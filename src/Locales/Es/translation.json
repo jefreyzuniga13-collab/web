@@ -1,0 +1,47 @@
+{
+    "login": {
+      "title": "¡Bienvenido de nuevo!",
+      "subtitle": "Inicia sesión en tu Panel de Soporte ChatBox",
+      "description": "Gestiona todas tus conversaciones con clientes en un solo lugar, mejora los tiempos de respuesta y optimiza tu flujo de trabajo.",
+      "imageAlt": "Ilustración de soporte al cliente por chat",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "usuario@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "••••••••••",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "rememberMe": "Recuérdame",
+      "submit": "Iniciar sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿Aún no tienes cuenta?",
+      "signUp": "Crear cuenta",
+      "needHelp": "¿Necesitas ayuda?",
+      "features": {
+        "fastReplies": "Respuestas más rápidas",
+        "centralInbox": "Bandeja unificada",
+        "analytics": "Analíticas integradas",
+        "customization": "Widget de chat personalizable"
+      },
+      "errors": {
+        "required": "{{field}} es obligatorio.",
+        "invalidEmail": "Por favor ingresa un correo válido.",
+        "passwordMin": "La contraseña debe tener al menos {{min}} caracteres.",
+        "loginFailed": "Credenciales inválidas. Verifica tu correo y contraseña.",
+        "accountLocked": "Tu cuenta ha sido bloqueada. Contacta soporte.",
+        "tooManyAttempts": "Demasiados intentos. Intenta de nuevo en {{minutes}} minutos."
+      },
+      "notifications": {
+        "loginSuccess": "Inicio de sesión exitoso",
+        "registerSuccess": "Registro exitoso",
+        "resetRequest": "Correo de restablecimiento enviado",
+        "resetSuccess": "Contraseña restablecida correctamente",
+        "verifySuccess": "Correo verificado correctamente",
+        "logout": "Sesión cerrada"
+      }
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "Lo sentimos, la página que buscas no existe o ha sido movida.",
+      "button": "Ir al inicio"
+    }
+  }

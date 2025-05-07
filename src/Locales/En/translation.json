@@ -1,0 +1,47 @@
+{
+    "login": {
+      "title": "Welcome Back!",
+      "subtitle": "Log in to your ChatBox Support Dashboard",
+      "description": "Manage all your customer conversations in one place, improve response times, and optimize your workflow.",
+      "imageAlt": "Illustration of customer support chat",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••••",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "rememberMe": "Remember me",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account yet?",
+      "signUp": "Get Started",
+      "needHelp": "Need help?",
+      "features": {
+        "fastReplies": "Faster replies",
+        "centralInbox": "Unified inbox",
+        "analytics": "Built-in analytics",
+        "customization": "Customizable chat widget"
+      },
+      "errors": {
+        "required": "{{field}} is required.",
+        "invalidEmail": "Please enter a valid email address.",
+        "passwordMin": "Password must be at least {{min}} characters.",
+        "loginFailed": "Invalid credentials. Please check your email and password.",
+        "accountLocked": "Your account has been locked. Contact support.",
+        "tooManyAttempts": "Too many attempts. Try again in {{minutes}} minutes."
+      },
+      "notifications": {
+        "loginSuccess": "Signed in successfully",
+        "registerSuccess": "Registration successful",
+        "resetRequest": "Password reset email sent",
+        "resetSuccess": "Password reset successfully",
+        "verifySuccess": "Email verified successfully",
+        "logout": "You have been logged out"
+      }
+    },
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "Sorry, the page you are looking for doesn’t exist or has been moved.",
+      "button": "Go to Home"
+    }
+  }

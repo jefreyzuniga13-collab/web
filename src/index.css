@@ -6,12 +6,19 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --primaryColor: #1872F6;
-  --textColor: #242424;
-  --bgColor:#fff;
-  --errorColor:#E74129;
-}
-
-:root > * {
-  margin: 30px 0;
+  --color-primary-start: #4f46e5;
+  --color-primary-end: #4338ca;
+  --color-primary-hover-opacity: 0.9;
+  --bg-secondary: #f3f4f6;
+  --bg-secondary-hover: #e5e7eb;
+  --bg-tertiary: transparent;
+  --border-tertiary: #d1d5db;
+  --bg-tertiary-hover: #f9fafb;
+  --color-destructive: #dc2626;
+  --bg-destructive-hover: rgba(220, 38, 38, 0.1);
+  --text-default: #111827;
+  --border-default: #d1d5db;
+  --error: #dc2626;
+  --input-bg: #ffffff;
+  --input-focus-border: #4f46e5;
 }

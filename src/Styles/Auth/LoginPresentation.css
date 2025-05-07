@@ -1,0 +1,131 @@
+.login-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .login-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 1rem 2rem;
+    gap: 1rem;
+  }
+  
+  .login-help {
+    font-size: 0.9rem;
+    color: var(--text-default);
+  }
+  
+  .login-content {
+    display: flex;
+    flex: 1;
+  }
+  
+  .login-info {
+    flex: 1;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .login-title {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .login-description {
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    color: #6b7280;
+  }
+  
+  .login-features {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+  
+  .login-features li {
+    margin: 0.25rem 0;
+    font-weight: 500;
+  }
+  
+  .login-image {
+    max-width: 80%;
+    height: auto;
+  }
+  
+  .login-form-section {
+    flex: 1;
+    max-width: 400px;
+    margin: auto;
+    padding: 2rem;
+  }
+  
+  .login-subtitle {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: #374151;
+  }
+  
+  .login-error {
+    margin-bottom: 1rem;
+    color: var(--error);
+    font-weight: 500;
+  }
+  
+  .login-label {
+    display: block;
+    margin: 0.5rem 0 0.25rem;
+    font-weight: 500;
+    color: var(--text-default);
+  }
+  
+  .login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0;
+  }
+  
+  .login-remember {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .login-forgot {
+    font-size: 0.875rem;
+    color: var(--color-primary-end);
+    text-decoration: none;
+  }
+  
+  .login-forgot:hover {
+    text-decoration: underline;
+  }
+  
+  .login-submit {
+    width: 100%;
+    margin-top: 1rem;
+  }
+  
+  .login-signup {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .login-signup-link {
+    color: var(--color-primary-end);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .login-signup-link:hover {
+    text-decoration: underline;
+  }

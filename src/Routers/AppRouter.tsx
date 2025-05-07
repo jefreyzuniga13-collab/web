@@ -1,12 +1,17 @@
-import {BrowserRouter, Routes, Route} from 'react-router-dom'
-import LoginPresentation from '../Presentations/Auth/LoginPresentation'
+import React, { Suspense, lazy } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+
+const LoginPresentation = lazy(() => import('@/Presentations/Auth/LoginPresentation'))
+const NotFound = lazy(() => import('@/Presentations/NotFound'))
 
 export function AppRouter() {
   return (
-    <BrowserRouter>
-    <Routes>
-        <Route path='/login' element={<LoginPresentation/>}/>
-    </Routes>
-    </BrowserRouter>
+    <Suspense fallback={<div className="loading">Loading…</div>}>
+      <Routes>
+        <Route index element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPresentation />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   )
 }

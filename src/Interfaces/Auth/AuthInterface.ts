@@ -1,43 +1,58 @@
-export interface LoginRequest{
-    email:string;
-    password:string;
-}
-
-export interface LoginResponse{
-    AccessToken: string;
-    RefreshToken: string;
-    ExpiresAt: Date;
-    UserId:string;
-    ContactId:string;
-}
-
-export interface RegisterRequest{
-    FullName: string;
-    Email: string;
-    Password: string;
-    CompanyName:string;
-    ContactName:string;
-    Phone:string;
-    Country:string;
-} 
-
-export interface AuthResponse{
-    AccessToken: string;
-    RefreshToken: string;
-    ExpiresAt: Date;
-    UserId:string;
-    ContactId:string;
-}
-
-export interface ForgotPasswordRequest{
-    Email: string;
-}
-
-export interface ResetPasswordRequest{
-    Token:string;
-    NewPassword: string;
-}
-
-export interface VerifyEmailRequest{
-    Token:string;
-}
+export interface ApiResponse<T> {
+    success: boolean
+    message: string
+    data: T
+    errors: string[]
+  }
+  
+  export interface AuthData {
+    accessToken: string
+    refreshToken: string
+    expiresAt: string
+    userId: string
+    contactId: string
+  }
+  
+  export interface LoginRequest {
+    email: string
+    password: string
+  }
+  
+  export type LoginResponse = ApiResponse<AuthData>
+  
+  export interface RegisterRequest {
+    fullName: string
+    email: string
+    password: string
+    companyName: string
+    contactName: string
+    phone: string
+    country: string
+  }
+  
+  export type RegisterResponse = ApiResponse<AuthData>
+  
+  export interface RefreshRequest {
+    refreshToken: string
+  }
+  
+  export type RefreshResponse = ApiResponse<AuthData>
+  
+  export interface ForgotPasswordRequest {
+    email: string
+  }
+  
+  export type ForgotPasswordResponse = ApiResponse<string>
+  
+  export interface ResetPasswordRequest {
+    token: string
+    newPassword: string
+  }
+  
+  export type ResetPasswordResponse = ApiResponse<string>
+  
+  export interface VerifyEmailRequest {
+    token: string
+  }
+  
+  export type VerifyEmailResponse = ApiResponse<string>
