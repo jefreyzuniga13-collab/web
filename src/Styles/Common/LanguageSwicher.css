@@ -1,0 +1,14 @@
+.languageSwitcher-btn{
+    background-color: transparent;
+    border: solid 1px var(--color-primary-start);
+    color:  var(--color-primary-start);
+    transition: all .3s ease;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.languageSwitcher-btn:hover{
+    background-color: var(--color-primary-start);
+    color: var(--bg-secondary);
+}

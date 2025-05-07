@@ -1,0 +1,39 @@
+.verifyEmail-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+.verifyEmail-image {
+  max-width: 50%;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+.verifyEmail-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-default);
+}
+.verifyEmail-description {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #6b7280;
+  max-width: 400px;
+}
+.verifyEmail-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    to right,
+    var(--color-primary-start),
+    var(--color-primary-end)
+  );
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+.verifyEmail-button:hover {
+  opacity: 0.9;
+}

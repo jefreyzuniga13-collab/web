@@ -77,7 +77,7 @@ export function useAuth() {
     [call, dispatch, navigate]
   )
 
-  const register = useCallback(
+  const registerAsync = useCallback(
     (creds: RegisterRequest) =>
       call(authService.registerAsync, creds, {
         onSuccess: (data: AuthData) => {
@@ -90,7 +90,7 @@ export function useAuth() {
     [call, dispatch, navigate]
   )
 
-  const forgotPassword = useCallback(
+  const forgotPasswordAsync = useCallback(
     (creds: ForgotPasswordRequest) =>
       call(authService.forgotPasswordAsync, creds, {
         successKey: 'login.notifications.resetRequest',
@@ -99,7 +99,7 @@ export function useAuth() {
     [call]
   )
 
-  const resetPassword = useCallback(
+  const resetPasswordAsync = useCallback(
     (creds: ResetPasswordRequest) =>
       call(authService.resetPasswordAsync, creds, {
         successKey: 'login.notifications.resetSuccess',
@@ -125,9 +125,9 @@ export function useAuth() {
 
   return {
     login,
-    register,
-    forgotPassword,
-    resetPassword,
+    registerAsync,
+    forgotPasswordAsync,
+    resetPasswordAsync,
     verifyEmail,
     logout,
     loading,

@@ -1,13 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+body{
+  padding: 0px !important;
+  font-family: "Roboto", sans-serif;
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  padding: 0px !important;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  --color-primary-start: #4f46e5;
-  --color-primary-end: #4338ca;
+  --color-primary-start: #356ace;
+  --color-primary-end: #2251a8;
   --color-primary-hover-opacity: 0.9;
   --bg-secondary: #f3f4f6;
   --bg-secondary-hover: #e5e7eb;
@@ -16,9 +19,10 @@
   --bg-tertiary-hover: #f9fafb;
   --color-destructive: #dc2626;
   --bg-destructive-hover: rgba(220, 38, 38, 0.1);
-  --text-default: #111827;
+  --text-default: #131418;
   --border-default: #d1d5db;
   --error: #dc2626;
   --input-bg: #ffffff;
-  --input-focus-border: #4f46e5;
+  --input-focus-border: #2251a8;
+  --grayColor:#374151;
 }

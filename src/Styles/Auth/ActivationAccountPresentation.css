@@ -1,0 +1,43 @@
+.activationAccount-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.activationAccount-image{
+    max-width: 70%;
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+
+.activationAccount-title{
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-default);
+}
+
+.activationAccount-description{
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--grayColor);
+    max-width: 400px;
+}
+.activationAccount-button{
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(
+        to right,
+        var(--color-primary-start),
+        var(--color-primary-end)
+    );
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+  }
+  .activationAccount-button:hover {
+    opacity: 0.9;
+  }

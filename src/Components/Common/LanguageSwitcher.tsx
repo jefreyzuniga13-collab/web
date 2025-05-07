@@ -1,6 +1,5 @@
-import React from 'react'
 import { useTranslation } from 'react-i18next'
-
+import '@/Styles/Common/LanguageSwicher.css'
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation()
 
@@ -10,9 +9,9 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      <button onClick={() => changeLang('es')}>ES</button>
-      <button onClick={() => changeLang('en')}>EN</button>
+    <div className='languageSwitcher-container' style={{ display: 'flex', gap: '0.5rem' }}>
+      <button className='languageSwitcher-btn' onClick={() => changeLang('es')}>ES</button>
+      <button className='languageSwitcher-btn' onClick={() => changeLang('en')}>EN</button>
     </div>
   )
 }

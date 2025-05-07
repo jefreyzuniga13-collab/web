@@ -21,7 +21,7 @@ class AuthService {
   async loginAsync({ email, password }: LoginRequest): Promise<AuthData> {
     if (!email || !password) throw new Error('Email y contraseña son requeridos')
     try {
-      const { data } = await api.post<ApiResponse<AuthData>>('/Auth/login', { email, password })
+      const { data } = await api.post<ApiResponse<AuthData>>('Auth/login', { email, password })
       return data.data
     } catch (error) {
       throw formatError<AuthData>(error)

@@ -47,6 +47,7 @@ export interface ApiResponse<T> {
   export interface ResetPasswordRequest {
     token: string
     newPassword: string
+    confirmNewPassword:string
   }
   
   export type ResetPasswordResponse = ApiResponse<string>

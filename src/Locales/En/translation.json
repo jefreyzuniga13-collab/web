@@ -2,7 +2,7 @@
     "login": {
       "title": "Welcome Back!",
       "subtitle": "Log in to your ChatBox Support Dashboard",
-      "description": "Manage all your customer conversations in one place, improve response times, and optimize your workflow.",
+      "description": "Manage all our conversations in one place, improve response times, and optimize your workflow.",
       "imageAlt": "Illustration of customer support chat",
       "emailLabel": "Email Address",
       "emailPlaceholder": "you@example.com",
@@ -42,6 +42,47 @@
     "notFound": {
       "title": "Page Not Found",
       "description": "Sorry, the page you are looking for doesn’t exist or has been moved.",
-      "button": "Go to Home"
+      "button": "Go to Login"
+    },
+    "verifyEmail": {
+      "title": "Veryfy your inbox",
+      "description": "We have sent you an email, please go there and click the activation account link.",
+      "button": "Go to Login"
+    },
+    "forgotPassword":{
+      "title":"don't remembe your password?",
+      "description":"To reset your forgot password, please enter your email and click send requiest. Follow the next steps below",
+      "steps":{
+        "1":"Enter your mail",
+        "2":"Click to submit",
+        "3":"Check your inbox",
+        "4":"Click link email",
+        "5":"Create a new password"
+      },
+      "subtitle":"Reset your password",
+      "emailLabel": "Enter your email",
+      "handleSubmit":"Send Requiest",
+      "backToLogin":"Back to login",
+      "requiredEmail":"Email is require"
+    },
+    "resetPassword":{
+      "title":"Reset your password",
+      "description":"Enter your new password, and login with it. Just follow the below steps:",
+      "steps":{
+        "1" :"Enter new password",
+        "2" :"Sumit the request",
+        "3": "Logim with your new credential"
+      },
+      "subtitle":"Enter your new password below",
+      "newPasswordLabel":"Enter password",
+      "confirmNewPasswordLabel":"ConfirPassword",
+      "submitting":"Loading...",
+      "submit":"Reset Password",
+      "requiredConfirmNewPassword":"Confirm password is require"
+    },
+    "activationAccount":{
+      "title":"Verification Success",
+      "description":"Now you can login into your account.",
+      "button":"Go to Login"
     }
   }

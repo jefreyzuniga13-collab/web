@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    max-height: 100vh;
   }
   
   .login-header {
@@ -10,11 +11,17 @@
     align-items: center;
     padding: 1rem 2rem;
     gap: 1rem;
+    top: 0; right: 0;
   }
   
   .login-help {
     font-size: 0.9rem;
     color: var(--text-default);
+    transition: color .2s ease;
+  }
+
+  .login-help:hover{
+    color: var(--color-primary-start);
   }
   
   .login-content {
@@ -25,7 +32,7 @@
   .login-info {
     flex: 1;
     padding: 2rem;
-    background: var(--bg-secondary);
+    background: var(--color-primary-start);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -35,27 +42,32 @@
   .login-title {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
+    color: var(--bg-secondary);
   }
   
   .login-description {
     font-size: 1.125rem;
-    margin-bottom: 1.5rem;
-    color: #6b7280;
+    margin: 0;
+    margin-bottom: 0.7rem;
+    color: var(--border-tertiary);
   }
   
   .login-features {
     list-style: none;
     padding: 0;
-    margin-bottom: 2rem;
+    margin: 0;
+    margin-bottom: .7rem;
+    color: var(--border-tertiary);
   }
   
   .login-features li {
     margin: 0.25rem 0;
     font-weight: 500;
+    color: var(--border-tertiary);
   }
   
   .login-image {
-    max-width: 80%;
+    max-width: 50%;
     height: auto;
   }
   
@@ -69,7 +81,7 @@
   .login-subtitle {
     font-size: 1.125rem;
     margin-bottom: 1rem;
-    color: #374151;
+    color: var(--grayColor);
   }
   
   .login-error {
@@ -83,6 +95,7 @@
     margin: 0.5rem 0 0.25rem;
     font-weight: 500;
     color: var(--text-default);
+    text-align: left;
   }
   
   .login-options {
@@ -128,4 +141,14 @@
   
   .login-signup-link:hover {
     text-decoration: underline;
+  }
+
+  @media (width <= 770px) {
+    .login-content {
+      flex-direction: column;
+    }
+    .login-info{
+        display: none;
+        visibility: hidden;
+    }
   }

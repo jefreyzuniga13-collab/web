@@ -6,7 +6,7 @@
     text-align: center;
   }
   .notfound-image {
-    max-width: 100%;
+    max-width: 50%;
     height: auto;
     margin-bottom: 1.5rem;
   }
@@ -34,6 +34,7 @@
     font-weight: 600;
     transition: opacity 0.2s ease;
   }
+  
   .notfound-button:hover {
     opacity: 0.9;
   }

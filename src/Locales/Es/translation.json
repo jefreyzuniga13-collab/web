@@ -2,7 +2,7 @@
     "login": {
       "title": "¡Bienvenido de nuevo!",
       "subtitle": "Inicia sesión en tu Panel de Soporte ChatBox",
-      "description": "Gestiona todas tus conversaciones con clientes en un solo lugar, mejora los tiempos de respuesta y optimiza tu flujo de trabajo.",
+      "description": "Gestiona todas tus conversaciones con nosotros en un solo lugar, mejora los tiempos de respuesta y optimiza tu flujo de trabajo.",
       "imageAlt": "Ilustración de soporte al cliente por chat",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "usuario@ejemplo.com",
@@ -20,7 +20,7 @@
         "fastReplies": "Respuestas más rápidas",
         "centralInbox": "Bandeja unificada",
         "analytics": "Analíticas integradas",
-        "customization": "Widget de chat personalizable"
+        "customization": "Atención por ia y humana."
       },
       "errors": {
         "required": "{{field}} es obligatorio.",
@@ -42,6 +42,47 @@
     "notFound": {
       "title": "Página no encontrada",
       "description": "Lo sentimos, la página que buscas no existe o ha sido movida.",
-      "button": "Ir al inicio"
+      "button": "Ir a Inicio de Sesión"
+    },
+    "verifyEmail": {
+      "title": "Revisar yu bandeja de entrada",
+      "description": "Te hemos enviado un mensaje a tu correo, por favor verificarlo y dar click en el enlace para activar su cuenta.",
+      "button": "Ir a Inicio de Sesión"
+    },
+    "forgotPassword":{
+      "title":"¿Olvido su contraseña?",
+      "description":"Para restablecer su contraseña, por favor ingrese su correo para recibir un enlace de cambio de contraseña. Siga los siguientes pasos:",
+      "steps":{
+        "1":"Ingrese su correo",
+        "2":"Click en enviar",
+        "3":"Revisar su bandeja de entrada",
+        "4":"Click en el enlace del correo recibido",
+        "5":"Espesificar la nueva contraseña"
+      },
+      "subtitle":"Restablece tu contraseña",
+      "emailLabel": "Correo electrónico",
+      "handleSubmit":"Enviar Solicitud",
+      "backToLogin":"Regresar a login",
+      "requiredEmail": "El correo es requerido."
+    },
+    "resetPassword":{
+      "title":"Restablecer contraseña",
+      "description":"Ingrese la nueva contraseña, y envie la solicitud, para que accede al sistema con su nueva credencial. Siga los siguientes pasos.",
+      "steps":{
+        "1" :"Ingrese su contraseña",
+        "2" :"Envie la solicitud",
+        "3": "Inicie sesión con la nueva credencial"
+      },
+      "subtitle":"Ingrese la nueva contraseña de su cuenta",
+      "newPasswordLabel":"Ingrese la nueva contraseña",
+      "confirmNewPasswordLabel":"Confirme contraseña",
+      "submitting":"cargando...",
+      "submit":"Restablecer contraseña",
+      "requiredConfirmNewPassword":"La confirmación es obligatoria"
+    },
+    "activationAccount":{
+      "title":"Activación Exitosa",
+      "description":"Ahora puedes iniciar sesión con tu cuenta",
+      "button":"Ir a Inicio de Sesión"
     }
   }
