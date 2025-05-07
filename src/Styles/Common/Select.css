@@ -1,0 +1,25 @@
+.select-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+  .select-field {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-default);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    background-color: var(--input-bg);
+    appearance: none;
+    transition: border-color 0.2s ease;
+  }
+  .select-field:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+  }
+  .select-field--error {
+    border-color: var(--error);
+  }
+  .select-error-message {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--error);
+  }  

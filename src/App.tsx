@@ -1,13 +1,23 @@
+import { ToastContainer } from 'react-toastify'
+import { AppRouter } from '@/Routers/AppRouter'
+import 'react-toastify/dist/ReactToastify.css'
 import './App.css'
-import { AppRouter } from './Routers/AppRouter'
+import './i18n'
 
-function App() {
-
+export default function App() {
   return (
     <>
-        <AppRouter/>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+      />
+      <AppRouter />
     </>
   )
 }
-
-export default App

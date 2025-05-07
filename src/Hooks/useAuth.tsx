@@ -1,124 +1,136 @@
-import { useState } from "react";
-import { AuthService } from "../Services/AuthService";
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'react-toastify'
+import { authService } from '@/Services/AuthService'
+import {
+  setCredentials,
+  logout as clearAuth
+} from '@/Context/Slices/authSlice'
 import type {
   LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-  VerifyEmailRequest
-} from "../Interfaces/Auth/AuthInterface";
-import { toast } from "react-toastify";
+  VerifyEmailRequest,
+  AuthData
+} from '@/Interfaces/Auth/AuthInterface'
 
 export function useAuth() {
+  const { t } = useTranslation()
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const isMounted = useRef(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [loading, setLoading] = useState<boolean | null>(false);
-
-  const [error, setError] = useState<string | null>(null);
-
-  const loginAsync = async (credentials: LoginRequest) => {
-    try {
-      setLoading(true);
-      const data = await AuthService.LoginAsync(credentials);
-      localStorage.setItem("AccessToken", data.AccessToken);
-      localStorage.setItem("RefreshToken", data.RefreshToken);
-
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.log("Error al inciar sesión", error);
-      toast.error("Error al iniciar sesión. Verifique sus credenciales.");
-      setError(error.response?.data?.message || "Error al inciar sesion.");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false
     }
-  };
+  }, [])
 
-  const registerAsycn = async (credentials: RegisterRequest) => {
-    try {
-      setLoading(true);
-      const data = await AuthService.RegisterAsync(credentials);
+  const call = useCallback(
+    async <P, R>(
+      fn: (payload: P) => Promise<R>,
+      payload: P,
+      opts: {
+        successKey?: string
+        errorKey?: string
+        onSuccess?: (data: R) => void
+      } = {}
+    ): Promise<R> => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await fn(payload)
+        opts.onSuccess?.(data)
+        if (opts.successKey) toast.success(t(opts.successKey))
+        return data
+      } catch (err: unknown) {
+        const msg = err instanceof Error
+          ? err.message
+          : opts.errorKey
+            ? t(opts.errorKey)
+            : t('login.notifications.loginFailed')
+        setError(msg)
+        toast.error(msg)
+        throw err
+      } finally {
+        if (isMounted.current) setLoading(false)
+      }
+    },
+    [t]
+  )
 
-      console.log("Usuario creado correctamente.");
-      toast.error("Usuario creado correctamente.");
-      return data;
+  const login = useCallback(
+    (creds: LoginRequest) =>
+      call(authService.loginAsync, creds, {
+        onSuccess: (data: AuthData) => {
+          dispatch(setCredentials(data))
+          navigate('/dashboard')
+        },
+        successKey: 'login.notifications.loginSuccess',
+        errorKey: 'login.errors.loginFailed'
+      }),
+    [call, dispatch, navigate]
+  )
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.log("Error al crear al usuario", error);
-      toast.error("Error al crear usuario, por favor intentelo de nuevo.");
-      setError(
-        error.response?.data?.message || "Error al registrar el nuevo usuario."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const register = useCallback(
+    (creds: RegisterRequest) =>
+      call(authService.registerAsync, creds, {
+        onSuccess: (data: AuthData) => {
+          dispatch(setCredentials(data))
+          navigate('/dashboard')
+        },
+        successKey: 'login.notifications.registerSuccess',
+        errorKey: 'login.errors.loginFailed'
+      }),
+    [call, dispatch, navigate]
+  )
 
-  const forgotPasswordAsync = async (credentials: ForgotPasswordRequest) => {
-    try {
-      setLoading(true);
-      const data = await AuthService.ForgotPasswordAsync(credentials);
-      console.log("Correo enviado correctamente.");
-      toast.error("Correo enviado correctamente.");
+  const forgotPassword = useCallback(
+    (creds: ForgotPasswordRequest) =>
+      call(authService.forgotPasswordAsync, creds, {
+        successKey: 'login.notifications.resetRequest',
+        errorKey: 'login.errors.loginFailed'
+      }),
+    [call]
+  )
 
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.log("Error al enviar correo al usuario", error);
-      toast.error("Error al enviar correo, por favor intentelo de nuevo.");
-      setError(error.response?.data?.message || "Error al enviar el correo.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const resetPassword = useCallback(
+    (creds: ResetPasswordRequest) =>
+      call(authService.resetPasswordAsync, creds, {
+        successKey: 'login.notifications.resetSuccess',
+        errorKey: 'login.errors.loginFailed'
+      }),
+    [call]
+  )
 
-  const resetPasswordAsync = async (credenciales: ResetPasswordRequest) => {
-    try {
-      setLoading(true);
-      const data = await AuthService.ResetPasswordAsycn(credenciales);
-      console.log("Contraseña actualizada correctamente");
-      toast.success("Contraseña actualizada correctamente");
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.log("Error al cambiar la contraseña", error);
-      toast.error("Error al cambiar contraseña.", error);
-      setError(
-        error.response?.data?.message || "Error al cambiar la contraseña."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const verifyEmail = useCallback(
+    (creds: VerifyEmailRequest) =>
+      call(authService.verifyEmailAsync, creds, {
+        successKey: 'login.notifications.verifySuccess',
+        errorKey: 'login.errors.loginFailed'
+      }),
+    [call]
+  )
 
-  const verifyEmailAsync = async (credentials: VerifyEmailRequest) => {
-    try {
-      setLoading(true);
-
-      const data = await AuthService.VerifyEmailAsync(credentials);
-
-      console.log("Correo verificado correctamente");
-      toast.success("Correo verificado correctamente");
-      return data;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.log("Error al verificar el correo", error);
-      toast.error("Error al verificar el correo.", error);
-      setError(
-        error.response?.data?.message || "Error al verificar el correo."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const logout = useCallback(() => {
+    dispatch(clearAuth())
+    toast.info(t('login.notifications.logout'))
+    navigate('/login')
+  }, [dispatch, navigate, t])
 
   return {
-    loginAsync,
-    registerAsycn,
-    forgotPasswordAsync,
-    resetPasswordAsync,
-    verifyEmailAsync,
-    error,
+    login,
+    register,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
+    logout,
     loading,
-  };
+    error
+  }
 }

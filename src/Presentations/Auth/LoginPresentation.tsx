@@ -1,46 +1,115 @@
-import useLoginContainer from "../../Containers/Auth/useLoginContainer";
-import '../../Styles/loginPresentation.css'
+import { Link } from 'react-router-dom'
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useTranslation } from 'react-i18next'
+import useLoginContainer from '@/Containers/Auth/useLoginContainer'
+import Input from '@/Components/Common/Input'
+import Button from '@/Components/Common/Button'
+import LanguageSwitcher from '@/Components/Common/LanguageSwitcher'
+import '@/Styles/Auth/LoginPresentation.css'
 
-const LoginPresentation = () => {
-  const { formik } = useLoginContainer();
+export default function LoginPresentation() {
+  const { t } = useTranslation()
+  const {
+    formik,
+    loading,
+    showPassword,
+    toggleShowPassword,
+    canSubmit,
+    formError
+  } = useLoginContainer()
 
   return (
-    <div className="login-form">
-        <h1 className="form-title">Inicio de Sesión</h1>
-        <h3 className="form-subTitle">Ingresa tus credenciales para iniciar sesión con tu cuenta.</h3>
-      <form onSubmit={formik.handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          id="email"
-          placeholder="Ingrese su correo electronico"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          className="form-email"
-        />
-        {formik.touched.email && (
-          <div className="form-errors">{formik.errors.email}</div>
-        )}
+    <div className="login-page">
+      <header className="login-header">
+        <div className="login-help">{t('login.needHelp')}</div>
+        <LanguageSwitcher/>
+      </header>
 
-        <input
-          type="password"
-          name="password"
-          id="password"
-          placeholder="Ingrese su contraseña"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          className="form-password"
-        />
-        {formik.errors.password && (
-          <div className="form-errors">{formik.errors.password}</div>
-        )}
+      <div className="login-content">
+        <aside className="login-info">
+          <h1 className="login-title">{t('login.title')}</h1>
+          <p className="login-description">{t('login.description')}</p>
+          <ul className="login-features">
+            <li>{t('login.features.fastReplies')}</li>
+            <li>{t('login.features.centralInbox')}</li>
+            <li>{t('login.features.analytics')}</li>
+            <li>{t('login.features.customization')}</li>
+          </ul>
+          <img
+            className="login-image"
+            src="https://i.ibb.co/gMbq1RzC/login.png"
+            alt={t('login.imageAlt')}
+          />
+        </aside>
 
-        <button type="submit" className="form-button">
-          Iniciar Sesion
-        </button>
-      </form>
+        <section className="login-form-section">
+          <p className="login-subtitle">{t('login.subtitle')}</p>
+          {formError && <div className="login-error">{formError}</div>}
+
+          <form onSubmit={formik.handleSubmit} noValidate>
+            <label htmlFor="email" className="login-label">
+              {t('login.emailLabel')}
+            </label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder={t('login.emailPlaceholder')}
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.email ? formik.errors.email : undefined}
+            />
+
+            <label htmlFor="password" className="login-label">
+              {t('login.passwordLabel')}
+            </label>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder={t('login.passwordPlaceholder')}
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.password ? formik.errors.password : undefined}
+              rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
+              onIconClick={toggleShowPassword}
+            />
+
+            <div className="login-options">
+              <label className="login-remember">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  checked={formik.values.remember}
+                  onChange={formik.handleChange}
+                />
+                {t('login.rememberMe')}
+              </label>
+              <Link to="/forgot-password" className="login-forgot">
+                {t('login.forgotPassword')}
+              </Link>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!canSubmit || loading}
+              className="login-submit"
+            >
+              {loading ? `${t('login.submit')}…` : t('login.submit')}
+            </Button>
+
+            <p className="login-signup">
+              {t('login.noAccount')}{' '}
+              <Link to="/signup" className="login-signup-link">
+                {t('login.signUp')}
+              </Link>
+            </p>
+          </form>
+        </section>
+      </div>
     </div>
-  );
-};
-
-export default LoginPresentation;
+  )
+}
