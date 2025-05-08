@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react'
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 const LoginPresentation = lazy(() => import('@/Presentations/Auth/LoginPresentation'))
@@ -9,6 +9,7 @@ const ForgotPasswordPresentation = lazy(()=> import("@/Presentations/Auth/Forgot
 const ResetPasswordPresentation = lazy(()=> import("@/Presentations/Auth/ResetPasswordPresentation"))
 const ActivationAccountPresentation = lazy(()=> import("@/Presentations/Auth/ActivationAccountPresentation"))
 const Unauthorized = lazy(()=> import("@/Components/Common/Unauthorized"))
+const ChatPresentation = lazy(()=> import("@/Presentations/Chats/ChatPresentation"))
 
 export function AppRouter() {
   return (
@@ -22,6 +23,7 @@ export function AppRouter() {
         <Route path='/reset-password' element={<ResetPasswordPresentation/>}/>
         <Route path='/verify-account' element={<ActivationAccountPresentation/>}/>
         <Route path='/unauthorized' element={<Unauthorized/>}/>
+        <Route path='/chat' element={<ChatPresentation/>}/>
         <Route path="*" element={<NotFound />} />
 
         {/* Sólo admins */}

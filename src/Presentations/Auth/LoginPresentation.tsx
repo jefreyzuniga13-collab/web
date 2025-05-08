@@ -21,6 +21,7 @@ export default function LoginPresentation() {
   return (
     <div className="login-page">
       <div className="login-content">
+        
         <aside className="login-info">
           <h1 className="login-title">{t("login.title")}</h1>
           <p className="login-description">{t("login.description")}</p>
@@ -113,6 +114,7 @@ export default function LoginPresentation() {
             </p>
           </form>
         </section>
+
       </div>
     </div>
   );

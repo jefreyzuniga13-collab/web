@@ -15,7 +15,7 @@ const VerifyEmailPresentation = () => {
       <h1 className="verifyEmail-title">{t("verifyEmail.title")}</h1>
       <p className="verifyEmail-description">{t("verifyEmail.description")}</p>
 
-      <Link to="/login" className="verifyEmail-button">
+      <Link to="/login" replace className="verifyEmail-button">
         {t("verifyEmail.button")}
       </Link>
     </div>
