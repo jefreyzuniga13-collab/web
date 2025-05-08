@@ -6,6 +6,9 @@ import App from '@/App'
 import { store } from '@/Context'
 import './i18n'
 import '@/index.css'
+import { setupResponseInterceptor } from '@/Interceptors/responseInterceptor'
+
+setupResponseInterceptor();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

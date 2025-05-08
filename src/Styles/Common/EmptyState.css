@@ -1,0 +1,43 @@
+.empty-state-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    min-height: 60vh;
+  }
+  
+  .empty-state-page__image {
+    max-width: 250px;
+    width: 40%;
+    margin-bottom: 1.5rem;
+  }
+  
+  .empty-state-page__title {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-default);
+  }
+  
+  .empty-state-page__subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary, #666);
+    max-width: 400px;
+  }
+  
+  .empty-state-page__button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.4rem;
+    background: var(--color-primary-start);
+    color: var(--bg-primary, #fff);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .empty-state-page__button:hover {
+    background: var(--color-primary-end);
+  }  

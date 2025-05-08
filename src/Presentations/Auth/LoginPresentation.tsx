@@ -38,12 +38,13 @@ export default function LoginPresentation() {
         </aside>
 
         <section className="login-form-section">
-          <header className="login-header">
-            <Link to="/signup" className="login-help">
-              {t("login.needHelp")}
-            </Link>
-            <LanguageSwitcher />
-          </header>
+        <div className="login-form-header">
+        <Link to="/forgot-password" className="login-help">
+          {t("login.needHelp")}
+        </Link>
+        <LanguageSwitcher />
+      </div>
+
           <p className="login-subtitle">{t("login.subtitle")}</p>
           {formError && <div className="login-error">{formError}</div>}
 

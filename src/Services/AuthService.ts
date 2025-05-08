@@ -36,7 +36,7 @@ class AuthService {
     contactName,
     phone,
     country
-  }: RegisterRequest): Promise<AuthData> {
+  }: RegisterRequest): Promise<string> {
     if (
       !fullName ||
       !email ||
@@ -49,7 +49,7 @@ class AuthService {
       throw new Error('Todos los campos son requeridos')
     }
     try {
-      const { data } = await api.post<ApiResponse<AuthData>>('/Auth/register', {
+      const { data } = await api.post<ApiResponse<string>>('/Auth/register', {
         fullName,
         email,
         password,

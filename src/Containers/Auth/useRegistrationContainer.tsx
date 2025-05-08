@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/Hooks/useAuth";
 import type { RegisterRequest } from "@/Interfaces/Auth/AuthInterface";
 
-const useRegistrationContainer = () => {
+export default function useRegistrationContainer() {
   const { t } = useTranslation();
   const { registerAsync, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -13,50 +13,60 @@ const useRegistrationContainer = () => {
   const validationSchema = useMemo(
     () =>
       Yup.object<RegisterRequest>({
-        fullName: Yup.string().required(
-          t("register.requiredFullName", {
-            field: t("registration.fullNameLabel"),
-          })
-        ),
-        companyName: Yup.string().required(
-          t("requiredCompanyName", { field: t("register.companyNameRequired") })
-        ),
-        contactName: Yup.string().required(
-          t("registration.requiredContactName", {
-            field: t("contactNameLabel"),
-          })
-        ),
-        email: Yup.string()
-          .required()
-          .email(
-            t("register.invalidEmailFormat", {
-              field: t("register.emailLabel"),
+        fullName: Yup.string()
+          .trim()
+          .required(
+            t("register.errors.required", {
+              field: t("register.fullNameLabel"),
             })
           ),
-        phone: Yup.string().required(
-          t("requiredPhone", { field: t("register.phoneLabel") })
-        ),
-        country: Yup.string().required(
-          t("registerEmail", { field: t("register.countryLabel") })
-        ),
+        companyName: Yup.string()
+          .trim()
+          .required(
+            t("register.errors.required", {
+              field: t("register.companyNameLabel"),
+            })
+          ),
+        contactName: Yup.string()
+          .trim()
+          .required(
+            t("register.errors.required", {
+              field: t("register.contactNameLabel"),
+            })
+          ),
+        email: Yup.string()
+          .trim()
+          .email(t("register.errors.invalidEmail"))
+          .required(
+            t("register.errors.required", { field: t("register.emailLabel") })
+          ),
+        phone: Yup.string()
+          .trim()
+          .required(
+            t("register.errors.required", { field: t("register.phoneLabel") })
+          ),
+        country: Yup.string()
+          .trim()
+          .required(
+            t("register.errors.required", { field: t("register.countryLabel") })
+          ),
         password: Yup.string()
           .required(
-            t("registration.requiredEmail", {
+            t("register.errors.required", {
               field: t("register.passwordLabel"),
             })
           )
-          .min(6, t("registration.minEmail", { min: 8 })),
+          .min(8, t("register.errors.passwordMin", { min: 8 })),
       }),
-
     [t]
   );
 
   const formik = useFormik<RegisterRequest>({
     initialValues: {
       fullName: "",
-      email: "",
       companyName: "",
       contactName: "",
+      email: "",
       phone: "",
       country: "",
       password: "",
@@ -66,32 +76,12 @@ const useRegistrationContainer = () => {
     validateOnChange: false,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
       setStatus(undefined);
-
       try {
-        const {
-          fullName,
-          email,
-          companyName,
-          contactName,
-          phone,
-          country,
-          password,
-        } = values;
-        await registerAsync({
-          fullName,
-          companyName,
-          contactName,
-          email,
-          phone,
-          country,
-          password,
-        });
+        await registerAsync(values);
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : t("registration.error.registrationFail");
-        setStatus(msg);
+        setStatus(
+          err instanceof Error ? err.message : t("register.errors.submitFail")
+        );
       } finally {
         setSubmitting(false);
       }
@@ -106,6 +96,4 @@ const useRegistrationContainer = () => {
     canSubmit: formik.isValid && formik.dirty && !loading,
     formError: formik.status as string | undefined,
   };
-};
-
-export default useRegistrationContainer;
+}

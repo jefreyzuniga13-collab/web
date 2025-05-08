@@ -80,23 +80,25 @@ export function useAuth() {
   const registerAsync = useCallback(
     (creds: RegisterRequest) =>
       call(authService.registerAsync, creds, {
-        onSuccess: (data: AuthData) => {
-          dispatch(setCredentials(data))
-          navigate('/dashboard')
+        onSuccess: () => {
+          navigate('/check-email', { replace: true })
         },
-        successKey: 'login.notifications.registerSuccess',
-        errorKey: 'login.errors.loginFailed'
+        successKey: 'register.notifications.sentEmail',
+        errorKey:   'register.errors.registrationFail'
       }),
-    [call, dispatch, navigate]
+    [call, navigate]
   )
 
   const forgotPasswordAsync = useCallback(
     (creds: ForgotPasswordRequest) =>
       call(authService.forgotPasswordAsync, creds, {
+        onSuccess: () => {
+          navigate('/check-email', { replace: true })
+        },
         successKey: 'login.notifications.resetRequest',
         errorKey: 'login.errors.loginFailed'
       }),
-    [call]
+    [call, navigate]
   )
 
   const resetPasswordAsync = useCallback(
@@ -108,14 +110,15 @@ export function useAuth() {
     [call]
   )
 
-  const verifyEmail = useCallback(
-    (creds: VerifyEmailRequest) =>
-      call(authService.verifyEmailAsync, creds, {
-        successKey: 'login.notifications.verifySuccess',
-        errorKey: 'login.errors.loginFailed'
-      }),
-    [call]
-  )
+    const verifyEmail = useCallback(
+      (creds: VerifyEmailRequest) =>
+        call(authService.verifyEmailAsync, creds, {
+          successKey: 'activationAccount.notifications.success',
+          errorKey: 'activationAccount.errors.invalidToken'
+        }),
+      [call]
+    )
+
 
   const logout = useCallback(() => {
     dispatch(clearAuth())

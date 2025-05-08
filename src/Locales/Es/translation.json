@@ -39,6 +39,42 @@
         "logout": "Sesión cerrada"
       }
     },
+    "register": {
+    "title": "Crea tu cuenta",
+    "description": "¡Únete hoy! Completa tus datos para comenzar.",
+    "subtitle": "Por favor, rellena todos los campos para registrarte.",
+    "steps": {
+      "1": "Ingresa tu información personal",
+      "2": "Proporciona los datos de tu empresa",
+      "3": "Elige una contraseña segura",
+      "4": "Confirma y envía"
+    },
+    "fullNameLabel": "Nombre completo",
+    "fullNameExample": "p. ej. María Pérez",
+    "contactNameLabel": "Nombre de contacto",
+    "contactNameExample": "p. ej. Juan López",
+    "emailLabel": "Correo electrónico",
+    "emailExample": "tú@ejemplo.com",
+    "phoneLabel": "Número de teléfono",
+    "phoneExample": "+505 89768909",
+    "companyNameLabel": "Nombre de la empresa",
+    "companyNameExample": "Tu Empresa S.L.",
+    "countryLabel": "País",
+    "countryExample": "p. ej. Nicaragua",
+    "passwordLabel": "Contraseña",
+    "passwordExample": "••••••••",
+    "submit": "Registrarse",
+    "submitting": "Registrando",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "backToLogin": "Inicia sesión aquí",
+    "sentEmail": "Registro exitoso. Revisa tu correo para activar tu cuenta.",
+    "errors": {
+      "required": "{{field}} es obligatorio.",
+      "invalidEmail": "Por favor ingresa un correo válido.",
+      "passwordMin": "La contraseña debe tener al menos {{min}} caracteres.",
+      "registrationFail": "No se pudo completar el registro. Inténtalo nuevamente."
+    }
+  },
     "notFound": {
       "title": "Página no encontrada",
       "description": "Lo sentimos, la página que buscas no existe o ha sido movida.",
@@ -49,40 +85,88 @@
       "description": "Te hemos enviado un mensaje a tu correo, por favor verificarlo y dar click en el enlace para activar su cuenta.",
       "button": "Ir a Inicio de Sesión"
     },
-    "forgotPassword":{
-      "title":"¿Olvido su contraseña?",
-      "description":"Para restablecer su contraseña, por favor ingrese su correo para recibir un enlace de cambio de contraseña. Siga los siguientes pasos:",
-      "steps":{
-        "1":"Ingrese su correo",
-        "2":"Click en enviar",
-        "3":"Revisar su bandeja de entrada",
-        "4":"Click en el enlace del correo recibido",
-        "5":"Espesificar la nueva contraseña"
-      },
-      "subtitle":"Restablece tu contraseña",
-      "emailLabel": "Correo electrónico",
-      "handleSubmit":"Enviar Solicitud",
-      "backToLogin":"Regresar a login",
-      "requiredEmail": "El correo es requerido."
+   "forgotPassword": {
+    "title": "¿Olvidaste tu contraseña?",
+    "description": "¡No te preocupes! Ingresa tu correo y te enviaremos un enlace.",
+    "subtitle": "Revisa tu bandeja para el enlace de restablecimiento",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tú@ejemplo.com",
+    "handleSubmit": "Enviar enlace",
+    "submitting": "Enviando",
+    "backToLogin": "Volver a iniciar sesión",
+    "imageAlt": "Ilustración de envío de restablecimiento de contraseña",
+    "steps": {
+      "1": "Ingresa tu correo",
+      "2": "Recibe el enlace",
+      "3": "Haz clic en el enlace",
+      "4": "Ingresa una nueva contraseña",
+      "5": "Inicia sesión de nuevo"
     },
-    "resetPassword":{
-      "title":"Restablecer contraseña",
-      "description":"Ingrese la nueva contraseña, y envie la solicitud, para que accede al sistema con su nueva credencial. Siga los siguientes pasos.",
-      "steps":{
-        "1" :"Ingrese su contraseña",
-        "2" :"Envie la solicitud",
-        "3": "Inicie sesión con la nueva credencial"
-      },
-      "subtitle":"Ingrese la nueva contraseña de su cuenta",
-      "newPasswordLabel":"Ingrese la nueva contraseña",
-      "confirmNewPasswordLabel":"Confirme contraseña",
-      "submitting":"cargando...",
-      "submit":"Restablecer contraseña",
-      "requiredConfirmNewPassword":"La confirmación es obligatoria"
+    "errors": "Ocurrió un error. Inténtalo de nuevo.",
+    "invalidEmail": "Por favor ingresa un correo válido",
+    "requiredEmail": "{{field}} es obligatorio"
+  },
+    "resetPassword": {
+    "title": "Restablecer contraseña",
+    "description": "Introduce tu token y tu nueva contraseña.",
+    "subtitle": "Revisa tu email para el token.",
+    "steps": {
+      "1": "Solicita restablecer contraseña",
+      "2": "Revisa tu correo",
+      "3": "Ingresa token y nueva contraseña"
     },
-    "activationAccount":{
-      "title":"Activación Exitosa",
-      "description":"Ahora puedes iniciar sesión con tu cuenta",
-      "button":"Ir a Inicio de Sesión"
+    "tokenLabel": "Token",
+    "newPasswordLabel": "Nueva contraseña",
+    "confirmNewPasswordLabel": "Confirmar contraseña",
+    "newPasswordPlaceholder": "••••••••",
+    "confirmNewPasswordPlaceholder": "••••••••",
+    "submit": "Cambiar contraseña",
+    "submitting": "Restableciendo…",
+    "errors": {
+      "requiredToken": "El token es obligatorio",
+      "requiredNewPassword": "La nueva contraseña es obligatoria",
+      "passwordMin": "Debe tener al menos {{min}} caracteres",
+      "requiredConfirm": "La confirmación es obligatoria",
+      "passwordsMustMatch": "Las contraseñas deben coincidir",
+      "resetFailed": "No se pudo restablecer la contraseña"
+    },
+    "notifications": {
+      "success": "Contraseña actualizada. Ya puedes iniciar sesión."
     }
+  },
+    "activationAccount": {
+    "title": "Activando cuenta…",
+    "description": "Estamos verificando tu token, por favor espera.",
+    "titleLoading": "Activando cuenta…",
+    "descriptionLoading": "Verificando token...",
+    "titleSuccess": "¡Cuenta activada!",
+    "descriptionSuccess": "Ahora puedes iniciar sesión con tus credenciales.",
+    "button": "Ir a Login",
+    "errors": {
+      "noToken": "No se encontró el token de verificación."
+    },
+    "notifications": {
+      "success": "Tu cuenta ha sido activada correctamente."
+    }
+  },
+    "reloginModal": {
+    "title": "Sesión expirada",
+    "message": "Se requiere volver a iniciar sesión.",
+    "button": "Ir a Login"
+  },
+  "offlinePage": {
+  "title": "Estás sin conexión",
+  "message": "Revisa tu conexión e inténtalo de nuevo.",
+  "button": "Reintentar"
+},
+"unauthorized": {
+  "title": "403 – No autorizado",
+  "description": "No tienes permisos para ver esta página.",
+  "button": "Volver al dashboard"
+},
+"errors": {
+    "tooManyRequests": "Demasiados intentos. Por favor, espera un momento.",
+    "serverError": "Error del servidor. Intenta más tarde.",
+    "generic": "Ocurrió un error. Intenta de nuevo."
+  }
   }

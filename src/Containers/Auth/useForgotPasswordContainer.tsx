@@ -1,53 +1,54 @@
-import { useAuth } from '@/Hooks/useAuth'
-import type { ForgotPasswordRequest } from '@/Interfaces/Auth/AuthInterface'
-import {useFormik} from 'formik'
-import {useMemo} from 'react'
-import { useTranslation } from 'react-i18next'
-import * as Yup from 'yup'
+import { useMemo } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/Hooks/useAuth";
+import type { ForgotPasswordRequest } from "@/Interfaces/Auth/AuthInterface";
 
+export default function useForgotPasswordContainer() {
+  const { t } = useTranslation();
+  const { forgotPasswordAsync, loading } = useAuth();
 
-const useForgotPasswordContainer = () => {
-    const {t} = useTranslation();
-    const {forgotPasswordAsync, loading} = useAuth();
+  const validationSchema = useMemo(
+    () =>
+      Yup.object<ForgotPasswordRequest>({
+        email: Yup.string()
+          .trim()
+          .email(t("forgotPassword.invalidEmail"))
+          .required(
+            t("forgotPassword.requiredEmail", {
+              field: t("forgotPassword.emailLabel"),
+            })
+          ),
+      }),
+    [t]
+  );
 
-    const validationSchema = useMemo(
-        ()=>
-            Yup.object<ForgotPasswordRequest>({
-                email: Yup.string()
-                .email(t("forgotPassword.invalidEmail"))
-                .required(t("forgotPassword.requiredEmail", {field: t("forgotPassword.emailLabel")}))
-            }),
-            [t]
-    )
-
-    const formik = useFormik<ForgotPasswordRequest>({
-        initialValues: {email:""},
-        validationSchema,
-        validateOnBlur: true,
-        validateOnChange:false,
-        onSubmit: async(values, {setStatus, setSubmitting})=>{
-            setStatus(undefined);
-
-            try{
-                const {email}= values;
-                await forgotPasswordAsync({email});
-
-            }catch(err:unknown){
-                const msg =
-                err instanceof Error ? err.message : t("forgotPassword.errors");
-                setStatus(msg)
-            }finally{
-                setSubmitting(false);
-            }
-        }
-    })
+  const formik = useFormik<ForgotPasswordRequest>({
+    initialValues: { email: "" },
+    validationSchema,
+    validateOnBlur: true,
+    validateOnChange: false,
+    onSubmit: async (values, { setStatus, setSubmitting }) => {
+      setStatus(undefined);
+      try {
+        await forgotPasswordAsync({ email: values.email });
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : t("forgotPassword.errors");
+        setStatus(msg);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
   return {
     formik,
     loading,
     canSubmit: formik.isValid && formik.dirty && !loading,
-    formError: formik.status as string | undefined
-  }
+    formError: formik.status as string | undefined,
+  };
 }
-
-export default useForgotPasswordContainer;

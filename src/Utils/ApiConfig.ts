@@ -1,4 +1,3 @@
-// src/services/apiConfig.ts
 import axios, { type AxiosInstance } from 'axios'
 
 // Base URL limpia (quita cualquier ‘/’ al final)

@@ -39,6 +39,44 @@
         "logout": "You have been logged out"
       }
     },
+    "register": {
+    "title": "Create Your Account",
+    "description": "Join us today! Fill in your details to get started.",
+    "subtitle": "Please complete all fields below to register.",
+    "steps": {
+      "1": "Enter your personal information",
+      "2": "Provide your company details",
+      "3": "Choose a secure password",
+      "4": "Confirm and submit"
+    },
+    "fullNameLabel": "Full Name",
+    "fullNameExample": "e.g. Masont Timber",
+    "contactNameLabel": "Contact Name",
+    "contactNameExample": "e.g. Carl Connager",
+    "emailLabel": "Email Address",
+    "emailExample": "you@example.com",
+    "phoneLabel": "Phone Number",
+    "phoneExample": "",
+    "companyNameLabel": "Company Name",
+    "companyNameExample": "Your Company LLC",
+    "countryLabel": "Country",
+    "countryExample": "e.g. Nicaragua",
+    "passwordLabel": "Password",
+    "passwordExample": "••••••••",
+    "submit": "Register",
+    "submitting": "Registering",
+    "alreadyHaveAccount": "Already have an account?",
+    "backToLogin": "Log in here",
+    "notifications": {
+      "sentEmail": "Registration successful. Check your email to activate your account."
+    },
+    "errors": {
+      "required": "{{field}} is required.",
+      "invalidEmail": "Please enter a valid email address.",
+      "passwordMin": "Password must be at least {{min}} characters.",
+       "registrationFail": "Registration could not be completed. Please try again."
+    }
+  },
     "notFound": {
       "title": "Page Not Found",
       "description": "Sorry, the page you are looking for doesn’t exist or has been moved.",
@@ -49,40 +87,88 @@
       "description": "We have sent you an email, please go there and click the activation account link.",
       "button": "Go to Login"
     },
-    "forgotPassword":{
-      "title":"don't remembe your password?",
-      "description":"To reset your forgot password, please enter your email and click send requiest. Follow the next steps below",
-      "steps":{
-        "1":"Enter your mail",
-        "2":"Click to submit",
-        "3":"Check your inbox",
-        "4":"Click link email",
-        "5":"Create a new password"
+    "forgotPassword": {
+      "title": "Forgot Your Password?",
+      "description": "No worries! Enter your email and we'll send you a reset link.",
+      "subtitle": "Check your inbox for a link to reset your password",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "you@example.com",
+      "handleSubmit": "Send Reset Link",
+      "submitting": "Sending",
+      "backToLogin": "Back to sign in",
+      "imageAlt": "Illustration of sending password reset",
+      "steps": {
+        "1": "Enter your email",
+        "2": "Receive reset link",
+        "3": "Click the link",
+        "4": "Enter a new password",
+        "5": "Sign in again"
       },
-      "subtitle":"Reset your password",
-      "emailLabel": "Enter your email",
-      "handleSubmit":"Send Requiest",
-      "backToLogin":"Back to login",
-      "requiredEmail":"Email is require"
+      "errors": "An error occurred. Please try again.",
+      "invalidEmail": "Please enter a valid email",
+      "requiredEmail": "{{field}} is required"
     },
-    "resetPassword":{
-      "title":"Reset your password",
-      "description":"Enter your new password, and login with it. Just follow the below steps:",
-      "steps":{
-        "1" :"Enter new password",
-        "2" :"Sumit the request",
-        "3": "Logim with your new credential"
-      },
-      "subtitle":"Enter your new password below",
-      "newPasswordLabel":"Enter password",
-      "confirmNewPasswordLabel":"ConfirPassword",
-      "submitting":"Loading...",
-      "submit":"Reset Password",
-      "requiredConfirmNewPassword":"Confirm password is require"
+    "resetPassword": {
+  "title": "Reset Password",
+  "description": "Enter your token and your new password.",
+  "subtitle": "Check your email for the token.",
+  "steps": {
+    "1": "Request password reset",
+    "2": "Check your email",
+    "3": "Enter token and new password"
+  },
+  "tokenLabel": "Token",
+  "newPasswordLabel": "New Password",
+  "confirmNewPasswordLabel": "Confirm Password",
+  "newPasswordPlaceholder": "••••••••",
+  "confirmNewPasswordPlaceholder": "••••••••",
+  "submit": "Change Password",
+  "submitting": "Resetting…",
+  "errors": {
+    "requiredToken": "Token is required",
+    "requiredNewPassword": "New password is required",
+    "passwordMin": "Must be at least {{min}} characters",
+    "requiredConfirm": "Confirmation is required",
+    "passwordsMustMatch": "Passwords must match",
+    "resetFailed": "Failed to reset password"
+  },
+  "notifications": {
+    "success": "Password updated. You can now log in."
+  }
+},
+    "activationAccount": {
+    "title": "Activating account…",
+    "description": "We’re verifying your token, please wait.",
+    "titleLoading": "Activating account…",
+    "descriptionLoading": "Verifying token...",
+    "titleSuccess": "Account activated!",
+    "descriptionSuccess": "You can now log in with your credentials.",
+    "button": "Go to Login",
+    "errors": {
+      "noToken": "Verification token not found."
     },
-    "activationAccount":{
-      "title":"Verification Success",
-      "description":"Now you can login into your account.",
-      "button":"Go to Login"
+    "notifications": {
+      "success": "Your account has been successfully activated."
     }
+  },
+    "reloginModal": {
+    "title": "Session expired",
+    "message": "Please log in again for security reasons.",
+    "button": "Go to Login"
+  },
+  "offlinePage": {
+  "title": "You are offline",
+  "message": "Check your connection and try again.",
+  "button": "Retry"
+},
+"unauthorized": {
+  "title": "403 – Forbidden",
+  "description": "You don’t have permission to access this page.",
+  "button": "Go to Dashboard"
+},
+"errors": {
+    "tooManyRequests": "Too many requests. Please wait a moment.",
+    "serverError": "Server error. Please try again later.",
+    "generic": "An error occurred. Please try again."
+  }
   }
