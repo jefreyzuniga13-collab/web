@@ -1,3 +1,4 @@
+import type { AgentDto, ConversationDto, MessageDto } from '@/Interfaces/Chat/ChatInterfaces';
 import axios, { type AxiosInstance } from 'axios'
 
 // Base URL limpia (quita cualquier ‘/’ al final)
@@ -15,3 +16,61 @@ const api: AxiosInstance = axios.create({
 })
 
 export default api
+
+
+export function getConversations() {
+  return api.get<{ data: ConversationDto[] }>('/conversations');
+}
+
+export function getConversation(id: number) {
+  return api.get<{ data: ConversationDto }>(`/conversations/${id}`);
+}
+
+export function getMessages(id: number) {
+  return api.get<{ data: MessageDto[] }>(`/conversations/${id}/messages`);
+}
+
+export function getAgents() {
+  return api.get<{ data: AgentDto[] }>('/users?role=db_agent');
+}
+
+export function assignAgent(
+  conversationId: number,
+  agentId: string,
+  status: string
+) {
+  return api.patch(`/conversations/${conversationId}`, {
+    assignedAgent: agentId,
+    status
+  });
+}
+
+export function sendText(
+  conversationId: number,
+  senderId: string,
+  content: string
+) {
+  const form = new FormData();
+  form.append('senderId', senderId);
+  form.append('content', content);
+  form.append('messageType', 'Text');
+  return api.post(`/conversations/${conversationId}/messages`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}
+
+export function sendFile(
+  conversationId: number,
+  senderId: string,
+  file: File,
+  caption?: string
+) {
+  const form = new FormData();
+  form.append('senderId', senderId);
+  form.append('file', file);
+  form.append('messageType', 'Media');
+  if (caption) form.append('caption', caption);
+  return api.post(`/conversations/${conversationId}/messages`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}

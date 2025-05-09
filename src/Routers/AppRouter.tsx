@@ -11,6 +11,7 @@ const ActivationAccountPresentation = lazy(()=> import("@/Presentations/Auth/Act
 const Unauthorized = lazy(()=> import("@/Components/Common/Unauthorized"))
 const ChatPresentation = lazy(()=> import("@/Presentations/Chats/ChatPresentation"))
 const ProtectedRouteLayout = lazy(()=> import('@/Layout/ProtectedRouteLayout'))
+const SupportPage = lazy(()=> import("@/Presentations/Chats/SupportPage"))
 
 export function AppRouter() {
   return (
@@ -24,7 +25,8 @@ export function AppRouter() {
         <Route path='/reset-password' element={<ResetPasswordPresentation/>}/>
         <Route path='/verify-account' element={<ActivationAccountPresentation/>}/>
         <Route path='/unauthorized' element={<Unauthorized/>}/>
-        <Route path='/chat' element={<ChatPresentation/>}/>
+        <Route path='/chat' element={<SupportPage/>}/>
+       
         <Route path="*" element={<NotFound />} />
 
 
