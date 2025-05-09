@@ -15,7 +15,7 @@ export default function useVerifyContainer() {
   useEffect(() => {
     const token = searchParams.get('token') ?? ''
     if (!token) {
-      toast.error(t('activationAccount.errors.noToken'))
+     
       navigate('/login', { replace: true })
       return
     }

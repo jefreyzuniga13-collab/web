@@ -95,6 +95,7 @@
       "emailPlaceholder": "you@example.com",
       "handleSubmit": "Send Reset Link",
       "submitting": "Sending",
+      "backToLoginLink":"Back",
       "backToLogin": "Back to sign in",
       "imageAlt": "Illustration of sending password reset",
       "steps": {

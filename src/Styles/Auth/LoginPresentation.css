@@ -13,13 +13,13 @@
   display: flex;
   flex: 1;
   height: 100%;
-  max-width: 70%;
+  max-width: 60%;
   padding: 4rem 0;
 }
 
 .login-info {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   background: var(--color-primary-start);
   display: flex;
   flex-direction: column;
@@ -62,11 +62,12 @@
   margin: auto;
   max-width: 450px;
   margin: 0;
-  padding: 2rem;
+  padding: 2rem 3rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  border-bottom-left-radius: 0;
 }
 
 .login-form-header {

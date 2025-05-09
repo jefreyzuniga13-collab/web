@@ -93,6 +93,7 @@
     "emailPlaceholder": "tú@ejemplo.com",
     "handleSubmit": "Enviar enlace",
     "submitting": "Enviando",
+     "backToLoginLink":"Regresar",
     "backToLogin": "Volver a iniciar sesión",
     "imageAlt": "Ilustración de envío de restablecimiento de contraseña",
     "steps": {

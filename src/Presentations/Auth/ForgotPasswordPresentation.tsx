@@ -3,6 +3,7 @@ import useForgotPasswordContainer from "@/Containers/Auth/useForgotPasswordConta
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
+import {Link} from 'react-router-dom'
 
 export default function ForgotPasswordPresentation() {
   const { t } = useTranslation();
@@ -70,6 +71,11 @@ export default function ForgotPasswordPresentation() {
                 ? `${t("forgotPassword.submitting")}…`
                 : t("forgotPassword.handleSubmit")}
             </Button>
+            <p className="forgotPassword-forgot-link">
+              <Link to="/login" className="forgotPassword-forgot-link">
+                {t("forgotPassword.backToLogin")}
+              </Link>
+            </p>
           </form>
         </section>
       </div>
