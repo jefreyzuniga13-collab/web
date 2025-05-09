@@ -6,7 +6,7 @@ import { getRoleFromToken } from '@/Utils/jwt'
 /**
  * Permite el acceso sólo a los roles indicados.
  */
-export function ProtectedRouteLayout({ roles }: { roles: string[] }) {
+const ProtectedRouteLayout= ({ roles }: { roles: string[] })=> {
   const token = useSelector((s: RootState) => s.auth.accessToken)
 
   if (!token) {
@@ -20,3 +20,5 @@ export function ProtectedRouteLayout({ roles }: { roles: string[] }) {
 
   return <Outlet />
 }
+
+export default ProtectedRouteLayout;

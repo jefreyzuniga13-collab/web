@@ -10,6 +10,7 @@ const ResetPasswordPresentation = lazy(()=> import("@/Presentations/Auth/ResetPa
 const ActivationAccountPresentation = lazy(()=> import("@/Presentations/Auth/ActivationAccountPresentation"))
 const Unauthorized = lazy(()=> import("@/Components/Common/Unauthorized"))
 const ChatPresentation = lazy(()=> import("@/Presentations/Chats/ChatPresentation"))
+const ProtectedRouteLayout = lazy(()=> import('@/Layout/ProtectedRouteLayout'))
 
 export function AppRouter() {
   return (
@@ -26,10 +27,10 @@ export function AppRouter() {
         <Route path='/chat' element={<ChatPresentation/>}/>
         <Route path="*" element={<NotFound />} />
 
-        {/* Sólo admins */}
-        {/* <Route element={<RoleProtectedRoute roles={['db_admin']} />}>
-          <Route path="/admin" element={<AdminPage />} />
-        </Route> */}
+
+        <Route element={<ProtectedRouteLayout roles={['db_admin, db_agent, db-client']} />}>
+          <Route path="/chat" element={<ChatPresentation />} />
+        </Route>
 
         {/* Sólo agentes */}
         {/* <Route element={<RoleProtectedRoute roles={['db_agent']} />}>
