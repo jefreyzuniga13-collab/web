@@ -40,43 +40,42 @@
       }
     },
     "register": {
-    "title": "Create Your Account",
-    "description": "Join us today! Fill in your details to get started.",
-    "subtitle": "Please complete all fields below to register.",
-    "steps": {
-      "1": "Enter your personal information",
-      "2": "Provide your company details",
-      "3": "Choose a secure password",
-      "4": "Confirm and submit"
-    },
-    "fullNameLabel": "Full Name",
-    "fullNameExample": "e.g. Masont Timber",
-    "contactNameLabel": "Contact Name",
-    "contactNameExample": "e.g. Carl Connager",
-    "emailLabel": "Email Address",
-    "emailExample": "you@example.com",
-    "phoneLabel": "Phone Number",
-    "phoneExample": "",
-    "companyNameLabel": "Company Name",
-    "companyNameExample": "Your Company LLC",
-    "countryLabel": "Country",
-    "countryExample": "e.g. Nicaragua",
-    "passwordLabel": "Password",
-    "passwordExample": "••••••••",
-    "submit": "Register",
-    "submitting": "Registering",
-    "alreadyHaveAccount": "Already have an account?",
-    "backToLogin": "Log in here",
-    "notifications": {
-      "sentEmail": "Registration successful. Check your email to activate your account."
-    },
-    "errors": {
-      "required": "{{field}} is required.",
-      "invalidEmail": "Please enter a valid email address.",
-      "passwordMin": "Password must be at least {{min}} characters.",
-       "registrationFail": "Registration could not be completed. Please try again."
-    }
+  "title": "Create Your Account",
+  "description": "Join us today! Fill in your details to get started.",
+  "subtitle": "Please complete all fields to register.",
+  "steps": {
+    "1": "Enter your personal information",
+    "2": "Provide your company details",
+    "3": "Choose a secure password",
+    "4": "Confirm and submit"
   },
+  "fullNameLabel": "Full Name",
+  "fullNameExample": "e.g. María Pérez",
+  "emailLabel": "Email Address",
+  "emailExample": "you@example.com",
+  "passwordLabel": "Password",
+  "passwordExample": "••••••••",
+  "companyIdLabel": "Company ID",
+  "companyIdExample": "1",
+  "phoneLabel": "Phone Number",
+  "phoneExample": "+505 8976-8909",
+  "identifierLabel": "Identifier",
+  "identifierExample": "e.g. ABC123",
+  "submit": "Register",
+  "submitting": "Registering",
+  "alreadyHaveAccount": "Already have an account?",
+  "backToLogin": "Log in here",
+  "notifications": {
+    "sentEmail": "Registration successful. Check your email to activate your account."
+  },
+  "errors": {
+    "required": "{{field}} is required.",
+    "invalidEmail": "Please enter a valid email.",
+    "passwordMin": "Password must be at least {{min}} characters.",
+    "registrationFail": "Registration could not be completed. Please try again."
+  }
+}
+,
     "notFound": {
       "title": "Page Not Found",
       "description": "Sorry, the page you are looking for doesn’t exist or has been moved.",

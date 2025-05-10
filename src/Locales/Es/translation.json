@@ -39,42 +39,42 @@
         "logout": "Sesión cerrada"
       }
     },
-    "register": {
-    "title": "Crea tu cuenta",
-    "description": "¡Únete hoy! Completa tus datos para comenzar.",
-    "subtitle": "Por favor, rellena todos los campos para registrarte.",
-    "steps": {
-      "1": "Ingresa tu información personal",
-      "2": "Proporciona los datos de tu empresa",
-      "3": "Elige una contraseña segura",
-      "4": "Confirma y envía"
-    },
-    "fullNameLabel": "Nombre completo",
-    "fullNameExample": "p. ej. María Pérez",
-    "contactNameLabel": "Nombre de contacto",
-    "contactNameExample": "p. ej. Juan López",
-    "emailLabel": "Correo electrónico",
-    "emailExample": "tú@ejemplo.com",
-    "phoneLabel": "Número de teléfono",
-    "phoneExample": "+505 89768909",
-    "companyNameLabel": "Nombre de la empresa",
-    "companyNameExample": "Tu Empresa S.L.",
-    "countryLabel": "País",
-    "countryExample": "p. ej. Nicaragua",
-    "passwordLabel": "Contraseña",
-    "passwordExample": "••••••••",
-    "submit": "Registrarse",
-    "submitting": "Registrando",
-    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
-    "backToLogin": "Inicia sesión aquí",
-    "sentEmail": "Registro exitoso. Revisa tu correo para activar tu cuenta.",
-    "errors": {
-      "required": "{{field}} es obligatorio.",
-      "invalidEmail": "Por favor ingresa un correo válido.",
-      "passwordMin": "La contraseña debe tener al menos {{min}} caracteres.",
-      "registrationFail": "No se pudo completar el registro. Inténtalo nuevamente."
-    }
+"register": {
+  "title": "Crea tu cuenta",
+  "description": "¡Únete hoy! Completa tus datos para comenzar.",
+  "subtitle": "Por favor, rellena todos los campos para registrarte.",
+  "steps": {
+    "1": "Ingresa tu información personal",
+    "2": "Proporciona los datos de tu empresa",
+    "3": "Elige una contraseña segura",
+    "4": "Confirma y envía"
   },
+  "fullNameLabel": "Nombre completo",
+  "fullNameExample": "p. ej. María Pérez",
+  "emailLabel": "Correo electrónico",
+  "emailExample": "tú@ejemplo.com",
+  "passwordLabel": "Contraseña",
+  "passwordExample": "••••••••",
+  "companyIdLabel": "ID de la empresa",
+  "companyIdExample": "1",
+  "phoneLabel": "Número de teléfono",
+  "phoneExample": "+505 8976‑8909",
+  "identifierLabel": "Identificador",
+  "identifierExample": "p. ej. ABC123",
+  "submit": "Registrarse",
+  "submitting": "Registrando",
+  "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+  "backToLogin": "Inicia sesión aquí",
+  "notifications": {
+    "sentEmail": "Registro exitoso. Revisa tu correo para activar tu cuenta."
+  },
+  "errors": {
+    "required": "{{field}} es obligatorio.",
+    "invalidEmail": "Por favor ingresa un correo válido.",
+    "passwordMin": "La contraseña debe tener al menos {{min}} caracteres.",
+    "registrationFail": "No se pudo completar el registro. Inténtalo nuevamente."
+  }
+},
     "notFound": {
       "title": "Página no encontrada",
       "description": "Lo sentimos, la página que buscas no existe o ha sido movida.",

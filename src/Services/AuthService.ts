@@ -28,41 +28,20 @@ class AuthService {
     }
   }
 
-  async registerAsync({
-    fullName,
-    email,
-    password,
-    companyName,
-    contactName,
-    phone,
-    country
-  }: RegisterRequest): Promise<string> {
-    if (
-      !fullName ||
-      !email ||
-      !password ||
-      !companyName ||
-      !contactName ||
-      !phone ||
-      !country
-    ) {
-      throw new Error('Todos los campos son requeridos')
+async registerAsync(req: RegisterRequest): Promise<string> {
+  const { data } = await api.post<ApiResponse<string>>(
+    '/Auth/register',
+    {
+      fullName:  req.fullName,
+      email:     req.email,
+      password:  req.password,
+      companyId: req.companyId,
+      phone:     req.phone,
+      identifier:req.identifier
     }
-    try {
-      const { data } = await api.post<ApiResponse<string>>('/Auth/register', {
-        fullName,
-        email,
-        password,
-        companyName,
-        contactName,
-        phone,
-        country
-      })
-      return data.data
-    } catch (error) {
-      throw formatError<AuthData>(error)
-    }
-  }
+  );
+  return data.data;
+}
 
   async refreshTokenAsync({ refreshToken }: RefreshRequest): Promise<AuthData> {
     if (!refreshToken) throw new Error('Refresh token es requerido')

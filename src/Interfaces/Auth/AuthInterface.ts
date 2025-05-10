@@ -20,16 +20,16 @@ export interface ApiResponse<T> {
   
   export type LoginResponse = ApiResponse<AuthData>
   
-  export interface RegisterRequest {
-    fullName: string
-    email: string
-    password: string
-    companyName: string
-    contactName: string
-    phone: string
-    country: string
-  }
+export interface RegisterRequest {
+  fullName:   string
+  email:      string
+  password:   string
+  companyId:  number
+  phone:      string
+  identifier: string 
+}
   
+
   export type RegisterResponse = ApiResponse<AuthData>
   
   export interface RefreshRequest {
@@ -57,3 +57,12 @@ export interface ApiResponse<T> {
   }
   
   export type VerifyEmailResponse = ApiResponse<string>
+
+export interface RegisterForm {
+  fullName:  string
+  email:     string
+  password:  string
+  companyId: number
+  phone:     string
+  identifier:string
+}

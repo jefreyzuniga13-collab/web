@@ -1,99 +1,87 @@
-import { useState, useMemo } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "@/Hooks/useAuth";
-import type { RegisterRequest } from "@/Interfaces/Auth/AuthInterface";
+import { useState, useEffect, useMemo } from 'react'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/Hooks/useAuth'
+import { getCompanies } from '@/Utils/ApiConfig'
+import type { RegisterRequest } from '@/Interfaces/Auth/AuthInterface'
+
+interface CompanyOption {
+  label: string
+  value: number
+}
 
 export default function useRegistrationContainer() {
-  const { t } = useTranslation();
-  const { registerAsync, loading } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation()
+  const { registerAsync, loading } = useAuth()
+  const [companies, setCompanies] = useState<CompanyOption[]>([])
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
+  // 1) Traer lista de compañías
+  useEffect(() => {
+    getCompanies()
+      .then(({ data }) => {
+        setCompanies(
+          data.data.map(c => ({ label: c.name, value: c.companyId }))
+        )
+      })
+      .catch(() => {
+        setFetchError(t('register.errors.fetchCompanies'))
+      })
+  }, [t])
+
+  // 2) Schema de validación
   const validationSchema = useMemo(
     () =>
       Yup.object<RegisterRequest>({
-        fullName: Yup.string()
-          .trim()
-          .required(
-            t("register.errors.required", {
-              field: t("register.fullNameLabel"),
-            })
-          ),
-        companyName: Yup.string()
-          .trim()
-          .required(
-            t("register.errors.required", {
-              field: t("register.companyNameLabel"),
-            })
-          ),
-        contactName: Yup.string()
-          .trim()
-          .required(
-            t("register.errors.required", {
-              field: t("register.contactNameLabel"),
-            })
-          ),
-        email: Yup.string()
-          .trim()
-          .email(t("register.errors.invalidEmail"))
-          .required(
-            t("register.errors.required", { field: t("register.emailLabel") })
-          ),
-        phone: Yup.string()
-          .trim()
-          .required(
-            t("register.errors.required", { field: t("register.phoneLabel") })
-          ),
-        country: Yup.string()
-          .trim()
-          .required(
-            t("register.errors.required", { field: t("register.countryLabel") })
-          ),
-        password: Yup.string()
-          .required(
-            t("register.errors.required", {
-              field: t("register.passwordLabel"),
-            })
-          )
-          .min(8, t("register.errors.passwordMin", { min: 8 })),
+        fullName:   Yup.string().trim().required(t('register.errors.required', { field: t('register.fullNameLabel') })),
+        email:      Yup.string().trim().email(t('register.errors.invalidEmail')).required(t('register.errors.required', { field: t('register.emailLabel') })),
+        password:   Yup.string().min(8, t('register.errors.passwordMin', { min: 8 })).required(t('register.errors.required', { field: t('register.passwordLabel') })),
+        companyId:  Yup.number().integer().positive().required(t('register.errors.required', { field: t('register.companyNameLabel') })),
+        phone:      Yup.string().trim().required(t('register.errors.required', { field: t('register.phoneLabel') })),
+        identifier: Yup.string().trim().required(t('register.errors.required', { field: t('register.identifierLabel') }))
       }),
     [t]
-  );
+  )
 
+  // 3) Formik
   const formik = useFormik<RegisterRequest>({
     initialValues: {
-      fullName: "",
-      companyName: "",
-      contactName: "",
-      email: "",
-      phone: "",
-      country: "",
-      password: "",
+      fullName:   '',
+      email:      '',
+      password:   '',
+      companyId:  0,
+      phone:      '',
+      identifier: ''
     },
     validationSchema,
-    validateOnBlur: true,
+    validateOnBlur:   true,
     validateOnChange: false,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
-      setStatus(undefined);
+      setStatus(undefined)
       try {
-        await registerAsync(values);
+        await registerAsync(values)
       } catch (err: unknown) {
         setStatus(
-          err instanceof Error ? err.message : t("register.errors.submitFail")
-        );
+          err instanceof Error
+            ? err.message
+            : t('register.errors.registrationFail')
+        )
       } finally {
-        setSubmitting(false);
+        setSubmitting(false)
       }
-    },
-  });
+    }
+  })
 
   return {
     formik,
+    companies,
+    fetchError,
     loading,
     showPassword,
-    toggleShowPassword: () => setShowPassword((v) => !v),
+    toggleShowPassword: () => setShowPassword(v => !v),
     canSubmit: formik.isValid && formik.dirty && !loading,
     formError: formik.status as string | undefined,
-  };
+  }
 }

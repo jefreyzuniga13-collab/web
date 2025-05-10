@@ -74,3 +74,8 @@ export function sendFile(
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 }
+
+
+export function getCompanies() {
+  return api.get<{ data: { companyId: number; name: string }[] }>('/Companies');
+}

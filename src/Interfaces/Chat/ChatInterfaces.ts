@@ -41,3 +41,9 @@ export interface AttachmentDto {
     fullName: string;
     email:    string;
   }  
+
+  export interface CompanyDto {
+  companyId: number
+  name: string
+  createdAt: string
+}
