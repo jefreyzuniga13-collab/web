@@ -48,7 +48,7 @@
 
 .inbox-list__item--selected {
   background-color: var(--color-blue-light);
-  border-left: 3px solid var(--color-blue-primary);
+  /* border-left: 3px solid var(--color-blue-primary); */
 }
 
 .inbox-list__item--selected:hover {

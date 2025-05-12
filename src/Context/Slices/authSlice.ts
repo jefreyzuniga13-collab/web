@@ -10,7 +10,6 @@ interface AuthState {
   expiresAt:    string | null
 }
 
-// 1. Cargar credenciales guardadas (si existen)
 const saved = localStorage.getItem('auth')
 const parsed: AuthData | null = saved ? JSON.parse(saved) : null
 
@@ -60,7 +59,6 @@ const authSlice = createSlice({
       state.contactId    = creds.contactId
       state.expiresAt    = creds.expiresAt
 
-      // 2. Persistir en localStorage
       localStorage.setItem('auth', JSON.stringify(creds))
     },
     logout(state) {

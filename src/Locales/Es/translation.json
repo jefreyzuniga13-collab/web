@@ -50,6 +50,7 @@
     "4": "Confirma y envía"
   },
   "fullNameLabel": "Nombre completo",
+  "companyNameLabel": "Empresa labura",
   "fullNameExample": "p. ej. María Pérez",
   "emailLabel": "Correo electrónico",
   "emailExample": "tú@ejemplo.com",
@@ -64,6 +65,7 @@
   "submit": "Registrarse",
   "submitting": "Registrando",
   "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+  "identifierPlaceholder": "000 000000 0000A",
   "backToLogin": "Inicia sesión aquí",
   "notifications": {
     "sentEmail": "Registro exitoso. Revisa tu correo para activar tu cuenta."

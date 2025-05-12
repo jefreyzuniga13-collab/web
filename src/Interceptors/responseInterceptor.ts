@@ -10,17 +10,17 @@ export function setupResponseInterceptor() {
     response => response,
     async error => {
       const { config, response } = error;
-      const url = config.url as string;
+      // const url = config.url as string;
       const status = response?.status;
 
-      // 1) NO disparar ningún toast para la verificación de email:
-      if (url.endsWith("/Auth/verify-email")) {
-        return Promise.reject(error);
-      }
+      // // 1) NO disparar ningún toast para la verificación de email:
+      // if (url.endsWith("/Auth/verify-email")) {
+      //   return Promise.reject(error);
+      // }
 
-      if (url.endsWith("/Auth/reset-password")) {
-        return Promise.reject(error);
-      }
+      // if (url.endsWith("/Auth/reset-password")) {
+      //   return Promise.reject(error);
+      // }
 
       // 401 → refresh / re-login
       if (status === 401 && !config._retry) {
@@ -48,8 +48,8 @@ export function setupResponseInterceptor() {
         return Promise.reject(error);
       }
 
-      // Otros → mensaje genérico o de la API
-      toast.error(response?.data?.message || t("errors.generic"));
+      // mensaje genérico o de la API
+      // toast.error(response?.data?.message || t("errors.generic"));
 
       // 400/403 en protegidos → logout
       if (status === 400 || status === 403) {

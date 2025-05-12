@@ -1,12 +1,15 @@
-.verifyEmail-container {
+.verifyEmail-container{
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 2rem;
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  background-color: var(--bg-secondary);
 }
 .verifyEmail-image {
-  max-width: 50%;
+  max-width: 20%;
   height: auto;
   margin-bottom: 1.5rem;
 }

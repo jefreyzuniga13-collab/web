@@ -1,5 +1,3 @@
-// src/Context/SignalRContext.tsx
-
 import React, {
   createContext,
   useContext,
@@ -14,8 +12,8 @@ import {
   onReceiveMessage,
   offReceiveMessage,
   onNewHumanRequest,
-  onConversationCreated,    // <-- importa
-  offConversationCreated    // <-- importa
+  onConversationCreated,
+  offConversationCreated
 } from '@/Services/signalr'
 import type {
   MessageDto,
@@ -88,6 +86,7 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSignalR() {
   return useContext(SignalRContext)
 }

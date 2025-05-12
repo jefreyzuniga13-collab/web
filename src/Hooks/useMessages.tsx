@@ -3,7 +3,7 @@ import { getMessages } from '@/Utils/ApiConfig'
 import { useSignalR } from '@/Context/SignalRContext'
 import type { MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 
-export function useMessages(conversationId?: number): MessageDto[] {
+export default function useMessages(conversationId?: number): MessageDto[] {
   const [messages, setMessages] = useState<MessageDto[]>([])
   const { joinConversation, leaveConversation, onReceiveMessage, offReceiveMessage } = useSignalR()
 
@@ -26,7 +26,7 @@ export function useMessages(conversationId?: number): MessageDto[] {
 
     let mounted = true
 
-    // 1) Suscríbete antes de unirte
+    // 1) Suscríbir antes de unirte
     onReceiveMessage(receiveHandler)
 
     // 2) Únete al grupo SignalR

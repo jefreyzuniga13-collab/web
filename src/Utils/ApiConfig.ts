@@ -1,7 +1,7 @@
 import type { AgentDto, AttachmentDto, ConversationDto, MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
 import axios, { type AxiosInstance } from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1'
+const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://pcgadmin-001-site3.ntempurl.com/'
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
