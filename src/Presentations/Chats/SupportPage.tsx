@@ -1,48 +1,82 @@
-import React, { useState } from 'react';
-import { SignalRProvider } from '@/Context/SignalRContext';
-import { InboxList }       from '@/Components/Chat/InboxList';
-import { ChatWindow }      from '@/Components/Chat/hatWindow';
-import { AssignModal }     from '@/Components/Chat/AssignModal';
-import { ContactDetail }   from '@/Components/Chat/ContactDetail';
 
- const SupportPage: React.FC = () => {
-  const [convId, setConvId]           = useState<number>();
-  const [showAssign, setShowAssign]   = useState(false);
-  const token  = localStorage.getItem('jwt')     || '';
-  const userId = localStorage.getItem('userId') || '';
+import React, { useState, useEffect } from 'react';
+import { SignalRProvider } from '@/Context/SignalRContext';
+import { InboxList } from '@/Components/Chat/InboxList';
+import { ChatWindow } from '@/Components/Chat/ChatWindow';
+import { AssignModal } from '@/Components/Chat/AssignModal';
+import { ContactDetail } from '@/Components/Chat/ContactDetail';
+import { getConversation } from '@/Utils/ApiConfig';
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import '@/Styles/Chat/SupportPage.css';
+
+const SupportPage: React.FC = () => {
+  const [convId, setConvId] = useState<number | null>(null);
+  const [showAssign, setShowAssign] = useState(false);
+  const [conversation, setConversation] = useState<ConversationDto | null>(null);
+  const token = localStorage.getItem('jwt') ?? '';
+  const userId = localStorage.getItem('userId') ?? 'agent456';
+
+  // Cargar conversación al cambiar el ID
+  useEffect(() => {
+    if (!convId) {
+      setConversation(null);
+      return;
+    }
+
+    getConversation(convId)
+      .then(res => setConversation(res.data.data))
+      .catch(console.error);
+  }, [convId]);
+
+  // Función para refrescar datos después de asignar
+  const handleAfterAssign = () => {
+    if (!convId) return;
+    
+    getConversation(convId)
+      .then(res => setConversation(res.data.data))
+      .catch(console.error);
+  };
 
   return (
     <SignalRProvider token={token}>
-      <div className="grid grid-cols-4 h-screen">
-        <aside className="col-span-1 border-r">
-          <InboxList selectedId={convId} onSelect={setConvId!} />
+      <div className="support-layout">
+        <aside className="sidebar">
+          <div className="inbox-header">
+            <h3 className="inbox-title">Conversaciones</h3>
+            <select className="filter-dropdown">
+              <option>Todos</option>
+              <option>Sin asignar</option>
+              <option>Asignados a mí</option>
+            </select>
+          </div>
+          <InboxList selectedId={convId ?? undefined} onSelect={setConvId} />
         </aside>
 
-        <main className="col-span-2 flex flex-col">
-          <header className="p-2 flex justify-between items-center border-b">
-            <h2 className="text-lg font-semibold">Chat</h2>
+        <main className="main-content">
+          <header className="main-header">
+            <h2 className="main-title">Chat</h2>
             <button
-              className="px-3 py-1 bg-green-600 text-white rounded"
+              disabled={!convId}
+              className="assign-button"
               onClick={() => setShowAssign(true)}
             >
               Asignar
             </button>
           </header>
 
-          <div className="flex-1">
-            <ChatWindow conversationId={convId} userId={userId} />
-          </div>
+          <ChatWindow conversationId={convId ?? undefined} userId={userId} />
         </main>
 
-        <aside className="col-span-1 border-l">
-          <ContactDetail conversationId={convId} />
+        <aside className="info-sidebar">
+          <ContactDetail conversationId={convId ?? undefined} />
         </aside>
       </div>
 
       <AssignModal
-        convId={convId}
+        conversation={conversation ?? undefined}
         isOpen={showAssign}
         onClose={() => setShowAssign(false)}
+        onAssigned={handleAfterAssign}
       />
     </SignalRProvider>
   );

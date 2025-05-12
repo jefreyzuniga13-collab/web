@@ -36,3 +36,10 @@ body {
   --grayColor: #374151;
   --greenColor: #37c255;
 }
+.loader-container{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100vw;
+  min-height: 100vh;
+}
