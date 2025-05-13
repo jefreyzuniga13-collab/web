@@ -3,6 +3,7 @@ import React from 'react';
 import { useConversations } from '@/Hooks/useConversations';
 import '@/Styles/Chat/InboxList.css';
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import {MessageSquareOff} from 'lucide-react'
 
 interface Props {
   selectedId?: number;
@@ -41,7 +42,10 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect }) => {
   return (
     <ul className="inbox-list">
       {convs.length === 0 && (
-        <li className="inbox-list__empty">No hay conversaciones disponibles</li>
+        <li className="inbox-list__empty">
+          <MessageSquareOff />
+          <span>No hay conversaciones disponibles</span>
+          </li>
       )}
 
       {convs.map((c: ConversationDto) => {

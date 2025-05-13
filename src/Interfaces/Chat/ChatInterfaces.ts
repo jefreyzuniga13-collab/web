@@ -50,3 +50,10 @@ export interface CompanyDto {
   name: string;
   createdAt: string;
 }
+
+export interface MenuItemProps {
+  icon: React.ReactNode;
+  text: string;
+  onClick?: () => void;
+  selectedOption:string;
+}

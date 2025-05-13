@@ -157,6 +157,11 @@
   text-decoration: underline;
 }
 
+.derechos-container{
+  color: gray;
+  font-size: 14px;
+}
+
 @media (max-width: 770px) {
   .login-content {
     flex-direction: column;

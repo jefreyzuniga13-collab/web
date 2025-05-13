@@ -14,8 +14,8 @@ const SupportPage: React.FC = () => {
   const [convId, setConvId] = useState<number | null>(null);
   const [showAssign, setShowAssign] = useState(false);
   const [conversation, setConversation] = useState<ConversationDto | null>(null);
-  const token = localStorage.getItem('jwt') ?? '';
-  const userId = localStorage.getItem('userId') ?? 'agent456';
+  const token = localStorage.getItem('accessToken') ?? '';
+  const userId = localStorage.getItem('userId') ?? 'ChatBot';
 
   // Cargar conversación al cambiar el ID
   useEffect(() => {
@@ -51,8 +51,8 @@ const SupportPage: React.FC = () => {
             <h3 className="inbox-title">Conversaciones</h3>
             <select className="filter-dropdown">
               <option>Todos</option>
+              <option>Asignados</option>
               <option>Sin asignar</option>
-              <option>Asignados a mí</option>
             </select>
           </div>
           <InboxList selectedId={convId ?? undefined} onSelect={setConvId} />

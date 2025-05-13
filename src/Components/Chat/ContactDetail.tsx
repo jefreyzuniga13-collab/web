@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { getConversation } from '@/Utils/ApiConfig';
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
-import { User, Clock, AlertCircle } from 'lucide-react';
+import { User, Clock, AlertCircle, SquareMousePointer } from 'lucide-react';
 import '@/Styles/Chat/ContactDetail.css';
 
 interface Props {
@@ -23,7 +23,8 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
   if (!conv) {
     return (
       <div className="contact-detail__empty">
-        Selecciona una conversación para ver los detalles del contacto
+        <SquareMousePointer />
+       <span> Selecciona una conversación para ver los detalles del contacto</span>
       </div>
     );
   }

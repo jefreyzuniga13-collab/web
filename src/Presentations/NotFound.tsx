@@ -13,7 +13,7 @@ export default function NotFound() {
       />
       <h1 className="notfound-title">{t("notFound.title")}</h1>
       <p className="notfound-description">{t("notFound.description")}</p>
-      <Link to="login" replace className="notfound-button">
+      <Link to="/login" replace className="notfound-button">
         {t("notFound.button")}
       </Link>
     </div>

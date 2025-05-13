@@ -20,8 +20,7 @@ export default function LoginPresentation() {
 
   return (
     <div className="login-page">
-      <div className="login-content">
-        
+      <div className="login-content">   
         <aside className="login-info">
           <h1 className="login-title">{t("login.title")}</h1>
           <p className="login-description">{t("login.description")}</p>
@@ -114,8 +113,8 @@ export default function LoginPresentation() {
             </p>
           </form>
         </section>
-
       </div>
+      <p className="derechos-container">©<span  className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
     </div>
   );
 }

@@ -12,7 +12,9 @@ const Unauthorized = lazy(()=> import("@/Components/Common/Unauthorized"))
 const ChatPresentation = lazy(()=> import("@/Presentations/Chats/ChatPresentation"))
 const ProtectedRouteLayout = lazy(()=> import('@/Layout/ProtectedRouteLayout'))
 const SupportPage = lazy(()=> import("@/Presentations/Chats/SupportPage"))
+const DashboardPresebtation = lazy(()=> import("@/Presentations/DashboardPresebtation"))
 import {ThreeDot} from 'react-loading-indicators'
+
 export function AppRouter() {
   return (
     <Suspense fallback={<div className="loader-container">
@@ -27,9 +29,8 @@ export function AppRouter() {
         <Route path='/reset-password' element={<ResetPasswordPresentation/>}/>
         <Route path='/verify-account' element={<ActivationAccountPresentation/>}/>
         <Route path='/unauthorized' element={<Unauthorized/>}/>
-        <Route path="/chat" element={<div className="bg-gray-50 min-h-screen">
-      <SupportPage />
-    </div>} />
+        <Route path="/dashboard" element={<div className="bg-gray-50 min-h-screen"><DashboardPresebtation /></div>} />
+        <Route path="/chat" element={<div className="bg-gray-50 min-h-screen"><SupportPage /></div>} />
        
         <Route path="*" element={<NotFound />} />
 
