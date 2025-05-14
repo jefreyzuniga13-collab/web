@@ -23,7 +23,8 @@ export default function useResetContainer() {
       toast.error(t('resetPassword.errors.noToken'))
       navigate('/login', { replace: true })
     }
-  }, [token, t, navigate])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   const validationSchema = Yup.object<ResetPasswordRequest>({
     token: Yup.string().required(t('resetPassword.errors.requiredToken')),
@@ -41,6 +42,7 @@ export default function useResetContainer() {
     validateOnChange: false,
     onSubmit: async (values, { setStatus }) => {
       setStatus(undefined)
+      console.log(token)
       try {
         await resetPasswordAsync(values)
         toast.success(t('resetPassword.notifications.success'))

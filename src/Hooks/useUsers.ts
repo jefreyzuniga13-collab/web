@@ -72,8 +72,10 @@ export const useUsers = () => {
         loadUsers();
         setShowCreateModal(false);
       })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .catch((error) => {
-        toast.error(`Error al crear usuario: ${error}`);
+        //toast.error(`Error al crear usuario: ${error}`);
+        toast.error(`Error al crear usuario.`);
       });
   };
 

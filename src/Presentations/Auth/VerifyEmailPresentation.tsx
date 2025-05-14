@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+//import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import '@/Styles/Auth/SentEmail.css'
 const VerifyEmailPresentation = () => {
@@ -15,9 +15,9 @@ const VerifyEmailPresentation = () => {
       <h1 className="verifyEmail-title">{t("verifyEmail.title")}</h1>
       <p className="verifyEmail-description">{t("verifyEmail.description")}</p>
 
-      <Link to="/login" replace className="verifyEmail-button">
+      {/* <Link to="/login" replace className="verifyEmail-button">
         {t("verifyEmail.button")}
-      </Link>
+      </Link> */}
     </div>
   );
 };

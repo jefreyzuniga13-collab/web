@@ -1,3 +1,10 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-gray-200);
+  background-color: white;
+  overflow: hidden;
+}
 
 .inbox-list {
   list-style: none;

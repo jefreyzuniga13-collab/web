@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { logout } from '@/Context/Slices/authSlice'
 import '@/Styles/Chat/Navbar.css'
+import { ThreeDot } from 'react-loading-indicators'
 
 const Navbar: React.FC = () => {
   const { menus, loading, error } = useMenus()
@@ -29,8 +30,13 @@ const Navbar: React.FC = () => {
     navigate(`/${url}`)
   }
 
-  if (loading) return <div className="navbar-loading">Cargando menú…</div>
-  if (error) return <div className="navbar-error">Error cargando menú: {error}</div>
+  if (loading) return <div className="navbar-loading">
+    <div className="loader-container">
+        <ThreeDot color="#3142cc" size="medium" />
+      </div>
+  </div>
+
+  if ((error !== null) && loading) return <div className="navbar-error">Error cargando menu.</div>
 
   return (
     <nav className={`navbar ${collapsed ? 'collapsed' : ''}`}>

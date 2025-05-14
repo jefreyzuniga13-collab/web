@@ -74,7 +74,8 @@
     "required": "{{field}} es obligatorio.",
     "invalidEmail": "Por favor ingresa un correo válido.",
     "passwordMin": "La contraseña debe tener al menos {{min}} caracteres.",
-    "registrationFail": "No se pudo completar el registro. Inténtalo nuevamente."
+    "registrationFail": "No se pudo completar el registro. Inténtalo nuevamente.",
+    "fetchCompanies":"No se podido obtener las empresas asociadas, recargue la pagina"
   }
 },
     "notFound": {

@@ -57,8 +57,12 @@ body {
 }
 
 .layout-content {
+  flex: flex;
+  justify-content: center;
+  align-items: center;
   margin-left: 250px; 
   padding: 1.5rem;
+  min-width: 80vw;
   min-height: 100vh;
   background-color: #f9fafb;
 }

@@ -7,13 +7,13 @@ export function useMenus() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+useEffect(() => {
     setLoading(true)
     menuService.getMenusAsync()
       .then(setMenus)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+}, [])
 
   return { menus, loading, error }
 }

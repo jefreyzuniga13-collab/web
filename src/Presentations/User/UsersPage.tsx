@@ -12,6 +12,7 @@ import Input from '@/Components/Common/Input2';
 import { Search, UserPlus } from 'lucide-react';
 import Spinner from '@/Components/Common/Spinner';
 import '@/Styles/Users/UsersPage.css';
+
 const UsersPage: React.FC = () => {
   const {
     users,

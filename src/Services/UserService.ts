@@ -16,6 +16,7 @@ class UserService {
 
   async getUserAsync(userId: number): Promise<User> {
     const { data } = await api.get<ApiResponse<User>>(`/Users/${userId}`);
+    console.log("Usuairos obtenido desde la api: ", data)
     return data.data;
   }
 

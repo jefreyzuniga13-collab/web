@@ -72,7 +72,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect }) => {
           >
             <div className="inbox-list__top">
               <div className="inbox-list__avatar">
-                {c.contactName.charAt(0).toUpperCase() || 'U'}
+                {c.contactNumber.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">

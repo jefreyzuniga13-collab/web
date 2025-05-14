@@ -38,7 +38,7 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
           {conv.contactName?.charAt(0).toUpperCase() || 'U'}
         </div>
         <h3 className="contact-name">{conv.contactName || 'Usuario'}</h3>
-        <p className="contact-email">{conv.contactEmail || '—'}</p>
+        <p className="contact-email">{conv.contactNumber || '—'}</p>
       </div>
 
       <div className="contact-detail__section">
@@ -48,7 +48,7 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
         <ul className="info-list">
           <li className="info-item">
             <div className="info-icon">
-              <AlertCircle size={16} />
+              <AlertCircle size={24} />
             </div>
             <div className="info-content">
               <span className="info-label">Estado</span>
@@ -57,7 +57,7 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
           </li>
           <li className="info-item">
             <div className="info-icon">
-              <Clock size={16} />
+              <Clock size={24} />
             </div>
             <div className="info-content">
               <span className="info-label">Creado</span>
@@ -67,7 +67,7 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
           {conv.updatedAt && (
             <li className="info-item">
               <div className="info-icon">
-                <Clock size={16} />
+                <Clock size={24} />
               </div>
               <div className="info-content">
                 <span className="info-label">Última actualización</span>
@@ -80,17 +80,17 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
           {conv.assignedAgent && (
             <li className="info-item">
               <div className="info-icon">
-                <User size={16} />
+                <User size={24} />
               </div>
               <div className="info-content">
                 <span className="info-label">Agente asignado</span>
-                <span className="info-value">{conv.assignedAgent}</span>
+                <span className="info-value">{conv.assignedAgentName ? conv.assignedAgentName : "---"}</span>
               </div>
             </li>
           )}
           <li className="info-item">
             <div className="info-icon">
-              <Clock size={16} />
+              <Clock size={24} />
             </div>
             <div className="info-content">
               <span className="info-label">Duración</span>

@@ -52,7 +52,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onClose }) => {
             <img src={user.imageUrl} alt={user.fullName} />
           ) : (
             <div className="user-detail-avatar-placeholder">
-              {user.fullName.charAt(0).toUpperCase()}
+               {user.fullName ? user.fullName.charAt(0).toUpperCase() : ''}
             </div>
           )}
         </div>
@@ -77,7 +77,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onClose }) => {
           className={`tab-button ${activeTab === 'roles' ? 'active' : ''}`}
           onClick={() => setActiveTab('roles')}
         >
-          Roles y permisos
+          Roles usuario
         </button>
         <button
           className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
@@ -102,7 +102,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onClose }) => {
                 <strong>Teléfono:</strong> <span>{user.phone || 'No especificado'}</span>
               </div>
               <div className="info-row">
-                <strong>Identificador:</strong> <span>{user.identifier || 'No especificado'}</span>
+                <strong>Numero Cedula:</strong> <span>{user.identifier || 'No especificado'}</span>
               </div>
             </div>
 

@@ -33,7 +33,7 @@ export default function ResetPasswordPresentation() {
           </ul>
           <img
             className="resetPassword-image"
-            src="https://i.ibb.co/qYprm0Dr/reset-password.png"
+            src="https://i.ibb.co/6R1Ym6LD/reset-password.png"
             alt={t('resetPassword.title')}
           />
         </aside>

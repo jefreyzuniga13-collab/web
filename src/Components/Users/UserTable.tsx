@@ -55,7 +55,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onDelete, onView, 
                   <img src={user.imageUrl} alt={user.fullName} />
                 ) : (
                   <div className="user-table-avatar-placeholder">
-                    {user.fullName.charAt(0).toUpperCase()}
+                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : ''}
                   </div>
                 )}
               </td>

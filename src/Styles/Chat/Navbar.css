@@ -13,6 +13,13 @@
   width: 80px;
   
 }
+.navbar-footer{
+  color: gray;
+  position: absolute;
+  bottom: 0;
+  padding-bottom: 12px;
+  font-size: 14px;
+}
 
 .navbar.collapsed .derechos{
   flex: none;

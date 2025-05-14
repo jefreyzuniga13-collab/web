@@ -1,5 +1,6 @@
 .register-page {
   display: flex;
+  min-width: 100vw;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
@@ -45,7 +46,10 @@
 .register-steps li {
   margin: 0.5rem 0;
 }
-
+.register-image{
+  max-width: 50%;
+  height: auto;
+}
 .register-form-section {
   flex: 1.5;
   padding: 2rem;

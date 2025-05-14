@@ -31,6 +31,7 @@ export default function RegisterPresentation() {
               <li key={step}>{t(`register.steps.${step}`)}</li>
             ))}
           </ul>
+          <img src="https://i.ibb.co/F26HCTK/singup.png" alt="singup" className='register-image'></img>
         </aside>
 
         <section className="register-form-section">

@@ -1,7 +1,7 @@
 import api from "@/Utils/ApiConfig";
 import { store } from "@/Context/index";
 import { refreshTokenThunk, logout } from "@/Context/Slices/authSlice";
-import { openReLoginModal } from "@/Context/Slices/uiSlice";
+//import { openReLoginModal } from "@/Context/Slices/uiSlice";
 import { toast } from "react-toastify";
 import { t } from "i18next";
 
@@ -32,7 +32,7 @@ export function setupResponseInterceptor() {
           config.headers.Authorization = `Bearer ${token}`;
           return api(config);
         }
-        store.dispatch(openReLoginModal());
+        //store.dispatch(openReLoginModal());
         return Promise.reject(error);
       }
 
@@ -43,10 +43,10 @@ export function setupResponseInterceptor() {
       }
 
       // 500+
-      if (status && status >= 500) {
-        toast.error(t("errors.serverError"));
-        return Promise.reject(error);
-      }
+      // if (status && status >= 500) {
+      //   toast.error(t("errors.serverError"));
+      //   return Promise.reject(error);
+      // }
 
       // mensaje genérico o de la API
       // toast.error(response?.data?.message || t("errors.generic"));

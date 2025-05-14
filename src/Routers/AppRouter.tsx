@@ -10,7 +10,6 @@ const ForgotPassword  = lazy(() => import('@/Presentations/Auth/ForgotPasswordPr
 const ResetPassword   = lazy(() => import('@/Presentations/Auth/ResetPasswordPresentation'))
 const Activation      = lazy(() => import('@/Presentations/Auth/ActivationAccountPresentation'))
 const Unauthorized    = lazy(() => import('@/Components/Common/Unauthorized'))
-//const Dashboard       = lazy(() => import('@/Presentations/DashboardPresebtation'))
 const SupportPage     = lazy(() => import('@/Presentations/Chat/SupportPage'))
 const UsersPage       = lazy(() => import('@/Presentations/User/UsersPage'))
 const DashboardPresentation       = lazy(() => import('@/Presentations/Dashboard/DashboardPresentation'))
@@ -37,7 +36,7 @@ export function AppRouter() {
             <Route index element={<Navigate to="Dashboard" replace />} />
             <Route path="Dashboard" element={<DashboardPresentation />} />
             <Route path="Chat"      element={<SupportPage />} />
-            <Route path="Usuarios"  element={<UsersPage />} />
+            <Route path="users"  element={<UsersPage />} />
           </Route>
 
         {/* Catch-all */}

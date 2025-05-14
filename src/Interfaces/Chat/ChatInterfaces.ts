@@ -3,10 +3,13 @@ export interface ConversationDto {
   companyId?: number;
   clientUserId?: number;
   assignedAgent?: number;
+  assignedAgentName?: string;
   status: string;
   createdAt: string;
   assignedAt?: string;
-  contactName: string;
+  assignedAtName?: string;
+  contactName?: string;
+  contactNumber: string;
   totalMensajes: number;
   ultimaActividad: string;
   duracion: number;
@@ -26,9 +29,9 @@ export interface MessageDto {
   messageId: number
   conversationId: number
   senderId: number
-  senderName: string        // nombre del remitente (Bot o usuario)
+  senderName: string 
   content?: string
-  caption?: string         // pie de foto para media
+  caption?: string         
   externalId?: string
   messageType: string
   createdAt: string
@@ -51,4 +54,12 @@ export interface MenuItemProps {
   text: string;
   onClick?: () => void;
   selectedOption:string;
+}
+export interface MenuDto{
+  menuId: number;
+  name: string;
+  description: string;
+  url: string;
+  index: string;
+  icon: string;
 }

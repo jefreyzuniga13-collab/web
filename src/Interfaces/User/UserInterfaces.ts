@@ -19,7 +19,7 @@ export interface User {
 export interface Role {
   roleId: number;
   roleName: string;
-  description: string | null;
+  description?: string | null;
 }
 
 export interface PaginatedUsers {
