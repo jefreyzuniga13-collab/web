@@ -31,41 +31,21 @@ export async function createHubConnection(token: string) {
 }
 
 export function joinConversation(conversationId: number) {
-  // Invoca al método del Hub que añade esta conexión al grupo de la conversación
   connection?.invoke('JoinConversation', conversationId.toString())
 }
 
 export function leaveConversation(conversationId: number) {
-  // Para limpiar grupos al salir de la ventana de chat
   connection?.invoke('LeaveConversation', conversationId.toString())
 }
 
-/**
- * Cuando la API notifica un nuevo mensaje dentro de una conversación
- * payload: {
- *   Message: { messageId, conversationId, senderId, content, messageType, createdAt, ... },
- *   Attachments: AttachmentDto[]
- * }
- */
-export function onReceiveMessage(
-  handler: (payload: { Message: MessageDto; Attachments: AttachmentDto[] }) => void
+export function onNewMessage(
+  handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
   connection?.on('ReceiveMessage', handler)
 }
 
-/**
- * Cuando un cliente solicita ser transferido a humano,
- * los agentes en el grupo "Admins" reciben este evento
- * payload: { conversationId: number, fromPhone: string }
- */
-export function onNewHumanRequest(
-  handler: (payload: { conversationId: number; fromPhone: string }) => void
-) {
-  connection?.on('NewHumanRequest', handler)
-}
-
-export function offReceiveMessage(
-  handler: (payload: { Message: MessageDto; Attachments: AttachmentDto[] }) => void
+export function offNewMessage(
+  handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
   connection?.off('ReceiveMessage', handler)
 }
@@ -80,4 +60,16 @@ export function offConversationCreated(
   handler: (convo: ConversationDto) => void
 ) {
   connection?.off('ConversationCreated', handler)
+}
+
+export function onNewHumanRequest(
+  handler: (payload: { conversationId: number; fromPhone: string }) => void
+) {
+  connection?.on('NewHumanRequest', handler)
+}
+
+export function offNewHumanRequest(
+  handler: (payload: { conversationId: number; fromPhone: string }) => void
+) {
+  connection?.off('NewHumanRequest', handler)
 }

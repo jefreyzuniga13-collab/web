@@ -43,3 +43,37 @@ body {
   min-width: 100vw;
   min-height: 100vh;
 }
+
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px; 
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  z-index: 1000;
+  overflow: auto;
+}
+
+.layout-content {
+  margin-left: 250px; 
+  padding: 1.5rem;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+
+@media (max-width: 768px) {
+  .navbar-container {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .layout-content {
+    margin-left: 0;
+    margin-top: calc(3.5rem + 1px); /* navbar height + border */
+  }
+}

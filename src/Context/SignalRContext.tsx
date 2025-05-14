@@ -1,49 +1,44 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode
-} from 'react'
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
   createHubConnection,
   joinConversation,
   leaveConversation,
-  onReceiveMessage,
-  offReceiveMessage,
+  onNewMessage,
+  offNewMessage,
   onNewHumanRequest,
+  offNewHumanRequest,
   onConversationCreated,
   offConversationCreated
 } from '@/Services/signalr'
-import type {
-  MessageDto,
-  AttachmentDto,
-  ConversationDto
-} from '@/Interfaces/Chat/ChatInterfaces'
+import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { ThreeDot } from 'react-loading-indicators'
 
 interface SignalRContextValue {
   joinConversation: (id: number) => void
   leaveConversation: (id: number) => void
-  onReceiveMessage: (
-    handler: (payload: { Message: MessageDto; Attachments: AttachmentDto[] }) => void
+  onNewMessage: (
+    handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
   ) => void
-  offReceiveMessage: (
-    handler: (payload: { Message: MessageDto; Attachments: AttachmentDto[] }) => void
+  offNewMessage: (
+    handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
   ) => void
   onNewHumanRequest: (
     handler: (payload: { conversationId: number; fromPhone: string }) => void
   ) => void
-  onConversationCreated: (handler: (c: ConversationDto) => void) => void
-  offConversationCreated: (handler: (c: ConversationDto) => void) => void
+  offNewHumanRequest: (
+    handler: (payload: { conversationId: number; fromPhone: string }) => void
+  ) => void
+  onConversationCreated: (handler: (convo: ConversationDto) => void) => void
+  offConversationCreated: (handler: (convo: ConversationDto) => void) => void
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
   joinConversation: () => {},
   leaveConversation: () => {},
-  onReceiveMessage: () => {},
-  offReceiveMessage: () => {},
+  onNewMessage: () => {},
+  offNewMessage: () => {},
   onNewHumanRequest: () => {},
+  offNewHumanRequest: () => {},
   onConversationCreated: () => {},
   offConversationCreated: () => {}
 })
@@ -57,16 +52,13 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
   useEffect(() => {
     createHubConnection(token)
       .then(() => setReady(true))
-      .catch(err => {
-        console.error('Error conectando SignalR:', err)
-        setReady(true)
-      })
+      .catch(() => setReady(true))
   }, [token])
 
   if (!ready) {
     return (
       <div className='loader-container'>
-        <ThreeDot color="#3142cc" size="medium" text="" textColor="" />
+        <ThreeDot />
       </div>
     )
   }
@@ -75,18 +67,18 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
     <SignalRContext.Provider value={{
       joinConversation,
       leaveConversation,
-      onReceiveMessage,
-      offReceiveMessage,
+      onNewMessage,
+      offNewMessage,
       onNewHumanRequest,
-      onConversationCreated,     
-      offConversationCreated     
+      offNewHumanRequest,
+      onConversationCreated,
+      offConversationCreated
     }}>
       {children}
     </SignalRContext.Provider>
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useSignalR() {
   return useContext(SignalRContext)
 }

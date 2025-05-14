@@ -1,0 +1,65 @@
+
+.delete-confirmation {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.delete-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(239, 68, 68, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.delete-icon svg {
+  width: 30px;
+  height: 30px;
+  color: var(--color-red-primary, #ef4444);
+}
+
+.delete-confirmation h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: var(--text-default, #374151);
+}
+
+.delete-confirmation p {
+  margin: 0 0 16px 0;
+  color: var(--text-secondary, #6b7280);
+}
+
+.delete-warning {
+  padding: 10px;
+  border-radius: 6px;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-red-primary, #ef4444);
+}
+
+.delete-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .delete-confirmation {
+    padding: 20px;
+  }
+  
+  .delete-actions {
+    flex-direction: column-reverse;
+    width: 100%;
+  }
+  
+  .delete-actions button {
+    width: 100%;
+  }
+}

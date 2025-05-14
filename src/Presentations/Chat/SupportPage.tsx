@@ -7,7 +7,6 @@ import { AssignModal } from '@/Components/Chat/AssignModal';
 import { ContactDetail } from '@/Components/Chat/ContactDetail';
 import { getConversation } from '@/Utils/ApiConfig';
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
-import Menu from '@/Components/Chat/Menu'
 import '@/Styles/Chat/SupportPage.css';
 
 const SupportPage: React.FC = () => {
@@ -15,7 +14,7 @@ const SupportPage: React.FC = () => {
   const [showAssign, setShowAssign] = useState(false);
   const [conversation, setConversation] = useState<ConversationDto | null>(null);
   const token = localStorage.getItem('accessToken') ?? '';
-  const userId = localStorage.getItem('userId') ?? 'ChatBot';
+  const userId = Number(localStorage.getItem('userId') ?? '1')
 
   // Cargar conversación al cambiar el ID
   useEffect(() => {
@@ -42,10 +41,6 @@ const SupportPage: React.FC = () => {
     <SignalRProvider token={token}>
 
       <div className="support-layout">
-
-        <nav className='navbar-container'>
-            <Menu/>
-        </nav>
         <aside className="sidebar">
           <div className="inbox-header">
             <h3 className="inbox-title">Conversaciones</h3>

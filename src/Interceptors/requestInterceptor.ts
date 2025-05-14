@@ -1,9 +1,9 @@
 import api from '@/Utils/ApiConfig'
-import { store } from '@/Context/index'
+import {getAccessToken} from '@/Utils/jwt'
 
 export function setupRequestInterceptor() {
   api.interceptors.request.use(config => {
-    const token = store.getState().auth.accessToken
+    const token = getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }

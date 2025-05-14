@@ -1,0 +1,244 @@
+
+.user-detail {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.user-detail-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--border-default, #e5e7eb);
+}
+
+.user-detail-avatar {
+  flex-shrink: 0;
+}
+
+.user-detail-avatar img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-detail-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--color-primary-start, #1c64f2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 32px;
+}
+
+.user-detail-info {
+  flex-grow: 1;
+}
+
+.user-detail-info h2 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-default, #1f2937);
+}
+
+.user-detail-info p {
+  margin: 0 0 8px 0;
+  color: var(--text-secondary, #6b7280);
+}
+
+.user-detail-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-indicator.active {
+  background-color: var(--color-green-primary, #10b981);
+}
+
+.status-indicator.inactive {
+  background-color: var(--color-red-primary, #ef4444);
+}
+
+.user-detail-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-default, #e5e7eb);
+}
+
+.tab-button {
+  padding: 16px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+  color: var(--text-default, #374151);
+}
+
+.tab-button.active {
+  color: var(--color-primary-start, #1c64f2);
+  border-bottom-color: var(--color-primary-start, #1c64f2);
+}
+
+.user-detail-content {
+  padding: 24px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.info-group {
+  margin-bottom: 24px;
+}
+
+.info-group h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-default, #1f2937);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-default, #e5e7eb);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-default, #e5e7eb);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row strong {
+  color: var(--text-default, #374151);
+}
+
+.info-row span {
+  color: var(--text-secondary, #6b7280);
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.status.active {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.status.inactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.role-card {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-default, #e5e7eb);
+}
+
+.role-card h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-default, #1f2937);
+  font-size: 16px;
+}
+
+.role-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.history-table th {
+  background-color: var(--bg-secondary, #f3f4f6);
+  padding: 10px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-default, #374151);
+  border-bottom: 2px solid var(--border-default, #e5e7eb);
+}
+
+.history-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-default, #e5e7eb);
+}
+
+.loading, .no-data {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.user-detail-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-default, #e5e7eb);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-detail-close-btn {
+  padding: 8px 16px;
+  background-color: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-default, #e5e7eb);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.user-detail-close-btn:hover {
+  background-color: var(--bg-secondary-hover, #e5e7eb);
+}
+
+@media (max-width: 768px) {
+  .user-detail-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .user-detail-tabs {
+    overflow-x: auto;
+  }
+  
+  .tab-button {
+    padding: 12px 16px;
+    white-space: nowrap;
+  }
+}
