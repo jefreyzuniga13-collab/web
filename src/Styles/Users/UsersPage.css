@@ -1,8 +1,6 @@
-
 .users-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 32px 16px;
+  box-sizing: border-box;
+  padding: 2rem 1rem;
 }
 
 .users-header {

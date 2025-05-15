@@ -9,6 +9,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   font-family: 'Roboto', sans-serif;
+  box-sizing: border-box;
 }
 
 body {
@@ -44,29 +45,11 @@ body {
   min-height: 100vh;
 }
 
-.navbar-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 250px; 
-  height: 100vh;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  z-index: 1000;
-  overflow: auto;
+.general-container{
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-width: 100vw;
 }
-
-.layout-content {
-  flex: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 250px; 
-  padding: 1.5rem;
-  min-width: 80vw;
-  min-height: 100vh;
-  background-color: #f9fafb;
-}
-
 
 @media (max-width: 768px) {
   .navbar-container {
@@ -75,9 +58,5 @@ body {
     position: relative;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
-  }
-  .layout-content {
-    margin-left: 0;
-    margin-top: calc(3.5rem + 1px); /* navbar height + border */
   }
 }

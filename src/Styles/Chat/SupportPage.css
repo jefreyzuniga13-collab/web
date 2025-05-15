@@ -38,9 +38,8 @@ button {
 }
 
 .support-layout {
-  display: flex;
-  min-height: 100vh;
-  min-width: 100vw;
+  display: grid;
+  grid-template-columns:1.3fr 2fr 1.3fr;
 }
 
 .main-header {

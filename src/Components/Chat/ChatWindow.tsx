@@ -3,7 +3,7 @@ import useMessages from '@/Hooks/useMessages'
 import { sendText, uploadAttachment, sendMedia } from '@/Utils/ApiConfig'
 import { Send, Paperclip } from 'lucide-react'
 import '@/Styles/Chat/ChatWindow.css'
-
+import {MessageSquareMore} from 'lucide-react'
 interface Props {
   conversationId?: number
   userId: number
@@ -67,7 +67,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
   if (!conversationId) {
     return (
       <div className="chat-empty-state">
-        <div className="empty-icon">💬</div>
+        <div><MessageSquareMore className="empty-icon"/></div>
         <h3 className="empty-title">Ninguna conversación seleccionada</h3>
         <p className="empty-text">
           Selecciona una conversación para chatear.

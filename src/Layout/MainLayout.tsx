@@ -4,14 +4,10 @@ import Navbar from '@/Components/Chat/Menu'
 
 const MainLayout: React.FC = () => {
   return (
-    <>
-      <nav className="navbar-container">
+    <div className='general-container'>
         <Navbar />
-      </nav>
-      <main className="layout-content">
         <Outlet />
-      </main>
-    </>
+    </div>
   )
 }
 

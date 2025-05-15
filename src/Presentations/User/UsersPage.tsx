@@ -68,7 +68,7 @@ const UsersPage: React.FC = () => {
   };
 
   return (
-      <div>
+
     <div className="users-page">
       <div className="users-header">
         <h1>Administración de Usuarios</h1>
@@ -187,7 +187,6 @@ const UsersPage: React.FC = () => {
         {currentUser && <UserDetail user={currentUser} onClose={() => setShowUserDetail(false)} />}
       </Modal>
     </div>
-      </div>
   );
 };
 
