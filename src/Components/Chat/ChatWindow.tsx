@@ -11,6 +11,7 @@ interface Props {
 
 export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
   const messages = useMessages(conversationId)
+  console.log("Mensajes desde la api" +  JSON.stringify(messages));
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)

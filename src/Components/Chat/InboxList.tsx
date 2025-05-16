@@ -72,7 +72,8 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect }) => {
           >
             <div className="inbox-list__top">
               <div className="inbox-list__avatar">
-                {c.contactNumber.charAt(0).toUpperCase() || 'U'}
+                {/* {c.contactNumber.charAt(0).toUpperCase() || 'U'} */}
+               <img src= {c.profilePhoto} alt="imagen" className='imagen-redonda'/>
               </div>
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
@@ -81,7 +82,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect }) => {
                 </div>
                 {c.assignedAgent && (
                   <div className="inbox-list__agent">
-                    Agente: <strong>{c.assignedAgent}</strong>
+                    Agente: <strong>{c.assignedAgentName}</strong>
                   </div>
                 )}
                 <span className="inbox-list__preview">

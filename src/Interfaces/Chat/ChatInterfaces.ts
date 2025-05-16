@@ -10,6 +10,7 @@ export interface ConversationDto {
   assignedAtName?: string;
   contactName?: string;
   contactNumber: string;
+  profilePhoto: string;
   totalMensajes: number;
   ultimaActividad: string;
   duracion: number;
