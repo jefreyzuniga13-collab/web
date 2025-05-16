@@ -12,7 +12,6 @@ const api: AxiosInstance = axios.create({
   timeout: 50_000,
 })
 
-
 export function getConversations() {
   return api.get<{ data: ConversationDto[] }>('/conversations')
 }
@@ -20,7 +19,6 @@ export function getConversations() {
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/conversations/${id}`)
 }
-
 
 export function getMessages(conversationId: number) {
   return api.get<{ data: MessageDto[] }>(`/conversations/${conversationId}/messages`)
@@ -31,22 +29,9 @@ export function sendText(
   to: string,
   body: string
 ) {
-  return api.post<{ data: string }> (
-    `/WhatsappWebhook/${conversationId}/send`,
-    { to, body }
-  )
-}
-
-export function sendMedia(
-  conversationId: number,
-  to: string,
-  mediaId: string,
-  mimeType: string,
-  caption?: string
-) {
   return api.post<{ data: string }>(
     `/WhatsappWebhook/${conversationId}/send`,
-    { to, mediaId, mimeType, caption }
+    { to, body }
   )
 }
 
@@ -60,6 +45,22 @@ export function getAttachments(messageId: number) {
   return api.get<{ data: AttachmentDto[] }>(`/Attachments/message/${messageId}`)
 }
 
+export function sendMediaMessage(
+  conversationId: number,
+  file: File,
+  caption?: string
+) {
+  const form = new FormData()
+  form.append('file', file)
+  if (caption) form.append('caption', caption)
+
+  return api.post<{ data: string }>(
+    `/WhatsappWebhook/${conversationId}/send-media`,
+    form,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+}
+
 // Agentes (filtrado por rol "Support")
 export function getAgents() {
   return api.get<{ data: AgentDto[] }>('/Users/agents?role=Support')
@@ -69,7 +70,7 @@ export function getAgents() {
 export function assignAgent(
   conversationId: number,
   agentUserId: string,
-  status: string = 'Human'      // o 'WaitingHuman' según tu lógica
+  status: string = 'Human'
 ) {
   return api.patch(`/conversations/${conversationId}`, null, {
     params: { agentUserId, status }

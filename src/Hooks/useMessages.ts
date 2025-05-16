@@ -5,7 +5,14 @@ import type { MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces
 
 export default function useMessages(conversationId?: number): MessageDto[] {
   const [messages, setMessages] = useState<MessageDto[]>([])
-  const { joinConversation, leaveConversation, onNewMessage, offNewMessage } = useSignalR()
+  const {
+    joinConversation,
+    leaveConversation,
+    onNewMessage,
+    offNewMessage,
+    onMessageStatusChanged,
+    offMessageStatusChanged
+  } = useSignalR()
 
   const receiveHandler = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
@@ -14,6 +21,20 @@ export default function useMessages(conversationId?: number): MessageDto[] {
         ...prev,
         { ...payload.message, attachments: payload.attachments }
       ])
+    },
+    [conversationId]
+  )
+
+  const statusHandler = useCallback(
+    (updated: MessageDto) => {
+      if (updated.conversationId !== conversationId) return
+      setMessages(prev =>
+        prev.map(m =>
+          m.messageId === updated.messageId
+            ? { ...m, status: updated.status, deliveredAt: updated.deliveredAt, readAt: updated.readAt }
+            : m
+        )
+      )
     },
     [conversationId]
   )
@@ -27,6 +48,7 @@ export default function useMessages(conversationId?: number): MessageDto[] {
     let mounted = true
 
     onNewMessage(receiveHandler)
+    onMessageStatusChanged(statusHandler)
     joinConversation(conversationId)
 
     getMessages(conversationId)
@@ -37,12 +59,16 @@ export default function useMessages(conversationId?: number): MessageDto[] {
       mounted = false
       leaveConversation(conversationId)
       offNewMessage(receiveHandler)
+      offMessageStatusChanged(statusHandler)
     }
   }, [
     conversationId,
     receiveHandler,
+    statusHandler,
     onNewMessage,
     offNewMessage,
+    onMessageStatusChanged,
+    offMessageStatusChanged,
     joinConversation,
     leaveConversation
   ])

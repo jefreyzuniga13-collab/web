@@ -8,7 +8,9 @@ import {
   onNewHumanRequest,
   offNewHumanRequest,
   onConversationCreated,
-  offConversationCreated
+  offConversationCreated,
+  onMessageStatusChanged,
+  offMessageStatusChanged
 } from '@/Services/signalr'
 import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { ThreeDot } from 'react-loading-indicators'
@@ -16,31 +18,43 @@ import { ThreeDot } from 'react-loading-indicators'
 interface SignalRContextValue {
   joinConversation: (id: number) => void
   leaveConversation: (id: number) => void
+
   onNewMessage: (
     handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
   ) => void
   offNewMessage: (
     handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
   ) => void
+
   onNewHumanRequest: (
     handler: (payload: { conversationId: number; fromPhone: string }) => void
   ) => void
   offNewHumanRequest: (
     handler: (payload: { conversationId: number; fromPhone: string }) => void
   ) => void
+
   onConversationCreated: (handler: (convo: ConversationDto) => void) => void
   offConversationCreated: (handler: (convo: ConversationDto) => void) => void
+
+  onMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
+  offMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
   joinConversation: () => {},
   leaveConversation: () => {},
+
   onNewMessage: () => {},
   offNewMessage: () => {},
+
   onNewHumanRequest: () => {},
   offNewHumanRequest: () => {},
+
   onConversationCreated: () => {},
-  offConversationCreated: () => {}
+  offConversationCreated: () => {},
+
+  onMessageStatusChanged: () => {},
+  offMessageStatusChanged: () => {}
 })
 
 export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> = ({
@@ -72,7 +86,9 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
       onNewHumanRequest,
       offNewHumanRequest,
       onConversationCreated,
-      offConversationCreated
+      offConversationCreated,
+      onMessageStatusChanged,
+      offMessageStatusChanged
     }}>
       {children}
     </SignalRContext.Provider>

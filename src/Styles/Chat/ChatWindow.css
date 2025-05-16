@@ -366,3 +366,21 @@
 .file-input-hidden {
   display: none;
 }
+
+.message-status {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  align-self: flex-end;
+}
+
+.message-status--sent {
+  color: var(--color-gray-500);
+}
+
+.message-status--delivered {
+  color: var(--color-gray-500);
+}
+
+.message-status--read {
+  color: var(--color-blue-primary);
+}
