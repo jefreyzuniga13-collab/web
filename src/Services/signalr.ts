@@ -1,5 +1,6 @@
 import * as signalR from '@microsoft/signalr'
 import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { toast } from 'react-toastify'
 
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
@@ -23,7 +24,8 @@ export async function createHubConnection(token: string) {
   })
 
   connection.onclose(error => {
-    console.error('SignalR connection closed', error)
+    console.error('SignalR connection closed', error);
+    toast.warn("La conección a finalizado, por favor iniciar sesión para continuar cargando datos actualizados.");
   })
 
   await connection.start()
