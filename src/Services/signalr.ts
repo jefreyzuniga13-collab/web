@@ -75,3 +75,15 @@ export function offNewHumanRequest(
 ) {
   connection?.off('NewHumanRequest', handler)
 }
+
+export function onMessageStatusChanged(
+  handler: (msg: MessageDto) => void
+) {
+  connection?.on('MessageStatusChanged', handler)
+}
+
+export function offMessageStatusChanged(
+  handler: (msg: MessageDto) => void
+) {
+  connection?.off('MessageStatusChanged', handler)
+}
