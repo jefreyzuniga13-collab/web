@@ -64,3 +64,11 @@ export interface MenuDto{
   index: string;
   icon: string;
 }
+
+export interface SentMessage{
+  conversationId: number;
+  senderId: number;
+  content:string;
+  messageType: string;
+  caption:string;
+}

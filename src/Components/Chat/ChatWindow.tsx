@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import useMessages from '@/Hooks/useMessages'
-import { sendText, uploadAttachment, sendMedia } from '@/Utils/ApiConfig'
+// import { sendText, uploadAttachment, sendMedia } from '@/Utils/ApiConfig'
+import { sendText, uploadAttachment } from '@/Utils/ApiConfig'
 import { Send, Paperclip } from 'lucide-react'
 import '@/Styles/Chat/ChatWindow.css'
 import {MessageSquareMore} from 'lucide-react'
+import type { SentMessage } from '@/Interfaces/Chat/ChatInterfaces'
 interface Props {
   conversationId?: number
   userId: number
@@ -11,7 +13,6 @@ interface Props {
 
 export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
   const messages = useMessages(conversationId)
-  console.log("Mensajes desde la api" +  JSON.stringify(messages));
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
@@ -36,19 +37,30 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         const formData = new FormData()
         formData.append('file', file)
         const uploadResponse = await uploadAttachment(formData)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const mediaId = uploadResponse.data.data as string
-        await sendMedia(
-          conversationId,
-          userId.toString(),
-          mediaId,
-          file.type,
-          text.trim() || undefined
-        )
+        // await sendMedia(
+        //   conversationId,
+        //   userId.toString(),
+        //   mediaId,
+        //   file.type,
+        //   text.trim() || undefined
+        // )
         setFile(null)
         setText('')
         if (fileInputRef.current) fileInputRef.current.value = ''
       } else if (text.trim()) {
-        await sendText(conversationId, userId.toString(), text.trim())
+
+      const message: SentMessage = {
+        conversationId: conversationId,
+        senderId: userId,
+        content: text.trim(),
+        messageType: 'text',
+        caption: ''
+      };
+
+        await sendText(message)
+
         setText('')
       }
     } catch (err) {

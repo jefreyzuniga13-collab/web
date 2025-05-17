@@ -175,7 +175,7 @@
 }
 
 .chat-window__composer {
-  padding: 1rem 1.5rem;
+  padding: 2rem 1.5rem;
   border-top: 1px solid var(--color-gray-200);
   background-color: white;
   display: flex;

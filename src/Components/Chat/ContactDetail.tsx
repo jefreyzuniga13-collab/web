@@ -11,12 +11,15 @@ interface Props {
 
 export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
   const [conv, setConv] = useState<ConversationDto | null>(null);
-
   useEffect(() => {
     if (!conversationId) return;
     
     getConversation(conversationId)
-      .then(res => setConv(res.data.data))
+      .then(res => 
+      {
+        setConv(res.data.data );
+      }
+      )
       .catch(console.error);
   }, [conversationId]);
 
@@ -55,6 +58,17 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
               <span className="info-value">{conv.status || 'Sin estado'}</span>
             </div>
           </li>
+          {conv.assignedAgent && (
+            <li className="info-item">
+              <div className="info-icon">
+                <User size={24} />
+              </div>
+              <div className="info-content">
+                <span className="info-label">Agente asignado</span>
+                <span className="info-value">{conv.assignedAgentName ? conv.assignedAgentName : "---"}</span>
+              </div>
+            </li>
+          )}
           <li className="info-item">
             <div className="info-icon">
               <Clock size={24} />
@@ -64,27 +78,23 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
               <span className="info-value">{formattedDate}</span>
             </div>
           </li>
-          {conv.updatedAt && (
+          <li className='info-item'>
+            <div className="info-icon">
+              <Clock size={24} />
+            </div>
+              <div className='info-content'>
+              <span className='info-label'>Asignado</span>
+              <span className='info-value'>{new Date(conv.assignedAt).toLocaleString()}</span>
+            </div>
+          </li>
+          {conv.ultimaActividad && (
             <li className="info-item">
               <div className="info-icon">
                 <Clock size={24} />
               </div>
               <div className="info-content">
                 <span className="info-label">Última actualización</span>
-                <span className="info-value">
-                  {new Date(conv.updatedAt).toLocaleString()}
-                </span>
-              </div>
-            </li>
-          )}
-          {conv.assignedAgent && (
-            <li className="info-item">
-              <div className="info-icon">
-                <User size={24} />
-              </div>
-              <div className="info-content">
-                <span className="info-label">Agente asignado</span>
-                <span className="info-value">{conv.assignedAgentName ? conv.assignedAgentName : "---"}</span>
+                <span className="info-value">{new Date(conv.ultimaActividad).toLocaleString()}</span>
               </div>
             </li>
           )}

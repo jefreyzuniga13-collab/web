@@ -103,16 +103,16 @@ const DashboardMenu: React.FC<DashboardMenuProps> = ({ from, to, onDateChange, o
           alignItems: 'center',
           justifyContent: 'center',
           gap: '5px',
-          padding: '8px 15px', 
+          padding: '10px 15px', 
           borderRadius: '4px', 
-          background: '#0d6efd',
+          background: '#356ace',
           color: 'white',
           border: 'none',
           width: '100%',
           cursor: 'pointer'
         }}
       >
-        <RefreshCw size={14} />
+        <RefreshCw size={14}/>
         Actualizar Datos
       </button>
     </div>

@@ -73,7 +73,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect }) => {
             <div className="inbox-list__top">
               <div className="inbox-list__avatar">
                 {/* {c.contactNumber.charAt(0).toUpperCase() || 'U'} */}
-               <img src= {c.profilePhoto} alt="imagen" className='imagen-redonda'/>
+               <img src= {c.profilePhoto ? c.profilePhoto: 'https://i.ibb.co/r16WH6Z/bot.jpg'} alt="imagen" className='imagen-redonda'/>
               </div>
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">

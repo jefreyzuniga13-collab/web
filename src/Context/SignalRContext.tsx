@@ -72,7 +72,7 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
   if (!ready) {
     return (
       <div className='loader-container'>
-        <ThreeDot />
+        <ThreeDot color="#3142cc" size="medium" />
       </div>
     )
   }

@@ -77,7 +77,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding:  1rem;
+  padding: 0.7rem 0.7rem;
 }
 
 .menu-item.selected {

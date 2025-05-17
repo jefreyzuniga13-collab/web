@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux'
 import { logout } from '@/Context/Slices/authSlice'
 import '@/Styles/Chat/Navbar.css'
 import { ThreeDot } from 'react-loading-indicators'
+import {SquareArrowLeft, SquareArrowRight} from 'lucide-react'
 
 const Navbar: React.FC = () => {
   const { menus, loading, error } = useMenus()
@@ -48,8 +49,8 @@ const Navbar: React.FC = () => {
         />
         <button className="collapse-button" onClick={handleCollapse}>
           {collapsed 
-            ? <Icons.ChevronRight size={20} /> 
-            : <Icons.ChevronLeft  size={20} />}
+            ? <SquareArrowRight size={20} /> 
+            : <SquareArrowLeft  size={20} />}
         </button>
         <button className="mobile-menu-toggle" onClick={handleMobileToggle}>
           <Icons.Menu size={24} />

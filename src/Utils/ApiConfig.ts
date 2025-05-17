@@ -1,4 +1,4 @@
-import type { AgentDto, AttachmentDto, ConversationDto, MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
+import type { AgentDto, AttachmentDto, ConversationDto, MessageDto, SentMessage } from '@/Interfaces/Chat/ChatInterfaces'
 import axios, { type AxiosInstance } from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://pcgadmin-001-site3.ntempurl.com/'
@@ -24,14 +24,25 @@ export function getMessages(conversationId: number) {
   return api.get<{ data: MessageDto[] }>(`/conversations/${conversationId}/messages`)
 }
 
+// export function sendText(
+//   conversationId: number,
+//   to: string,
+//   body: string
+// ) {
+//   return api.post<{ data: string }>(
+//     `/WhatsappWebhook/${conversationId}/send`,
+//     { to, body }
+//   )
+// }
+
 export function sendText(
-  conversationId: number,
-  to: string,
-  body: string
+  message: SentMessage
 ) {
+  console.log(JSON.stringify(message));
+
   return api.post<{ data: string }>(
-    `/WhatsappWebhook/${conversationId}/send`,
-    { to, body }
+    `/WhatsappWebhook/${message.conversationId}/send`,
+    message
   )
 }
 
