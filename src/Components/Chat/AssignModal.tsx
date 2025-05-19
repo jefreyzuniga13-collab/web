@@ -27,7 +27,7 @@ export const AssignModal: React.FC<Props> = ({
     if (!isOpen || !conversation) return;
 
     // Precargamos estados
-    setSel(conversation.assignedAgent ?? '');
+    setSel(conversation.assignedAgentId?.toString() ?? '');
     setStatus(conversation.status);
 
     // Cargamos agentes
@@ -126,7 +126,7 @@ export const AssignModal: React.FC<Props> = ({
           </button>
           <button
             className="assign-modal__button assign-modal__button--primary"
-            disabled={!sel || (status === conversation?.status && sel === conversation?.assignedAgent)}
+            disabled={!sel || (status === conversation?.status && sel === conversation?.assignedAgentId?.toString())}
             onClick={handleAssign}
           >
             Guardar cambios

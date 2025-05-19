@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
   createHubConnection,
@@ -10,7 +11,9 @@ import {
   onConversationCreated,
   offConversationCreated,
   onMessageStatusChanged,
-  offMessageStatusChanged
+  offMessageStatusChanged,
+  onNewNotification,
+  offNewNotification
 } from '@/Services/signalr'
 import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { ThreeDot } from 'react-loading-indicators'
@@ -38,6 +41,11 @@ interface SignalRContextValue {
 
   onMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
   offMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onNewNotification: (handler: (payload: { type: string; data: any }) => void) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  offNewNotification: (handler: (payload: { type: string; data: any }) => void) => void
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
@@ -54,7 +62,10 @@ const SignalRContext = createContext<SignalRContextValue>({
   offConversationCreated: () => {},
 
   onMessageStatusChanged: () => {},
-  offMessageStatusChanged: () => {}
+  offMessageStatusChanged: () => {},
+  
+  onNewNotification: () => {},
+  offNewNotification: () => {}
 })
 
 export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> = ({
@@ -88,7 +99,9 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
       onConversationCreated,
       offConversationCreated,
       onMessageStatusChanged,
-      offMessageStatusChanged
+      offMessageStatusChanged,
+      onNewNotification,
+      offNewNotification
     }}>
       {children}
     </SignalRContext.Provider>

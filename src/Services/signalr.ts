@@ -1,89 +1,136 @@
-import * as signalR from '@microsoft/signalr'
-import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { toast } from 'react-toastify'
 
-const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1'
-const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
+import * as signalR from '@microsoft/signalr';
+import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import { toast } from 'react-toastify';
 
-let connection: signalR.HubConnection | null = null
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1';
+const HUB_BASE = API_URL.replace(/\/api\/v1$/, '');
+
+let chatConnection: signalR.HubConnection | null = null;
+let notificationsConnection: signalR.HubConnection | null = null;
 
 export async function createHubConnection(token: string) {
-  connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${HUB_BASE}/chatHub`, {
+  // Conexión al hub de chat
+  chatConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${HUB_BASE}/hubs/chat`, {
       accessTokenFactory: () => token
     })
     .withAutomaticReconnect()
-    .build()
+    .build();
 
-  connection.onreconnecting(error => {
-    console.warn('Reconnecting to SignalR...', error)
-  })
+  chatConnection.onreconnecting(error => {
+    console.warn('Reconnecting to Chat Hub...', error);
+  });
 
-  connection.onreconnected(() => {
-    console.info('Reconnected to SignalR')
-  })
+  chatConnection.onreconnected(() => {
+    console.info('Reconnected to Chat Hub');
+  });
 
-  connection.onclose(error => {
-    console.error('SignalR connection closed', error);
-    toast.warn("La conección a finalizado, por favor iniciar sesión para continuar cargando datos actualizados.");
-  })
+  chatConnection.onclose(error => {
+    console.error('Chat Hub connection closed', error);
+    toast.warn("La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.");
+  });
 
-  await connection.start()
-  return connection
+  // Conexión al hub de notificaciones
+  notificationsConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${HUB_BASE}/hubs/notifications`, {
+      accessTokenFactory: () => token
+    })
+    .withAutomaticReconnect()
+    .build();
+
+  notificationsConnection.onreconnecting(error => {
+    console.warn('Reconnecting to Notifications Hub...', error);
+  });
+
+  notificationsConnection.onreconnected(() => {
+    console.info('Reconnected to Notifications Hub');
+  });
+
+  notificationsConnection.onclose(error => {
+    console.error('Notifications Hub connection closed', error);
+  });
+
+  try {
+    await chatConnection.start();
+    await notificationsConnection.start();
+    return { chatConnection, notificationsConnection };
+  } catch (error) {
+    console.error("Error starting SignalR connections:", error);
+    throw error;
+  }
 }
 
 export function joinConversation(conversationId: number) {
-  connection?.invoke('JoinConversation', conversationId.toString())
+  if (chatConnection?.state === signalR.HubConnectionState.Connected) {
+    chatConnection.invoke('JoinConversation', conversationId.toString());
+  }
 }
 
 export function leaveConversation(conversationId: number) {
-  connection?.invoke('LeaveConversation', conversationId.toString())
+  if (chatConnection?.state === signalR.HubConnectionState.Connected) {
+    chatConnection.invoke('LeaveConversation', conversationId.toString());
+  }
 }
 
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
-  connection?.on('ReceiveMessage', handler)
+  chatConnection?.on('ReceiveMessage', handler);
 }
 
 export function offNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
-  connection?.off('ReceiveMessage', handler)
+  chatConnection?.off('ReceiveMessage', handler);
 }
 
 export function onConversationCreated(
   handler: (convo: ConversationDto) => void
 ) {
-  connection?.on('ConversationCreated', handler)
+  chatConnection?.on('ConversationCreated', handler);
 }
 
 export function offConversationCreated(
   handler: (convo: ConversationDto) => void
 ) {
-  connection?.off('ConversationCreated', handler)
+  chatConnection?.off('ConversationCreated', handler);
 }
 
 export function onNewHumanRequest(
   handler: (payload: { conversationId: number; fromPhone: string }) => void
 ) {
-  connection?.on('NewHumanRequest', handler)
+  notificationsConnection?.on('NewHumanRequest', handler);
 }
 
 export function offNewHumanRequest(
   handler: (payload: { conversationId: number; fromPhone: string }) => void
 ) {
-  connection?.off('NewHumanRequest', handler)
+  notificationsConnection?.off('NewHumanRequest', handler);
 }
 
 export function onMessageStatusChanged(
   handler: (msg: MessageDto) => void
 ) {
-  connection?.on('MessageStatusChanged', handler)
+  notificationsConnection?.on('MessageStatusChanged', handler);
 }
 
 export function offMessageStatusChanged(
   handler: (msg: MessageDto) => void
 ) {
-  connection?.off('MessageStatusChanged', handler)
+  notificationsConnection?.off('MessageStatusChanged', handler);
+}
+
+export function onNewNotification(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (payload: { type: string; data: any }) => void
+) {
+  notificationsConnection?.on('ReceiveNotification', handler);
+}
+
+export function offNewNotification(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (payload: { type: string; data: any }) => void
+) {
+  notificationsConnection?.off('ReceiveNotification', handler);
 }

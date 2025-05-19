@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { getConversation } from '@/Utils/ApiConfig';
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
-import { User, Clock, AlertCircle, SquareMousePointer } from 'lucide-react';
+import { User, Clock, AlertCircle } from 'lucide-react';
 import '@/Styles/Chat/ContactDetail.css';
 
 interface Props {
@@ -11,23 +11,19 @@ interface Props {
 
 export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
   const [conv, setConv] = useState<ConversationDto | null>(null);
+
   useEffect(() => {
     if (!conversationId) return;
     
     getConversation(conversationId)
-      .then(res => 
-      {
-        setConv(res.data.data );
-      }
-      )
+      .then(res => setConv(res.data.data))
       .catch(console.error);
   }, [conversationId]);
 
   if (!conv) {
     return (
       <div className="contact-detail__empty">
-        <SquareMousePointer />
-       <span> Selecciona una conversación para ver los detalles del contacto</span>
+        Selecciona una conversación para ver los detalles del contacto
       </div>
     );
   }
@@ -51,60 +47,53 @@ export const ContactDetail: React.FC<Props> = ({ conversationId }) => {
         <ul className="info-list">
           <li className="info-item">
             <div className="info-icon">
-              <AlertCircle size={24} />
+              <AlertCircle size={16} />
             </div>
             <div className="info-content">
               <span className="info-label">Estado</span>
               <span className="info-value">{conv.status || 'Sin estado'}</span>
             </div>
           </li>
-          {conv.assignedAgent && (
-            <li className="info-item">
-              <div className="info-icon">
-                <User size={24} />
-              </div>
-              <div className="info-content">
-                <span className="info-label">Agente asignado</span>
-                <span className="info-value">{conv.assignedAgentName ? conv.assignedAgentName : "---"}</span>
-              </div>
-            </li>
-          )}
           <li className="info-item">
             <div className="info-icon">
-              <Clock size={24} />
+              <Clock size={16} />
             </div>
             <div className="info-content">
               <span className="info-label">Creado</span>
               <span className="info-value">{formattedDate}</span>
             </div>
           </li>
-          <li className='info-item'>
-            <div className="info-icon">
-              <Clock size={24} />
-            </div>
-              <div className='info-content'>
-              <span className='info-label'>Asignado</span>
-              <span className='info-value'>{new Date(conv.assignedAt).toLocaleString()}</span>
-            </div>
-          </li>
-          {conv.ultimaActividad && (
+          {conv.updatedAt && (
             <li className="info-item">
               <div className="info-icon">
-                <Clock size={24} />
+                <Clock size={16} />
               </div>
               <div className="info-content">
                 <span className="info-label">Última actualización</span>
-                <span className="info-value">{new Date(conv.ultimaActividad).toLocaleString()}</span>
+                <span className="info-value">
+                  {new Date(conv.updatedAt).toLocaleString()}
+                </span>
+              </div>
+            </li>
+          )}
+          {conv.assignedAgentId && (
+            <li className="info-item">
+              <div className="info-icon">
+                <User size={16} />
+              </div>
+              <div className="info-content">
+                <span className="info-label">Agente asignado</span>
+                <span className="info-value">{conv.assignedAgentName || conv.assignedAgentId}</span>
               </div>
             </li>
           )}
           <li className="info-item">
             <div className="info-icon">
-              <Clock size={24} />
+              <Clock size={16} />
             </div>
             <div className="info-content">
               <span className="info-label">Duración</span>
-              <span className="info-value">{conv.duracion}</span>
+              <span className="info-value">{conv.duracion || conv.duration}</span>
             </div>
           </li>
         </ul>
