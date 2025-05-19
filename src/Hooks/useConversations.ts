@@ -84,7 +84,8 @@ export function useConversations(filter: string = 'all'): ConversationDto[] {
         }));
         
         // Filtrar por rol y filtro adicional
-        if (!isAdmin) {
+        if (isAdmin) {
+          console.log("Es admin o no es admin" , isAdmin)
           conversations = conversations.filter(conv => 
             conv.assignedAgentId?.toString() === userId
           );

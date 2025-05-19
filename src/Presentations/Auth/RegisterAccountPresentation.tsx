@@ -6,7 +6,7 @@ import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
 import Button from '@/Components/Common/Button'
 import '@/Styles/Auth/RegisterPresentation.css'
-
+import InputMask from '@/Components/Common/InputMask'
 export default function RegisterPresentation() {
   const { t } = useTranslation()
   const {
@@ -78,7 +78,7 @@ export default function RegisterPresentation() {
               />
 
               <label htmlFor="phone">{t('register.phoneLabel')}</label>
-              <Input
+              <InputMask
                 id="phone"
                 name="phone"
                 placeholder={t('register.phoneExample')}
@@ -86,6 +86,7 @@ export default function RegisterPresentation() {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.phone ? formik.errors.phone : undefined}
+                mask="99999999"
               />
             </div>
 

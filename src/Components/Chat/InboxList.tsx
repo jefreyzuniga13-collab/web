@@ -12,7 +12,7 @@ interface Props {
 
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
   const convs = useConversations(filter);
-  
+
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString([], {
       hour: '2-digit',

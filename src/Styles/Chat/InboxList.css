@@ -133,6 +133,7 @@
   border-radius: 1rem;
   display: inline-block;
   align-self: flex-start;
+  padding: 2px 4px;
 }
 
 .inbox-list__status--bot {
@@ -149,10 +150,13 @@
   background-color: #feeddc;
   color: #b45309;
 }
-
+.inbox-list__status--esperando {
+  background-color: #f1f5f9;
+  color: #adbb5d;
+}
 .inbox-list__status--closed {
   background-color: #f1f5f9;
-  color: #475569;
+  color: #556070;
 }
 
 .inbox-list__status--default {

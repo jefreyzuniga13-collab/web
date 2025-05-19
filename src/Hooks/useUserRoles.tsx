@@ -29,8 +29,10 @@ export function useUserRoles() {
       let userRoles: string[] = [];
       if (decoded.role) {
         userRoles = Array.isArray(decoded.role) ? decoded.role : [decoded.role];
+
       }
       setRoles(userRoles);
+    
       
       // Determinar si es admin o support
       setIsAdmin(userRoles.includes('Admin'));
@@ -42,7 +44,7 @@ export function useUserRoles() {
       console.error('Error al decodificar el token JWT:', error);
     }
   }, []);
-  
+
   return { 
     roles,
     userId, 

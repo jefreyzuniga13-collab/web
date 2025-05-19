@@ -46,9 +46,9 @@ export interface AttachmentDto {
 }
 
 export interface MessageDto {
-  messageId: number;
-  conversationId: number;
-  senderId: number;
+  messageId?: number;
+  conversationId?: number;
+  senderId?: number;
   senderUserId?: number;
   senderContactId?: number;
   senderName: string;
@@ -60,7 +60,7 @@ export interface MessageDto {
   status?: MessageStatus;
   deliveredAt?: string;
   readAt?: string;
-  attachments: AttachmentDto[];
+  attachments?: AttachmentDto[];
 }
 
 export interface AgentDto {

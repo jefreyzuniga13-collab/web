@@ -3,8 +3,8 @@ import * as signalR from '@microsoft/signalr';
 import type { MessageDto, AttachmentDto, ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
 import { toast } from 'react-toastify';
 
-const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1';
-const HUB_BASE = API_URL.replace(/\/api\/v1$/, '');
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:7108/api/v1'
+const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 let chatConnection: signalR.HubConnection | null = null;
 let notificationsConnection: signalR.HubConnection | null = null;
@@ -53,7 +53,7 @@ export async function createHubConnection(token: string) {
 
   try {
     await chatConnection.start();
-    await notificationsConnection.start();
+    //await notificationsConnection.start();
     return { chatConnection, notificationsConnection };
   } catch (error) {
     console.error("Error starting SignalR connections:", error);
