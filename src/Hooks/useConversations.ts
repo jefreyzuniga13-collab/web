@@ -1,134 +1,173 @@
+// src/Hooks/useConversations.ts
 
-import { useState, useEffect, useCallback } from 'react';
-import { getConversations } from '@/Utils/ApiConfig';
-import { useSignalR } from '@/Context/SignalRContext';
-import { useUserRoles } from '@/Hooks/useUserRoles';
-import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces';
+import { useState, useEffect, useCallback } from 'react'
+import { getConversationsByRole } from '@/Services/ConversationService'
+import { useSignalR } from '@/Context/SignalRContext'
+import type {
+  ConversationDto,
+  MessageDto,
+  AttachmentDto,
+} from '@/Interfaces/Chat/ChatInterfaces'
 
-export function useConversations(filter: string = 'all'): ConversationDto[] {
-  const [conversations, setConversations] = useState<ConversationDto[]>([]);
-  const { isAdmin, userId } = useUserRoles();
+export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human' | 'closed'
+
+export interface UseConversationsResult {
+  conversations: ConversationDto[]
+  loading: boolean
+  error?: string
+  reload: () => void
+}
+
+export function useConversations(
+  filter: Filter = 'all'
+): UseConversationsResult {
+  const [conversations, setConversations] = useState<ConversationDto[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>()
+
   const {
     onConversationCreated,
     offConversationCreated,
+    onConversationUpdated,  
+    offConversationUpdated,  
     onNewMessage,
     offNewMessage,
     onNewHumanRequest,
-    offNewHumanRequest
-  } = useSignalR();
+    offNewHumanRequest,
+  } = useSignalR()
+
 
   const handleHumanRequest = useCallback(
-    (payload: { conversationId: number; fromPhone: string }) => {
+    (payload: { conversationId: number }) => {
       setConversations(prev =>
         prev.map(c =>
           c.conversationId === payload.conversationId
-            ? { ...c, status: 'WaitingHuman' }
+            ? { ...c, status: 'Human' }
             : c
         )
-      );
+      )
     },
     []
-  );
+  )
 
-  const handleNewConvo = useCallback(
-    (newConvo: ConversationDto) => {
-      // Solo añadir la conversación si es admin o si está asignada al usuario
-      if (isAdmin || (newConvo.assignedAgentId?.toString() === userId)) {
-        setConversations(prev => [newConvo, ...prev]);
-      }
-    },
-    [isAdmin, userId]
-  );
+
+  const handleNewConvo = useCallback((newConvo: ConversationDto) => {
+    setConversations(prev => [newConvo, ...prev])
+  }, [])
+
+  
+  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+    setConversations(prev =>
+      prev
+        .map(c =>
+          c.conversationId === updated.conversationId ? updated : c
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.lastActivity || b.createdAt).getTime() -
+            new Date(a.lastActivity || a.createdAt).getTime()
+        )
+    )
+  }, [])
+
 
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
-      const msg = payload.message;
+      const msg = payload.message
       setConversations(prev =>
         prev
           .map(c =>
             c.conversationId === msg.conversationId
               ? {
                   ...c,
-                  totalMensajes: (c.totalMensajes || 0) + 1,
-                  ultimaActividad: msg.createdAt,
-                  unreadCount: (c.unreadCount || 0) + 1
+                  totalMessages: (c.totalMessages || 0) + 1,
+                  lastActivity: msg.createdAt,
+                  unreadCount: (c.unreadCount || 0) + 1,
                 }
               : c
           )
           .sort(
-            (a, b) => {
-              const dateA = new Date(a.ultimaActividad || a.lastActivity || a.createdAt).getTime();
-              const dateB = new Date(b.ultimaActividad || b.lastActivity || b.createdAt).getTime();
-              return dateB - dateA;
-            }
+            (a, b) =>
+              new Date(b.lastActivity!).getTime() -
+              new Date(a.lastActivity!).getTime()
           )
-      );
+      )
     },
     []
-  );
+  )
+
+
+  const reload = useCallback(async () => {
+    setLoading(true)
+    setError(undefined)
+    try {
+      const res = await getConversationsByRole()
+      let convs = res.data.data.map(conv => ({
+        ...conv,
+        totalMessages: conv.totalMessages,
+        lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
+        duration: conv.duration,
+        unreadCount: conv.unreadCount || 0,
+      }))
+
+
+      if (filter === 'new') {
+        convs = convs.filter(c => c.status === 'Waiting')
+      } else if (filter === 'bot') {
+        convs = convs.filter(c => c.status === 'Bot')
+      } else if (filter === 'waiting') {
+        convs = convs.filter(c => c.status === 'Waiting')
+      } else if (filter === 'human') {
+        convs = convs.filter(c => c.status === 'Human')
+      } else if (filter === 'closed') {
+        convs = convs.filter(c => c.status === 'Closed')
+      }
+
+      convs.sort(
+        (a, b) =>
+          new Date(b.lastActivity!).getTime() -
+          new Date(a.lastActivity!).getTime()
+      )
+
+      setConversations(convs)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || 'Error cargando conversaciones')
+    } finally {
+      setLoading(false)
+    }
+  }, [filter])
 
   useEffect(() => {
-    let mounted = true;
+    reload()
 
-    getConversations()
-      .then(res => {
-        if (!mounted) return;
-        
-        // Mapear los datos de la API al formato que espera nuestra UI
-        let conversations = res.data.data.map(conv => ({
-          ...conv,
-          totalMensajes: conv.totalMessages || 0,
-          ultimaActividad: conv.lastActivity || conv.updatedAt || conv.createdAt,
-          duracion: conv.duration || "00:00:00",
-          unreadCount: 0 // Por defecto, inicializamos en 0
-        }));
-        
-        // Filtrar por rol y filtro adicional
-        if (isAdmin) {
-          console.log("Es admin o no es admin" , isAdmin)
-          conversations = conversations.filter(conv => 
-            conv.assignedAgentId?.toString() === userId
-          );
-        }
-        
-        // Aplicar filtro adicional si existe
-        if (filter !== 'all') {
-          conversations = conversations.filter(conv => {
-            if (filter === 'pending') return conv.status === 'WaitingHuman';
-            if (filter === 'mine') return conv.assignedAgentId?.toString() === userId;
-            if (filter === 'closed') return conv.status === 'Closed';
-            return true;
-          });
-        }
-        
-        setConversations(conversations);
-      })
-      .catch(console.error);
-
-    onNewHumanRequest(handleHumanRequest);
-    onConversationCreated(handleNewConvo);
-    onNewMessage(handleNewMessage);
+    onNewHumanRequest(handleHumanRequest)
+    onConversationCreated(handleNewConvo)
+    onConversationUpdated(handleUpdatedConvo) 
+    onNewMessage(handleNewMessage)
 
     return () => {
-      mounted = false;
-      offNewHumanRequest(handleHumanRequest);
-      offConversationCreated(handleNewConvo);
-      offNewMessage(handleNewMessage);
-    };
+      offNewHumanRequest(handleHumanRequest)
+      offConversationCreated(handleNewConvo)
+      offConversationUpdated(handleUpdatedConvo) 
+      offNewMessage(handleNewMessage)
+    }
   }, [
-    filter,
-    isAdmin,
-    userId,
+    reload,
     handleHumanRequest,
     handleNewConvo,
+    handleUpdatedConvo,   
     handleNewMessage,
     onNewHumanRequest,
-    onConversationCreated,
-    onNewMessage,
     offNewHumanRequest,
+    onConversationCreated,
     offConversationCreated,
-    offNewMessage
-  ]);
+    onConversationUpdated,
+    offConversationUpdated,
+    onNewMessage,
+    offNewMessage,
+  ])
 
-  return conversations;
+  return { conversations, loading, error, reload }
 }

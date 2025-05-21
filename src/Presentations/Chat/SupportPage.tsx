@@ -1,43 +1,38 @@
-
-import React, { useState, useEffect } from 'react';
-import { SignalRProvider } from '@/Context/SignalRContext';
-import { InboxList } from '@/Components/Chat/InboxList';
-import { ChatWindow } from '@/Components/Chat/ChatWindow';
-import { AssignModal } from '@/Components/Chat/AssignModal';
-import { ContactDetail } from '@/Components/Chat/ContactDetail';
-import { useUserRoles } from '@/Hooks/useUserRoles';
-import { getConversation } from '@/Utils/ApiConfig';
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
-import '@/Styles/Chat/SupportPage.css';
+import React, { useState, useEffect } from 'react'
+import { SignalRProvider } from '@/Context/SignalRContext'
+import { InboxList } from '@/Components/Chat/InboxList'
+import { ChatWindow } from '@/Components/Chat/ChatWindow'
+import { AssignModal } from '@/Components/Chat/AssignModal'
+import { ContactDetail } from '@/Components/Chat/ContactDetail'
+import { getConversation } from '@/Services/ConversationService'
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import '@/Styles/Chat/SupportPage.css'
 
 const SupportPage: React.FC = () => {
-  const [convId, setConvId] = useState<number | null>(null);
-  const [showAssign, setShowAssign] = useState(false);
-  const [conversation, setConversation] = useState<ConversationDto | null>(null);
-  const [filterOption, setFilterOption] = useState<string>('all');
-  const { isAdmin, userId } = useUserRoles();
-  const token = localStorage.getItem('accessToken') ?? '';
+  const [convId, setConvId] = useState<number | null>(null)
+  const [conversation, setConversation] = useState<ConversationDto | null>(null)
+  const [showAssign, setShowAssign] = useState(false)
+  const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
 
-  // Cargar conversación al cambiar el ID
+  const authRaw = localStorage.getItem('auth') || '{}'
+  const { accessToken: token, userId } = JSON.parse(authRaw) as { accessToken: string; userId: number }
+
   useEffect(() => {
     if (!convId) {
-      setConversation(null);
-      return;
+      setConversation(null)
+      return
     }
-
     getConversation(convId)
       .then(res => setConversation(res.data.data))
-      .catch(console.error);
-  }, [convId]);
+      .catch(console.error)
+  }, [convId])
 
-  // Función para refrescar datos después de asignar
   const handleAfterAssign = () => {
-    if (!convId) return;
-    
+    if (!convId) return
     getConversation(convId)
       .then(res => setConversation(res.data.data))
-      .catch(console.error);
-  };
+      .catch(console.error)
+  }
 
   return (
     <SignalRProvider token={token}>
@@ -45,49 +40,37 @@ const SupportPage: React.FC = () => {
         <aside className="sidebar">
           <div className="inbox-header">
             <h3 className="inbox-title">Conversaciones</h3>
-            <select 
-              className="filter-dropdown" 
-              value={filterOption}
-              onChange={(e) => setFilterOption(e.target.value)}
+            <select
+              className="filter-dropdown"
+              value={filter}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onChange={e => setFilter(e.target.value as any)}
             >
               <option value="all">Todos</option>
-              {isAdmin && (
-                <option value="pending">Sin asignar</option>
-              )}
-              <option value="mine">Asignados a mí</option>
-              <option value="closed">Cerrados</option>
+              <option value="waiting">Pendientes</option>
+              <option value="human">En espera</option>
+              <option value="closed">Cerradas</option>
             </select>
           </div>
-          <InboxList 
-            selectedId={convId ?? undefined} 
-            onSelect={setConvId} 
-            filter={filterOption} 
+          <InboxList
+            selectedId={convId ?? undefined}
+            onSelect={setConvId}
+            filter={filter}
           />
         </aside>
 
         <main className="main-content">
           <header className="main-header">
             <h2 className="main-title">Chat</h2>
-            {isAdmin && (
-              <button
-                disabled={!convId}
-                className="assign-button"
-                onClick={() => setShowAssign(true)}
-              >
-                Asignar
-              </button>
-            )}
-            {!isAdmin && conversation?.assignedAgentId?.toString() === userId && (
-              <button
-                className="close-button"
-                onClick={() => {/* Implementar cierre de conversación */}}
-              >
-                Cerrar
-              </button>
-            )}
+            <button
+              className="assign-button"
+              disabled={!convId}
+              onClick={() => setShowAssign(true)}
+            >
+              Asignar
+            </button>
           </header>
-
-          <ChatWindow conversationId={convId ?? undefined} userId={Number(userId)} />
+          <ChatWindow conversationId={convId ?? undefined} userId={userId} />
         </main>
 
         <aside className="info-sidebar">
@@ -95,16 +78,14 @@ const SupportPage: React.FC = () => {
         </aside>
       </div>
 
-      {isAdmin && (
-        <AssignModal
-          conversation={conversation ?? undefined}
-          isOpen={showAssign}
-          onClose={() => setShowAssign(false)}
-          onAssigned={handleAfterAssign}
-        />
-      )}
+      <AssignModal
+        conversation={conversation ?? undefined}
+        isOpen={showAssign}
+        onClose={() => setShowAssign(false)}
+        onAssigned={handleAfterAssign}
+      />
     </SignalRProvider>
-  );
-};
+  )
+}
 
-export default SupportPage;
+export default SupportPage
