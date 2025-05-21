@@ -36,7 +36,9 @@ export interface MessageDto {
   messageId: number;
   conversationId: number;
   senderUserId?: number;
+  SenderUserName?: string;
   senderContactId?: number;
+  SenderContactName?: string;
   isIncoming: boolean;
   content?: string;
   externalId: string;

@@ -81,7 +81,7 @@ export function useConversations(
               ? {
                   ...c,
                   totalMessages: (c.totalMessages || 0) + 1,
-                  lastActivity: msg.createdAt,
+                  lastActivity: msg.sentAt?.toString(),
                   unreadCount: (c.unreadCount || 0) + 1,
                 }
               : c

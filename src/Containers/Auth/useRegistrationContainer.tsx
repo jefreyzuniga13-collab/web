@@ -3,7 +3,7 @@ import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/Hooks/useAuth'
-import { getCompanies } from '@/Utils/ApiConfig'
+import { getCompanies } from '@/Services/CompanyService'
 import type { RegisterRequest } from '@/Interfaces/Auth/AuthInterface'
 
 interface CompanyOption {

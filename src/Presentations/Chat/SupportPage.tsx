@@ -48,7 +48,7 @@ const SupportPage: React.FC = () => {
             >
               <option value="all">Todos</option>
               <option value="waiting">Pendientes</option>
-              <option value="human">En espera</option>
+              <option value="human">Asignadas</option>
               <option value="closed">Cerradas</option>
             </select>
           </div>

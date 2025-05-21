@@ -80,17 +80,24 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       <div className="chat-window__messages">
         {messages.length > 0 && <div className="messages-date-divider">Hoy</div>}
         {messages.map((m, i) => {
-          const isOut = m.senderUserId === userId
+          //Actualizar, hay 3 positivilidades.
+          //1. Si el es un mensaje de cliente la propiedad de senderContactId tendra un valor, mientra que senderUserId sera null (Los mensajes deven de ser blancos, y poner en cada mensaje el SenderContactName)
+          //2. Si la propiedad senderUserId tiene un valor distinto a userId, obtener y poner el SenderUserName y los mensajes en color de fondo verde.
+          //3. Si senderUserId y userId son iguales, el color de fondo deve de ser auzul, y poner tambien el SenderUserName. Estos mensajes deve de estar a la derecha dado que son del usuario qe esta usando la web. Mientras que en el caso 1 y 2 deven de estar a la derecha y cada uo con un color de fondo distinto.
+          // Esto brinda una mayor separacion y distincion entre los mensajes lo cual es util, para mostrar una mejor expericia a los usuarios.
+          const isOut = m.senderUserId === userId 
           const side = isOut ? 'out' : 'in'
+          
           const prev = i > 0 ? messages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
           return (
             <div key={m.messageId} className={`message-group message-group--${side}`}>
               {showSender && !isOut && (
                 <div className="message-sender">
-                  {m.senderContactId ? m.senderContactId || 'Cliente' : m.senderUserId || 'Sistema'}
+                  {m.senderContactId ? m.SenderContactName || 'Cliente' : m.SenderUserName || 'Sistema'}
                 </div>
               )}
+              
               <div className={`chat-window__message chat-window__message--${side}`}>
                 {m.messageType === 'Media' && m.attachments?.length ? (
                   <img
