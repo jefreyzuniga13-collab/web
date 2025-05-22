@@ -1,18 +1,8 @@
-// src/Components/Chat/ContactDetail.tsx
 
 import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react'
-import type { ConversationDto, TagDto } from '@/Interfaces/Chat/ChatInterfaces'
-import {
-  getConversation,
-  updateConversationTags
-} from '@/Services/ConversationService'
-import {
-  User,
-  Clock,
-  AlertCircle,
-   //Tag as TagIcon
-} from 'lucide-react'
-import '@/Styles/Chat/ContactDetail.css'
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { getConversation, updateConversation } from '@/Services/ConversationService'
+import { User, Clock, AlertCircle, Tag, ChevronDown, Edit, X, Check, Info } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
 
 interface ContactDetailProps {
@@ -21,10 +11,11 @@ interface ContactDetailProps {
 
 export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) => {
   const [conv, setConv] = useState<ConversationDto | null>(null)
-  const [tags, setTags] = useState<TagDto[]>([])
+  const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAddingTag, setIsAddingTag] = useState(false)
 
   const {
     onConversationUpdated,
@@ -49,14 +40,17 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     }
   }, [])
 
-  // 2) Persistir cambio de etiquetas
+  // 2) Persistir cambio de etiquetas usando el PUT genérico
   const saveTags = useCallback(
-    async (updated: TagDto[]) => {
+    async (newTags: string[]) => {
       if (!conv) return
-      const tagIds = updated.map(t => t.tagId)
-      await updateConversationTags(conv.conversationId, tagIds)
-      setTags(updated)
-      setConv(v => v ? { ...v, tags: updated } : v)
+      try {
+        await updateConversation(conv.conversationId, { tags: newTags })
+        setTags(newTags)
+        setConv(v => v ? { ...v, tags: newTags } : v)
+      } catch (err) {
+        console.error('Error al guardar etiquetas:', err)
+      }
     },
     [conv]
   )
@@ -64,11 +58,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
   const handleAddTag = () => {
     const name = newTag.trim()
     if (!name) return
-    // TagId=0 como marcador; el backend puede asignar el real
-    saveTags([...tags, { tagId: 0, name }])
+    saveTags([...tags, name])
     setNewTag('')
+    setIsAddingTag(false)
   }
-  const handleRemoveTag = (tag: TagDto) => {
+
+  const handleRemoveTag = (tag: string) => {
     saveTags(tags.filter(t => t !== tag))
   }
 
@@ -104,19 +99,54 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     offConversationCreated
   ])
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddTag()
+    } else if (e.key === 'Escape') {
+      setIsAddingTag(false)
+      setNewTag('')
+    }
+  }
+
   if (!conversationId) {
     return (
-      <div className="contact-detail__empty">
-        Selecciona una conversación para ver los detalles del contacto.
+      <div className="contact-detail-empty">
+        <div className="contact-detail-empty-icon">
+          <Info size={24} />
+        </div>
+        <h3>Sin conversación seleccionada</h3>
+        <p>Selecciona una conversación para ver los detalles del contacto.</p>
       </div>
     )
   }
+  
   if (loading) {
-    return <div className="contact-detail__loading">Cargando detalles...</div>
+    return (
+      <div className="contact-detail-loading">
+        <div className="loading-spinner"></div>
+        <p>Cargando detalles...</p>
+      </div>
+    )
   }
+  
   if (error) {
-    return <div className="contact-detail__error">{error}</div>
+    return (
+      <div className="contact-detail-error">
+        <div className="error-icon">
+          <AlertCircle size={24} />
+        </div>
+        <h3>Error</h3>
+        <p>{error}</p>
+        <button 
+          className="retry-button" 
+          onClick={() => conversationId && fetchDetail(conversationId)}
+        >
+          Reintentar
+        </button>
+      </div>
+    )
   }
+  
   if (!conv) return null
 
   const createdAt = new Date(conv.createdAt).toLocaleString()
@@ -125,86 +155,165 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     : null
   const duration = conv.duration ?? '—'
 
+  const statusClass = `status-indicator status-${conv.status?.toLowerCase()}`
+
   return (
     <section className="contact-detail" aria-label="Detalles de contacto">
       <header className="contact-header">
-        <div
-          className="contact-avatar"
-          role="img"
-          aria-label="Avatar del contacto"
-        >
+        <div className="contact-avatar" role="img" aria-label="Avatar del contacto">
           {conv.clientContactName?.charAt(0).toUpperCase() || 'U'}
         </div>
         <div className="contact-info">
           <h3 className="contact-name">{conv.clientContactName || 'Usuario'}</h3>
-          <p className="contact-number">{conv.contactNumber || '—'}</p>
+          <div className="contact-meta">
+            <span className={statusClass}></span>
+            <span className="status-text">{conv.status}</span>
+          </div>
+          {conv.contactNumber && (
+            <p className="contact-number">{conv.contactNumber}</p>
+          )}
         </div>
       </header>
 
-      <div className="contact-detail__section">
-        <h4 className="section-title">Información principal</h4>
-        <ul className="info-list">
-          <li className="info-item">
-            <AlertCircle size={16} />
-            <span className="info-label">Estado:</span>{' '}
-            <span className="info-value">{conv.status}</span>
-          </li>
-          <li className="info-item">
-            <Clock size={16} />
-            <span className="info-label">Creado:</span>{' '}
-            <time className="info-value" dateTime={conv.createdAt}>
-              {createdAt}
-            </time>
-          </li>
-          {updatedAt && (
-            <li className="info-item">
-              <Clock size={16} />
-              <span className="info-label">Última actualización:</span>{' '}
-              <time className="info-value" dateTime={conv.updatedAt!}>
-                {updatedAt}
-              </time>
-            </li>
-          )}
-          {conv.assignedAgentId && (
-            <li className="info-item">
-              <User size={16} />
-              <span className="info-label">Agente asignado:</span>{' '}
-              <span className="info-value">{conv.assignedAgentName}</span>
-            </li>
-          )}
-          <li className="info-item">
-            <Clock size={16} />
-            <span className="info-label">Duración:</span>{' '}
-            <span className="info-value">{duration}</span>
-          </li>
-        </ul>
-      </div>
-
-      <div className="contact-detail__section">
-        <div className="section-header">
-          <h4 className="section-title">Etiquetas</h4>
+      <div className="contact-detail-body">
+        <div className="contact-detail-section">
+          <div className="section-header">
+            <h4 className="section-title">
+              <span className="section-icon"><Info size={16} /></span>
+              Información principal
+            </h4>
+            <button className="section-toggle">
+              <ChevronDown size={16} />
+            </button>
+          </div>
+          
+          <div className="section-content">
+            <ul className="info-list">
+              <li className="info-item">
+                <div className="info-item-icon">
+                  <Clock size={16} />
+                </div>
+                <div className="info-item-content">
+                  <span className="info-label">Creado</span>
+                  <time className="info-value" dateTime={conv.createdAt}>
+                    {createdAt}
+                  </time>
+                </div>
+              </li>
+              
+              {updatedAt && (
+                <li className="info-item">
+                  <div className="info-item-icon">
+                    <Clock size={16} />
+                  </div>
+                  <div className="info-item-content">
+                    <span className="info-label">Última actualización</span>
+                    <time className="info-value" dateTime={conv.updatedAt!}>
+                      {updatedAt}
+                    </time>
+                  </div>
+                </li>
+              )}
+              
+              {conv.assignedAgentId && (
+                <li className="info-item">
+                  <div className="info-item-icon">
+                    <User size={16} />
+                  </div>
+                  <div className="info-item-content">
+                    <span className="info-label">Agente asignado</span>
+                    <span className="info-value info-value-highlight">{conv.assignedAgentName}</span>
+                  </div>
+                </li>
+              )}
+              
+              <li className="info-item">
+                <div className="info-item-icon">
+                  <Clock size={16} />
+                </div>
+                <div className="info-item-content">
+                  <span className="info-label">Duración</span>
+                  <span className="info-value">{duration}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div className="tag-editor">
-          {tags.map(tag => (
-            <span key={`${tag.tagId}-${tag.name}`} className="tag">
-              {tag.name}
-              <button
-                className="tag-remove"
-                onClick={() => handleRemoveTag(tag)}
-              >×</button>
-            </span>
-          ))}
-          <input
-            className="tag-input"
-            value={newTag}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setNewTag(e.target.value)
-            }
-            placeholder="Nueva etiqueta..."
-          />
-          <button className="tag-add" onClick={handleAddTag}>
-            Añadir
-          </button>
+        
+        <div className="contact-detail-section">
+          <div className="section-header">
+            <h4 className="section-title">
+              <span className="section-icon"><Tag size={16} /></span>
+              Etiquetas
+            </h4>
+            {!isAddingTag && (
+              <button 
+                className="section-action"
+                onClick={() => setIsAddingTag(true)}
+              >
+                <Edit size={14} />
+                <span>Editar</span>
+              </button>
+            )}
+          </div>
+          
+          <div className="section-content">
+            <div className="tags-container">
+              {tags.length === 0 ? (
+                <p className="empty-tags">No hay etiquetas</p>
+              ) : (
+                <div className="tag-list">
+                  {tags.map(tag => (
+                    <div key={tag} className="tag">
+                      <span className="tag-text">{tag}</span>
+                      {isAddingTag && (
+                        <button
+                          className="tag-remove"
+                          onClick={() => handleRemoveTag(tag)}
+                          aria-label={`Eliminar etiqueta ${tag}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {isAddingTag && (
+                <div className="tag-editor">
+                  <div className="tag-input-container">
+                    <input
+                      className="tag-input"
+                      value={newTag}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)}
+                      placeholder="Nueva etiqueta..."
+                      autoFocus
+                      onKeyDown={handleKeyDown}
+                    />
+                    <div className="tag-input-actions">
+                      <button 
+                        className="tag-action-btn tag-add-btn" 
+                        onClick={handleAddTag}
+                        disabled={!newTag.trim()}
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button 
+                        className="tag-action-btn tag-cancel-btn" 
+                        onClick={() => {
+                          setNewTag('');
+                          setIsAddingTag(false);
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>

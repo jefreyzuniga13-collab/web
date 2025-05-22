@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react'
+import {jwtDecode} from 'jwt-decode'
 import { SignalRProvider } from '@/Context/SignalRContext'
 import { InboxList } from '@/Components/Chat/InboxList'
 import { ChatWindow } from '@/Components/Chat/ChatWindow'
 import { AssignModal } from '@/Components/Chat/AssignModal'
 import { ContactDetail } from '@/Components/Chat/ContactDetail'
-import { getConversation } from '@/Services/ConversationService'
+import { getConversation, closeConversation } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/SupportPage.css'
+
+interface AuthStorage {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  userId: number
+}
+
+interface JwtPayload {
+  role: string
+  // otros claims si los necesitas...
+}
 
 const SupportPage: React.FC = () => {
   const [convId, setConvId] = useState<number | null>(null)
@@ -14,8 +27,13 @@ const SupportPage: React.FC = () => {
   const [showAssign, setShowAssign] = useState(false)
   const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
 
+  // 1) Lee el objeto auth del localStorage
   const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken: token, userId } = JSON.parse(authRaw) as { accessToken: string; userId: number }
+  const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
+
+  // 2) Decodifica el token y obtén el role
+  const { role } = jwtDecode<JwtPayload>(accessToken)
+  const isAdmin = role.toLowerCase() === 'admin'
 
   useEffect(() => {
     if (!convId) {
@@ -34,8 +52,22 @@ const SupportPage: React.FC = () => {
       .catch(console.error)
   }
 
+  // 3) Manejador unificado para Asignar/Cerrar
+  const handleAssignClick = () => {
+    if (!convId) return
+
+    if (isAdmin) {
+      setShowAssign(true)
+    } else {
+      // usuarios no-admin sólo cierran la conversación
+      closeConversation(convId)
+        .then(handleAfterAssign)
+        .catch(console.error)
+    }
+  }
+
   return (
-    <SignalRProvider token={token}>
+    <SignalRProvider token={accessToken}>
       <div className="support-layout">
         <aside className="sidebar">
           <div className="inbox-header">
@@ -65,9 +97,9 @@ const SupportPage: React.FC = () => {
             <button
               className="assign-button"
               disabled={!convId}
-              onClick={() => setShowAssign(true)}
+              onClick={handleAssignClick}
             >
-              Asignar
+              {isAdmin ? 'Asignar' : 'Cerrar'}
             </button>
           </header>
           <ChatWindow conversationId={convId ?? undefined} userId={userId} />

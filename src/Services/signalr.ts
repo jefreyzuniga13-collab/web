@@ -9,6 +9,7 @@ const HUB_BASE = API_URL.replace(/\/api\/v1$/, '');
 
 let chatConnection: signalR.HubConnection | null = null;
 let notificationsConnection: signalR.HubConnection | null = null;
+let presenceConnection: signalR.HubConnection | null = null;
 
 export async function createHubConnection(token: string) {
   chatConnection = new signalR.HubConnectionBuilder()
@@ -21,11 +22,9 @@ export async function createHubConnection(token: string) {
   chatConnection.onreconnecting(error => {
     console.warn('Reconnecting to Chat Hub...', error);
   });
-
   chatConnection.onreconnected(() => {
     console.info('Reconnected to Chat Hub');
   });
-
   chatConnection.onclose(error => {
     console.error('Chat Hub connection closed', error);
     toast.warn("La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.");
@@ -41,19 +40,38 @@ export async function createHubConnection(token: string) {
   notificationsConnection.onreconnecting(error => {
     console.warn('Reconnecting to Notifications Hub...', error);
   });
-
   notificationsConnection.onreconnected(() => {
     console.info('Reconnected to Notifications Hub');
   });
-
   notificationsConnection.onclose(error => {
     console.error('Notifications Hub connection closed', error);
   });
 
+  presenceConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${HUB_BASE}/hubs/presence`, {
+      accessTokenFactory: () => token
+    })
+    .withAutomaticReconnect()
+    .build();
+
+  presenceConnection.onreconnecting(error => {
+    console.warn('Reconnecting to Presence Hub...', error);
+  });
+  presenceConnection.onreconnected(() => {
+    console.info('Reconnected to Presence Hub');
+  });
+  presenceConnection.onclose(error => {
+    console.warn('Presence Hub connection closed', error);
+  });
+
   try {
-    await chatConnection.start();
-    // await notificationsConnection.start();
-    return { chatConnection, notificationsConnection };
+    // Arrancamos todas las conexiones en paralelo
+    await Promise.all([
+      chatConnection.start(),
+      // notificationsConnection?.start(),
+      presenceConnection.start(),
+    ]);
+    return { chatConnection, notificationsConnection, presenceConnection };
   } catch (error) {
     console.error("Error starting SignalR connections:", error);
     throw error;
@@ -93,6 +111,12 @@ export function onConversationCreated(
   chatConnection?.on('ConversationCreated', handler);
 }
 
+export function offConversationCreated(
+  handler: (convo: ConversationDto) => void
+) {
+  chatConnection?.off('ConversationCreated', handler);
+}
+
 export function onConversationUpdated(
   handler: (c: ConversationDto) => void
 ) {
@@ -103,12 +127,6 @@ export function offConversationUpdated(
   handler: (c: ConversationDto) => void
 ) {
   chatConnection?.off('ConversationUpdated', handler);
-}
-
-export function offConversationCreated(
-  handler: (convo: ConversationDto) => void
-) {
-  chatConnection?.off('ConversationCreated', handler);
 }
 
 export function onNewHumanRequest(

@@ -6,8 +6,11 @@ import type {
 } from '@/Interfaces/Chat/ChatInterfaces'
 import { getAgents } from '@/Services/AgentService'
 import { assignAgent } from '@/Services/ConversationService'
+import { useUserPresence } from '@/Hooks/useUserPresence'
+import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
 import '@/Styles/Chat/AssignModal.css'
+import { AgentOption } from '@/Components/Chat/AgentOption'
 
 interface AssignModalProps {
   conversation?: ConversationDto
@@ -26,16 +29,20 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   const [sel, setSel] = useState<string>('')
   const [status, setStatus] = useState<ConversationStatus>('Bot')
 
-  // Todas las opciones de estado con su etiqueta
+  // Hook para presencia del agente seleccionado (solo primera carga)
+  const { isOnline: selectedIsOnline } = useUserPresence(
+    sel ? Number(sel) : 0,
+    0
+  )
+
   const statusOptions: { value: ConversationStatus; label: string }[] = [
-    { value: 'New', label: 'Nuevo' },
-    { value: 'Bot', label: 'Bot' },
+    { value: 'New',     label: 'Nuevo'     },
+    { value: 'Bot',     label: 'Bot'       },
     { value: 'Waiting', label: 'Esperando' },
-    { value: 'Human', label: 'Humano' },
-    { value: 'Closed', label: 'Cerrado' },
+    { value: 'Human',   label: 'Humano'    },
+    { value: 'Closed',  label: 'Cerrado'   },
   ]
 
-  // Cuando se abre el modal, precargamos valores y cargamos agentes
   useEffect(() => {
     if (!isOpen || !conversation) return
 
@@ -49,12 +56,19 @@ export const AssignModal: React.FC<AssignModalProps> = ({
 
   const handleAssign = async () => {
     if (!conversation || !sel) return
+
+    if (!selectedIsOnline) {
+      toast.error('No puedes asignar un agente que está desconectado.')
+      return
+    }
+
     try {
       await assignAgent(conversation.conversationId, sel, status)
+      toast.success('Agente asignado correctamente.')
       onAssigned?.()
       onClose()
-    } catch (err) {
-      console.error('Error al asignar agente:', err)
+    } catch {
+      toast.error('Error al asignar agente.')
     }
   }
 
@@ -67,8 +81,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
           <h2 className="assign-modal__title">
             Asignar agente a{' '}
             <strong>
-              {conversation?.clientContactName ??
-                `#${conversation?.conversationId}`}
+              {conversation?.clientContactName ?? `#${conversation?.conversationId}`}
             </strong>
           </h2>
           <button
@@ -92,15 +105,20 @@ export const AssignModal: React.FC<AssignModalProps> = ({
           >
             <option value="">— Selecciona un agente —</option>
             {agents.map(agent => (
-              <option key={agent.userId} value={agent.userId}>
-                {agent.fullName} ({agent.email})
-              </option>
+              <AgentOption key={agent.userId} agent={agent} />
             ))}
           </select>
+          {sel && !selectedIsOnline && (
+            <p className="assign-modal__warning">
+              ⚠️ Este agente no está conectado.
+            </p>
+          )}
         </div>
 
         <div className="assign-modal__field">
-          <label className="assign-modal__label">Estado de la conversación</label>
+          <label className="assign-modal__label">
+            Estado de la conversación
+          </label>
           <div className="assign-modal__status">
             {statusOptions.map(opt => (
               <div className="status-option" key={opt.value}>
@@ -136,8 +154,9 @@ export const AssignModal: React.FC<AssignModalProps> = ({
             onClick={handleAssign}
             disabled={
               !sel ||
+              !selectedIsOnline ||
               (status === conversation?.status &&
-                sel === conversation.assignedAgentId?.toString())
+               sel === conversation.assignedAgentId?.toString())
             }
           >
             Guardar cambios

@@ -1,5 +1,5 @@
 import api from '@/Utils/ApiConfig';
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import type { ConversationDto, UpdateConversationRequest } from '@/Interfaces/Chat/ChatInterfaces';
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>('/Conversations/getByRole');
@@ -33,13 +33,13 @@ export function closeConversation(conversationId: number) {
   return api.put(`/Conversations/${conversationId}/close`);
 }
 
-export function updateConversationTags(
+
+export function getAssignedCount(agentUserId: number) {
+  return api.get<number>(`/Conversations/${agentUserId}/assigned-count`);
+}
+export function updateConversation(
   conversationId: number,
-  tagIds: number[]
+  payload: Partial<UpdateConversationRequest>
 ) {
-  return api.put(
-    `/Conversations/${conversationId}`,
-    { TagIds: tagIds },
-    { params: { } }
-  )
+  return api.put(`/Conversations/${conversationId}`, payload)
 }

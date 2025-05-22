@@ -29,9 +29,17 @@ export interface ConversationDto {
   isClosed: boolean
   unreadCount?: number
   messages?: MessageDto[]
-  tags?: TagDto[]
+  tags: string[];
 }
-
+export interface UpdateConversationRequest {
+  conversationId: number
+  priority?: string;
+  initialized?: boolean
+  status?: ConversationStatus
+  assignedAgentId?: number
+  tags?: string[]
+  isArchived?: boolean
+}
 export interface MessageDto {
   messageId: number;
   conversationId: number;
@@ -106,4 +114,21 @@ export interface NotificationsResponse {
 export interface TagDto {
   tagId: number
   name: string
+}
+
+export interface MenuItemProps {
+  icon: React.ReactNode;
+  text: string;
+  onClick?: () => void;
+  selectedOption: string;
+}
+
+
+export interface MenuDto {
+  menuId: number;
+  name: string;
+  description: string;
+  url: string;
+  index: string;
+  icon: string;
 }

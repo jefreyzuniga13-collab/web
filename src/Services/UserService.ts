@@ -48,6 +48,11 @@ class UserService {
     const { data } = await api.get<ApiResponse<UserHistoryItem[]>>(`/Users/${userId}/history`);
     return data.data;
   }
+
+  async getUserStatus(userId: number): Promise<{ lastOnline: string, isOnline: boolean }> {
+    const { data } = await api.get<{ lastOnline: string, isOnline: boolean }>(`/Users/${userId}/status`);
+    return data;
+  }
 }
 
 export const userService = new UserService();

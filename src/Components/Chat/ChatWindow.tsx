@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import useMessages from '@/Hooks/useMessages'
 import { sendText, sendMedia } from '@/Services/MessageService'
@@ -37,6 +38,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         setText('')
         fileInputRef.current!.value = ''
       } else if (text.trim()) {
+        console.log("ID de conversacion es: ", conversationId);
+        console.log("ID de serder desde el chatWindows es: ", userId);
+
         await sendText({
           conversationId,
           senderId: userId,
@@ -65,6 +69,32 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     return null
   }
 
+  const getMessageClassName = (m: MessageDto) => {
+    // Caso 1: Mensaje de cliente
+    if (m.senderContactId) {
+      return 'chat-window__message chat-window__message--client'
+    }
+    // Caso 2: Mensaje de otro agente
+    else if (m.senderUserId && m.senderUserId !== userId) {
+      return 'chat-window__message chat-window__message--agent'
+    }
+    // Caso 3: Mensaje del usuario actual
+    else {
+      return 'chat-window__message chat-window__message--out'
+    }
+  }
+
+  const getMessagePosition = (m: MessageDto) => {
+    // Si es del usuario actual, va a la derecha
+    if (m.senderUserId === userId) {
+      return 'message-group message-group--out'
+    } 
+    // Todos los demás van a la izquierda
+    else {
+      return 'message-group message-group--in'
+    }
+  }
+
   if (!conversationId) {
     return (
       <div className="chat-empty-state">
@@ -80,37 +110,34 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       <div className="chat-window__messages">
         {messages.length > 0 && <div className="messages-date-divider">Hoy</div>}
         {messages.map((m, i) => {
-          //Actualizar, hay 3 positivilidades.
-          //1. Si el es un mensaje de cliente la propiedad de senderContactId tendra un valor, mientra que senderUserId sera null (Los mensajes deven de ser blancos, y poner en cada mensaje el SenderContactName)
-          //2. Si la propiedad senderUserId tiene un valor distinto a userId, obtener y poner el SenderUserName y los mensajes en color de fondo verde.
-          //3. Si senderUserId y userId son iguales, el color de fondo deve de ser auzul, y poner tambien el SenderUserName. Estos mensajes deve de estar a la derecha dado que son del usuario qe esta usando la web. Mientras que en el caso 1 y 2 deven de estar a la derecha y cada uo con un color de fondo distinto.
-          // Esto brinda una mayor separacion y distincion entre los mensajes lo cual es util, para mostrar una mejor expericia a los usuarios.
-          const isOut = m.senderUserId === userId 
-          const side = isOut ? 'out' : 'in'
-          
+          const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? messages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
+          
           return (
-            <div key={m.messageId} className={`message-group message-group--${side}`}>
-              {showSender && !isOut && (
+            <div key={m.messageId} className={getMessagePosition(m)}>
+              {showSender && !isCurrentUser && (
                 <div className="message-sender">
                   {m.senderContactId ? m.SenderContactName || 'Cliente' : m.SenderUserName || 'Sistema'}
                 </div>
               )}
               
-              <div className={`chat-window__message chat-window__message--${side}`}>
+              <div className={getMessageClassName(m)}>
                 {m.messageType === 'Media' && m.attachments?.length ? (
-                  <img
-                    src={m.attachments[0].mediaUrl}
-                    // alt={m.caption || ''}
-                    className="chat-window__image"
-                  />
+                  <div className="message-media-container">
+                    <img
+                      src={m.attachments[0].mediaUrl}
+                      alt="Media attachment"
+                      className="chat-window__image"
+                    />
+                    {m.content && <p className="chat-window__text message-caption">{m.content}</p>}
+                  </div>
                 ) : (
                   <p className="chat-window__text">{m.content}</p>
                 )}
                 <div className="message-info">
-                  {getStatusIcon(m, isOut)}
-                  <span className={`message-time message-time--${side}`}>
+                  {getStatusIcon(m, isCurrentUser)}
+                  <span className="message-time">
                     {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -120,8 +147,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         })}
         <div ref={bottomRef} />
       </div>
+      
       <div className="chat-window__composer">
-        <label htmlFor="file-upload" className="attachment-button">
+        <label htmlFor="file-upload" className="attachment-button" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
         <input
@@ -132,6 +160,18 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           onChange={handleFileChange}
           disabled={!conversationId || sending}
         />
+        
+        {file && (
+          <div className="file-preview">
+            <span className="file-name">{file.name}</span>
+            <button 
+              className="file-remove" 
+              onClick={() => setFile(null)} 
+              aria-label="Eliminar archivo"
+            >×</button>
+          </div>
+        )}
+        
         <div className="chat-window__input-wrap">
           <input
             type="text"
@@ -143,6 +183,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             disabled={!conversationId || sending}
           />
         </div>
+        
         <button
           className="chat-window__send"
           onClick={handleSend}
