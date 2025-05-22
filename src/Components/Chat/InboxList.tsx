@@ -1,5 +1,3 @@
-// src/Components/Chat/InboxList.tsx
-
 import React from 'react'
 import { useConversations } from '@/Hooks/useConversations'
 import '@/Styles/Chat/InboxList.css'
@@ -19,6 +17,7 @@ export const InboxList: React.FC<Props> = ({
 }) => {
   // ① Desestructuramos el resultado para extraer el array de conversaciones
   const { conversations } = useConversations(filter)
+  console.log("Conversaciones componenes", conversations)
 
   // Formatea hora de última actividad
   const formatTime = (iso?: string) => {

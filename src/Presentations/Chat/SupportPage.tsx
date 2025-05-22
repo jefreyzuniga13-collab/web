@@ -18,7 +18,6 @@ interface AuthStorage {
 
 interface JwtPayload {
   role: string
-  // otros claims si los necesitas...
 }
 
 const SupportPage: React.FC = () => {

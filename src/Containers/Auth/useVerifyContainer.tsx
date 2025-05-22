@@ -14,6 +14,7 @@ export default function useVerifyContainer() {
 
   useEffect(() => {
     const token = searchParams.get('token') ?? ''
+    
     if (!token) {
       navigate('/login', { replace: true })
       return

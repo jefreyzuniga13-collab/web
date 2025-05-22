@@ -45,9 +45,9 @@ export interface RegisterRequest {
   export type ForgotPasswordResponse = ApiResponse<string>
   
   export interface ResetPasswordRequest {
-    token: string
-    newPassword: string
-    confirmNewPassword:string
+    token: string;
+    newPassword: string;
+    confirmNewPassword:string;
   }
   
   export type ResetPasswordResponse = ApiResponse<string>
@@ -65,4 +65,10 @@ export interface RegisterForm {
   companyId: number
   phone:     string
   identifier:string
+}
+
+export interface RoleResponseDto {
+  roleId: number;
+  roleName: string;
+  description: string;
 }

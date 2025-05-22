@@ -33,9 +33,9 @@ export function AppRouter() {
         <Route path="/verify-account"  element={<Activation />} />
         <Route path="/unauthorized"    element={<Unauthorized />} />
           <Route element={<MainLayout />}>
-            <Route index element={<Navigate to="Dashboard" replace />} />
-            <Route path="Dashboard" element={<DashboardPresentation />} />
-            <Route path="Chat"      element={<SupportPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPresentation />} />
+            <Route path="chat"      element={<SupportPage />} />
             <Route path="users"  element={<UsersPage />} />
           </Route>
 

@@ -1,10 +1,11 @@
-
-import React from 'react';
-import Button from '@/Components/Common/Button';
-import '@/Styles/Users/DeleteConfirmation.css';
+import React from "react";
+import Button from "@/Components/Common/Button";
+import "@/Styles/Users/DeleteConfirmation.css";
+import { CirclePower } from "lucide-react";
 
 interface DeleteConfirmationProps {
   userName: string;
+  isActive: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   loading: boolean;
@@ -12,6 +13,7 @@ interface DeleteConfirmationProps {
 
 const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   userName,
+  isActive,
   onConfirm,
   onCancel,
   loading,
@@ -19,25 +21,59 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   return (
     <div className="delete-confirmation">
       <div className="delete-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-          <line x1="10" y1="11" x2="10" y2="17" />
-          <line x1="14" y1="11" x2="14" y2="17" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+         <CirclePower/>
         </svg>
       </div>
-      <h3>Eliminar usuario</h3>
-      <p>
-        ¿Estás seguro que deseas eliminar a <strong>{userName}</strong>?
-      </p>
-      <p className="delete-warning">
-        Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados a este usuario.
-      </p>
+
+      {isActive ? (
+        <>
+          <h3>Desactivar usuario</h3>
+          <p>
+            ¿Estás seguro que deseas desactivar a <strong>{userName}</strong>?
+          </p>
+          <p className="delete-warning">
+            Si dedactiva el usuario no podra accceder al sistama, hasta que sea
+            activado nuevamente. Por favor tome en cuenta este hecho antes de
+            seguir.
+          </p>
+        </>
+      ) : (
+        <>
+          <p>
+            <h3>Activar usuario</h3>
+            ¿Estás seguro que deseas activar a <strong>{userName}</strong>?
+          </p>
+          <p className="acivaion-warning">
+            Activar el usuario recupera todos los accesos que se le asignaron,
+            verifique que los permisos asignado actualmente seran autorizados
+            para el usaurio a activar
+          </p>
+        </>
+      )}
+
       <div className="delete-actions">
-        <Button type="button" variant="tertiary" onClick={onCancel} disabled={loading}>
+        <Button
+          type="button"
+          variant="tertiary"
+          onClick={onCancel}
+          disabled={loading}
+        >
           Cancelar
         </Button>
-        <Button type="button" variant="destructive" onClick={onConfirm} disabled={loading}>
-          {loading ? 'Eliminando...' : 'Eliminar'}
+        <Button
+          type="button"
+          variant="primary"
+          onClick={onConfirm}
+          disabled={loading}
+        >
+          {loading ? "Actualizando..." : "Actualizar"}
         </Button>
       </div>
     </div>

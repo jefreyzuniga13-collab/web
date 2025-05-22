@@ -25,7 +25,7 @@ const Navbar: React.FC = () => {
     // Cerrar sesión
     if (text.toLowerCase().includes('cerrar')) {
       dispatch(logout())
-      navigate('/login')
+      navigate('/login', {replace: true})
       return
     }
     navigate(`/${url}`)
@@ -41,12 +41,14 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className={`navbar ${collapsed ? 'collapsed' : ''}`}>
+      
       <div className="menu-header">
         <img
           src="https://i.ibb.co/B5tvT539/logopcg.webp"
           alt="PC Group S.A logo"
           className="menu-logo"
         />
+
         <button className="collapse-button" onClick={handleCollapse}>
           {collapsed 
             ? <SquareArrowRight size={20} /> 

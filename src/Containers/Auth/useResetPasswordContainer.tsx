@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useFormik } from 'formik'
@@ -15,8 +15,8 @@ export default function useResetContainer() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  // Extrae el token de la URL sólo una vez
-  const token = useMemo(() => searchParams.get('token') ?? '', [searchParams])
+    let token = searchParams.get('token') ?? ''
+    token = token.replace(/ /g, '+')
 
   useEffect(() => {
     if (!token) {

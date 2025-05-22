@@ -1,5 +1,3 @@
-// src/Context/SignalRContext.tsx
-
 import React, {
   createContext,
   useContext,
@@ -29,7 +27,7 @@ import type {
   AttachmentDto,
   ConversationDto
 } from '@/Interfaces/Chat/ChatInterfaces'
-import { ThreeDot } from 'react-loading-indicators'
+//import { ThreeDot } from 'react-loading-indicators'
 
 interface SignalRContextValue {
   joinConversation: (id: number) => void
@@ -101,9 +99,10 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
 
   if (!ready) {
     return (
-      <div className="loader-container">
-        <ThreeDot color="#3142cc" size="medium" />
-      </div>
+      // <div className="loader-container">
+      //   <ThreeDot color="#3142cc" size="medium" />
+      // </div>
+      <></>
     )
   }
 

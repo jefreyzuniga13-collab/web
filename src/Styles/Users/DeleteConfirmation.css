@@ -11,7 +11,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(68, 85, 239, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,7 +21,7 @@
 .delete-icon svg {
   width: 30px;
   height: 30px;
-  color: var(--color-red-primary, #ef4444);
+  color: var(--color-red-primary, #446cef);
 }
 
 .delete-confirmation h3 {
@@ -35,11 +35,19 @@
   color: var(--text-secondary, #6b7280);
 }
 
-.delete-warning {
+.delete-warning, .acivaion-warning {
   padding: 10px;
   border-radius: 6px;
-  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.delete-warning{
+    background-color: rgba(239, 68, 68, 0.1);
   color: var(--color-red-primary, #ef4444);
+}
+
+.acivaion-warning {
+    background-color: rgba(88, 239, 68, 0.3);
+  color: var(--greenColor, #58d438);
 }
 
 .delete-actions {

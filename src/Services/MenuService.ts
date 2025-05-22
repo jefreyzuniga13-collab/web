@@ -1,4 +1,3 @@
-// src/Services/MenuService.ts
 import api from '@/Utils/ApiConfig'
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
 import type { MenuDto } from '@/Interfaces/Chat/ChatInterfaces'

@@ -1,5 +1,3 @@
-// src/Hooks/useConversations.ts
-
 import { useState, useEffect, useCallback } from 'react'
 import { getConversationsByRole } from '@/Services/ConversationService'
 import { useSignalR } from '@/Context/SignalRContext'
@@ -24,6 +22,7 @@ export function useConversations(
   const [conversations, setConversations] = useState<ConversationDto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
+
 
   const {
     onConversationCreated,

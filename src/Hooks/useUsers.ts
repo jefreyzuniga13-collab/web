@@ -24,7 +24,7 @@ export const useUsers = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUserDetail, setShowUserDetail] = useState(false);
   const [tempUserData, setTempUserData] = useState<User | null>(null);
-
+  
   useEffect(() => {
     loadUsers();
     loadRoles();

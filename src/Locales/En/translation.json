@@ -1,7 +1,7 @@
 {
   "login": {
     "title": "Welcome Back!",
-    "subtitle": "Log in to your ChatBox Support Dashboard",
+    "subtitle": "Log in to your ChatBot Support Dashboard",
     "description": "Manage all our conversations in one place, improve response times, and optimize your workflow.",
     "imageAlt": "Illustration of customer support chat",
     "emailLabel": "Email Address",

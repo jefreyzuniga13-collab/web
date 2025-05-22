@@ -31,7 +31,7 @@ class UserService {
   }
 
   async deleteUserAsync(userId: number): Promise<void> {
-    await api.delete(`/Users/${userId}`);
+    await api.patch(`/Users/${userId}`);
   }
 
   async getRolesAsync(): Promise<{ roleId: number, roleName: string }[]> {

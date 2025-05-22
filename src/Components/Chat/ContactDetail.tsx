@@ -4,7 +4,7 @@ import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { getConversation, updateConversation } from '@/Services/ConversationService'
 import { User, Clock, AlertCircle, Tag, ChevronDown, Edit, X, Check, Info } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
-
+import '@/Styles/Chat/ContactDetail.css'
 interface ContactDetailProps {
   conversationId?: number
 }

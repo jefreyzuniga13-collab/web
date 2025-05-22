@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Eye, Edit, Trash, Check, X } from 'lucide-react';
+import { Eye, Edit, Check, X, CirclePower } from 'lucide-react';
 import type { User } from '@/Interfaces/User/UserInterfaces';
 import '@/Styles/Users/UserTable.css';
 
@@ -96,7 +96,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onDelete, onView, 
                     <Edit size={16} />
                   </button>
                   <button className="action-btn delete" onClick={() => onDelete(user)}>
-                    <Trash size={16} />
+                    <CirclePower size={16}/>
                   </button>
                 </div>
               </td>

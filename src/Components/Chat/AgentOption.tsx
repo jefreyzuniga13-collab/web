@@ -1,4 +1,3 @@
-// src/Components/Chat/AgentOption.tsx
 import React from 'react'
 import type { AgentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { useUserPresence } from '@/Hooks/useUserPresence'

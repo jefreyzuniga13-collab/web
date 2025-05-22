@@ -12,6 +12,8 @@ import Input from '@/Components/Common/Input2';
 import { Search, UserPlus } from 'lucide-react';
 import Spinner from '@/Components/Common/Spinner';
 import '@/Styles/Users/UsersPage.css';
+import {useRoles} from '@/Hooks/useRoles'
+
 
 const UsersPage: React.FC = () => {
   const {
@@ -20,7 +22,7 @@ const UsersPage: React.FC = () => {
     loading,
     error,
     pagination,
-    roles,
+    // roles,
     companies,
     searchQuery,
     showCreateModal,
@@ -40,6 +42,8 @@ const UsersPage: React.FC = () => {
     closeModals,
     setShowUserDetail
   } = useUsers();
+
+  const {roles} = useRoles();
 
   const [searchInput, setSearchInput] = useState('');
   
@@ -170,6 +174,7 @@ const UsersPage: React.FC = () => {
         {tempUserData && (
           <DeleteConfirmation
             userName={tempUserData.fullName}
+            isActive={tempUserData.isActive}
             onConfirm={() => handleDeleteUser(tempUserData.userId)}
             onCancel={closeModals}
             loading={loading}
