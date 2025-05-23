@@ -1,27 +1,34 @@
-import React from 'react'
-import type { MenuItemProps } from '@/Interfaces/Chat/ChatInterfaces'
+import React from 'react';
+
+export interface MenuItemProps {
+  icon: React.ReactNode;
+  text: string;
+  onClick?: () => void;
+  selected?: boolean;
+  badge?: number;
+}
 
 const MenuItem: React.FC<MenuItemProps> = ({
   icon,
   text,
   onClick,
-  selectedOption
+  selected,
+  badge
 }) => (
   <li
-    className={`menu-item ${selectedOption === text ? 'selected' : ''}`}
+    className={`menu-item ${selected ? 'selected' : ''}`}
     onClick={onClick}
   >
     <div className="menu-item-content">
       {icon}
-      <span
-        className={`menu-item-text ${
-          text.toLowerCase().includes('cerrar') ? 'cerrar-sesion' : ''
-        }`}
-      >
+      <span className="menu-item-text">
         {text}
       </span>
+      {badge != null && (
+        <span className="menu-item-badge">{badge}</span>
+      )}
     </div>
   </li>
-)
+);
 
-export default MenuItem
+export default MenuItem;

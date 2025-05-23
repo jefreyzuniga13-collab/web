@@ -7,6 +7,7 @@ export const AgentOption: React.FC<{ agent: AgentDto }> = ({ agent }) => {
   const { isOnline } = useUserPresence(agent.userId)
   const count = useAssignedCount(agent.userId)
 
+  console.log("El  id del usauri es:", agent.userId);
   return (
     <option value={agent.userId}>
       {/* • verde=online, gris=offline */}

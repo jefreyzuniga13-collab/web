@@ -31,9 +31,8 @@ export const AssignModal: React.FC<AssignModalProps> = ({
 
   // Hook para presencia del agente seleccionado (solo primera carga)
   const { isOnline: selectedIsOnline } = useUserPresence(
-    sel ? Number(sel) : 0,
-    0
-  )
+  sel ? Number(sel) : 0
+)
 
   const statusOptions: { value: ConversationStatus; label: string }[] = [
     { value: 'New',     label: 'Nuevo'     },

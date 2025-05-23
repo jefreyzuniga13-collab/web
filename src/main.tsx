@@ -7,8 +7,11 @@ import { store } from '@/Context'
 import './i18n'
 import '@/index.css'
 import { setupResponseInterceptor } from '@/Interceptors/responseInterceptor'
+import { setupRequestInterceptor }  from '@/Interceptors/requestInterceptor'
+
 
 setupResponseInterceptor();
+setupRequestInterceptor();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

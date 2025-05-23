@@ -1,32 +1,49 @@
-import { useState, useEffect } from 'react'
-import { userService } from '@/Services/UserService'
+// src/Hooks/useUserPresence.ts
+import { useEffect, useState } from 'react'
+import api from '@/Utils/ApiConfig'
+import { presenceConnection } from '@/Services/signalr'
 
-export function useUserPresence(userId: number, pollInterval = 60_000) {
-  const [presence, setPresence] = useState<{ isOnline: boolean; lastOnline?: string }>({
-    isOnline: false
-  })
+interface PresenceResponse {
+  isOnline: boolean
+  lastOnline: string | null
+}
 
+export function useUserPresence(userId: number) {
+  const [isOnline, setIsOnline] = useState(false)
+  const [lastOnline, setLastOnline] = useState<Date | null>(null)
+
+  // 1) Fetch inicial
   useEffect(() => {
-    let mounted = true
-    const fetch = async () => {
-      try {
+    if (!userId) return
+    api.get<PresenceResponse>(`/presence/${userId}`)
+      .then(res => {
+        setIsOnline(res.data.isOnline)
+        setLastOnline(res.data.lastOnline ? new Date(res.data.lastOnline) : null)
+      })
+      .catch(console.error)
+  }, [userId])
 
-        const { isOnline, lastOnline } = await userService.getUserStatus(1)
-
-        if (mounted) setPresence({ isOnline, lastOnline })
-      } catch (e) {
-        console.error('Error fetching presence', e)
+  // 2) Suscripción a eventos
+  useEffect(() => {
+    if (!userId) return
+    const onConnect = (id: number) => {
+      if (id === userId) setIsOnline(true)
+    }
+    const onDisconnect = (id: number) => {
+      if (id === userId) {
+        setIsOnline(false)
+        setLastOnline(new Date())
       }
     }
-    fetch()
-    const timer = setInterval(fetch, pollInterval)
+
+    presenceConnection?.on('UserConnected', onConnect)
+    presenceConnection?.on('UserDisconnected', onDisconnect)
+
     return () => {
-      mounted = false
-      clearInterval(timer)
+      presenceConnection?.off('UserConnected', onConnect)
+      presenceConnection?.off('UserDisconnected', onDisconnect)
     }
+  }, [userId])
 
-    console.log("Desde useUserPresence");
-  }, [userId, pollInterval])
-
-  return presence
+  return { isOnline, lastOnline }
 }

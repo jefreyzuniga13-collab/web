@@ -53,6 +53,10 @@ class UserService {
     const { data } = await api.get<{ lastOnline: string, isOnline: boolean }>(`/Users/${userId}/status`);
     return data;
   }
+  
 }
+
+export const getUserStatus = (userId: number) =>
+  api.get<{ isOnline: boolean; lastOnline?: string }>(`/users/${userId}/presence`);
 
 export const userService = new UserService();

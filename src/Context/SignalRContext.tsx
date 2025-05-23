@@ -1,10 +1,11 @@
+// src/Context/SignalRContext.tsx
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
   type ReactNode
-} from 'react'
+} from 'react';
 import {
   createHubConnection,
   joinConversation,
@@ -15,51 +16,50 @@ import {
   offNewHumanRequest,
   onConversationCreated,
   offConversationCreated,
-  onConversationUpdated,  
+  onConversationUpdated,
   offConversationUpdated,
   onMessageStatusChanged,
   offMessageStatusChanged,
   onNewNotification,
   offNewNotification
-} from '@/Services/signalr'
+} from '@/Services/signalr';
 import type {
   MessageDto,
   AttachmentDto,
-  ConversationDto
-} from '@/Interfaces/Chat/ChatInterfaces'
-//import { ThreeDot } from 'react-loading-indicators'
+  ConversationDto,
+  NotificationDto
+} from '@/Interfaces/Chat/ChatInterfaces';
 
 interface SignalRContextValue {
-  joinConversation: (id: number) => void
-  leaveConversation: (id: number) => void
+  joinConversation: (id: number) => void;
+  leaveConversation: (id: number) => void;
 
   onNewMessage: (
     handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
-  ) => void
+  ) => void;
   offNewMessage: (
     handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
-  ) => void
+  ) => void;
 
   onNewHumanRequest: (
     handler: (payload: { conversationId: number; fromPhone: string }) => void
-  ) => void
+  ) => void;
   offNewHumanRequest: (
     handler: (payload: { conversationId: number; fromPhone: string }) => void
-  ) => void
+  ) => void;
 
-  onConversationCreated: (handler: (convo: ConversationDto) => void) => void
-  offConversationCreated: (handler: (convo: ConversationDto) => void) => void
+  onConversationCreated: (handler: (convo: ConversationDto) => void) => void;
+  offConversationCreated: (handler: (convo: ConversationDto) => void) => void;
 
-  onConversationUpdated: (handler: (convo: ConversationDto) => void) => void   
-  offConversationUpdated: (handler: (convo: ConversationDto) => void) => void 
+  onConversationUpdated: (handler: (convo: ConversationDto) => void) => void;
+  offConversationUpdated: (handler: (convo: ConversationDto) => void) => void;
 
-  onMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
-  offMessageStatusChanged: (handler: (msg: MessageDto) => void) => void
+  onMessageStatusChanged: (handler: (msg: MessageDto) => void) => void;
+  offMessageStatusChanged: (handler: (msg: MessageDto) => void) => void;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onNewNotification: (handler: (payload: { type: string; data: any }) => void) => void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  offNewNotification: (handler: (payload: { type: string; data: any }) => void) => void
+  // Ahora recibe directamente el NotificationDto
+  onNewNotification: (handler: (notification: NotificationDto) => void) => void;
+  offNewNotification: (handler: (notification: NotificationDto) => void) => void;
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
@@ -75,36 +75,29 @@ const SignalRContext = createContext<SignalRContextValue>({
   onConversationCreated: () => {},
   offConversationCreated: () => {},
 
-  onConversationUpdated: () => {},   
-  offConversationUpdated: () => {},  
+  onConversationUpdated: () => {},
+  offConversationUpdated: () => {},
 
   onMessageStatusChanged: () => {},
   offMessageStatusChanged: () => {},
 
   onNewNotification: () => {},
   offNewNotification: () => {}
-})
+});
 
 export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> = ({
   token,
   children
 }) => {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     createHubConnection(token)
       .then(() => setReady(true))
-      .catch(() => setReady(true))
-  }, [token])
+      .catch(() => setReady(true));
+  }, [token]);
 
-  if (!ready) {
-    return (
-      // <div className="loader-container">
-      //   <ThreeDot color="#3142cc" size="medium" />
-      // </div>
-      <></>
-    )
-  }
+  if (!ready) return <></>;
 
   return (
     <SignalRContext.Provider
@@ -117,8 +110,8 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
         offNewHumanRequest,
         onConversationCreated,
         offConversationCreated,
-        onConversationUpdated,    
-        offConversationUpdated, 
+        onConversationUpdated,
+        offConversationUpdated,
         onMessageStatusChanged,
         offMessageStatusChanged,
         onNewNotification,
@@ -127,9 +120,9 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
     >
       {children}
     </SignalRContext.Provider>
-  )
-}
+  );
+};
 
 export function useSignalR() {
-  return useContext(SignalRContext)
+  return useContext(SignalRContext);
 }

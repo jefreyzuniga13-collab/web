@@ -38,7 +38,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         setText('')
         fileInputRef.current!.value = ''
       } else if (text.trim()) {
-        console.log("ID de conversacion es: ", conversationId);
+        console.log("ID de conversacion el chatWindows es: ", conversationId);
         console.log("ID de serder desde el chatWindows es: ", userId);
 
         await sendText({

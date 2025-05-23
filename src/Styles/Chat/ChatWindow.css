@@ -217,6 +217,8 @@
 .chat-window__text {
   margin: 0;
   line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Composer section */

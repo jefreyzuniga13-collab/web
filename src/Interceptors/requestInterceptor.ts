@@ -1,11 +1,17 @@
 import api from '@/Utils/ApiConfig'
-import {getAccessToken} from '@/Utils/jwt'
 
 export function setupRequestInterceptor() {
   api.interceptors.request.use(config => {
-    const token = getAccessToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
+    try {
+      const authRaw = localStorage.getItem('auth')
+      if (authRaw && config.headers) {
+        const { accessToken } = JSON.parse(authRaw)
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`
+        }
+      }
+    } catch {
+      // si algo falla al parsear, simplemente seguimos sin header
     }
     return config
   })

@@ -13,6 +13,7 @@ const Unauthorized    = lazy(() => import('@/Components/Common/Unauthorized'))
 const SupportPage     = lazy(() => import('@/Presentations/Chat/SupportPage'))
 const UsersPage       = lazy(() => import('@/Presentations/User/UsersPage'))
 const DashboardPresentation       = lazy(() => import('@/Presentations/Dashboard/DashboardPresentation'))
+const NotificationsPage       = lazy(() => import('@/Presentations/Notification/NotificationsPage'))
 const NotFound        = lazy(() => import('@/Presentations/NotFound'))
 
 export function AppRouter() {
@@ -37,6 +38,7 @@ export function AppRouter() {
             <Route path="dashboard" element={<DashboardPresentation />} />
             <Route path="chat"      element={<SupportPage />} />
             <Route path="users"  element={<UsersPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
         {/* Catch-all */}

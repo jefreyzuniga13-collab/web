@@ -17,6 +17,17 @@
   box-sizing: border-box;
 }
 
+.menu-item-badge {
+  background: var(--color-accent);
+  color: white;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  position: absolute;
+  top: 4px;
+  right: 8px;
+}
+
 @media (max-width: 768px) {
   .navbar-container {
     padding: 0.5rem 1rem;
