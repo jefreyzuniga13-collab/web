@@ -40,7 +40,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     }
   }, [])
 
-  // 2) Persistir cambio de etiquetas usando el PUT genérico
+  // Persistir cambio de etiquetas usando el PUT genérico
   const saveTags = useCallback(
     async (newTags: string[]) => {
       if (!conv) return
@@ -61,6 +61,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     saveTags([...tags, name])
     setNewTag('')
     setIsAddingTag(false)
+
+    console.log("Tag: ", name)
   }
 
   const handleRemoveTag = (tag: string) => {

@@ -143,7 +143,6 @@
 .chat-window__message--client {
   background-color: white;
   color: var(--color-gray-800);
-  border: 1px solid var(--color-gray-200);
   border-bottom-left-radius: 4px;
 }
 
@@ -151,7 +150,6 @@
 .chat-window__message--agent {
   background-color: var(--color-green-light);
   color: var(--color-gray-800);
-  border: 1px solid var(--color-green-primary);
   border-bottom-left-radius: 4px;
 }
 

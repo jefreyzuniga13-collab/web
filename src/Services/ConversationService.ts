@@ -33,7 +33,6 @@ export function closeConversation(conversationId: number) {
   return api.put(`/Conversations/${conversationId}/close`);
 }
 
-
 export function getAssignedCount(agentUserId: number) {
   return api.get<number>(`/Conversations/${agentUserId}/assigned-count`);
 }
