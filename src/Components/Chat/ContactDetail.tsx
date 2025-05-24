@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { getConversation, updateConversation } from '@/Services/ConversationService'
+import { getConversation, updateTag } from '@/Services/ConversationService'
 import { User, Clock, AlertCircle, Tag, ChevronDown, Edit, X, Check, Info } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
 import '@/Styles/Chat/ContactDetail.css'
@@ -24,7 +24,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     offConversationCreated
   } = useSignalR()
 
-  // 1) Carga o recarga datos de la conversación
+  // Carga o recarga datos de la conversación
   const fetchDetail = useCallback(async (id: number) => {
     setLoading(true)
     setError(null)
@@ -45,13 +45,17 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     async (newTags: string[]) => {
       if (!conv) return
       try {
-        await updateConversation(conv.conversationId, { tags: newTags })
-        setTags(newTags)
-        setConv(v => v ? { ...v, tags: newTags } : v)
+
+      setTags(newTags)
+     updateTag(conv.conversationId, newTags);
+      
+      setConv(v => v ? { ...v, tags: newTags } : v)
+
       } catch (err) {
         console.error('Error al guardar etiquetas:', err)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [conv]
   )
 
@@ -61,8 +65,6 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     saveTags([...tags, name])
     setNewTag('')
     setIsAddingTag(false)
-
-    console.log("Tag: ", name)
   }
 
   const handleRemoveTag = (tag: string) => {
@@ -126,7 +128,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
     return (
       <div className="contact-detail-loading">
         <div className="loading-spinner"></div>
-        <p>Cargando detalles...</p>
+        <p>Cargando detalles...</p> 
       </div>
     )
   }

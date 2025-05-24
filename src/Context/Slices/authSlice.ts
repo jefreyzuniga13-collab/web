@@ -68,7 +68,7 @@ const authSlice = createSlice({
       state.contactId    = null
       state.expiresAt    = null
 
-      // 3. Eliminar del storage
+      // Eliminar del storage
       localStorage.removeItem('auth')
     }
   },

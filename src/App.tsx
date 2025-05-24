@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-
 import { ToastContainer } from 'react-toastify'
 import { AppRouter } from '@/Presentations/Routers/AppRouter'
 import ReLoginModal from '@/Components/Common/ReLoginModal'
@@ -21,16 +19,16 @@ interface AuthStorage {
 export default function App() {
   const online = useOnline()
 
-  // 1) Extraemos el token (si existe) del localStorage
+  // Extraemos el token (si existe) del localStorage
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as AuthStorage
 
-  // 2) Si no hay token, vamos al login (página pública)
+  // Si no hay token, vamos al login (página pública)
   if (!accessToken) {
-    return <AppRouter />  // en tus rutas públicas ya tienes /login
+    return <AppRouter />  // Rutas públicas ya esta /login
   }
 
-  // 3) Sólo cuando tenemos token, arrancamos SignalR y las notifs en tiempo real
+  // Sólo cuando tenemos token, arrancamos SignalR y las notifs en tiempo real
   return (
     <SignalRProvider token={accessToken}>
       {/* Hook de suscripción global a notificaciones */}

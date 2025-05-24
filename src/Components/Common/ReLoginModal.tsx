@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { closeReLoginModal } from '@/Context/Slices/uiSlice'
-import { logout }            from '@/Context/Slices/authSlice'
+import { logout } from '@/Context/Slices/authSlice'
 import type { RootState, AppDispatch } from '@/Context/index'
 import '@/Styles/Common/ReLoginModal.css'
 

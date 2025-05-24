@@ -15,10 +15,14 @@
 }
 .navbar-footer{
   color: gray;
+  min-width: 100%;
   position: absolute;
   bottom: 0;
   padding-bottom: 12px;
   font-size: 14px;
+}
+.navbar-footer p{
+  text-align: center;
 }
 
 .navbar.collapsed .derechos{

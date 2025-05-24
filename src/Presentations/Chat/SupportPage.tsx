@@ -66,15 +66,18 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="support-layout">
+      
       <aside className="sidebar">
         <div className="inbox-header">
           <h3 className="inbox-title">Conversaciones</h3>
           <select
             className="filter-dropdown"
             value={filter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={e => setFilter(e.target.value as any)}
           >
             <option value="all">Todos</option>
+            <option value="bot">Todos</option>
             <option value="waiting">Pendientes</option>
             <option value="human">Asignadas</option>
             <option value="closed">Cerradas</option>

@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
       </ul>
 
       <div className="navbar-footer">
-        <p>© 2025 PC Group S.A. Todos los derechos reservados.</p>
+        <p>© 2025 PC Group S.A.</p>
       </div>
     </nav>
   );

@@ -13,10 +13,6 @@ export function getPendingConversations() {
   return api.get<{ data: ConversationDto[] }>('/Conversations/pending');
 }
 
-// export function startConversation(payload: { /* tu DTO */ }) {
-//   return api.post<{ data: ConversationDto }>('/Conversations', payload);
-// }
-
 export function assignAgent(
   conversationId: number,
   agentUserId: string,
@@ -41,4 +37,11 @@ export function updateConversation(
   payload: Partial<UpdateConversationRequest>
 ) {
   return api.put(`/Conversations/${conversationId}`, payload)
+}
+
+export function updateTag(conversationId: number, 
+  payload: string[]){
+  console.log("Tag: ", JSON.stringify(payload));
+
+  return api.put(`/Conversations/tags/${conversationId}`, payload)
 }

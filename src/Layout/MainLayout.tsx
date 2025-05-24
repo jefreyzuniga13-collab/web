@@ -11,4 +11,4 @@ const MainLayout: React.FC = () => {
   )
 }
 
-export default MainLayout
+export default MainLayout;

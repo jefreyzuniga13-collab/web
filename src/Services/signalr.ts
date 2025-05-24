@@ -10,7 +10,8 @@ import { toast } from 'react-toastify'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
-  'http://localhost:7108/api/v1'
+  'http://localhost:7108/api/v1';
+
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 // Conexiones internas
@@ -21,7 +22,8 @@ export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
 
 export async function createHubConnection(token: string) {
-  // 1) Chat hub
+
+  // Chat hub
   chatConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/chat`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
@@ -40,7 +42,7 @@ export async function createHubConnection(token: string) {
     )
   })
 
-  // 2) Notifications hub
+  // Notifications hub
   notificationsConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/notifications`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
@@ -56,7 +58,7 @@ export async function createHubConnection(token: string) {
     console.error('Notifications Hub connection closed', err)
   )
 
-  // 3) Presence hub
+  // Presence hub
   presenceConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/presence`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()

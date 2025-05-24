@@ -32,6 +32,8 @@ export function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/verify-account"  element={<Activation />} />
+
+        {/**Rutas privados */}
         <Route path="/unauthorized"    element={<Unauthorized />} />
           <Route element={<MainLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
@@ -39,7 +41,7 @@ export function AppRouter() {
             <Route path="chat"      element={<SupportPage />} />
             <Route path="users"  element={<UsersPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
-          </Route>
+        </Route>
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />

@@ -15,9 +15,9 @@ export const InboxList: React.FC<Props> = ({
   onSelect,
   filter = 'all',
 }) => {
-  // ① Desestructuramos el resultado para extraer el array de conversaciones
+  
+  // Desestructuramos el resultado para extraer el array de conversaciones
   const { conversations } = useConversations(filter)
-  console.log("Conversaciones componenes", conversations)
 
   // Formatea hora de última actividad
   const formatTime = (iso?: string) => {
