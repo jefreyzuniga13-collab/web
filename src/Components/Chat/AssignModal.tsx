@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import React, { useEffect, useState } from 'react'
 import type {
   AgentDto,
@@ -5,7 +6,7 @@ import type {
   ConversationStatus,
 } from '@/Interfaces/Chat/ChatInterfaces'
 import { getAgents } from '@/Services/AgentService'
-import { assignAgent } from '@/Services/ConversationService'
+import { assignAgent, closeConversation } from '@/Services/ConversationService'
 import { useUserPresence } from '@/Hooks/useUserPresence'
 import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
@@ -35,9 +36,9 @@ export const AssignModal: React.FC<AssignModalProps> = ({
 )
 
   const statusOptions: { value: ConversationStatus; label: string }[] = [
-    { value: 'New',     label: 'Nuevo'     },
+    // { value: 'New',     label: 'Nuevo'     },
     { value: 'Bot',     label: 'Bot'       },
-    { value: 'Waiting', label: 'Esperando' },
+    // { value: 'Waiting', label: 'Esperando' },
     { value: 'Human',   label: 'Humano'    },
     { value: 'Closed',  label: 'Cerrado'   },
   ]
@@ -54,7 +55,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   }, [isOpen, conversation])
 
   const handleAssign = async () => {
-    if (!conversation || !sel) return
+    if (!conversation || (!sel && status !== 'Closed')) return
 
     if (!selectedIsOnline) {
       toast.error('No puedes asignar un agente que está desconectado.')
@@ -62,7 +63,10 @@ export const AssignModal: React.FC<AssignModalProps> = ({
     }
 
     try {
-      await assignAgent(conversation.conversationId, sel, status)
+      
+    status !== 'Closed' ? await assignAgent(conversation.conversationId, sel, status) 
+    : await closeConversation(conversation.conversationId);
+
       toast.success('Agente asignado correctamente.')
       onAssigned?.()
       onClose()
@@ -152,8 +156,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
             className="assign-modal__button assign-modal__button--primary"
             onClick={handleAssign}
             disabled={
-              !sel ||
-              !selectedIsOnline ||
+              (!sel && status !== 'Closed' && !selectedIsOnline) ||
               (status === conversation?.status &&
                sel === conversation.assignedAgentId?.toString())
             }

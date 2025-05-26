@@ -157,11 +157,13 @@
 
 .status-closed {
   color: var(--color-gray-600);
+  background-color: transparent !important;
+  box-shadow: none;
 }
 
 .status-radio:checked + .status-closed {
   border-color: var(--color-gray-600);
-  background-color: rgba(75, 85, 99, 0.1);
+  background-color: rgba(75, 85, 99, 0.1); 
   color: var(--color-gray-600);
 }
 

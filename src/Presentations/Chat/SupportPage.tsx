@@ -77,7 +77,7 @@ const SupportPage: React.FC = () => {
             onChange={e => setFilter(e.target.value as any)}
           >
             <option value="all">Todos</option>
-            <option value="bot">Todos</option>
+            <option value="bot">Bot</option>
             <option value="waiting">Pendientes</option>
             <option value="human">Asignadas</option>
             <option value="closed">Cerradas</option>

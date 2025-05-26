@@ -118,7 +118,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             <div key={m.messageId} className={getMessagePosition(m)}>
               {showSender && !isCurrentUser && (
                 <div className="message-sender">
-                  {m.senderContactId ? m.SenderContactName || 'Cliente' : m.SenderUserName || 'Sistema'}
+                  {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
                 </div>
               )}
               

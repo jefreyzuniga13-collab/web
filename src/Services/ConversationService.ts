@@ -41,7 +41,5 @@ export function updateConversation(
 
 export function updateTag(conversationId: number, 
   payload: string[]){
-  console.log("Tag: ", JSON.stringify(payload));
-
   return api.put(`/Conversations/tags/${conversationId}`, payload)
 }

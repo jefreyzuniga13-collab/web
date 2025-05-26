@@ -31,27 +31,30 @@
   --transition-slow: 350ms;
 }
 
-.main-content {
+
+.main-content{
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--color-gray-200);
+  background-color: white;
   overflow: hidden;
+  box-sizing: border-box;
   max-height: 100vh;
 }
 
-/* Chat window container */
 .chat-window {
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  padding: 0;
   height: 100%;
-  flex-grow: 1;
-  flex-basis: 200px;
+  overflow-y: auto;
   background-color: var(--color-gray-50);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23e5e7eb' fill-opacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-/* Messages container */
+
 .chat-window__messages {
-  flex: 1;
+  max-width: 100%;
+  height: 80%;
   padding: 1.5rem;
   overflow-y: auto;
   display: flex;
@@ -59,10 +62,9 @@
   scroll-behavior: smooth;
 }
 
-/* Date divider */
 .messages-date-divider {
   text-align: center;
-  margin: 1.25rem 0;
+  margin: 1rem 0;
   position: relative;
   color: var(--color-gray-500);
   font-size: 0.75rem;
@@ -87,12 +89,12 @@
   right: 0;
 }
 
-/* Message group */
 .message-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1rem;
+  margin-bottom: 0.7rem;
   max-width: 80%;
+  text-align: left;
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -109,7 +111,6 @@
   align-self: flex-end;
 }
 
-/* Sender name */
 .message-sender {
   font-size: 0.75rem;
   margin-bottom: 0.25rem;
@@ -118,12 +119,10 @@
   font-weight: 500;
 }
 
-/* Message bubble */
 .chat-window__message {
-  margin-bottom: 0.25rem;
   padding: 0.75rem 1rem;
   border-radius: 16px;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   position: relative;
   word-break: break-word;
   box-shadow: var(--shadow-sm);
@@ -139,21 +138,21 @@
   margin-bottom: 0;
 }
 
-/* Mensaje de cliente (blanco) */
+
 .chat-window__message--client {
   background-color: white;
   color: var(--color-gray-800);
   border-bottom-left-radius: 4px;
 }
 
-/* Mensaje de agente (verde) */
+
 .chat-window__message--agent {
   background-color: var(--color-green-light);
   color: var(--color-gray-800);
   border-bottom-left-radius: 4px;
 }
 
-/* Mensaje propio (azul) */
+
 .chat-window__message--out {
   background-color: var(--color-blue-primary);
   color: white;
@@ -161,7 +160,7 @@
   align-self: flex-end;
 }
 
-/* Message info section */
+
 .message-info {
   display: flex;
   justify-content: flex-end;
@@ -170,7 +169,6 @@
   margin-top: 4px;
 }
 
-/* Message time */
 .message-time {
   font-size: 0.6875rem;
   opacity: 0.8;
@@ -187,13 +185,11 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* Media container */
 .message-media-container {
   display: flex;
   flex-direction: column;
 }
 
-/* Image in message */
 .chat-window__image {
   max-width: 280px;
   border-radius: 12px;
@@ -204,14 +200,13 @@
   border: 1px solid var(--color-gray-200);
 }
 
-/* Image caption */
+
 .message-caption {
   font-size: 0.875rem;
   margin-top: 0.25rem;
   opacity: 0.9;
 }
 
-/* Message text content */
 .chat-window__text {
   margin: 0;
   line-height: 1.4;
@@ -219,9 +214,9 @@
   word-break: break-word;
 }
 
-/* Composer section */
 .chat-window__composer {
-  padding: 1.25rem;
+  height: 20%;
+  padding: 1.5rem;
   border-top: 1px solid var(--color-gray-200);
   background-color: white;
   display: flex;
@@ -230,7 +225,6 @@
   align-items: center;
 }
 
-/* Attachment button */
 .attachment-button {
   width: 40px;
   height: 40px;
@@ -250,12 +244,10 @@
   color: var(--color-gray-700);
 }
 
-/* Hidden file input */
 .file-input-hidden {
   display: none;
 }
 
-/* File preview */
 .file-preview {
   display: flex;
   align-items: center;
@@ -315,7 +307,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Text input */
 .chat-window__input {
   flex: 1;
   background: transparent;
@@ -332,7 +323,6 @@
   color: var(--color-gray-500);
 }
 
-/* Send button */
 .chat-window__send {
   width: 40px;
   height: 40px;
@@ -401,7 +391,6 @@
   font-size: 0.9375rem;
 }
 
-/* Message status icons */
 .message-status {
   font-size: 0.75rem;
   align-self: flex-end;
@@ -438,7 +427,7 @@
   }
 }
 
-/* Typing indicator (optional) */
+/* Typing indicator  */
 .typing-indicator {
   display: flex;
   align-items: center;
