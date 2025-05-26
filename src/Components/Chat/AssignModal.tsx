@@ -57,7 +57,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   const handleAssign = async () => {
     if (!conversation || (!sel && status !== 'Closed')) return
 
-    if (!selectedIsOnline) {
+    if (!selectedIsOnline && (!sel && status !== 'Closed')) {
       toast.error('No puedes asignar un agente que está desconectado.')
       return
     }

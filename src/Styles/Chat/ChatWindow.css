@@ -54,7 +54,7 @@
 
 .chat-window__messages {
   max-width: 100%;
-  height: 80%;
+  height: 85%;
   padding: 1.5rem;
   overflow-y: auto;
   display: flex;
@@ -215,8 +215,8 @@
 }
 
 .chat-window__composer {
-  height: 20%;
-  padding: 1.5rem;
+  height: 15%;
+  padding: 0 1.5rem !important;
   border-top: 1px solid var(--color-gray-200);
   background-color: white;
   display: flex;

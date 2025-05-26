@@ -29,7 +29,6 @@ const SupportPage: React.FC = () => {
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
 
-  // Decodifica rol
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
 
