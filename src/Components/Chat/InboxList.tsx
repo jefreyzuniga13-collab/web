@@ -16,7 +16,6 @@ export const InboxList: React.FC<Props> = ({
   filter = 'all',
 }) => {
   const { conversations } = useConversations(filter)
-  console.log("Conversaciones componenes", conversations)
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''

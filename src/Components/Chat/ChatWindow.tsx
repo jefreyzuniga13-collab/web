@@ -54,12 +54,12 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
+  // const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //   if (e.key === 'Enter' && !e.shiftKey) {
+  //     e.preventDefault()
+  //     handleSend()
+  //   }
+  // }
 
   const getStatusIcon = (m: MessageDto, isOut: boolean) => {
     if (!isOut) return null
@@ -113,7 +113,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? messages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
-          
+
           return (
             <div key={m.messageId} className={getMessagePosition(m)}>
               {showSender && !isCurrentUser && (
@@ -173,13 +173,13 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         )}
         
         <div className="chat-window__input-wrap">
-          <input
-            type="text"
+          <textarea
+            // type="text"
             className="chat-window__input"
             placeholder="Escribe un mensaje..."
             value={text}
             onChange={e => setText(e.target.value)}
-            onKeyDown={handleKeyPress}
+            // onKeyDown={handleKeyPress}
             disabled={!conversationId || sending}
           />
         </div>

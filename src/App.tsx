@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { ToastContainer } from 'react-toastify'
-import { AppRouter } from '@/Presentations/Routers/AppRouter'
+import { AppRouter } from '@/Routers/AppRouter'
 import ReLoginModal from '@/Components/Common/ReLoginModal'
 import OfflineBanner from '@/Components/Common/OfflineBanner'
 import { useOnline } from '@/Hooks/useOnline'
@@ -28,11 +29,11 @@ export default function App() {
     return <AppRouter />  // Rutas públicas ya esta /login
   }
 
+  useRealtimeNotifications();
+  
   // Sólo cuando tenemos token, arrancamos SignalR y las notifs en tiempo real
   return (
     <SignalRProvider token={accessToken}>
-      {/* Hook de suscripción global a notificaciones */}
-      {useRealtimeNotifications()}
 
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
 

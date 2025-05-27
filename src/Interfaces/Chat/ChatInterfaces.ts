@@ -65,7 +65,6 @@ export interface SentMessage {
   senderId: number;
   content: string;
   messageType: MessageType;
-
   caption?: string;
   file?: File;
 }
