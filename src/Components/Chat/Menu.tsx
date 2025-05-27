@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Icons from 'lucide-react';
 import { useMenus } from '@/Hooks/useMenus';
 import MenuItem from '@/Components/Chat/MenuItem';
@@ -9,8 +9,12 @@ import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Chat/Navbar.css';
 import { ThreeDot } from 'react-loading-indicators';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
+import { useUsers } from '@/Hooks/useUsers';
+interface menuProp{
+  id: number;
+}
 
-const Navbar: React.FC = () => {
+const Navbar: React.FC<menuProp> = ({id}) => {
   const { menus, loading, error } = useMenus();
   const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(false);
@@ -18,6 +22,14 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { currentUser, loading: userLoading, getUserById } = useUsers();
+
+    useEffect(() => {
+      if (!currentUser) {
+        getUserById(id);
+      }
+    }, [currentUser, getUserById]);
+
 
   // Marcar como seleccionado el menú según la ruta actual
   const selectedUrl = location.pathname.replace(/^\//, '');
@@ -79,6 +91,15 @@ const Navbar: React.FC = () => {
       </ul>
 
       <div className="navbar-footer">
+         {userLoading ? (
+         <div className="navbar-profile">Cargando usuario...</div>
+          ) : currentUser && (
+            <div className='navbar-profile'>
+              <img src={`${currentUser.imageUrl}`} alt="user photo" className='profile-photo'/>
+              <span className='navbar-fullname'>{currentUser.fullName}</span>
+            </div>
+          )}
+        
         <p>© 2025 PC Group S.A.</p>
       </div>
     </nav>

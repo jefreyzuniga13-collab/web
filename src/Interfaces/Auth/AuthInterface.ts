@@ -10,7 +10,6 @@ export interface ApiResponse<T> {
     refreshToken: string
     expiresAt: string
     userId: string
-    contactId: string
   }
   
   export interface LoginRequest {

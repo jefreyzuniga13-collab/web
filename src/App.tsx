@@ -9,20 +9,13 @@ import { useRealtimeNotifications } from '@/Hooks/useRealtimeNotifications'
 import './App.css'
 import './i18n'
 import 'react-toastify/dist/ReactToastify.css'
-
-interface AuthStorage {
-  accessToken?: string
-  refreshToken?: string
-  expiresAt?: string
-  userId?: number
-}
+import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
 
 export default function App() {
   const online = useOnline()
 
-  // Extraemos el token (si existe) del localStorage
   const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken } = JSON.parse(authRaw) as AuthStorage
+  const { accessToken } = JSON.parse(authRaw) as AuthData
 
   // Si no hay token, vamos al login (página pública)
   if (!accessToken) {
