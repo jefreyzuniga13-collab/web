@@ -33,7 +33,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     setSending(true)
     try {
       if (file) {
-        await sendMedia(conversationId, userId, file, text.trim() || undefined)
+        await sendMedia(conversationId, file, text.trim() || undefined)
         setFile(null)
         setText('')
         fileInputRef.current!.value = ''
@@ -123,18 +123,47 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
               )}
               
               <div className={getMessageClassName(m)}>
-                {m.messageType === 'Media' && m.attachments?.length ? (
-                  <div className="message-media-container">
+                {m.attachments?.length ? (
+                <div className="message-media-container">
+                  {/* si es imagen */}
+                  {m.attachments[0].mimeType?.startsWith('image/') && (
                     <img
                       src={m.attachments[0].mediaUrl}
-                      alt="Media attachment"
+                      alt={m.attachments[0].fileName}
                       className="chat-window__image"
                     />
-                    {m.content && <p className="chat-window__text message-caption">{m.content}</p>}
-                  </div>
-                ) : (
-                  <p className="chat-window__text">{m.content}</p>
-                )}
+                  )}
+
+                  {/* si es audio */}
+                  {m.attachments[0].mimeType?.startsWith('audio/') && (
+                    <audio controls src={m.attachments[0].mediaUrl} />
+                  )}
+
+                      {/* si es video */}
+                      {m.attachments[0].mimeType?.startsWith('video/') && (
+                        <video controls className="chat-window__video" src={m.attachments[0].mediaUrl} />
+                      )}
+
+                      {/* si es sticker o documento, lo tratamos como imagen o link */}
+                      {m.attachments[0].mimeType === 'image/webp' && (
+                        <img
+                          src={m.attachments[0].mediaUrl}
+                          alt={m.attachments[0].fileName}
+                          className="chat-window__image"
+                        />
+                      )}
+                      {m.messageType === 'Document' && (
+                        <a href={m.attachments[0].mediaUrl} target="_blank" rel="noopener noreferrer">
+                          📎 {m.attachments[0].fileName}
+                        </a>
+                      )}
+
+                      {/* pie de foto */}
+                      {m.content && <p className="message-caption">{m.content}</p>}
+                    </div>
+                  ) : (
+                    <p className="chat-window__text">{m.content}</p>
+                  )}
                 <div className="message-info">
                   {getStatusIcon(m, isCurrentUser)}
                   <span className="message-time">

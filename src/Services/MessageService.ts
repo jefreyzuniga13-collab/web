@@ -25,19 +25,21 @@ export function sendText(message: SentMessage) {
 
 export function sendMedia(
   conversationId: number,
-  senderId: number,
   file: File,
   caption?: string
 ) {
-  const form = new FormData();
-  form.append('SenderId', senderId.toString());
-  form.append('MessageType', 'Media');
-  if (caption) form.append('Caption', caption);
-  form.append('File', file);
+  const form = new FormData()
+  form.append('file', file)
+  if (caption) form.append('caption', caption)
 
   return api.post<{ data: MessageDto }>(
-    `/conversations/${conversationId}/messages`,
+    `/WhatsappWebhook/${conversationId}/send/media`,
     form,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
-  );
+    {
+      headers: {
+        // obligamos a multipart/form-data con boundary
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+  )
 }

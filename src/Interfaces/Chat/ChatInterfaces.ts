@@ -1,4 +1,13 @@
-export type MessageType = 'Text' | 'Media' | 'Interactive' | 'Bot';
+export type MessageType =
+  | 'Text'
+  | 'Image'
+  | 'Video'
+  | 'Audio'
+  | 'Sticker'
+  | 'Document'
+  | 'Interactive'
+  | 'Bot'
+
 export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed'
 export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed'
 export type NotificationType = 'NewContact' | 'HumanSupport' | 'ConversationAssigned' | 'MessageReceived'
@@ -69,6 +78,11 @@ export interface SentMessage {
   file?: File;
 }
 
+export interface SentMedia {
+  conversationId: number;
+  file: File;
+  caption?: string;
+}
 export interface AttachmentDto {
   attachmentId: number
   messageId: number
@@ -130,4 +144,21 @@ export interface MenuDto {
   url: string;
   index: string;
   icon: string;
+}
+
+export interface MessageWithAttachmentsDto {
+  messageId: number;
+  senderUserId?: number;
+  senderContactId?: number;
+  content?: string;
+  sentAt: string;
+  messageType: string;
+  attachments: AttachmentDto[];
+}
+
+export interface ConversationHistoryDto {
+  conversationId: number;
+  createdAt: string;
+  status: string;
+  messages: MessageWithAttachmentsDto[];
 }

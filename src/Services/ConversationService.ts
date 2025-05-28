@@ -1,5 +1,5 @@
 import api from '@/Utils/ApiConfig';
-import type { ConversationDto, UpdateConversationRequest } from '@/Interfaces/Chat/ChatInterfaces';
+import type { ConversationDto, UpdateConversationRequest,  ConversationHistoryDto } from '@/Interfaces/Chat/ChatInterfaces';
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>('/Conversations/getByRole');
@@ -42,4 +42,22 @@ export function updateConversation(
 export function updateTag(conversationId: number, 
   payload: string[]){
   return api.put(`/Conversations/tags/${conversationId}`, payload)
+}
+
+/**
+ * Trae todas las conversaciones + mensajes + attachments de un contacto
+ */
+export function getHistoryByContact(contactId: number) {
+  return api.get<{ data: ConversationHistoryDto[] }>(
+    `/Conversations/${contactId}/history`
+  );
+}
+
+/**
+ * Genera resumen completo de TODO el histórico de un contacto
+ */
+export function summarizeAllByContact(contactId: number) {
+  return api.post<{ data: string }>(
+    `/Conversations/${contactId}/summary`
+  );
 }
