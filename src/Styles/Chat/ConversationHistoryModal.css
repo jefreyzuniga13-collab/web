@@ -156,8 +156,10 @@
 .summary-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 16px;
+  max-height: 72px;
   background-color: #3b82f6;
   color: white;
   border: none;
@@ -331,6 +333,8 @@
 }
 
 .loading-spinner {
+  max-width: 16px;
+  max-height: 16px;
   animation: spin 1s linear infinite;
 }
 

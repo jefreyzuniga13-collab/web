@@ -135,7 +135,7 @@
   border-radius: 1rem;
   display: inline-block;
   align-self: flex-start;
-  padding: 2px 4px;
+  padding: 2px 7px;
 }
 
 .inbox-list__status--bot {

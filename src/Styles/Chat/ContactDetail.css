@@ -62,11 +62,11 @@
 }
 
 .status-new {
-  background-color: #10b981;
+  background-color: #3b82f6;
 }
 
 .status-bot {
-  background-color: #f59e0b;
+  background-color: #3b82f6;
 }
 
 .status-waitinghuman {
@@ -74,11 +74,11 @@
 }
 
 .status-human {
-  background-color: #3b82f6;
+  background-color: #7ae75f;
 }
 
 .status-closed {
-  background-color: #6b7280;
+  background-color: #1c1d21 !important;
 }
 
 .status-text {
@@ -218,15 +218,16 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.75rem;
-  background-color: #f3f4f6;
+  background-color: #3b82f6;
   border-radius: 1rem;
   font-size: 0.75rem;
-  color: #374151;
+  color: #f3f4f6;
   transition: background-color 0.2s;
+  font-size: .9rem;
 }
 
 .tag:hover {
-  background-color: #e5e7eb;
+  background-color: #327bef;
 }
 
 .tag-text {
@@ -303,12 +304,12 @@
 }
 
 .tag-add-btn {
-  background-color: #10b981;
+  background-color: #3b82f6;
   color: white;
 }
 
 .tag-add-btn:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #317df7;
 }
 
 .tag-add-btn:disabled {

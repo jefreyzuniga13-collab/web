@@ -37,6 +37,8 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
      const response = await getConversationHistory(conversationId);
         const result = response.data?.data;
 
+        console.log("Datos del usuario", JSON.stringify(result));
+
         if (Array.isArray(result) && result.length > 0) {
           setHistory(result[0]);
         }
@@ -225,11 +227,10 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
               disabled={loadingSummary || !history}
             >
               {loadingSummary ? (
-                <Loader2 size={16} className="loading-spinner" />
+                <Loader2 size={12} className="loading-spinner" />
               ) : (
-                <span>📄</span>
+                <span>📄Resumen</span>
               )}
-              Resumen
             </button>
           </div>
 
@@ -268,7 +269,9 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
                       </div>
                       <div className="message-meta">
                         <span className="sender-name">
-                          {message.senderContactId ? 'Cliente' : 'Agente'}
+
+                          {message.senderContactId ?  message.senderContactName || 'Cliente' : message.senderUserName || 'Agente'}
+
                         </span>
                         <span className="message-time">
                           {new Date(message.sentAt).toLocaleString()}

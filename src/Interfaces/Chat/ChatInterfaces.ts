@@ -149,7 +149,9 @@ export interface MenuDto {
 export interface MessageWithAttachmentsDto {
   messageId: number;
   senderUserId?: number;
+  senderUserName?: string;
   senderContactId?: number;
+  senderContactName?: string;
   content?: string;
   sentAt: string;
   messageType: string;

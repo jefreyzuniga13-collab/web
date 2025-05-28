@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { getConversation } from '@/Services/ConversationService'
-import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History } from 'lucide-react'
+import { getConversation, updateTag } from '@/Services/ConversationService'
+import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History, Hourglass, UserPen } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
 import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
 import '@/Styles/Chat/ContactDetail.css'
@@ -43,11 +43,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
       if (!conv) return
       try {
         setTags(newTags)
-        // TODO: Implement updateTag API call when available
+        updateTag(conv.conversationId, newTags);
         setConv(v => v ? { ...v, tags: newTags } : v)
       } catch (err) {
         console.error('Error al guardar etiquetas:', err)
       }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     },[conv]
   )
 
@@ -177,7 +178,6 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
           <div className="contact-detail__section">
             <div className="section-header">
               <h4 className="section-title">
-                <span className="section-icon"><Info size={16} /></span>
                 Información principal
               </h4>
               <button 
@@ -207,13 +207,26 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
                 {updatedAt && (
                   <li className="info-item">
                     <div className="info-icon">
-                      <Clock size={16} />
+                      <History size={16} />
                     </div>
                     <div className="info-content">
                       <span className="info-label">Última actualización</span>
                       <time className="info-value" dateTime={conv.updatedAt!}>
                         {updatedAt}
                       </time>
+                    </div>
+                  </li>
+                )}
+
+                {conv.assignedByUserId && (
+
+                  <li className='info-item'>
+                    <div className='info-icon'>
+                      <UserPen size={16}/>
+                    </div>
+                    <div className='info-content'>
+                      <span className='info-label'>Asignado por</span>
+                      <span className='info-value'>{conv.assignedByUserName}</span>
                     </div>
                   </li>
                 )}
@@ -232,7 +245,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
                 
                 <li className="info-item">
                   <div className="info-icon">
-                    <Clock size={16} />
+                    <Hourglass size={16} />
                   </div>
                   <div className="info-content">
                     <span className="info-label">Duración</span>
