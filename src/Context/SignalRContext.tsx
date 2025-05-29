@@ -20,7 +20,9 @@ import {
   onMessageStatusChanged,
   offMessageStatusChanged,
   onNewNotification,
-  offNewNotification
+  offNewNotification,
+  notifyUserAbsent,
+  notifyUserPresent
 } from '@/Services/signalr';
 import type {
   MessageDto,
@@ -59,6 +61,9 @@ interface SignalRContextValue {
   // Ahora recibe directamente el NotificationDto
   onNewNotification: (handler: (notification: NotificationDto) => void) => void;
   offNewNotification: (handler: (notification: NotificationDto) => void) => void;
+  
+    notifyUserPresent: (userId: number) => void;
+    notifyUserAbsent: (userId: number) => void;
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
@@ -81,7 +86,10 @@ const SignalRContext = createContext<SignalRContextValue>({
   offMessageStatusChanged: () => {},
 
   onNewNotification: () => {},
-  offNewNotification: () => {}
+  offNewNotification: () => {},
+  
+  notifyUserPresent: () => {},
+  notifyUserAbsent: () => {},
 });
 
 export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> = ({
@@ -114,7 +122,9 @@ export const SignalRProvider: React.FC<{ token: string; children: ReactNode }> =
         onMessageStatusChanged,
         offMessageStatusChanged,
         onNewNotification,
-        offNewNotification
+        offNewNotification,
+        notifyUserAbsent,
+        notifyUserPresent,
       }}
     >
       {children}

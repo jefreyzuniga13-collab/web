@@ -134,6 +134,8 @@
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
+  pointer-events: none;
+  user-select: none;
   
 }
 

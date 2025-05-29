@@ -26,7 +26,7 @@ export const InboxList: React.FC<Props> = ({
   }
 
   const getStatusClass = (status: string) => {
-    const s = status.toLowerCase()
+    const s = status.toLowerCase().toString()
     if (s.includes('human')) return 'human'
     if (s.includes('bot')) return 'bot'
     if (s.includes('waiting')) return 'waiting'

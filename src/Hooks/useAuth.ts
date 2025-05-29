@@ -17,6 +17,15 @@ import type {
   AuthData
 } from '@/Interfaces/Auth/AuthInterface'
 
+import { useSignalR } from '@/Context/SignalRContext'
+
+interface AuthStorage {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  userId: number
+}
+
 export function useAuth() {
   const { t } = useTranslation()
   const dispatch = useDispatch()
@@ -24,12 +33,20 @@ export function useAuth() {
   const isMounted = useRef(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const {
+    notifyUserPresent,
+    notifyUserAbsent
+      } = useSignalR()
 
   useEffect(() => {
     return () => {
       isMounted.current = false
     }
   }, [])
+
+    // Lee auth
+  const authRaw = localStorage.getItem('auth') || '{}'
+  const userData = JSON.parse(authRaw) as AuthStorage
 
   const call = useCallback(
     async <P, R>(
@@ -70,10 +87,15 @@ export function useAuth() {
         onSuccess: (data: AuthData) => {
           dispatch(setCredentials(data))
           navigate('/chat')
+
+          notifyUserPresent(userData.userId);
+
+          navigate(0);
         },
         successKey: 'login.notifications.loginSuccess',
         errorKey: 'login.errors.loginFailed'
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [call, dispatch, navigate]
   )
 
@@ -124,6 +146,10 @@ export function useAuth() {
     dispatch(clearAuth())
     toast.info(t('login.notifications.logout'))
     navigate('/login')
+
+    notifyUserAbsent(userData.userId);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, navigate, t])
 
   return {

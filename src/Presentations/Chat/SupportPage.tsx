@@ -30,7 +30,7 @@ const SupportPage: React.FC = () => {
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
 
   const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin'
+  const isAdmin = role.toLowerCase().toString() === 'admin'
 
   // Cargar detalle de la conversación
   useEffect(() => {

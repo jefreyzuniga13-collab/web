@@ -31,7 +31,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, isCompact = false }
       <div className="agent-card__avatar-container">
         {avatarUrl ? (
           <img
-            src={avatarUrl}
+            src={agent.imageUrl}
             alt={`Avatar de ${agent.fullName}`}
             className="agent-card__avatar"
             onError={(e) => {

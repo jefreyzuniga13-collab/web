@@ -158,3 +158,17 @@ export function onNewNotification(handler: (dto: NotificationDto) => void) {
 export function offNewNotification(handler: (dto: NotificationDto) => void) {
   notificationsConnection?.off('Notification', handler)
 }
+
+export function notifyUserPresent(userId: number) {
+  if (presenceConnection?.state === signalR.HubConnectionState.Connected) {
+    presenceConnection.invoke('UserPresent', userId.toString())
+      .catch(err => console.error('Error invoking UserPresent:', err))
+  }
+}
+
+export function notifyUserAbsent(userId: number) {
+  if (presenceConnection?.state === signalR.HubConnectionState.Connected) {
+    presenceConnection.invoke('UserAbsent', userId.toString())
+      .catch(err => console.error('Error invoking UserAbsent:', err))
+  }
+}
