@@ -16,6 +16,7 @@ body {
   background: var(--bg-secondary);
   color: var(--text-default);
   line-height: 1.5;
+  overflow: hidden;
 }
 
 :root {

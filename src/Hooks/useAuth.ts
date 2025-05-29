@@ -69,7 +69,7 @@ export function useAuth() {
       call(authService.loginAsync, creds, {
         onSuccess: (data: AuthData) => {
           dispatch(setCredentials(data))
-          navigate('/Dashboard')
+          navigate('/chat')
         },
         successKey: 'login.notifications.loginSuccess',
         errorKey: 'login.errors.loginFailed'

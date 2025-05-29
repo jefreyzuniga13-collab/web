@@ -36,7 +36,8 @@ export function AppRouter() {
         {/**Rutas privados */}
         <Route path="/unauthorized"    element={<Unauthorized />} />
           <Route element={<MainLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route index element={<Navigate to="chat" replace />} />
+
             <Route path="dashboard" element={<DashboardPresentation />} />
             <Route path="chat"      element={<SupportPage />} />
             <Route path="users"  element={<UsersPage />} />

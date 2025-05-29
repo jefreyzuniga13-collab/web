@@ -19,7 +19,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     className={`menu-item ${selected ? 'selected' : ''}`}
     onClick={onClick}
   >
-    <div className="menu-item-content">
+    <div className={`menu-item-content ${text.includes("Cerrar") ? 'cerrar-sesion' : ''}`}>
       {icon}
       <span className="menu-item-text">
         {text}

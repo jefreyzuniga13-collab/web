@@ -10,6 +10,7 @@ import '@/Styles/Chat/Navbar.css';
 import { ThreeDot } from 'react-loading-indicators';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/useUsers';
+
 interface menuProp{
   id: number;
 }
@@ -28,6 +29,7 @@ const Navbar: React.FC<menuProp> = ({id}) => {
       if (!currentUser) {
         getUserById(id);
       }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentUser, getUserById]);
 
 
