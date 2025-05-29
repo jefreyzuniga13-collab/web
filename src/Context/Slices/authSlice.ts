@@ -6,7 +6,6 @@ interface AuthState {
   accessToken:  string | null
   refreshToken: string | null
   userId:       string | null
-  contactId:    string | null
   expiresAt:    string | null
 }
 
@@ -18,14 +17,12 @@ const initialState: AuthState = parsed
       accessToken:  parsed.accessToken,
       refreshToken: parsed.refreshToken,
       userId:       parsed.userId,
-      contactId:    parsed.contactId,
       expiresAt:    parsed.expiresAt
     }
   : {
       accessToken:  null,
       refreshToken: null,
       userId:       null,
-      contactId:    null,
       expiresAt:    null
     }
 
@@ -56,7 +53,6 @@ const authSlice = createSlice({
       state.accessToken  = creds.accessToken
       state.refreshToken = creds.refreshToken
       state.userId       = creds.userId
-      state.contactId    = creds.contactId
       state.expiresAt    = creds.expiresAt
 
       localStorage.setItem('auth', JSON.stringify(creds))
@@ -65,7 +61,6 @@ const authSlice = createSlice({
       state.accessToken  = null
       state.refreshToken = null
       state.userId       = null
-      state.contactId    = null
       state.expiresAt    = null
 
       // Eliminar del storage

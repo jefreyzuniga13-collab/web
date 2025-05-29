@@ -1,3 +1,4 @@
+// src/Hooks/useMessages.ts
 import { useState, useEffect, useCallback } from 'react'
 import { getMessages } from '@/Services/MessageService'
 import { useSignalR } from '@/Context/SignalRContext'
@@ -14,32 +15,44 @@ const useMessages = (conversationId?: number) => {
     offMessageStatusChanged
   } = useSignalR()
 
-  // Handler para nuevos mensajes entrantes (ahora recibe el payload completo)
+  // Cuando llega un mensaje por SignalR
   const receiveHandler = useCallback(
-    (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
+    async (payload: { message: MessageDto; attachments?: AttachmentDto[] }) => {
       const { message, attachments } = payload
       if (message.conversationId !== conversationId) return
-      setMessages(prev => [
-        ...prev,
-        { ...message, attachments }
-      ])
+
+      // 1) Si viene con attachments, lo añadimos directamente
+      if (attachments && attachments.length > 0) {
+        setMessages(prev => [...prev, { ...message, attachments }])
+        return
+      }
+
+      // 2) Si es Text normal, sin attachments
+      if (message.messageType === 'Text') {
+        setMessages(prev => [...prev, { ...message, attachments: [] }])
+        return
+      }
+
+      // 3) Si es media pero no vino con attachments -> recargamos todos los mensajes
+      try {
+        const res = await getMessages(conversationId!)
+        setMessages(res.data.data)
+      } catch {
+        // en caso de fallo, igual añadimos el mensaje sin media
+        setMessages(prev => [...prev, { ...message, attachments: [] }])
+      }
     },
     [conversationId]
   )
 
-  // Handler para actualizaciones de estado (delivered/read)
+  // Cuando cambia el status (delivered/read)
   const statusHandler = useCallback(
-    (updatedMessage: MessageDto) => {
-      if (updatedMessage.conversationId !== conversationId) return
+    (updated: MessageDto) => {
+      if (updated.conversationId !== conversationId) return
       setMessages(prev =>
         prev.map(m =>
-          m.messageId === updatedMessage.messageId
-            ? {
-                ...m,
-                status: updatedMessage.status,
-                deliveredAt: updatedMessage.deliveredAt,
-                readAt: updatedMessage.readAt
-              }
+          m.messageId === updated.messageId
+            ? { ...m, ...updated }
             : m
         )
       )
@@ -55,10 +68,12 @@ const useMessages = (conversationId?: number) => {
 
     let mounted = true
 
+    // 1) suscripciones SignalR
     onNewMessage(receiveHandler)
     onMessageStatusChanged(statusHandler)
     joinConversation(conversationId)
 
+    // 2) carga inicial de mensajes
     getMessages(conversationId)
       .then(res => {
         if (mounted) setMessages(res.data.data)

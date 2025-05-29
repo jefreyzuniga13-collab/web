@@ -94,6 +94,7 @@ export interface AttachmentDto {
 }
 
 export interface AgentDto {
+  imageUrl: null
   userId: number
   fullName: string
   email: string

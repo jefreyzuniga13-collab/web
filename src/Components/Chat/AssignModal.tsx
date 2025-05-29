@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import React, { useEffect, useState } from 'react'
 import type {
   AgentDto,
@@ -8,10 +8,11 @@ import type {
 import { getAgents } from '@/Services/AgentService'
 import { assignAgent, closeConversation } from '@/Services/ConversationService'
 import { useUserPresence } from '@/Hooks/useUserPresence'
-import { toast } from 'react-toastify'
+import {toast} from 'react-toastify'
 import { X } from 'lucide-react'
-import '@/Styles/Chat/AssignModal.css'
-import { AgentOption } from '@/Components/Chat/AgentOption'
+//import { AgentOption } from '@/Components/Chat/AgentOption'
+import { AgentCard } from '@/Components/Chat/AgentCard'
+import '@/styles/Chat/AssignModal.css'
 
 interface AssignModalProps {
   conversation?: ConversationDto
@@ -27,26 +28,24 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   onAssigned,
 }) => {
   const [agents, setAgents] = useState<AgentDto[]>([])
-  const [sel, setSel] = useState<string>('')
+  const [selectedAgent, setSelectedAgent] = useState<string>('')
   const [status, setStatus] = useState<ConversationStatus>('Bot')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-  // Hook para presencia del agente seleccionado (solo primera carga)
   const { isOnline: selectedIsOnline } = useUserPresence(
-  sel ? Number(sel) : 0
-)
+    selectedAgent ? Number(selectedAgent) : 0
+  )
 
-  const statusOptions: { value: ConversationStatus; label: string }[] = [
-    // { value: 'New',     label: 'Nuevo'     },
-    { value: 'Bot',     label: 'Bot'       },
-    // { value: 'Waiting', label: 'Esperando' },
-    { value: 'Human',   label: 'Humano'    },
-    { value: 'Closed',  label: 'Cerrado'   },
+  const statusOptions: { value: ConversationStatus; label: string; color: string }[] = [
+    { value: 'Bot', label: 'Bot', color: 'bot' },
+    { value: 'Human', label: 'Humano', color: 'human' },
+    { value: 'Closed', label: 'Cerrado', color: 'closed' },
   ]
 
   useEffect(() => {
     if (!isOpen || !conversation) return
 
-    setSel(conversation.assignedAgentId?.toString() ?? '')
+    setSelectedAgent(conversation.assignedAgentId?.toString() ?? '')
     setStatus(conversation.status)
 
     getAgents()
@@ -55,110 +54,172 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   }, [isOpen, conversation])
 
   const handleAssign = async () => {
-    if (!conversation || (!sel && status !== 'Closed')) return
+    if (!conversation || (!selectedAgent && status !== 'Closed')) return
 
-    if (!selectedIsOnline && (!sel && status !== 'Closed')) {
-      toast.error('No puedes asignar un agente que está desconectado.')
+    if (!selectedIsOnline && (!selectedAgent && status !== 'Closed')) {
+      toast.warn("No puedes asignar un agente que está desconectado.")
       return
     }
 
     try {
-      
-    status !== 'Closed' ? await assignAgent(conversation.conversationId, sel, status) 
-    : await closeConversation(conversation.conversationId);
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      status !== 'Closed' 
+        ? await assignAgent(conversation.conversationId, selectedAgent, status) 
+        : await closeConversation(conversation.conversationId)
 
-      toast.success('Agente asignado correctamente.')
+      toast.success("Agente asignado correctamente.")
       onAssigned?.()
       onClose()
     } catch {
-      toast.error('Error al asignar agente.')
+      toast.error("Error al asignar agente.")
     }
   }
+
+  const selectedAgentData = agents.find(agent => agent.userId.toString() === selectedAgent)
 
   if (!isOpen) return null
 
   return (
-    <div className="assign-modal__backdrop">
-      <div className="assign-modal">
+    <div className="assign-modal__overlay">
+      <div className="assign-modal__container">
         <header className="assign-modal__header">
-          <h2 className="assign-modal__title">
-            Asignar agente a{' '}
-            <strong>
-              {conversation?.clientContactName ?? `#${conversation?.conversationId}`}
-            </strong>
-          </h2>
-          <button
-            className="assign-modal__close"
-            onClick={onClose}
-            aria-label="Cerrar"
-          >
-            <X size={18} />
-          </button>
+          <div className="assign-modal__header-content">
+            <h2 className="assign-modal__title">
+              Asignar agente a{' '}
+              <span className="assign-modal__client-name">
+                {conversation?.clientContactName ?? `#${conversation?.conversationId}`}
+              </span>
+            </h2>
+            <button
+              className="assign-modal__close-button"
+              onClick={onClose}
+              aria-label="Cerrar modal"
+              type="button"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </header>
 
-        <div className="assign-modal__field">
-          <label htmlFor="agent-select" className="assign-modal__label">
-            Seleccionar agente
-          </label>
-          <select
-            id="agent-select"
-            className="assign-modal__select"
-            value={sel}
-            onChange={e => setSel(e.target.value)}
-          >
-            <option value="">— Selecciona un agente —</option>
-            {agents.map(agent => (
-              <AgentOption key={agent.userId} agent={agent} />
-            ))}
-          </select>
-          {sel && !selectedIsOnline && (
-            <p className="assign-modal__warning">
-              ⚠️ Este agente no está conectado.
-            </p>
-          )}
-        </div>
-
-        <div className="assign-modal__field">
-          <label className="assign-modal__label">
-            Estado de la conversación
-          </label>
-          <div className="assign-modal__status">
-            {statusOptions.map(opt => (
-              <div className="status-option" key={opt.value}>
-                <input
-                  type="radio"
-                  id={`status-${opt.value.toLowerCase()}`}
-                  name="status"
-                  value={opt.value}
-                  checked={status === opt.value}
-                  onChange={() => setStatus(opt.value)}
-                  className="status-radio"
-                />
-                <label
-                  htmlFor={`status-${opt.value.toLowerCase()}`}
-                  className={`status-label status-${opt.value.toLowerCase()}`}
+        <div className="assign-modal__body">
+          <div className="assign-modal__field">
+            <label className="assign-modal__label">
+              Seleccionar agente
+            </label>
+            
+            <div className="assign-modal__dropdown">
+              <button
+                type="button"
+                className="assign-modal__dropdown-trigger"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-expanded={isDropdownOpen}
+              >
+                {selectedAgentData ? (
+                  <div className="assign-modal__selected-agent">
+                    <AgentCard agent={selectedAgentData} isCompact />
+                  </div>
+                ) : (
+                  <span className="assign-modal__placeholder">
+                    — Selecciona un agente —
+                  </span>
+                )}
+                <svg 
+                  className={`assign-modal__dropdown-icon ${isDropdownOpen ? 'assign-modal__dropdown-icon--open' : ''}`}
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 16 16" 
+                  fill="currentColor"
                 >
-                  {opt.label}
-                </label>
+                  <path d="M4.427 6.573L8 10.146l3.573-3.573a.5.5 0 0 1 .707.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 1 1 .708-.708z"/>
+                </svg>
+              </button>
+
+              {isDropdownOpen && (
+                <div className="assign-modal__dropdown-menu">
+                  <div className="assign-modal__dropdown-content">
+                    <button
+                      type="button"
+                      className="assign-modal__dropdown-item"
+                      onClick={() => {
+                        setSelectedAgent('')
+                        setIsDropdownOpen(false)
+                      }}
+                    >
+                      <span className="assign-modal__dropdown-item-text">
+                        — Selecciona un agente —
+                      </span>
+                    </button>
+                    {agents.map(agent => (
+                      <button
+                        key={agent.userId}
+                        type="button"
+                        className="assign-modal__dropdown-item"
+                        onClick={() => {
+                          setSelectedAgent(agent.userId.toString())
+                          setIsDropdownOpen(false)
+                        }}
+                      >
+                        <AgentCard agent={agent} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {selectedAgent && !selectedIsOnline && (
+              <div className="assign-modal__warning">
+                <span className="assign-modal__warning-icon">⚠️</span>
+                Este agente no está conectado.
               </div>
-            ))}
+            )}
+          </div>
+
+          <div className="assign-modal__field">
+            <label className="assign-modal__label">
+              Estado de la conversación
+            </label>
+            <div className="assign-modal__status-grid">
+              {statusOptions.map(option => (
+                <label
+                  key={option.value}
+                  className={`assign-modal__status-option assign-modal__status-option--${option.color} ${
+                    status === option.value ? 'assign-modal__status-option--selected' : ''
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="conversation-status"
+                    value={option.value}
+                    checked={status === option.value}
+                    onChange={() => setStatus(option.value)}
+                    className="assign-modal__status-radio"
+                  />
+                  <span className="assign-modal__status-label">
+                    {option.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
-        <footer className="assign-modal__actions">
+        <footer className="assign-modal__footer">
           <button
+            type="button"
             className="assign-modal__button assign-modal__button--secondary"
             onClick={onClose}
           >
             Cancelar
           </button>
           <button
+            type="button"
             className="assign-modal__button assign-modal__button--primary"
             onClick={handleAssign}
             disabled={
-              (!sel && status !== 'Closed' && !selectedIsOnline) ||
+              (!selectedAgent && status !== 'Closed' && !selectedIsOnline) ||
               (status === conversation?.status &&
-               sel === conversation.assignedAgentId?.toString())
+               selectedAgent === conversation.assignedAgentId?.toString())
             }
           >
             Guardar cambios
