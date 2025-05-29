@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { ToastContainer } from 'react-toastify'
 import { AppRouter } from '@/Routers/AppRouter'
 import ReLoginModal from '@/Components/Common/ReLoginModal'
@@ -11,6 +10,12 @@ import './i18n'
 import 'react-toastify/dist/ReactToastify.css'
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
 
+// Componente interno para disparar el hook dentro del provider
+function NotificationsHandler() {
+  useRealtimeNotifications()
+  return null
+}
+
 export default function App() {
   const online = useOnline()
 
@@ -19,19 +24,21 @@ export default function App() {
 
   // Si no hay token, vamos al login (página pública)
   if (!accessToken) {
-    return <AppRouter />  // Rutas públicas ya esta /login
+    return <AppRouter /> // Rutas públicas ya están en /login
   }
 
-  useRealtimeNotifications();
-  
-  // Sólo cuando tenemos token, arrancamos SignalR y las notifs en tiempo real
   return (
     <SignalRProvider token={accessToken}>
+      {/* Iniciar la escucha de notificaciones en tiempo real */}
+      <NotificationsHandler />
 
+      {/* Banner offline */}
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
 
+      {/* Modal de re-login por token expirado */}
       <ReLoginModal />
 
+      {/* Contenedor de toasts */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -43,6 +50,7 @@ export default function App() {
         theme="colored"
       />
 
+      {/* Tu aplicación de rutas */}
       <AppRouter />
     </SignalRProvider>
   )

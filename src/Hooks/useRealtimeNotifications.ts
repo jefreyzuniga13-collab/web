@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { fetchUnreadCount, fetchNotifications } from '@/Context/Slices/notificationsSlice'
 import type { AppDispatch } from '@/Context'
 import { notificationsConnection } from '@/Services/signalr'
+import type { NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 export function useRealtimeNotifications(
   currentPage: number = 1,
@@ -11,21 +12,15 @@ export function useRealtimeNotifications(
 ) {
   const dispatch = useDispatch<AppDispatch>()
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = (dto: { type: string; data: any }) => {
-      // 1) Mostrar toast
-      toast.info(`📬 Nueva notificación: ${dto.data.payload}`, {
-        position: 'top-right',
-        autoClose: 5000
-      })
-      // 2) Refrescar badge y (si estás en página) la lista
+    const handler = (dto: NotificationDto) => {
+      toast.info(`📬 ${dto.payload}`) 
       dispatch(fetchUnreadCount())
       dispatch(fetchNotifications({ page: currentPage, pageSize }))
     }
 
-    notificationsConnection?.on('ReceiveNotification', handler)
+    notificationsConnection?.on('Notification', handler)
     return () => {
-      notificationsConnection?.off('ReceiveNotification', handler)
+      notificationsConnection?.off('Notification', handler)
     }
   }, [dispatch, currentPage, pageSize])
 }

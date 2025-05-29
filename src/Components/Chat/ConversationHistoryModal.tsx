@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, ChevronDown, ChevronUp, X, Loader2 } from 'lucide-react';
 import { getHistoryByContact as getConversationHistory, summarizeAllByContact as generateConversationSummary } from '@/Services/ConversationService';
-//import type { ConversationHistoryDto, MessageWithAttachmentsDto as  MessageWithAttachmentsDto } from '@/Interfaces/Chat/ChatInterfaces';
-import type { ConversationHistoryDto } from '@/Interfaces/Chat/ChatInterfaces';
+import type { ConversationHistoryDto, MessageWithAttachmentsDto } from '@/Interfaces/Chat/ChatInterfaces';
 import '@/Styles/Chat/ConversationHistoryModal.css';
 
 interface ConversationHistoryModalProps {
@@ -16,8 +15,9 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
   onClose,
   conversationId
 }) => {
-  const [history, setHistory] = useState<ConversationHistoryDto | null>();
-  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [conversations, setConversations] = useState<ConversationHistoryDto[]>([]);
+  const [allMessages, setAllMessages] = useState<MessageWithAttachmentsDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentMatch, setCurrentMatch] = useState(0);
@@ -31,18 +31,20 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
     if (!conversationId) return;
     
     setLoading(true);
-
     try {
+      const response = await getConversationHistory(conversationId);
+      const result = response.data?.data;
 
-     const response = await getConversationHistory(conversationId);
-        const result = response.data?.data;
+      console.log("Datos del historial", JSON.stringify(result));
 
-        console.log("Datos del usuario", JSON.stringify(result));
-
-        if (Array.isArray(result) && result.length > 0) {
-          setHistory(result[0]);
-        }
-
+      if (Array.isArray(result)) {
+        setConversations(result);
+        // Combinar todos los mensajes de todas las conversaciones
+        const messages = result.flatMap(conv => conv.messages);
+        // Ordenar por fecha
+        messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+        setAllMessages(messages);
+      }
     } catch (error) {
       console.error('Error fetching conversation history:', error);
     } finally {
@@ -70,7 +72,8 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
       fetchHistory();
     } else {
       // Reset state when modal closes
-      setHistory(null);
+      setConversations([]);
+      setAllMessages([]);
       setSearchTerm('');
       setCurrentMatch(0);
       setTotalMatches(0);
@@ -82,28 +85,30 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
   const highlightText = (text: string, searchTerm: string) => {
     if (!searchTerm.trim()) return text;
     
-    const regex = new RegExp((`${searchTerm}`), 'gi');
-
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
     const parts = text.split(regex);
     
-    return parts.map((part, index) => 
-      regex.test(part) ? (
-        <mark key={index} className="search-highlight">
-          {part}
-        </mark>
-      ) : part
-    );
+    return parts.map((part, index) => {
+      if (part.toLowerCase() === searchTerm.toLowerCase()) {
+        return (
+          <mark key={index} className="search-highlight">
+            {part}
+          </mark>
+        );
+      }
+      return part;
+    });
   };
 
   const searchMessages = useCallback(() => {
-    if (!history || !searchTerm.trim()) {
+    if (!allMessages.length || !searchTerm.trim()) {
       setTotalMatches(0);
       setCurrentMatch(0);
       return;
     }
 
     const matches: number[] = [];
-    history.messages.forEach((message, index) => {
+    allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -120,17 +125,17 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
         messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-  }, [history, searchTerm]);
+  }, [allMessages, searchTerm]);
 
   useEffect(() => {
     searchMessages();
   }, [searchMessages]);
 
   const goToNextMatch = () => {
-    if (!history || totalMatches === 0) return;
+    if (!allMessages.length || totalMatches === 0) return;
     
     const matches: number[] = [];
-    history.messages.forEach((message, index) => {
+    allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -146,10 +151,10 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
   };
 
   const goToPreviousMatch = () => {
-    if (!history || totalMatches === 0) return;
+    if (!allMessages.length || totalMatches === 0) return;
     
     const matches: number[] = [];
-    history.messages.forEach((message, index) => {
+    allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -180,7 +185,7 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container modal-large" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Historial de Conversación</h2>
+          <h2 className="modal-title">Historial de Conversaciones</h2>
           <button className="modal-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -224,20 +229,21 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
             <button
               className="summary-btn"
               onClick={generateSummary}
-              disabled={loadingSummary || !history}
+              disabled={loadingSummary || allMessages.length === 0}
             >
               {loadingSummary ? (
-                <Loader2 size={12} className="loading-spinner" />
+                <Loader2 size={16} className="loading-spinner" />
               ) : (
-                <span>📄Resumen</span>
+                <span>📄</span>
               )}
+              Resumen
             </button>
           </div>
 
           {showSummary && summary && (
             <div className="summary-panel">
               <div className="summary-header">
-                <h4 className="summary-title">Resumen de la conversación</h4>
+                <h4 className="summary-title">Resumen de las conversaciones</h4>
                 <button
                   className="summary-close"
                   onClick={() => setShowSummary(false)}
@@ -255,11 +261,11 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
                 <Loader2 size={32} className="loading-spinner" />
                 <span>Cargando historial...</span>
               </div>
-            ) : history ? (
+            ) : allMessages.length > 0 ? (
               <div className="messages-list">
-                {history.messages.map((message, index) => (
+                {allMessages.map((message, index) => (
                   <div
-                    key={message.messageId}
+                    key={`${message.messageId}-${index}`}
                     ref={(el) => { messageRefs.current[index] = el; }}
                     className="message-item"
                   >
@@ -269,9 +275,9 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
                       </div>
                       <div className="message-meta">
                         <span className="sender-name">
-
-                          {message.senderContactId ?  message.senderContactName || 'Cliente' : message.senderUserName || 'Agente'}
-
+                          {message.senderContactId 
+                            ? message.senderContactName || 'Cliente' 
+                            : message.senderUserName || 'Agente'}
                         </span>
                         <span className="message-time">
                           {new Date(message.sentAt).toLocaleString()}
@@ -297,7 +303,7 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
               </div>
             ) : (
               <div className="error-state">
-                No se pudo cargar el historial
+                No se encontraron conversaciones
               </div>
             )}
           </div>
