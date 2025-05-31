@@ -76,3 +76,7 @@ export interface Company {
   id: number;
   name: string;
 }
+export interface PresenceDto {
+  lastOnline?: string;
+  isOnline: boolean;
+}

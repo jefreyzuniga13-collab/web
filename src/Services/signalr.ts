@@ -10,8 +10,7 @@ import { toast } from 'react-toastify'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
-  'http://localhost:7108/api/v1';
-
+  'http://localhost:7108/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 // Conexiones internas
@@ -22,7 +21,6 @@ export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
 
 export async function createHubConnection(token: string) {
-
   // Chat hub
   chatConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/chat`, { accessTokenFactory: () => token })
@@ -63,6 +61,16 @@ export async function createHubConnection(token: string) {
     .withUrl(`${HUB_BASE}/hubs/presence`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
     .build()
+
+  // Register presence events broadcast from server
+  presenceConnection.on('UserIsOnline', (userId: number) => {
+    console.log('Usuario en línea:', userId)
+    // Aquí despacha a tu store o actualiza contexto
+  })
+  presenceConnection.on('UserIsOffline', (userId: number) => {
+    console.log('Usuario desconectado:', userId)
+    // Aquí despacha a tu store o actualiza contexto
+  })
 
   presenceConnection.onreconnecting(err =>
     console.warn('Reconnecting to Presence Hub...', err)
@@ -150,25 +158,10 @@ export function offMessageStatusChanged(handler: (msg: MessageDto) => void) {
   notificationsConnection?.off('MessageStatusChanged', handler)
 }
 
-// Suscripción al evento de notificación genérica
 export function onNewNotification(handler: (dto: NotificationDto) => void) {
   notificationsConnection?.on('Notification', handler)
 }
 
 export function offNewNotification(handler: (dto: NotificationDto) => void) {
   notificationsConnection?.off('Notification', handler)
-}
-
-export function notifyUserPresent(userId: number) {
-  if (presenceConnection?.state === signalR.HubConnectionState.Connected) {
-    presenceConnection.invoke('UserPresent', userId.toString())
-      .catch(err => console.error('Error invoking UserPresent:', err))
-  }
-}
-
-export function notifyUserAbsent(userId: number) {
-  if (presenceConnection?.state === signalR.HubConnectionState.Connected) {
-    presenceConnection.invoke('UserAbsent', userId.toString())
-      .catch(err => console.error('Error invoking UserAbsent:', err))
-  }
 }

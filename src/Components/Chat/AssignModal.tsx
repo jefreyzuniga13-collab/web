@@ -1,16 +1,10 @@
-
 import React, { useEffect, useState } from 'react'
-import type {
-  AgentDto,
-  ConversationDto,
-  ConversationStatus,
-} from '@/Interfaces/Chat/ChatInterfaces'
+import type { AgentDto, ConversationDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
 import { getAgents } from '@/Services/AgentService'
 import { assignAgent, closeConversation } from '@/Services/ConversationService'
 import { useUserPresence } from '@/Hooks/useUserPresence'
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
-//import { AgentOption } from '@/Components/Chat/AgentOption'
 import { AgentCard } from '@/Components/Chat/AgentCard'
 import '@/styles/Chat/AssignModal.css'
 
@@ -32,10 +26,10 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   const [status, setStatus] = useState<ConversationStatus>('Bot')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-  const { isOnline: selectedIsOnline } = useUserPresence(
-    selectedAgent ? Number(selectedAgent) : 0
-  )
+  const selectedAgentId = selectedAgent ? Number(selectedAgent) : 0
+  const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId)
 
+  // Opciones de estado con color para estilos
   const statusOptions: { value: ConversationStatus; label: string; color: string }[] = [
     { value: 'Bot', label: 'Bot', color: 'bot' },
     { value: 'Human', label: 'Humano', color: 'human' },
@@ -45,6 +39,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   useEffect(() => {
     if (!isOpen || !conversation) return
 
+    // Inicializamos selección y estado
     setSelectedAgent(conversation.assignedAgentId?.toString() ?? '')
     setStatus(conversation.status)
 
@@ -53,35 +48,54 @@ export const AssignModal: React.FC<AssignModalProps> = ({
       .catch(console.error)
   }, [isOpen, conversation])
 
-  const handleAssign = async () => {
-    if (!conversation || (!selectedAgent && status !== 'Closed')) return
+  // Controla la lógica al cambiar estado
+  const handleStatusChange = (newStatus: ConversationStatus) => {
+    if (newStatus === 'Human') {
+      if (!selectedAgent) {
+        toast.warn('Debes seleccionar un agente antes de asignar Humano.')
+        return
+      }
+      if (!selectedIsOnline) {
+        toast.warn('No puedes asignar Humano a un agente desconectado.')
+        return
+      }
+    }
 
-    if (!selectedIsOnline && (!selectedAgent && status !== 'Closed')) {
-      toast.warn("No puedes asignar un agente que está desconectado.")
+    if (newStatus === 'Bot' && selectedAgent) {
+      toast.warn('No puedes establecer Bot cuando hay un agente seleccionado.')
       return
     }
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      status !== 'Closed' 
-        ? await assignAgent(conversation.conversationId, selectedAgent, status) 
-        : await closeConversation(conversation.conversationId)
+    // 'Closed' siempre permitido
+    setStatus(newStatus)
+  }
 
-      toast.success("Agente asignado correctamente.")
+  // Ejecuta la asignación o cierre
+  const handleAssign = async () => {
+    if (!conversation) return
+
+    try {
+      if (status === 'Closed') {
+        await closeConversation(conversation.conversationId)
+      } else {
+        // Ya validamos en handleStatusChange que Human y Bot sean válidos
+        await assignAgent(conversation.conversationId, selectedAgent, status)
+      }
+      toast.success('Cambios guardados exitosamente.')
       onAssigned?.()
       onClose()
     } catch {
-      toast.error("Error al asignar agente.")
+      toast.error('Error al guardar los cambios.')
     }
   }
 
-  const selectedAgentData = agents.find(agent => agent.userId.toString() === selectedAgent)
-
+  const selectedAgentData = agents.find(a => a.userId.toString() === selectedAgent)
   if (!isOpen) return null
 
   return (
     <div className="assign-modal__overlay">
       <div className="assign-modal__container">
+        {/* Header */}
         <header className="assign-modal__header">
           <div className="assign-modal__header-content">
             <h2 className="assign-modal__title">
@@ -101,17 +115,15 @@ export const AssignModal: React.FC<AssignModalProps> = ({
           </div>
         </header>
 
+        {/* Body */}
         <div className="assign-modal__body">
           <div className="assign-modal__field">
-            <label className="assign-modal__label">
-              Seleccionar agente
-            </label>
-            
+            <label className="assign-modal__label">Seleccionar agente</label>
             <div className="assign-modal__dropdown">
               <button
                 type="button"
                 className="assign-modal__dropdown-trigger"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => setIsDropdownOpen(open => !open)}
                 aria-expanded={isDropdownOpen}
               >
                 {selectedAgentData ? (
@@ -123,17 +135,18 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                     — Selecciona un agente —
                   </span>
                 )}
-                <svg 
-                  className={`assign-modal__dropdown-icon ${isDropdownOpen ? 'assign-modal__dropdown-icon--open' : ''}`}
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
+                <svg
+                  className={`assign-modal__dropdown-icon ${
+                    isDropdownOpen ? 'assign-modal__dropdown-icon--open' : ''
+                  }`}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
                   fill="currentColor"
                 >
-                  <path d="M4.427 6.573L8 10.146l3.573-3.573a.5.5 0 0 1 .707.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 1 1 .708-.708z"/>
+                  <path d="M4.427 6.573L8 10.146l3.573-3.573a.5.5 0 0 1 .707.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 1 1 .708-.708z" />
                 </svg>
               </button>
-
               {isDropdownOpen && (
                 <div className="assign-modal__dropdown-menu">
                   <div className="assign-modal__dropdown-content">
@@ -145,9 +158,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                         setIsDropdownOpen(false)
                       }}
                     >
-                      <span className="assign-modal__dropdown-item-text">
-                        — Selecciona un agente —
-                      </span>
+                      — Selecciona un agente —
                     </button>
                     {agents.map(agent => (
                       <button
@@ -166,19 +177,11 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                 </div>
               )}
             </div>
-
-            {selectedAgent && !selectedIsOnline && (
-              <div className="assign-modal__warning">
-                <span className="assign-modal__warning-icon">⚠️</span>
-                Este agente no está conectado.
-              </div>
-            )}
           </div>
 
+          {/* Estado de la conversación */}
           <div className="assign-modal__field">
-            <label className="assign-modal__label">
-              Estado de la conversación
-            </label>
+            <label className="assign-modal__label">Estado de la conversación</label>
             <div className="assign-modal__status-grid">
               {statusOptions.map(option => (
                 <label
@@ -192,18 +195,24 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                     name="conversation-status"
                     value={option.value}
                     checked={status === option.value}
-                    onChange={() => setStatus(option.value)}
+                    disabled={
+                      option.value === 'Human'
+                        ? !(selectedAgent && selectedIsOnline)
+                        : option.value === 'Bot'
+                        ? !!selectedAgent
+                        : false
+                    }
+                    onChange={() => handleStatusChange(option.value)}
                     className="assign-modal__status-radio"
                   />
-                  <span className="assign-modal__status-label">
-                    {option.label}
-                  </span>
+                  <span className="assign-modal__status-label">{option.label}</span>
                 </label>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Footer */}
         <footer className="assign-modal__footer">
           <button
             type="button"
@@ -216,11 +225,6 @@ export const AssignModal: React.FC<AssignModalProps> = ({
             type="button"
             className="assign-modal__button assign-modal__button--primary"
             onClick={handleAssign}
-            disabled={
-              (!selectedAgent && status !== 'Closed' && !selectedIsOnline) ||
-              (status === conversation?.status &&
-               selectedAgent === conversation.assignedAgentId?.toString())
-            }
           >
             Guardar cambios
           </button>
