@@ -58,7 +58,11 @@ class UserService {
   }
 
   async getUserPresence(userId: number): Promise<PresenceDto> {
+
+    console.log("Solicitud de estado de usuario");
+    console.log("UserId Es", userId);
     const { data } = await api.get<ApiResponse<PresenceDto>>(`/Users/${userId}/status`)
+      console.log("Si retorna esto", JSON.stringify(data));
     return data.data
   }
 }

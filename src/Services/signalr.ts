@@ -57,10 +57,12 @@ export async function createHubConnection(token: string) {
   )
 
   // Presence hub
-  presenceConnection = new signalR.HubConnectionBuilder()
-    .withUrl(`${HUB_BASE}/hubs/presence`, { accessTokenFactory: () => token })
+presenceConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${HUB_BASE}/hubs/presence`, {
+      accessTokenFactory: () => token
+    })
     .withAutomaticReconnect()
-    .build()
+    .build();
 
   // Register presence events broadcast from server
   presenceConnection.on('UserIsOnline', (userId: number) => {
