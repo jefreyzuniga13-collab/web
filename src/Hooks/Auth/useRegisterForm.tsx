@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/Hooks/useAuth'
+import { useAuth } from '@/Hooks/Auth/useAuth'
 import { getCompanies } from '@/Services/CompanyService'
 import type { RegisterRequest } from '@/Interfaces/Auth/AuthInterface'
 
@@ -11,7 +11,7 @@ interface CompanyOption {
   value: number
 }
 
-export default function useRegistrationContainer() {
+export default function useRegisterForm() {
   const { t } = useTranslation()
   const { registerAsync, loading } = useAuth()
   const [companies, setCompanies] = useState<CompanyOption[]>([])

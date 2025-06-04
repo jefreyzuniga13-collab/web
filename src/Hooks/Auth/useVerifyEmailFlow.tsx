@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 //import { useTranslation } from 'react-i18next'
 //import { toast } from 'react-toastify'
-import { useAuth } from '@/Hooks/useAuth'
+import { useAuth } from '@/Hooks/Auth/useAuth'
 import type { VerifyEmailRequest } from '@/Interfaces/Auth/AuthInterface'
 
-export default function useVerifyContainer() {
+export default function useVerifyEmailFlow() {
   //const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()

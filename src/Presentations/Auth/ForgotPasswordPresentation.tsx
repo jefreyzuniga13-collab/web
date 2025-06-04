@@ -1,50 +1,50 @@
 import { useTranslation } from "react-i18next";
-import useForgotPasswordContainer from "@/Containers/Auth/useForgotPasswordContainer";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
 import {Link} from 'react-router-dom'
+import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
 
 export default function ForgotPasswordPresentation() {
   const { t } = useTranslation();
-  const { formik, loading, canSubmit, formError } =
-    useForgotPasswordContainer();
+  const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
 
   return (
-    <div className="forgotPassword-page">
-      <div className="forgotPassword-content">
-        <aside className="forgotPassword-info">
-          <h1 className="forgotPassword-title">
+    <div className={`forgot-password ${loading ? 'forgot-password--loading' : ''}`}>
+      <div className="forgot-password__container">
+        <aside className="forgot-password__info-panel">
+          <h1 className="forgot-password__title">
             {t("forgotPassword.title")}
           </h1>
-          <p className="forgotPassword-description">
+          <p className="forgot-password__description">
             {t("forgotPassword.description")}
           </p>
-          <ul className="forgotPassword-steps">
+          <ul className="forgot-password__steps">
             {Array.from({ length: 5 }, (_, i) => (
-              <li key={i}>{t(`forgotPassword.steps.${i + 1}`)}</li>
+              <li key={i} className="forgot-password__steps-item">
+                {t(`forgotPassword.steps.${i + 1}`)}
+              </li>
             ))}
           </ul>
           <img
-            className="forgotPassword-image"
+            className="forgot-password__image"
             src="https://i.ibb.co/qLpn7cCK/forgot-password-email.png"
             alt={t("forgotPassword.imageAlt")}
           />
         </aside>
 
-        <section className="forgotPassword-form-section">
-
-          <p className="forgotPassword-subtitle">
+        <section className={`forgot-password__form-section ${formError ? 'forgot-password__form-section--error' : ''}`}>
+          <p className="forgot-password__subtitle">
             {t("forgotPassword.subtitle")}
           </p>
           {formError && (
-            <div className="forgotPassword-error">{formError}</div>
+            <div className="forgot-password__error">{formError}</div>
           )}
 
           <form onSubmit={formik.handleSubmit} noValidate>
             <label
               htmlFor="email"
-              className="forgotPassword-label"
+              className="forgot-password__label"
             >
               {t("forgotPassword.emailLabel")}
             </label>
@@ -65,14 +65,14 @@ export default function ForgotPasswordPresentation() {
               type="submit"
               variant="primary"
               disabled={!canSubmit || loading}
-              className="forgotPassword-submit"
+              className="forgot-password__submit-button"
             >
               {loading
                 ? `${t("forgotPassword.submitting")}…`
                 : t("forgotPassword.handleSubmit")}
             </Button>
-            <p className="forgotPassword-forgot-link">
-              <Link to="/login" className="forgotPassword-forgot-link">
+            <p className="forgot-password__back-link">
+              <Link to="/login" className="forgot-password__link">
                 {t("forgotPassword.backToLogin")}
               </Link>
             </p>

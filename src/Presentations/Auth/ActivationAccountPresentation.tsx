@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import useVerifyContainer from '@/Containers/Auth/useVerifyContainer'
 import '@/Styles/Auth/ActivationAccountPresentation.css'
+import useVerifyEmailFlow from '@/Hooks/Auth/useVerifyEmailFlow'
 
 export default function ActivationAccountPresentation() {
   const { t } = useTranslation()
-  const { loading, done } = useVerifyContainer()
+  const { loading, done } = useVerifyEmailFlow()
 
   return (
     <div className="activationAccount-container">

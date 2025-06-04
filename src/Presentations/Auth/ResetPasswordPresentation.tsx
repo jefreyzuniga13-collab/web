@@ -1,9 +1,9 @@
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
-import useResetContainer from '@/Containers/Auth/useResetPasswordContainer'
 import Input from '@/Components/Common/Input'
 import Button from '@/Components/Common/Button'
 import '@/Styles/Auth/ResetPasswordPresentation.css'
+import useResetPasswordForm from '@/Hooks/Auth/useResetPasswordForm'
 
 export default function ResetPasswordPresentation() {
   const { t } = useTranslation()
@@ -16,7 +16,7 @@ export default function ResetPasswordPresentation() {
     showConfirm,
     toggleShowConfirm,
     formError,
-  } = useResetContainer()
+  } = useResetPasswordForm()
 
   return (
     <div className="resetPassword-page">

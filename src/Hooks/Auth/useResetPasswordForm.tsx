@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { toast } from 'react-toastify'
-import { useAuth } from '@/Hooks/useAuth'
+import { useAuth } from '@/Hooks/Auth/useAuth'
 import type { ResetPasswordRequest } from '@/Interfaces/Auth/AuthInterface'
 
-export default function useResetContainer() {
+export default function useResetPasswordForm() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()

@@ -1,11 +1,12 @@
+
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
-import useLoginContainer from "@/Containers/Auth/useLoginContainer";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import LanguageSwitcher from "@/Components/Common/LanguageSwitcher";
 import "@/Styles/Auth/LoginPresentation.css";
+import useLoginForm from "@/Hooks/Auth/useLoginForm";
 
 export default function LoginPresentation() {
   const { t } = useTranslation();
@@ -16,40 +17,40 @@ export default function LoginPresentation() {
     toggleShowPassword,
     canSubmit,
     formError,
-  } = useLoginContainer();
+  } = useLoginForm();
 
   return (
-    <div className="login-page">
-      <div className="login-content">   
-        <aside className="login-info">
-          <h1 className="login-title">{t("login.title")}</h1>
-          <p className="login-description">{t("login.description")}</p>
-          <ul className="login-features">
-            <li>{t("login.features.fastReplies")}</li>
-            <li>{t("login.features.centralInbox")}</li>
-            <li>{t("login.features.analytics")}</li>
-            <li>{t("login.features.customization")}</li>
+    <div className={`login ${loading ? 'login--loading' : ''}`}>
+      <div className="login__container">   
+        <aside className="login__info-panel">
+          <h1 className="login__title">{t("login.title")}</h1>
+          <p className="login__description">{t("login.description")}</p>
+          <ul className="login__features">
+            <li className="login__features-item">{t("login.features.fastReplies")}</li>
+            <li className="login__features-item">{t("login.features.centralInbox")}</li>
+            <li className="login__features-item">{t("login.features.analytics")}</li>
+            <li className="login__features-item">{t("login.features.customization")}</li>
           </ul>
           <img
-            className="login-image"
+            className="login__image"
             src="https://i.ibb.co/mrNrN3tv/login-illustration.png"
             alt={t("login.imageAlt")}
           />
         </aside>
 
-        <section className="login-form-section">
-        <div className="login-form-header">
-        <Link to="/forgot-password" className="login-help">
-          {t("login.needHelp")}
-        </Link>
-        <LanguageSwitcher />
-      </div>
+        <section className={`login__form-section ${formError ? 'login__form-section--error' : ''}`}>
+          <div className="login__form-header">
+            <Link to="/forgot-password" className="login__help-link">
+              {t("login.needHelp")}
+            </Link>
+            <LanguageSwitcher />
+          </div>
 
-          <p className="login-subtitle">{t("login.subtitle")}</p>
-          {formError && <div className="login-error">{formError}</div>}
+          <p className="login__subtitle">{t("login.subtitle")}</p>
+          {formError && <div className="login__error">{formError}</div>}
 
           <form onSubmit={formik.handleSubmit} noValidate>
-            <label htmlFor="email" className="login-label">
+            <label htmlFor="email" className="login__label">
               {t("login.emailLabel")}
             </label>
             <Input
@@ -63,7 +64,7 @@ export default function LoginPresentation() {
               error={formik.touched.email ? formik.errors.email : undefined}
             />
 
-            <label htmlFor="password" className="login-label">
+            <label htmlFor="password" className="login__label">
               {t("login.passwordLabel")}
             </label>
             <Input
@@ -81,8 +82,8 @@ export default function LoginPresentation() {
               onIconClick={toggleShowPassword}
             />
 
-            <div className="login-options">
-              <label className="login-remember">
+            <div className="login__options">
+              <label className="login__remember">
                 <input
                   type="checkbox"
                   name="remember"
@@ -91,7 +92,7 @@ export default function LoginPresentation() {
                 />
                 {t("login.rememberMe")}
               </label>
-              <Link to="/forgot-password" replace className="login-forgot">
+              <Link to="/forgot-password" replace className="login__forgot-link">
                 {t("login.forgotPassword")}
               </Link>
             </div>
@@ -100,21 +101,21 @@ export default function LoginPresentation() {
               type="submit"
               variant="primary"
               disabled={!canSubmit || loading}
-              className="login-submit"
+              className="login__submit-button"
             >
               {loading ? `${t("login.submit")}…` : t("login.submit")}
             </Button>
 
-            <p className="login-signup">
+            <p className="login__signup-text">
               {t("login.noAccount")}{" "}
-              <Link to="/signup" replace className="login-signup-link">
+              <Link to="/signup" replace className="login__signup-link">
                 {t("login.signUp")}
               </Link>
             </p>
           </form>
         </section>
       </div>
-      <p className="derechos-container">©<span  className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
+      <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
     </div>
   );
 }

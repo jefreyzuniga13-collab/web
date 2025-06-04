@@ -3,7 +3,7 @@
     flex-direction: column;
   }
   .select-field {
-    padding: 0.5rem 0.75rem;
+    padding: 1rem 0.75rem;
     border: 1px solid var(--border-default);
     border-radius: 0.375rem;
     font-size: 1rem;

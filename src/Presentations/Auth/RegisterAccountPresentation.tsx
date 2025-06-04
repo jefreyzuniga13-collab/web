@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
-import useRegistrationContainer from '@/Containers/Auth/useRegistrationContainer'
 import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
 import Button from '@/Components/Common/Button'
 import '@/Styles/Auth/RegisterPresentation.css'
-
+import useRegisterForm from '@/Hooks/Auth/useRegisterForm'
 export default function RegisterPresentation() {
   const { t } = useTranslation()
   const {
@@ -18,31 +17,34 @@ export default function RegisterPresentation() {
     toggleShowPassword,
     canSubmit,
     formError
-  } = useRegistrationContainer()
+  } = useRegisterForm()
 
   return (
-    <div className="register-page">
-      <div className="register-content">
-        <aside className="register-info">
-          <h1 className="register-title">{t('register.title')}</h1>
-          <p className="register-description">{t('register.description')}</p>
-          <ul className="register-steps">
+    <div className={`register ${loading ? 'register--loading' : ''}`}>
+      <div className="register__container">
+        <aside className="register__info-panel">
+          <h1 className="register__title">{t('register.title')}</h1>
+          <p className="register__description">{t('register.description')}</p>
+          <ul className="register__steps">
             {['1', '2', '3', '4'].map(step => (
-              <li key={step}>{t(`register.steps.${step}`)}</li>
+              <li key={step} className="register__steps-item">{t(`register.steps.${step}`)}</li>
             ))}
           </ul>
-          <img src="https://i.ibb.co/F26HCTK/singup.png" alt="singup" className='register-image'></img>
+          <img 
+            src="https://i.ibb.co/F26HCTK/singup.png" 
+            alt="singup" 
+            className="register__image"
+          />
         </aside>
 
-        <section className="register-form-section">
+        <section className={`register__form-section ${(formError || fetchError) ? 'register__form-section--error' : ''}`}>
           {(formError || fetchError) && (
-            <div className="register-error">{formError || fetchError}</div>
+            <div className="register__error">{formError || fetchError}</div>
           )}
 
-          <form onSubmit={formik.handleSubmit} className="register-form-grid" noValidate>
-            {/* Columna 1 */}
-            <div className="field-group">
-              <label htmlFor="fullName">{t('register.fullNameLabel')}</label>
+          <form onSubmit={formik.handleSubmit} className="register__form-grid" noValidate>
+            <div className="register__field-group">
+              <label htmlFor="fullName" className="register__label">{t('register.fullNameLabel')}</label>
               <Input
                 id="fullName"
                 name="fullName"
@@ -53,7 +55,7 @@ export default function RegisterPresentation() {
                 error={formik.touched.fullName ? formik.errors.fullName : undefined}
               />
 
-              <label htmlFor="email">{t('register.emailLabel')}</label>
+              <label htmlFor="email" className="register__label">{t('register.emailLabel')}</label>
               <Input
                 id="email"
                 name="email"
@@ -65,7 +67,7 @@ export default function RegisterPresentation() {
                 error={formik.touched.email ? formik.errors.email : undefined}
               />
 
-              <label htmlFor="companyId">{t('register.companyNameLabel')}</label>
+              <label htmlFor="companyId" className="register__label">{t('register.companyNameLabel')}</label>
               <Select
                 id="companyId"
                 name="companyId"
@@ -77,7 +79,7 @@ export default function RegisterPresentation() {
                 placeholder={t('register.companyNameExample')}
               />
 
-              <label htmlFor="phone">{t('register.phoneLabel')}</label>
+              <label htmlFor="phone" className="register__label">{t('register.phoneLabel')}</label>
               <Input
                 id="phone"
                 name="phone"
@@ -89,9 +91,8 @@ export default function RegisterPresentation() {
               />
             </div>
 
-            {/* Columna 2 */}
-            <div className="field-group">
-              <label htmlFor="identifier">{t('register.identifierLabel')}</label>
+            <div className="register__field-group">
+              <label htmlFor="identifier" className="register__label">{t('register.identifierLabel')}</label>
               <Input
                 id="identifier"
                 name="identifier"
@@ -102,7 +103,7 @@ export default function RegisterPresentation() {
                 error={formik.touched.identifier ? formik.errors.identifier : undefined}
               />
 
-              <label htmlFor="password">{t('register.passwordLabel')}</label>
+              <label htmlFor="password" className="register__label">{t('register.passwordLabel')}</label>
               <Input
                 id="password"
                 name="password"
@@ -117,22 +118,21 @@ export default function RegisterPresentation() {
               />
             </div>
 
-            {/* Botón y enlace */}
-            <div className="full-width">
+            <div className="register__actions">
               <Button
                 type="submit"
                 variant="primary"
                 disabled={!canSubmit || loading}
-                className="register-submit"
+                className="register__submit-button"
               >
                 {loading
                   ? `${t('register.submitting')}…`
                   : t('register.submit')}
               </Button>
 
-              <p className="register-login-link">
+              <p className="register__login-text">
                 {t('register.alreadyHaveAccount')}{' '}
-                <Link to="/login" className="register-link">
+                <Link to="/" className="register__login-link">
                   {t('register.backToLogin')}
                 </Link>
               </p>

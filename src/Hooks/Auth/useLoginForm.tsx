@@ -2,14 +2,14 @@ import { useState, useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/Hooks/useAuth";
+import { useAuth } from "@/Hooks/Auth/useAuth";
 import type { LoginRequest } from "@/Interfaces/Auth/AuthInterface";
 
 interface LoginFormValues extends LoginRequest {
   remember: boolean;
 }
 
-export default function useLoginContainer() {
+export default function useLoginForm() {
   const { t } = useTranslation();
   const { login, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
