@@ -76,6 +76,7 @@ export const useUsers = () => {
       .catch((error) => {
         //toast.error(`Error al crear usuario: ${error}`);
         toast.error(`Error al crear usuario.`);
+        console.error(`Error al crear usuario: ${error}`);
       });
   };
 

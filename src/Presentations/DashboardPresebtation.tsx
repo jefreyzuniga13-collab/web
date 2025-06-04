@@ -1,10 +1,10 @@
-import Menu from '@/Components/Chat/Menu'
+// import Menu from '@/Components/Chat/Menu'
 import '@/Styles/DashboardContainer.css'
 
 const DashboardPresebtation = () => {
   return (
     <div className="dashboard-container">
-        <Menu/>
+        {/* <Menu/> */}
         <p className='dashboard-text'>Dashboard</p>
     </div>
   )

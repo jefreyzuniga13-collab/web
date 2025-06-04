@@ -71,3 +71,20 @@ export interface RoleResponseDto {
   roleName: string;
   description: string;
 }
+
+export interface SystemParamResponseDto{
+  id: number;
+  name: string;
+  value: string;
+  description: string;
+  updatedAt: string;
+  createdAt: string;
+  type: string;
+}
+export interface SystemParamRequestDto{
+  id:number;
+  name: string;
+  value: string;
+  description: string;
+  type: string;
+}

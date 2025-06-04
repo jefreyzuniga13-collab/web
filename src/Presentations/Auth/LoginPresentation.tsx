@@ -4,7 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
-import LanguageSwitcher from "@/Components/Common/LanguageSwitcher";
+// import LanguageSwitcher from "@/Components/Common/LanguageSwitcher";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 
@@ -43,7 +43,7 @@ export default function LoginPresentation() {
             <Link to="/forgot-password" className="login__help-link">
               {t("login.needHelp")}
             </Link>
-            <LanguageSwitcher />
+            {/* <LanguageSwitcher /> */}
           </div>
 
           <p className="login__subtitle">{t("login.subtitle")}</p>

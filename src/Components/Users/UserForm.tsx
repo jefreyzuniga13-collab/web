@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Input from '@/Components/Common/Input';
-import Select from '@/Components/Common/Select';
+// import Select from '@/Components/Common/Select';
 import Button from '@/Components/Common/Button';
 import { Eye, EyeOff } from 'lucide-react';
 import '@/Styles/Users/UserForm.css';
@@ -89,10 +89,10 @@ const UserForm: React.FC<UserFormProps> = ({
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(e.target.selectedOptions, (opt) => parseInt(opt.value));
-    setFormData((prev) => ({ ...prev, roleIds: selected }));
-  };
+  // const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   const selected = Array.from(e.target.selectedOptions, (opt) => parseInt(opt.value));
+  //   setFormData((prev) => ({ ...prev, roleIds: selected }));
+  // };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,7 +211,7 @@ const UserForm: React.FC<UserFormProps> = ({
             />
           </div>
 
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="roles">Roles *</label>
             <Select
               id="roles"
@@ -221,7 +221,7 @@ const UserForm: React.FC<UserFormProps> = ({
               onChange={handleRoleChange}
               error={errors.roleIds}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              options={(roles.items || []).map((role: { roleName: any; roleId: { toString: () => any; }; }) => ({
+              options={(roles || []).map((role: { roleName: any; roleId: { toString: () => any; }; }) => ({
                   label: role.roleName,
                   value: role.roleId.toString(),
                 }))}
@@ -232,7 +232,7 @@ const UserForm: React.FC<UserFormProps> = ({
             <small className="help-text">
               Mantén presionada la tecla Ctrl (Cmd en Mac) para seleccionar múltiples roles
             </small>
-          </div>
+          </div> */}
         </div>
       </div>
 

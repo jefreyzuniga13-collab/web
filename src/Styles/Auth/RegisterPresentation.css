@@ -18,7 +18,6 @@
   background: var(--bg-primary);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
 }
 
 .register__info-panel {

@@ -27,6 +27,7 @@ export const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> =
   const [showSummary, setShowSummary] = useState(false);
   const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
+  console.log(conversations, ' conversaciones');
   const fetchHistory = useCallback(async () => {
     if (!conversationId) return;
     
