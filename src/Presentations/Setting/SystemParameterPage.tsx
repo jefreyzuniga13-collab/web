@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Search, Filter } from 'lucide-react'
 import { useSystemParams } from '@/Hooks/Setting/useSystemParams'
 import { SystemParamsTable } from '@/Components/Setting/SystemParamsTable'
 import { SystemParamModal } from '@/Components/Setting/SystemParamModal'
@@ -10,13 +10,20 @@ import type { SystemParamResponseDto, SystemParamRequestDto } from "@/Interfaces
 import '@/Styles/Setting/SystemParamsPage.css'
 
 export const SystemParamsPage: React.FC = () => {
+  // ... keep existing code (all state and hook logic)
   const {
     systemParams,
     loading,
     error,
+    searchTerm,
+    sortBy,
+    sortOrder,
     loadSystemParam,
+    searchParams,
+    sortParams,
     createSystemParam,
     updateSystemParam,
+    toggleSystemParam,
     deleteSystemParam
   } = useSystemParams()
 
@@ -24,15 +31,20 @@ export const SystemParamsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
   const [selectedParam, setSelectedParam] = useState<SystemParamResponseDto | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     loadSystemParam()
   }, [loadSystemParam])
 
+  // ... keep existing code (all handler functions)
   const handleCreate = async (data: SystemParamRequestDto) => {
-    await createSystemParam(data)
-    setIsCreateModalOpen(false)
+    const result = await createSystemParam(data)
+    if (result) {
+      setIsCreateModalOpen(false)
+    }
   }
 
   const handleEdit = (param: SystemParamResponseDto) => {
@@ -41,9 +53,11 @@ export const SystemParamsPage: React.FC = () => {
   }
 
   const handleUpdate = async (data: SystemParamRequestDto) => {
-    await updateSystemParam(data)
-    setIsEditModalOpen(false)
-    setSelectedParam(null)
+    const result = await updateSystemParam(data)
+    if (result) {
+      setIsEditModalOpen(false)
+      setSelectedParam(null)
+    }
   }
 
   const handleView = (param: SystemParamResponseDto) => {
@@ -53,15 +67,40 @@ export const SystemParamsPage: React.FC = () => {
 
   const handleDelete = (param: SystemParamResponseDto) => {
     setSelectedParam(param)
-    setIsDeleteDialogOpen(true)
+    if (param.isActive) {
+      setIsToggleDialogOpen(true)
+    } else {
+      setIsDeleteDialogOpen(true)
+    }
   }
 
   const handleConfirmDelete = async () => {
     if (selectedParam) {
-      await deleteSystemParam(selectedParam.id)
-      setIsDeleteDialogOpen(false)
-      setSelectedParam(null)
+      const result = await deleteSystemParam(selectedParam.id)
+      if (result) {
+        setIsDeleteDialogOpen(false)
+        setSelectedParam(null)
+      }
     }
+  }
+
+  const handleConfirmToggle = async () => {
+    if (selectedParam) {
+      const result = await toggleSystemParam(selectedParam.id)
+      if (result) {
+        setIsToggleDialogOpen(false)
+        setSelectedParam(null)
+      }
+    }
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    searchParams(e.target.value)
+  }
+
+  const handleSortChange = (field: 'name' | 'createdAt' | 'updatedAt') => {
+    const newOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc'
+    sortParams(field, newOrder)
   }
 
   return (
@@ -83,6 +122,59 @@ export const SystemParamsPage: React.FC = () => {
             Nuevo Parámetro
           </button>
         </div>
+
+        {/* Search and Filters */}
+        <div className="system-params-page__controls">
+          <div className="system-params-page__search">
+            <Search size={20} className="system-params-page__search-icon" />
+            <input
+              type="text"
+              placeholder="Buscar parámetros..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="system-params-page__search-input"
+            />
+          </div>
+          
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="system-params-page__filter-button"
+          >
+            <Filter size={20} />
+            Filtros
+          </button>
+        </div>
+
+        {/* Filter Options */}
+        {showFilters && (
+          <div className="system-params-page__filters">
+            <div className="system-params-page__filter-group">
+              <label className="system-params-page__filter-label">Ordenar por:</label>
+              <select
+                value={sortBy}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onChange={(e) => handleSortChange(e.target.value as any)}
+                className="system-params-page__filter-select"
+              >
+                <option value="name">Nombre</option>
+                <option value="createdAt">Fecha de Creación</option>
+                <option value="updatedAt">Última Actualización</option>
+              </select>
+            </div>
+            
+            <div className="system-params-page__filter-group">
+              <label className="system-params-page__filter-label">Orden:</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => sortParams(sortBy, e.target.value as 'asc' | 'desc')}
+                className="system-params-page__filter-select"
+              >
+                <option value="asc">Ascendente</option>
+                <option value="desc">Descendente</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -149,6 +241,17 @@ export const SystemParamsPage: React.FC = () => {
           }}
           onConfirm={handleConfirmDelete}
           param={selectedParam}
+        />
+
+        <DeleteParamDialog
+          isOpen={isToggleDialogOpen}
+          onClose={() => {
+            setIsToggleDialogOpen(false)
+            setSelectedParam(null)
+          }}
+          onConfirm={handleConfirmToggle}
+          param={selectedParam}
+          isToggle={true}
         />
       </div>
     </div>

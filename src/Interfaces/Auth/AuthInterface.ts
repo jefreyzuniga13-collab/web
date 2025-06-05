@@ -72,17 +72,20 @@ export interface RoleResponseDto {
   description: string;
 }
 
-export interface SystemParamResponseDto{
+
+export interface SystemParamResponseDto {
   id: number;
   name: string;
   value: string;
   description: string;
+  isActive: boolean;
   updatedAt: string;
   createdAt: string;
   type: string;
 }
-export interface SystemParamRequestDto{
-  id:number;
+
+export interface SystemParamRequestDto {
+  id: number;
   name: string;
   value: string;
   description: string;

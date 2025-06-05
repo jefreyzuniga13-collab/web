@@ -16,6 +16,7 @@ const DashboardPresentation       = lazy(() => import('@/Presentations/Dashboard
 const NotificationsPage       = lazy(() => import('@/Presentations/Notification/NotificationsPage'))
 const NotFound        = lazy(() => import('@/Presentations/NotFound'))
 const SystemParameterPage = lazy(() => import('@/Presentations/Setting/SystemParameterPage'))
+const ProfilePage = lazy(() => import('@/Presentations/Setting/Profile'))
 
 export function AppRouter() {
   return (
@@ -44,6 +45,7 @@ export function AppRouter() {
             <Route path="users"  element={<UsersPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="system-params" element={<SystemParameterPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>
 

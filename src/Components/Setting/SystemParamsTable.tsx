@@ -1,7 +1,8 @@
 
 import React from 'react'
-import { Edit, Trash2, Eye } from 'lucide-react'
+import { PaginatedTable } from '../Common/PaginatedTable'
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface"
+import '@/Styles/Setting/SystemParamsTable.css'
 
 interface Props {
   params: SystemParamResponseDto[]
@@ -18,86 +19,69 @@ export const SystemParamsTable: React.FC<Props> = ({
   onView,
   loading = false
 }) => {
-  if (loading) {
-    return (
-      <div className="system-params-table__loading">
-        <div className="system-params-table__spinner"></div>
-      </div>
-    )
-  }
-
-  if (params.length === 0) {
-    return (
-      <div className="system-params-table__empty">
-        <p className="system-params-table__empty-text">No hay parámetros del sistema configurados.</p>
-      </div>
-    )
-  }
+  const columns = [
+    {
+      key: 'id',
+      header: 'ID',
+      className: 'system-params-table__cell--id'
+    },
+    {
+      key: 'name',
+      header: 'Nombre',
+      className: 'system-params-table__cell--name'
+    },
+    {
+      key: 'value',
+      header: 'Valor',
+      className: 'system-params-table__cell--value',
+      render: (value: string) => (
+        <span className="system-params-table__badge system-params-table__badge--value">
+          {value.length > 50 ? `${value.substring(0, 50)}...` : value}
+        </span>
+      )
+    },
+    {
+      key: 'type',
+      header: 'Tipo',
+      className: 'system-params-table__cell--type',
+      render: (type: string) => (
+        <span className={`system-params-table__badge system-params-table__badge--${type}`}>
+          {type}
+        </span>
+      )
+    },
+    {
+      key: 'isActive',
+      header: 'Estado',
+      className: 'system-params-table__cell--status',
+      render: (isActive: boolean) => (
+        <span className={`system-params-table__badge system-params-table__badge--${isActive ? 'active' : 'inactive'}`}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
+    {
+      key: 'description',
+      header: 'Descripción',
+      className: 'system-params-table__cell--description',
+      render: (description: string) => (
+        description.length > 30 ? `${description.substring(0, 30)}...` : description
+      )
+    }
+  ]
 
   return (
-    <div className="system-params-table">
-      <table className="system-params-table__table">
-        <thead className="system-params-table__head">
-          <tr>
-            <th className="system-params-table__header">ID</th>
-            <th className="system-params-table__header">Nombre</th>
-            <th className="system-params-table__header">Valor</th>
-            <th className="system-params-table__header">Tipo</th>
-            <th className="system-params-table__header">Descripción</th>
-            <th className="system-params-table__header system-params-table__header--actions">Acciones</th>
-          </tr>
-        </thead>
-        <tbody className="system-params-table__body">
-          {params.map((param) => (
-            <tr key={param.id} className="system-params-table__row">
-              <td className="system-params-table__cell system-params-table__cell--id">
-                {param.id}
-              </td>
-              <td className="system-params-table__cell system-params-table__cell--name">
-                {param.name}
-              </td>
-              <td className="system-params-table__cell system-params-table__cell--value">
-                <span className="system-params-table__badge system-params-table__badge--value">
-                  {param.value}
-                </span>
-              </td>
-              <td className="system-params-table__cell system-params-table__cell--type">
-                <span className={`system-params-table__badge system-params-table__badge--${param.type}`}>
-                  {param.type}
-                </span>
-              </td>
-              <td className="system-params-table__cell system-params-table__cell--description">
-                {param.description}
-              </td>
-              <td className="system-params-table__cell system-params-table__cell--actions">
-                <div className="system-params-table__actions">
-                  <button
-                    onClick={() => onView(param)}
-                    className="system-params-table__action system-params-table__action--view"
-                    title="Ver detalles"
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    onClick={() => onEdit(param)}
-                    className="system-params-table__action system-params-table__action--edit"
-                    title="Editar"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(param)}
-                    className="system-params-table__action system-params-table__action--delete"
-                    title="Eliminar"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <PaginatedTable
+      data={params}
+      columns={columns}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onView={onView}
+      loading={loading}
+      emptyMessage="No hay parámetros del sistema configurados."
+      className="system-params-table"
+      itemsPerPageOptions={[5, 10, 20, 50]}
+      defaultItemsPerPage={10}
+    />
   )
 }

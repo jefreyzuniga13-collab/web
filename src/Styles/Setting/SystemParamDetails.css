@@ -1,0 +1,95 @@
+
+/* Estilos para detalles de parámetros del sistema */
+.system-param-details__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  border-bottom: var(--border-width) solid var(--color-gray-100);
+}
+
+.system-param-details__field:last-child {
+  border-bottom: none;
+}
+
+.system-param-details__label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.system-param-details__value {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-900);
+  margin: 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.system-param-details__value--code {
+  background-color: var(--color-gray-50);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid var(--color-gray-200);
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: var(--font-size-xs);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.system-param-details__close-button {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.system-param-details__close-button:hover {
+  background-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Layout mejorado para detalles */
+.system-param-details__container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0;
+}
+
+.system-param-details__meta {
+  background-color: var(--color-gray-50);
+  border-right: var(--border-width) solid var(--color-gray-200);
+}
+
+.system-param-details__content {
+  background-color: var(--color-white);
+}
+
+.system-param-details__field--highlight {
+  background-color: var(--color-primary-light);
+}
+
+.system-param-details__field--meta {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .system-param-details__container {
+    grid-template-columns: 1fr;
+  }
+  
+  .system-param-details__meta {
+    border-right: none;
+    border-bottom: var(--border-width) solid var(--color-gray-200);
+  }
+}

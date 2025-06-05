@@ -3,6 +3,7 @@ import React from 'react'
 import { X } from 'lucide-react'
 import { SystemParamForm } from './SystemParamForm'
 import type { SystemParamResponseDto, SystemParamRequestDto } from "@/Interfaces/Auth/AuthInterface"
+import '@/Styles/Setting/SystemParamModal.css'
 
 interface Props {
   isOpen: boolean
