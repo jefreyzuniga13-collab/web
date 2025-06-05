@@ -311,6 +311,7 @@
 .profile-card__status-badge {
   display: flex;
   align-items: center;
+  margin: auto;
   gap: var(--space-sm);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);

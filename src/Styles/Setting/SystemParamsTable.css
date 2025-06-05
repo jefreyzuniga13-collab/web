@@ -1,5 +1,3 @@
-
-/* Estilos para la tabla de parámetros del sistema */
 .system-params-table {
   width: 100%;
   background-color: var(--color-white);
@@ -15,7 +13,6 @@
   background-color: var(--color-gray-50);
   border-bottom: 2px solid var(--color-gray-200);
 }
-
 .system-params-table__header {
   padding: var(--spacing-lg) var(--spacing-md);
   text-align: left;
@@ -58,8 +55,22 @@
   width: 80px;
 }
 
+.reusable-table__action{
+  background-color: transparent;
+  border: none;
+}
+.reusable-table__action--view{
+  color: var(--color-primary);
+}
+.reusable-table__action--edit{
+  color: var(--color-gray-500);
+}
+.reusable-table__action--delete{
+  color: var(--color-danger);
+}
 .system-params-table__cell--name {
   font-weight: 600;
+  font-size: var(--font-size-base);
   color: var(--color-gray-900);
   min-width: 150px;
 }
@@ -80,6 +91,7 @@
 .system-params-table__cell--description {
   max-width: 250px;
   word-break: break-word;
+  font-size: var(--font-size-sm);
 }
 
 .system-params-table__cell--actions {
@@ -98,47 +110,32 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  margin: auto;
 }
 
 .system-params-table__badge--value {
   background-color: var(--color-gray-100);
   color: var(--color-gray-700);
-  font-family: 'Monaco', 'Consolas', monospace;
   text-transform: none;
   letter-spacing: 0;
-}
 
-.system-params-table__badge--string {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.system-params-table__badge--number {
-  background-color: var(--color-success-light);
-  color: var(--color-success);
-}
-
-.system-params-table__badge--boolean {
-  background-color: var(--color-warning-light);
-  color: var(--color-warning);
-}
-
-.system-params-table__badge--prompt {
-  background-color: #f3e8ff;
-  color: #7c3aed;
 }
 
 .system-params-table__badge--active {
+  width: 30%;
+  margin: auto;
   background-color: var(--color-success-light);
   color: var(--color-success);
 }
 
 .system-params-table__badge--inactive {
+  width: 30%;
+    margin: auto;
+  text-align: center;
   background-color: var(--color-danger-light);
   color: var(--color-danger);
 }
 
-/* Actions */
 .system-params-table__actions {
   display: flex;
   justify-content: center;

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Edit, Trash2, Eye } from 'lucide-react'
+import '@/Styles/Common/ReusableTable.css' // Import your CSS styles
 
 interface Column {
   key: string
@@ -43,6 +44,7 @@ export const ReusableTable: React.FC<ReusableTableProps> = ({
     return (
       <div className="reusable-table__empty">
         <p className="reusable-table__empty-text">{emptyMessage}</p>
+        <img src="https://i.ibb.co/QF1nWVyv/nodata.png" alt="sin registros" className='reusable-table__empty-img' />
       </div>
     )
   }

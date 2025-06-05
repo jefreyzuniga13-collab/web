@@ -1,4 +1,4 @@
-import type { ApiResponse, SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
+import type { ApiResponse, SystemParamRequestDto, SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
 import api from '@/Utils/ApiConfig'
 
 export default class SystemParamService {
@@ -14,7 +14,7 @@ export default class SystemParamService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static async updateSystemParams(params: Record<string, any>) {
+  static async updateSystemParams(params: SystemParamRequestDto) {
     try {
       const response = await api.put<ApiResponse<SystemParamResponseDto>>('/SystemParam', params)
       return response.data.data

@@ -189,11 +189,11 @@ export const SystemParamsPage: React.FC = () => {
 
         {/* Table */}
         <div className="system-params-page__table-container">
-          <div className="system-params-page__table-header">
+          {/* <div className="system-params-page__table-header">
             <h2 className="system-params-page__table-title">
               Lista de Parámetros ({systemParams.length})
             </h2>
-          </div>
+          </div> */}
           <SystemParamsTable
             params={systemParams}
             onEdit={handleEdit}

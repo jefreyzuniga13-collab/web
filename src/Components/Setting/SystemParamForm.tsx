@@ -31,10 +31,9 @@ export const SystemParamForm: React.FC<Props> = ({
       type: 'select' as const,
       required: true,
       options: [
-        { value: 'string', label: 'Texto' },
-        { value: 'number', label: 'Número' },
-        { value: 'boolean', label: 'Booleano' },
-        { value: 'prompt', label: 'Prompt' }
+        { value: 'Prompts', label: 'Prompts' },
+        { value: 'Keywords', label: 'Keywords' },
+        { value: 'Temp', label: 'Temp' }
       ]
     },
     {

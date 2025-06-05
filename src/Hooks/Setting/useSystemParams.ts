@@ -28,6 +28,7 @@ export function useSystemParams() {
   }, [])
 
   const filterAndSort = useCallback((params: SystemParamResponseDto[], search: string, sort: string, order: string) => {
+    // eslint-disable-next-line prefer-const
     let filtered = params.filter(param => 
       param.name.toLowerCase().includes(search.toLowerCase()) ||
       param.description.toLowerCase().includes(search.toLowerCase()) ||

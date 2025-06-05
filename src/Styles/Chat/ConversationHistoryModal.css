@@ -88,6 +88,17 @@
   align-items: center;
 }
 
+.date-input{
+  width: 10rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background-color: var(--input-bg);
+  color: var(--text-default);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
 .search-input-wrapper {
   flex: 1;
   position: relative;
@@ -312,6 +323,7 @@
   font-size: 0.875rem;
   color: var(--text-default);
   line-height: 1.5;
+  text-align: left;
 }
 
 .no-content {
