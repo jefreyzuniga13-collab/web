@@ -34,6 +34,7 @@ export function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/verify-account"  element={<Activation />} />
+        <Route path="/verify-account"  element={''} />
 
         {/**Rutas privados */}
         <Route path="/unauthorized"    element={<Unauthorized />} />

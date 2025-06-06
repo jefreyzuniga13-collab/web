@@ -13,11 +13,12 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  position: relative;
 }
 
 .contact-avatar {
-  width: 72px;
-  height: 72px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: #dbeafe;
   color: #3b82f6;
@@ -92,8 +93,25 @@
   margin: 0;
 }
 
+.close-button{
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 1.7rem;
+  font-weight: 600;
+  background-color: transparent;
+  color: var(--color-red-primary);
+  border: none;
+  transition: ease-in-out 0.2s;
+}
+
+.close-button:hover{
+  opacity: 0.8;
+}
+
 .contact-detail__body {
   flex: 1;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -156,6 +174,13 @@
   padding: 0;
   margin: 0;
 }
+.info-list-group{
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  justify-content: center;
+  text-wrap: wrap;
+}
 
 .info-item {
   display: flex;
@@ -214,16 +239,16 @@
 }
 
 .tag {
-  display: flex;
+  display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.75rem;
   background-color: #3b82f6;
   border-radius: 1rem;
-  font-size: 0.75rem;
+  font-size: .9rem;
   color: #f3f4f6;
   transition: background-color 0.2s;
-  font-size: .9rem;
 }
 
 .tag:hover {
@@ -232,8 +257,12 @@
 
 .tag-text {
   display: block;
+  max-width: 14rem;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-align: left;
 }
-
 .tag-remove {
   background: none;
   border: none;

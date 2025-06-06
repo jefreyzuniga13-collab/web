@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState, useRef, type ChangeEvent } from 'react'
-import { Send, Paperclip, Check, CheckCheck, MessageSquareMore, Download } from 'lucide-react'
+import { Send, Paperclip, Download, CheckCheck, Check, MessageSquareMore } from 'lucide-react'
 import type { MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/styles/Chat/ChatWindow.css'
 import useMessages from '@/Hooks/useMessages'
@@ -23,9 +22,31 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Maneja cambios desde el input type="file"
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (f) setFile(f)
+  }
+
+  // NUEVO: Maneja el pegado desde el portapapeles dentro del textarea
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    // Si ya hay un archivo en estado, no hacemos nada
+    if (file) return
+
+    const clipboardItems = Array.from(e.clipboardData.items)
+    for (const item of clipboardItems) {
+      // Solo nos interesan elementos que sean archivos
+      if (item.kind === 'file') {
+        const pastedFile = item.getAsFile()
+        if (pastedFile) {
+          e.preventDefault() // evitamos que el browser pegue texto extra
+          setFile(pastedFile)
+          // Si tu lógica quiere también agregar texto en el textarea, podrías concatenar:
+          // setText(prev => prev + '\n[Archivo adjunto: ' + pastedFile.name + ']')
+          break
+        }
+      }
+    }
   }
 
   const handleSend = async () => {
@@ -33,10 +54,11 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     setSending(true)
     try {
       if (file) {
+        // Si hay un archivo (ya sea adjuntado via input o pegado), lo enviamos
         await sendMedia(conversationId, file, text.trim() || undefined)
         setFile(null)
         setText('')
-        fileInputRef.current!.value = ''
+        if (fileInputRef.current) fileInputRef.current.value = ''
       } else if (text.trim()) {
         await sendText({
           conversationId,
@@ -46,6 +68,8 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         })
         setText('')
       }
+    } catch (err) {
+      console.error(err)
     } finally {
       setSending(false)
     }
@@ -58,7 +82,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = fileName || 'imagen'
+      link.download = fileName || 'archivo'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -70,9 +94,12 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
 
   const getStatusIcon = (m: MessageDto, isOut: boolean) => {
     if (!isOut) return null
-    if (m.readAt) return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--read" />
-    if (m.deliveredAt) return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--delivered" />
-    if (m.status === 'Sent') return <Check size={14} className="chat-window__message-status chat-window__message-status--sent" />
+    if (m.readAt)
+      return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--read" />
+    if (m.deliveredAt)
+      return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--delivered" />
+    if (m.status === 'Sent')
+      return <Check size={14} className="chat-window__message-status chat-window__message-status--sent" />
     return null
   }
 
@@ -125,7 +152,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             <span className="chat-window__date-text">Hoy</span>
           </div>
         )}
-        
+
         {messages.map((m, i) => {
           const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? messages[i - 1] : null
@@ -138,13 +165,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                   {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
                 </div>
               )}
-              
+
               <div className={getMessageClassName(m)}>
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
                     <div className="chat-window__media">
-                      {/* Imágenes y Stickers */}
-                      {(m.attachments[0].mimeType?.startsWith('image/') || m.attachments[0].mimeType === 'image/webp') && (
+                      {/* Imágenes y Multimedia */}
+                      {(m.attachments[0].mimeType?.startsWith('image/') ||
+                        m.attachments[0].mimeType === 'image/webp') && (
                         <div className="chat-window__media-image">
                           <div className="chat-window__image-container">
                             <img
@@ -155,7 +183,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                             />
                             <button
                               className="chat-window__download-btn"
-                              onClick={() => handleDownload(m.attachments[0].mediaUrl!, m.attachments[0].fileName || 'imagen')}
+                              onClick={() =>
+                                handleDownload(m.attachments![0].mediaUrl!, m.attachments![0].fileName || 'imagen')
+                              }
                               aria-label="Descargar imagen"
                             >
                               <Download size={16} />
@@ -164,31 +194,22 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                         </div>
                       )}
 
-                      {/* Videos */}
                       {m.attachments[0].mimeType?.startsWith('video/') && (
                         <div className="chat-window__media-video">
-                          <video 
-                            controls 
-                            className="chat-window__video"
-                            src={m.attachments[0].mediaUrl}
-                            preload="metadata"
-                          >
+                          <video controls className="chat-window__video" src={m.attachments[0].mediaUrl} preload="metadata">
                             Tu navegador no soporta el elemento video.
                           </video>
                         </div>
                       )}
 
-                      {/* Audio */}
                       {m.attachments[0].mimeType?.startsWith('audio/') && (
                         <div className="chat-window__media-audio">
                           <div className="chat-window__audio-container">
                             <div className="chat-window__audio-icon">🎵</div>
                             <div className="chat-window__audio-info">
-                              <div className="chat-window__audio-name">
-                                {m.attachments[0].fileName || 'Audio'}
-                              </div>
-                              <audio 
-                                controls 
+                              <div className="chat-window__audio-name">{m.attachments[0].fileName || 'Audio'}</div>
+                              <audio
+                                controls
                                 className="chat-window__audio-player"
                                 src={m.attachments[0].mediaUrl}
                                 preload="metadata"
@@ -200,12 +221,11 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                         </div>
                       )}
 
-                      {/* Documentos */}
                       {m.messageType === 'Document' && (
                         <div className="chat-window__media-document">
-                          <a 
-                            href={m.attachments[0].mediaUrl} 
-                            target="_blank" 
+                          <a
+                            href={m.attachments[0].mediaUrl}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="chat-window__document-link"
                           >
@@ -216,9 +236,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               <div className="chat-window__document-name">
                                 {m.attachments[0].fileName || 'Documento'}
                               </div>
-                              <div className="chat-window__document-size">
-                                {m.attachments[0].mimeType || 'Archivo'}
-                              </div>
+                              <div className="chat-window__document-size">{m.attachments[0].mimeType || 'Archivo'}</div>
                             </div>
                             <div className="chat-window__document-download">
                               <Download size={16} />
@@ -227,20 +245,15 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                         </div>
                       )}
 
-                      {/* Caption si existe */}
                       {m.content && (
-                        <div className="chat-window__message-caption">
-                          {m.content}
-                        </div>
+                        <div className="chat-window__message-caption">{m.content}</div>
                       )}
                     </div>
                   ) : (
-                    <div className="chat-window__message-text">
-                      {m.content}
-                    </div>
+                    <div className="chat-window__message-text">{m.content}</div>
                   )}
                 </div>
-                
+
                 <div className="chat-window__message-info">
                   <span className="chat-window__message-time">
                     {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -253,8 +266,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         })}
         <div ref={bottomRef} />
       </div>
-      
+
       <div className="chat-window__composer">
+        {/* Ícono de adjuntar archivo tradicional */}
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
@@ -266,31 +280,33 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           onChange={handleFileChange}
           disabled={!conversationId || sending}
         />
-        
+
+        {/* Vista previa del archivo seleccionado */}
         {file && (
           <div className="chat-window__composer-file-preview">
             <span className="chat-window__composer-file-name">{file.name}</span>
-            <button 
-              className="chat-window__composer-file-remove" 
-              onClick={() => setFile(null)} 
+            <button
+              className="chat-window__composer-file-remove"
+              onClick={() => setFile(null)}
               aria-label="Eliminar archivo"
             >
               ×
             </button>
           </div>
         )}
-        
+
         <div className="chat-window__composer-input-container">
           <textarea
             className="chat-window__composer-input"
-            placeholder="Escribe un mensaje..."
+            placeholder="Escribe un mensaje…"
             value={text}
             onChange={e => setText(e.target.value)}
+            onPaste={handlePaste}  
             disabled={!conversationId || sending}
             rows={1}
           />
         </div>
-        
+
         <button
           className="chat-window__composer-send"
           onClick={handleSend}

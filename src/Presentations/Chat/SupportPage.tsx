@@ -25,6 +25,8 @@ const SupportPage: React.FC = () => {
   const [showAssign, setShowAssign] = useState(false)
   const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
 
+  const [contactDetailToggle, setContactDetailToggle] = useState(false);
+  
   // Lee auth
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
@@ -92,27 +94,41 @@ const SupportPage: React.FC = () => {
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">Chat</h2>
-          <button
+         <div className='btn-container'>
+           {convId && (
+            <button className={`contact-detail-button ${!convId ? 'diabled' : 'active'}`}
+              onClick={() => setContactDetailToggle(!contactDetailToggle)}
+              disabled={!convId}
+              >
+              {contactDetailToggle ? 'Ocultar Detalles' : 'Mostrar Detalles'}
+          </button>
+            )}
+
+           <button
             className="assign-button"
             disabled={!convId}
             onClick={handleAssignClick}
           >
             {isAdmin ? 'Asignar' : 'Cerrar'}
           </button>
+         </div>
         </header>
         <ChatWindow conversationId={convId ?? undefined} userId={userId} />
       </main>
-
-      <aside className="info-sidebar">
-        <ContactDetail conversationId={convId ?? undefined} />
+     {contactDetailToggle && (
+      <div className='modal-overlay'>
+          <aside className="info-sidebar">
+        <ContactDetail conversationId={convId ?? undefined} contactDetailToggle={contactDetailToggle} setContactDetailToggle={setContactDetailToggle} />
       </aside>
-
-      <AssignModal
+      </div>
+      )}
+       <AssignModal
         conversation={conversation ?? undefined}
         isOpen={showAssign}
         onClose={() => setShowAssign(false)}
         onAssigned={handleAfterAssign}
       />
+
     </div>
   )
 }

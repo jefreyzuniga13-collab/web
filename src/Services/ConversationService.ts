@@ -62,3 +62,10 @@ export function summarizeAllByContact(contactId: number) {
     `/Conversations/${contactId}/summary`
   );
 }
+
+  //Update conversation assigment status by id
+  export function updateConversationState(
+    payload: {conversationId: number,  assignmentStatus: 'Assigned' | 'Rejected'; justification?: string }
+  ) {
+    return api.put(`/Conversations/assignment`, payload);
+  }

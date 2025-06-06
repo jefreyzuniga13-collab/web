@@ -16,7 +16,7 @@ export default class SystemParamService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async updateSystemParams(params: SystemParamRequestDto) {
     try {
-      const response = await api.put<ApiResponse<SystemParamResponseDto>>('/SystemParam', params)
+      const response = await api.put<ApiResponse<SystemParamResponseDto>>(`/systemParam/${params.id}`, params)
       return response.data.data
     } catch (error) {
       console.error('Error updating system parameters:', error)

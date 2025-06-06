@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { getConversation, updateTag } from '@/Services/ConversationService'
-import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History, Hourglass, UserPen } from 'lucide-react'
+// import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History, Hourglass, UserPen } from 'lucide-react'
+import {Book  , AlertCircle, Tag, Edit, X, Check, Info, History } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
 import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
 import '@/Styles/Chat/ContactDetail.css'
+import { IoClose } from "react-icons/io5";
 
 interface ContactDetailProps {
   conversationId?: number
+  contactDetailToggle: boolean;
+  setContactDetailToggle?: (toggle: boolean) => void
 }
 
-export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) => {
+export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, contactDetailToggle, setContactDetailToggle }) => {
   const [conv, setConv] = useState<ConversationDto | null>(null)
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
@@ -109,6 +113,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
   if (!conversationId) {
     return (
       <div className="contact-detail__empty">
+        <button 
+            className="close-button"
+            onClick={() => setContactDetailToggle && setContactDetailToggle(false)}
+            aria-label="Cerrar detalles del contacto"><IoClose /></button>
         <div className="contact-detail__empty-icon">
           <Info size={24} />
         </div>
@@ -147,7 +155,15 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
   
   if (!conv) return null
 
-  const createdAt = new Date(conv.createdAt).toLocaleString()
+  const createdAt = conv.createdAt ?  new Date(conv.createdAt).toLocaleString() : '----------';
+ // const firstResponseAt = new Date(conv.firstResponseAt).toLocaleString()
+  const assignedAt = conv.assignedAt ? new Date(conv.assignedAt).toLocaleString() : '----------';
+  const agentFirstMessageAt = conv.agentFirstMessageAt ? new Date(conv.agentFirstMessageAt).toLocaleString(): '----------';
+  const agentLastMessageAt = conv.agentLastMessageAt ? new Date(conv.agentLastMessageAt).toLocaleString(): '----------';
+  const clientLastMessageAt = conv.clientLastMessageAt ? new Date(conv.clientLastMessageAt).toLocaleString(): '----------';
+  const closedAt = conv.closedAt ? new Date(conv.closedAt).toLocaleString(): '----------';
+  const agentRequestAt = conv.agentRequestAt ? new Date(conv.agentRequestAt).toLocaleString(): '----------';
+
   const updatedAt = conv.updatedAt
     ? new Date(conv.updatedAt).toLocaleString()
     : null
@@ -157,7 +173,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
 
   return (
     <>
-      <section className="contact-detail" aria-label="Detalles de contacto">
+      <section className={`contact-detail ${contactDetailToggle ? "show-container" : ""}`} aria-label="Detalles de contacto">
+
         <header className="contact-header">
           <div className="contact-avatar" role="img" aria-label="Avatar del contacto">
             {conv.clientContactName?.charAt(0).toUpperCase() || 'U'}
@@ -172,12 +189,18 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
               <p className="contact-number">{conv.contactNumber}</p>
             )}
           </div>
+
+          <button 
+            className="close-button"
+            onClick={() => setContactDetailToggle && setContactDetailToggle(false)}
+            aria-label="Cerrar detalles del contacto"><IoClose /></button>
         </header>
 
         <div className="contact-detail__body">
           <div className="contact-detail__section">
             <div className="section-header">
               <h4 className="section-title">
+                <Book size={14}/>
                 Información principal
               </h4>
               <button 
@@ -192,38 +215,111 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
             
             <div className="section-content">
               <ul className="info-list">
-                <li className="info-item">
-                  <div className="info-icon">
-                    <Clock size={16} />
-                  </div>
+                <div className='info-list-group'>
+                    <li className="info-item">
+                      <div className="info-content">
+                        <span className="info-label">Creado</span>
+                        <time className="info-value" dateTime={conv.createdAt}>
+                          {createdAt}
+                        </time>
+                      </div>
+                    </li>
+
+                     <li className="info-item">
+                      <div className="info-content">
+                        <span className="info-label">Finalizada</span>
+                        <time className="info-value" dateTime={conv.closedAt}>
+                          {closedAt}
+                        </time>
+                      </div>
+                </li>
+
+                    <li className="info-item">
+                      <div className="info-content">
+                        <span className="info-label">Solicitud Agente</span>
+                        <time className="info-value" dateTime={conv.agentRequestAt}>
+                          {agentRequestAt}
+                        </time>
+                      </div>
+                    </li>
+                </div>
+
+                <div className='info-list-group'>
+                    <li className="info-item">
                   <div className="info-content">
-                    <span className="info-label">Creado</span>
-                    <time className="info-value" dateTime={conv.createdAt}>
-                      {createdAt}
+                    <span className="info-label">Fecha Asignación Agente</span>
+                    <time className="info-value" dateTime={conv.assignedAt}>
+                      {assignedAt}
                     </time>
                   </div>
                 </li>
-                
-                {updatedAt && (
-                  <li className="info-item">
-                    <div className="info-icon">
-                      <History size={16} />
-                    </div>
-                    <div className="info-content">
-                      <span className="info-label">Última actualización</span>
-                      <time className="info-value" dateTime={conv.updatedAt!}>
-                        {updatedAt}
-                      </time>
-                    </div>
-                  </li>
-                )}
 
-                {conv.assignedByUserId && (
+                <li className="info-item">
+                  <div className="info-content">
+                    <span className="info-label">Primer Mensaje Agente</span>
+                    <time className="info-value" dateTime={conv.agentFirstMessageAt}>
+                      {agentFirstMessageAt}
+                    </time>
+                  </div>
+                </li>
+
+                <li className="info-item">
+                  <div className="info-content">
+                    <span className="info-label">Agente Ultimo Mensaje</span>
+                    <time className="info-value" dateTime={conv.agentLastMessageAt}>
+                      {agentLastMessageAt}
+                    </time>
+                  </div>
+                </li>
+                </div>
+                
+                <div className='info-list-group'>
+
+                   <li className="info-item">
+                        {/* <div className="info-icon">
+                          <History size={16} />
+                        </div> */}
+                        <div className="info-content">
+                          <span className="info-label">Cliente Ultimo Mensaje</span>
+                          <time className="info-value" dateTime={conv.clientLastMessageAt!}>
+                            {clientLastMessageAt}
+                          </time>
+                        </div>
+                      </li>
+
+
+                    {updatedAt && (
+                      <li className="info-item">
+                        {/* <div className="info-icon">
+                          <History size={16} />
+                        </div> */}
+                        <div className="info-content">
+                          <span className="info-label">Última actualización</span>
+                          <time className="info-value" dateTime={conv.updatedAt!}>
+                            {updatedAt}
+                          </time>
+                        </div>
+                      </li>
+                    )}
+
+                    <li className="info-item">
+                      {/* <div className="info-icon">
+                        <Hourglass size={16} />
+                      </div> */}
+                      <div className="info-content">
+                        <span className="info-label">Duración</span>
+                        <span className="info-value">{duration}</span>
+                      </div>
+                    </li>
+                </div>
+
+                <div className='info-list-group'>
+                   {conv.assignedByUserId && (
 
                   <li className='info-item'>
-                    <div className='info-icon'>
+                    {/* <div className='info-icon'>
                       <UserPen size={16}/>
-                    </div>
+                    </div> */}
                     <div className='info-content'>
                       <span className='info-label'>Asignado por</span>
                       <span className='info-value'>{conv.assignedByUserName}</span>
@@ -233,25 +329,16 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId }) 
                 
                 {conv.assignedAgentId && (
                   <li className="info-item">
-                    <div className="info-icon">
+                    {/* <div className="info-icon">
                       <User size={16} />
-                    </div>
+                    </div> */}
                     <div className="info-content">
                       <span className="info-label">Agente asignado</span>
                       <span className="info-value info-value-highlight">{conv.assignedAgentName}</span>
                     </div>
                   </li>
                 )}
-                
-                <li className="info-item">
-                  <div className="info-icon">
-                    <Hourglass size={16} />
                   </div>
-                  <div className="info-content">
-                    <span className="info-label">Duración</span>
-                    <span className="info-value">{duration}</span>
-                  </div>
-                </li>
               </ul>
             </div>
           </div>

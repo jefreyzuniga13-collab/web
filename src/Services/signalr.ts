@@ -1,4 +1,3 @@
-// src/Services/signalr.ts
 import * as signalR from '@microsoft/signalr'
 import type {
   MessageDto,
@@ -137,6 +136,14 @@ export function onConversationUpdated(handler: (c: ConversationDto) => void) {
 
 export function offConversationUpdated(handler: (c: ConversationDto) => void) {
   chatConnection?.off('ConversationUpdated', handler)
+}
+
+export function onConversationassigned(handler: (c: ConversationDto) => void) {
+  chatConnection?.on('Conversationassigned', handler)
+}
+
+export function offConversationassigned(handler: (c: ConversationDto) => void) {
+  chatConnection?.off('Conversationassigned', handler)
 }
 
 // --- Métodos públicos para notifications ---

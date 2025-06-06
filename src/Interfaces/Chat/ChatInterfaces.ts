@@ -23,11 +23,16 @@ export interface ConversationDto {
   assignedAgentName?: string
   assignedByUserId?: number
   assignedByUserName?: string
-  assignedAt?: string
   status: ConversationStatus
   initialized: boolean
   createdAt: string
+  assignedAt?: string
   firstResponseAt?: string
+  agentRequestAt?: string
+  clientLastMessageAt: string;
+  agentFirstMessageAt: string;
+  agentLastMessageAt: string;
+  requestedAgentAt: string
   updatedAt?: string
   closedAt?: string
   isArchived: boolean
@@ -39,7 +44,9 @@ export interface ConversationDto {
   unreadCount?: number
   messages?: MessageDto[]
   tags: string[];
+  assignmentStatus?: 'Assigned' | 'Unassigned' | 'Rejected';
 }
+
 export interface UpdateConversationRequest {
   conversationId: number
   priority?: string;
