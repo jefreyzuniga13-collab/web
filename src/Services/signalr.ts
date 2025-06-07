@@ -83,6 +83,23 @@ presenceConnection = new signalR.HubConnectionBuilder()
     console.warn('Presence Hub connection closed', err)
   )
 
+   notificationsConnection.on('AssignmentRequested', (payload: { conversationId: number; requestedAt: string }) => {
+    // emitiremos un evento global o estado compartido
+    window.dispatchEvent(new CustomEvent('AssignmentRequested', { detail: payload }))
+  })
+
+  notificationsConnection.on('AssignmentResponse', (payload: { conversationId: number; accepted: boolean; comment?: string }) => {
+    window.dispatchEvent(new CustomEvent('AssignmentResponse', { detail: payload }))
+  })
+
+  notificationsConnection.on('AssignmentForced', (payload: { conversationId: number; comment: string }) => {
+    window.dispatchEvent(new CustomEvent('AssignmentForced', { detail: payload }))
+  })
+
+  notificationsConnection.on('AssignmentForcedAdmin', (payload: { conversationId: number; targetAgentId: number; comment: string }) => {
+    window.dispatchEvent(new CustomEvent('AssignmentForcedAdmin', { detail: payload }))
+  })
+
   // Arrancamos todas en paralelo
   try {
     await Promise.all([

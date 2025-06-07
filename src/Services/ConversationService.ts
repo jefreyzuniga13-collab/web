@@ -69,3 +69,25 @@ export function summarizeAllByContact(contactId: number) {
   ) {
     return api.put(`/Conversations/assignment`, payload);
   }
+
+  export function respondAssignment(
+  conversationId: number,
+  accepted: boolean,
+  comment?: string
+) {
+  return api.post(`/Conversations/${conversationId}/assignment-response`, {
+    accepted,
+    comment
+  });
+}
+
+export function forceAssign(
+  conversationId: number,
+  targetAgentId: number,
+  comment: string
+) {
+  return api.post(`/Conversations/${conversationId}/force-assign`, {
+    targetAgentId,
+    comment
+  });
+}
