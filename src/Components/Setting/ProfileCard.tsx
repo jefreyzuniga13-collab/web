@@ -1,230 +1,281 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUsers } from '@/Hooks/User/useUsers';
-import type { User } from '@/Interfaces/User/UserInterfaces';
+import { Camera, Edit, Lock } from 'lucide-react';
+import type { UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
+import { Label } from '@/Components/ui/label';
+import { Input } from '@/Components/ui/input';
+import FileInput from '@/Components/ui/FileInput';
 import '@/Styles/Setting/ProfileCard.css';
-
+import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 const ProfileCard: React.FC = () => {
-  const { currentUser, loading } = useUsers();
+  const { currentUser, loading, handleUpdateUser, getUserById } = useUsers();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<User>>({});
-
-  // Datos de ejemplo para mostrar el diseño
-  const mockUser: User = {
-    userId: 1,
-    fullName: "Alisa Mercedez López Cárdenas",
-    email: "alisa.lopez@pcgroup.com",
-    phone: "+58 414-123-4567",
-    identifier: "V-12345678",
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState<UpdateUserRequest>({
+    fullName: '',
+    email: '',
     isActive: true,
     companyId: 1,
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-06-05T14:20:00Z",
-    imageUrl: "/lovable-uploads/ccfb97d1-9ce5-460f-b647-ce43c2ebbca5.png",
-    clientType: "Premium",
-    lastOnline: "2024-06-05T16:45:00Z",
-    isOnline: true,
-    roles: [
-      { roleId: 1, roleName: "Administrador", description: "Acceso completo al sistema" },
-      { roleId: 2, roleName: "Editor", description: "Puede editar contenido" }
-    ]
-  };
+    phone: '',
+    identifier: '',
+    roleIds: []
+  });
+const authRaw = localStorage.getItem('auth') || '{}'
+  const { userId } = JSON.parse(authRaw) as AuthData;
 
-  const user = currentUser || mockUser;
+  useEffect(() => {
+    if (!currentUser) {
+      getUserById(Number(userId));
+    }
+  }, [currentUser, getUserById]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        fullName: currentUser.fullName,
+        email: currentUser.email,
+        phone: currentUser.phone || '',
+        identifier: currentUser.identifier || '',
+        isActive: currentUser.isActive,
+        companyId: currentUser.companyId,
+        roleIds: currentUser.roles.map(role => role.roleId)
+      });
+    }
+  }, [currentUser]);
 
   const handleEdit = () => {
-    setFormData({
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      identifier: user.identifier
-    });
-    setIsEditing(true);
+    if (currentUser) {
+      setFormData({
+        fullName: currentUser.fullName,
+        email: currentUser.email,
+        phone: currentUser.phone || '',
+        identifier: currentUser.identifier || '',
+        isActive: currentUser.isActive,
+        companyId: currentUser.companyId,
+        roleIds: currentUser.roles.map(role => role.roleId)
+      });
+      setIsEditing(true);
+    }
   };
 
   const handleSave = () => {
-    // Aquí implementarías la lógica para guardar
-    console.log('Guardando datos:', formData);
-    setIsEditing(false);
+    if (currentUser) {
+      const updateData = { ...formData };
+      if (selectedFile) {
+        // manejar la subida de la imagen
+      }
+      handleUpdateUser(currentUser.userId, updateData);
+      setIsEditing(false);
+      setSelectedFile(null);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setFormData({});
+    setSelectedFile(null);
+    if (currentUser) {
+      setFormData({
+        fullName: currentUser.fullName,
+        email: currentUser.email,
+        phone: currentUser.phone || '',
+        identifier: currentUser.identifier || '',
+        isActive: currentUser.isActive,
+        companyId: currentUser.companyId,
+        roleIds: currentUser.roles.map(role => role.roleId)
+      });
+    }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof UpdateUserRequest, value: string | boolean | number | number[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
+  };
+
   if (loading) {
     return (
-      <div className="profile-card profile-card--loading">
-        <div className="profile-card__loader">
-          <div className="profile-card__spinner"></div>
-          <p>Cargando perfil...</p>
-        </div>
+      <div className="profile-card__loading">
+        <div className="profile-card__spinner"></div>
+        <p>Cargando perfil...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="profile-card__loading">
+        <p>No se pudo cargar la información del usuario</p>
       </div>
     );
   }
 
   return (
     <div className="profile-card">
-      {/* Header con imagen y status */}
       <div className="profile-card__header">
-        <div className="profile-card__avatar-section">
+        <div className="profile-card__user-section">
           <div className="profile-card__avatar-container">
             <img 
-              src={user.imageUrl || '/placeholder-avatar.png'} 
-              alt={user.fullName}
+              src={currentUser.imageUrl || '/placeholder-avatar.png'} 
+              alt={currentUser.fullName}
               className="profile-card__avatar"
             />
-            <div className={`profile-card__status ${user.isOnline ? 'profile-card__status--online' : 'profile-card__status--offline'}`}>
+            <div className={`profile-card__status ${currentUser.isOnline ? 'profile-card__status--online' : 'profile-card__status--offline'}`}>
               <span className="profile-card__status-dot"></span>
-              <span className="profile-card__status-text">
-                {user.isOnline ? 'En línea' : 'Desconectado'}
+            </div>
+          </div>
+          
+          <div className="profile-card__user-info">
+            <h2 className="profile-card__name">{currentUser.fullName}</h2>
+            <p className="profile-card__email">{currentUser.email}</p>
+            <div className="profile-card__roles">
+              {currentUser.roles.map(role => (
+                <span key={role.roleId} className="profile-card__role-badge">
+                  {role.roleName}
+                </span>
+              ))}
+            </div>
+            <div className="profile-card__online-status">
+              <span className="profile-card__online-text">
+                {currentUser.isOnline ? 'En línea' : 'Desconectado'}
               </span>
             </div>
           </div>
-          <button className="profile-card__change-photo">
-            <svg className="profile-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
-            Cambiar foto
-          </button>
         </div>
 
-        <div className="profile-card__header-info">
-          <h2 className="profile-card__name">{user.fullName}</h2>
-          <div className="profile-card__roles">
-            {user.roles.map(role => (
-              <span key={role.roleId} className="profile-card__role-badge">
-                {role.roleName}
-              </span>
-            ))}
-          </div>
-          <div className="profile-card__actions">
-            {!isEditing ? (
+        <div className="profile-card__header-actions">
+          <button className="profile-card__change-photo">
+            <Camera size={16} />
+            Cambiar foto
+          </button>
+          
+          {!isEditing ? (
+            <button 
+              className="profile-card__edit-btn"
+              onClick={handleEdit}
+            >
+              <Edit size={16} />
+              Editar perfil
+            </button>
+          ) : (
+            <div className="profile-card__edit-actions">
               <button 
-                className="profile-card__edit-btn"
-                onClick={handleEdit}
+                className="profile-card__save-btn"
+                onClick={handleSave}
               >
-                <svg className="profile-card__edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                Editar perfil
+                Guardar
               </button>
-            ) : (
-              <div className="profile-card__edit-actions">
-                <button 
-                  className="profile-card__save-btn"
-                  onClick={handleSave}
-                >
-                  Guardar
-                </button>
-                <button 
-                  className="profile-card__cancel-btn"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </button>
-              </div>
-            )}
-          </div>
+              <button 
+                className="profile-card__cancel-btn"
+                onClick={handleCancel}
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Contenido principal en layout horizontal */}
       <div className="profile-card__content">
         <div className="profile-card__main-content">
-          {/* Información personal */}
           <div className="profile-card__section">
             <h3 className="profile-card__section-title">Información Personal</h3>
             <div className="profile-card__info-grid">
               <div className="profile-card__field">
-                <label className="profile-card__label">Nombre completo</label>
+                <Label htmlFor="fullName">Nombre completo</Label>
                 {isEditing ? (
-                  <input
+                  <Input
+                    id="fullName"
                     type="text"
-                    className="profile-card__input"
-                    value={formData.fullName || ''}
+                    value={formData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
                   />
                 ) : (
-                  <span className="profile-card__value">{user.fullName}</span>
+                  <span className="profile-card__value">{currentUser.fullName}</span>
                 )}
               </div>
 
               <div className="profile-card__field">
-                <label className="profile-card__label">Correo electrónico</label>
+                <Label htmlFor="email">Correo electrónico</Label>
                 {isEditing ? (
-                  <input
+                  <Input
+                    id="email"
                     type="email"
-                    className="profile-card__input"
-                    value={formData.email || ''}
+                    value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                   />
                 ) : (
-                  <span className="profile-card__value">{user.email}</span>
+                  <span className="profile-card__value">{currentUser.email}</span>
                 )}
               </div>
 
               <div className="profile-card__field">
-                <label className="profile-card__label">Teléfono</label>
+                <Label htmlFor="phone">Teléfono</Label>
                 {isEditing ? (
-                  <input
+                  <Input
+                    id="phone"
                     type="tel"
-                    className="profile-card__input"
                     value={formData.phone || ''}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                   />
                 ) : (
-                  <span className="profile-card__value">{user.phone || 'No especificado'}</span>
+                  <span className="profile-card__value">{currentUser.phone || 'No especificado'}</span>
                 )}
               </div>
 
               <div className="profile-card__field">
-                <label className="profile-card__label">Identificación</label>
+                <Label htmlFor="identifier">Identificación</Label>
                 {isEditing ? (
-                  <input
+                  <Input
+                    id="identifier"
                     type="text"
-                    className="profile-card__input"
                     value={formData.identifier || ''}
                     onChange={(e) => handleInputChange('identifier', e.target.value)}
                   />
                 ) : (
-                  <span className="profile-card__value">{user.identifier || 'No especificado'}</span>
+                  <span className="profile-card__value">{currentUser.identifier || 'No especificado'}</span>
                 )}
               </div>
+
+              {isEditing && (
+                <div className="profile-card__field profile-card__field--full-width">
+                  <Label>Imagen de perfil</Label>
+                  <FileInput
+                    onFileSelect={handleFileSelect}
+                    currentImage={currentUser.imageUrl || undefined}
+                    accept="image/*"
+                    maxSize={5 * 1024 * 1024}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Información de cuenta */}
           <div className="profile-card__section">
             <h3 className="profile-card__section-title">Información de Cuenta</h3>
             <div className="profile-card__info-grid">
               <div className="profile-card__field">
-                <label className="profile-card__label">Estado de cuenta</label>
+                <Label>Estado de cuenta</Label>
                 <div className="profile-card__status-badge">
-                  <span className={`profile-card__status-indicator ${user.isActive ? 'profile-card__status-indicator--active' : 'profile-card__status-indicator--inactive'}`}></span>
-                  {user.isActive ? 'Activa' : 'Inactiva'}
+                  <span className={`profile-card__account-indicator ${currentUser.isActive ? 'profile-card__account-indicator--active' : 'profile-card__account-indicator--inactive'}`}></span>
+                  {currentUser.isActive ? 'Activa' : 'Inactiva'}
                 </div>
               </div>
 
-              <div className="profile-card__field">
-                <label className="profile-card__label">Tipo de cliente</label>
-                <span className="profile-card__value">{user.clientType || 'Estándar'}</span>
-              </div>
+              {/* <div className="profile-card__field">
+                <Label>Tipo de cliente</Label>
+                <span className="profile-card__value">{currentUser.clientType || 'Estándar'}</span>
+              </div> */}
 
               <div className="profile-card__field">
-                <label className="profile-card__label">Miembro desde</label>
+                <Label>Miembro desde</Label>
                 <span className="profile-card__value">
-                  {new Date(user.createdAt).toLocaleDateString('es-ES', { 
+                  {new Date(currentUser.createdAt).toLocaleDateString('es-ES', { 
                     year: 'numeric', 
                     month: 'long', 
                     day: 'numeric' 
@@ -233,9 +284,9 @@ const ProfileCard: React.FC = () => {
               </div>
 
               <div className="profile-card__field">
-                <label className="profile-card__label">Última actividad</label>
+                <Label>Última actividad</Label>
                 <span className="profile-card__value">
-                  {user.lastOnline ? new Date(user.lastOnline).toLocaleDateString('es-ES', {
+                  {currentUser.lastOnline ? new Date(currentUser.lastOnline).toLocaleDateString('es-ES', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
@@ -248,28 +299,14 @@ const ProfileCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Barra lateral con configuración de seguridad */}
         <div className="profile-card__sidebar">
           <div className="profile-card__section">
             <h3 className="profile-card__section-title">Seguridad</h3>
             <div className="profile-card__security-actions">
               <button className="profile-card__security-btn">
-                <svg className="profile-card__security-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <circle cx="12" cy="16" r="1"></circle>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
+                <Lock size={20} />
                 Cambiar contraseña
               </button>
-              
-              {/* <button className="profile-card__security-btn">
-                <svg className="profile-card__security-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4"></path>
-                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                </svg>
-                Verificación en dos pasos
-              </button> */}
             </div>
           </div>
         </div>

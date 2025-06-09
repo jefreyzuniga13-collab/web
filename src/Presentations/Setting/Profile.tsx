@@ -5,9 +5,10 @@ import ProfileCard from '@/Components/Setting/ProfileCard'
 
 const Profile: React.FC = () => {
   return (
-    <div className="profile">
-      <div className="profile__container">
-        <div className="profile__content">
+    <div className="profile-page">
+      <div className="profile-page__container">
+        
+        <div className="profile-page__content">
           <ProfileCard />
         </div>
       </div>

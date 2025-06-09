@@ -1,55 +1,73 @@
 
-import React from 'react'
-import { X } from 'lucide-react'
-import { SystemParamForm } from './SystemParamForm'
-import type { SystemParamResponseDto, SystemParamRequestDto } from "@/Interfaces/Auth/AuthInterface"
+import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
+import SystemParamForm from './SystemParamForm';
+import type { SystemParamRequestDto, SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
 import '@/Styles/Setting/SystemParamModal.css'
 
-interface Props {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: SystemParamRequestDto) => void
-  initialData?: SystemParamResponseDto
-  title: string
-  isLoading?: boolean
+interface SystemParamModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: SystemParamRequestDto) => void;
+  initialData?: SystemParamResponseDto;
+  title: string;
+  isLoading?: boolean;
 }
 
-export const SystemParamModal: React.FC<Props> = ({
-  isOpen,
-  onClose,
+export const SystemParamModal: React.FC<SystemParamModalProps> = ({ 
+  isOpen, 
+  onClose, 
   onSubmit,
   initialData,
   title,
   isLoading = false
 }) => {
-  if (!isOpen) return null
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
-    <div className="system-param-modal">
-      <div className="system-param-modal__backdrop">
-        <div className="system-param-modal__overlay" onClick={onClose}></div>
+    <div className="modal__overlay" onClick={onClose}>
+      <div 
+        className="modal__container modal__container--large" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="modal__header">
+          <h2 className="modal__title">{title}</h2>
+          <button 
+            className="modal__close-button"
+            onClick={onClose}
+            type="button"
+          >
+            <X size={20} />
+          </button>
+        </div>
         
-        <div className="system-param-modal__content">
-          <div className="system-param-modal__header">
-            <h3 className="system-param-modal__title">{title}</h3>
-            <button
-              onClick={onClose}
-              className="system-param-modal__close"
-            >
-              <X size={24} />
-            </button>
-          </div>
-          
-          <div className="system-param-modal__body">
-            <SystemParamForm
-              initialData={initialData}
-              onSubmit={onSubmit}
-              onCancel={onClose}
-              isLoading={isLoading}
-            />
-          </div>
+        <div className="modal__content">
+          <SystemParamForm
+            initialData={initialData}
+            onSubmit={onSubmit}
+            onCancel={onClose}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,7 +1,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
-import '@/Components/ui/FileInput.css'
+import '@/Styles/UI/FileInput.css'
 
 interface FileInputProps {
   id?: string;

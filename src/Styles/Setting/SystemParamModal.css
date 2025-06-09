@@ -1,104 +1,73 @@
 
-/* Estilos para modales de parámetros del sistema */
-.system-param-modal {
+.system-param-modal__overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-lg);
-}
-
-.system-param-modal__backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease-out;
-}
-
-.system-param-modal__overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  cursor: pointer;
-}
-
-.system-param-modal__content {
-  position: relative;
-  background-color: var(--color-white);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-lg);
-  max-width: 600px;
-  
-  max-height: 90vh;
   width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(0.2rem);
+  animation: modalOverlayFadeIn var(--transition-normal) var(--transition-ease);
+}
+
+.system-param-modal__container {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  max-height: 90vh;
   overflow-y: auto;
-  animation: slideIn 0.3s ease-out;
-  margin: auto;
+  border: 0.1rem solid var(--border-secondary);
+  animation: modalSlideIn var(--transition-normal) var(--transition-ease);
+  width: 90%;
+  max-width: 80rem;
 }
 
 .system-param-modal__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xl);
-  border-bottom: var(--border-width) solid var(--color-gray-200);
-  background-color: var(--color-gray-50);
+  padding: var(--space-lg);
+  border-bottom: 0.1rem solid var(--border-secondary);
+  background-color: var(--bg-secondary);
 }
 
 .system-param-modal__title {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  color: var(--color-gray-900);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
   margin: 0;
 }
 
-.system-param-modal__close {
+.system-param-modal__close-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-sm);
+  color: var(--text-muted);
+  transition: all var(--transition-fast) var(--transition-ease);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: none;
-  border-radius: var(--border-radius-md);
-  background-color: transparent;
-  color: var(--color-gray-500);
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
 }
 
-.system-param-modal__close:hover {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-700);
+.system-param-modal__close-button:hover {
+  color: var(--color-error);
+  background-color: var(--color-error-light);
+  transform: scale(1.1);
 }
 
-.system-param-modal__body {
-  padding: var(--spacing-xl);
+.system-param-modal__content {
+  padding: var(--space-lg);
+  background-color: var(--bg-primary);
 }
 
-.system-param-modal__footer {
-  padding: var(--spacing-lg) var(--spacing-xl);
-  border-top: var(--border-width) solid var(--color-gray-200);
-  background-color: var(--color-gray-50);
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Animaciones */
-@keyframes fadeIn {
+@keyframes modalOverlayFadeIn {
   from {
     opacity: 0;
   }
@@ -107,10 +76,10 @@
   }
 }
 
-@keyframes slideIn {
+@keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-1rem) scale(0.95);
+    transform: translateY(-2rem) scale(0.95);
   }
   to {
     opacity: 1;
@@ -118,20 +87,50 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .system-param-modal {
-    padding: var(--spacing-md);
+@media (max-width: 76.8rem) {
+  .system-param-modal__container {
+    width: 95%;
+    max-width: 70rem;
+  }
+  
+  .system-param-modal__header {
+    padding: var(--space-md);
   }
   
   .system-param-modal__content {
-    max-width: 100%;
-    max-height: 95vh;
+    padding: var(--space-md);
   }
   
-  .system-param-modal__header,
-  .system-param-modal__body,
-  .system-param-modal__footer {
-    padding: var(--spacing-lg);
+  .system-param-modal__title {
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 48rem) {
+  .system-param-modal__overlay {
+    padding: var(--space-sm);
+  }
+  
+  .system-param-modal__container {
+    width: 100%;
+    max-height: 95vh;
+    margin: var(--space-sm);
+    max-width: none;
+  }
+  
+  .system-param-modal__header {
+    padding: var(--space-sm);
+  }
+  
+  .system-param-modal__content {
+    padding: var(--space-sm);
+  }
+  
+  .system-param-modal__title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .system-param-modal__close-button {
+    padding: var(--space-xs);
   }
 }

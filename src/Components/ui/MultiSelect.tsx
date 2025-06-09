@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Check } from 'lucide-react';
-import '@/Components/ui/MultiSelect.css'
+import '@/Styles/ui/MultiSelect.css'
 
 
 interface Option {
