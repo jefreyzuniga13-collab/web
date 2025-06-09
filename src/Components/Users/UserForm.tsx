@@ -89,6 +89,7 @@ const UserForm: React.FC<UserFormProps> = ({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 const handleInputChange = (
   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
@@ -138,6 +139,7 @@ const handleInputChange = (
     if (selectedFile) {
       const formDataForUpload = new FormData();
       formDataForUpload.append('file', selectedFile);
+      console.log("La meta data de la imagen es", formDataForUpload);
       
       try {
         const response = await fetch('/api/upload', {
@@ -152,6 +154,7 @@ const handleInputChange = (
       } catch (error) {
         console.error('Error uploading file:', error);
       }
+          console.log("Meta data imagen 2", formDataForUpload);
     }
 
     const submitData = {
@@ -164,8 +167,10 @@ const handleInputChange = (
       delete (submitData as any).password;
     }
 
+    console.log("Date usuario enviada", submitData)
     onSubmit(submitData);
   };
+
 
   const togglePasswordVisibility = () => {
     setShowPassword(prev => !prev);

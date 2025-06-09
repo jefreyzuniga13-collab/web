@@ -68,6 +68,7 @@ presenceConnection = new signalR.HubConnectionBuilder()
     console.log('Usuario en línea:', userId)
     // Aquí despacha a tu store o actualiza contexto
   })
+
   presenceConnection.on('UserIsOffline', (userId: number) => {
     console.log('Usuario desconectado:', userId)
     // Aquí despacha a tu store o actualiza contexto
@@ -83,8 +84,7 @@ presenceConnection = new signalR.HubConnectionBuilder()
     console.warn('Presence Hub connection closed', err)
   )
 
-   notificationsConnection.on('AssignmentRequested', (payload: { conversationId: number; requestedAt: string }) => {
-    // emitiremos un evento global o estado compartido
+  notificationsConnection.on('AssignmentRequested', (payload: { conversationId: number; requestedAt: string }) => {
     window.dispatchEvent(new CustomEvent('AssignmentRequested', { detail: payload }))
   })
 

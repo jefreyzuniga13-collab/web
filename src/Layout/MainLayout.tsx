@@ -16,7 +16,7 @@ const MainLayout: React.FC = () => {
   const { userId } = JSON.parse(authRaw) as AuthData
   const isAuthenticated = Boolean(userId)
 
-  // 2) Hook que expone qué modales mostrar
+  // Hook que expone qué modales mostrar
   const {
     requestedConv, clearRequested,
     responsePayload, clearResponse,

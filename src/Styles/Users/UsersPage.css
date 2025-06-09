@@ -32,9 +32,10 @@
 
 .search-form {
   display: flex;
-  gap: 16px;
-  min-width: 300px !important;
-  max-width: 500px !important;
+  gap: 1.6rem;
+  min-width: 30rem !important;
+  max-width: 50rem !important;
+  flex: 1;
 }
 
 .search-input-wrapper {
@@ -45,6 +46,25 @@
   display: flex;
   gap: 8px;
 }
+.btn--primary {
+  background-color: var(--color-primary, #3b82f6);
+  color: var(--text-white, #ffffff);
+}
+
+.btn--primary:hover {
+  background-color: var(--color-primary-hover, #2563eb);
+  transform: translateY(-0.1rem);
+}
+.btn-tertiary {
+  background-color: transparent;
+  color: var(--text-secondary, #374151);
+  border-color: var(--border-primary, #d1d5db);
+}
+
+.btn-tertiary:hover {
+  background-color: var(--bg-secondary, #f3f4f6);
+}
+
 
 .filter-group {
   display: flex;

@@ -4,7 +4,6 @@ import api from '@/Utils/ApiConfig'
 export default class SystemParamService {
   static async getSystemParams() {
     try {
-      console.log('Fetching system parameters...')
       const response = await api.get<ApiResponse<SystemParamResponseDto[]>>('/SystemParam')
       return response.data.data
     } catch (error) {

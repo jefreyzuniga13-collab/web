@@ -23,6 +23,7 @@ export function useAssignmentEvents() {
 
   useEffect(() => {
     const onRequested = (e: CustomEvent<{ conversationId: number }>) => {
+          console.log("Valor de request", requestedConv);
       setRequestedConv(e.detail.conversationId);
     };
     const onResponse = (e: CustomEvent<AssignmentResponsePayload>) => {

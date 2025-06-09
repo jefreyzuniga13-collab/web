@@ -93,9 +93,9 @@ const UsersPage: React.FC = () => {
             />
           </div>
           <div className="search-buttons">
-            <Button type="submit" variant="primary">Buscar</Button>
+            <Button type="submit" variant="primary" className='btn--primary'>Buscar</Button>
             {searchQuery && (
-              <Button type="button" variant="tertiary" onClick={handleClearSearch}>
+              <Button type="button" variant="tertiary" className='btn-tertiary' onClick={handleClearSearch}>
                 Limpiar
               </Button>
             )}

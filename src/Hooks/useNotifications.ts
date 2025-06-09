@@ -18,4 +18,4 @@ export function useNotifications(page = 1, pageSize = 10) {
   }, [dispatch])
 
   return { list, meta, unreadCount, loadingList, loadingCount }
-}   
+}

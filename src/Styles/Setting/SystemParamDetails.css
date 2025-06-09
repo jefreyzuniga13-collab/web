@@ -49,7 +49,7 @@
   color: var(--text-white);
 }
 
-.system-param-details__type-badge--keywords {
+.system-param-details__type-badge--Keywords {
   background-color: var(--color-warning);
   color: var(--text-white);
 }

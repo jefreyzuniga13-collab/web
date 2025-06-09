@@ -369,7 +369,7 @@
     }
 
     .menu-item__text {
-      font-size: var(--font-size-sm);
+      font-size: var(--font-size-base);
     }
   }
 
@@ -433,7 +433,7 @@
   }
 
   /* ESCRITORIOS GRANDES (≥1440px) */
-  @media (min-width: 144rem) {
+  @media (min-width: 110rem) {
     .navbar {
       width: 32rem;
       box-shadow: var(--shadow-lg);
@@ -554,7 +554,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  @media (min-width: 120rem) {
+  @media (min-width: 100rem) {
     .navbar:hover {
       box-shadow: var(--shadow-xl);
     }

@@ -54,9 +54,6 @@ export function getHistoryByContact(contactId: number) {
   );
 }
 
-/**
- * Genera resumen completo de TODO el histórico de un contacto
- */
 export function summarizeAllByContact(contactId: number) {
   return api.post<{ data: string }>(
     `/Conversations/${contactId}/summary`

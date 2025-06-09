@@ -10,8 +10,6 @@ export function getMessages(conversationId: number) {
 }
 
 export function sendText(message: SentMessage) {
-  console.log("El id de conversacion el servicio: ", message.conversationId)
-  console.log("El id de sender el servicio: ", message.senderId)
   return api.post<{ data: MessageDto }>(
     `/WhatsappWebhook/${message.conversationId}/send`,
     {

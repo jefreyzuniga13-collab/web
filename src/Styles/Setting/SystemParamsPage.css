@@ -2,13 +2,14 @@
 .system-params-page {
   box-sizing: border-box;
   padding: 2rem 1rem;
+  overflow: hidden;
 }
 
 .system-params-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.4rem;
+  margin-bottom: 24px;
 }
 
 .system-params-header h1 {
@@ -18,10 +19,9 @@
 }
 
 .system-params-controls {
-  margin-bottom: 2.4rem;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
-  gap: 1.6rem;
 }
 
 .search-form {
@@ -51,7 +51,7 @@
 
 .search-input {
   width: 100%;
-  padding: 1.5rem 4rem !important;
+  padding: 1rem 4rem !important;
   border: 0.1rem solid var(--border-primary, #d1d5db);
   border-radius: 0.6rem;
   font-size: 1.4rem !important;
@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 1rem 1.6rem;
+   padding: 1rem 4rem !important;
   border-radius: 0.6rem;
   font-size: 1.4rem;
   font-weight: 500;
