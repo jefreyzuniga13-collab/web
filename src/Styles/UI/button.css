@@ -1,0 +1,120 @@
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  ring-offset-background: transparent;
+  transition: colors 0.15s ease-in-out;
+  outline: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button svg {
+  pointer-events: none;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Variants */
+.button--default {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.button--default:hover:not(:disabled) {
+  background-color: #1e293b;
+}
+
+.button--destructive {
+  background-color: #dc2626;
+  color: #fef2f2;
+}
+
+.button--destructive:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.button--outline {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.button--outline:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.button--secondary {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.button--secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+}
+
+.button--ghost {
+  background-color: transparent;
+  color: #0f172a;
+}
+
+.button--ghost:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.button--link {
+  background-color: transparent;
+  color: #0f172a;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.button--link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+/* Sizes */
+.button--default {
+  height: 2.5rem;
+  padding: 1.7rem !important;
+  font-size: 1rem !important    ;
+}
+
+.button--sm {
+  height: 2.25rem;
+  border-radius: 0.375rem;
+  padding: 0 0.75rem;
+}
+
+.button--lg {
+  height: 2.75rem;
+  border-radius: 0.375rem;
+  padding: 0 2rem;
+}
+
+.button--icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  padding: 0;
+}

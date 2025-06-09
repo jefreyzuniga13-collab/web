@@ -1,0 +1,114 @@
+
+.table-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: auto;
+  border-radius: var(--radius-lg);
+  border: 0.1rem solid var(--color-border-secondary);
+}
+
+.table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: var(--font-size-sm);
+  border-collapse: collapse;
+  background-color: var(--color-background-primary);
+}
+
+.table-header .table-row {
+  border-bottom: 0.1rem solid var(--color-border-secondary);
+  background-color: var(--color-gray-50);
+}
+
+.table-body .table-row:last-child {
+  border: 0;
+}
+
+.table-footer {
+  border-top: 0.1rem solid var(--color-border-secondary);
+  background-color: var(--color-gray-50);
+  font-weight: var(--font-weight-medium);
+}
+
+.table-footer .table-row:last-child {
+  border-bottom: 0;
+}
+
+.table-row {
+  border-bottom: 0.1rem solid var(--color-border-secondary);
+  transition: background-color var(--transition-fast);
+}
+
+.table-row:hover {
+  background-color: var(--color-gray-50);
+}
+
+.table-row[data-state="selected"] {
+  background-color: var(--color-gray-100);
+}
+
+.table-head {
+  height: 4.8rem;
+  padding: 0 var(--spacing-lg);
+  text-align: left;
+  vertical-align: middle;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-head:has([role="checkbox"]) {
+  padding-right: 0;
+}
+
+.table-cell {
+  padding: var(--spacing-lg);
+  vertical-align: middle;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+.table-cell:has([role="checkbox"]) {
+  padding-right: 0;
+}
+
+.table-caption {
+  margin-top: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-wrapper {
+    font-size: var(--font-size-xs);
+  }
+  
+  .table-head {
+    height: 4rem;
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-xs);
+  }
+  
+  .table-cell {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .table-head {
+    height: 3.6rem;
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .table-cell {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useUsers } from '@/Hooks/useUsers';
+import { useUsers } from '@/Hooks/User/useUsers';
 import type { User } from '@/Interfaces/User/UserInterfaces';
 import '@/Styles/Setting/ProfileCard.css';
 

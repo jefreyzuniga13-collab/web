@@ -1,9 +1,8 @@
-
 import React from 'react';
-import { Eye, Edit, Check, X, CirclePower } from 'lucide-react';
+import { Eye, Edit, Check, X, CirclePower, Users } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import type { User } from '@/Interfaces/User/UserInterfaces';
-import '@/Styles/Users/UserTable.css';
-
+import '@/Styles/Users/UserTable.css'
 interface UserTableProps {
   users: User[];
   onEdit: (user: User) => void;
@@ -25,85 +24,123 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEdit, onDelete, onView, 
   };
 
   if (loading) {
-    return <div className="user-table-loading">Cargando usuarios...</div>;
+    return (
+      <div className="user-table__loading">
+        <div className="user-table__spinner"></div>
+        <span>Cargando usuarios...</span>
+      </div>
+    );
   }
 
   if (users.length === 0) {
-    return <div className="user-table-empty">No hay usuarios para mostrar</div>;
+    return (
+      <div className="user-table__empty">
+        <div className="user-table__empty-icon">
+          <Users size={48} />
+        </div>
+        <h3 className="user-table__empty-title">No hay usuarios</h3>
+        <p className="user-table__empty-description">No se encontraron usuarios que coincidan con los criterios de búsqueda.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="user-table-container">
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            {/* <th>Empresa</th> */}
-            <th>Roles</th>
-            <th>Estado</th>
-            <th>Última actividad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="user-table">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="user-table__header-cell">Foto</TableHead>
+            <TableHead className="user-table__header-cell">Nombre</TableHead>
+            <TableHead className="user-table__header-cell">Email</TableHead>
+            <TableHead className="user-table__header-cell">Roles</TableHead>
+            <TableHead className="user-table__header-cell">Estado</TableHead>
+            <TableHead className="user-table__header-cell">Última actividad</TableHead>
+            <TableHead className="user-table__header-cell">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {users.map((user) => (
-            <tr key={user.userId}>
-              <td className="user-table-avatar">
-                {user.imageUrl ? (
-                  <img src={user.imageUrl} alt={user.fullName} />
-                ) : (
-                  <div className="user-table-avatar-placeholder">
-                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : ''}
-                  </div>
-                )}
-              </td>
-              <td>{user.fullName}</td>
-              <td>{user.email}</td>
-              {/* <td>{user.companyId}</td> */}
-              <td>
-                <div className="user-table-roles">
+            <TableRow key={user.userId} className="user-table__row">
+              <TableCell className="user-table__cell">
+                <div className="user-table__avatar">
+                  {user.imageUrl ? (
+                    <img 
+                      src={user.imageUrl} 
+                      alt={user.fullName} 
+                      className="user-table__avatar-image"
+                    />
+                  ) : (
+                    <div className="user-table__avatar-placeholder">
+                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="user-table__cell">
+                <div className="user-table__user-info">
+                  <span className="user-table__user-name">{user.fullName}</span>
+                  {/* <span className="user-table__user-id">ID: {user.userId}</span> */}
+                </div>
+              </TableCell>
+              <TableCell className="user-table__cell">{user.email}</TableCell>
+              <TableCell className="user-table__cell">
+                <div className="user-table__roles">
                   {user.roles.map((role) => (
-                    <span key={role.roleId} className="user-table-role">
+                    <span key={role.roleId} className="user-table__role-badge">
                       {role.roleName}
                     </span>
                   ))}
                 </div>
-              </td>
-              <td>
-                <div className={`user-table-status ${user.isActive ? 'active' : 'inactive'}`}>
-                  {user.isActive ? (
-                    <>
-                      <Check size={16} />
-                      <span>Activo</span>
-                    </>
-                  ) : (
-                    <>
-                      <X size={16} />
-                      <span>Inactivo</span>
-                    </>
+              </TableCell>
+              <TableCell className="user-table__cell">
+                <div className={`user-table__status ${user.isActive ? 'user-table__status--active' : 'user-table__status--inactive'}`}>
+                  <div className="user-table__status-icon">
+                    {user.isActive ? <Check size={16} /> : <X size={16} />}
+                  </div>
+                  <span className="user-table__status-text">
+                    {user.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="user-table__cell">
+                <div className="user-table__last-activity">
+                  <span className="user-table__date">
+                    {user.lastOnline ? formatDate(user.lastOnline) : 'Nunca'}
+                  </span>
+                  {user.isOnline && (
+                    <span className="user-table__online-indicator">En línea</span>
                   )}
                 </div>
-              </td>
-              <td>{user.lastOnline ? formatDate(user.lastOnline) : 'Nunca'}</td>
-              <td>
-                <div className="user-table-actions">
-                  <button className="action-btn view" onClick={() => onView(user.userId)}>
+              </TableCell>
+              <TableCell className="user-table__cell">
+                <div className="user-table__actions">
+                  <button 
+                    className="user-table__action-btn user-table__action-btn--view"
+                    onClick={() => onView(user.userId)}
+                    title="Ver detalles"
+                  >
                     <Eye size={16} />
                   </button>
-                  <button className="action-btn edit" onClick={() => onEdit(user)}>
+                  <button 
+                    className="user-table__action-btn user-table__action-btn--edit"
+                    onClick={() => onEdit(user)}
+                    title="Editar usuario"
+                  >
                     <Edit size={16} />
                   </button>
-                  <button className="action-btn delete" onClick={() => onDelete(user)}>
-                    <CirclePower size={16}/>
+                  <button 
+                    className="user-table__action-btn user-table__action-btn--delete"
+                    onClick={() => onDelete(user)}
+                    title={user.isActive ? "Desactivar usuario" : "Activar usuario"}
+                  >
+                    <CirclePower size={16} />
                   </button>
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };

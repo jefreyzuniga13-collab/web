@@ -1,6 +1,6 @@
 // src/Hooks/useUserPresence.ts
 import { useEffect, useState } from 'react'
-import { userService } from '@/Services/UserService'
+import { userService } from '@/Services/User/UserService'
 import { presenceConnection } from '@/Services/signalr'
 //import type { PresenceDto } from '@/Interfaces/User/UserInterfaces'
 

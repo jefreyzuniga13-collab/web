@@ -25,7 +25,6 @@ export function useUserRoles() {
     try {
       const decoded = jwtDecode<JWTPayload>(token);
       
-      // Extraer roles
       let userRoles: string[] = [];
       if (decoded.role) {
         userRoles = Array.isArray(decoded.role) ? decoded.role : [decoded.role];
@@ -33,12 +32,10 @@ export function useUserRoles() {
       }
       setRoles(userRoles);
     
-      
       // Determinar si es admin o support
       setIsAdmin(userRoles.includes('Admin'));
       setIsSupport(userRoles.includes('Support'));
       
-      // Extraer ID del usuario
       setUserId(decoded.sub || decoded.nameid || '');
     } catch (error) {
       console.error('Error al decodificar el token JWT:', error);

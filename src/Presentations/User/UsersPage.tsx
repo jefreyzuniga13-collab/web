@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useUsers } from '@/Hooks/useUsers';
+import { useUsers } from '@/Hooks/User/useUsers';
 import UserTable from '@/Components/Users/UserTable';
 import Pagination from '@/Components/Users/Pagination';
 import Modal from '@/Components/Users/Modal';
@@ -77,10 +77,6 @@ const UsersPage: React.FC = () => {
     <div className="users-page">
       <div className="users-header">
         <h1>Administración de Usuarios</h1>
-        <Button variant="primary" onClick={openCreateModal} className="create-user-btn">
-          <UserPlus size={18} />
-          Nuevo Usuario
-        </Button>
       </div>
 
       <div className="users-controls">
@@ -105,6 +101,10 @@ const UsersPage: React.FC = () => {
             )}
           </div>
         </form>
+        <Button variant="primary" onClick={openCreateModal} className="create-user-btn">
+          <UserPlus size={18} />
+          Nuevo Usuario
+        </Button>
       </div>
 
       {error && <div className="users-error">Error: {error}</div>}
@@ -124,10 +124,9 @@ const UsersPage: React.FC = () => {
           />
           
           <Pagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            onPageChange={handlePageChange}
-          />
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange} totalCount={0} pageSize={0}          />
         </>
       )}
 

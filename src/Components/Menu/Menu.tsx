@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import * as Icons from 'lucide-react';
 import { useMenus } from '@/Hooks/useMenus';
-import MenuItem from '@/Components/Chat/MenuItem';
+import MenuItem from '@/Components/Menu/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/Context/Slices/authSlice';
 import { useNotifications } from '@/Hooks/useNotifications';
-import '@/Styles/Chat/Navbar.css';
+import '@/Styles/Menu/Navbar.css';
 import { ThreeDot } from 'react-loading-indicators';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
-import { useUsers } from '@/Hooks/useUsers';
+import { useUsers } from '@/Hooks/User/useUsers';
 
-interface menuProp{
+interface NavbarProps {
   id: number;
 }
 
-const Navbar: React.FC<menuProp> = ({id}) => {
+const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, loading, error } = useMenus();
   const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(false);
@@ -25,15 +25,12 @@ const Navbar: React.FC<menuProp> = ({id}) => {
   const dispatch = useDispatch();
   const { currentUser, loading: userLoading, getUserById } = useUsers();
 
-    useEffect(() => {
-      if (!currentUser) {
-        getUserById(id);
-      }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentUser, getUserById]);
+  useEffect(() => {
+    if (!currentUser) {
+      getUserById(id);
+    }
+  }, [currentUser, getUserById, id]);
 
-
-  // Marcar como seleccionado el menú según la ruta actual
   const selectedUrl = location.pathname.replace(/^\//, '');
 
   const onClick = (url: string, text: string) => {
@@ -46,33 +43,40 @@ const Navbar: React.FC<menuProp> = ({id}) => {
   };
 
   if (loading) return (
-    <div className="navbar-loading">
-      <div className="loader-container">
-        <ThreeDot color="#3142cc" size="medium" />
+    <div className="navbar__loading">
+      <div className="navbar__loader">
+        <ThreeDot color="#356ace" size="medium" />
       </div>
     </div>
   );
-  if (error) return <div className="navbar-error">Error cargando menú.</div>;
+  
+  if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
   return (
-    <nav className={`navbar ${collapsed ? 'collapsed' : ''}`}>
-      <div className="menu-header">
+    <nav className={`navbar ${collapsed ? 'navbar--collapsed' : ''}`}>
+      <div className="navbar__header">
         <img
           src="https://i.ibb.co/B5tvT539/logopcg.webp"
           alt="PC Group S.A logo"
-          className="menu-logo"
+          className="navbar__logo"
         />
-        <button className="collapse-button" onClick={() => setCollapsed(!collapsed)}>
+        <button 
+          className="navbar__collapse-btn" 
+          onClick={() => setCollapsed(!collapsed)}
+        >
           {collapsed
-            ? <SquareArrowRight size={20}/>
-            : <SquareArrowLeft size={20}/>}
+            ? <SquareArrowRight size={20} />
+            : <SquareArrowLeft size={20} />}
         </button>
-        <button className="mobile-menu-toggle" onClick={() => setMobileOpen(!mobileOpen)}>
-          <Icons.Menu size={24}/>
+        <button 
+          className="navbar__mobile-toggle" 
+          onClick={() => setMobileOpen(!mobileOpen)}
+        >
+          <Icons.Menu size={24} />
         </button>
       </div>
 
-      <ul className={`menu-items ${mobileOpen ? 'open' : ''}`}>
+      <ul className={`navbar__menu ${mobileOpen ? 'navbar__menu--open' : ''}`}>
         {menus.map(m => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const Icon = (Icons as any)[m.icon] ?? Icons.Menu;
@@ -82,27 +86,33 @@ const Navbar: React.FC<menuProp> = ({id}) => {
           return (
             <MenuItem
               key={m.menuId}
-              icon={<Icon size={20}/>}
+              icon={<Icon size={20} />}
               text={m.name}
               onClick={() => onClick(m.url, m.name)}
               selected={isSelected}
-              badge={ showBadge ? unreadCount : undefined }
+              badge={showBadge ? unreadCount : undefined}
             />
           );
         })}
       </ul>
 
-      <div className="navbar-footer">
-         {userLoading ? (
-         <div className="navbar-profile">Cargando usuario...</div>
-          ) : currentUser && (
-            <div className='navbar-profile'>
-              <img src={`${currentUser.imageUrl}`} alt="user photo" className='profile-photo'/>
-              <span className='navbar-fullname'>{currentUser.fullName}</span>
-            </div>
-          )}
+      <div className="navbar__footer">
+        {userLoading ? (
+          <div className="navbar__profile">
+            <div className="navbar__profile-loading">Cargando usuario...</div>
+          </div>
+        ) : currentUser && (
+          <div className="navbar__profile">
+            <img 
+              src={currentUser.imageUrl || '/placeholder-avatar.png'} 
+              alt="Foto de perfil" 
+              className="navbar__profile-photo"
+            />
+            <span className="navbar__profile-name">{currentUser.fullName}</span>
+          </div>
+        )}
         
-        <p>© 2025 PC Group S.A.</p>
+        <p className="navbar__copyright">© 2025 PC Group S.A.</p>
       </div>
     </nav>
   );

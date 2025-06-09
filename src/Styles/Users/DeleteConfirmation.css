@@ -1,73 +1,132 @@
 
+/* DeleteConfirmation Component Styles */
 .delete-confirmation {
-  padding: 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  padding: var(--space-lg);
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  max-width: 50rem;
+  margin: 0 auto;
 }
 
-.delete-icon {
-  width: 60px;
-  height: 60px;
+.delete-confirmation__icon {
+  color: var(--color-warning);
+  margin-bottom: var(--space-md);
+  background-color: var(--color-warning-light);
+  padding: var(--space-md);
   border-radius: 50%;
-  background-color: rgba(68, 85, 239, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
 }
 
-.delete-icon svg {
-  width: 30px;
-  height: 30px;
-  color: var(--color-red-primary, #446cef);
+.delete-confirmation__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
 }
 
-.delete-confirmation h3 {
-  margin: 0 0 10px 0;
-  font-size: 20px;
-  color: var(--text-default, #374151);
+.delete-confirmation__message {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  line-height: var(--line-height-relaxed);
 }
 
-.delete-confirmation p {
-  margin: 0 0 16px 0;
-  color: var(--text-secondary, #6b7280);
+.delete-confirmation__warning {
+  background-color: var(--color-warning-light);
+  border: 0.1rem solid var(--color-warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-dark);
+  line-height: var(--line-height-relaxed);
 }
 
-.delete-warning, .acivaion-warning {
-  padding: 10px;
-  border-radius: 6px;
+.delete-confirmation__warning--activation {
+  background-color: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success-dark);
 }
 
-.delete-warning{
-    background-color: rgba(239, 68, 68, 0.1);
-  color: var(--color-red-primary, #ef4444);
-}
-
-.acivaion-warning {
-    background-color: rgba(88, 239, 68, 0.3);
-  color: var(--greenColor, #58d438);
-}
-
-.delete-actions {
-  margin-top: 24px;
+.delete-confirmation__actions {
   display: flex;
+  gap: var(--space-md);
+  width: 100%;
   justify-content: center;
-  gap: 16px;
 }
 
-@media (max-width: 480px) {
+.delete-confirmation__button {
+  min-width: 12rem;
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast) var(--transition-ease);
+}
+
+.delete-confirmation__button--cancel {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 0.1rem solid var(--border-primary);
+}
+
+.delete-confirmation__button--cancel:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.delete-confirmation__button--confirm {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--text-white);
+  border: 0.1rem solid var(--color-primary);
+}
+
+.delete-confirmation__button--confirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  transform: translateY(-0.1rem);
+  box-shadow: var(--shadow-md);
+}
+
+.delete-confirmation__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 48rem) {
   .delete-confirmation {
-    padding: 20px;
+    padding: var(--space-md);
   }
   
-  .delete-actions {
-    flex-direction: column-reverse;
-    width: 100%;
+  .delete-confirmation__title {
+    font-size: var(--font-size-base);
   }
   
-  .delete-actions button {
+  .delete-confirmation__message {
+    font-size: var(--font-size-sm);
+  }
+  
+  .delete-confirmation__warning {
+    padding: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+  
+  .delete-confirmation__actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  .delete-confirmation__button {
     width: 100%;
+    min-width: auto;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
   }
 }

@@ -1,7 +1,6 @@
-// src/layouts/MainLayout.tsx
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Navbar from '@/Components/Chat/Menu'
+import Navbar from '@/Components/Menu/Menu'
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
 import { useAssignmentEvents } from '@/Hooks/useAssignmentEvents'
 

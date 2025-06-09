@@ -1,7 +1,8 @@
+
 import React from "react";
-import Button from "@/Components/Common/Button";
-import "@/Styles/Users/DeleteConfirmation.css";
-import { CirclePower } from "lucide-react";
+import { CirclePower, AlertTriangle } from "lucide-react";
+import { Button } from '@/Components/ui/CustomButton';
+import '@/Styles/Users/DeleteConfirmation.css'
 
 interface DeleteConfirmationProps {
   userName: string;
@@ -20,60 +21,62 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
 }) => {
   return (
     <div className="delete-confirmation">
-      <div className="delete-icon">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-         <CirclePower/>
-        </svg>
+      <div className="delete-confirmation__header">
+        <div className={`delete-confirmation__icon ${isActive ? 'delete-confirmation__icon--warning' : 'delete-confirmation__icon--success'}`}>
+          {isActive ? <AlertTriangle size={32} /> : <CirclePower size={32} />}
+        </div>
+        
+        <div className="delete-confirmation__content">
+          <h3 className="delete-confirmation__title">
+            {isActive ? 'Desactivar Usuario' : 'Activar Usuario'}
+          </h3>
+          
+          <p className="delete-confirmation__message">
+            ¿Estás seguro que deseas {isActive ? 'desactivar' : 'activar'} a{' '}
+            <span className="delete-confirmation__user-name">{userName}</span>?
+          </p>
+          
+          <div className={`delete-confirmation__warning ${isActive ? 'delete-confirmation__warning--danger' : 'delete-confirmation__warning--info'}`}>
+            {isActive ? (
+              <div className="delete-confirmation__warning-content">
+                <strong>Advertencia:</strong> Si desactivas el usuario no podrá acceder al sistema 
+                hasta que sea activado nuevamente. Ten en cuenta este hecho antes de continuar.
+              </div>
+            ) : (
+              <div className="delete-confirmation__warning-content">
+                <strong>Información:</strong> Activar el usuario recupera todos los accesos que se le asignaron. 
+                Verifica que los permisos asignados actualmente sean autorizados para el usuario a activar.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {isActive ? (
-        <>
-          <h3>Desactivar usuario</h3>
-          <p>
-            ¿Estás seguro que deseas desactivar a <strong>{userName}</strong>?
-          </p>
-          <p className="delete-warning">
-            Si dedactiva el usuario no podra accceder al sistama, hasta que sea
-            activado nuevamente. Por favor tome en cuenta este hecho antes de
-            seguir.
-          </p>
-        </>
-      ) : (
-        <>
-          <p>
-            <h3>Activar usuario</h3>
-            ¿Estás seguro que deseas activar a <strong>{userName}</strong>?
-          </p>
-          <p className="acivaion-warning">
-            Activar el usuario recupera todos los accesos que se le asignaron,
-            verifique que los permisos asignado actualmente seran autorizados
-            para el usaurio a activar
-          </p>
-        </>
-      )}
-
-      <div className="delete-actions">
+      <div className="delete-confirmation__actions">
         <Button
           type="button"
-          variant="tertiary"
+          variant="outline"
           onClick={onCancel}
           disabled={loading}
+          className="delete-confirmation__button delete-confirmation__button--cancel"
         >
           Cancelar
         </Button>
         <Button
           type="button"
-          variant="primary"
+          variant={isActive ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={loading}
+          className={`delete-confirmation__button ${isActive ? 'delete-confirmation__button--danger' : 'delete-confirmation__button--success'}`}
         >
-          {loading ? "Actualizando..." : "Actualizar"}
+          {loading ? (
+            <span className="delete-confirmation__loading">
+              <div className="delete-confirmation__spinner"></div>
+              Procesando...
+            </span>
+          ) : (
+            `${isActive ? 'Desactivar' : 'Activar'} Usuario`
+          )}
         </Button>
       </div>
     </div>

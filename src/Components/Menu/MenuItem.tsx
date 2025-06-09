@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export interface MenuItemProps {
@@ -16,16 +17,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
   badge
 }) => (
   <li
-    className={`menu-item ${selected ? 'selected' : ''}`}
+    className={`menu-item ${selected ? 'menu-item--selected' : ''}`}
     onClick={onClick}
   >
-    <div className={`menu-item-content ${text.includes("Cerrar") ? 'cerrar-sesion' : ''}`}>
-      {icon}
-      <span className="menu-item-text">
+    <div className={`menu-item__content ${text.includes("Cerrar") ? 'menu-item__content--logout' : ''}`}>
+      <span className="menu-item__icon">
+        {icon}
+      </span>
+      <span className="menu-item__text">
         {text}
       </span>
       {badge != null && (
-        <span className="menu-item-badge">{badge}</span>
+        <span className="menu-item__badge">{badge}</span>
       )}
     </div>
   </li>

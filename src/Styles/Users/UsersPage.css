@@ -21,16 +21,20 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
+  background-color: var(--color-primary);
 }
 
 .users-controls {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .search-form {
   display: flex;
   gap: 16px;
-  max-width: 600px;
+  min-width: 300px !important;
+  max-width: 500px !important;
 }
 
 .search-input-wrapper {

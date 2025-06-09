@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { userService } from '@/Services/UserService';
+import { userService } from '@/Services/User/UserService';
 import type { User, UserHistoryItem } from '@/Interfaces/User/UserInterfaces';
-import '@/Styles/Users/UserDetail.css';
+import '@/Styles/Users/UserDetail.css'
+import { Button } from '@/Components/ui/CustomButton';
 
 interface UserDetailProps {
   user: User;
@@ -18,7 +19,6 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onClose }) => {
     if (activeTab === 'history') {
       loadUserHistory();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user.userId]);
 
   const loadUserHistory = async () => {
@@ -46,159 +46,198 @@ const UserDetail: React.FC<UserDetailProps> = ({ user, onClose }) => {
 
   return (
     <div className="user-detail">
-      <div className="user-detail-header">
-        <div className="user-detail-avatar">
+      <div className="user-detail__header">
+        <div className="user-detail__avatar">
           {user.imageUrl ? (
-            <img src={user.imageUrl} alt={user.fullName} />
+            <img 
+              src={user.imageUrl} 
+              alt={user.fullName} 
+              className="user-detail__avatar-image"
+            />
           ) : (
-            <div className="user-detail-avatar-placeholder">
-               {user.fullName ? user.fullName.charAt(0).toUpperCase() : ''}
+            <div className="user-detail__avatar-placeholder">
+              {user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}
             </div>
           )}
+          <div className={`user-detail__online-status ${user.isOnline ? 'user-detail__online-status--online' : 'user-detail__online-status--offline'}`}></div>
         </div>
-        <div className="user-detail-info">
-          <h2>{user.fullName}</h2>
-          <p>{user.email}</p>
-          <div className="user-detail-status">
-            <span className={`status-indicator ${user.isActive ? 'active' : 'inactive'}`}></span>
-            <span>{user.isActive ? 'Activo' : 'Inactivo'}</span>
+        
+        <div className="user-detail__info">
+          <h2 className="user-detail__name">{user.fullName}</h2>
+          <p className="user-detail__email">{user.email}</p>
+          <div className="user-detail__status">
+            <span className={`user-detail__status-indicator ${user.isActive ? 'user-detail__status-indicator--active' : 'user-detail__status-indicator--inactive'}`}></span>
+            <span className="user-detail__status-text">
+              {user.isActive ? 'Usuario Activo' : 'Usuario Inactivo'}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="user-detail-tabs">
+      <div className="user-detail__tabs">
         <button
-          className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
+          className={`user-detail__tab ${activeTab === 'info' ? 'user-detail__tab--active' : ''}`}
           onClick={() => setActiveTab('info')}
         >
-          Información
+          Información General
         </button>
         <button
-          className={`tab-button ${activeTab === 'roles' ? 'active' : ''}`}
+          className={`user-detail__tab ${activeTab === 'roles' ? 'user-detail__tab--active' : ''}`}
           onClick={() => setActiveTab('roles')}
         >
-          Roles usuario
+          Roles y Permisos
         </button>
         <button
-          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          className={`user-detail__tab ${activeTab === 'history' ? 'user-detail__tab--active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
-          Historial de actividad
+          Historial de Cambios
         </button>
       </div>
 
-      <div className="user-detail-content">
+      <div className="user-detail__content">
         {activeTab === 'info' && (
-          <div className="user-detail-info-tab">
-            <div className="info-group">
-              <h3>Información personal</h3>
-              <div className="info-row">
-                <strong>Nombre completo:</strong> <span>{user.fullName}</span>
-              </div>
-              <div className="info-row">
-                <strong>Email:</strong> <span>{user.email}</span>
-              </div>
-              <div className="info-row">
-                <strong>Teléfono:</strong> <span>{user.phone || 'No especificado'}</span>
-              </div>
-              <div className="info-row">
-                <strong>Numero Cedula:</strong> <span>{user.identifier || 'No especificado'}</span>
+          <div className="user-detail__info-tab">
+            <div className="user-detail__section">
+              <h3 className="user-detail__section-title">Información Personal</h3>
+              <div className="user-detail__info-grid">
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Nombre completo</label>
+                  <span className="user-detail__info-value">{user.fullName}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Correo electrónico</label>
+                  <span className="user-detail__info-value">{user.email}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Teléfono</label>
+                  <span className="user-detail__info-value">{user.phone || 'No especificado'}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Número de Cédula</label>
+                  <span className="user-detail__info-value">{user.identifier || 'No especificado'}</span>
+                </div>
               </div>
             </div>
 
-            <div className="info-group">
-              <h3>Información de cuenta</h3>
-              <div className="info-row">
-                <strong>ID de usuario:</strong> <span>{user.userId}</span>
-              </div>
-              <div className="info-row">
-                <strong>Empresa:</strong> <span>ID: {user.companyId}</span>
-              </div>
-              <div className="info-row">
-                <strong>Tipo de cliente:</strong> <span>{user.clientType || 'No especificado'}</span>
-              </div>
-              <div className="info-row">
-                <strong>Fecha de registro:</strong> <span>{formatDate(user.createdAt)}</span>
-              </div>
-              <div className="info-row">
-                <strong>Última actualización:</strong> <span>{formatDate(user.updatedAt)}</span>
-              </div>
-              <div className="info-row">
-                <strong>Última conexión:</strong>
-                <span>{user.lastOnline ? formatDate(user.lastOnline) : 'Nunca'}</span>
-              </div>
-              <div className="info-row">
-                <strong>Estado:</strong>
-                <span className={`status ${user.isActive ? 'active' : 'inactive'}`}>
-                  {user.isActive ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
-              <div className="info-row">
-                <strong>En línea:</strong>
-                <span className={`status ${user.isOnline ? 'active' : 'inactive'}`}>
-                  {user.isOnline ? 'Sí' : 'No'}
-                </span>
+            <div className="user-detail__section">
+              <h3 className="user-detail__section-title">Información de la Cuenta</h3>
+              <div className="user-detail__info-grid">
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">ID de usuario</label>
+                  <span className="user-detail__info-value">{user.userId}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Empresa</label>
+                  <span className="user-detail__info-value">ID: {user.companyId}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Tipo de cliente</label>
+                  <span className="user-detail__info-value">{user.clientType || 'Estándar'}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Fecha de registro</label>
+                  <span className="user-detail__info-value">{formatDate(user.createdAt)}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Última actualización</label>
+                  <span className="user-detail__info-value">{formatDate(user.updatedAt)}</span>
+                </div>
+                <div className="user-detail__info-item">
+                  <label className="user-detail__info-label">Última conexión</label>
+                  <span className="user-detail__info-value">
+                    {user.lastOnline ? formatDate(user.lastOnline) : 'Nunca se ha conectado'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'roles' && (
-          <div className="user-detail-roles-tab">
-            <h3>Roles asignados</h3>
-            <div className="roles-grid">
-              {user.roles.map(role => (
-                <div key={role.roleId} className="role-card">
-                  <h4>{role.roleName}</h4>
-                  <p>{role.description || 'Sin descripción'}</p>
+          <div className="user-detail__roles-tab">
+            <div className="user-detail__section">
+              <h3 className="user-detail__section-title">Roles Asignados</h3>
+              <div className="user-detail__roles-grid">
+                {user.roles.map(role => (
+                  <div key={role.roleId} className="user-detail__role-card">
+                    <div className="user-detail__role-header">
+                      <h4 className="user-detail__role-name">{role.roleName}</h4>
+                      <span className="user-detail__role-id">ID: {role.roleId}</span>
+                    </div>
+                    <p className="user-detail__role-description">
+                      {role.description || 'Sin descripción disponible'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {user.roles.length === 0 && (
+                <div className="user-detail__empty-state">
+                  <p className="user-detail__empty-text">El usuario no tiene roles asignados.</p>
                 </div>
-              ))}
+              )}
             </div>
-            {user.roles.length === 0 && (
-              <p className="no-data">El usuario no tiene roles asignados.</p>
-            )}
           </div>
         )}
 
         {activeTab === 'history' && (
-          <div className="user-detail-history-tab">
-            <h3>Historial de cambios</h3>
-            {loading ? (
-              <p className="loading">Cargando historial...</p>
-            ) : historyItems.length > 0 ? (
-              <table className="history-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Campo</th>
-                    <th>Valor anterior</th>
-                    <th>Nuevo valor</th>
-                    <th>Modificado por</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyItems.map(item => (
-                    <tr key={item.id}>
-                      <td>{formatDate(item.changedAt)}</td>
-                      <td>{item.changedField}</td>
-                      <td>{item.oldValue}</td>
-                      <td>{item.newValue}</td>
-                      <td>{item.changedBy}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="no-data">No hay registros de cambios para este usuario.</p>
-            )}
+          <div className="user-detail__history-tab">
+            <div className="user-detail__section">
+              <h3 className="user-detail__section-title">Historial de Modificaciones</h3>
+              {loading ? (
+                <div className="user-detail__loading">
+                  <div className="user-detail__spinner"></div>
+                  <span>Cargando historial...</span>
+                </div>
+              ) : historyItems.length > 0 ? (
+                <div className="user-detail__history-table">
+                  <table className="user-detail__table">
+                    <thead>
+                      <tr>
+                        <th className="user-detail__table-header">Fecha</th>
+                        <th className="user-detail__table-header">Campo Modificado</th>
+                        <th className="user-detail__table-header">Valor Anterior</th>
+                        <th className="user-detail__table-header">Nuevo Valor</th>
+                        <th className="user-detail__table-header">Modificado Por</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyItems.map(item => (
+                        <tr key={item.id} className="user-detail__table-row">
+                          <td className="user-detail__table-cell">{formatDate(item.changedAt)}</td>
+                          <td className="user-detail__table-cell user-detail__table-cell--field">
+                            {item.changedField}
+                          </td>
+                          <td className="user-detail__table-cell user-detail__table-cell--old">
+                            {item.oldValue}
+                          </td>
+                          <td className="user-detail__table-cell user-detail__table-cell--new">
+                            {item.newValue}
+                          </td>
+                          <td className="user-detail__table-cell">{item.changedBy}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="user-detail__empty-state">
+                  <p className="user-detail__empty-text">No hay registros de cambios para este usuario.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="user-detail-footer">
-        <button className="user-detail-close-btn" onClick={onClose}>
+      <div className="user-detail__footer">
+        <Button 
+          variant="outline" 
+          onClick={onClose}
+          className="user-detail__close-btn"
+        >
           Cerrar
-        </button>
+        </Button>
       </div>
     </div>
   );

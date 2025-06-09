@@ -1,35 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import Input from '@/Components/Common/Input';
-// import Select from '@/Components/Common/Select';
-import Button from '@/Components/Common/Button';
 import { Eye, EyeOff } from 'lucide-react';
-import '@/Styles/Users/UserForm.css';
-import type { RoleResponseDto } from '@/Interfaces/Auth/AuthInterface';
+import { Input } from '@/Components/ui/input';
+import { Button } from '@/Components/ui/CustomButton';
+import { Label } from '@/Components/ui/label';
+import FileInput from '@/Components/ui/FileInput';
+import MultiSelect from '@/Components/ui/MultiSelect';
+import { useRoles } from '@/Hooks/useRoles';
+import type { User, CreateUserRequest, UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
+import '@/Styles/Users/UserForm.css'
 
 interface UserFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialData?: any;
-  roles: RoleResponseDto[];
-  companies: { id: number; name: string }[];
+  initialData?: User;
+  companies: { companyId: number; name: string }[];
   isEditing?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => void;
   onCancel: () => void;
 }
 
 const UserForm: React.FC<UserFormProps> = ({
   initialData,
-  roles,
-  // companies,
+  companies,
   isEditing = false,
   onSubmit,
   onCancel,
 }) => {
+  const { roles, loading: rolesLoading } = useRoles();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
-    companyId: '',
+    companyId: 1,
     phone: '',
     identifier: '',
     imageUrl: '',
@@ -47,13 +48,12 @@ const UserForm: React.FC<UserFormProps> = ({
         fullName: initialData.fullName || '',
         email: initialData.email || '',
         password: '',
-        companyId: initialData.companyId?.toString() || '',
+        companyId: initialData.companyId || 1,
         phone: initialData.phone || '',
         identifier: initialData.identifier || '',
         imageUrl: initialData.imageUrl || '',
         isActive: initialData.isActive ?? true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        roleIds: initialData.roles?.map((r: any) => r.roleId) || [],
+        roleIds: initialData.roles?.map(r => r.roleId) || [],
         sendWelcomeEmail: false,
       });
     }
@@ -62,9 +62,15 @@ const UserForm: React.FC<UserFormProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.fullName) newErrors.fullName = 'El nombre es obligatorio';
-    if (!formData.email) newErrors.email = 'El email es obligatorio';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email inválido';
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'El nombre completo es obligatorio';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'El correo electrónico es obligatorio';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'El formato del correo electrónico no es válido';
+    }
 
     if (!isEditing && !formData.password) {
       newErrors.password = 'La contraseña es obligatoria';
@@ -72,199 +78,319 @@ const UserForm: React.FC<UserFormProps> = ({
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
 
-    if (!formData.companyId) newErrors.companyId = 'La empresa es obligatoria';
-    if (formData.roleIds.length === 0) newErrors.roleIds = 'Debe seleccionar al menos un rol';
+    if (formData.roleIds.length === 0) {
+      newErrors.roleIds = 'Debe seleccionar al menos un rol';
+    }
+
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
+      newErrors.imageFile = 'La imagen no puede superar los 5MB';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  setFormData(prev => ({
+    ...prev,
+    [name]: 
+      name === "companyId" 
+        ? Number(value)        // convierte "1" → 1, "" → 0
+        : value
+  }));
+
+  if (errors[name]) {
+    setErrors(prev => ({ ...prev, [name]: "" }));
+  }
+};
+
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
+    setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  // const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const selected = Array.from(e.target.selectedOptions, (opt) => parseInt(opt.value));
-  //   setFormData((prev) => ({ ...prev, roleIds: selected }));
-  // };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (validate()) {
-      const submitData = {
-        ...formData,
-        companyId: parseInt(formData.companyId),
-      };
-
-      if (isEditing && !submitData.password) {
-        const dataToSubmit = { ...submitData };
-        //delete dataToSubmit.password;
-        onSubmit(dataToSubmit);
-      } else {
-        onSubmit(submitData);
-      }
+  const handleRoleChange = (selectedRoles: (string | number)[]) => {
+    const roleIds = selectedRoles.map(role => Number(role));
+    setFormData(prev => ({ ...prev, roleIds }));
+    if (errors.roleIds) {
+      setErrors(prev => ({ ...prev, roleIds: '' }));
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
+    if (errors.imageFile) {
+      setErrors(prev => ({ ...prev, imageFile: '' }));
+    }
   };
 
-  console.log("Estos son los roles que se pueden ver desde el UserForm", roles);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    let imageUrl = formData.imageUrl;
+    
+    if (selectedFile) {
+      const formDataForUpload = new FormData();
+      formDataForUpload.append('file', selectedFile);
+      
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formDataForUpload,
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          imageUrl = result.url;
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+
+    const submitData = {
+      ...formData,
+      imageUrl,
+    };
+
+    if (isEditing && !submitData.password) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (submitData as any).password;
+    }
+
+    onSubmit(submitData);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
+
+  const roleOptions = roles.map(role => ({
+    value: role.roleId,
+    label: role.roleName
+  }));
 
   return (
     <form className="user-form" onSubmit={handleSubmit}>
-      <div className="form-grid">
-        <div className="form-column">
-          <div className="form-group">
-            <label htmlFor="fullName">Nombre completo *</label>
-            <Input
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              error={errors.fullName}
-              placeholder="Nombre completo"
-            />
-          </div>
+      <div className="user-form__container">
+        <div className="user-form__section">
+          <h3 className="user-form__section-title">Información Personal</h3>
+          
+          <div className="user-form__grid">
+            <div className="user-form__field">
+              <Label htmlFor="fullName" className="user-form__label">
+                Nombre completo *
+              </Label>
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className={`user-form__input ${errors.fullName ? 'user-form__input--error' : ''}`}
+                placeholder="Ingrese el nombre completo"
+              />
+              {errors.fullName && (
+                <span className="user-form__error">{errors.fullName}</span>
+              )}
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email *</label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="email@ejemplo.com"
-            />
-          </div>
+            <div className="user-form__field">
+              <Label htmlFor="email" className="user-form__label">
+                Correo electrónico *
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={`user-form__input ${errors.email ? 'user-form__input--error' : ''}`}
+                placeholder="correo@ejemplo.com"
+              />
+              {errors.email && (
+                <span className="user-form__error">{errors.email}</span>
+              )}
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="password">{isEditing ? 'Nueva contraseña' : 'Contraseña *'}</label>
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              placeholder={isEditing ? 'Dejar en blanco para no cambiar' : 'Contraseña'}
-              rightIcon={showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              onIconClick={togglePasswordVisibility}
-            />
-          </div>
+            <div className="user-form__field">
+              <Label htmlFor="password" className="user-form__label">
+                {isEditing ? 'Nueva contraseña' : 'Contraseña *'}
+              </Label>
+              <div className="user-form__password-field">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`user-form__input ${errors.password ? 'user-form__input--error' : ''}`}
+                  placeholder={isEditing ? 'Dejar vacío para no cambiar' : 'Ingrese la contraseña'}
+                />
+                <button
+                  type="button"
+                  className="user-form__password-toggle"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <span className="user-form__error">{errors.password}</span>
+              )}
+            </div>
 
-          {/* <div className="form-group">
-            <label htmlFor="companyId">Empresa *</label>
-            <Select
-              id="companyId"
-              name="companyId"
-              value={formData.companyId}
-              onChange={handleChange}
-              error={errors.companyId}
-              placeholder="Seleccione una empresa"
-              options={companies.map((c) => ({ label: c.name, value: c.id.toString() }))}
-            />
-          </div> */}
+            <div className="user-form__field">
+              <Label htmlFor="phone" className="user-form__label">
+                Teléfono
+              </Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className="user-form__input"
+                placeholder="+505 1234-5678"
+              />
+            </div>
+
+            <div className="user-form__field">
+              <Label htmlFor="identifier" className="user-form__label">
+                Número de cédula
+              </Label>
+              <Input
+                id="identifier"
+                name="identifier"
+                type="text"
+                value={formData.identifier}
+                onChange={handleInputChange}
+                className="user-form__input"
+                placeholder="123-456789-0001A"
+              />
+            </div>
+
+            <div className="user-form__field">
+              <Label htmlFor="companyId" className="user-form__label">
+                Empresa *
+              </Label>
+              <select
+                id="companyId"
+                name="companyId"
+                value={formData.companyId}
+                onChange={handleInputChange}
+                className="user-form__select"
+              >
+                <option value="">Seleccione una empresa</option>
+                {companies.map(company => (
+                  <option key={company.companyId} value={company.companyId}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="form-column">
-          <div className="form-group">
-            <label htmlFor="phone">Teléfono</label>
-            <Input
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+505 56523269"
-            />
+        <div className="user-form__section">
+          <h3 className="user-form__section-title">Roles y Permisos</h3>
+          
+          <div className="user-form__field">
+            <Label className="user-form__label">
+              Roles asignados *
+            </Label>
+            {rolesLoading ? (
+              <div className="user-form__loading">Cargando roles...</div>
+            ) : (
+              <MultiSelect
+                options={roleOptions}
+                value={formData.roleIds}
+                onChange={handleRoleChange}
+                placeholder="Seleccione uno o más roles"
+                error={errors.roleIds}
+                className="user-form__multi-select"
+              />
+            )}
+            {errors.roleIds && (
+              <span className="user-form__error">{errors.roleIds}</span>
+            )}
           </div>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="identifier">Número de Cédula</label>
-            <Input
-              id="identifier"
-              name="identifier"
-              value={formData.identifier}
-              onChange={handleChange}
-              placeholder="Identificador o documento"
+        <div className="user-form__section">
+          <h3 className="user-form__section-title">Imagen de Perfil</h3>
+          
+          <div className="user-form__field">
+            <Label className="user-form__label">
+              Foto de perfil
+            </Label>
+            <FileInput
+              onFileSelect={handleFileSelect}
+              maxSize={5 * 1024 * 1024}
+              accept="image/*"
+              error={errors.imageFile}
+              currentImage={formData.imageUrl}
+              className="user-form__file-input"
             />
+            <span className="user-form__help-text">
+              Formatos admitidos: JPG, PNG, GIF. Tamaño máximo: 5MB
+            </span>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="imageUrl">URL de imagen de perfil</label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              placeholder="https://ejemplo.com/imagen.jpg"
-            />
+        <div className="user-form__section">
+          <h3 className="user-form__section-title">Configuración</h3>
+          
+          <div className="user-form__checkboxes">
+            {isEditing && (
+              <label className="user-form__checkbox">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleCheckboxChange}
+                  className="user-form__checkbox-input"
+                />
+                <span className="user-form__checkbox-label">Usuario activo</span>
+              </label>
+            )}
+            
+            <label className="user-form__checkbox">
+              <input
+                type="checkbox"
+                name="sendWelcomeEmail"
+                checked={formData.sendWelcomeEmail}
+                onChange={handleCheckboxChange}
+                className="user-form__checkbox-input"
+              />
+              <span className="user-form__checkbox-label">
+                Enviar correo de bienvenida
+              </span>
+            </label>
           </div>
-
-          {/* <div className="form-group">
-            <label htmlFor="roles">Roles *</label>
-            <Select
-              id="roles"
-              name="roles"
-              multiple
-              value={formData.roleIds.map(String)}
-              onChange={handleRoleChange}
-              error={errors.roleIds}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              options={(roles || []).map((role: { roleName: any; roleId: { toString: () => any; }; }) => ({
-                  label: role.roleName,
-                  value: role.roleId.toString(),
-                }))}
-              className="multi-select"
-              placeholder="Seleccione uno o más roles"
-            />
-            {errors.roleIds && <span className="error-message">{errors.roleIds}</span>}
-            <small className="help-text">
-              Mantén presionada la tecla Ctrl (Cmd en Mac) para seleccionar múltiples roles
-            </small>
-          </div> */}
         </div>
       </div>
 
-      <div className="form-checkboxes">
-        {isEditing && (
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleCheckboxChange}
-            />
-            Usuario activo
-          </label>
-        )}
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            name="sendWelcomeEmail"
-            checked={formData.sendWelcomeEmail}
-            onChange={handleCheckboxChange}
-          />
-          Enviar email de bienvenida
-        </label>
-      </div>
-
-      <div className="form-actions">
-        <Button type="submit" variant="primary">
-          {isEditing ? 'Actualizar Usuario' : 'Crear Usuario'}
-        </Button>
-        <Button type="button" variant="tertiary" onClick={onCancel}>
+      <div className="user-form__actions">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          className="user-form__button user-form__button--cancel"
+        >
           Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          className="user-form__button user-form__button--submit"
+        >
+          {isEditing ? 'Actualizar Usuario' : 'Crear Usuario'}
         </Button>
       </div>
     </form>
