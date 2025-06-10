@@ -1,0 +1,204 @@
+
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  border-radius: 0 0 8px 8px;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pagination-info-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pagination-page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-page-size-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pagination-select-trigger {
+  width: 80px;
+  height: 36px;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #ffffff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-select-trigger:hover {
+  border-color: #cbd5e1;
+}
+
+.pagination-select-trigger:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-button {
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  color: #374151;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 2.5rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-button:hover:not(.pagination-button--disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.pagination-button:focus:not(.pagination-button--disabled) {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.pagination-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+  color: #94a3b8;
+}
+
+.pagination-button--active {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.pagination-button--active:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.pagination-ellipsis {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .pagination-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-button {
+    min-width: 2rem;
+    height: 1.75rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .pagination-ellipsis {
+    min-width: 2rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .pagination-info-text,
+  .pagination-page-size-label {
+    font-size: 0.75rem;
+  }
+  
+  .pagination-select-trigger {
+    width: 70px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+}
+
+.pagination-container[data-theme="dark"] {
+  background-color: #1e293b;
+  border-top-color: #334155;
+}
+
+.pagination-container[data-theme="dark"] .pagination-info-text,
+.pagination-container[data-theme="dark"] .pagination-page-size-label {
+  color: #94a3b8;
+}
+
+.pagination-container[data-theme="dark"] .pagination-button {
+  background-color: transparent;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.pagination-container[data-theme="dark"] .pagination-button:hover:not(.pagination-button--disabled) {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.pagination-container[data-theme="dark"] .pagination-button--disabled {
+  background-color: #1e293b;
+  color: #64748b;
+}
+
+.pagination-container[data-theme="dark"] .pagination-ellipsis {
+  color: #94a3b8;
+}
+
+.pagination-container[data-theme="dark"] .pagination-select-trigger {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}

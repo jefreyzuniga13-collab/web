@@ -17,6 +17,7 @@ const NotificationsPage       = lazy(() => import('@/Presentations/Notification/
 const NotFound        = lazy(() => import('@/Presentations/NotFound'))
 const SystemParameterPage = lazy(() => import('@/Presentations/Setting/SystemParameterPage'))
 const ProfilePage = lazy(() => import('@/Presentations/Setting/Profile'))
+const PrivacyPolicy = lazy(() => import('@/Presentations/Setting/PrivacyPolicy'))
 
 export function AppRouter() {
   return (
@@ -34,6 +35,7 @@ export function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/verify-account"  element={<Activation />} />
+        <Route path="/privacy-policy"  element={<PrivacyPolicy />} />
         <Route path="/verify-account"  element={''} />
 
         {/**Rutas privados */}

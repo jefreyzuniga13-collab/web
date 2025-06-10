@@ -17,9 +17,14 @@ export const SystemParamsPage: React.FC = () => {
     searchTerm,
     sortBy,
     sortOrder,
+    pagination,
     loadSystemParam,
     searchParams,
     sortParams,
+    handlePageChange,
+    handlePageSizeChange,
+    getSystemParamById,
+    getSystemParamByName,
     createSystemParam,
     updateSystemParam,
     toggleSystemParam,
@@ -59,9 +64,15 @@ export const SystemParamsPage: React.FC = () => {
     }
   }
 
-  const handleView = (param: SystemParamResponseDto) => {
-    setSelectedParam(param)
-    setIsDetailsModalOpen(true)
+  const handleView = async (param: SystemParamResponseDto) => {
+    const detailedParam = await getSystemParamById(param.id)
+    if (detailedParam) {
+      setSelectedParam(detailedParam)
+      setIsDetailsModalOpen(true)
+    } else {
+      setSelectedParam(param)
+      setIsDetailsModalOpen(true)
+    }
   }
 
   const handleDelete = (param: SystemParamResponseDto) => {
@@ -205,11 +216,14 @@ export const SystemParamsPage: React.FC = () => {
       )}
 
       <SystemParamsTable
-        params={systemParams}
+        data={systemParams}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
         loading={loading}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       <SystemParamModal

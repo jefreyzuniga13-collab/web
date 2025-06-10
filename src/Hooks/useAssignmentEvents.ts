@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/hooks/useAssignmentEvents.ts
-import { useState, useEffect } from 'react';
-//import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import { useState, useEffect, useCallback } from 'react';
 
-export interface AssignmentResponsePayload {
+interface AssignmentResponsePayload {
   conversationId: number;
   accepted: boolean;
   comment?: string;
 }
 
-export interface ForcedAdminPayload {
+interface ForcedAdminPayload {
   conversationId: number;
   targetAgentId: number;
   comment: string;
@@ -22,45 +19,52 @@ export function useAssignmentEvents() {
   const [forcedAdminPayload, setForcedAdminPayload] = useState<ForcedAdminPayload | null>(null);
 
   useEffect(() => {
-    const onRequested = (e: CustomEvent<{ conversationId: number }>) => {
-          console.log("Valor de request", requestedConv);
-      setRequestedConv(e.detail.conversationId);
-    };
-    const onResponse = (e: CustomEvent<AssignmentResponsePayload>) => {
-      setResponsePayload(e.detail);
-    };
-    const onForced = (e: CustomEvent<{ conversationId: number }>) => {
-      setForcedConv(e.detail.conversationId);
-    };
-    const onForcedAdmin = (e: CustomEvent<ForcedAdminPayload>) => {
-      setForcedAdminPayload(e.detail);
+    const handleRequested = (e: Event) => {
+      const detail = (e as CustomEvent<{ conversationId: number }>).detail;
+      setRequestedConv(detail.conversationId);
     };
 
-    window.addEventListener('AssignmentRequested', onRequested as any);
-    window.addEventListener('AssignmentResponse', onResponse as any);
-    window.addEventListener('AssignmentForced', onForced as any);
-    window.addEventListener('AssignmentForcedAdmin', onForcedAdmin as any);
+    const handleResponse = (e: Event) => {
+      const detail = (e as CustomEvent<AssignmentResponsePayload>).detail;
+      setResponsePayload(detail);
+    };
+
+    const handleForced = (e: Event) => {
+      const detail = (e as CustomEvent<{ conversationId: number }>).detail;
+      setForcedConv(detail.conversationId);
+    };
+
+    const handleForcedAdmin = (e: Event) => {
+      const detail = (e as CustomEvent<ForcedAdminPayload>).detail;
+      setForcedAdminPayload(detail);
+    };
+
+    window.addEventListener('AssignmentRequested', handleRequested);
+    window.addEventListener('AssignmentResponse', handleResponse);
+    window.addEventListener('AssignmentForced', handleForced);
+    window.addEventListener('AssignmentForcedAdmin', handleForcedAdmin);
 
     return () => {
-      window.removeEventListener('AssignmentRequested', onRequested as any);
-      window.removeEventListener('AssignmentResponse', onResponse as any);
-      window.removeEventListener('AssignmentForced', onForced as any);
-      window.removeEventListener('AssignmentForcedAdmin', onForcedAdmin as any);
+      window.removeEventListener('AssignmentRequested', handleRequested);
+      window.removeEventListener('AssignmentResponse', handleResponse);
+      window.removeEventListener('AssignmentForced', handleForced);
+      window.removeEventListener('AssignmentForcedAdmin', handleForcedAdmin);
     };
   }, []);
 
+  const clearRequested = useCallback(() => setRequestedConv(null), []);
+  const clearResponse = useCallback(() => setResponsePayload(null), []);
+  const clearForced = useCallback(() => setForcedConv(null), []);
+  const clearForcedAdmin = useCallback(() => setForcedAdminPayload(null), []);
+
   return {
-    // Para mostrar/ocultar los modales
     requestedConv,
-    clearRequested: () => setRequestedConv(null),
-
+    clearRequested,
     responsePayload,
-    clearResponse: () => setResponsePayload(null),
-
+    clearResponse,
     forcedConv,
-    clearForced: () => setForcedConv(null),
-
+    clearForced,
     forcedAdminPayload,
-    clearForcedAdmin: () => setForcedAdminPayload(null),
+    clearForcedAdmin
   };
 }

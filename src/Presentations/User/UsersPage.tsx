@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { useUsers } from '@/Hooks/User/useUsers';
 import UserTable from '@/Components/Users/UserTable';
-import Pagination from '@/Components/Users/Pagination';
 import Modal from '@/Components/Users/Modal';
 import UserForm from '@/Components/Users/UserForm';
 import UserDetail from '@/Components/Users/UserDetail';
@@ -14,7 +12,6 @@ import Spinner from '@/Components/Common/Spinner';
 import '@/Styles/Users/UsersPage.css';
 import {useRoles} from '@/Hooks/useRoles'
 
-
 const UsersPage: React.FC = () => {
   
   const {
@@ -23,7 +20,6 @@ const UsersPage: React.FC = () => {
     loading,
     error,
     pagination,
-    // roles,
     companies,
     searchQuery,
     showCreateModal,
@@ -34,6 +30,7 @@ const UsersPage: React.FC = () => {
     getUserById,
     handleSearch,
     handlePageChange,
+    handlePageSizeChange,
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
@@ -73,7 +70,6 @@ const UsersPage: React.FC = () => {
   };
 
   return (
-
     <div className="users-page">
       <div className="users-header">
         <h1>Administración de Usuarios</h1>
@@ -114,20 +110,16 @@ const UsersPage: React.FC = () => {
           <Spinner size={40} text="Cargando usuarios..." />
         </div>
       ) : (
-        <>
-          <UserTable
-            users={users}
-            onEdit={openEditModal}
-            onDelete={openDeleteConfirm}
-            onView={getUserById}
-            loading={loading}
-          />
-          
-          <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              onPageChange={handlePageChange} totalCount={0} pageSize={0}          />
-        </>
+        <UserTable
+          users={users}
+          onEdit={openEditModal}
+          onDelete={openDeleteConfirm}
+          onView={getUserById}
+          loading={loading}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
 
       {/* Create User Modal */}

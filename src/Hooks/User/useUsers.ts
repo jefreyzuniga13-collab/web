@@ -64,6 +64,18 @@ export const useUsers = () => {
     dispatch(fetchUsers({ page, pageSize: pagination.pageSize, search: searchQuery }));
   };
 
+  const handlePageSizeChange = (pageSize: number) => {
+    dispatch(fetchUsers({ page: 1, pageSize, search: searchQuery }));
+  };
+
+  // Transform pagination to match expected interface
+  const transformedPagination = {
+    currentPage: pagination.currentPage,
+    totalPages: pagination.totalPages,
+    totalItems: pagination.totalCount,
+    itemsPerPage: pagination.pageSize
+  };
+
   const handleCreateUser = (userData: CreateUserRequest) => {
     dispatch(createUser(userData))
       .unwrap()
@@ -137,7 +149,7 @@ export const useUsers = () => {
     currentUser,
     loading,
     error,
-    pagination,
+    pagination: transformedPagination,
     roles,
     companies,
     searchQuery,
@@ -150,6 +162,7 @@ export const useUsers = () => {
     getUserById,
     handleSearch,
     handlePageChange,
+    handlePageSizeChange,
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
