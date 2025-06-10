@@ -13,10 +13,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
 }
 
 .pagination-info-text {
-  font-size: 0.875rem;
+ font-size: var(--font-size-sm);
   color: #64748b;
   font-weight: 500;
 }
@@ -28,7 +29,7 @@
 }
 
 .pagination-page-size-label {
-  font-size: 0.875rem;
+ font-size: var(--font-size-sm);
   color: #64748b;
   font-weight: 500;
 }
@@ -40,7 +41,6 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: #ffffff;
-  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -65,9 +65,9 @@
   background-color: transparent;
   border: 1px solid #e2e8f0;
   color: #374151;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-lg);
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -157,7 +157,7 @@
   
   .pagination-info-text,
   .pagination-page-size-label {
-    font-size: 0.75rem;
+    font-size: var(--font-size-sm);
   }
   
   .pagination-select-trigger {

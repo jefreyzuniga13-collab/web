@@ -6,13 +6,14 @@ import { Label } from '@/Components/ui/label';
 import FileInput from '@/Components/ui/FileInput';
 import MultiSelect from '@/Components/ui/MultiSelect';
 import { useRoles } from '@/Hooks/useRoles';
-import type { User, CreateUserRequest, UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
+import type { User } from '@/Interfaces/User/UserInterfaces';
 import '@/Styles/Users/UserForm.css';
 interface UserFormProps {
   initialData?: User;
   companies: { companyId: number; name: string }[];
   isEditing?: boolean;
-  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
@@ -36,6 +37,8 @@ const UserForm: React.FC<UserFormProps> = ({
     roleIds: [] as number[],
     sendWelcomeEmail: false,
   });
+
+  console.log(companies)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
 
@@ -102,34 +105,28 @@ const UserForm: React.FC<UserFormProps> = ({
     if (!validate()) return;
 
     const payload = new FormData();
-    payload.append('fullName', formData.fullName);
-    payload.append('email', formData.email);
-    if (!isEditing) payload.append('password', formData.password);
-    payload.append('companyId', formData.companyId.toString());
-    payload.append('phone', formData.phone);
-    payload.append('identifier', formData.identifier);
-    payload.append('isActive', formData.isActive.toString());
-    payload.append('sendWelcomeEmail', formData.sendWelcomeEmail.toString());
-    formData.roleIds.forEach(id => payload.append('roleIds', id.toString()));
-    if (selectedFile) payload.append('imageFile', selectedFile);
+      payload.append('fullName', formData.fullName);
+      payload.append('email', formData.email);
+      if (!isEditing) payload.append('password', formData.password);
+      payload.append('companyId', formData.companyId.toString());
+      payload.append('phone', formData.phone);
+      payload.append('identifier', formData.identifier);
+      payload.append('isActive', formData.isActive.toString());
+      payload.append('sendWelcomeEmail', formData.sendWelcomeEmail.toString());
+      formData.roleIds.forEach(id => payload.append('roleIds', id.toString()));
+      // if (selectedFile) payload.append('imageFile', selectedFile);
 
-    const url = isEditing
-      ? `/api/v1/users/${initialData?.userId}`
-      : '/api/v1/users';
-    const method = isEditing ? 'PUT' : 'POST';
-
-    const response = await fetch(url, {
-      method,
-      body: payload,
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onSubmit(result as any);
-    } else {
-      console.error('Error al guardar usuario:', await response.text());
-    }
+     const submitData = {
+        ...formData,
+        companyId: formData.companyId,
+      };
+    if (isEditing) {
+        const dataToSubmit = { ...submitData };
+        //delete dataToSubmit.password;
+        onSubmit(dataToSubmit);
+      } else {
+        onSubmit(submitData);
+      }
   };
 
   const roleOptions = roles.map(r => ({ value: r.roleId, label: r.roleName }));

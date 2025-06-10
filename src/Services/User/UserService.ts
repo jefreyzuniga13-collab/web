@@ -1,4 +1,3 @@
-// src/Services/UserService.ts
 import api from '@/Utils/ApiConfig'
 import type {
   ApiResponse,
@@ -23,7 +22,9 @@ class UserService {
   }
 
   async getUserAsync(userId: number): Promise<User> {
+    console.log("Haciendo la consulta")
     const { data } = await api.get<ApiResponse<User>>(`/Users/${userId}`)
+    console.log("Los datos obtenidos son: ", JSON.stringify(data))
     return data.data
   }
 
@@ -46,8 +47,8 @@ class UserService {
     return data.data
   }
 
-  async getCompaniesAsync(): Promise<{ id: number; name: string }[]> {
-    const { data } = await api.get<ApiResponse<{ id: number; name: string }[]>>('/Companies')
+  async getCompaniesAsync(): Promise<{ companyId: number; name: string }[]> {
+    const { data } = await api.get<ApiResponse<{ companyId: number; name: string }[]>>('/Companies')
     return data.data
   }
 

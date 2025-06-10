@@ -75,22 +75,22 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     }
   }
 
-  const handleDownload = async (mediaUrl: string, fileName: string) => {
-    try {
-      const response = await fetch(mediaUrl)
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = fileName || 'archivo'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Error descargando archivo:', error)
-    }
-  }
+  // const handleDownload = async (mediaUrl: string, fileName: string) => {
+  //   try {
+  //     const response = await fetch(mediaUrl)
+  //     const blob = await response.blob()
+  //     const url = window.URL.createObjectURL(blob)
+  //     const link = document.createElement('a')
+  //     link.href = url
+  //     link.download = fileName || 'archivo'
+  //     document.body.appendChild(link)
+  //     link.click()
+  //     document.body.removeChild(link)
+  //     window.URL.revokeObjectURL(url)
+  //   } catch (error) {
+  //     console.error('Error descargando archivo:', error)
+  //   }
+  // }
 
   const getStatusIcon = (m: MessageDto, isOut: boolean) => {
     if (!isOut) return null
@@ -181,7 +181,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               className="chat-window__image"
                               loading="lazy"
                             />
-                            <button
+                            {/* <button
                               className="chat-window__download-btn"
                               onClick={() =>
                                 handleDownload(m.attachments![0].mediaUrl!, m.attachments![0].fileName || 'imagen')
@@ -189,7 +189,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               aria-label="Descargar imagen"
                             >
                               <Download size={16} />
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       )}

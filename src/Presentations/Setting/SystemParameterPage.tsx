@@ -17,14 +17,14 @@ export const SystemParamsPage: React.FC = () => {
     searchTerm,
     sortBy,
     sortOrder,
-    pagination,
+    // pagination,
     loadSystemParam,
     searchParams,
     sortParams,
-    handlePageChange,
-    handlePageSizeChange,
+    // handlePageChange,
+    // handlePageSizeChange,
     getSystemParamById,
-    getSystemParamByName,
+    // getSystemParamByName,
     createSystemParam,
     updateSystemParam,
     toggleSystemParam,
@@ -221,9 +221,9 @@ export const SystemParamsPage: React.FC = () => {
         onDelete={handleDelete}
         onView={handleView}
         loading={loading}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        // pagination={pagination}
+        // onPageChange={handlePageChange}
+        // onPageSizeChange={handlePageSizeChange}
       />
 
       <SystemParamModal

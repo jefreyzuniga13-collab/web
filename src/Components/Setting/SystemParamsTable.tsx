@@ -4,7 +4,7 @@ import { Eye, Edit, Check, X, CirclePower, Users } from 'lucide-react';
 import DataTable from '@/Components/ui/DataTable';
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
 import type { Column, PaginationInfo } from '@/Interfaces/GlobalInterface';
-import '@/Styles/Setting/SystemParamDetails.css';
+import '@/Styles/Setting/SystemParamsTable.css'
 
 interface SystemParamsTableProps {
   data?: SystemParamResponseDto[];
@@ -105,14 +105,14 @@ const SystemParamsTableNew: React.FC<SystemParamsTableProps> = ({
             onClick={() => onView(param)}
             title="Ver detalles"
           >
-            <Eye size={16} />
+            <Eye size={20} />
           </button>
           <button 
             className="system-params-table__action-btn system-params-table__action-btn--edit"
             onClick={() => onEdit(param)}
             title="Editar parámetro"
           >
-            <Edit size={16} />
+            <Edit size={20} />
           </button>
           <button 
             className="system-params-table__action-btn system-params-table__action-btn--delete"

@@ -73,7 +73,7 @@ export interface UserHistoryItem {
 }
 
 export interface Company {
-  id: number;
+  companyId: number;
   name: string;
 }
 export interface PresenceDto {

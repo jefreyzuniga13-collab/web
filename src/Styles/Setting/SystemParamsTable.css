@@ -8,7 +8,7 @@
 .system-params-table__param-name {
   font-weight: 600;
   color: #111827;
-  font-size: 0.875rem;
+    font-size: var(--font-size-base);
 }
 
 .system-params-table__type-badge {
@@ -16,7 +16,7 @@
   align-items: center;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+   font-size: var(--font-size-base);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -43,16 +43,17 @@
 }
 
 .system-params-table__value {
-  max-width: 20rem;
+  max-width: 100%;
 }
 
 .system-params-table__value-text {
   display: block;
-  font-size: 0.875rem;
+   font-size: var(--font-size-base);
   color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 100%;
 }
 
 .system-params-table__status {
@@ -79,7 +80,7 @@
 }
 
 .system-params-table__status-text {
-  font-size: 0.75rem;
+  font-size: var(--font-size-base);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -144,8 +145,5 @@
     min-height: 1.5rem;
     padding: 0.25rem;
   }
-  
-  .system-params-table__value {
-    max-width: 15rem;
-  }
+
 }

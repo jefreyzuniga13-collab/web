@@ -10,7 +10,7 @@ import Input from '@/Components/Common/Input2';
 import { Search, UserPlus } from 'lucide-react';
 import Spinner from '@/Components/Common/Spinner';
 import '@/Styles/Users/UsersPage.css';
-import {useRoles} from '@/Hooks/useRoles'
+// import {useRoles} from '@/Hooks/useRoles'
 
 const UsersPage: React.FC = () => {
   
@@ -41,7 +41,7 @@ const UsersPage: React.FC = () => {
     setShowUserDetail
   } = useUsers();
 
-  const {roles} = useRoles();
+  // const {roles} = useRoles();
 
   const [searchInput, setSearchInput] = useState('');
   
@@ -130,7 +130,7 @@ const UsersPage: React.FC = () => {
         size="large"
       >
         <UserForm
-          roles={roles}
+          // roles={roles}
           companies={companies}
           onSubmit={handleCreateUser}
           onCancel={closeModals}
@@ -147,7 +147,7 @@ const UsersPage: React.FC = () => {
         {currentUser && (
           <UserForm
             initialData={currentUser}
-            roles={roles}
+            // roles={roles}
             companies={companies}
             isEditing={true}
             onSubmit={(data) => handleUpdateUser(currentUser.userId, data)}

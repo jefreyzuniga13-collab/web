@@ -482,7 +482,7 @@
 }
 
 .chat-window__composer-send:hover:not(:disabled) {
-  background-color: #4338ca;
+  background-color: var(--color-primary-light);
   transform: scale(1.05);
   box-shadow: var(--shadow-md);
 }

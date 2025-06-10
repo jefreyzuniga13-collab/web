@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUsers } from '@/Hooks/User/useUsers';
-import { Camera, Edit, Lock } from 'lucide-react';
+import { Edit, Lock } from 'lucide-react';
 import type { UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
 import { Label } from '@/Components/ui/label';
 import { Input } from '@/Components/ui/input';
 import FileInput from '@/Components/ui/FileInput';
 import '@/Styles/Setting/ProfileCard.css';
-import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
+//import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
+
 const ProfileCard: React.FC = () => {
   const { currentUser, loading, handleUpdateUser, getUserById } = useUsers();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [formData, setFormData] = useState<UpdateUserRequest>({
     fullName: '',
     email: '',
@@ -21,8 +23,9 @@ const ProfileCard: React.FC = () => {
     identifier: '',
     roleIds: []
   });
-const authRaw = localStorage.getItem('auth') || '{}'
-  const { userId } = JSON.parse(authRaw) as AuthData;
+
+  const authRaw = localStorage.getItem("auth") || "{}";
+  const { userId } = JSON.parse(authRaw);
 
   useEffect(() => {
     if (!currentUser) {
@@ -140,19 +143,19 @@ const authRaw = localStorage.getItem('auth') || '{}'
                 </span>
               ))}
             </div>
-            <div className="profile-card__online-status">
+            {/* <div className="profile-card__online-status">
               <span className="profile-card__online-text">
                 {currentUser.isOnline ? 'En línea' : 'Desconectado'}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
 
         <div className="profile-card__header-actions">
-          <button className="profile-card__change-photo">
+          {/* <button className="profile-card__change-photo">
             <Camera size={16} />
             Cambiar foto
-          </button>
+          </button> */}
           
           {!isEditing ? (
             <button 

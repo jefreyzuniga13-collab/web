@@ -50,6 +50,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
 
   // Controla la lógica al cambiar estado
   const handleStatusChange = (newStatus: ConversationStatus) => {
+
     if (newStatus === 'Human') {
       if (!selectedAgent) {
         toast.warn('Debes seleccionar un agente antes de asignar Humano.')
@@ -74,14 +75,24 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   const handleAssign = async () => {
     if (!conversation) return
 
+    // if (!selectedIsOnline && assignAgent !== null) {
+    //     toast.warn('No puedes asignar Humano a un agente desconectado.')
+    //     return
+    //   } 
+
     try {
       if (status === 'Closed') {
         await closeConversation(conversation.conversationId)
+        toast.success('Cambios guardados exitosamente.')
       } else {
-        // Ya validamos en handleStatusChange que Human y Bot sean válidos
-        await assignAgent(conversation.conversationId, selectedAgent, status)
+      
+        if(status == 'Human'){
+            await assignAgent(conversation.conversationId, selectedAgent, status);
+            toast.success('Cambios guardados exitosamente.')
+        }
+        else toast.warn('El estado no ha cambiado, dado que no has seleccionado uno nuevo')
       }
-      toast.success('Cambios guardados exitosamente.')
+
       onAssigned?.()
       onClose()
     } catch {

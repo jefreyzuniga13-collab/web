@@ -113,7 +113,7 @@ export const InboxList: React.FC<Props> = ({
                   <span className="inbox-list__preview">
                     {c.status === 'Closed'
                       ? 'Conversación cerrada'
-                      : `${c.totalMessages} mensaje(s) · ${c.duration}`}
+                      : `mensaje(s): ${c.totalMessages} · duración: ${c.duration}`}
                   </span>
                 </div>
               </div>

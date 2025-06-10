@@ -15,7 +15,7 @@ interface UserState {
     totalPages: number;
   };
   roles: { roleId: number, roleName: string }[];
-  companies: { id: number, name: string }[];
+  companies: { companyId: number, name: string }[];
 }
 
 const initialState: UserState = {

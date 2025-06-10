@@ -28,6 +28,8 @@ export function useConversations(
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
   const { role } = jwtDecode<JwtPayload>(accessToken)
+  console.log("Roles", role);
+  
   const isAdmin = role.toLowerCase() === 'admin'
 
   const [conversations, setConversations] = useState<ConversationDto[]>([])
@@ -57,7 +59,7 @@ export function useConversations(
         case 'waiting': return c.status === 'Waiting'
         case 'bot':     return c.status === 'Bot'
         case 'human':   return c.status === 'Human'
-        case 'closed':  return c.status === 'Closed'
+        // case 'closed':  return c.status === 'Closed'
         default:        return true
       }
     },
@@ -143,10 +145,12 @@ export function useConversations(
         lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
         unreadCount: conv.unreadCount || 0,
       }))
+      
+      const filterConv = convs.filter(e => e.status !== 'Closed')
 
       // aplicamos filtro + rol
       convs = convs.filter(matchesFilter)
-      setConversations(sortByActivity(convs))
+      setConversations(sortByActivity(filterConv))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)

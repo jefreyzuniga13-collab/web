@@ -1,7 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
 import '@/Styles/UI/select.css'
+
 export interface SelectOption {
   value: string
   label: string
@@ -9,32 +9,39 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
+
+  children?: React.ReactNode
+
   value?: string
   defaultValue?: string
   onValueChange?: (value: string) => void
   placeholder?: string
   disabled?: boolean
-  options: SelectOption[]
+  options?: SelectOption[]
   className?: string
   error?: boolean
   success?: boolean
   size?: 'small' | 'default' | 'large'
 }
 
-const Select = React.forwardRef<HTMLDivElement, SelectProps>(
-  ({ 
-    value, 
-    defaultValue, 
-    onValueChange, 
-    placeholder = "Seleccionar...", 
-    disabled = false,
-    options = [],
-    className = '',
-    error,
-    success,
-    size = 'default',
-    ...props 
-  }, ref) => {
+const Select = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectProps>>(
+  (
+    {
+      value,
+      defaultValue,
+      onValueChange,
+      placeholder = 'Seleccionar...',
+      disabled = false,
+      options = [],
+      className = '',
+      error,
+      success,
+      size = 'default',
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const [isOpen, setIsOpen] = useState(false)
     const [selectedValue, setSelectedValue] = useState(value || defaultValue || '')
     const selectRef = useRef<HTMLDivElement>(null)
@@ -58,7 +65,7 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     const handleSelect = (optionValue: string) => {
       if (disabled) return
-      
+
       setSelectedValue(optionValue)
       setIsOpen(false)
       onValueChange?.(optionValue)
@@ -75,7 +82,7 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     const getTriggerClassNames = () => {
       let classes = 'select-trigger'
-      
+
       if (error) classes += ' select-trigger--error'
       if (success) classes += ' select-trigger--success'
       if (size !== 'default') classes += ` select-trigger--${size}`
@@ -83,13 +90,13 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       if (isOpen) classes += ' select-trigger--open'
       if (!selectedValue) classes += ' select-trigger--placeholder'
       if (className) classes += ` ${className}`
-      
+
       return classes
     }
 
     return (
-      <div 
-        className="select-container" 
+      <div
+        className="select-container"
         ref={selectRef}
         {...props}
       >
@@ -101,7 +108,7 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           tabIndex={disabled ? -1 : 0}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (disabled) return
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -111,35 +118,36 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             }
           }}
         >
-          <span className="select-trigger__text">
-            {displayText}
-          </span>
+          <span className="select-trigger__text">{displayText}</span>
           <ChevronDown className="select-trigger__icon" />
         </div>
 
         {isOpen && (
           <div className="select-content">
             <div className="select-viewport">
-              {options.map((option) => (
-                <div
-                  key={option.value}
-                  className={`select-item ${option.disabled ? 'select-item--disabled' : ''} ${selectedValue === option.value ? 'select-item--selected' : ''}`}
-                  onClick={() => !option.disabled && handleSelect(option.value)}
-                  role="option"
-                  aria-selected={selectedValue === option.value}
-                >
-                  <span className="select-item__indicator">
-                    {selectedValue === option.value && (
-                      <Check className="select-item__check" />
-                    )}
-                  </span>
-                  <span className="select-item__text">{option.label}</span>
-                </div>
-              ))}
-              {options.length === 0 && (
-                <div className="select-item select-item--disabled">
-                  No hay opciones disponibles
-                </div>
+              {/* Si quieres seguir usando el API de options: */}
+              {options.length > 0 ? (
+                options.map(option => (
+                  <div
+                    key={option.value}
+                    className={`select-item ${
+                      option.disabled ? 'select-item--disabled' : ''
+                    } ${selectedValue === option.value ? 'select-item--selected' : ''}`}
+                    onClick={() => !option.disabled && handleSelect(option.value)}
+                    role="option"
+                    aria-selected={selectedValue === option.value}
+                  >
+                    <span className="select-item__indicator">
+                      {selectedValue === option.value && (
+                        <Check className="select-item__check" />
+                      )}
+                    </span>
+                    <span className="select-item__text">{option.label}</span>
+                  </div>
+                ))
+              ) : (
+               
+                children
               )}
             </div>
           </div>
@@ -149,25 +157,21 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   }
 )
 
-Select.displayName = "Select"
+Select.displayName = 'Select'
 
-// Componentes adicionales para compatibilidad con la API anterior
 export const SelectContent: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <>{children}</>
 )
-
-export const SelectItem: React.FC<{ 
+export const SelectItem: React.FC<{
   value: string
   children: React.ReactNode
   disabled?: boolean
 }> = ({ children }) => <>{children}</>
-
-export const SelectTrigger: React.FC<{ 
+export const SelectTrigger: React.FC<{
   children: React.ReactNode
   className?: string
 }> = ({ children }) => <>{children}</>
-
-export const SelectValue: React.FC<{ 
+export const SelectValue: React.FC<{
   placeholder?: string
 }> = () => null
 

@@ -53,7 +53,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <span className="pagination-page-size-label">Mostrar:</span>
           <Select 
             value={itemsPerPage.toString()} 
-            onValueChange={(value) => onPageSizeChange(Number(value))}
+            onValueChange={(value) => onPageSizeChange(Number(value.toString()))}
           >
             <SelectTrigger className="pagination-select-trigger">
               <SelectValue />

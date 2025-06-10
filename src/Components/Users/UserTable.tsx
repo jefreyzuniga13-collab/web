@@ -66,14 +66,14 @@ const UserTable: React.FC<UserTableProps> = ({
       header: 'Nombre',
       render: (user) => (
         <div className="user-table__user-info">
-          <span className="user-table__user-name">{user.fullName}</span>
+          <span className="user-table__value user-table__user-name">{user.fullName}</span>
         </div>
       )
     },
     {
       key: 'email',
       header: 'Email',
-      render: (user) => <span className="user-table__email">{user.email}</span>
+      render: (user) => <span className="user-table__value user-table__email">{user.email}</span>
     },
     {
       key: 'roles',
@@ -83,7 +83,7 @@ const UserTable: React.FC<UserTableProps> = ({
           {user.roles.map((role) => (
             <span 
               key={role.roleId} 
-              className="user-table__role-badge"
+              className="user-table__value user-table__role-badge"
             >
               {role.roleName}
             </span>
@@ -99,7 +99,7 @@ const UserTable: React.FC<UserTableProps> = ({
           <div className="user-table__status-icon">
             {user.isActive ? <Check size={16} /> : <X size={16} />}
           </div>
-          <span className="user-table__status-text">
+          <span className="user-table__value user-table__status-text">
             {user.isActive ? 'Activo' : 'Inactivo'}
           </span>
         </div>
@@ -110,7 +110,7 @@ const UserTable: React.FC<UserTableProps> = ({
       header: 'Última actividad',
       render: (user) => (
         <div className="user-table__last-activity">
-          <span className="user-table__date">
+          <span className="user-table__value user-table__date">
             {user.lastOnline ? formatDate(user.lastOnline) : 'Nunca'}
           </span>
           {user.isOnline && (
@@ -132,21 +132,21 @@ const UserTable: React.FC<UserTableProps> = ({
             onClick={() => onView(user.userId)}
             title="Ver detalles"
           >
-            <Eye size={16} />
+            <Eye size={20} />
           </button>
           <button 
             className="user-table__action-btn user-table__action-btn--edit"
             onClick={() => onEdit(user)}
             title="Editar usuario"
           >
-            <Edit size={16} />
+            <Edit size={20} />
           </button>
           <button 
             className="user-table__action-btn user-table__action-btn--delete"
             onClick={() => onDelete(user)}
             title={user.isActive ? "Desactivar usuario" : "Activar usuario"}
           >
-            <CirclePower size={16} />
+            <CirclePower size={20} />
           </button>
         </div>
       )
