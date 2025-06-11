@@ -3,6 +3,7 @@
   import uiReducer        from '@/Context/Slices/uiSlice'
   import userReducer from '@/Context/Slices/userSlice'
   import notificationsReducer from '@/Context/Slices/notificationsSlice'
+  import popupReducer     from '@/Context/Slices/popupSlice'
 
   export const store = configureStore({
     reducer: {
@@ -10,6 +11,7 @@
       ui:   uiReducer,
       users: userReducer,
       notifications: notificationsReducer,
+      popup:          popupReducer,
     }
   })
 

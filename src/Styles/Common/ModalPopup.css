@@ -1,0 +1,81 @@
+.modal-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.modal-popup__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.modal-popup__dialog {
+  position: relative;
+  max-width: 400px;
+  margin: 5% auto;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.modal-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-popup__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-popup__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-popup__body {
+  padding: 1rem;
+}
+
+.modal-popup__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #eee;
+}
+
+.modal-popup__action {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.modal-popup__action--primary {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.modal-popup__action--secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.modal-popup__action--danger {
+  background-color: #dc3545;
+  color: #fff;
+}

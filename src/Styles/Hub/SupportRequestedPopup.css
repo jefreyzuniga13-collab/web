@@ -1,0 +1,23 @@
+.support-requested-bubble {
+  position: fixed;
+  bottom: var(--space-md);
+  left: var(--space-md);
+  width: 3.2rem;
+  height: 3.2rem;
+  background: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-2xl);
+  color: var(--text-white);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  animation: support-pulse 2s infinite;
+  z-index: 1100;
+}
+
+@keyframes support-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

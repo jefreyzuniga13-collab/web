@@ -12,34 +12,23 @@ const API_URL =
   'https://localhost:7108/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
-// Conexiones internas
 let chatConnection: signalR.HubConnection | null = null
-
-// Exportamos las conexiones que necesitaremos fuera
 export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
 
 export async function createHubConnection(token: string) {
-  // Chat hub
   chatConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/chat`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
     .build()
 
-  chatConnection.onreconnecting(err =>
-    console.warn('Reconnecting to Chat Hub...', err)
-  )
-  chatConnection.onreconnected(() =>
-    console.info('Reconnected to Chat Hub')
-  )
+  chatConnection.onreconnecting(err => console.warn('Reconnecting to Chat Hub...', err))
+  chatConnection.onreconnected(() => console.info('Reconnected to Chat Hub'))
   chatConnection.onclose(err => {
     console.error('Chat Hub connection closed', err)
-    toast.warn(
-      'La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.'
-    )
+    toast.warn('La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.')
   })
 
-  // Notifications hub
   notificationsConnection = new signalR.HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/hubs/notifications`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
@@ -55,25 +44,17 @@ export async function createHubConnection(token: string) {
     console.error('Notifications Hub connection closed', err)
   )
 
-  // Presence hub
-presenceConnection = new signalR.HubConnectionBuilder()
-    .withUrl(`${HUB_BASE}/hubs/presence`, {
-      accessTokenFactory: () => token
-    })
+  presenceConnection = new signalR.HubConnectionBuilder()
+    .withUrl(`${HUB_BASE}/hubs/presence`, { accessTokenFactory: () => token })
     .withAutomaticReconnect()
-    .build();
+    .build()
 
-  // Register presence events broadcast from server
   presenceConnection.on('UserIsOnline', (userId: number) => {
     console.log('Usuario en línea:', userId)
-    // Aquí despacha a tu store o actualiza contexto
   })
-
   presenceConnection.on('UserIsOffline', (userId: number) => {
     console.log('Usuario desconectado:', userId)
-    // Aquí despacha a tu store o actualiza contexto
   })
-
   presenceConnection.onreconnecting(err =>
     console.warn('Reconnecting to Presence Hub...', err)
   )
@@ -84,23 +65,42 @@ presenceConnection = new signalR.HubConnectionBuilder()
     console.warn('Presence Hub connection closed', err)
   )
 
-  notificationsConnection.on('AssignmentRequested', (payload: { conversationId: number; requestedAt: string }) => {
-    window.dispatchEvent(new CustomEvent('AssignmentRequested', { detail: payload }))
-  })
+  // notifications handlers
+  notificationsConnection.on(
+    'SupportRequested',
+    (payload: { conversationId: number; clientName: string; requestedAt: string }) => {
+      window.dispatchEvent(new CustomEvent('SupportRequested', { detail: payload }))
+    }
+  )
 
-  notificationsConnection.on('AssignmentResponse', (payload: { conversationId: number; accepted: boolean; comment?: string }) => {
-    window.dispatchEvent(new CustomEvent('AssignmentResponse', { detail: payload }))
-  })
+  notificationsConnection.on(
+    'ConversationAssigned',
+    (dto: ConversationDto) => {
+      window.dispatchEvent(new CustomEvent('ConversationAssigned', { detail: dto }))
+    }
+  )
 
-  notificationsConnection.on('AssignmentForced', (payload: { conversationId: number; comment: string }) => {
-    window.dispatchEvent(new CustomEvent('AssignmentForced', { detail: payload }))
-  })
+  notificationsConnection.on(
+    'AssignmentResponse',
+    (payload: { conversationId: number; accepted: boolean; comment?: string }) => {
+      window.dispatchEvent(new CustomEvent('AssignmentResponse', { detail: payload }))
+    }
+  )
 
-  notificationsConnection.on('AssignmentForcedAdmin', (payload: { conversationId: number; targetAgentId: number; comment: string }) => {
-    window.dispatchEvent(new CustomEvent('AssignmentForcedAdmin', { detail: payload }))
-  })
+  notificationsConnection.on(
+    'AssignmentForced',
+    (payload: { conversationId: number; comment: string }) => {
+      window.dispatchEvent(new CustomEvent('AssignmentForced', { detail: payload }))
+    }
+  )
 
-  // Arrancamos todas en paralelo
+  notificationsConnection.on(
+    'AssignmentForcedAdmin',
+    (payload: { conversationId: number; targetAgentId: number; comment: string }) => {
+      window.dispatchEvent(new CustomEvent('AssignmentForcedAdmin', { detail: payload }))
+    }
+  )
+
   try {
     await Promise.all([
       chatConnection.start(),
@@ -114,7 +114,7 @@ presenceConnection = new signalR.HubConnectionBuilder()
   }
 }
 
-// --- Métodos públicos para chat ---
+// --- chat methods ---
 export function joinConversation(conversationId: number) {
   if (chatConnection?.state === signalR.HubConnectionState.Connected) {
     chatConnection.invoke('JoinConversation', conversationId.toString())
@@ -142,7 +142,6 @@ export function offNewMessage() {
 export function onConversationCreated(handler: (convo: ConversationDto) => void) {
   chatConnection?.on('ConversationCreated', handler)
 }
-
 export function offConversationCreated(handler: (convo: ConversationDto) => void) {
   chatConnection?.off('ConversationCreated', handler)
 }
@@ -150,20 +149,9 @@ export function offConversationCreated(handler: (convo: ConversationDto) => void
 export function onConversationUpdated(handler: (c: ConversationDto) => void) {
   chatConnection?.on('ConversationUpdated', handler)
 }
-
 export function offConversationUpdated(handler: (c: ConversationDto) => void) {
   chatConnection?.off('ConversationUpdated', handler)
 }
-
-export function onConversationassigned(handler: (c: ConversationDto) => void) {
-  chatConnection?.on('Conversationassigned', handler)
-}
-
-export function offConversationassigned(handler: (c: ConversationDto) => void) {
-  chatConnection?.off('Conversationassigned', handler)
-}
-
-// --- Métodos públicos para notifications ---
 export function onNewHumanRequest(
   handler: (payload: { conversationId: number; fromPhone: string }) => void
 ) {
@@ -190,4 +178,60 @@ export function onNewNotification(handler: (dto: NotificationDto) => void) {
 
 export function offNewNotification(handler: (dto: NotificationDto) => void) {
   notificationsConnection?.off('Notification', handler)
+}
+
+// --- notifications methods ---
+export function onSupportRequested(
+  handler: (payload: { conversationId: number; clientName: string; requestedAt: string }) => void
+) {
+  notificationsConnection?.on('SupportRequested', handler)
+}
+export function offSupportRequested(
+  handler: (payload: { conversationId: number; clientName: string; requestedAt: string }) => void
+) {
+  notificationsConnection?.off('SupportRequested', handler)
+}
+
+export function onConversationAssigned(
+  handler: (dto: ConversationDto) => void
+) {
+  notificationsConnection?.on('ConversationAssigned', handler)
+}
+export function offConversationAssigned(
+  handler: (dto: ConversationDto) => void
+) {
+  notificationsConnection?.off('ConversationAssigned', handler)
+}
+
+export function onAssignmentResponse(
+  handler: (payload: { conversationId: number; accepted: boolean; comment?: string }) => void
+) {
+  notificationsConnection?.on('AssignmentResponse', handler)
+}
+export function offAssignmentResponse(
+  handler: (payload: { conversationId: number; accepted: boolean; comment?: string }) => void
+) {
+  notificationsConnection?.off('AssignmentResponse', handler)
+}
+
+export function onAssignmentForced(
+  handler: (payload: { conversationId: number; comment: string }) => void
+) {
+  notificationsConnection?.on('AssignmentForced', handler)
+}
+export function offAssignmentForced(
+  handler: (payload: { conversationId: number; comment: string }) => void
+) {
+  notificationsConnection?.off('AssignmentForced', handler)
+}
+
+export function onAssignmentForcedAdmin(
+  handler: (payload: { conversationId: number; targetAgentId: number; comment: string }) => void
+) {
+  notificationsConnection?.on('AssignmentForcedAdmin', handler)
+}
+export function offAssignmentForcedAdmin(
+  handler: (payload: { conversationId: number; targetAgentId: number; comment: string }) => void
+) {
+  notificationsConnection?.off('AssignmentForcedAdmin', handler)
 }
