@@ -1,51 +1,72 @@
-import React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import type { RootState } from '@/Context'
-import { closePopup, openPopup } from '@/Context/Slices/popupSlice'
-import { ModalPopup, type ModalAction } from '@/Components/Common/Hub/ModalPopup'
-import '@/Styles/Hub/SupportRequestedPopup.css'
 
-export const SupportRequestedPopup: React.FC = () => {
-  const dispatch = useDispatch()
-  const { isOpen, event } = useSelector((s: RootState) => s.popup)
+import React, { useState } from 'react';
+import { ModalPopup, type ModalAction } from './ModalPopup';
 
-  if (!event || event.type !== 'SupportRequested') return null
+interface SupportEvent {
+  type: string;
+  payload: {
+    conversationId: string;
+    clientName: string;
+    requestedAt: string;
+  };
+}
 
-  const { conversationId, clientName, requestedAt } = event.payload
+interface SupportRequestedPopupProps {
+  event?: SupportEvent | null;
+  isVisible?: boolean;
+  onClose?: () => void;
+}
+
+export const SupportRequestedPopup: React.FC<SupportRequestedPopupProps> = ({
+  event = {
+    type: 'SupportRequested',
+    payload: {
+      conversationId: '123',
+      clientName: 'Usuario Demo',
+      requestedAt: new Date().toISOString()
+    }
+  },
+  isVisible = true,
+  onClose = () => console.log('Notification closed')
+}) => {
+  const [isOpen, setIsOpen] = useState(isVisible);
+
+  if (!event || event.type !== 'SupportRequested') return null;
+
+  const { conversationId, clientName, requestedAt } = event.payload;
 
   const actions: ModalAction[] = [
     {
       label: 'Ver conversación',
       onClick: () => {
-        window.location.href = `/conversations/${conversationId}`
-        dispatch(closePopup())
+        console.log(`Navegando a conversación: ${conversationId}`);
+        // window.location.href = `/conversations/${conversationId}`;
+        handleClose();
       },
       variant: 'primary'
     },
     {
       label: 'Cerrar',
-      onClick: () => dispatch(closePopup()),
+      onClick: () => handleClose(),
       variant: 'secondary'
     }
-  ]
+  ];
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose();
+  };
 
   return (
-    <>
-      {!isOpen && (
-        <div
-          className="support-requested-bubble"
-          onClick={() => dispatch(openPopup(event))}
-        >
-          🛎️
-        </div>
-      )}
-      <ModalPopup
-        title="Solicitud de soporte"
-        message={`El cliente ${clientName} solicitó soporte el ${new Date(requestedAt).toLocaleString()}.`}
-        actions={actions}
-        isOpen={isOpen}
-        onClose={() => dispatch(closePopup())}
-      />
-    </>
-  )
-}
+    <ModalPopup
+      title="Solicitud de soporte"
+      message="Ha solicitado atención al cliente"
+      actions={actions}
+      isOpen={isOpen}
+      onClose={handleClose}
+      clientName={clientName}
+      timestamp={requestedAt}
+      icon="🎧"
+    />
+  );
+};
