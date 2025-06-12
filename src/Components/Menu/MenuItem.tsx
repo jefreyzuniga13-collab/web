@@ -7,6 +7,7 @@ export interface MenuItemProps {
   onClick?: () => void;
   selected?: boolean;
   badge?: number;
+  className: string;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({
@@ -14,10 +15,11 @@ const MenuItem: React.FC<MenuItemProps> = ({
   text,
   onClick,
   selected,
-  badge
+  badge,
+  className
 }) => (
   <li
-    className={`menu-item ${selected ? 'menu-item--selected' : ''}`}
+    className={`menu-item ${className} ${selected ? 'menu-item--selected' : ''}`}
     onClick={onClick}
   >
     <div className={`menu-item__content ${text.includes("Cerrar") ? 'menu-item__content--logout' : ''}`}>

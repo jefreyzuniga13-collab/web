@@ -3,45 +3,34 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@/Context'
 import { closePopup } from '@/Context/Slices/popupSlice'
 import { ModalPopup, type ModalAction } from '@/Components/Common/Hub/ModalPopup'
-import { forceAssign } from '@/Services/ConversationService'
 
 export const AssignmentForcedPopup: React.FC = () => {
+
   const dispatch = useDispatch()
   const { isOpen, event } = useSelector((s: RootState) => s.popup)
 
   if (!isOpen || event?.type !== 'AssignmentForced') return null
 
-  const { conversationId, comment } = event.payload
-
+  const {assignmentComment} = event.payload as {assignmentComment: string;}
+  console.log("assignment recibida", assignmentComment);
   const handleForce = async () => {
-    try {
-      // aquí podrías pedir al usuario seleccionar otro agente si lo deseas
-      // por ahora forzamos sin cambiar agente:
-      await forceAssign(conversationId)
+
       dispatch(closePopup())
-    } catch {
-      // opcional: mostrar toast de error
-      dispatch(closePopup())
-    }
+
   }
 
   const actions: ModalAction[] = [
     {
-      label: 'Forzar asignación',
+      label: 'Aceptar',
       onClick: handleForce,
-      variant: 'danger'
-    },
-    {
-      label: 'Cerrar',
-      onClick: () => dispatch(closePopup()),
-      variant: 'secondary'
+      variant: 'primary'
     }
   ]
 
   return (
     <ModalPopup
       title="Asignación forzada"
-      message={`La asignación fue forzada. Motivo: ${comment}`}
+      message={`La asignación fue realizada con éxito. El motivo ha sido: ${assignmentComment.length != 0 ? assignmentComment : 'No Especificado.'}`}
       actions={actions}
       isOpen={isOpen}
       onClose={() => dispatch(closePopup())}

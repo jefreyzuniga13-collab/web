@@ -11,6 +11,7 @@ import { openPopup } from '@/Context/Slices/popupSlice'
 import { SupportRequestedPopup } from '@/Components/Common/Hub/SupportRequestedPopup'
 import { AssignmentResponsePopup } from '@/Components/Common/Hub/AssignmentResponsePopup'
 import { AssignmentForcedPopup } from '@/Components/Common/Hub/AssignmentForcedPopup'
+import { ConversationAssignedPopup } from '@/Components/Common/Hub/ConversationAssignedPopup'
 import '@/App.css'
 import '@/i18n'
 import 'react-toastify/dist/ReactToastify.css'
@@ -41,10 +42,13 @@ export default function App() {
 
   return (
     <SignalRProvider token={accessToken}>
+      
       <NotificationsHandler />
       <SupportRequestedPopup />
+      <ConversationAssignedPopup/>
       <AssignmentResponsePopup />
       <AssignmentForcedPopup />
+
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
       <ReLoginModal />
       <ToastContainer

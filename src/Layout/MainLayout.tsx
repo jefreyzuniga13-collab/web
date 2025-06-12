@@ -2,13 +2,13 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from '@/Components/Menu/Menu'
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
-import { useAssignmentEvents } from '@/Hooks/useAssignmentEvents'
+//import { useAssignmentEvents } from '@/Hooks/useAssignmentEvents'
 
-import AssignedModal from '@/Components/Chat/AssignedModal'
-import AdminResponseModal from '@/Components/Chat/AdminResponseModal'
-import SupportForcedModal from '@/Components/Chat/SupportForcedModal'
-import AdminForcedModal from '@/Components/Chat/AdminForcedModal'
-//import { forceAssign } from '@/Services/ConversationService'
+// import AssignedModal from '@/Components/Chat/AssignedModal'
+// import AdminResponseModal from '@/Components/Chat/AdminResponseModal'
+// import SupportForcedModal from '@/Components/Chat/SupportForcedModal'
+// import AdminForcedModal from '@/Components/Chat/AdminForcedModal'
+// //import { forceAssign } from '@/Services/ConversationService'
 
 const MainLayout: React.FC = () => {
   // 1) Solo si estás autentificado tienes userId
@@ -17,12 +17,12 @@ const MainLayout: React.FC = () => {
   const isAuthenticated = Boolean(userId)
 
   // Hook que expone qué modales mostrar
-  const {
-    requestedConv, clearRequested,
-    responsePayload, clearResponse,
-    forcedConv, clearForced,
-    forcedAdminPayload, clearForcedAdmin
-  } = useAssignmentEvents()
+  // const {
+  //   requestedConv, clearRequested,
+  //   responsePayload, clearResponse,
+  //   forcedConv, clearForced,
+  //   forcedAdminPayload, clearForcedAdmin
+  // } = useAssignmentEvents()
 
   // 3) Función auxiliar para forzar desde el modal de admin
   // const handleForceFromResponse = async (
@@ -44,30 +44,30 @@ const MainLayout: React.FC = () => {
       <Navbar id={Number(userId)} />
 
       {/* Modales globales de asignación */}
-      {requestedConv !== null && (
+      {/* {requestedConv !== null && (
         <AssignedModal
           conversationId={requestedConv}
           onClose={clearRequested}
         />
-      )}
+      )} */}
 
-      {responsePayload !== null && (<AdminResponseModal
+      {/* {responsePayload !== null && (<AdminResponseModal
               conversationId={responsePayload.conversationId}
               accepted={responsePayload.accepted}
               comment={responsePayload.comment}
               onClose={clearResponse}
           />
-        // <AdminResponseModal
-        //   conversationId={responsePayload.conversationId}
-        //   accepted={responsePayload.accepted}
-        //   comment={responsePayload.comment}
-        //   onClose={clearResponse}
-        //   // Le pasas la función para forzar asignación
-        //   onForceAssign={handleForceFromResponse}
-        // />
+        <AdminResponseModal
+          conversationId={responsePayload.conversationId}
+          accepted={responsePayload.accepted}
+          comment={responsePayload.comment}
+          onClose={clearResponse}
+          // Le pasas la función para forzar asignación
+          onForceAssign={handleForceFromResponse}
+        />
         
-      )}
-
+      )} */}
+{/* 
       {forcedConv !== null && (
         <SupportForcedModal
           conversationId={forcedConv}
@@ -83,7 +83,7 @@ const MainLayout: React.FC = () => {
           comment={forcedAdminPayload.comment}
           onClose={clearForcedAdmin}
         />
-      )}
+      )} */}
 
       {/*Resto de la UI de tu app */}
       <Outlet />

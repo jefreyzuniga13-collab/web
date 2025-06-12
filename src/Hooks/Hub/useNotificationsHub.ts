@@ -3,8 +3,8 @@ import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { notificationsConnection } from '@/Services/signalr'
 
 type SupportRequestedPayload = { conversationId: number; clientName: string; requestedAt: string }
-type AssignmentResponsePayload = { conversationId: number; accepted: boolean; comment?: string }
-type AssignmentForcedPayload = { conversationId: number; comment: string }
+type AssignmentResponsePayload = { conversationId: number; accepted: boolean; comment?: string; justification?: string }
+type AssignmentForcedPayload = { conversationId: number; assignmentComment: string }
 type AssignmentForcedAdminPayload = { conversationId: number; targetAgentId: number; comment: string }
 
 export type NotificationEvent =

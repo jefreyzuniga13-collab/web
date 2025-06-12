@@ -1,12 +1,12 @@
 
 .contact-detail {
   padding: 0;
+  padding-bottom: 2rem;
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
 }
 
 .contact-header {
@@ -152,7 +152,11 @@
   align-items: center;
   gap: var(--space-sm);
 }
-
+.info-list-subtitle{
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
 .section-icon {
   color: var(--color-gray-500);
 }
@@ -263,6 +267,7 @@
   font-size: var(--font-size-sm);
   color: var(--text-white);
   transition: all var(--transition-fast) var(--transition-ease);
+  max-width: 100%;
 }
 
 .tag:hover {
@@ -273,7 +278,6 @@
 
 .tag-text {
   display: block;
-  max-width: 14rem;
   white-space: normal;
   overflow-wrap: break-word;
   word-break: break-word;

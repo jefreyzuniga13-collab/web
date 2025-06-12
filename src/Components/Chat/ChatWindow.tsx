@@ -28,7 +28,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     if (f) setFile(f)
   }
 
-  // NUEVO: Maneja el pegado desde el portapapeles dentro del textarea
+  // Maneja el pegado desde el portapapeles dentro del textarea
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     // Si ya hay un archivo en estado, no hacemos nada
     if (file) return
@@ -41,11 +41,18 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         if (pastedFile) {
           e.preventDefault() // evitamos que el browser pegue texto extra
           setFile(pastedFile)
-          // Si tu lógica quiere también agregar texto en el textarea, podrías concatenar:
+          // también agregar texto en el textarea, concatenar:
           // setText(prev => prev + '\n[Archivo adjunto: ' + pastedFile.name + ']')
           break
         }
       }
+    }
+  }
+
+ const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
     }
   }
 
@@ -301,6 +308,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             placeholder="Escribe un mensaje…"
             value={text}
             onChange={e => setText(e.target.value)}
+            onKeyDown={handleKeyPress}
             onPaste={handlePaste}  
             disabled={!conversationId || sending}
             rows={1}

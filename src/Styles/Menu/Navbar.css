@@ -11,7 +11,7 @@
   }
 
   .navbar--collapsed {
-    width: 8rem;
+    width: 10rem;
   }
 
   .navbar__header {
@@ -25,6 +25,8 @@
   }
 
   .navbar__logo {
+    user-select: none;
+    pointer-events: none;
     width: 4.8rem;
     height: auto;
     transition: all var(--transition-slow) var(--transition-ease);
@@ -80,6 +82,10 @@
     cursor: pointer;
     transition: all var(--transition-fast) var(--transition-ease);
     border-radius: 0;
+  }
+  .collapsed-styles{
+    display: flex;
+    justify-content: center;
   }
 
   .menu-item__content {
@@ -335,7 +341,7 @@
   /* LAPTOPS (1024px - 1200px) */
   @media (min-width: 76.8rem) and (max-width: 120rem) {
     .navbar {
-      width: 24rem;
+      width: 30rem;
     }
 
     .navbar--collapsed {

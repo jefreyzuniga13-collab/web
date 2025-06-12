@@ -7,6 +7,9 @@ import { ContactDetail } from '@/Components/Chat/ContactDetail'
 import { getConversation, closeConversation } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/SupportPage.css'
+import { RiChatHistoryFill } from "react-icons/ri";
+import { FaUserAlt, FaClipboard } from "react-icons/fa";
+import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
 
 interface AuthStorage {
   accessToken: string
@@ -21,9 +24,11 @@ interface JwtPayload {
 
 const SupportPage: React.FC = () => {
   const [convId, setConvId] = useState<number | null>(null)
+
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
   const [showAssign, setShowAssign] = useState(false)
   const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
   
@@ -97,25 +102,38 @@ const SupportPage: React.FC = () => {
           <h2 className="main-title">Chat</h2>
          <div className='btn-container'>
            {convId && (
+           <>
             <button className={`contact-detail-button ${!convId ? 'diabled' : 'active'}`}
+              onClick={() => setShowHistoryModal(true)}
+              disabled={!convId}
+              >
+              <RiChatHistoryFill size={16} />
+              {'Historial'}
+          </button>
+
+               <button className={`contact-detail-button ${!convId ? 'diabled' : 'active'}`}
               onClick={() => setContactDetailToggle(!contactDetailToggle)}
               disabled={!convId}
               >
-              {contactDetailToggle ? 'Ocultar Detalles' : 'Mostrar Detalles'}
-          </button>
+                <FaClipboard size={16}/>
+              {'Detalles'}
+              </button>
+           </>
             )}
 
            <button
-            className="assign-button"
+            className={`assign-button ${isAdmin? '' : 'button-cerrar'}`}
             disabled={!convId}
             onClick={handleAssignClick}
           >
+            <FaUserAlt size={16}/>
             {isAdmin ? 'Asignar' : 'Cerrar'}
           </button>
          </div>
         </header>
         <ChatWindow conversationId={convId ?? undefined} userId={userId} />
       </main>
+
      {contactDetailToggle && (
       <div className='modal-overlay'>
           <aside className="info-sidebar">
@@ -123,6 +141,13 @@ const SupportPage: React.FC = () => {
       </aside>
       </div>
       )}
+
+       <ConversationHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        conversationId={convId || 0}
+      />
+
        <AssignModal
         conversation={conversation ?? undefined}
         isOpen={showAssign}

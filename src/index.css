@@ -156,7 +156,7 @@ body {
 
 .general-container {
   display: grid;
-  grid-template-columns: 0.3fr 2fr;
+  grid-template-columns: auto 2fr;
   min-width: 100vw;
 }
 
@@ -170,7 +170,7 @@ body {
   }
   .general-container {
     display: grid;
-    grid-template-columns: 0.5fr 2fr;
+    grid-template-columns: auto 2fr;
     min-width: 100vw;
   }
 }

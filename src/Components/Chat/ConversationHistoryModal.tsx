@@ -254,6 +254,8 @@ console.log(conversations)
                 name="startDate"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                min="01/01/2024"
+                max="01/01/2030"
               />
               <input
                 type="date"
@@ -262,6 +264,8 @@ console.log(conversations)
                 name="endDate"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                min="01/01/2024"
+                max="01/01/2030"
               />
             </div>
 

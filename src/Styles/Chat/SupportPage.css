@@ -33,6 +33,10 @@
 
 .assign-button,
 .contact-detail-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
   padding: var(--space-sm) var(--space-md);
   background-color: var(--color-primary);
   color: var(--text-white);
@@ -43,7 +47,9 @@
   transition: all var(--transition-fast) var(--transition-ease);
   cursor: pointer;
 }
-
+.button-cerrar{
+  background-color: var(--color-error);
+}
 .contact-detail-button {
   background-color: transparent;
   border: 0.1rem solid var(--color-primary);
@@ -64,6 +70,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.button-cerrar:hover:not(:disabled),
+.button-cerrar:focus{
+  background-color: var(--color-error);
+  opacity: 0.7;
+}
 .assign-button:disabled,
 .contact-detail-button:disabled {
   background-color: var(--color-gray-400);
@@ -104,15 +115,17 @@
   position: absolute;
   margin: auto;
   min-width: 35%;
-  max-width: 40rem;
+  max-width: 40%;
   height: 90%;
   background-color: var(--bg-primary);
   box-shadow: var(--shadow-lg);
   border-left: 0.1rem solid var(--border-secondary);
   padding: var(--space-md);
+  padding-bottom: 0;
   border-radius: var(--radius-lg);
   z-index: 1000;
 }
+
 
 @media (max-width: 76.8rem) {
   .support-layout {

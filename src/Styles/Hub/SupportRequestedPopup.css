@@ -16,7 +16,13 @@
   animation: support-pulse 2s infinite;
   z-index: 1100;
 }
-
+.assignmentResponse-justification{
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+.modal-popup__error{
+  color: var(--color-error);
+}
 @keyframes support-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }

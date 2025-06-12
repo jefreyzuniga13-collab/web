@@ -79,10 +79,12 @@ export function respondAssignment(
 }
 
 export function forceAssign(
-  conversationId: number
+  conversationId: number,
+  forced: boolean,
+  assignmentComment: string,
 ) {
   return api.post(
     `/Conversations/${conversationId}/force`,
-    { }
+    {forced, assignmentComment}
   )
 }

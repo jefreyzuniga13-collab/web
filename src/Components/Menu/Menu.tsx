@@ -18,7 +18,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, loading, error } = useMenus();
   const { unreadCount } = useNotifications();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -91,6 +91,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
               onClick={() => onClick(m.url, m.name)}
               selected={isSelected}
               badge={showBadge ? unreadCount : undefined}
+              className = {collapsed ? 'collapsed-styles' : ''}
             />
           );
         })}

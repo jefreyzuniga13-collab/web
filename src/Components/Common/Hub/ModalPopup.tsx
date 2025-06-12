@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import '@/Styles/Common/ModalPopup.css';
+import "@/Styles/Hub/ModalPopup.css"
 
 export interface ModalAction {
   label: string;
@@ -24,7 +24,6 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
   message,
   actions,
   isOpen,
-  onClose,
   clientName,
   timestamp,
   icon = '💬'
@@ -65,7 +64,7 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
         >
           <div className="modal-popup__bubble-content">
             <span className="modal-popup__icon">{icon}</span>
-            <div className="modal-popup__pulse-indicator" />
+            {/* <div className="modal-popup__pulse-indicator" /> */}
           </div>
         </div>
       )}
@@ -92,7 +91,7 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
               </div>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleToggle}
               className="modal-popup__close-btn"
               aria-label="Cerrar"
             >
@@ -125,15 +124,6 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
               </button>
             ))}
           </div>
-
-          {/* Minimize button */}
-          <button
-            onClick={handleToggle}
-            className="modal-popup__minimize-btn"
-            title="Minimizar"
-          >
-            <div className="modal-popup__minimize-dot" />
-          </button>
         </div>
       )}
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { getConversation, updateTag } from '@/Services/ConversationService'
 // import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History, Hourglass, UserPen } from 'lucide-react'
-import {Book  , AlertCircle, Tag, Edit, X, Check, Info, History } from 'lucide-react'
+import {Book  , AlertCircle, Tag, Edit, X, Check, Info } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
 import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
 import '@/Styles/Chat/ContactDetail.css'
@@ -203,19 +203,20 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
                 <Book size={14}/>
                 Información principal
               </h4>
-              <button 
+              {/* <button 
                 className="section-action"
                 onClick={() => setShowHistoryModal(true)}
                 title="Ver historial completo"
               >
                 <History size={14} />
                 <span>Historial</span>
-              </button>
+              </button> */}
             </div>
             
             <div className="section-content">
               <ul className="info-list">
                 <div className='info-list-group'>
+                  
                     <li className="info-item">
                       <div className="info-content">
                         <span className="info-label">Creado</span>
@@ -338,7 +339,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
                     </div>
                   </li>
                 )}
-                  </div>
+                </div>
+
               </ul>
             </div>
           </div>
@@ -393,6 +395,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
                         placeholder="Nueva etiqueta..."
                         autoFocus
                         onKeyDown={handleKeyDown}
+                        maxLength={60}
                       />
                       <div className="tag-input-actions">
                         <button 
