@@ -3,9 +3,11 @@ import type {
   MessageDto,
   AttachmentDto,
   ConversationDto,
-  NotificationDto
+  NotificationDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
-import { toast } from 'react-toastify'
+import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
+
+//import { toast } from 'react-toastify'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
@@ -15,6 +17,7 @@ const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 let chatConnection: signalR.HubConnection | null = null
 export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
+export let userConeccion: signalR.HubConnection | null = null
 
 export async function createHubConnection(token: string) {
   chatConnection = new signalR.HubConnectionBuilder()
@@ -26,7 +29,18 @@ export async function createHubConnection(token: string) {
   chatConnection.onreconnected(() => console.info('Reconnected to Chat Hub'))
   chatConnection.onclose(err => {
     console.error('Chat Hub connection closed', err)
-    toast.warn('La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.')
+    // toast.warn('La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.')
+  })
+
+  userConeccion = new signalR.HubConnectionBuilder()
+  .withUrl(`${HUB_BASE}/hubs/users`, {accessTokenFactory: ()=> token})
+  .withAutomaticReconnect()
+  .build();
+
+  userConeccion.onreconnecting(err=> console.warn("Reconnecting to User Hub...", err))
+  userConeccion.onreconnected(()=> console.info("Reconnected to User Chat Hub"));
+  userConeccion.onclose(err =>{
+    console.error("USER HUB conection closed", err);
   })
 
   notificationsConnection = new signalR.HubConnectionBuilder()
@@ -101,13 +115,21 @@ export async function createHubConnection(token: string) {
     }
   )
 
+    notificationsConnection.on(
+    'offNewContactValidation',
+    (payload: {contactLog: ContactLog}) => {
+      window.dispatchEvent(new CustomEvent('newContactValidation', { detail: payload }))
+    }
+  )
+
   try {
     await Promise.all([
       chatConnection.start(),
       notificationsConnection.start(),
-      presenceConnection.start()
+      presenceConnection.start(),
+      userConeccion.start()
     ])
-    return { chatConnection, notificationsConnection, presenceConnection }
+    return { chatConnection, notificationsConnection, presenceConnection, userConeccion }
   } catch (error) {
     console.error('Error starting SignalR connections:', error)
     throw error
@@ -137,6 +159,20 @@ export function onNewMessage(
 
 export function offNewMessage() {
   chatConnection?.off('ReceiveMessage')
+}
+
+
+//New contact on and off
+// export function onNewContact(
+//   handler: (payload: { contactLog: ContactLog}) => void
+// ) {
+//   chatConnection?.on('newContactValidation', (contactLog) => {
+//     handler({contactLog })
+//   })
+// }
+
+export function offNewContact(){
+  userConeccion?.off("newContactValidation");
 }
 
 export function onConversationCreated(handler: (convo: ConversationDto) => void) {
@@ -234,4 +270,16 @@ export function offAssignmentForcedAdmin(
   handler: (payload: { conversationId: number; targetAgentId: number; comment: string }) => void
 ) {
   notificationsConnection?.off('AssignmentForcedAdmin', handler)
+}
+
+export function onNewContactValidation(
+  handler: (payload: { contactLog: ContactLog }) => void
+) {
+  notificationsConnection?.on('newContactValidation', handler)
+}
+
+export function offNewContactValidation(
+  handler: (payload: { contactLog: ContactLog}) => void
+) {
+  notificationsConnection?.off('newContactValidation', handler)
 }

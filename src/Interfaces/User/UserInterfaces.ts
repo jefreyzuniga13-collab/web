@@ -80,3 +80,17 @@ export interface PresenceDto {
   lastOnline?: string;
   isOnline: boolean;
 }
+
+export interface ContactLog{
+  id: number;
+  waName: number;
+  waUserId?: number;
+  phone: number;
+  idCard?: string;
+  fullName?: string;
+  company?: Company;
+  isVerified?: boolean;
+  status?: boolean;
+  createdAt: string;
+  UpdatedAt?: string;
+}

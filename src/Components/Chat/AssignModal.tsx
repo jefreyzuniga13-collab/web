@@ -1,26 +1,22 @@
+// src/Components/Chat/AssignModal.tsx
 import React, { useEffect, useState } from 'react'
-import type { AgentDto, ConversationDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
+import { useSelector, useDispatch } from 'react-redux'
+import type { AgentDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
 import { getAgents } from '@/Services/AgentService'
-import { assignAgent, closeConversation } from '@/Services/ConversationService'
+import { assignAgent, closeConversation as apiCloseConversation } from '@/Services/ConversationService'
 import { useUserPresence } from '@/Hooks/useUserPresence'
 import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
 import { AgentCard } from '@/Components/Chat/AgentCard'
 import '@/styles/Chat/AssignModal.css'
+import type { RootState, AppDispatch } from '@/Context/index'
 
-interface AssignModalProps {
-  conversation?: ConversationDto
-  isOpen: boolean
-  onClose: () => void
-  onAssigned?: () => void
-}
+import { closeAssignModal } from '@/Context/Slices/assignModalSlice'
 
-export const AssignModal: React.FC<AssignModalProps> = ({
-  conversation,
-  isOpen,
-  onClose,
-  onAssigned,
-}) => {
+export const AssignModal: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>()
+  const { isOpen, conversation } = useSelector((state: RootState) => state.assignModal)
+
   const [agents, setAgents] = useState<AgentDto[]>([])
   const [selectedAgent, setSelectedAgent] = useState<string>('')
   const [status, setStatus] = useState<ConversationStatus>('Bot')
@@ -29,17 +25,15 @@ export const AssignModal: React.FC<AssignModalProps> = ({
   const selectedAgentId = selectedAgent ? Number(selectedAgent) : 0
   const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId)
 
-  // Opciones de estado con color para estilos
   const statusOptions: { value: ConversationStatus; label: string; color: string }[] = [
-    { value: 'Bot', label: 'Bot', color: 'bot' },
-    { value: 'Human', label: 'Humano', color: 'human' },
-    { value: 'Closed', label: 'Cerrado', color: 'closed' },
+    { value: 'Human', label: 'Asignar', color: 'human' },
+    { value: 'Closed', label: 'Cerrar', color: 'closed' },
   ]
 
+  // Al abrir, cargar agentes y estado inicial
   useEffect(() => {
     if (!isOpen || !conversation) return
 
-    // Inicializamos selección y estado
     setSelectedAgent(conversation.assignedAgentId?.toString() ?? '')
     setStatus(conversation.status)
 
@@ -48,9 +42,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
       .catch(console.error)
   }, [isOpen, conversation])
 
-  // Controla la lógica al cambiar estado
   const handleStatusChange = (newStatus: ConversationStatus) => {
-
     if (newStatus === 'Human') {
       if (!selectedAgent) {
         toast.warn('Debes seleccionar un agente antes de asignar Humano.')
@@ -61,63 +53,57 @@ export const AssignModal: React.FC<AssignModalProps> = ({
         return
       }
     }
-
     if (newStatus === 'Bot' && selectedAgent) {
       toast.warn('No puedes establecer Bot cuando hay un agente seleccionado.')
       return
     }
-
-    // 'Closed' siempre permitido
     setStatus(newStatus)
   }
 
-  // Ejecuta la asignación o cierre
   const handleAssign = async () => {
     if (!conversation) return
 
-    // if (!selectedIsOnline && assignAgent !== null) {
-    //     toast.warn('No puedes asignar Humano a un agente desconectado.')
-    //     return
-    //   } 
-
     try {
       if (status === 'Closed') {
-        await closeConversation(conversation.conversationId)
-        toast.success('Cambios guardados exitosamente.')
+        await apiCloseConversation(conversation.conversationId)
+        toast.success('Conversación cerrada correctamente.')
+      } else if (status === 'Human') {
+        await assignAgent(conversation.conversationId, selectedAgent, status)
+        toast.success('Agente asignado correctamente.')
       } else {
-      
-        if(status == 'Human'){
-            await assignAgent(conversation.conversationId, selectedAgent, status);
-            toast.success('Cambios guardados exitosamente.')
-        }
-        else toast.warn('El estado no ha cambiado, dado que no has seleccionado uno nuevo')
+        toast.warn('No se aplicaron cambios.')
+        return
       }
 
-      onAssigned?.()
-      onClose()
+      dispatch(closeAssignModal())
     } catch {
       toast.error('Error al guardar los cambios.')
     }
   }
 
+  const handleClose = () => {
+    dispatch(closeAssignModal())
+  }
+
+  if (!isOpen || !conversation) return null
+
   const selectedAgentData = agents.find(a => a.userId.toString() === selectedAgent)
-  if (!isOpen) return null
 
   return (
     <div className="assign-modal__overlay">
       <div className="assign-modal__container">
-        {/* Header */}
+
         <header className="assign-modal__header">
           <div className="assign-modal__header-content">
             <h2 className="assign-modal__title">
               Asignar agente a{' '}
               <span className="assign-modal__client-name">
-                {conversation?.clientContactName ?? `#${conversation?.conversationId}`}
+                {conversation.clientContactName ?? `#${conversation.conversationId}`}
               </span>
             </h2>
             <button
               className="assign-modal__close-button"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Cerrar modal"
               type="button"
             >
@@ -126,7 +112,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
           </div>
         </header>
 
-        {/* Body */}
+
         <div className="assign-modal__body">
           <div className="assign-modal__field">
             <label className="assign-modal__label">Seleccionar agente</label>
@@ -134,7 +120,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
               <button
                 type="button"
                 className="assign-modal__dropdown-trigger"
-                onClick={() => setIsDropdownOpen(open => !open)}
+                onClick={() => setIsDropdownOpen(o => !o)}
                 aria-expanded={isDropdownOpen}
               >
                 {selectedAgentData ? (
@@ -190,7 +176,6 @@ export const AssignModal: React.FC<AssignModalProps> = ({
             </div>
           </div>
 
-          {/* Estado de la conversación */}
           <div className="assign-modal__field">
             <label className="assign-modal__label">Estado de la conversación</label>
             <div className="assign-modal__status-grid">
@@ -223,12 +208,12 @@ export const AssignModal: React.FC<AssignModalProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
+
         <footer className="assign-modal__footer">
           <button
             type="button"
             className="assign-modal__button assign-modal__button--secondary"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancelar
           </button>

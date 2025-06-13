@@ -18,6 +18,7 @@ const NotFound        = lazy(() => import('@/Presentations/NotFound'))
 const SystemParameterPage = lazy(() => import('@/Presentations/Setting/SystemParameterPage'))
 const ProfilePage = lazy(() => import('@/Presentations/Setting/Profile'))
 const PrivacyPolicy = lazy(() => import('@/Presentations/Setting/PrivacyPolicy'))
+const VerifyNewContactPage = lazy(()=> import("@/Presentations/Setting/VerifyNewContactPage"))
 
 export function AppRouter() {
   return (
@@ -49,6 +50,7 @@ export function AppRouter() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="system-params" element={<SystemParameterPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="verify-contact/:phone" element={<VerifyNewContactPage />} />
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>
 

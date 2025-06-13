@@ -4,6 +4,7 @@
   import userReducer from '@/Context/Slices/userSlice'
   import notificationsReducer from '@/Context/Slices/notificationsSlice'
   import popupReducer     from '@/Context/Slices/popupSlice'
+  import assignModalSlice     from '@/Context/Slices/assignModalSlice'
 
   export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@
       users: userReducer,
       notifications: notificationsReducer,
       popup:          popupReducer,
+      assignModal: assignModalSlice
     }
   })
 

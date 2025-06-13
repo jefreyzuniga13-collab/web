@@ -1,15 +1,18 @@
+// src/Pages/SupportPage.tsx
 import React, { useState, useEffect } from 'react'
 import { jwtDecode } from 'jwt-decode'
+import { useDispatch } from 'react-redux'
 import { InboxList } from '@/Components/Chat/InboxList'
 import { ChatWindow } from '@/Components/Chat/ChatWindow'
-import { AssignModal } from '@/Components/Chat/AssignModal'
 import { ContactDetail } from '@/Components/Chat/ContactDetail'
+import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
 import { getConversation, closeConversation } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { openAssignModal } from '@/Context/Slices/assignModalSlice'
 import '@/Styles/Chat/SupportPage.css'
-import { RiChatHistoryFill } from "react-icons/ri";
-import { FaUserAlt, FaClipboard } from "react-icons/fa";
-import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
+
+import { RiChatHistoryFill } from 'react-icons/ri'
+import { FaUserAlt, FaClipboard } from 'react-icons/fa'
 
 interface AuthStorage {
   accessToken: string
@@ -23,23 +26,18 @@ interface JwtPayload {
 }
 
 const SupportPage: React.FC = () => {
+  const dispatch = useDispatch()
   const [convId, setConvId] = useState<number | null>(null)
-
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [showAssign, setShowAssign] = useState(false)
   const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [contactDetailToggle, setContactDetailToggle] = useState(false)
 
-  const [contactDetailToggle, setContactDetailToggle] = useState(false);
-  
-  // Lee auth
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
-
   const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase().toString() === 'admin'
+  const isAdmin = role.toLowerCase() === 'admin'
 
-  // Cargar detalle de la conversación
   useEffect(() => {
     if (!convId) {
       setConversation(null)
@@ -57,12 +55,11 @@ const SupportPage: React.FC = () => {
       .catch(console.error)
   }
 
-  // Asignar o cerrar
   const handleAssignClick = () => {
-    if (!convId) return
+    if (!convId || !conversation) return
 
     if (isAdmin) {
-      setShowAssign(true)
+      dispatch(openAssignModal(conversation))
     } else {
       closeConversation(convId)
         .then(handleAfterAssign)
@@ -72,7 +69,6 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="support-layout">
-      
       <aside className="sidebar">
         <div className="inbox-header">
           <h3 className="inbox-title">Conversaciones</h3>
@@ -82,12 +78,11 @@ const SupportPage: React.FC = () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={e => setFilter(e.target.value as any)}
           >
-            
             <option value="all">Todos</option>
             <option value="bot">Bot</option>
             <option value="waiting">Pendientes</option>
             <option value="human">Asignadas</option>
-            {/* <option value="closed">Cerradas</option> */}
+            <option value="closed">Cerradas</option>
           </select>
         </div>
         <InboxList
@@ -100,61 +95,57 @@ const SupportPage: React.FC = () => {
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">Chat</h2>
-         <div className='btn-container'>
-           {convId && (
-           <>
-            <button className={`contact-detail-button ${!convId ? 'diabled' : 'active'}`}
-              onClick={() => setShowHistoryModal(true)}
-              disabled={!convId}
-              >
-              <RiChatHistoryFill size={16} />
-              {'Historial'}
-          </button>
+          <div className="btn-container">
+            {convId && (
+              <>
+                <button
+                  className={`contact-detail-button ${convId ? 'active' : 'disabled'}`}
+                  onClick={() => setShowHistoryModal(true)}
+                  disabled={!convId}
+                >
+                  <RiChatHistoryFill size={16} /> Historial
+                </button>
 
-               <button className={`contact-detail-button ${!convId ? 'diabled' : 'active'}`}
-              onClick={() => setContactDetailToggle(!contactDetailToggle)}
-              disabled={!convId}
-              >
-                <FaClipboard size={16}/>
-              {'Detalles'}
-              </button>
-           </>
+                <button
+                  className={`contact-detail-button ${convId ? 'active' : 'disabled'}`}
+                  onClick={() => setContactDetailToggle(t => !t)}
+                  disabled={!convId}
+                >
+                  <FaClipboard size={16} /> Detalles
+                </button>
+              </>
             )}
 
-           <button
-            className={`assign-button ${isAdmin? '' : 'button-cerrar'}`}
-            disabled={!convId}
-            onClick={handleAssignClick}
-          >
-            <FaUserAlt size={16}/>
-            {isAdmin ? 'Asignar' : 'Cerrar'}
-          </button>
-         </div>
+            <button
+              className={`assign-button ${isAdmin ? '' : 'button-cerrar'}`}
+              disabled={!convId}
+              onClick={handleAssignClick}
+            >
+              <FaUserAlt size={16} /> {isAdmin ? 'Asignar' : 'Cerrar'}
+            </button>
+          </div>
         </header>
+
         <ChatWindow conversationId={convId ?? undefined} userId={userId} />
       </main>
 
-     {contactDetailToggle && (
-      <div className='modal-overlay'>
+      {contactDetailToggle && (
+        <div className="modal-overlay">
           <aside className="info-sidebar">
-        <ContactDetail conversationId={convId ?? undefined} contactDetailToggle={contactDetailToggle} setContactDetailToggle={setContactDetailToggle} />
-      </aside>
-      </div>
+            <ContactDetail
+              conversationId={convId ?? undefined}
+              contactDetailToggle={contactDetailToggle}
+              setContactDetailToggle={setContactDetailToggle}
+            />
+          </aside>
+        </div>
       )}
 
-       <ConversationHistoryModal
+      <ConversationHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         conversationId={convId || 0}
       />
-
-       <AssignModal
-        conversation={conversation ?? undefined}
-        isOpen={showAssign}
-        onClose={() => setShowAssign(false)}
-        onAssigned={handleAfterAssign}
-      />
-
     </div>
   )
 }

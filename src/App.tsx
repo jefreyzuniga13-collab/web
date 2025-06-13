@@ -12,6 +12,8 @@ import { SupportRequestedPopup } from '@/Components/Common/Hub/SupportRequestedP
 import { AssignmentResponsePopup } from '@/Components/Common/Hub/AssignmentResponsePopup'
 import { AssignmentForcedPopup } from '@/Components/Common/Hub/AssignmentForcedPopup'
 import { ConversationAssignedPopup } from '@/Components/Common/Hub/ConversationAssignedPopup'
+import ContactValidatorHub from '@/Components/Common/Hub/ContactValidatorHub'
+
 import '@/App.css'
 import '@/i18n'
 import 'react-toastify/dist/ReactToastify.css'
@@ -48,6 +50,7 @@ export default function App() {
       <ConversationAssignedPopup/>
       <AssignmentResponsePopup />
       <AssignmentForcedPopup />
+      <ContactValidatorHub/>
 
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
       <ReLoginModal />

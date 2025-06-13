@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { notificationsConnection } from '@/Services/signalr'
+import type { ContactLog } from '@/Interfaces/User/UserInterfaces';
 
 type SupportRequestedPayload = { conversationId: number; clientName: string; requestedAt: string }
 type AssignmentResponsePayload = { conversationId: number; accepted: boolean; comment?: string; justification?: string }
@@ -13,6 +14,7 @@ export type NotificationEvent =
   | { type: 'AssignmentResponse'; payload: AssignmentResponsePayload }
   | { type: 'AssignmentForced'; payload: AssignmentForcedPayload }
   | { type: 'AssignmentForcedAdmin'; payload: AssignmentForcedAdminPayload }
+  | {type: "newContactValidation", payload: ContactLog}
 
 export function useNotificationsHub(): NotificationEvent | null {
   const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null)
@@ -36,11 +38,15 @@ export function useNotificationsHub(): NotificationEvent | null {
     const assignmentForcedAdminHandler = (payload: AssignmentForcedAdminPayload) =>
       setLastEvent({ type: 'AssignmentForcedAdmin', payload })
 
+    const newContactValidationHanlder = (payload: ContactLog)=>
+      setLastEvent({type: 'newContactValidation', payload})
+
     conn.on('SupportRequested', supportRequestedHandler)
     conn.on('ConversationAssigned', conversationAssignedHandler)
     conn.on('AssignmentResponse', assignmentResponseHandler)
     conn.on('AssignmentForced', assignmentForcedHandler)
     conn.on('AssignmentForcedAdmin', assignmentForcedAdminHandler)
+    conn.on('newContactValidation', newContactValidationHanlder)
 
     return () => {
       conn.off('SupportRequested', supportRequestedHandler)
@@ -48,7 +54,9 @@ export function useNotificationsHub(): NotificationEvent | null {
       conn.off('AssignmentResponse', assignmentResponseHandler)
       conn.off('AssignmentForced', assignmentForcedHandler)
       conn.off('AssignmentForcedAdmin', assignmentForcedAdminHandler)
+      conn.off("newContactValidation", newContactValidationHanlder)
     }
+    
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notificationsConnection])
 

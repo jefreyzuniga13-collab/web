@@ -1,40 +1,59 @@
-import React, { useState } from 'react'
+// src/Components/Hub/SupportRequestedPopup.tsx
+import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import type { RootState } from '@/Context'
+import type { RootState, AppDispatch } from '@/Context/'
 import { closePopup } from '@/Context/Slices/popupSlice'
+import { openAssignModal } from '@/Context/Slices/assignModalSlice'
 import { ModalPopup, type ModalAction } from '@/Components/Common/Hub/ModalPopup'
-import { forceAssign } from '@/Services/ConversationService'
-
+import { forceAssign, getConversation } from '@/Services/ConversationService'
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Hub/SupportRequestedPopup.css'
 
 export const AssignmentResponsePopup: React.FC = () => {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
+
+
   const { isOpen, event } = useSelector((state: RootState) => state.popup)
-  const [assignmentComment, setComment] = useState<string>('')
-  //const [error, setError] = useState<string>('')
 
-  // Solo renderizar si es el evento correcto
-  if (!isOpen || event?.type !== 'AssignmentResponse') return null
+  const payload = event?.payload as
+    | { conversationId: number; accepted: boolean; justification: string }
+    | undefined
+  const conversationId = payload?.conversationId ?? null
+  const accepted = payload?.accepted ?? false
+  const justification = payload?.justification ?? ''
 
-  const { conversationId, accepted, justification } = event.payload as { conversationId: number; accepted: boolean; justification: string }
+
+  const [assignmentComment, setAssignmentComment] = useState('')
+  const [conversation, setConversation] = useState<ConversationDto | null>(null)
+
+  useEffect(() => {
+    if (conversationId === null) {
+      setConversation(null)
+      return
+    }
+    getConversation(conversationId)
+      .then(res => setConversation(res.data.data))
+      .catch(console.error)
+  }, [conversationId])
+
+
+  if (!isOpen || event?.type !== 'AssignmentResponse') {
+    return null
+  }
 
   const handleSubmit = async (isAccepted: boolean) => {
-    // Validar justificación al rechazar
-    // if (!isAccepted && assignmentComment.trim() === '') {
-    //   setError('La justificación es obligatoria cuando se rechaza.')
-    //   return
-    // }
-
     try {
-    if(accepted)
-      {
-        console.log("Aceptado")
-      }else{
-           await forceAssign(conversationId, isAccepted, assignmentComment)
+      if (!accepted) {
+        await forceAssign(conversationId || 0, isAccepted, assignmentComment)
+        
+        if (!isAccepted && conversation) {
+          dispatch(openAssignModal(conversation))
+        }
       }
+    } catch (err) {
+      console.error(err)
+    } finally {
       dispatch(closePopup())
-    } catch {
-      //setError('Error al enviar la respuesta. Intenta de nuevo.')
     }
   }
 
@@ -45,7 +64,7 @@ export const AssignmentResponsePopup: React.FC = () => {
       variant: accepted ? 'primary' : 'danger',
     },
     {
-      label: 'Rechazar',
+      label: 'Reasignar',
       onClick: () => handleSubmit(false),
       variant: 'secondary',
     },
@@ -54,30 +73,25 @@ export const AssignmentResponsePopup: React.FC = () => {
   return (
     <ModalPopup
       title="Respuesta de asignación"
+      isOpen={isOpen}
+      onClose={() => dispatch(closePopup())}
       message={
         accepted ? (
           <p>El agente aceptó la asignación.</p>
         ) : (
           <>
-            <p>El agente va a rechazar la asignación, Motivo:</p>
-            <p className='assignmentResponse-justification'> {justification}</p>
-
+            <p>El agente va a rechazar la asignación. Motivo:</p>
+            <p className="assignmentResponse-justification">{justification}</p>
             <textarea
               className="modal-popup__textarea"
               placeholder="Motivo de forzar asignación..."
               value={assignmentComment}
-              onChange={e => {
-                setComment(e.target.value)
-                // if (e.target.value.trim()) setError('')
-              }}
+              onChange={e => setAssignmentComment(e.target.value)}
             />
-            {/* {error && <p className="modal-popup__error">{error}</p>} */}
           </>
         )
       }
       actions={actions}
-      isOpen={isOpen}
-      onClose={() => dispatch(closePopup())}
     />
   )
 }
