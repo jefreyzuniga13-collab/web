@@ -1,3 +1,5 @@
+// src/App.tsx
+import { useEffect } from 'react'
 import { ToastContainer } from 'react-toastify'
 import { AppRouter } from '@/Routers/AppRouter'
 import ReLoginModal from '@/Components/Common/ReLoginModal'
@@ -5,13 +7,12 @@ import OfflineBanner from '@/Components/Common/OfflineBanner'
 import { useOnline } from '@/Hooks/useOnline'
 import { SignalRProvider } from '@/Context/SignalRContext'
 import { useNotificationsHub } from '@/Hooks/Hub/useNotificationsHub'
-import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import { openPopup } from '@/Context/Slices/popupSlice'
+import { enqueuePopup } from '@/Context/Slices/popupSlice'
 import { SupportRequestedPopup } from '@/Components/Common/Hub/SupportRequestedPopup'
+import { ConversationAssignedPopup } from '@/Components/Common/Hub/ConversationAssignedPopup'
 import { AssignmentResponsePopup } from '@/Components/Common/Hub/AssignmentResponsePopup'
 import { AssignmentForcedPopup } from '@/Components/Common/Hub/AssignmentForcedPopup'
-import { ConversationAssignedPopup } from '@/Components/Common/Hub/ConversationAssignedPopup'
 import ContactValidatorHub from '@/Components/Common/Hub/ContactValidatorHub'
 
 import '@/App.css'
@@ -24,9 +25,8 @@ function NotificationsHandler() {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    console.log('🔔 SignalR event:', lastEvent)
     if (lastEvent) {
-      dispatch(openPopup(lastEvent))
+      dispatch(enqueuePopup(lastEvent))
     }
   }, [lastEvent, dispatch])
 
@@ -44,13 +44,12 @@ export default function App() {
 
   return (
     <SignalRProvider token={accessToken}>
-      
       <NotificationsHandler />
       <SupportRequestedPopup />
-      <ConversationAssignedPopup/>
+      <ConversationAssignedPopup />
       <AssignmentResponsePopup />
       <AssignmentForcedPopup />
-      <ContactValidatorHub/>
+      <ContactValidatorHub />
 
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
       <ReLoginModal />

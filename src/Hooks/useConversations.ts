@@ -48,13 +48,13 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
       if (!isAdmin && c.status === 'Bot') return false
 
       switch (filter) {
-        case 'all': return true
+        case 'all':     return c.status !== 'Closed'
         case 'new':
         case 'waiting': return c.status === 'Waiting'
-        case 'bot': return c.status === 'Bot'
-        case 'human': return c.status === 'Human'
-        case 'closed': return c.status === 'Closed'
-        default: return true
+        case 'bot':     return c.status === 'Bot'
+        case 'human':   return c.status === 'Human'
+        case 'closed':  return c.status === 'Closed'
+        default:        return true
       }
     },
     [filter, isAdmin]
@@ -94,7 +94,9 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
       if (exists) {
         next = ok
-          ? prev.map(c => c.conversationId === updated.conversationId ? updated : c)
+          ? prev.map(c =>
+              c.conversationId === updated.conversationId ? updated : c
+            )
           : prev.filter(c => c.conversationId !== updated.conversationId)
       } else {
         next = ok ? [...prev, updated] : prev
@@ -128,6 +130,7 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
   const reload = useCallback(async () => {
     setLoading(true)
     setError(undefined)
+
     try {
       const res = await getConversationsByRole()
       let convs = res.data.data.map(conv => ({
@@ -136,10 +139,8 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
         unreadCount: conv.unreadCount || 0,
       }))
 
-      const filterConv = convs.filter(e => e.status !== 'Closed')
-
       convs = convs.filter(matchesFilter)
-      setConversations(sortByActivity(filterConv))
+      setConversations(sortByActivity(convs))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)

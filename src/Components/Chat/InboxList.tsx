@@ -11,11 +11,10 @@ interface Props {
 }
 
 const formatDuration = (ms: number): string => {
-  const totalSeconds = Math.floor(ms / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  return `${hours}h ${minutes}m ${seconds}s`
+  const totalMinutes = Math.floor(ms / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
@@ -78,10 +77,6 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
           const statusText = getStatusText(c.status)
           const hasUnread = (c.unreadCount ?? 0) > 0
 
-          console.log("Estado: ", statusText);
-          console.log("assignedAt: ", c.assignedAt);
-          console.log("requestedAgentAt: ", c.requestedAgentAt);
-          
           let timeSinceRequest = ''
           if (!c.assignedAt && c.requestedAgentAt) {
             const diff = now - new Date(c.requestedAgentAt).getTime()
@@ -98,7 +93,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
           }
 
           let previewText = `mensajes: ${c.totalMessages}`
-          if (c.requestedAgentAt) {
+          if (!c.assignedAt && c.requestedAgentAt) {
             previewText += ` · Tiempo desde solicitud: ${timeSinceRequest}`
           }
           if (c.assignedAt && timeToFirstResponse) {

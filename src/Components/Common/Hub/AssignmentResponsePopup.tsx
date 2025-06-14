@@ -1,8 +1,8 @@
-// src/Components/Hub/SupportRequestedPopup.tsx
+// src/Components/Common/Hub/AssignmentResponsePopup.tsx
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import type { RootState, AppDispatch } from '@/Context/'
-import { closePopup } from '@/Context/Slices/popupSlice'
+import type { RootState, AppDispatch } from '@/Context'
+import { dequeuePopup } from '@/Context/Slices/popupSlice'
 import { openAssignModal } from '@/Context/Slices/assignModalSlice'
 import { ModalPopup, type ModalAction } from '@/Components/Common/Hub/ModalPopup'
 import { forceAssign, getConversation } from '@/Services/ConversationService'
@@ -11,41 +11,43 @@ import '@/Styles/Hub/SupportRequestedPopup.css'
 
 export const AssignmentResponsePopup: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
-
-
-  const { isOpen, event } = useSelector((state: RootState) => state.popup)
-
-  const payload = event?.payload as
-    | { conversationId: number; accepted: boolean; justification: string }
-    | undefined
-  const conversationId = payload?.conversationId ?? null
-  const accepted = payload?.accepted ?? false
-  const justification = payload?.justification ?? ''
-
+  const { queue } = useSelector((state: RootState) => state.popup)
+  const current = queue[0]
 
   const [assignmentComment, setAssignmentComment] = useState('')
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
 
   useEffect(() => {
-    if (conversationId === null) {
+    if (!current || current.type !== 'AssignmentResponse') {
       setConversation(null)
       return
+    }
+    const { conversationId } = current.payload as {
+      conversationId: number
+      accepted: boolean
+      justification: string
     }
     getConversation(conversationId)
       .then(res => setConversation(res.data.data))
       .catch(console.error)
-  }, [conversationId])
+  }, [current])
 
+  if (!current || current.type !== 'AssignmentResponse') return null
 
-  if (!isOpen || event?.type !== 'AssignmentResponse') {
-    return null
+  const { conversationId, accepted, justification } = current.payload as {
+    conversationId: number
+    accepted: boolean
+    justification: string
+  }
+
+  const handleClose = () => {
+    dispatch(dequeuePopup())
   }
 
   const handleSubmit = async (isAccepted: boolean) => {
     try {
       if (!accepted) {
-        await forceAssign(conversationId || 0, isAccepted, assignmentComment)
-        
+        await forceAssign(conversationId, isAccepted, assignmentComment)
         if (!isAccepted && conversation) {
           dispatch(openAssignModal(conversation))
         }
@@ -53,7 +55,7 @@ export const AssignmentResponsePopup: React.FC = () => {
     } catch (err) {
       console.error(err)
     } finally {
-      dispatch(closePopup())
+      handleClose()
     }
   }
 
@@ -73,8 +75,8 @@ export const AssignmentResponsePopup: React.FC = () => {
   return (
     <ModalPopup
       title="Respuesta de asignación"
-      isOpen={isOpen}
-      onClose={() => dispatch(closePopup())}
+      isOpen={true}
+      onClose={handleClose}
       message={
         accepted ? (
           <p>El agente aceptó la asignación.</p>

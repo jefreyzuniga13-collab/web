@@ -2,29 +2,28 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { NotificationEvent } from '@/Hooks/Hub/useNotificationsHub'
 
 interface PopupState {
-  isOpen: boolean
-  event: NotificationEvent | null
+  /** Cola de eventos pendientes de mostrar */
+  queue: NotificationEvent[]
 }
 
 const initialState: PopupState = {
-  isOpen: false,
-  event: null
+  queue: []
 }
 
 const popupSlice = createSlice({
   name: 'popup',
   initialState,
   reducers: {
-    openPopup(state, action: PayloadAction<NotificationEvent>) {
-      state.isOpen = true
-      state.event = action.payload
+    /** Añade un nuevo evento a la cola */
+    enqueuePopup(state, action: PayloadAction<NotificationEvent>) {
+      state.queue.push(action.payload)
     },
-    closePopup(state) {
-      state.isOpen = false
-      state.event = null
+    /** Elimina el evento ya mostrado de la cola */
+    dequeuePopup(state) {
+      state.queue.shift()
     }
   }
 })
 
-export const { openPopup, closePopup } = popupSlice.actions
-export default popupSlice.reducer;
+export const { enqueuePopup, dequeuePopup } = popupSlice.actions
+export default popupSlice.reducer
