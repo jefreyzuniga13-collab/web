@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useConversations } from '@/Hooks/useConversations'
 import '@/Styles/Chat/InboxList.css'
 import { MessageSquareOff } from 'lucide-react'
@@ -11,26 +11,25 @@ interface Props {
 }
 
 const formatDuration = (ms: number): string => {
-  const totalMinutes = Math.floor(ms / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
+  const totalSeconds = Math.floor(ms / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${hours}h ${minutes}m ${seconds}s`
 }
 
-export const InboxList: React.FC<Props> = ({
-  selectedId,
-  onSelect,
-  filter = 'all',
-}) => {
+export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
   const { conversations } = useConversations(filter)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
-    return new Date(iso).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
   const getStatusClass = (status: string) => {
@@ -44,18 +43,12 @@ export const InboxList: React.FC<Props> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'New':
-        return 'Nuevo'
-      case 'Bot':
-        return 'Bot'
-      case 'Waiting':
-        return 'Pendiente'
-      case 'Human':
-        return 'Humano'
-      case 'Closed':
-        return 'Cerrado'
-      default:
-        return status
+      case 'New': return 'Nuevo'
+      case 'Bot': return 'Bot'
+      case 'Waiting': return 'Pendiente'
+      case 'Human': return 'Humano'
+      case 'Closed': return 'Cerrado'
+      default: return status
     }
   }
 
@@ -85,32 +78,30 @@ export const InboxList: React.FC<Props> = ({
           const statusText = getStatusText(c.status)
           const hasUnread = (c.unreadCount ?? 0) > 0
 
-          // 1) Tiempo desde solicitud de agente hasta ahora (si no está asignado)
+          console.log("Estado: ", statusText);
+          console.log("assignedAt: ", c.assignedAt);
+          console.log("requestedAgentAt: ", c.requestedAgentAt);
+          
           let timeSinceRequest = ''
-          if (
-            (c.status === 'Waiting' || c.status === 'New')
-          ) {
-            const diff = new  Date().getTime() - new Date(c.agentRequestAt || new Date()).getTime()
+          if (!c.assignedAt && c.requestedAgentAt) {
+            const diff = now - new Date(c.requestedAgentAt).getTime()
             timeSinceRequest = formatDuration(diff)
           }
 
-          // 2) Tiempo desde asignación hasta primer mensaje del agente
           let timeToFirstResponse = ''
-          if (c.status === 'Human' && c.assignedAt) {
-            const assignedTs = new Date(c.assignedAt).getTime()
-            const firstMsgTs = c.agentFirstMessageAt
-              ? new Date(c.agentFirstMessageAt).getTime()
-              : Date.now()
-            const diff = firstMsgTs - assignedTs
+          if (c.assignedAt && !c.agentFirstMessageAt) {
+            const diff = now - new Date(c.assignedAt).getTime()
+            timeToFirstResponse = formatDuration(diff)
+          } else if (c.assignedAt && c.agentFirstMessageAt) {
+            const diff = new Date(c.agentFirstMessageAt).getTime() - new Date(c.assignedAt).getTime()
             timeToFirstResponse = formatDuration(diff)
           }
 
-          // Construimos el texto de previsualización
           let previewText = `mensajes: ${c.totalMessages}`
-          if (timeSinceRequest) {
+          if (c.requestedAgentAt) {
             previewText += ` · Tiempo desde solicitud: ${timeSinceRequest}`
           }
-          if (timeToFirstResponse) {
+          if (c.assignedAt && timeToFirstResponse) {
             previewText += ` · Tiempo hasta 1ª respuesta: ${timeToFirstResponse}`
           }
 
@@ -122,15 +113,11 @@ export const InboxList: React.FC<Props> = ({
               aria-pressed={isSelected}
               onClick={() => onSelect(c.conversationId)}
               onKeyDown={e => e.key === 'Enter' && onSelect(c.conversationId)}
-              className={`inbox-list__item ${
-                isSelected ? 'inbox-list__item--selected' : ''
-              }`}
+              className={`inbox-list__item ${isSelected ? 'inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
                 <div className="inbox-list__avatar">
-                  {(c.clientContactName || 'U')
-                    .charAt(0)
-                    .toUpperCase()}
+                  {(c.clientContactName || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
@@ -148,9 +135,7 @@ export const InboxList: React.FC<Props> = ({
                 </div>
               </div>
               <div className="inbox-list__bottom">
-                <span
-                  className={`inbox-list__status inbox-list__status--${statusClass}`}
-                >
+                <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
                   {statusText}
                 </span>
                 {hasUnread && (

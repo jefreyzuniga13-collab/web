@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import {jwtDecode} from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import { getConversationsByRole } from '@/Services/ConversationService'
 import { useSignalR } from '@/Context/SignalRContext'
 import type {
@@ -21,15 +21,11 @@ export interface UseConversationsResult {
   reload: () => void
 }
 
-export function useConversations(
-  filter: Filter = 'all'
-): UseConversationsResult {
-  // -- detectamos rol desde el JWT --
+export function useConversations(filter: Filter = 'all'): UseConversationsResult {
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
   const { role } = jwtDecode<JwtPayload>(accessToken)
-  console.log("Roles", role);
-  
+
   const isAdmin = role.toLowerCase() === 'admin'
 
   const [conversations, setConversations] = useState<ConversationDto[]>([])
@@ -47,26 +43,23 @@ export function useConversations(
     offNewHumanRequest,
   } = useSignalR()
 
-  // decide si entra según filtro y rol
   const matchesFilter = useCallback(
     (c: ConversationDto) => {
-      // soporte NO ve bots
       if (!isAdmin && c.status === 'Bot') return false
 
       switch (filter) {
-        case 'all':     return true
+        case 'all': return true
         case 'new':
         case 'waiting': return c.status === 'Waiting'
-        case 'bot':     return c.status === 'Bot'
-        case 'human':   return c.status === 'Human'
-        // case 'closed':  return c.status === 'Closed'
-        default:        return true
+        case 'bot': return c.status === 'Bot'
+        case 'human': return c.status === 'Human'
+        case 'closed': return c.status === 'Closed'
+        default: return true
       }
     },
     [filter, isAdmin]
   )
 
-  // util sorting
   const sortByActivity = (list: ConversationDto[]) =>
     list.sort(
       (a, b) =>
@@ -74,7 +67,6 @@ export function useConversations(
         new Date(a.lastActivity || a.createdAt).getTime()
     )
 
-  // 1) chat humano solicitado → actualiza estado
   const handleHumanRequest = useCallback(
     (payload: { conversationId: number }) => {
       setConversations(prev =>
@@ -88,31 +80,30 @@ export function useConversations(
     []
   )
 
-  // 2) nueva conversación → solo admins reciben este evento
   const handleNewConvo = useCallback((newConvo: ConversationDto) => {
     if (!matchesFilter(newConvo)) return
-    setConversations(prev =>
-      sortByActivity([newConvo, ...prev])
-    )
+    setConversations(prev => sortByActivity([newConvo, ...prev]))
   }, [matchesFilter])
 
-  // 3) conversación actualizada → insert/reemplaza/remueve + sort
   const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
     setConversations(prev => {
       const exists = prev.some(c => c.conversationId === updated.conversationId)
       const ok = matchesFilter(updated)
-      let next = exists
-        ? prev.map(c => c.conversationId === updated.conversationId ? updated : c)
-        : ok ? [updated, ...prev] : prev
 
-      if (!ok) {
-        next = next.filter(c => c.conversationId !== updated.conversationId)
+      let next: ConversationDto[]
+
+      if (exists) {
+        next = ok
+          ? prev.map(c => c.conversationId === updated.conversationId ? updated : c)
+          : prev.filter(c => c.conversationId !== updated.conversationId)
+      } else {
+        next = ok ? [...prev, updated] : prev
       }
+
       return sortByActivity(next)
     })
   }, [matchesFilter])
 
-  // 4) nuevo mensaje → bump counters + lastActivity + sort
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
       const msg = payload.message
@@ -134,7 +125,6 @@ export function useConversations(
     []
   )
 
-  // 5) carga inicial
   const reload = useCallback(async () => {
     setLoading(true)
     setError(undefined)
@@ -145,10 +135,9 @@ export function useConversations(
         lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
         unreadCount: conv.unreadCount || 0,
       }))
-      
+
       const filterConv = convs.filter(e => e.status !== 'Closed')
 
-      // aplicamos filtro + rol
       convs = convs.filter(matchesFilter)
       setConversations(sortByActivity(filterConv))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,14 +149,13 @@ export function useConversations(
     }
   }, [matchesFilter])
 
-  // suscripciones SignalR
   useEffect(() => {
     reload()
 
-    // admin solo recibe creación
     if (isAdmin) {
       onConversationCreated(handleNewConvo)
     }
+
     onConversationUpdated(handleUpdatedConvo)
     onNewMessage(handleNewMessage)
     onNewHumanRequest(handleHumanRequest)
