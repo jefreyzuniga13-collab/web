@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef, type ChangeEvent } from 'react'
-import { Send, Paperclip, Download, CheckCheck, Check, MessageSquareMore } from 'lucide-react'
-import type { MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
+import React, { useEffect } from 'react'
+import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
-import useMessages from '@/Hooks/useMessages'
-import { sendMedia, sendText } from '@/Services/MessageService'
+import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
+//import { IoMdResize } from 'react-icons/io'
 
 interface Props {
   conversationId?: number
@@ -11,133 +10,42 @@ interface Props {
 }
 
 export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
-  const messages = useMessages(conversationId)
-  const [text, setText] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [sending, setSending] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const {
+    setConversationId,
+    setUserId,
+    messages,
+    text,
+    setText,
+    file,
+    setFile,
+    sending,
+    handleSend,
+    bottomRef,
+    fileInputRef,
+    handleFileChange,
+    handlePaste,
+    handleKeyPress,
+    handleDownload,
+    getStatusIcon,
+    getMessageClassName,
+    getMessagePosition,
+    getFileIcon,
+    ismaximize,
+    previewImageUrl,
+    openImagePreview,
+    closeImagePreview,
+  } = useChatWindow()
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    setConversationId(Number(conversationId))
+    setUserId(Number(userId))
 
-  // Maneja cambios desde el input type="file"
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (f) setFile(f)
-  }
-
-  // Maneja el pegado desde el portapapeles dentro del textarea
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    // Si ya hay un archivo en estado, no hacemos nada
-    if (file) return
-
-    const clipboardItems = Array.from(e.clipboardData.items)
-    for (const item of clipboardItems) {
-      // Solo nos interesan elementos que sean archivos
-      if (item.kind === 'file') {
-        const pastedFile = item.getAsFile()
-        if (pastedFile) {
-          e.preventDefault() // evitamos que el browser pegue texto extra
-          setFile(pastedFile)
-          // también agregar texto en el textarea, concatenar:
-          // setText(prev => prev + '\n[Archivo adjunto: ' + pastedFile.name + ']')
-          break
-        }
-      }
+    return () => {
+      setConversationId(0)
+      setUserId(0)
     }
-  }
-
- const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
-
-  const handleSend = async () => {
-    if (!conversationId || sending) return
-    setSending(true)
-    try {
-      if (file) {
-        // Si hay un archivo (ya sea adjuntado via input o pegado), lo enviamos
-        await sendMedia(conversationId, file, text.trim() || undefined)
-        setFile(null)
-        setText('')
-        if (fileInputRef.current) fileInputRef.current.value = ''
-      } else if (text.trim()) {
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content: text.trim(),
-          messageType: 'Text'
-        })
-        setText('')
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setSending(false)
-    }
-  }
-
-  // const handleDownload = async (mediaUrl: string, fileName: string) => {
-  //   try {
-  //     const response = await fetch(mediaUrl)
-  //     const blob = await response.blob()
-  //     const url = window.URL.createObjectURL(blob)
-  //     const link = document.createElement('a')
-  //     link.href = url
-  //     link.download = fileName || 'archivo'
-  //     document.body.appendChild(link)
-  //     link.click()
-  //     document.body.removeChild(link)
-  //     window.URL.revokeObjectURL(url)
-  //   } catch (error) {
-  //     console.error('Error descargando archivo:', error)
-  //   }
-  // }
-
-  const getStatusIcon = (m: MessageDto, isOut: boolean) => {
-    if (!isOut) return null
-    if (m.readAt)
-      return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--read" />
-    if (m.deliveredAt)
-      return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--delivered" />
-    if (m.status === 'Sent')
-      return <Check size={14} className="chat-window__message-status chat-window__message-status--sent" />
-    return null
-  }
-
-  const getMessageClassName = (m: MessageDto) => {
-    if (m.senderContactId) {
-      return 'chat-window__message chat-window__message--incoming'
-    } else if (m.senderUserId && m.senderUserId !== userId) {
-      return 'chat-window__message chat-window__message--agent'
-    } else {
-      return 'chat-window__message chat-window__message--outgoing'
-    }
-  }
-
-  const getMessagePosition = (m: MessageDto) => {
-    if (m.senderUserId === userId) {
-      return 'chat-window__message-group chat-window__message-group--outgoing'
-    } else {
-      return 'chat-window__message-group chat-window__message-group--incoming'
-    }
-  }
-
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return '🖼️'
-    if (mimeType.startsWith('video/')) return '🎥'
-    if (mimeType.startsWith('audio/')) return '🎵'
-    if (mimeType.includes('pdf')) return '📄'
-    if (mimeType.includes('word') || mimeType.includes('document')) return '📝'
-    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊'
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📽️'
-    return '📎'
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId])
 
   if (!conversationId) {
     return (
@@ -177,18 +85,11 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
                     <div className="chat-window__media">
-                      {/* Imágenes y Multimedia */}
                       {(m.attachments[0].mimeType?.startsWith('image/') ||
                         m.attachments[0].mimeType === 'image/webp') && (
                         <div className="chat-window__media-image">
                           <div className="chat-window__image-container">
-                            <img
-                              src={m.attachments[0].mediaUrl}
-                              alt={m.attachments[0].fileName || 'Imagen'}
-                              className="chat-window__image"
-                              loading="lazy"
-                            />
-                            {/* <button
+                            <button
                               className="chat-window__download-btn"
                               onClick={() =>
                                 handleDownload(m.attachments![0].mediaUrl!, m.attachments![0].fileName || 'imagen')
@@ -196,14 +97,30 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               aria-label="Descargar imagen"
                             >
                               <Download size={16} />
-                            </button> */}
+                            </button>
+                            <img
+                              src={m.attachments[0].mediaUrl}
+                              alt={m.attachments[0].fileName || 'Imagen'}
+                              className="chat-window__image"
+                              loading="lazy"
+                              onClick={() => openImagePreview(m.attachments[0].mediaUrl!)}
+                            />
+                            {/* <div className="chat-window-container">
+                              <button
+                                className={`chat-window__maximize-btn ${ismaximize ? 'maximize' : ''}`}
+                                onClick={() => openImagePreview(m.attachments[0].mediaUrl!)}
+                                aria-label="maximizar"
+                              >
+                                <IoMdResize size={18} />
+                              </button>
+                            </div> */}
                           </div>
                         </div>
                       )}
 
                       {m.attachments[0].mimeType?.startsWith('video/') && (
                         <div className="chat-window__media-video">
-                          <video controls className="chat-window__video" src={m.attachments[0].mediaUrl} preload="metadata">
+                          <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
                             Tu navegador no soporta el elemento video.
                           </video>
                         </div>
@@ -215,12 +132,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                             <div className="chat-window__audio-icon">🎵</div>
                             <div className="chat-window__audio-info">
                               <div className="chat-window__audio-name">{m.attachments[0].fileName || 'Audio'}</div>
-                              <audio
-                                controls
-                                className="chat-window__audio-player"
-                                src={m.attachments[0].mediaUrl}
-                                preload="metadata"
-                              >
+                              <audio controls className="chat-window__audio-player" src={m.attachments[0].mediaUrl}>
                                 Tu navegador no soporta el elemento audio.
                               </audio>
                             </div>
@@ -275,7 +187,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       </div>
 
       <div className="chat-window__composer">
-        {/* Ícono de adjuntar archivo tradicional */}
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
@@ -288,7 +199,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           disabled={!conversationId || sending}
         />
 
-        {/* Vista previa del archivo seleccionado */}
         {file && (
           <div className="chat-window__composer-file-preview">
             <span className="chat-window__composer-file-name">{file.name}</span>
@@ -309,7 +219,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyPress}
-            onPaste={handlePaste}  
+            onPaste={handlePaste}
             disabled={!conversationId || sending}
             rows={1}
           />
@@ -324,6 +234,13 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           <Send size={18} />
         </button>
       </div>
+
+      {/* Overlay para imagen maximizada */}
+      {ismaximize && previewImageUrl && (
+        <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
+          <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
+        </div>
+      )}
     </div>
   )
 }

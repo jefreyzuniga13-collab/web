@@ -128,8 +128,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
                   )}
                   <span className="inbox-list__preview">{previewText}</span>
                 </div>
-              </div>
-              <div className="inbox-list__bottom">
+                <div className="inbox-list__bottom">
                 <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
                   {statusText}
                 </span>
@@ -139,7 +138,8 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
                   </span>
                 )}
               </div>
-              {hasUnread && <div className="inbox-list__unread-indicator" />}
+              </div>
+              {/* {hasUnread && <div className="inbox-list__unread-indicator" />} */}
             </li>
           )
         })}

@@ -96,7 +96,7 @@ export async function createHubConnection(token: string) {
 
   notificationsConnection.on(
     'AssignmentResponse',
-    (payload: { conversationId: number; accepted: boolean; comment?: string }) => {
+    (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string }) => {
       window.dispatchEvent(new CustomEvent('AssignmentResponse', { detail: payload }))
     }
   )
@@ -240,12 +240,12 @@ export function offConversationAssigned(
 }
 
 export function onAssignmentResponse(
-  handler: (payload: { conversationId: number; accepted: boolean; comment?: string }) => void
+  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string }) => void
 ) {
   notificationsConnection?.on('AssignmentResponse', handler)
 }
 export function offAssignmentResponse(
-  handler: (payload: { conversationId: number; accepted: boolean; comment?: string }) => void
+  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string }) => void
 ) {
   notificationsConnection?.off('AssignmentResponse', handler)
 }

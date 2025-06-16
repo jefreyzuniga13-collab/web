@@ -41,3 +41,12 @@ export function sendMedia(
     }
   )
 }
+
+export async function DownloadMedia(
+  fileName: string
+){
+  const response = await api.get(`Media/${fileName}`, {
+        responseType: 'blob',
+      })
+      return response;
+}

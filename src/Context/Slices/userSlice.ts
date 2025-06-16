@@ -1,7 +1,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { userService } from '@/Services/User/UserService';
-import type { User, CreateUserRequest, UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
+import type { User, UpdateUserRequest } from '@/Interfaces/User/UserInterfaces';
 
 interface UserState {
   users: User[];
@@ -57,14 +57,16 @@ export const fetchUserById = createAsyncThunk(
 
 export const createUser = createAsyncThunk(
   'users/createUser',
-  async (userData: CreateUserRequest, { rejectWithValue }) => {
+  async (formData: FormData, thunkAPI) => {
     try {
-      return await userService.createUserAsync(userData);
+      const response = await userService.createUserAsync(formData);
+      return response;
     } catch (error) {
-      return rejectWithValue((error as Error).message);
+      return thunkAPI.rejectWithValue(error);
     }
   }
 );
+
 
 export const updateUser = createAsyncThunk(
   'users/updateUser',

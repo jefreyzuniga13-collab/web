@@ -34,6 +34,11 @@
   background-color: var(--border-secondary);
 }
 
+.chat-window-container{
+  display: flex;
+  justify-content: end;
+  gap: 2rem;
+}
 .chat-window__date-text {
   padding: 0 var(--space-md);
   font-size: var(--font-size-xs);
@@ -47,6 +52,33 @@
   flex-direction: column;
   max-width: 70%;
   animation: fadeInUp var(--transition-normal) ease-out;
+}
+
+.chat-window__image-container {
+  position: relative;
+  max-width: 200px;
+  cursor: zoom-in;
+  transition: all 0.3s ease;
+}
+
+.chat-window__image-container.maximize {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  max-width: 90vw;
+  max-height: 90vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  padding: 1rem;
+  border-radius: 12px;
+  cursor: zoom-out;
+}
+
+.chat-window__image-container img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
 }
 
 @keyframes fadeInUp {
@@ -193,10 +225,9 @@
   border-radius: var(--radius-md);
 }
 
+.chat-window__maximize-btn,
 .chat-window__download-btn {
   position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
   width: 3.2rem;
   height: 3.2rem;
   background-color: rgba(0, 0, 0, 0.7);
@@ -212,13 +243,46 @@
   backdrop-filter: blur(0.4rem);
 }
 
-.chat-window__image-container:hover .chat-window__download-btn {
+/* .chat-window__maximize-btn {
+  top: var(--space-sm);
+  left: var(--space-sm);
+} */
+
+.chat-window__download-btn {
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
+.chat-window__image-container:hover .chat-window__download-btn,
+.chat-window__image-container:hover .chat-window__maximize-btn {
   opacity: 1;
 }
 
-.chat-window__download-btn:hover {
+.chat-window__download-btn:hover,
+.chat-window__maximize-btn:hover {
   background-color: rgba(0, 0, 0, 0.9);
   transform: scale(1.1);
+}
+
+.chat-window__image-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.88);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+
+.chat-window__image-preview-full {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #000;
 }
 
 .chat-window__media-video {

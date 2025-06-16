@@ -318,6 +318,9 @@
 
 .user-detail__close-btn {
   min-width: 12rem;
+  background-color: var(--color-error);
+  color: var(--bg-primary);
+  font-size: var(--font-size-sm);
 }
 
 /* Responsive Design */

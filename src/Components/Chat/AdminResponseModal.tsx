@@ -24,7 +24,7 @@ const AdminResponseModal: React.FC<AdminResponseModalProps> = ({
     if (!targetAgentId || !justification.trim()) return
     setLoading(true)
     try {
-      await forceAssign(conversationId, true)
+      await forceAssign(conversationId, true, justification? justification : '')
       onClose()
     } catch (e) {
       console.error(e)

@@ -3,7 +3,6 @@ import type {
   ApiResponse,
   PaginatedUsers,
   User,
-  CreateUserRequest,
   UpdateUserRequest,
   UserHistoryItem,
   PresenceDto
@@ -28,10 +27,15 @@ class UserService {
     return data.data
   }
 
-  async createUserAsync(request: CreateUserRequest): Promise<User> {
-    const { data } = await api.post<ApiResponse<User>>('/Users', request)
-    return data.data
-  }
+async createUserAsync(formData: FormData): Promise<User> {
+  const { data } = await api.post<ApiResponse<User>>('/Users', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return data.data;
+}
+
 
   async updateUserAsync(userId: number, request: UpdateUserRequest): Promise<void> {
         console.log('Datos enviados a la API:', request)

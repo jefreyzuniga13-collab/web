@@ -26,6 +26,7 @@ const UserForm: React.FC<UserFormProps> = ({
 }) => {
   const { roles, loading: rolesLoading } = useRoles();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -116,17 +117,23 @@ const UserForm: React.FC<UserFormProps> = ({
       formData.roleIds.forEach(id => payload.append('roleIds', id.toString()));
       // if (selectedFile) payload.append('imageFile', selectedFile);
 
-     const submitData = {
-        ...formData,
-        companyId: formData.companyId,
-      };
+    //  const submitData = {
+    //     ...formData,
+    //     companyId: formData.companyId,
+    //   };
+    // if (isEditing) {
+    //     const dataToSubmit = { ...submitData };
+    //     //delete dataToSubmit.password;
+    //     onSubmit(dataToSubmit);
+    //   } else {
+    //     onSubmit(submitData);
+    //   }
+
     if (isEditing) {
-        const dataToSubmit = { ...submitData };
-        //delete dataToSubmit.password;
-        onSubmit(dataToSubmit);
-      } else {
-        onSubmit(submitData);
-      }
+      onSubmit(payload); 
+    } else {
+      onSubmit(payload); 
+    }
   };
 
   const roleOptions = roles.map(r => ({ value: r.roleId, label: r.roleName }));

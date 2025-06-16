@@ -4,7 +4,7 @@ import { notificationsConnection } from '@/Services/signalr'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces';
 
 type SupportRequestedPayload = { conversationId: number; clientName: string; requestedAt: string }
-type AssignmentResponsePayload = { conversationId: number; accepted: boolean; comment?: string; justification?: string }
+type AssignmentResponsePayload = { conversationId: number; AssignedAgentName?: string, accepted: boolean; comment?: string; justification?: string }
 type AssignmentForcedPayload = { conversationId: number; assignmentComment: string }
 type AssignmentForcedAdminPayload = { conversationId: number; targetAgentId: number; comment: string }
 

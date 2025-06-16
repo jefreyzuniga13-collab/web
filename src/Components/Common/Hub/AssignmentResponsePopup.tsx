@@ -1,4 +1,3 @@
-// src/Components/Common/Hub/AssignmentResponsePopup.tsx
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '@/Context'
@@ -34,11 +33,13 @@ export const AssignmentResponsePopup: React.FC = () => {
 
   if (!current || current.type !== 'AssignmentResponse') return null
 
-  const { conversationId, accepted, justification } = current.payload as {
+  const { conversationId, assignedAgentName, accepted, justification } = current.payload as {
     conversationId: number
+    assignedAgentName: string;
     accepted: boolean
     justification: string
   }
+
 
   const handleClose = () => {
     dispatch(dequeuePopup())
@@ -82,7 +83,7 @@ export const AssignmentResponsePopup: React.FC = () => {
           <p>El agente aceptó la asignación.</p>
         ) : (
           <>
-            <p>El agente va a rechazar la asignación. Motivo:</p>
+            <p>El agente {assignedAgentName} va a rechazar la asignación. Motivo:</p>
             <p className="assignmentResponse-justification">{justification}</p>
             <textarea
               className="modal-popup__textarea"

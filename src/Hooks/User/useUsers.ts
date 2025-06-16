@@ -12,8 +12,9 @@ import {
   fetchCompanies,
   clearCurrentUser
 } from '@/Context/Slices/userSlice';
+
 import type { AppDispatch, RootState } from '@/Context';
-import type { CreateUserRequest, UpdateUserRequest, User } from '@/Interfaces/User/UserInterfaces';
+import type { UpdateUserRequest, User } from '@/Interfaces/User/UserInterfaces';
 
 export const useUsers = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -76,8 +77,8 @@ export const useUsers = () => {
     itemsPerPage: pagination.pageSize
   };
 
-  const handleCreateUser = (userData: CreateUserRequest) => {
-    dispatch(createUser(userData))
+ const handleCreateUser = (formData: FormData) => {
+  dispatch(createUser(formData))
       .unwrap()
       .then(() => {
         toast.success('Usuario creado exitosamente');
