@@ -19,6 +19,7 @@ import '@/App.css'
 import '@/i18n'
 import 'react-toastify/dist/ReactToastify.css'
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
+import { useForceLogoutListener } from '@/Hooks/Auth/useForceLogoutListener'
 
 function NotificationsHandler() {
   const lastEvent = useNotificationsHub()
@@ -37,11 +38,13 @@ export default function App() {
   const online = useOnline()
   const authRaw = localStorage.getItem('auth') ?? '{}'
   const { accessToken } = JSON.parse(authRaw) as AuthData
-
+  
+  useForceLogoutListener();
+ 
   if (!accessToken) {
     return <AppRouter />
   }
-
+  
   return (
     <SignalRProvider token={accessToken}>
       <NotificationsHandler />

@@ -29,7 +29,7 @@ const SupportPage: React.FC = () => {
   const dispatch = useDispatch()
   const [convId, setConvId] = useState<number | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed'>('all')
+  const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed' | 'incomplete'>('all')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [contactDetailToggle, setContactDetailToggle] = useState(false)
 
@@ -83,6 +83,7 @@ const SupportPage: React.FC = () => {
             <option value="waiting">Pendientes</option>
             <option value="human">Asignadas</option>
             <option value="closed">Cerradas</option>
+            <option value="incomplete">Incompletas</option>
           </select>
         </div>
         <InboxList

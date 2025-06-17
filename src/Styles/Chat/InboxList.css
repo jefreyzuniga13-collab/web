@@ -182,6 +182,10 @@
   color: var(--color-gray-600);
 }
 
+inbox-list__status--incomplete{
+  background-color: var(--color-error);
+}
+
 .inbox-list__status--default {
   background-color: var(--color-gray-200);
   color: var(--color-gray-600);

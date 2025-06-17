@@ -49,6 +49,8 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
+      localStorage.setItem("forceLogout", Date.now().toString());
+
       const creds = action.payload
       state.accessToken  = creds.accessToken
       state.refreshToken = creds.refreshToken
@@ -56,6 +58,7 @@ const authSlice = createSlice({
       state.expiresAt    = creds.expiresAt
 
       localStorage.setItem('auth', JSON.stringify(creds))
+
     },
     logout(state) {
       state.accessToken  = null

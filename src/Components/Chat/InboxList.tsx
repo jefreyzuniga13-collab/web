@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useConversations } from '@/Hooks/useConversations'
-import '@/Styles/Chat/InboxList.css'
 import { MessageSquareOff } from 'lucide-react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-
+import '@/Styles/Chat/InboxList.css'
 interface Props {
   selectedId?: number
   onSelect: (id: number) => void
-  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed'
+  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
 }
 
 const formatDuration = (ms: number): string => {
@@ -37,6 +36,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
     if (s.includes('bot')) return 'bot'
     if (s.includes('waiting')) return 'waiting'
     if (s.includes('closed')) return 'closed'
+    if (s.includes('incomplete')) return 'incomplete'
     return 'default'
   }
 
@@ -47,6 +47,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
       case 'Waiting': return 'Pendiente'
       case 'Human': return 'Humano'
       case 'Closed': return 'Cerrado'
+      case 'Incomplete': return 'Imcompleta'
       default: return status
     }
   }
@@ -92,7 +93,8 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
             timeToFirstResponse = formatDuration(diff)
           }
 
-          let previewText = `mensajes: ${c.totalMessages}`
+          let previewText = `Cliente últ. msj:: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
+          
           if (!c.assignedAt && c.requestedAgentAt) {
             previewText += ` · Tiempo desde solicitud: ${timeSinceRequest}`
           }

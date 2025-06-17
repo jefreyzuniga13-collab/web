@@ -9,7 +9,7 @@ export type MessageType =
   | 'Bot'
 
 export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed'
-export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed'
+export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete'
 export type NotificationType = 'NewContact' | 'HumanSupport' | 'ConversationAssigned' | 'MessageReceived'
 
 export interface ConversationDto {
@@ -29,12 +29,15 @@ export interface ConversationDto {
   assignedAt?: string
   firstResponseAt?: string
   agentRequestAt?: string
+  clientFirstMessage: string;
   clientLastMessageAt: string;
   agentFirstMessageAt: string;
   agentLastMessageAt: string;
   requestedAgentAt: string
   updatedAt?: string
   closedAt?: string
+  IncompletedAt?: string;
+  clientLastMessage: string;
   isArchived: boolean
   totalMessages: number
   lastActivity: string

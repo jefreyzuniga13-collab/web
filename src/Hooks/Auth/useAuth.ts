@@ -70,8 +70,7 @@ export function useAuth() {
         onSuccess: (data: AuthData) => {
           dispatch(setCredentials(data))
           navigate('/chat')
-
-          navigate(0);
+          navigate(0);// Rvisar esta recarga
         },
         successKey: 'login.notifications.loginSuccess',
         errorKey: 'login.errors.loginFailed'

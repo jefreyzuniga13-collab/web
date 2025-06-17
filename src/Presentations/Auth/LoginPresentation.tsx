@@ -7,6 +7,7 @@ import Button from "@/Components/Common/Button";
 // import LanguageSwitcher from "@/Components/Common/LanguageSwitcher";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
+import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
 
 export default function LoginPresentation() {
   const { t } = useTranslation();
@@ -17,6 +18,9 @@ export default function LoginPresentation() {
     toggleShowPassword,
     canSubmit,
     formError,
+    showModal,
+    confirmLogin,
+    cancelLogin
   } = useLoginForm();
 
   return (
@@ -116,6 +120,13 @@ export default function LoginPresentation() {
         </section>
       </div>
       <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
+    
+      {showModal && (
+        <ActivationSesionModal
+          onAccept={confirmLogin}
+          onCancel={cancelLogin}
+        />
+      )}
     </div>
   );
 }

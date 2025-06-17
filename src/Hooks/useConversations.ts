@@ -8,7 +8,7 @@ import type {
   AttachmentDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
 
-export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human' | 'closed'
+export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human' | 'closed'| 'incomplete'
 
 interface JwtPayload {
   role: string
@@ -54,6 +54,7 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
         case 'bot':     return c.status === 'Bot'
         case 'human':   return c.status === 'Human'
         case 'closed':  return c.status === 'Closed'
+        case 'incomplete':  return c.status === 'Incomplete'
         default:        return true
       }
     },
