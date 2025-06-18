@@ -1,4 +1,4 @@
-// src/Pages/SupportPage.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { useDispatch } from 'react-redux'
@@ -9,8 +9,8 @@ import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryM
 import { getConversation, closeConversation } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { openAssignModal } from '@/Context/Slices/assignModalSlice'
+import { useConversations } from '@/Hooks/useConversations'
 import '@/Styles/Chat/SupportPage.css'
-
 import { RiChatHistoryFill } from 'react-icons/ri'
 import { FaUserAlt, FaClipboard } from 'react-icons/fa'
 
@@ -29,7 +29,8 @@ const SupportPage: React.FC = () => {
   const dispatch = useDispatch()
   const [convId, setConvId] = useState<number | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [filter, setFilter] = useState<'all' | 'waiting' | 'human' | 'closed' | 'incomplete'>('all')
+  const [filter, setFilter] = useState<'all' | 'bot' | 'waiting' | 'human'>('all')
+  const [filterInactiveConv, setFilterInactiveConv] = useState<'all' | 'closed' | 'incomplete'>('all')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [contactDetailToggle, setContactDetailToggle] = useState(false)
 
@@ -37,6 +38,11 @@ const SupportPage: React.FC = () => {
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
+
+  const {
+    conversations,            // activas (no cerradas)
+    conversationsHistory,     // cerradas o incompletas
+  } = useConversations(filter, filterInactiveConv)
 
   useEffect(() => {
     if (!convId) {
@@ -69,30 +75,53 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="support-layout">
+      {/* Conversaciones finalizadas */}
       <aside className="sidebar">
         <div className="inbox-header">
-          <h3 className="inbox-title">Conversaciones</h3>
+          <h3 className="inbox-title">Conversaciones finalizadas</h3>
+          <select
+            className="filter-dropdown"
+            value={filterInactiveConv}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onChange={e => setFilterInactiveConv(e.target.value as any)}
+          >
+            <option value="all">Todos</option>
+            <option value="incomplete">Incompletas</option>
+            <option value="closed">Cerradas</option>
+          </select>
+        </div>
+        <InboxList
+          selectedId={convId ?? undefined}
+          onSelect={setConvId}
+          filterInactiveConv={filterInactiveConv}
+          conversations={conversationsHistory}
+        />
+      </aside>
+
+      {/* Conversaciones activas */}
+      <aside className="sidebar">
+        <div className="inbox-header">
+          <h3 className="inbox-title">Conversaciones en curso</h3>
           <select
             className="filter-dropdown"
             value={filter}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={e => setFilter(e.target.value as any)}
           >
             <option value="all">Todos</option>
             <option value="bot">Bot</option>
             <option value="waiting">Pendientes</option>
             <option value="human">Asignadas</option>
-            <option value="closed">Cerradas</option>
-            <option value="incomplete">Incompletas</option>
           </select>
         </div>
         <InboxList
           selectedId={convId ?? undefined}
           onSelect={setConvId}
           filter={filter}
+          conversations={conversations}
         />
       </aside>
 
+      {/* Chat principal */}
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">Chat</h2>

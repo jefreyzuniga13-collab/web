@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { getConversationsByRole } from '@/Services/ConversationService'
@@ -8,7 +9,8 @@ import type {
   AttachmentDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
 
-export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human' | 'closed'| 'incomplete'
+export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human'
+export type filterInactiveConv = 'all' | 'closed' | 'incomplete'
 
 interface JwtPayload {
   role: string
@@ -16,19 +18,23 @@ interface JwtPayload {
 
 export interface UseConversationsResult {
   conversations: ConversationDto[]
+  conversationsHistory: ConversationDto[]
   loading: boolean
   error?: string
   reload: () => void
 }
 
-export function useConversations(filter: Filter = 'all'): UseConversationsResult {
+export function useConversations(
+  filter: Filter = 'all',
+  filterInactiveConv: filterInactiveConv = 'all'
+): UseConversationsResult {
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
   const { role } = jwtDecode<JwtPayload>(accessToken)
-
   const isAdmin = role.toLowerCase() === 'admin'
 
   const [conversations, setConversations] = useState<ConversationDto[]>([])
+  const [conversationsHistory, setConversationsHistory] = useState<ConversationDto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
 
@@ -46,19 +52,36 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
   const matchesFilter = useCallback(
     (c: ConversationDto) => {
       if (!isAdmin && c.status === 'Bot') return false
-
       switch (filter) {
-        case 'all':     return c.status !== 'Closed'
-        case 'new':
-        case 'waiting': return c.status === 'Waiting'
-        case 'bot':     return c.status === 'Bot'
-        case 'human':   return c.status === 'Human'
-        case 'closed':  return c.status === 'Closed'
-        case 'incomplete':  return c.status === 'Incomplete'
-        default:        return true
+        case 'all':
+          return c.status !== 'Closed' && c.status !== 'Incomplete'
+        case 'waiting':
+          return c.status === 'Waiting'
+        case 'bot':
+          return c.status === 'Bot'
+        case 'human':
+          return c.status === 'Human'
+        default:
+          return true
       }
     },
     [filter, isAdmin]
+  )
+
+  const matchesFilterHistory = useCallback(
+    (c: ConversationDto) => {
+      switch (filterInactiveConv) {
+        case 'all':
+          return c.status === 'Closed' || c.status === 'Incomplete'
+        case 'closed':
+          return c.status === 'Closed'
+        case 'incomplete':
+          return c.status === 'Incomplete'
+        default:
+          return false
+      }
+    },
+    [filterInactiveConv]
   )
 
   const sortByActivity = (list: ConversationDto[]) =>
@@ -81,31 +104,62 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     []
   )
 
-  const handleNewConvo = useCallback((newConvo: ConversationDto) => {
-    if (!matchesFilter(newConvo)) return
-    setConversations(prev => sortByActivity([newConvo, ...prev]))
-  }, [matchesFilter])
+  const handleNewConvo = useCallback(
+    (newConvo: ConversationDto) => {
+      const active = matchesFilter(newConvo)
+      const inactive = matchesFilterHistory(newConvo)
 
-  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
-    setConversations(prev => {
-      const exists = prev.some(c => c.conversationId === updated.conversationId)
-      const ok = matchesFilter(updated)
-
-      let next: ConversationDto[]
-
-      if (exists) {
-        next = ok
-          ? prev.map(c =>
-              c.conversationId === updated.conversationId ? updated : c
-            )
-          : prev.filter(c => c.conversationId !== updated.conversationId)
-      } else {
-        next = ok ? [...prev, updated] : prev
+      if (active) {
+        setConversations(prev => sortByActivity([newConvo, ...prev]))
+      } else if (inactive) {
+        setConversationsHistory(prev => sortByActivity([newConvo, ...prev]))
       }
+    },
+    [matchesFilter, matchesFilterHistory]
+  )
 
-      return sortByActivity(next)
-    })
-  }, [matchesFilter])
+  const handleUpdatedConvo = useCallback(
+    (updated: ConversationDto) => {
+      setConversations(prev => {
+        const exists = prev.some(c => c.conversationId === updated.conversationId)
+        const ok = matchesFilter(updated)
+
+        let next: ConversationDto[]
+
+        if (exists) {
+          next = ok
+            ? prev.map(c =>
+                c.conversationId === updated.conversationId ? updated : c
+              )
+            : prev.filter(c => c.conversationId !== updated.conversationId)
+        } else {
+          next = ok ? [...prev, updated] : prev
+        }
+
+        return sortByActivity(next)
+      })
+
+      setConversationsHistory(prev => {
+        const exists = prev.some(c => c.conversationId === updated.conversationId)
+        const ok = matchesFilterHistory(updated)
+
+        let next: ConversationDto[]
+
+        if (exists) {
+          next = ok
+            ? prev.map(c =>
+                c.conversationId === updated.conversationId ? updated : c
+              )
+            : prev.filter(c => c.conversationId !== updated.conversationId)
+        } else {
+          next = ok ? [...prev, updated] : prev
+        }
+
+        return sortByActivity(next)
+      })
+    },
+    [matchesFilter, matchesFilterHistory]
+  )
 
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
@@ -134,22 +188,23 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
     try {
       const res = await getConversationsByRole()
-      let convs = res.data.data.map(conv => ({
+      const convsData = res.data.data.map(conv => ({
         ...conv,
         lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
         unreadCount: conv.unreadCount || 0,
       }))
 
-      convs = convs.filter(matchesFilter)
+      const convs = convsData.filter(matchesFilter)
+      const convsHistory = convsData.filter(matchesFilterHistory)
+
       setConversations(sortByActivity(convs))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setConversationsHistory(sortByActivity(convsHistory))
     } catch (err: any) {
-      console.error(err)
       setError(err.message || 'Error cargando conversaciones')
     } finally {
       setLoading(false)
     }
-  }, [matchesFilter])
+  }, [matchesFilter, matchesFilterHistory])
 
   useEffect(() => {
     reload()
@@ -185,5 +240,5 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     offNewHumanRequest,
   ])
 
-  return { conversations, loading, error, reload }
+  return { conversations, conversationsHistory, loading, error, reload }
 }

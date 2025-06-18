@@ -77,8 +77,8 @@
 }
 
 .inbox-list__avatar {
-  width: 5rem;
-  height: 5rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -140,6 +140,11 @@
   max-width: 100%;
 }
 
+.inbox-list__container{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
 .inbox-list__bottom {
   display: flex;
   justify-content: space-between;
@@ -182,8 +187,9 @@
   color: var(--color-gray-600);
 }
 
-inbox-list__status--incomplete{
+.inbox-list__status--incomplete{
   background-color: var(--color-error);
+  color: var(--text-white);
 }
 
 .inbox-list__status--default {
@@ -241,8 +247,8 @@ inbox-list__status--incomplete{
   }
   
   .inbox-list__avatar {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 1rem;
+    height: 1rem;
     font-size: var(--font-size-base);
   }
   
@@ -269,8 +275,8 @@ inbox-list__status--incomplete{
   }
   
   .inbox-list__avatar {
-    width: 3rem;
-    height: 3rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 
@@ -294,8 +300,8 @@ inbox-list__status--incomplete{
   }
   
   .inbox-list__avatar {
-    width: 4rem;
-    height: 4rem;
+    width: 2rem;
+    height: 2rem;
   }
   
   .inbox-list__unread-indicator {
