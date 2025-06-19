@@ -19,6 +19,7 @@ const SystemParameterPage = lazy(() => import('@/Presentations/Setting/SystemPar
 const ProfilePage = lazy(() => import('@/Presentations/Setting/Profile'))
 const PrivacyPolicy = lazy(() => import('@/Presentations/Setting/PrivacyPolicy'))
 const VerifyNewContactPage = lazy(()=> import("@/Presentations/Setting/VerifyNewContactPage"))
+const OpeningHourPage = lazy(()=> import("@/Presentations/Setting/OpeningHourPage"))
 
 export function AppRouter() {
   return (
@@ -50,6 +51,7 @@ export function AppRouter() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="system-params" element={<SystemParameterPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="opening-hour" element={<OpeningHourPage />} />
             <Route path="verify-contact/:phone" element={<VerifyNewContactPage />} />
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>

@@ -38,7 +38,7 @@ async createUserAsync(formData: FormData): Promise<User> {
 
 
   async updateUserAsync(userId: number, request: UpdateUserRequest): Promise<void> {
-        console.log('Datos enviados a la API:', request)
+    console.log('Datos enviados a la API:', request)
     await api.put(`/Users/${userId}`, request)
   }
 

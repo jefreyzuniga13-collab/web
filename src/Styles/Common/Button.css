@@ -1,14 +1,15 @@
 .btn {
-    padding: 1rem 0.7rem;
+    padding: 1.5rem 2rem;
     border-radius: 0.5rem;
     font-weight: 600;
     cursor: pointer;
     transition: opacity 0.2s ease;
+    font-size: var(--font-size-sm);
     border: none;
   }
   .btn--primary {
-    background: linear-gradient(to right, var(--color-primary-start), var(--color-primary-end));
-    color: #fff;
+    background: var(--color-blue-primary);
+    color: var(--text-white);
   }
   .btn--primary:hover:not(:disabled) {
     opacity: var(--color-primary-hover-opacity);

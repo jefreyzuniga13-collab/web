@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@microsoft/signalr": "^8.0.7",
+    "@mui/material": "^7.1.2",
     "@react-input/mask": "^2.0.4",
     "@reduxjs/toolkit": "^2.8.0",
     "@types/node": "^22.15.14",

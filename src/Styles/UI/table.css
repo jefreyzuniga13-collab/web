@@ -4,6 +4,7 @@
   overflow: auto;
   border-radius: hsl(var(--radius));
   border: 1px solid hsl(var(--border));
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .table {
