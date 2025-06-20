@@ -11,11 +11,12 @@ import type { User } from "@/Interfaces/User/UserInterfaces";
 
 
 export interface Column<T> {
-  id: keyof T;
-  label: string;
-  minWidth?: number;
-  align?: 'right';
-  format?: (value: any) => string;
+  id: Extract<keyof T, string> | 'actions'
+  label: string
+  minWidth?: number
+  align?: 'left'|'right'|'center'
+  format?: (v:any)=>string
+  render?: (row: T)=>React.ReactNode
 }
 
 export interface Data {
@@ -36,19 +37,33 @@ export interface Props<T> {
   rows: T[];
 }
 
-export interface OpeningHourInterface{
-    id: number;
-    name: string;
-    description: string;
-    startTime: string;
-    endTime: string;
-    isHoliday: boolean;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
 
-    createdById: number;
-    updatedById: number;
-    createdBy: User;
-    updatedBy: User;
+export interface OpeningHourInterface {
+  id: number;
+  name: string;
+  description: string;
+  startTime: string;   // 'HH:mm'
+  endTime: string;     // 'HH:mm'
+  isHoliday: boolean;
+  isActive: boolean;
+  createdAt: string;   // ISO
+  updatedAt: string;   // ISO
+  createdById: number;
+  updatedById: number;
+  createdBy: User;
+  updatedBy: User;
 }
+
+/**
+ * Payload que envía el formulario (sin metadatos ni IDs).
+ */
+export type OpeningHourFormValues = Omit<
+  OpeningHourInterface,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'createdBy'
+  | 'updatedBy'
+  | 'createdById'
+  | 'updatedById'
+>;

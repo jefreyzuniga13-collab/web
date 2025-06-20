@@ -1,0 +1,49 @@
+.time-picker-field {
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Input base */
+.time-picker-field .MuiInputBase-root {
+  border-radius: 0.375rem;             
+  background-color: #ffffff;          
+  box-shadow: inset 0 0 0 1px #cccccc; 
+  transition: box-shadow 0.2s ease;
+}
+
+.time-picker-field .MuiInputBase-root:hover {
+  box-shadow: inset 0 0 0 1px #999999;
+}
+.time-picker-field .MuiInputBase-root.Mui-focused {
+  box-shadow: inset 0 0 0 2px #3f51b5; 
+}
+
+
+.time-picker-field .MuiInputBase-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.time-picker-field .MuiFormLabel-root {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 0.25rem;
+}
+
+.time-picker-field--disabled .MuiInputBase-root {
+  background-color: #f5f5f5;
+  box-shadow: none;
+  color: #999999;
+}
+
+
+.time-picker-field .Mui-error .MuiInputBase-root {
+  box-shadow: inset 0 0 0 1px #d32f2f;
+}
+.time-picker-field .MuiFormHelperText-root.Mui-error {
+  color: #d32f2f;
+  margin-top: 0.25rem;
+}

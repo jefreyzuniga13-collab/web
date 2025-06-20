@@ -1,0 +1,44 @@
+
+/* Bloques */
+.date-picker-field,
+.time-picker-field {
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Inputs */
+.date-picker-field .MuiInputBase-root,
+.time-picker-field .MuiInputBase-root {
+  border-radius: 0.375rem;       
+  background-color: #ffffff;     
+  box-shadow: inset 0 0 0 1px #cccccc;
+}
+
+
+.date-picker-field .MuiInputBase-input,
+.time-picker-field .MuiInputBase-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.date-picker-field .MuiFormLabel-root,
+.time-picker-field .MuiFormLabel-root {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 0.25rem;
+}
+
+
+.date-picker-field--disabled .MuiInputBase-root,
+.time-picker-field--disabled .MuiInputBase-root {
+  background-color: #f5f5f5;
+  box-shadow: none;
+}
+
+
+.form__row {
+  margin-bottom: 1.5rem;
+}
