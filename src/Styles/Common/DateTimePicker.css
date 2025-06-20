@@ -19,16 +19,18 @@
 .date-picker-field .MuiInputBase-input,
 .time-picker-field .MuiInputBase-input {
   padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
   line-height: 1.5;
 }
-
+.MuiPickersSectionList-section{
+      font-size: var(--font-size-lg);
+}
 .date-picker-field .MuiFormLabel-root,
 .time-picker-field .MuiFormLabel-root {
   font-size: 0.875rem;
   font-weight: 500;
   color: #333333;
   margin-bottom: 0.25rem;
+  font-size: var(--font-size-sm);
 }
 
 

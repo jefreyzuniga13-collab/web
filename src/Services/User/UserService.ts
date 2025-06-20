@@ -21,9 +21,7 @@ class UserService {
   }
 
   async getUserAsync(userId: number): Promise<User> {
-    console.log("Haciendo la consulta")
     const { data } = await api.get<ApiResponse<User>>(`/Users/${userId}`)
-    console.log("Los datos obtenidos son: ", JSON.stringify(data))
     return data.data
   }
 

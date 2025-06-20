@@ -42,9 +42,10 @@ export interface OpeningHourInterface {
   id: number;
   name: string;
   description: string;
-  startTime: string;   // 'HH:mm'
-  endTime: string;     // 'HH:mm'
+  startTime: string | null;   // 'HH:mm'
+  endTime: string | null;     // 'HH:mm'
   isHoliday: boolean;
+  holidayDate: { day: number; month: number } | null;
   isActive: boolean;
   createdAt: string;   // ISO
   updatedAt: string;   // ISO

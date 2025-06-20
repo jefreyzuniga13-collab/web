@@ -16,7 +16,7 @@ class OpeningHour {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<OpeningHourInterface>>>(
         '/OpeningHour',
-        { params: { PageNumber: 1, PageSize: 10 } }
+        { params: { PageNumber: 1, PageSize: 20 } }
       )
       return data.data.items
     } catch (error) {
@@ -39,6 +39,13 @@ class OpeningHour {
     values: OpeningHourFormValues
   ): Promise<OpeningHourInterface> {
     try {
+
+      console.log("Data enviada a la api desde el servicio de OpeningHourService: ", values);
+      if(values.startTime!.length < 1){
+        values.startTime = null;
+        values.endTime = null;
+      }
+
       const { data } = await api.post<ApiResponse<OpeningHourInterface>>(
         '/OpeningHour',
         values

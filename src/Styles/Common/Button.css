@@ -6,7 +6,9 @@
     transition: opacity 0.2s ease;
     font-size: var(--font-size-sm);
     border: none;
+    margin: auto;
   }
+
   .btn--primary {
     background: var(--color-blue-primary);
     color: var(--text-white);

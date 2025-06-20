@@ -14,18 +14,29 @@ export const useOpeningHour = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState<boolean>(false)
 
-  const getOpeningHours = async () => {
-    setLoading(true)
-    setError(null)
+const getOpeningHours = async () => {
+  setLoading(true);
+  setError(null);
     try {
-      const items = await OpeningHourService.getOpeningHourAsync()
-      setOpeningHours(items)
+      const items = await OpeningHourService.getOpeningHourAsync();
+
+      const formattedRows = items.map(item => ({
+        ...item,
+        holidayDateFormatted: item.holidayDate
+          ? `${item.holidayDate.day}/${item.holidayDate.month}`
+          : 'N/A',
+      }));
+
+      setOpeningHours(formattedRows);
+
+      console.log("Data retrieve from api: ", formattedRows);
     } catch (err: any) {
-      setError(err)
+      setError(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
 
   const getOpeningHourById = async (id: number) => {
     setLoading(true)
@@ -43,6 +54,7 @@ export const useOpeningHour = () => {
   const createOpeningHour = async (values: OpeningHourFormValues) => {
     setLoading(true)
     setError(null)
+
     try {
       const newItem = await OpeningHourService.createOpeningHourAsync(values)
       setOpeningHours(prev => [...prev, newItem])
@@ -108,10 +120,12 @@ export const useOpeningHour = () => {
   }
 
   const handleSubmit = (values: OpeningHourFormValues) => {
+
     if (modalMode === 'create') createOpeningHour(values)
     else if (modalMode === 'edit' && selectedOpeningHour)
       updateOpeningHour({ ...selectedOpeningHour, ...values })
-    closeModal()
+    closeModal();
+
   }
 
   useEffect(() => {

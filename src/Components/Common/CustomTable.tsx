@@ -10,10 +10,11 @@ import {
   TableRow,
 } from '@mui/material'
 import type { Props } from '@/Interfaces/Setting/OpeningHour'
+import "@/Styles/Common/CustomTable.css"
 
 export default function CustomTable<T>({ columns, rows }: Props<T>) {
-  const [page, setPage] = React.useState(0)
-  const [rowsPerPage, setRowsPerPage] = React.useState(10)
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage)
@@ -88,7 +89,7 @@ export default function CustomTable<T>({ columns, rows }: Props<T>) {
 
       <TablePagination
         className="table__pagination"
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={[5, 10, 15]}
         component="div"
         count={rows.length}
         rowsPerPage={rowsPerPage}

@@ -31,6 +31,15 @@ export default function OpeningHourPage() {
     { id: 'name',       label: 'Nombre',         minWidth: 170 },
     { id: 'description',label: 'Descripción',    minWidth: 200 },
     { id: 'isHoliday',  label: 'Feriado',        minWidth: 100, align: 'right' },
+    {
+      id: 'holidayDate',
+    label: 'Fecha Feriado',
+    render: (row) => {
+      return row.holidayDate
+        ? `${row.holidayDate.day.toString().padStart(2, '0')}/${row.holidayDate.month.toString().padStart(2, '0')}`
+        : '';
+    }
+    },
     { id: 'startTime',  label: 'Hora de inicio', minWidth: 120, align: 'right' },
     { id: 'endTime',    label: 'Hora de fin',    minWidth: 120, align: 'right' },
     { id: 'isActive',   label: 'Activo',         minWidth: 100, align: 'right' },
@@ -65,6 +74,7 @@ export default function OpeningHourPage() {
           </h3>
         </div>
         <Button variant="primary" onClick={openCreate}>
+          
           Crear Horario
         </Button>
       </div>
