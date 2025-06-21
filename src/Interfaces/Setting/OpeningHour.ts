@@ -19,13 +19,13 @@ export interface Column<T> {
   render?: (row: T)=>React.ReactNode
 }
 
-export interface Data {
-  name: string;
-  code: string;
-  population: number;
-  size: number;
-  density: number;
-}
+// export interface Data {
+//   name: string;
+//   code: string;
+//   population: number;
+//   size: number;
+//   density: number;
+// }
 
 // export interface  Props {
 //   columns: Column[];

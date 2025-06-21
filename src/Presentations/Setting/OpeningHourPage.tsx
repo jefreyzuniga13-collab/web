@@ -9,6 +9,7 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import OpeningHourModal from '@/Components/Setting/OpeningHourModal'
 import { useOpeningHour } from '@/Hooks/Setting/useOpeningHour'
 import type { Column, OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
+
 import '@/Styles/Setting/OpeningHourPage.css'
 
 export default function OpeningHourPage() {
@@ -62,11 +63,13 @@ export default function OpeningHourPage() {
         </>
       ),
     },
+    
   ], [openView, openEdit, toggleOpeningHourStatus])
 
   return (
     <div className="openingHour-container">
       <div className="openingHour-top">
+
         <div className="OpeningHour-header">
           <h1 className="openingHour-title">Gestión de horario de atención</h1>
           <h3 className="openingHour-subtitle">
@@ -80,7 +83,7 @@ export default function OpeningHourPage() {
       </div>
 
       {loading && <p>Cargando horarios...</p>}
-      {error   && <p className="text-red-600">Error: {error.message}</p>}
+      {error   && <p className="text-error">Error: {error.message}</p>}
 
       <CustomTable<OpeningHourInterface>
         columns={columns}
@@ -94,6 +97,7 @@ export default function OpeningHourPage() {
         onClose={closeModal}
         onSubmit={handleSubmit}
       />
+
     </div>
   )
 }

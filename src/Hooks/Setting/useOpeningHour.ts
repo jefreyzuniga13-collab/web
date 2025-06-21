@@ -29,7 +29,6 @@ const getOpeningHours = async () => {
 
       setOpeningHours(formattedRows);
 
-      console.log("Data retrieve from api: ", formattedRows);
     } catch (err: any) {
       setError(err);
     } finally {
@@ -70,6 +69,7 @@ const getOpeningHours = async () => {
     setError(null)
     try {
       const updated = await OpeningHourService.updateOpeningHourAsync(payload.id, payload)
+      
       setOpeningHours(prev =>
         prev.map(item => (item.id === updated.id ? updated : item))
       )
@@ -125,7 +125,6 @@ const getOpeningHours = async () => {
     else if (modalMode === 'edit' && selectedOpeningHour)
       updateOpeningHour({ ...selectedOpeningHour, ...values })
     closeModal();
-
   }
 
   useEffect(() => {
