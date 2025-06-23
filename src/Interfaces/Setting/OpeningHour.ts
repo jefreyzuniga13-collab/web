@@ -45,7 +45,7 @@ export type OpeningHourFormValues = {
   name: string;
   description?: string;
   recurrence: RecurrenceType;
-  daysOfWeek?: string[];
+  daysOfWeek?: string[] | null;
   holidayDate?: DayMonth | null;
   specificDate?: Date | string | null;
   startTime: string | null;

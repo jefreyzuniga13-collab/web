@@ -12,12 +12,12 @@ import { EditIcon } from "lucide-react"
 import "@/Styles/Setting/OpeningHourPage.css"
 import "@/Styles/Setting/WorkShiftPage.css"
 import WorkShiftModal from "@/Components/Setting/WorkShiftModal"
-import Spinner from "@/Components/Common/Spinner"
+// import Spinner from "@/Components/Common/Spinner"
 
 export default function WorkShiftPage() {
   const {
     workShifts,
-    loading,
+    // loading,
     error,
     page,
     pageSize,
@@ -79,9 +79,9 @@ export default function WorkShiftPage() {
           </IconButton>
           <IconButton size="small" onClick={() => toggleStatus(row.id)}>
             {row.isActive ? (
-              <ToggleOffIcon fontSize="small" />
+              <ToggleOnIcon fontSize="small" color="success"/>
             ) : (
-              <ToggleOnIcon fontSize="small" />
+              <ToggleOffIcon fontSize="small" />
             )}
           </IconButton>
         </>
@@ -98,12 +98,14 @@ export default function WorkShiftPage() {
             Administración de turnos según horarios y asignaciones
           </p>
         </div>
-        <Button variant="primary" onClick={openCreate}>
+        <div className="ws-page__btnContainer">
+          <Button variant="primary" onClick={openCreate} className="ws-page__btn">
           Nuevo Turno
         </Button>
+        </div>
       </div>
 
-      {loading && <p className="ws-page__loading"><Spinner/></p>}
+      {/* {loading && <div className="ws-page__loading"><Spinner/></div>} */}
       {error && <p className="ws-page__error">Error: {error.message}</p>}
 
       <CustomTable<WorkShiftInterface>
@@ -124,7 +126,6 @@ export default function WorkShiftPage() {
           onClose={closeModal}
           onSubmit={handleSubmit}
         />
-      *
     </div>
   )
 }

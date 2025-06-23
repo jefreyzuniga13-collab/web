@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
@@ -9,6 +10,23 @@ function formatError(error: unknown): Error {
   const axiosError = error as AxiosError<ApiResponse<any>>
   const message = axiosError.response?.data?.message ?? axiosError.message
   return new Error(message)
+}
+function cleanPayload(payload: Record<string, any>): Record<string, any> {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined && value !== '')
+  );
+}
+
+
+function transformPayload(input: OpeningHourFormValues): any {
+  return cleanPayload({
+    ...input,
+    specificDate: input.specificDate instanceof Date ? input.specificDate.toISOString().split('T')[0] : input.specificDate,
+    effectiveFrom: input.effectiveFrom instanceof Date ? input.effectiveFrom.toISOString().split('T')[0] : input.effectiveFrom,
+    effectiveTo: input.effectiveTo instanceof Date ? input.effectiveTo.toISOString().split('T')[0] : input.effectiveTo,
+    startTime: input.startTime ?? null,
+    endTime: input.endTime ?? null,
+  });
 }
 
 class OpeningHour {
@@ -42,16 +60,11 @@ class OpeningHour {
     values: OpeningHourFormValues
   ): Promise<OpeningHourInterface> {
     try {
-
-      console.log("Data enviada a la api desde el servicio de OpeningHourService: ", values);
-      if(values.startTime!.length < 1){
-        values.startTime = null;
-        values.endTime = null;
-      }
-
+      
+      const payload = transformPayload(values);
       const { data } = await api.post<ApiResponse<OpeningHourInterface>>(
         '/OpeningHour',
-        values
+        payload
       )
       return data.data
     } catch (error) {
@@ -64,9 +77,10 @@ class OpeningHour {
     values: OpeningHourFormValues
   ): Promise<OpeningHourInterface> {
     try {
+      const payload = transformPayload(values);
       const { data } = await api.put<ApiResponse<OpeningHourInterface>>(
         `/OpeningHour/${id}`,
-        values
+        payload
       )
       return data.data
     } catch (error) {

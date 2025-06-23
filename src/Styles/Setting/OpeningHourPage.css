@@ -1,6 +1,7 @@
 .oh-page__container {
   padding: var(--space-sm) var(--space-2xl);
   display: grid;
+  max-height: 100vh;
   grid-template-rows: auto 1fr;
   gap: var(--space-lg);
 }
@@ -16,6 +17,10 @@
   display: flex;
   flex-direction: column;
 }
+.oh-page__btnContainer{
+  display: flex;
+  justify-content: end;
+}
 
 .oh-page__title {
   margin: 0;
@@ -28,11 +33,20 @@
   margin: 0;
   color: var(--text-muted);
   font-size: var(--font-size-base);
+  text-align: left;
 }
 
 .oh-page__loading,
 .oh-page__error {
-  padding: var(--space-md) 0;
   font-size: var(--font-size-base);
   color: var(--color-error);
+}
+
+.MuiInputBase-input{
+  font-size: var(--font-size-sm) !important;
+  padding: var(--space-md)!important;
+}
+
+.MuiFormLabel-root{
+  font-size: var(--font-size-xm) !important;
 }

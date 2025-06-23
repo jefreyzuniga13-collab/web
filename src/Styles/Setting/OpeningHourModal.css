@@ -99,7 +99,20 @@
 .oh-modal__col--full {
   grid-column: span 2;
 }
+.oh-modal__inline-label{
+  font-size: var(--font-size-base);
+}
 
+.input-container{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.oh-modal__input-container{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
 .oh-modal__field {
   margin: var(--space-lg) 0;
 }

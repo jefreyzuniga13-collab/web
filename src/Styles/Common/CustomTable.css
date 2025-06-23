@@ -2,10 +2,10 @@
     overflow: hidden;
     box-sizing: border-box;
 }
-
 .table__container {
   width: 100%;
   display: flex;
+  max-height: 90%;
   flex-direction: column;
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
@@ -44,7 +44,7 @@
   color: var(--text-white);
 }
 
-.status--inactive {
+.status .status--inactive {
   background-color: var(--color-error);
   color: var(--text-white);
 }
@@ -96,4 +96,11 @@
 .status--inactive {
   background-color: var(--color-error);
   color: var(--text-white);
+}
+
+.MuiTableRow-root{
+  max-width: 100%;
+}
+.MuiTableCell-head{
+      line-height: 1.2 !important;
 }

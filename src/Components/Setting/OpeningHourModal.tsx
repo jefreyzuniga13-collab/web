@@ -12,7 +12,7 @@ import type {
 import '@/Styles/Setting/OpeningHourModal.css'
 
 const WEEK_DAYS = [
-  'Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
+  'Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'
 ] as const
 
 interface OpeningHourModalProps {
@@ -37,12 +37,12 @@ export default function OpeningHourModal({
     description: '',
     recurrence: 'Weekly',
     daysOfWeek: [],
-    holidayDate: new Date(),
-    specificDate: new Date(),
+    holidayDate: null,
+    specificDate: null,
     startTime: null,
     endTime: null,
-    effectiveFrom: new Date(),
-    effectiveTo: new Date(),
+    effectiveFrom: null,
+    effectiveTo: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -126,25 +126,23 @@ export default function OpeningHourModal({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
 
-    console.log("Antes del payload.");
-
     const payload: OpeningHourFormValues = {
       name: form.name,
       description: form.description,
       recurrence: form.recurrence,
       daysOfWeek:
-        form.recurrence === 'Weekly' ? form.daysOfWeek : undefined,
+        form.recurrence === 'Weekly' ? form.daysOfWeek : null,
       holidayDate:
         form.recurrence === 'AnnualHoliday' && form.holidayDate
           ? {
               day: form.holidayDate.getDate(),
               month: form.holidayDate.getMonth() + 1,
             }
-          : undefined,
+          : null,
       specificDate:
         form.recurrence === 'OneTimeHoliday' && form.specificDate
           ? form.specificDate
-          : undefined,
+          : null,
       startTime:
         form.recurrence === 'Weekly' && form.startTime
           ? format(form.startTime, 'HH:mm')
@@ -153,11 +151,10 @@ export default function OpeningHourModal({
         form.recurrence === 'Weekly' && form.endTime
           ? format(form.endTime, 'HH:mm')
           : null,
-      effectiveFrom: form.effectiveFrom ?? undefined,
-      effectiveTo: form.effectiveTo ?? undefined,
+      effectiveFrom: form.effectiveFrom ?? null,
+      effectiveTo: form.effectiveTo ?? null,
       isActive: form.isActive,
     }
-    console.log("Enviando");
 
     onSubmit(payload)
   }
@@ -260,8 +257,10 @@ export default function OpeningHourModal({
                 </div>
               </>
             )}
-
-            {form.recurrence === 'AnnualHoliday' && (
+  <div className='input-container'>
+                        {form.recurrence !== 'Weekly' && (
+               <>
+                 <p className="oh-modal__inline-label">¿Es feriado?</p>
               <div className="oh-modal__col">
                 <DatePickerField
                   label="Día feriado"
@@ -272,7 +271,9 @@ export default function OpeningHourModal({
                   disabled={isView}
                 />
               </div>
+               </>
             )}
+  </div>
 
             {form.recurrence === 'OneTimeHoliday' && (
               <div className="oh-modal__col">
@@ -287,27 +288,35 @@ export default function OpeningHourModal({
               </div>
             )}
 
-            <div className="oh-modal__col">
-              <DatePickerField
-                label="Vigencia desde"
-                value={form.effectiveFrom}
-                onChange={d =>
-                  setForm(f => ({ ...f, effectiveFrom: d }))
-                }
-                disabled={isView}
-              />
-            </div>
+          {form.recurrence == "OneTimeHoliday" &&
+          (
+            <div className='input-container'>
+                  <p className="oh-modal__inline-label">¿Es feriado largo? (Seleccione el rango)</p>
+                <div className='oh-modal__input-container'>
+                    <div className="oh-modal__col">
+                      <DatePickerField
+                        label="Vigencia desde"
+                        value={form.effectiveFrom}
+                        onChange={d =>
+                          setForm(f => ({ ...f, effectiveFrom: d }))
+                        }
+                        disabled={isView}
+                      />
+                    </div>
 
-            <div className="oh-modal__col">
-              <DatePickerField
-                label="Vigencia hasta"
-                value={form.effectiveTo}
-                onChange={d =>
-                  setForm(f => ({ ...f, effectiveTo: d }))
-                }
-                disabled={isView}
-              />
+                      <div className="oh-modal__col">
+                      <DatePickerField
+                            label="Vigencia hasta"
+                            value={form.effectiveTo}
+                            onChange={d =>
+                              setForm(f => ({ ...f, effectiveTo: d }))
+                            }
+                            disabled={isView}
+                          />
+                  </div>
+           </div>
             </div>
+          )}
 
             <div className="oh-modal__col oh-modal__col--full oh-modal__field--checkbox">
               <label>

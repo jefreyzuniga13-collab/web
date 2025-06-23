@@ -1,4 +1,3 @@
-// src/Pages/Setting/OpeningHourPage.tsx
 import { useMemo } from 'react'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'
@@ -12,11 +11,12 @@ import { useOpeningHour } from '@/Hooks/Setting/useOpeningHour'
 import type { OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/OpeningHourPage.css'
+// import { ThreeDot } from 'react-loading-indicators'
 
 export default function OpeningHourPage() {
   const {
     openingHours,
-    loading,
+    // loading,
     error,
     page,
     pageSize,
@@ -32,11 +32,11 @@ export default function OpeningHourPage() {
     closeModal,
     handleSubmit,
     toggleOpeningHourStatus,
-  } = useOpeningHour()
+  } = useOpeningHour();
 
   const columns: Column<OpeningHourInterface>[] = useMemo(
     () => [
-      { id: 'name',       label: 'Nombre',       minWidth: 150 },
+      { id: 'name',       label: 'Nombre',       minWidth: 130 },
       { id: 'description',label: 'Descripción',  minWidth: 200 },
       { id: 'recurrence', label: 'Recurrencia',  minWidth: 130 },
       {
@@ -45,6 +45,8 @@ export default function OpeningHourPage() {
         minWidth: 180,
         render: row => row.daysOfWeek?.join(', ') || '-',
       },
+      { id: 'startTime',     label: 'Inicio',           minWidth: 100 },
+      { id: 'endTime',       label: 'Fin',              minWidth: 100 },
       {
         id: 'holidayDate',
         label: 'Fecha Feriado',
@@ -56,8 +58,6 @@ export default function OpeningHourPage() {
               }`
             : '-',
       },
-      { id: 'startTime',     label: 'Inicio',           minWidth: 100 },
-      { id: 'endTime',       label: 'Fin',              minWidth: 100 },
       { id: 'effectiveFrom', label: 'Vigencia Desde',   minWidth: 130 },
       { id: 'effectiveTo',   label: 'Vigencia Hasta',   minWidth: 130 },
       {
@@ -81,9 +81,9 @@ export default function OpeningHourPage() {
             </IconButton>
             <IconButton size="small" onClick={() => toggleOpeningHourStatus(row.id)}>
               {row.isActive ? (
-                <ToggleOffIcon fontSize="small" />
+                <ToggleOnIcon fontSize="small" color='success' />
               ) : (
-                <ToggleOnIcon fontSize="small" />
+                <ToggleOffIcon fontSize="small" />
               )}
             </IconButton>
           </>
@@ -102,12 +102,15 @@ export default function OpeningHourPage() {
             Administra tus horarios regulares y feriados
           </p>
         </div>
-        <Button variant="primary" onClick={openCreate}>
-          Nuevo Horario
-        </Button>
+        <div className='oh-page__btnContainer'>
+          <Button variant="primary" onClick={openCreate} className='oh-page_btn'>
+            Nuevo Horario
+          </Button>
+        </div>
       </div>
 
-      {loading && <p className="oh-page__loading">Cargando horarios...</p>}
+      {/* {loading &&  <div className="loader-container">
+        <ThreeDot color="#3142cc" size="medium" /></div>} */}
       {error   && <p className="oh-page__error">Error: {error.message}</p>}
 
       <CustomTable<OpeningHourInterface>
