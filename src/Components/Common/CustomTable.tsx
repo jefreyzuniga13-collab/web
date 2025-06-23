@@ -1,4 +1,3 @@
-import * as React from 'react'
 import {
   Paper,
   Table,
@@ -6,96 +5,95 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
+  TablePagination,
 } from '@mui/material'
-import type { Props } from '@/Interfaces/Setting/OpeningHour'
-import "@/Styles/Common/CustomTable.css"
+import type { Props } from '@/Interfaces/Common/CustomTable'
+import '@/Styles/Common/CustomTable.css'
 
-export default function CustomTable<T>({ columns, rows }: Props<T>) {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value)
-    setPage(0)
-  }
-
+export default function CustomTable<T>({
+  columns,
+  rows,
+  count,
+  page,
+  rowsPerPage,
+  rowsPerPageOptions = [5, 10, 15, 20],
+  onPageChange,
+  onRowsPerPageChange,
+}: Props<T>) {
   return (
     <Paper className="table__container">
       <TableContainer className="table__scroll-container">
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {columns.map((column) => (
+              {columns.map(col => (
                 <TableCell
-                  key={String(column.id)}
-                  align={column.align}
+                  key={col.id}
+                  align={col.align}
                   className="table__cell--header"
-                  style={{ minWidth: column.minWidth }}
+                  style={{ minWidth: col.minWidth }}
                 >
-                  {column.label}
+                  {col.label}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
-
           <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row, rowIndex) => (
-                <TableRow hover key={rowIndex}>
-                  {columns.map((column) => {
-                    if (column.render) {
-                      return (
-                        <TableCell
-                          key={String(column.id)}
-                          align={column.align}
-                          className="table__cell--body"
-                        >
-                          {column.render(row)}
-                        </TableCell>
-                      )
-                    }
-                    const key = column.id as keyof T
-                    const value = row[key]
+            {rows.map((row, rowIndex) => (
+              <TableRow hover key={rowIndex}>
+                {columns.map(col => {
+                  if (col.render) {
                     return (
                       <TableCell
-                        key={String(column.id)}
-                        align={column.align}
+                        key={col.id}
+                        align={col.align}
                         className="table__cell--body"
                       >
-                        {typeof value === 'boolean' ? (
-                          <span className={value ? 'status status--active' : 'status status--inactive'}>
-                            {value ? 'Sí' : 'No'}
-                          </span>
-                        ) : column.format && typeof value === 'number' ? (
-                          column.format(value)
-                        ) : (
-                          String(value ?? '')
-                        )}
+                        {col.render(row)}
                       </TableCell>
                     )
-                  })}
-                </TableRow>
-              ))}
+                  }
+                  const value = row[col.id as keyof T]
+                  return (
+                    <TableCell
+                      key={col.id}
+                      align={col.align}
+                      className="table__cell--body"
+                    >
+                      {typeof value === 'boolean' ? (
+                        <span
+                          className={
+                            value
+                              ? 'status status--active'
+                              : 'status status--inactive'
+                          }
+                        >
+                          {value ? 'Sí' : 'No'}
+                        </span>
+                      ) : col.format && typeof value === 'number' ? (
+                        col.format(value)
+                      ) : (
+                        String(value ?? '')
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       <TablePagination
         className="table__pagination"
-        rowsPerPageOptions={[5, 10, 15]}
         component="div"
-        count={rows.length}
-        rowsPerPage={rowsPerPage}
+        count={count}
         page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageOptions={rowsPerPageOptions}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
       />
     </Paper>
   )

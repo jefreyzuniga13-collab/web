@@ -1,11 +1,6 @@
-
-
-.modal__overlay {
+.oh-modal__overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(0.2rem);
   display: flex;
@@ -16,61 +11,58 @@
   animation: fadeIn var(--transition-normal) var(--transition-ease);
 }
 
-.modal__container {
+.oh-modal__container {
   background-color: var(--bg-primary);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   width: 100%;
-  max-width: 52rem;
+  max-width: 70rem;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: slideIn var(--transition-normal) var(--transition-ease);
   padding: var(--space-3xl);
-
 }
 
 @media (min-width: var(--breakpoint-mobile)) {
-  .modal__container {
+  .oh-modal__container {
     max-width: 40rem;
   }
 }
 
 @media (min-width: var(--breakpoint-tablet)) {
-  .modal__container {
+  .oh-modal__container {
     max-width: 50rem;
   }
 }
 
 @media (min-width: var(--breakpoint-laptop)) {
-  .modal__container {
+  .oh-modal__container {
     max-width: 60rem;
   }
 }
 
 @media (min-width: var(--breakpoint-desktop)) {
-  .modal__container {
+  .oh-modal__container {
     max-width: 70rem;
   }
 }
 
-.modal__header {
+.oh-modal__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-md);
-  background-color: transparent;
-  border-radius: var(--border-radius-lg);
 }
 
-.modal__title {
+.oh-modal__title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
 }
 
-.modal__close {
+.oh-modal__close {
   background: transparent;
   border: none;
   font-size: var(--font-size-xl);
@@ -80,37 +72,88 @@
   transition: color var(--transition-fast);
 }
 
-.modal__close:hover {
+.oh-modal__close:hover {
   color: var(--text-primary);
 }
 
-.modal__body {
+.oh-modal__body {
+  flex: 1;
+  overflow-y: auto;
   margin-bottom: var(--space-md);
 }
 
-.modal__field {
-  margin-bottom: var(--space-md);
-  margin: var(--space-lg) 0
+/* Grilla de dos columnas */
+.oh-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
 }
 
-.modal__field--checkbox {
+@media (min-width: var(--breakpoint-tablet)) {
+  .oh-modal__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Columna que ocupa ambas columnas */
+.oh-modal__col--full {
+  grid-column: span 2;
+}
+
+.oh-modal__field {
+  margin: var(--space-lg) 0;
+}
+
+.oh-modal__field--checkbox,
+.oh-modal__field--checkbox-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+}
+
+.oh-modal__checkbox {
   display: flex;
   align-items: center;
   font-size: var(--font-size-base);
   color: var(--text-secondary);
 }
 
-.modal__field--checkbox input {
+.oh-modal__checkbox input {
   margin-right: var(--space-sm);
 }
 
-.modal__footer {
+.oh-modal__label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.oh-modal__select {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.oh-modal__timestamps {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.oh-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-sm);
 }
 
-.modal__btn {
+.oh-modal__btn {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-base);
   border: none;
@@ -119,24 +162,25 @@
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.modal__btn--cancel {
+.oh-modal__btn--cancel {
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
 
-.modal__btn--cancel:hover {
+.oh-modal__btn--cancel:hover {
   background: var(--bg-secondary-hover);
 }
 
-.modal__btn--confirm {
+.oh-modal__btn--confirm {
   background: var(--color-primary);
   color: var(--text-white);
 }
 
-.modal__btn--confirm:hover {
+.oh-modal__btn--confirm:hover {
   background: var(--color-primary-dark);
 }
 
-.MuiSvgIcon-root{
+/* Asegura íconos MUI del tamaño correcto */
+.MuiSvgIcon-root {
   font-size: var(--font-size-xl) !important;
 }

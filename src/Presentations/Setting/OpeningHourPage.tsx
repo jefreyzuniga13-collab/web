@@ -1,3 +1,4 @@
+// src/Pages/Setting/OpeningHourPage.tsx
 import { useMemo } from 'react'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'
@@ -8,8 +9,8 @@ import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import OpeningHourModal from '@/Components/Setting/OpeningHourModal'
 import { useOpeningHour } from '@/Hooks/Setting/useOpeningHour'
-import type { Column, OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
-
+import type { OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
+import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/OpeningHourPage.css'
 
 export default function OpeningHourPage() {
@@ -17,6 +18,11 @@ export default function OpeningHourPage() {
     openingHours,
     loading,
     error,
+    page,
+    pageSize,
+    totalCount,
+    setPage,
+    setPageSize,
     modalMode,
     isModalOpen,
     selectedOpeningHour,
@@ -28,76 +34,100 @@ export default function OpeningHourPage() {
     toggleOpeningHourStatus,
   } = useOpeningHour()
 
-  const columns: Column<OpeningHourInterface>[] = useMemo(() => [
-    { id: 'name',       label: 'Nombre',         minWidth: 170 },
-    { id: 'description',label: 'Descripción',    minWidth: 200 },
-    { id: 'isHoliday',  label: 'Feriado',        minWidth: 100, align: 'right' },
-    {
-      id: 'holidayDate',
-    label: 'Fecha Feriado',
-    render: (row) => {
-      return row.holidayDate
-        ? `${row.holidayDate.day.toString().padStart(2, '0')}/${row.holidayDate.month.toString().padStart(2, '0')}`
-        : '';
-    }
-    },
-    { id: 'startTime',  label: 'Hora de inicio', minWidth: 120, align: 'right' },
-    { id: 'endTime',    label: 'Hora de fin',    minWidth: 120, align: 'right' },
-    { id: 'isActive',   label: 'Activo',         minWidth: 100, align: 'right' },
-    {
-      id: 'actions',
-      label: 'Acciones',
-      minWidth: 150,
-      align: 'center',
-      render: (row: OpeningHourInterface) => (
-        <>
-          <IconButton onClick={() => openView(row.id)}>
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => openEdit(row.id)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => toggleOpeningHourStatus(row.id)}>
-            {row.isActive ? <ToggleOffIcon fontSize="small" /> : <ToggleOnIcon fontSize="small" />}
-          </IconButton>
-        </>
-      ),
-    },
-    
-  ], [openView, openEdit, toggleOpeningHourStatus])
+  const columns: Column<OpeningHourInterface>[] = useMemo(
+    () => [
+      { id: 'name',       label: 'Nombre',       minWidth: 150 },
+      { id: 'description',label: 'Descripción',  minWidth: 200 },
+      { id: 'recurrence', label: 'Recurrencia',  minWidth: 130 },
+      {
+        id: 'daysOfWeek',
+        label: 'Días',
+        minWidth: 180,
+        render: row => row.daysOfWeek?.join(', ') || '-',
+      },
+      {
+        id: 'holidayDate',
+        label: 'Fecha Feriado',
+        minWidth: 130,
+        render: row =>
+          row.holidayDate
+            ? `${String(row.holidayDate.day).padStart(2, '0')}/${
+                String(row.holidayDate.month).padStart(2, '0')
+              }`
+            : '-',
+      },
+      { id: 'startTime',     label: 'Inicio',           minWidth: 100 },
+      { id: 'endTime',       label: 'Fin',              minWidth: 100 },
+      { id: 'effectiveFrom', label: 'Vigencia Desde',   minWidth: 130 },
+      { id: 'effectiveTo',   label: 'Vigencia Hasta',   minWidth: 130 },
+      {
+        id: 'isActive',
+        label: 'Activo',
+        minWidth: 100,
+        render: row => (row.isActive ? 'Sí' : 'No'),
+      },
+      {
+        id: 'actions',
+        label: 'Acciones',
+        minWidth: 150,
+        align: 'center',
+        render: row => (
+          <>
+            <IconButton size="small" onClick={() => openView(row.id)}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => openEdit(row.id)}>
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => toggleOpeningHourStatus(row.id)}>
+              {row.isActive ? (
+                <ToggleOffIcon fontSize="small" />
+              ) : (
+                <ToggleOnIcon fontSize="small" />
+              )}
+            </IconButton>
+          </>
+        ),
+      },
+    ],
+    [openView, openEdit, toggleOpeningHourStatus]
+  )
 
   return (
-    <div className="openingHour-container">
-      <div className="openingHour-top">
-
-        <div className="OpeningHour-header">
-          <h1 className="openingHour-title">Gestión de horario de atención</h1>
-          <h3 className="openingHour-subtitle">
-            Administración de horarios en días normales y feriados
-          </h3>
+    <div className="oh-page__container">
+      <div className="oh-page__header">
+        <div className="oh-page__header-content">
+          <h1 className="oh-page__title">Gestión de Horarios de Atención</h1>
+          <p className="oh-page__subtitle">
+            Administra tus horarios regulares y feriados
+          </p>
         </div>
         <Button variant="primary" onClick={openCreate}>
-          
-          Crear Horario
+          Nuevo Horario
         </Button>
       </div>
 
-      {loading && <p>Cargando horarios...</p>}
-      {error   && <p className="text-error">Error: {error.message}</p>}
+      {loading && <p className="oh-page__loading">Cargando horarios...</p>}
+      {error   && <p className="oh-page__error">Error: {error.message}</p>}
 
       <CustomTable<OpeningHourInterface>
         columns={columns}
         rows={openingHours}
+        count={totalCount}
+        page={page - 1}                     // Hook devuelve page 1-based
+        rowsPerPage={pageSize}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        onPageChange={(_, newPage) => setPage(newPage + 1)}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
       />
 
       <OpeningHourModal
         mode={modalMode}
         isOpen={isModalOpen}
-        data={selectedOpeningHour || undefined}
+        data={selectedOpeningHour}
         onClose={closeModal}
         onSubmit={handleSubmit}
       />
-
     </div>
   )
 }

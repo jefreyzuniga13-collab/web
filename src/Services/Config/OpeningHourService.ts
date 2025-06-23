@@ -12,13 +12,16 @@ function formatError(error: unknown): Error {
 }
 
 class OpeningHour {
-  async getOpeningHourAsync(): Promise<OpeningHourInterface[]> {
+ async getAll(
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<OpeningHourInterface>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<OpeningHourInterface>>>(
         '/OpeningHour',
-        { params: { PageNumber: 1, PageSize: 20 } }
+        { params: { PageNumber: page, PageSize: pageSize } }
       )
-      return data.data.items
+      return data.data
     } catch (error) {
       throw formatError(error)
     }

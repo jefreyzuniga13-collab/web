@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import api from '@/Utils/ApiConfig'
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
-import type {PagedResponse} from '@/Interfaces/GlobalInterface'
-import {type WorkShiftInterface} from '@/Interfaces/Setting/WorkShiftInterface'
-import {AxiosError} from 'axios'
+import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import type {
+  WorkShiftInterface,
+  WorkShiftFormValues,
+} from '@/Interfaces/Setting/WorkShiftInterface'
+import type { AxiosError } from 'axios'
 
 function formatError(error: unknown): Error {
   const axiosError = error as AxiosError<ApiResponse<any>>
@@ -11,65 +14,104 @@ function formatError(error: unknown): Error {
   return new Error(message)
 }
 
+function toDateOnlyString(date: Date | string | undefined | null): string | undefined {
+  if (!date) return undefined
+  const d = date instanceof Date ? date : new Date(date)
+  return d.toISOString().split('T')[0]
+}
+
 class WorkShift {
-  async getAllAsync(): Promise<WorkShiftInterface[]> {
+  async getAll(page = 1, size = 20): Promise<PagedResponse<WorkShiftInterface>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<WorkShiftInterface>>>(
         '/WorkShift',
-        { params: { PageNumber: 1, PageSize: 20 } }
+        { params: { PageNumber: page, PageSize: size } }
       )
-      return data.data.items
+      return data.data
     } catch (error) {
       throw formatError(error)
     }
   }
 
-  async getByIdAsync(id: number): Promise<WorkShiftInterface>{
-    try{
-        const {data} = await api.get<ApiResponse<WorkShiftInterface>>(
-            `/WorkShift/${id}`
-        )
-        return data.data;
-    }catch(error){
-        throw formatError(error);
+  async getById(id: number): Promise<WorkShiftInterface> {
+    try {
+      const { data } = await api.get<ApiResponse<WorkShiftInterface>>(`/WorkShift/${id}`)
+      return data.data
+    } catch (error) {
+      throw formatError(error)
     }
   }
 
-  async createAsync(values: WorkShiftInterface): Promise<WorkShiftInterface>{
-    try{
-        const {data} = await api.post<ApiResponse<WorkShiftInterface>>(
-            "/WorkShift",
-            values
-        )
-
-        return data.data;
-    }catch(error){
-        throw formatError(error);
+  async create(values: WorkShiftFormValues): Promise<WorkShiftInterface> {
+    try {
+      const payload = {
+        ...values,
+        validFrom: toDateOnlyString(values.validFrom),
+        validTo: toDateOnlyString(values.validTo),
+      }
+      const { data } = await api.post<ApiResponse<WorkShiftInterface>>(
+        '/WorkShift',
+        payload
+      )
+      return data.data
+    } catch (error) {
+      throw formatError(error)
     }
   }
 
-  async updateAsync(id: number, values: WorkShiftInterface): Promise<WorkShiftInterface>{
-    try{
-        const {data} = await api.put<ApiResponse<WorkShiftInterface>>(
+  async update(id: number, values: WorkShiftFormValues): Promise<WorkShiftInterface> {
+    try {
+      const payload = {
+        ...values,
+        validFrom: toDateOnlyString(values.validFrom),
+        validTo: toDateOnlyString(values.validTo),
+      }
+      const { data } = await api.put<ApiResponse<WorkShiftInterface>>(
         `/WorkShift/${id}`,
-        values
-    )
-    return data.data
-    }catch(err){
-        throw formatError(err);
+        payload
+      )
+      return data.data
+    } catch (error) {
+      throw formatError(error)
     }
-    }
+  }
 
-    async toggleAsync(id: number): Promise<WorkShiftInterface>{
-        try{
-            const {data} = await api.patch<ApiResponse<WorkShiftInterface>>(
-                `/WorkShift${id}`
-            )
-            return data.data;
-        }catch(err){
-            throw formatError(err)
-        }
+  async toggleStatus(id: number): Promise<WorkShiftInterface> {
+    try {
+      const { data } = await api.patch<ApiResponse<WorkShiftInterface>>(
+        `/WorkShift/${id}`
+      )
+      return data.data
+    } catch (error) {
+      throw formatError(error)
     }
+  }
+
+  async getByDate(date: Date | string): Promise<WorkShiftInterface[]> {
+    try {
+      const dateStr = toDateOnlyString(date)!
+      const { data } = await api.get<ApiResponse<WorkShiftInterface[]>>(
+        '/WorkShift/by-date',
+        { params: { date: dateStr } }
+      )
+      return data.data
+    } catch (error) {
+      throw formatError(error)
+    }
+  }
+
+  async getActiveCount(date: Date | string): Promise<number> {
+    try {
+      const dateStr = toDateOnlyString(date)!
+      const { data } = await api.get<ApiResponse<number>>(
+        '/WorkShift/count-by-date',
+        { params: { date: dateStr } }
+      )
+      return data.data
+    } catch (error) {
+      throw formatError(error)
+    }
+  }
 }
 
-export const WorkShiftService = new WorkShift();
+export const WorkShiftService = new WorkShift()
