@@ -1,88 +1,130 @@
-import { useWorkShift } from "@/Hooks/Setting/useWorkShift";
-import type { WorkShiftInterface } from "@/Interfaces/Setting/WorkShiftInterface";
+import { useMemo } from "react"
+import { useWorkShift } from "@/Hooks/Setting/useWorkShift"
+import type { WorkShiftInterface } from "@/Interfaces/Setting/WorkShiftInterface"
+import type { Column } from "@/Interfaces/Common/CustomTable"
+import Button from "@/Components/Common/Button"
+import CustomTable from "@/Components/Common/CustomTable"
+import IconButton from "@mui/material/IconButton"
+import VisibilityIcon from "@mui/icons-material/Visibility"
+import ToggleOffIcon from "@mui/icons-material/ToggleOff"
+import ToggleOnIcon from "@mui/icons-material/ToggleOn"
+import { EditIcon } from "lucide-react"
 import "@/Styles/Setting/OpeningHourPage.css"
 import "@/Styles/Setting/WorkShiftPage.css"
+import WorkShiftModal from "@/Components/Setting/WorkShiftModal"
+import Spinner from "@/Components/Common/Spinner"
 
-import type {
-  Column,
-} from "@/Interfaces/Setting/OpeningHour";
-import { useMemo } from "react";
-import Button from "@/Components/Common/Button";
-import CustomTable from "@/Components/Common/CustomTable";
-import IconButton from '@mui/material/IconButton'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import ToggleOffIcon from '@mui/icons-material/ToggleOff'
-import ToggleOnIcon from '@mui/icons-material/ToggleOn'
-import { EditIcon } from "lucide-react";
-
-export const WorkShiftPage = () => {
+export default function WorkShiftPage() {
   const {
     workShifts,
-    // selectedWorkShift,
-    error,
     loading,
-    toggleAsync,
+    error,
+    page,
+    pageSize,
+    totalCount,
+    setPage,
+    setPageSize,
+    toggleStatus,
     openCreate,
     openEdit,
     openView,
-    // closeModal,
-    // handleSubmit,
-    // isModalOpen,
-    // modalMode,
-  } = useWorkShift();
+    closeModal,
+    handleSubmit,
+    isModalOpen,
+    modalMode,
+    selectedWorkShift
+  } = useWorkShift()
 
-  const columns: Column<WorkShiftInterface>[] = useMemo(() => [
-      { id: "openingHour", label: "Date", minWidth: 170 },
-      { id: "assignedUser", label: "Assigned", minWidth: 170 },
-      { id: "isActive", label: "Active", minWidth: 170 },
-      { id: "createdAt", label: "CreatedAt", minWidth: 170 },
-      { id: "updatedAt", label: "UpdateBy", minWidth: 170 },
-      {
-            id: 'actions',
-            label: 'Acciones',
-            minWidth: 150,
-            align: 'center',
-            render: (row: WorkShiftInterface) => (
-              <>
-                <IconButton onClick={() => openView(row.id)}>
-                  <VisibilityIcon fontSize="small" />
-                </IconButton>
-                <IconButton onClick={() => openEdit(row.id)}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton onClick={() => toggleAsync(row.id)}>
-                  {row.isActive ? <ToggleOffIcon fontSize="small" /> : <ToggleOnIcon fontSize="small" />}
-                </IconButton>
-              </>
-            ),
-        }
-    ], [openView, openEdit, toggleAsync]);
+  const columns = useMemo<Column<WorkShiftInterface>[]>(() => [
+    {
+      id: "openingHour",
+      label: "Horario",
+      minWidth: 170,
+      render: row => row.openingHour.name,
+    },
+    {
+      id: "assignedUser",
+      label: "Asignado a",
+      minWidth: 170,
+      render: row => row.assignedUser.fullName,
+    },
+    {
+      id: "isActive",
+      label: "Activo",
+      minWidth: 100,
+      render: row => (row.isActive ? "Sí" : "No"),
+    },
+    {
+      id: "validFrom",
+      label: "Vigencia Desde",
+      minWidth: 130,
+    },
+    {
+      id: "validTo",
+      label: "Vigencia Hasta",
+      minWidth: 130,
+    },
+    {
+      id: "actions",
+      label: "Acciones",
+      minWidth: 150,
+      align: "center",
+      render: row => (
+        <>
+          <IconButton size="small" onClick={() => openView(row.id)}>
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => openEdit(row.id)}>
+            <EditIcon size={16} />
+          </IconButton>
+          <IconButton size="small" onClick={() => toggleStatus(row.id)}>
+            {row.isActive ? (
+              <ToggleOffIcon fontSize="small" />
+            ) : (
+              <ToggleOnIcon fontSize="small" />
+            )}
+          </IconButton>
+        </>
+      ),
+    },
+  ], [openView, openEdit, toggleStatus])
 
   return (
-    <div className="workShift-container">
-      <div className="workShift-top">
-        <div className="OpeningHour-header">
-          <h1 className="openingHour-title">Gestión de turnos</h1>
-          <h3 className="openingHour-subtitle">
-            Administración de turnos en días normales y feriados
-          </h3>
+    <div className="ws-page__container">
+      <div className="ws-page__header">
+        <div className="ws-page__header-content">
+          <h1 className="ws-page__title">Gestión de Turnos</h1>
+          <p className="ws-page__subtitle">
+            Administración de turnos según horarios y asignaciones
+          </p>
         </div>
         <Button variant="primary" onClick={openCreate}>
-            Crear turno
+          Nuevo Turno
         </Button>
       </div>
 
-      {loading && <p>Cargando turnos</p>}
-      {error && <p className="text-error"></p>}
+      {loading && <p className="ws-page__loading"><Spinner/></p>}
+      {error && <p className="ws-page__error">Error: {error.message}</p>}
 
-      <CustomTable 
+      <CustomTable<WorkShiftInterface>
         columns={columns}
         rows={workShifts}
+        count={totalCount}
+        page={page - 1}
+        rowsPerPage={pageSize}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        onPageChange={(_, newPage) => setPage(newPage + 1)}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
       />
 
-      {/* Modal */}
+        <WorkShiftModal
+          mode={modalMode}
+          isOpen={isModalOpen}
+          data={selectedWorkShift}
+          onClose={closeModal}
+          onSubmit={handleSubmit}
+        />
+      *
     </div>
-  );
-};
-
-export default WorkShiftPage;
+  )
+}

@@ -125,6 +125,9 @@ export default function OpeningHourModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+
+    console.log("Antes del payload.");
+
     const payload: OpeningHourFormValues = {
       name: form.name,
       description: form.description,
@@ -154,6 +157,8 @@ export default function OpeningHourModal({
       effectiveTo: form.effectiveTo ?? undefined,
       isActive: form.isActive,
     }
+    console.log("Enviando");
+
     onSubmit(payload)
   }
 
@@ -334,9 +339,7 @@ export default function OpeningHourModal({
               </div>
             )}
           </div>
-        </form>
-
-        <footer className="oh-modal__footer">
+          <footer className="oh-modal__footer">
           <Button
             variant="secondary"
             onClick={onClose}
@@ -354,6 +357,7 @@ export default function OpeningHourModal({
             </Button>
           )}
         </footer>
+        </form>
       </div>
     </div>
   )

@@ -63,6 +63,14 @@ async createUserAsync(formData: FormData): Promise<User> {
     const { data } = await api.get<ApiResponse<PresenceDto>>(`/Users/${userId}/status`)
     return data.data
   }
+
+  async getAgentsByRoleAsync(role: string): Promise<User[]> {
+    const { data } = await api.get<ApiResponse<User[]>>(
+      '/Users/agents',
+      { params: { role } }
+    )
+    return data.data
+  }
 }
 
 export const userService = new UserService()

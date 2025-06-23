@@ -1,138 +1,150 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WorkShiftService } from "@/Services/Config/WorkShiftService";
-import type { WorkShiftInterface } from "@/Interfaces/Setting/WorkShiftInterface";
+import type {
+  WorkShiftInterface,
+  WorkShiftFormValues,
+} from "@/Interfaces/Setting/WorkShiftInterface";
 
 export const useWorkShift = () => {
   const [workShifts, setWorkShifts] = useState<WorkShiftInterface[]>([]);
   const [selectedWorkShift, setSelectedWorkShift] = useState<WorkShiftInterface | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingList, setLoadingList] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'update' | 'view'>('create');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const getAllAsync = async () => {
-    setLoading(true);
+  const fetchPage = useCallback(async (p = page, s = pageSize) => {
+    setLoadingList(true);
     setError(null);
     try {
-      const items = await WorkShiftService.getAllAsync();
-      setWorkShifts(items);
+      const resp = await WorkShiftService.getAllAsync(p, s);
+      setWorkShifts(resp.items);
+      setTotalCount(resp.meta.totalCount);
+      setPage(resp.meta.currentPage);
+      setPageSize(resp.meta.pageSize);
     } catch (err: any) {
       setError(err);
     } finally {
-      setLoading(false);
+      setLoadingList(false);
     }
-  };
+  }, [page, pageSize]);
 
-  const getByIdAsync = async (id: number) => {
-    setLoading(true);
+  const fetchById = useCallback(async (id: number) => {
+    setLoadingItem(true);
     setError(null);
     try {
-      const value = await WorkShiftService.getByIdAsync(id);
-      setSelectedWorkShift(value);
+      const ws = await WorkShiftService.getByIdAsync(id);
+      setSelectedWorkShift(ws);
     } catch (err: any) {
       setError(err);
     } finally {
-      setLoading(false);
+      setLoadingItem(false);
     }
-  };
+  }, []);
 
-  const createAsync = async (value: WorkShiftInterface) => {
-    setLoading(true);
+  const create = useCallback(async (values: WorkShiftFormValues) => {
+    setLoadingItem(true);
     setError(null);
+      console.log("Datos enviados desde hook metodo create: ", JSON.stringify(values))
     try {
-      const newItem = await WorkShiftService.createAsync(value);
-      setWorkShifts(prev => [...prev, newItem]);
+      await WorkShiftService.createAsync(values);
+      await fetchPage(1, pageSize);
     } catch (err: any) {
       setError(err);
     } finally {
-      setLoading(false);
+      setLoadingItem(false);
     }
-  };
+  }, [fetchPage, pageSize]);
 
-  const updateAsync = async (id: number, value: WorkShiftInterface) => {
-    setLoading(true);
+  const update = useCallback(async (id: number, values: WorkShiftFormValues) => {
+    setLoadingItem(true);
     setError(null);
     try {
-      const updated = await WorkShiftService.updateAsync(id, value);
-      setWorkShifts(prev =>
-         prev.map(item => item.id === updated.id ? updated : item)
-      );
+      await WorkShiftService.updateAsync(id, values);
+      await fetchPage(page, pageSize);
     } catch (err: any) {
       setError(err);
     } finally {
-      setLoading(false);
+      setLoadingItem(false);
     }
-  };
+  }, [fetchPage, page, pageSize]);
 
-  const toggleAsync = async (id: number) => {
-    setLoading(true);
+  const toggleStatus = useCallback(async (id: number) => {
+    setLoadingItem(true);
     setError(null);
     try {
-      const updated = await WorkShiftService.toggleAsync(id);
-      setWorkShifts(prev =>
-         prev.map(item => item.id === updated.id ? updated : item)
-      );
+      const updated = await WorkShiftService.toggleStatusAsync(id);
+      setWorkShifts(ws => ws.map(w => w.id === updated.id ? updated : w));
     } catch (err: any) {
       setError(err);
     } finally {
-      setLoading(false);
+      setLoadingItem(false);
     }
-  };
+  }, []);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setSelectedWorkShift(null);
-    setModalMode("create");
+    setModalMode('create');
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openEdit = (id: number) => {
-    getByIdAsync(id).then(() => {
-      setModalMode("update");
-      setIsModalOpen(true);
-    });
-  };
+  const openEdit = useCallback((id: number) => {
+    // show immediately with cached
+    const cached = workShifts.find(w => w.id === id) || null;
+    setSelectedWorkShift(cached);
+    setModalMode('update');
+    setIsModalOpen(true);
+    // then refresh details
+    fetchById(id);
+  }, [workShifts, fetchById]);
 
-  const openView = (id: number) => {
-    getByIdAsync(id).then(() => {
-      setModalMode("view");
-      setIsModalOpen(true);
-    });
-  };
+  const openView = useCallback((id: number) => {
+    const cached = workShifts.find(w => w.id === id) || null;
+    setSelectedWorkShift(cached);
+    setModalMode('view');
+    setIsModalOpen(true);
+    fetchById(id);
+  }, [workShifts, fetchById]);
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  const closeModal = useCallback(() => setIsModalOpen(false), []);
 
-  const handleSubmit = (values: WorkShiftInterface) => {
-    if (modalMode === "create") {
-      createAsync(values);
-    } else if (modalMode === "update" && selectedWorkShift) {
-      updateAsync(selectedWorkShift.id, values);
+  const handleSubmit = useCallback((values: WorkShiftFormValues) => {
+
+      console.log("Datos enviados desde el metodo handleSubmit: ", JSON.stringify(values))
+    if (modalMode === 'create') {
+      create(values);
+    } else if (modalMode === 'update' && selectedWorkShift) {
+      update(selectedWorkShift.id, values);
     }
     closeModal();
-  };
+  }, [modalMode, selectedWorkShift, create, update, closeModal]);
 
   useEffect(() => {
-    getAllAsync();
-  }, []);
+    fetchPage();
+  }, [fetchPage]);
 
   return {
     workShifts,
     selectedWorkShift,
+    loading: loadingList || loadingItem,
     error,
-    loading,
-    getAllAsync,
-    getByIdAsync,
-    createAsync,
-    updateAsync,
-    toggleAsync,
+    page,
+    pageSize,
+    totalCount,
+    setPage:      (p: number) => fetchPage(p, pageSize),
+    setPageSize:  (s: number) => fetchPage(1, s),
+    modalMode,
+    isModalOpen,
     openCreate,
     openEdit,
     openView,
     closeModal,
     handleSubmit,
-    isModalOpen,
-    modalMode,
+    toggleStatus,
   };
 };
