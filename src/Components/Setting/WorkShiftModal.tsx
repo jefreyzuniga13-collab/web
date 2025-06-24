@@ -107,7 +107,7 @@ export default function WorkShiftModal({
             <div className="ws-modal__col">
               <DatePickerField
                 label="Vigencia hasta"
-                value={form.validTo as Date | null}
+                value={form.validTo? new Date(form.validTo)  : null}
                 onChange={d => handleDate('validTo', d)}
                 disabled={isView}
               />

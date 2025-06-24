@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { parse, format } from 'date-fns'
 import type {
@@ -41,7 +42,21 @@ const SPANISH_TO_ENGLISH: Record<string, DayOfWeek> = {
   Sábado: 'Saturday',
 }
 
-export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormParams) {
+const ENGLISH_TO_SPANISH: Record<DayOfWeek, string> = {
+  Sunday: 'Domingo',
+  Monday: 'Lunes',
+  Tuesday: 'Martes',
+  Wednesday: 'Miércoles',
+  Thursday: 'Jueves',
+  Friday: 'Viernes',
+  Saturday: 'Sábado',
+}
+
+export function useOpeningHourForm({
+  mode,
+  data,
+  onSubmit,
+}: UseOpeningHourFormParams) {
   const isView = mode === 'view'
 
   const initialForm: OpeningHourFormState = {
@@ -69,31 +84,30 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
         name: data.name,
         description: data.description ?? '',
         recurrence: data.recurrence,
-        daysOfWeek: data.daysOfWeek ?? [],
+        // Traducimos inglés → español para mostrar en checkboxes
+        daysOfWeek: data.daysOfWeek
+          ? (data.daysOfWeek as DayOfWeek[]).map(day => ENGLISH_TO_SPANISH[day])
+          : [],
         holidayDate: data.holidayDate
           ? new Date(0, data.holidayDate.month - 1, data.holidayDate.day)
           : new Date(),
-        specificDate: data.specificDate
-          ? new Date(data.specificDate)
-          : new Date(),
+        specificDate: data.specificDate ? new Date(data.specificDate) : new Date(),
         startTime: data.startTime
           ? parse(data.startTime, 'HH:mm', new Date())
           : null,
-        endTime: data.endTime
-          ? parse(data.endTime, 'HH:mm', new Date())
-          : null,
-        effectiveFrom: data.effectiveFrom
-          ? new Date(data.effectiveFrom)
-          : new Date(),
-        effectiveTo: data.effectiveTo
-          ? new Date(data.effectiveTo)
-          : new Date(),
+        endTime: data.endTime ? parse(data.endTime, 'HH:mm', new Date()) : null,
+        effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : new Date(),
+        effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : new Date(),
         isActive: data.isActive,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt ?? data.createdAt),
       })
     } else if (mode === 'create') {
-      setForm({ ...initialForm, effectiveFrom: new Date(), effectiveTo: new Date() })
+      setForm({
+        ...initialForm,
+        effectiveFrom: new Date(),
+        effectiveTo: new Date(),
+      })
     }
   }, [mode, data, isView])
 
@@ -133,7 +147,6 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Errors = {}
-    const today = new Date()
 
     if (!form.name.trim()) newErrors.name = 'Nombre es obligatorio.'
     else if (form.name.length < 3 || form.name.length > 50)
@@ -143,8 +156,9 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
       newErrors.description = 'Descripción no puede exceder 200 caracteres.'
 
     if (form.recurrence === 'Weekly') {
-      if (!form.daysOfWeek.length) newErrors.days = 'Seleccione al menos un día.'
-      if (!form.startTime || !form.endTime) newErrors.time = 'Debe especificar hora de inicio y fin.'
+      if (form.daysOfWeek.length <= 0) newErrors.days = 'Seleccione al menos un día.'
+      if (!form.startTime || !form.endTime)
+        newErrors.time = 'Debe especificar hora de inicio y fin.'
       else if (form.startTime >= form.endTime)
         newErrors.time = 'Hora de inicio debe ser menor que hora de fin.'
     }
@@ -163,8 +177,6 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
     if (form.recurrence === 'OneTimeHoliday') {
       if (!form.specificDate)
         newErrors.specificDate = 'Fecha específica es obligatoria.'
-      else if (form.specificDate < today)
-        newErrors.specificDate = 'Fecha específica no puede ser pasada.'
       if (
         form.effectiveFrom &&
         form.effectiveTo &&
@@ -180,6 +192,7 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
 
     setErrors({})
 
+    // Convertimos español → inglés antes de enviar
     const payload: OpeningHourFormValues = {
       name: form.name,
       description: form.description,
@@ -190,7 +203,10 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
           : null,
       holidayDate:
         form.recurrence === 'AnnualHoliday' && form.holidayDate
-          ? { day: form.holidayDate.getDate(), month: form.holidayDate.getMonth() + 1 }
+          ? {
+              day: form.holidayDate.getDate(),
+              month: form.holidayDate.getMonth() + 1,
+            }
           : null,
       specificDate:
         form.recurrence === 'OneTimeHoliday' && form.specificDate
@@ -205,17 +221,14 @@ export function useOpeningHourForm({ mode, data, onSubmit }: UseOpeningHourFormP
           ? format(form.endTime, 'HH:mm')
           : null,
       effectiveFrom:
-        form.recurrence === 'OneTimeHoliday'
-          ? form.effectiveFrom
-          : null,
+        form.recurrence === 'OneTimeHoliday' ? form.effectiveFrom : null,
       effectiveTo:
-        form.recurrence === 'OneTimeHoliday'
-          ? form.effectiveTo
-          : null,
+        form.recurrence === 'OneTimeHoliday' ? form.effectiveTo : null,
       isActive: form.isActive,
     }
 
     onSubmit(payload)
+
     if (mode === 'create') {
       setForm(initialForm)
       setErrors({})

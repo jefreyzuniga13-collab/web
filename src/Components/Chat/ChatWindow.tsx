@@ -92,7 +92,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                             <button
                               className="chat-window__download-btn"
                               onClick={() =>
-                                handleDownload(m.attachments![0].mediaUrl!, m.attachments![0].fileName || 'imagen')
+                                handleDownload(m.attachments![0].mediaUrl!)
                               }
                               aria-label="Descargar imagen"
                             >

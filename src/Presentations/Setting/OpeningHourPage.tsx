@@ -58,6 +58,7 @@ export default function OpeningHourPage() {
               }`
             : '-',
       },
+      { id: 'specificDate', label: 'Fecha Especifica',   minWidth: 130 },
       { id: 'effectiveFrom', label: 'Vigencia Desde',   minWidth: 130 },
       { id: 'effectiveTo',   label: 'Vigencia Hasta',   minWidth: 130 },
       {

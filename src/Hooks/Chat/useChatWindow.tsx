@@ -74,7 +74,7 @@ export const useChatWindow = () => {
     }
   }
 
-  const handleDownload = async (mediaUrl: string, fileName: string) => {
+  const handleDownload = async ( fileName: string) => {
     try {
       const response = DownloadMedia(fileName);
 

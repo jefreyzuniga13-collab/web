@@ -107,7 +107,9 @@ export default function LoginPresentation() {
               disabled={!canSubmit || loading}
               className="login__submit-button"
             >
-              {loading ? `${t("login.submit")}…` : t("login.submit")}
+           <p className="login__submit-text">
+               {loading ? `${t("login.submit")}…` : t("login.submit")}
+           </p>
             </Button>
 
             <p className="login__signup-text">

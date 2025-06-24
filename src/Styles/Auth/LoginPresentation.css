@@ -159,9 +159,14 @@
   width: 100%;
   margin-top: var(--space-lg);
   background-color:#356ace !important ;
+  text-align: center !important;
 }
 
-
+.login__submit-text{
+  text-align: center;
+  padding: 0;
+  margin: auto;
+}
 .login__signup-text {
   text-align: center;
   margin-top: var(--space-xl);

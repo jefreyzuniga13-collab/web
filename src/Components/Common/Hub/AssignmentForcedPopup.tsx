@@ -27,7 +27,7 @@ export const AssignmentForcedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title="Asignación forzada"
+      title="Asignación realizada"
       message={`La asignación fue realizada con éxito. El motivo ha sido: ${assignmentComment || 'No Especificado.'}`}
       actions={actions}
       isOpen={true}

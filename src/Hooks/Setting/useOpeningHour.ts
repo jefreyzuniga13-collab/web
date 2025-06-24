@@ -10,7 +10,7 @@ export const useOpeningHour = () => {
   const [openingHours, setOpeningHours] = useState<OpeningHourInterface[]>([])
   const [selectedOpeningHour, setSelectedOpeningHour] = useState<OpeningHourInterface|null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(5)
   const [totalCount, setTotalCount] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingItem, setLoadingItem] = useState(false)

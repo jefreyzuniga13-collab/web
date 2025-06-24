@@ -87,6 +87,7 @@ export default function OpeningHourModal({
                   </div>
                   {errors.days && <div className="oh-modal__error">{errors.days}</div>}
                 </div>
+                
                 <div className="oh-modal__col">
                   <TimePickerField
                     label="Hora inicio"
@@ -125,6 +126,7 @@ export default function OpeningHourModal({
             {form.recurrence === 'OneTimeHoliday' && (
               <>
                 <div className="oh-modal__col">
+                   <p className="oh-modal__inline-label">¿Es feriado corto?</p>
                   <DatePickerField
                     label="Fecha específica"
                     value={form.specificDate}
@@ -135,7 +137,7 @@ export default function OpeningHourModal({
                 </div>
                 
                 <div className="oh-modal__col oh-modal__col--full">
-                  <p className="oh-modal__inline-label">Vigencia</p>
+                  <p className="oh-modal__inline-label">¿Es feriado largo?</p>
                   <div className="oh-modal__input-container">
                     <div className="oh-modal__col">
                       <DatePickerField
@@ -194,4 +196,4 @@ export default function OpeningHourModal({
       </div>
     </div>
   )
-} 
+}

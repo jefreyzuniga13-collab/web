@@ -115,7 +115,6 @@ export const useWorkShift = () => {
 
   const handleSubmit = useCallback((values: WorkShiftFormValues) => {
 
-      console.log("Datos enviados desde el metodo handleSubmit: ", JSON.stringify(values))
     if (modalMode === 'create') {
       create(values);
     } else if (modalMode === 'update' && selectedWorkShift) {
