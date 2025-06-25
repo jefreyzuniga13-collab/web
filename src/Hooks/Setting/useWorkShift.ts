@@ -10,7 +10,7 @@ export const useWorkShift = () => {
   const [workShifts, setWorkShifts] = useState<WorkShiftInterface[]>([]);
   const [selectedWorkShift, setSelectedWorkShift] = useState<WorkShiftInterface | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(5);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingItem, setLoadingItem] = useState(false);
@@ -111,7 +111,10 @@ export const useWorkShift = () => {
     fetchById(id);
   }, [workShifts, fetchById]);
 
-  const closeModal = useCallback(() => setIsModalOpen(false), []);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false)
+    setSelectedWorkShift(null);
+  }, []);
 
   const handleSubmit = useCallback((values: WorkShiftFormValues) => {
 

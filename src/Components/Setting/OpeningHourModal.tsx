@@ -50,24 +50,44 @@ export default function OpeningHourModal({
         </header>
         <form className="oh-modal__body" onSubmit={handleSubmit}>
           <div className="oh-modal__grid">
+            
             <div className="oh-modal__col">
               <label className="oh-modal__label">Nombre</label>
               <Input name="name" value={form.name} onChange={handleTextChange} disabled={isView} />
               {errors.name && <div className="oh-modal__error">{errors.name}</div>}
             </div>
+
             <div className="oh-modal__col">
               <label className="oh-modal__label">Descripción</label>
               <Input name="description" value={form.description} onChange={handleTextChange} disabled={isView} />
               {errors.description && <div className="oh-modal__error">{errors.description}</div>}
             </div>
+
             <div className="oh-modal__col">
-              <label className="oh-modal__label">Recurrencia</label>
+              <p className="oh-modal__inline-label">Recurrencia</p>
               <select className="oh-modal__select" value={form.recurrence} onChange={handleRecurrence} disabled={isView}>
                 <option value="Weekly">Semanal</option>
-                <option value="AnnualHoliday">Feriado Anual</option>
-                <option value="OneTimeHoliday">Feriado Único</option>
+                {/* <option value="AnnualHoliday">Feriado Anual</option> */}
+                <option value="OneTimeHoliday">Feriado</option>
               </select>
             </div>
+
+            {form.recurrence === 'Weekly' &&(
+              <>
+                <div className="oh-modal__col oh-modal__col-isActive">
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="isWorkShift"
+                      checked={form.isWorkShift}
+                      onChange={handleCheckbox}
+                      disabled={isView}
+                    />
+                    ¿Es turno?
+                  </label>
+                </div>
+              </>
+            )}
 
             {form.recurrence === 'Weekly' && (
               <>
@@ -108,7 +128,7 @@ export default function OpeningHourModal({
               </>
             )}
 
-            {form.recurrence === 'AnnualHoliday' && (
+            {/* {form.recurrence === 'AnnualHoliday' && (
               <>
                 <div className="oh-modal__col">
                   <DatePickerField
@@ -121,11 +141,11 @@ export default function OpeningHourModal({
                 </div>
 
               </>
-            )}
+            )} */}
 
             {form.recurrence === 'OneTimeHoliday' && (
               <>
-                <div className="oh-modal__col">
+                {/* <div className="oh-modal__col">
                    <p className="oh-modal__inline-label">¿Es feriado corto?</p>
                   <DatePickerField
                     label="Fecha específica"
@@ -134,6 +154,17 @@ export default function OpeningHourModal({
                     disabled={isView}
                   />
                   {errors.specificDate && <div className="oh-modal__error">{errors.specificDate}</div>}
+                </div> */}
+
+                <div className="oh-modal__col">
+                  <p className="oh-modal__inline-label">¿Es feriado corto y fijo?</p>
+                  <DatePickerField
+                    label="Día feriado"
+                    value={form.holidayDate}
+                    onChange={d => setForm(f => ({ ...f, holidayDate: d }))}
+                    disabled={isView}
+                  />
+                  {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
                 </div>
                 
                 <div className="oh-modal__col oh-modal__col--full">
@@ -176,8 +207,21 @@ export default function OpeningHourModal({
 
             {isView && (
               <div className="oh-modal__col oh-modal__col--full oh-modal__timestamps">
+               {
+                form.recurrence === "OneTimeHoliday" &&(
+                  <>
+                     <DatePickerField label="Fecha feriado oficial" value={form.holidayMovedFrom ? form.holidayMovedFrom : null} onChange={()=>{}} disabled />
+                      <DatePickerField label='Fecha feriado transladada' value={form.holidayMoveTo ? form.holidayMoveTo : null}  onChange={()=> {}} disabled/>
+                  </>
+                )
+               }
+               </div>
+           ) }
+
+            {isView && (
+              <div className="oh-modal__col oh-modal__col--full oh-modal__timestamps">
                 <DatePickerField label="Creado"     value={form.createdAt}   onChange={() => {}} disabled />
-                <DatePickerField label="Actualizado" value={form.updatedAt}   onChange={() => {}} disabled />
+                <DatePickerField label="Actualizado" value={form.updatedAt}   onChange={() => {}} disabled/>
               </div>
             )}
           </div>

@@ -21,7 +21,8 @@ function cleanPayload(payload: Record<string, any>): Record<string, any> {
 function transformPayload(input: OpeningHourFormValues): any {
   return cleanPayload({
     ...input,
-    specificDate: input.specificDate instanceof Date ? input.specificDate.toISOString().split('T')[0] : input.specificDate,
+    holidayDate: input.holidayDate instanceof Date ? input.holidayDate.toISOString().split('T')[0] : input.holidayDate,
+    // specificDate: input.specificDate instanceof Date ? input.specificDate.toISOString().split('T')[0] : input.specificDate,
     effectiveFrom: input.effectiveFrom instanceof Date ? input.effectiveFrom.toISOString().split('T')[0] : input.effectiveFrom,
     effectiveTo: input.effectiveTo instanceof Date ? input.effectiveTo.toISOString().split('T')[0] : input.effectiveTo,
     startTime: input.startTime ?? null,

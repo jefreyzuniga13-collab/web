@@ -73,12 +73,13 @@
   display: block;
   margin-bottom: var(--space-xs);
   font-size: var(--font-size-base);
-  color: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .ws-modal__field--checkbox {
-  align-items: center;
   display: flex;
+  justify-self: center;
+  text-align: center;
   font-size: var(--font-size-base);
   color: var(--text-secondary);
 }

@@ -12,6 +12,7 @@ import { EditIcon } from "lucide-react"
 import "@/Styles/Setting/OpeningHourPage.css"
 import "@/Styles/Setting/WorkShiftPage.css"
 import WorkShiftModal from "@/Components/Setting/WorkShiftModal"
+import { format, parseISO } from "date-fns"
 // import Spinner from "@/Components/Common/Spinner"
 
 export default function WorkShiftPage() {
@@ -39,35 +40,45 @@ export default function WorkShiftPage() {
     {
       id: "openingHour",
       label: "Horario",
-      minWidth: 170,
+      minWidth: 150,
       render: row => row.openingHour.name,
     },
     {
       id: "assignedUser",
       label: "Asignado a",
-      minWidth: 170,
+      minWidth: 150,
       render: row => row.assignedUser.fullName,
     },
     {
       id: "isActive",
       label: "Activo",
-      minWidth: 100,
+      minWidth: 90,
       render: row => (row.isActive ? "Sí" : "No"),
     },
     {
       id: "validFrom",
       label: "Vigencia Desde",
-      minWidth: 130,
+      minWidth: 110,
+      render: row => {
+        if(!row.validFrom) return '-';
+        const date = parseISO(row.validFrom);
+        return <span>{format(date, 'dd/MM/yyyy')}</span>
+      }
     },
     {
       id: "validTo",
       label: "Vigencia Hasta",
-      minWidth: 130,
+      minWidth: 110,
+      render: row => {
+        if(!row.validTo) return '-';
+        const date = parseISO(row.validTo)
+        return <span>{format(date, 'dd/MM/yyyy')}</span>
+      }
     },
     {
       id: "actions",
       label: "Acciones",
-      minWidth: 150,
+      minWidth: 130,
       align: "center",
       render: row => (
         <>
@@ -116,7 +127,7 @@ export default function WorkShiftPage() {
         rowsPerPage={pageSize}
         rowsPerPageOptions={[5, 10, 20, 50]}
         onPageChange={(_, newPage) => setPage(newPage + 1)}
-        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 5))}
       />
 
         <WorkShiftModal

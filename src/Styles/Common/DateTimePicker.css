@@ -36,11 +36,14 @@
 
 .date-picker-field--disabled .MuiInputBase-root,
 .time-picker-field--disabled .MuiInputBase-root {
-  background-color: #f5f5f5;
+  background-color: var(--color-white);
   box-shadow: none;
 }
 
 
 .form__row {
   margin-bottom: 1.5rem;
+}
+.MuiPickersSectionList-root{
+    padding: var(--space-lg);
 }

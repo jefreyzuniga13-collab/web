@@ -49,8 +49,6 @@
   color: var(--text-white);
 }
 
-
-
 .table__container {
   width: 100%;
   border-radius: var(--border-radius-lg);
@@ -103,4 +101,9 @@
 }
 .MuiTableCell-head{
       line-height: 1.2 !important;
+}
+
+.MuiTableCell-root{
+  font-size: var(--font-size-base) !important;
+  pad: var(--space-sm) 0 !important;
 }

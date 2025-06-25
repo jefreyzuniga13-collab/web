@@ -21,7 +21,7 @@ type Errors = {
   description?: string
   days?: string
   holidayDate?: string
-  specificDate?: string
+  //specificDate?: string
   time?: string
   range?: string
 }
@@ -65,11 +65,15 @@ export function useOpeningHourForm({
     recurrence: 'Weekly',
     daysOfWeek: [],
     holidayDate: null,
-    specificDate: null,
+    //specificDate: null,
     startTime: null,
     endTime: null,
     effectiveFrom: null,
     effectiveTo: null,
+    isWorkShift: true,
+    isHolidayMoved: false,
+    holidayMoveTo: null,
+    holidayMovedFrom: null,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -88,16 +92,28 @@ export function useOpeningHourForm({
         daysOfWeek: data.daysOfWeek
           ? (data.daysOfWeek as DayOfWeek[]).map(day => ENGLISH_TO_SPANISH[day])
           : [],
-        holidayDate: data.holidayDate
-          ? new Date(0, data.holidayDate.month - 1, data.holidayDate.day)
-          : new Date(),
-        specificDate: data.specificDate ? new Date(data.specificDate) : new Date(),
-        startTime: data.startTime
-          ? parse(data.startTime, 'HH:mm', new Date())
+          // si usas holidayDate en DatePicker:
+      holidayDate: data.holidayDate
+        ? parse(
+            `${String(data.holidayDate.day).padStart(2,'0')}/${String(data.holidayDate.month).padStart(2,'0')}`,
+            'dd/MM',
+            new Date()
+          )
+        : null,
+        // specificDate: data.specificDate ? new Date(data.specificDate) : new Date(),
+         startTime: data.startTime
+          ? parse(data.startTime.slice(0, 8), 'HH:mm:ss', new Date())
           : null,
-        endTime: data.endTime ? parse(data.endTime, 'HH:mm', new Date()) : null,
-        effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : new Date(),
-        effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : new Date(),
+        endTime: data.endTime
+          ? parse(data.endTime.slice(0, 8), 'HH:mm:ss', new Date())
+          : null,
+            
+        effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : null,
+        effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : null,
+        isWorkShift: data.isWorkShift,
+        isHolidayMoved: data.isHolidayMoved,
+        holidayMoveTo: data.holidayMoveTo ? new Date(data.holidayMoveTo): null,
+        holidayMovedFrom: data.holidayMovedFrom ? new Date(data.holidayMovedFrom): null,
         isActive: data.isActive,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt ?? data.createdAt),
@@ -126,12 +142,12 @@ export function useOpeningHourForm({
       ...f,
       recurrence: e.target.value as OpeningHourFormState['recurrence'],
       daysOfWeek: [],
-      holidayDate: new Date(),
-      specificDate: new Date(),
+      holidayDate: null,
+      // specificDate: null,
       startTime: null,
       endTime: null,
-      effectiveFrom: new Date(),
-      effectiveTo: new Date(),
+      effectiveFrom: null,
+      effectiveTo: null,
     }))
   }
 
@@ -163,26 +179,35 @@ export function useOpeningHourForm({
         newErrors.time = 'Hora de inicio debe ser menor que hora de fin.'
     }
 
-    if (form.recurrence === 'AnnualHoliday') {
-      if (!form.holidayDate)
-        newErrors.holidayDate = 'Fecha de feriado anual es obligatoria.'
-      if (
-        form.effectiveFrom &&
-        form.effectiveTo &&
-        form.effectiveFrom > form.effectiveTo
-      )
-        newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
-    }
+    // if (form.recurrence === 'AnnualHoliday') {
+    //   if (!form.holidayDate)
+    //     newErrors.holidayDate = 'Fecha de feriado anual es obligatoria.'
+    //   if (
+    //     form.effectiveFrom &&
+    //     form.effectiveTo &&
+    //     form.effectiveFrom > form.effectiveTo
+    //   )
+    //     newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
+    // }
 
     if (form.recurrence === 'OneTimeHoliday') {
-      if (!form.specificDate)
-        newErrors.specificDate = 'Fecha específica es obligatoria.'
+      if (!form.holidayDate &&
+         !form.effectiveFrom &&
+        !form.effectiveTo 
+      ){ newErrors.holidayDate = 'Seleccionar una fecha espesifica o rango.';
+       newErrors.range = 'Seleccionar una fecha espesifica o rango.'}
+
       if (
         form.effectiveFrom &&
         form.effectiveTo &&
         form.effectiveFrom > form.effectiveTo
-      )
-        newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
+      ) newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
+
+      if (
+        form.effectiveFrom &&
+        form.effectiveTo &&
+        form.effectiveFrom < new Date() && form.effectiveFrom < new Date()
+      ) newErrors.range = 'Desde debe ser posterior o igual a Hasta.'
     }
 
     if (Object.keys(newErrors).length) {
@@ -202,16 +227,16 @@ export function useOpeningHourForm({
           ? form.daysOfWeek.map(spanish => SPANISH_TO_ENGLISH[spanish])
           : null,
       holidayDate:
-        form.recurrence === 'AnnualHoliday' && form.holidayDate
+        form.recurrence === 'OneTimeHoliday' && form.holidayDate
           ? {
               day: form.holidayDate.getDate(),
               month: form.holidayDate.getMonth() + 1,
             }
           : null,
-      specificDate:
-        form.recurrence === 'OneTimeHoliday' && form.specificDate
-          ? form.specificDate
-          : null,
+      // specificDate:
+      //   form.recurrence === 'OneTimeHoliday' && form.specificDate
+      //     ? form.specificDate
+      //     : null,
       startTime:
         form.recurrence === 'Weekly' && form.startTime
           ? format(form.startTime, 'HH:mm')
@@ -224,6 +249,7 @@ export function useOpeningHourForm({
         form.recurrence === 'OneTimeHoliday' ? form.effectiveFrom : null,
       effectiveTo:
         form.recurrence === 'OneTimeHoliday' ? form.effectiveTo : null,
+        isWorkShift: form.isWorkShift,
       isActive: form.isActive,
     }
 

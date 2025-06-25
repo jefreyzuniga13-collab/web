@@ -24,6 +24,7 @@ export default function DatePickerField({
         value={value}
         disabled={disabled}
         onChange={(newValue: Date | null) => onChange(newValue)}
+        format='dd/MM/yyyy'
         slotProps={{
           textField: {
             className: `date-picker-field ${className}`,

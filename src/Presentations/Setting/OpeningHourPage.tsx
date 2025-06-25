@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'
@@ -11,6 +12,7 @@ import { useOpeningHour } from '@/Hooks/Setting/useOpeningHour'
 import type { OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/OpeningHourPage.css'
+import { format, parseISO } from 'date-fns';
 // import { ThreeDot } from 'react-loading-indicators'
 
 export default function OpeningHourPage() {
@@ -36,21 +38,21 @@ export default function OpeningHourPage() {
 
   const columns: Column<OpeningHourInterface>[] = useMemo(
     () => [
-      { id: 'name',       label: 'Nombre',       minWidth: 130 },
-      { id: 'description',label: 'Descripción',  minWidth: 200 },
-      { id: 'recurrence', label: 'Recurrencia',  minWidth: 130 },
+      { id: 'name',       label: 'Nombre',       minWidth: 100 },
+      { id: 'description',label: 'Descripción',  minWidth: 150 },
+      { id: 'recurrence', label: 'Recurrencia',  minWidth: 100 },
       {
         id: 'daysOfWeek',
         label: 'Días',
-        minWidth: 180,
+        minWidth: 150,
         render: row => row.daysOfWeek?.join(', ') || '-',
       },
-      { id: 'startTime',     label: 'Inicio',           minWidth: 100 },
-      { id: 'endTime',       label: 'Fin',              minWidth: 100 },
+      { id: 'startTime',     label: 'Inicio',           minWidth: 80 },
+      { id: 'endTime',       label: 'Fin',              minWidth: 80 },
       {
         id: 'holidayDate',
         label: 'Fecha Feriado',
-        minWidth: 130,
+        minWidth: 110,
         render: row =>
           row.holidayDate
             ? `${String(row.holidayDate.day).padStart(2, '0')}/${
@@ -58,19 +60,37 @@ export default function OpeningHourPage() {
               }`
             : '-',
       },
-      { id: 'specificDate', label: 'Fecha Especifica',   minWidth: 130 },
-      { id: 'effectiveFrom', label: 'Vigencia Desde',   minWidth: 130 },
-      { id: 'effectiveTo',   label: 'Vigencia Hasta',   minWidth: 130 },
-      {
-        id: 'isActive',
-        label: 'Activo',
-        minWidth: 100,
-        render: row => (row.isActive ? 'Sí' : 'No'),
+      // { id: 'specificDate', label: 'Fecha Especifica',   minWidth: 100 },
+       {
+      id: 'effectiveFrom',
+      label: 'Vigencia Desde',
+      minWidth: 110,
+      render: row => {
+        if (!row.effectiveFrom) return '-';
+        const date = parseISO(row.effectiveFrom);
+        return <span>{format(date, 'dd/MM/yyyy')}</span>;
       },
+    },
+    {
+      id: 'effectiveTo',
+      label: 'Vigencia Hasta',
+      minWidth: 110,
+      render: row => {
+        if (!row.effectiveTo) return '-';
+        const date = parseISO(row.effectiveTo);
+        return <span>{format(date, 'dd/MM/yyyy')}</span>;
+      },
+    },
+      // {
+      //   id: 'isActive',
+      //   label: 'Activo',
+      //   minWidth: 100,
+      //   render: row => (row.isActive ? 'Sí' : 'No'),
+      // },
       {
         id: 'actions',
         label: 'Acciones',
-        minWidth: 150,
+        minWidth: 130,
         align: 'center',
         render: row => (
           <>
