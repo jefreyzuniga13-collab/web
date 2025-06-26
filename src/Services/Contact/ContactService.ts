@@ -11,10 +11,18 @@ class ContactService{
 
     }
 
-    async updateSystemParams(params: ContactLogInterface) {
+    async getContactByPhoneAsync(phone: string): Promise<ContactLogInterface> {
+
+        const { data } = await api.get<ApiResponse<ContactLogInterface>>(`/ContactLogs/contact/${phone}`)
+
+        return data.data;
+
+    }
+
+    async updateContactAsync(params: ContactLogInterface) {
         try {
         const response = await api.put<ApiResponse<ContactLogInterface>>(`/contactLogs/${params.id}`, params)
-        return response.data
+        return response.data;
         } catch (error) {
         console.error('Error updating system parameters:', error)
         throw error

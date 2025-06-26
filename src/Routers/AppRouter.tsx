@@ -45,7 +45,6 @@ export function AppRouter() {
         <Route path="/unauthorized"    element={<Unauthorized />} />
           <Route element={<MainLayout />}>
             <Route index element={<Navigate to="chat" replace />} />
-
             <Route path="dashboard" element={<DashboardPresentation />} />
             <Route path="chat"      element={<SupportPage />} />
             <Route path="users"  element={<UsersPage />} />
@@ -54,7 +53,7 @@ export function AppRouter() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="opening-hour" element={<OpeningHourPage />} />
             <Route path="work-shift" element={<WorkShiftPage />} />
-            <Route path="verify-contact/:phone" element={<VerifyNewContactPage />} />
+            <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>
 

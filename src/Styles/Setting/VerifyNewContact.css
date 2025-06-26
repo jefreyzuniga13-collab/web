@@ -1,0 +1,73 @@
+.verifyContact__general-container{
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    padding: 0 var(--space-2xl);
+}
+
+.verifyContact-companies{
+    border-left: 1px solid #aaa;
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    text-align: left;
+     padding: 0 var(--space-2xl);
+}
+
+.verifyContact-container{
+    padding: var(--space-xl) var(--space-2xl)
+}
+
+.verifyContact-title{
+margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-align: left;
+}
+.verifyContact-subtitle{
+    margin: 0;
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.verifyContact-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-2xl);
+    padding-top: var(--space-3xl);
+}
+.verifyContact-grid-col-ck{
+    display: flex;
+    justify-content: start;
+    align-items: end;
+}
+.verifyContact-grid-p{
+    text-align: left;
+    margin: var(--space-sm) 0;
+    font-weight: var(--font-weight-medium);
+}
+
+.verifyContact-footer{
+    padding-top: var(--space-2xl);
+    gap: var(--space-2xl);
+}
+.verifyContact-btn{
+    margin: 0 var(--space-2xl);
+}
+
+.verifyContact-error{
+    color: var(--color-error);
+    text-align: left;
+}
+
+.verifyContact-loading{
+    margin: auto;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.verifyContact__select{
+    width: 100%;
+    padding: 1rem 0.7rem;
+}
