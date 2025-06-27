@@ -104,7 +104,7 @@ export default function WorkShiftPage() {
     <div className="ws-page__container">
       <div className="ws-page__header">
         <div className="ws-page__header-content">
-          <h1 className="ws-page__title">Gestión asignación de Turnos</h1>
+          <h1 className="ws-page__title">Gestión Asignación de Turnos</h1>
           <p className="ws-page__subtitle">
             Administración de turnos según horarios de turnos y feriados.
           </p>

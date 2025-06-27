@@ -21,11 +21,20 @@ class ContactService{
 
     async updateContactAsync(params: ContactLogInterface) {
         try {
-        const response = await api.put<ApiResponse<ContactLogInterface>>(`/contactLogs/${params.id}`, params)
+        const response = await api.put<ApiResponse<ContactLogInterface>>(`/ContactLogs/${params.id}`, params)
         return response.data;
         } catch (error) {
         console.error('Error updating system parameters:', error)
         throw error
+        }
+    }
+
+    async verifyContactAsync(id: number){
+        try{
+            const response = await api.put<ApiResponse<ContactLogInterface>>(`/Contactlogs/verifyContact/${id}`);
+            return response.data;
+        }catch(error){
+            console.error(error);
         }
     }
 }

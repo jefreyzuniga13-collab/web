@@ -1,6 +1,6 @@
 export interface CompanyInterface{
     companyId?: number | null;
-    name?: string;
+    name: string;
     address?: string;
     createdAt?: string | null;
 }

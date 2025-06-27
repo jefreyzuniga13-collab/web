@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/Hooks/Auth/useAuth'
-import { getCompanies } from '@/Services/CompanyService'
+//import { CompanyService } from '@/Services/CompanyService'
 import type { RegisterRequest } from '@/Interfaces/Auth/AuthInterface'
 
 interface CompanyOption {
@@ -14,22 +14,22 @@ interface CompanyOption {
 export default function useRegisterForm() {
   const { t } = useTranslation()
   const { registerAsync, loading } = useAuth()
-  const [companies, setCompanies] = useState<CompanyOption[]>([])
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [companies] = useState<CompanyOption[]>([])
+  const [fetchError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  // 1) Traer lista de compañías
-  useEffect(() => {
-    getCompanies()
-      .then(({ data }) => {
-        setCompanies(
-          data.data.map(c => ({ label: c.name, value: c.companyId }))
-        )
-      })
-      .catch(() => {
-        setFetchError(t('register.errors.fetchCompanies'))
-      })
-  }, [t])
+  // // 1) Traer lista de compañías
+  // useEffect(() => {
+  //   CompanyService.getAllAsync()
+  //     .then(({ data }) => {
+  //       setCompanies(
+  //         data.data.map(c => ({ label: c.name, value: c.companyId }))
+  //       )
+  //     })
+  //     .catch(() => {
+  //       setFetchError(t('register.errors.fetchCompanies'))
+  //     })
+  // }, [t])
 
   // 2) Schema de validación
   const validationSchema = useMemo(

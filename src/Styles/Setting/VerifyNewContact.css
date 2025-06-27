@@ -71,3 +71,14 @@ margin: 0;
     width: 100%;
     padding: 1rem 0.7rem;
 }
+
+.MuiAutocomplete-root{
+
+}
+
+.MuiInputBase-input{
+    font-size: var(--font-size-lg) !important;
+}
+.MuiFormLabel-root{
+    font-size: var(--font-size-sm) !important;
+}

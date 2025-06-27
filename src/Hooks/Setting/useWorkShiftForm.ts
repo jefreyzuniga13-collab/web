@@ -68,15 +68,16 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
     if (!form.openingHourId) newErrors.openingHourId = 'Debe seleccionar un horario.'
     if (!form.assignedUserId) newErrors.assignedUserId = 'Debe asignar un usuario.'
     if (!form.validFrom) newErrors.validFrom = 'Fecha de inicio es obligatoria.'
-    //if (!form.validFrom ) newErrors.validFrom = 'Fecha de inicio es obligatoria.'
-    // if (!form.validTo) newErrors.validTo = 'Fecha de fin es obligatoria.'
-    // if (
-    //   form.validFrom &&
-    //   form.validTo &&
-    //   form.validFrom > form.validTo
-    // ) {
-    //   newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
-    // }
+    if (!form.validFrom ) newErrors.validFrom = 'Fecha de inicio es obligatoria.'
+    
+    if (!form.validTo) newErrors.validTo = 'Fecha de fin es obligatoria.'
+    if (
+      form.validFrom &&
+      form.validTo &&
+      form.validFrom > form.validTo
+    ) {
+      newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
+    }
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)

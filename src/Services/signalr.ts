@@ -6,8 +6,8 @@ import type {
   NotificationDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
+import { notificationSound } from '@/Utils/sound'
 
-//import { toast } from 'react-toastify'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
@@ -18,6 +18,11 @@ let chatConnection: signalR.HubConnection | null = null
 export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
 export let userConeccion: signalR.HubConnection | null = null
+// const play = () => {
+//         if (!notificationSound.playing()) {
+//           notificationSound.play();
+//         }
+//       };
 
 export async function createHubConnection(token: string) {
   chatConnection = new signalR.HubConnectionBuilder()
@@ -51,9 +56,11 @@ export async function createHubConnection(token: string) {
   notificationsConnection.onreconnecting(err =>
     console.warn('Reconnecting to Notifications Hub...', err)
   )
+  
   notificationsConnection.onreconnected(() =>
     console.info('Reconnected to Notifications Hub')
   )
+
   notificationsConnection.onclose(err =>
     console.error('Notifications Hub connection closed', err)
   )
@@ -120,6 +127,7 @@ export async function createHubConnection(token: string) {
     (payload: {contactLog: ContactLog}) => {
       window.dispatchEvent(new CustomEvent('newContactValidation', { detail: payload }))
     }
+    
   )
 
   try {
@@ -155,6 +163,7 @@ export function onNewMessage(
   chatConnection?.on('ReceiveMessage', (message, attachments) => {
     handler({ message, attachments })
   })
+  // play()
 }
 
 export function offNewMessage() {
@@ -276,6 +285,7 @@ export function onNewContactValidation(
   handler: (payload: { contactLog: ContactLog }) => void
 ) {
   notificationsConnection?.on('newContactValidation', handler)
+  notificationSound.play();
 }
 
 export function offNewContactValidation(

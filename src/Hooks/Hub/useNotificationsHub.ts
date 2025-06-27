@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { notificationsConnection } from '@/Services/signalr'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces';
+import { notificationSound } from '@/Utils/sound';
 
 type SupportRequestedPayload = { conversationId: number; clientName: string; requestedAt: string }
 type AssignmentResponsePayload = { conversationId: number; AssignedAgentName?: string, accepted: boolean; comment?: string; justification?: string }
@@ -17,48 +18,59 @@ export type NotificationEvent =
   | {type: "newContactValidation", payload: ContactLog}
 
 export function useNotificationsHub(): NotificationEvent | null {
-  const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null)
+  const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null);
 
   useEffect(() => {
-    const conn = notificationsConnection
-    if (!conn) return
+    const conn = notificationsConnection;
+    if (!conn) return;
 
-    const supportRequestedHandler = (payload: SupportRequestedPayload) =>
-      setLastEvent({ type: 'SupportRequested', payload })
+    const play = () => {
+      if (!notificationSound.playing()) {
+        notificationSound.play();
+      }
+    };
 
-    const conversationAssignedHandler = (payload: ConversationDto) =>
-      setLastEvent({ type: 'ConversationAssigned', payload })
+    const supportRequested = (payload: SupportRequestedPayload) => {
+      setLastEvent({ type: 'SupportRequested', payload });
+      play();
+    };
+    const conversationAssigned = (payload: ConversationDto) => {
+      setLastEvent({ type: 'ConversationAssigned', payload });
+      play();
+    };
+    const assignmentResponse = (payload: AssignmentResponsePayload) => {
+      setLastEvent({ type: 'AssignmentResponse', payload });
+      play();
+    };
+    const assignmentForced = (payload: AssignmentForcedPayload) => {
+      setLastEvent({ type: 'AssignmentForced', payload });
+      play();
+    };
+    const assignmentForcedAdmin = (payload: AssignmentForcedAdminPayload) => {
+      setLastEvent({ type: 'AssignmentForcedAdmin', payload });
+      play();
+    };
+    const newContactValidation = (payload: ContactLog) => {
+      setLastEvent({ type: 'newContactValidation', payload });
+      play();
+    };
 
-    const assignmentResponseHandler = (payload: AssignmentResponsePayload) =>
-      setLastEvent({ type: 'AssignmentResponse', payload })
-
-    const assignmentForcedHandler = (payload: AssignmentForcedPayload) =>
-      setLastEvent({ type: 'AssignmentForced', payload })
-
-    const assignmentForcedAdminHandler = (payload: AssignmentForcedAdminPayload) =>
-      setLastEvent({ type: 'AssignmentForcedAdmin', payload })
-
-    const newContactValidationHanlder = (payload: ContactLog)=>
-      setLastEvent({type: 'newContactValidation', payload})
-
-    conn.on('SupportRequested', supportRequestedHandler)
-    conn.on('ConversationAssigned', conversationAssignedHandler)
-    conn.on('AssignmentResponse', assignmentResponseHandler)
-    conn.on('AssignmentForced', assignmentForcedHandler)
-    conn.on('AssignmentForcedAdmin', assignmentForcedAdminHandler)
-    conn.on('newContactValidation', newContactValidationHanlder)
+    conn.on('SupportRequested', supportRequested);
+    conn.on('ConversationAssigned', conversationAssigned);
+    conn.on('AssignmentResponse', assignmentResponse);
+    conn.on('AssignmentForced', assignmentForced);
+    conn.on('AssignmentForcedAdmin', assignmentForcedAdmin);
+    conn.on('newContactValidation', newContactValidation);
 
     return () => {
-      conn.off('SupportRequested', supportRequestedHandler)
-      conn.off('ConversationAssigned', conversationAssignedHandler)
-      conn.off('AssignmentResponse', assignmentResponseHandler)
-      conn.off('AssignmentForced', assignmentForcedHandler)
-      conn.off('AssignmentForcedAdmin', assignmentForcedAdminHandler)
-      conn.off("newContactValidation", newContactValidationHanlder)
-    }
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notificationsConnection])
+      conn.off('SupportRequested', supportRequested);
+      conn.off('ConversationAssigned', conversationAssigned);
+      conn.off('AssignmentResponse', assignmentResponse);
+      conn.off('AssignmentForced', assignmentForced);
+      conn.off('AssignmentForcedAdmin', assignmentForcedAdmin);
+      conn.off('newContactValidation', newContactValidation);
+    };
+  }, [notificationsConnection]);
 
-  return lastEvent
+  return lastEvent;
 }

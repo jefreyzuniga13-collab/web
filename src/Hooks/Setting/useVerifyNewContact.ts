@@ -24,6 +24,7 @@ export function useVerifyNewContact(phoneNumber: string) {
     waId: null,
     waUserId: "",
     phone: "",
+    companyName: "",
     companyId: null,
     status: null,
     fullName: "",
@@ -77,6 +78,8 @@ export function useVerifyNewContact(phoneNumber: string) {
     [name]: value !== "" ? parseInt(value, 10) : null
   }));
 };
+  const handleSelectUser = (id: number) =>
+    setForm(f => ({ ...f, assignedUserId: id }))
 
 
   const handleBack = () => {
@@ -87,6 +90,7 @@ export function useVerifyNewContact(phoneNumber: string) {
     setLoading(true);
     try {
       await contactService.updateContactAsync(form);
+      await verifyNewContactAsync(form.id)
       toast.success("Contacto verificado con éxito.");
       navigate("/chat");
     } catch (err: any) {
@@ -96,6 +100,17 @@ export function useVerifyNewContact(phoneNumber: string) {
       setLoading(false);
     }
   }, [form, navigate]);
+  
+  const verifyNewContactAsync = async(id: number)=>{
+    setLoading(true);
+    try{
+        await contactService.verifyContactAsync(id);
+    }catch(err: any){
+      setErrors(err);
+    }finally{
+      setLoading(false);
+    }
+  }
 
 
   const handleSubmit = async () => {
@@ -143,6 +158,7 @@ export function useVerifyNewContact(phoneNumber: string) {
     handleCheckbox,
     handleBack,
     handleSubmit,
-    handleSelectChange
+    handleSelectChange,
+    handleSelectUser
   };
 }

@@ -112,12 +112,12 @@ export default function LoginPresentation() {
            </p>
             </Button>
 
-            <p className="login__signup-text">
+            {/* <p className="login__signup-text">
               {t("login.noAccount")}{" "}
               <Link to="/signup" replace className="login__signup-link">
                 {t("login.signUp")}
               </Link>
-            </p>
+            </p> */}
           </form>
         </section>
       </div>

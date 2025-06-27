@@ -203,11 +203,11 @@ export function useOpeningHourForm({
         form.effectiveFrom > form.effectiveTo
       ) newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
 
-      if (
-        form.effectiveFrom &&
-        form.effectiveTo &&
-        form.effectiveFrom < new Date() && form.effectiveFrom < new Date()
-      ) newErrors.range = 'Desde debe ser posterior o igual a Hasta.'
+      // if (
+      //   form.effectiveFrom &&
+      //   form.effectiveTo &&
+      //   form.effectiveFrom < new Date() && form.effectiveFrom < new Date()
+      // ) newErrors.range = 'Desde debe ser posterior o igual a Hasta.'
     }
 
     if (Object.keys(newErrors).length) {

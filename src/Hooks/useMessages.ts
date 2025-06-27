@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getMessages } from '@/Services/MessageService'
 import { useSignalR } from '@/Context/SignalRContext'
 import type { MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
+// import { notificationSound } from '@/Utils/sound'
 
 const useMessages = (conversationId?: number) => {
   const [messages, setMessages] = useState<MessageDto[]>([])
@@ -32,6 +33,8 @@ const useMessages = (conversationId?: number) => {
         setMessages(prev => [...prev, { ...message, attachments: [] }])
         return
       }
+
+      //  notificationSound.play()
 
       // 3) Si es media pero no vino con attachments -> recargamos todos los mensajes
       try {

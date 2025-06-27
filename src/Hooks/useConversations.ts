@@ -8,6 +8,7 @@ import type {
   MessageDto,
   AttachmentDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
+import { notificationSound } from '@/Utils/sound'
 
 export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human'
 export type filterInactiveConv = 'all' | 'closed' | 'incomplete'
@@ -30,6 +31,7 @@ export function useConversations(
 ): UseConversationsResult {
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
+  const { userId } = JSON.parse(authRaw) as { userId: number }
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
 
@@ -161,6 +163,13 @@ export function useConversations(
     [matchesFilter, matchesFilterHistory]
   )
 
+    const play = () => {
+        if (!notificationSound.playing()) {
+          notificationSound.play();
+        }
+      };
+
+      
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
       const msg = payload.message
@@ -178,6 +187,9 @@ export function useConversations(
           )
         )
       )
+      if(msg.senderUserId !== userId || msg.senderContactId != null){
+              play();
+      }
     },
     []
   )

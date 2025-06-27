@@ -1,4 +1,4 @@
-// import type { User } from "../User/UserInterfaces";
+import type { User } from "../User/UserInterfaces";
 
 export type ContactStatus =
   | 'New'
@@ -17,6 +17,7 @@ export type ContactStatus =
     phone: string;
     idCard?: string;
     fullName?: string;
+    companyName?: string;
     companyId?: number | null;
     isVerified?: boolean;
     status: ContactStatus | null;
@@ -24,5 +25,5 @@ export type ContactStatus =
     updatedAt?: string;
     verifiedAt?: string;
     verifiedId?: number;
-    // verifiedBy?: User;
+    verifiedBy?: User;
 }

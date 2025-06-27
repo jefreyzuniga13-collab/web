@@ -35,6 +35,8 @@ export default function OpeningHourModal({
     handleSubmit,
   } = useOpeningHourForm({ mode, data, onSubmit })
 
+
+  
   if (!isOpen) return null
 
   return (

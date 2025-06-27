@@ -7,6 +7,8 @@ import { useVerifyNewContact } from "@/Hooks/Setting/useVerifyNewContact";
 import { useCompany } from "@/Hooks/Company/useCompany";
 import type { CompanyInterface } from "@/Interfaces/Company/CompanyInterface";
 import "@/Styles/Setting/VerifyNewContact.css";
+// import Autocomplete from "@mui/material/Autocomplete";
+// import TextField from "@mui/material/TextField";
 
 const VerifyNewContactPage: React.FC = () => {
   const { phoneNumber } = useParams<{ phoneNumber: string }>();
@@ -16,6 +18,7 @@ const VerifyNewContactPage: React.FC = () => {
     loading: verifying,
     handleChangeText,
     handleCheckbox,
+    //handleSelectUser,
     handleSelectChange,
     handleSubmit,
     handleBack,
@@ -74,6 +77,17 @@ const VerifyNewContactPage: React.FC = () => {
             </div>
 
             <div className="verifyContact-grid-col">
+              <label htmlFor="idCard">Nombre compañía indica por el contacto</label>
+              <Input
+                id="companyName"
+                name="companyName"
+                value={form.companyName}
+                onChange={handleChangeText}
+                disabled
+              />
+            </div>
+ 
+            <div className="verifyContact-grid-col">
               <label htmlFor="companyId">Seleccione una compañía</label>
               <select
                 id="companyId"
@@ -95,7 +109,28 @@ const VerifyNewContactPage: React.FC = () => {
               {errors.companyId && (
                 <div className="verifyContact-error">{errors.companyId}</div>
               )}
-            </div>
+            </div> 
+
+            {/* <div className="verifyContact-grid-col">
+                  <label htmlFor="companyId">Seleccione una compañía</label>
+                          <Autocomplete
+                            options={companiesList}
+                             className="verifyContact__select"
+                            getOptionLabel={h => h.name}
+                            value={companiesList.find(h => h.companyId === form.companyId) || null}
+                            onChange={(_, h) => handleSelectUser(h?.companyId || 0)}
+                            renderInput={params => (
+                              <TextField
+                                {...params}
+                                label="Horario"
+                                size="small"
+                                error={!!errors.companyId}
+                                helperText={errors.companyId}
+                                className="verifyContact__select-text"
+                              />
+                            )}
+                          />
+                        </div> */}
 
             <div className="verifyContact-grid-col">
               <label htmlFor="waName">Nombre de WhatsApp</label>
