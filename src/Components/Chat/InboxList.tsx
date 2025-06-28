@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { useConversations } from '@/Hooks/useConversations'
 import { MessageSquareOff } from 'lucide-react'
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
-
 interface Props {
   selectedId?: number
   onSelect: (id: number) => void
-  filter?: 'all' | 'bot' | 'waiting' | 'human'
-  filterInactiveConv?: 'all' | 'closed' | 'incomplete'
-  conversations: ConversationDto[]
+  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
 }
 
 const formatDuration = (ms: number): string => {
@@ -18,11 +16,8 @@ const formatDuration = (ms: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
-export const InboxList: React.FC<Props> = ({
-  selectedId,
-  onSelect,
-  conversations,
-}) => {
+export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
+  const { conversations } = useConversations(filter)
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -32,10 +27,7 @@ export const InboxList: React.FC<Props> = ({
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
-    return new Date(iso).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
   const getStatusClass = (status: string) => {
@@ -50,20 +42,13 @@ export const InboxList: React.FC<Props> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'New':
-        return 'Nuevo'
-      case 'Bot':
-        return 'Bot'
-      case 'Waiting':
-        return 'Pendiente'
-      case 'Human':
-        return 'Humano'
-      case 'Closed':
-        return 'Cerrado'
-      case 'Incomplete':
-        return 'Incompleta'
-      default:
-        return status
+      case 'New': return 'Nuevo'
+      case 'Bot': return 'Bot'
+      case 'Waiting': return 'Pendiente'
+      case 'Human': return 'Humano'
+      case 'Closed': return 'Cerrado'
+      case 'Incomplete': return 'Imcompleta'
+      default: return status
     }
   }
 
@@ -91,10 +76,7 @@ export const InboxList: React.FC<Props> = ({
           const lastTime = formatTime(c.lastActivity || c.createdAt)
           const statusClass = getStatusClass(c.status)
           const statusText = getStatusText(c.status)
-          
           const hasUnread = (c.unreadCount ?? 0) > 0
-
-          console.log("Mensajes sin leer son: ", hasUnread)
 
           let timeSinceRequest = ''
           if (!c.assignedAt && c.requestedAgentAt) {
@@ -111,12 +93,11 @@ export const InboxList: React.FC<Props> = ({
             timeToFirstResponse = formatDuration(diff)
           }
 
-          let previewText = `Cliente últ. msj: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
-
+          let previewText = `Cliente últ. msj:: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
+          
           if (!c.assignedAt && c.requestedAgentAt) {
             previewText += ` · Tiempo desde solicitud: ${timeSinceRequest}`
           }
-
           if (c.assignedAt && timeToFirstResponse) {
             previewText += ` · Tiempo hasta 1ª respuesta: ${timeToFirstResponse}`
           }
@@ -132,6 +113,9 @@ export const InboxList: React.FC<Props> = ({
               className={`inbox-list__item ${isSelected ? 'inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
+                <div className="inbox-list__avatar">
+                  {(c.clientContactName || 'U').charAt(0).toUpperCase()}
+                </div>
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
                     <span className="inbox-list__name">
@@ -146,28 +130,16 @@ export const InboxList: React.FC<Props> = ({
                   )}
                   <span className="inbox-list__preview">{previewText}</span>
                 </div>
-
-               <div className='inbox-list__container'>
-                   <div className="inbox-list__bottom">
-                  
-                  {hasUnread && (
-                    <span className="inbox-list__unread-badge">
-                      {c.unreadCount}
-                    </span>
-                  )}
-                </div>
-
                 <div className="inbox-list__bottom">
-                  <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
-                    {statusText}
+                <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
+                  {statusText}
+                </span>
+                {hasUnread && (
+                  <span className="inbox-list__unread-badge">
+                    {c.unreadCount}
                   </span>
-                  {/* {hasUnread && (
-                    <span className="inbox-list__unread-badge">
-                      {c.unreadCount}
-                    </span>
-                  )} */}
-                </div>
-               </div>
+                )}
+              </div>
               </div>
             </li>
           )
@@ -175,3 +147,6 @@ export const InboxList: React.FC<Props> = ({
     </ul>
   )
 }
+
+//Se necesita poder ordenar de la siguiente forma las converaciones por los estados como lo hace whatspp y ademas agreagr un buscador com en la imagen. Y hacer que el usurio pueda ordenar el orden de los estados.
+//Si seleccione el orden pendiente, humano se cambie el orden de los opciones de los estados de filtro, com ves se co pop up o algfo asi

@@ -21,17 +21,80 @@
   background-color: var(--bg-primary);
   border-bottom: 0.1rem solid var(--border-secondary);
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
 }
 
+.inbox-title-container{
+  display: flex;
+
+}
 .inbox-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-gray-800);
   margin: 0;
 }
+.sort-button{
+  font-size: var(--font-size-base);
+  background-color: var(--bg-primary);
+  color: var(--text-white);
+  /* border: 1px solid var(--color-primary); */
+  border: none;
+  align-self: flex-end !important;
+  justify-self: flex-end;
+  cursor: pointer;
+  padding: var(--space-sm);
+}
+.sort-button-icon{
+  font-size: var(--font-size-base);
+  background-color: transparent;
+  color: var(--color-primary);
+}
 
+.sort-button:hover{
+  background-color: var(--color-blue-light);
+  border-radius: var(--space-sm);
+}
+
+.inbox-status__container{
+  gap: 0.9rem 2rem;
+
+  min-width: 100%;
+  max-width: 100%;
+  overflow-x: scroll;
+  padding: var(--space-lg) 2rem;
+  box-sizing: border-box;
+}
+
+.inbox-status__label{
+  font-size: var(--font-size-sm) !important;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--space-2xl);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  transition: all .2s ease-in-out;
+}
+
+ .radio-container input[type="radio"]:checked + label {
+    background-color: #aaddff;
+    border-color: #007bff;
+  }
+
+.inbox-status__label:hover{
+  background-color: var(--color-primary);
+  color: var(--text-white);
+}
+
+input[type="radio"]:checked{
+  background-color: var(--color-primary);
+  color: var(--text-white);
+}
+
+.inbox-status__input{
+  display: none;
+}
 .filter-dropdown {
   border: 0.1rem solid var(--border-secondary);
   padding: 0.6rem 1.2rem;
@@ -307,4 +370,36 @@
   .inbox-list__unread-indicator {
     right: var(--space-2xl);
   }
+}
+
+.order-modal{
+  background-color: var(--bg-primary);
+  padding: var(--space-2xl) var(--space-3xl);
+  border-radius: var(--space-xl);
+}
+
+.order-modal-title{
+  font-size: var(--font-size-xl);
+  text-align: left;
+}
+
+.order-list{
+  list-style: none;
+  text-align: left;
+  min-width: 100%;
+  padding: 0;
+}
+
+.order-item{
+  margin: var(--space-lg) 0;
+  cursor: pointer;
+}
+
+.order-item:hover{
+  color: var(--color-primary);
+}
+
+.order-modal-actions{
+  display: flex;
+  gap: var(--space-2xl);
 }

@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react'
-import { jwtDecode } from 'jwt-decode'
+import React, { useState, useEffect, useMemo } from 'react'
+import {jwtDecode} from 'jwt-decode'
 import { useDispatch } from 'react-redux'
 import { InboxList } from '@/Components/Chat/InboxList'
 import { ChatWindow } from '@/Components/Chat/ChatWindow'
@@ -9,10 +8,11 @@ import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryM
 import { getConversation, closeConversation } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { openAssignModal } from '@/Context/Slices/assignModalSlice'
-import { useConversations } from '@/Hooks/useConversations'
 import '@/Styles/Chat/SupportPage.css'
+import { FaFilter } from "react-icons/fa";
 import { RiChatHistoryFill } from 'react-icons/ri'
 import { FaUserAlt, FaClipboard } from 'react-icons/fa'
+import Button from '@/Components/Common/Button'
 
 interface AuthStorage {
   accessToken: string
@@ -25,25 +25,51 @@ interface JwtPayload {
   role: string
 }
 
+// Tipo de cada opción de filtro
+type FilterOption = { label: string; value: string; content: string }
+
+const DEFAULT_OPTIONS: FilterOption[] = [
+  { label: 'all', value: 'all', content: 'Todos' },
+  { label: 'bot', value: 'bot', content: 'Bot' },
+  { label: 'waiting', value: 'waiting', content: 'Pendiente' },
+  { label: 'human', value: 'human', content: 'Asignado' },
+  { label: 'closed', value: 'closed', content: 'Cerrado' },
+  { label: 'incomplete', value: 'incomplete', content: 'Incompleto' },
+]
+
+const FILTER_ORDER_STORAGE_KEY = 'filterOrder'
+
 const SupportPage: React.FC = () => {
   const dispatch = useDispatch()
   const [convId, setConvId] = useState<number | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [filter, setFilter] = useState<'all' | 'bot' | 'waiting' | 'human'>('all')
-  const [filterInactiveConv, setFilterInactiveConv] = useState<'all' | 'closed' | 'incomplete'>('all')
+  const [filter, setFilter] = useState<string>('all')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [contactDetailToggle, setContactDetailToggle] = useState(false)
+  const [orderModalVisible, setOrderModalVisible] = useState(false)
 
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
 
-  const {
-    conversations,            // activas (no cerradas)
-    conversationsHistory,     // cerradas o incompletas
-  } = useConversations(filter, filterInactiveConv)
+  // Cargar orden de filtros desde localStorage o usar el predeterminado
+  const [filterOrder, setFilterOrder] = useState<string[]>(() => {
+    const stored = localStorage.getItem(FILTER_ORDER_STORAGE_KEY)
+    if (stored) {
+      try { return JSON.parse(stored) } catch { /* ignore */ }
+    }
+    return DEFAULT_OPTIONS.map(o => o.value)
+  })
 
+  // Opciones ordenadas según filterOrder
+  const sortedOptions = useMemo(() => {
+    return filterOrder
+      .map(val => DEFAULT_OPTIONS.find(o => o.value === val))
+      .filter((o): o is FilterOption => !!o)
+  }, [filterOrder])
+
+  // Control de conversión
   useEffect(() => {
     if (!convId) {
       setConversation(null)
@@ -63,7 +89,6 @@ const SupportPage: React.FC = () => {
 
   const handleAssignClick = () => {
     if (!convId || !conversation) return
-
     if (isAdmin) {
       dispatch(openAssignModal(conversation))
     } else {
@@ -73,55 +98,56 @@ const SupportPage: React.FC = () => {
     }
   }
 
+  const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value)
+    setConvId(null)
+  }
+
+  // Guardar orden en localStorage
+  const saveOrder = (newOrder: string[]) => {
+    setFilterOrder(newOrder)
+    localStorage.setItem(FILTER_ORDER_STORAGE_KEY, JSON.stringify(newOrder))
+  }
+
   return (
     <div className="support-layout">
-      {/* Conversaciones finalizadas */}
       <aside className="sidebar">
         <div className="inbox-header">
-          <h3 className="inbox-title">Conversaciones finalizadas</h3>
-          <select
-            className="filter-dropdown"
-            value={filterInactiveConv}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onChange={e => setFilterInactiveConv(e.target.value as any)}
-          >
-            <option value="all">Todos</option>
-            <option value="incomplete">Incompletas</option>
-            <option value="closed">Cerradas</option>
-          </select>
+          <div className="inbox-title-container">
+            <h3 className="inbox-title">Conversaciones</h3>
+            <button
+              className="sort-button"
+              onClick={() => setOrderModalVisible(true)}
+              title="Ordenar filtros"
+            >
+              <FaFilter className='sort-button-icon'/>
+            </button>
+          </div>
+          <div className="inbox-status__container">
+            {sortedOptions.map(opt => (
+              <label key={opt.value} className={`inbox-status__label`} >
+                <input
+                  type="radio"
+                  name="filters"
+                  value={opt.value}
+                  checked={filter === opt.value}
+                  onChange={handleOptionChange}
+                  className="inbox-status__input"
+                />
+                {opt.content}
+              </label>
+            ))}
+          </div>
         </div>
+
         <InboxList
           selectedId={convId ?? undefined}
           onSelect={setConvId}
-          filterInactiveConv={filterInactiveConv}
-          conversations={conversationsHistory}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          filter={filter as any}
         />
       </aside>
 
-      {/* Conversaciones activas */}
-      <aside className="sidebar">
-        <div className="inbox-header">
-          <h3 className="inbox-title">Conversaciones en curso</h3>
-          <select
-            className="filter-dropdown"
-            value={filter}
-            onChange={e => setFilter(e.target.value as any)}
-          >
-            <option value="all">Todos</option>
-            <option value="bot">Bot</option>
-            <option value="waiting">Pendientes</option>
-            <option value="human">Asignadas</option>
-          </select>
-        </div>
-        <InboxList
-          selectedId={convId ?? undefined}
-          onSelect={setConvId}
-          filter={filter}
-          conversations={conversations}
-        />
-      </aside>
-
-      {/* Chat principal */}
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">Chat</h2>
@@ -135,7 +161,6 @@ const SupportPage: React.FC = () => {
                 >
                   <RiChatHistoryFill size={16} /> Historial
                 </button>
-
                 <button
                   className={`contact-detail-button ${convId ? 'active' : 'disabled'}`}
                   onClick={() => setContactDetailToggle(t => !t)}
@@ -145,7 +170,6 @@ const SupportPage: React.FC = () => {
                 </button>
               </>
             )}
-
             <button
               className={`assign-button ${isAdmin ? '' : 'button-cerrar'}`}
               disabled={!convId}
@@ -176,6 +200,76 @@ const SupportPage: React.FC = () => {
         onClose={() => setShowHistoryModal(false)}
         conversationId={convId || 0}
       />
+
+      {orderModalVisible && (
+        <FilterOrderModal
+          currentOrder={filterOrder}
+          options={DEFAULT_OPTIONS}
+          onSave={newOrder => {
+            saveOrder(newOrder)
+            setOrderModalVisible(false)
+          }}
+          onClose={() => setOrderModalVisible(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+interface FilterOrderModalProps {
+  currentOrder: string[]
+  options: FilterOption[]
+  onSave: (newOrder: string[]) => void
+  onClose: () => void
+}
+
+const FilterOrderModal: React.FC<FilterOrderModalProps> = ({ currentOrder, options, onSave, onClose }) => {
+  const [order, setOrder] = useState<string[]>(currentOrder)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+
+  const handleDragStart = (idx: number) => {
+    setDragIndex(idx)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (idx: number) => {
+    if (dragIndex === null) return
+    const newOrder = [...order]
+    const [moved] = newOrder.splice(dragIndex, 1)
+    newOrder.splice(idx, 0, moved)
+    setOrder(newOrder)
+    setDragIndex(null)
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="order-modal">
+        <h3 className='order-modal-title'>Ordenar filtros</h3>
+        <ul className="order-list">
+          {order.map((val, idx) => {
+            const opt = options.find(o => o.value === val)!
+            return (
+              <li
+                key={val}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(idx)}
+                className="order-item"
+              >
+                ☰ {opt.content}
+              </li>
+            )
+          })}
+        </ul>
+        <div className="order-modal-actions">
+          <Button variant='secondary' onClick={onClose}>Cancelar</Button>
+          <Button variant='primary' onClick={() => onSave(order)}>Guardar</Button>
+        </div>
+      </div>
     </div>
   )
 }
