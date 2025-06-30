@@ -1,5 +1,5 @@
 import { Howl } from 'howler';
-import notificationMp3 from '@/assets/audio/notification.mp3';
+import notificationMp3 from '@/assets/audio/bellnotification.mp3';
 
 export const notificationSound = new Howl({
   src: [notificationMp3],

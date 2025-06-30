@@ -7,7 +7,8 @@ import type {
   MessageDto,
   AttachmentDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
-import { notificationSound } from '@/Utils/sound'
+import { joinConversation } from '@/Services/signalr'
+//import { notificationSound } from '@/Utils/sound'
 
 export type Filter = 'all' | 'new' | 'bot' | 'waiting' | 'human' | 'closed'| 'incomplete'
 
@@ -25,7 +26,7 @@ export interface UseConversationsResult {
 export function useConversations(filter: Filter = 'all'): UseConversationsResult {
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
-  const { userId } = JSON.parse(authRaw) as { userId: number }
+  //const { userId } = JSON.parse(authRaw) as { userId: number }
   const { role } = jwtDecode<JwtPayload>(accessToken)
 
   const isAdmin = role.toLowerCase() === 'admin'
@@ -83,10 +84,10 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     []
   )
 
-  const handleNewConvo = useCallback((newConvo: ConversationDto) => {
-    if (!matchesFilter(newConvo)) return
-    setConversations(prev => sortByActivity([newConvo, ...prev]))
-  }, [matchesFilter])
+  // const handleNewConvo = useCallback((newConvo: ConversationDto) => {
+  //   if (!matchesFilter(newConvo)) return
+  //   setConversations(prev => sortByActivity([newConvo, ...prev]))
+  // }, [matchesFilter])
 
   const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
     setConversations(prev => {
@@ -109,11 +110,11 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     })
   }, [matchesFilter])
 
-    const play = () => {
-        if (!notificationSound.playing()) {
-          notificationSound.play();
-        }
-      };
+    // const play = () => {
+    //     if (!notificationSound.playing()) {
+    //       notificationSound.play();
+    //     }
+    //   };
 
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
@@ -132,13 +133,18 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
           )
         )
       )
-
-      if(msg.senderUserId !== userId || msg.senderContactId != null){
-              play();
-      }
+      // if(msg.senderUserId !== userId || msg.senderContactId != null){
+      //         play();
+      // }
     },
     []
   )
+
+  const handleNewConvo = useCallback((newConvo: ConversationDto) => {
+        if (!matchesFilter(newConvo)) return
+        joinConversation(newConvo.conversationId)
+        setConversations(prev => sortByActivity([newConvo, ...prev]))
+      }, [matchesFilter])
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -154,6 +160,10 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
       convs = convs.filter(matchesFilter)
       setConversations(sortByActivity(convs))
+
+       convs.forEach(c => {
+        joinConversation(c.conversationId)
+      })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)
@@ -162,6 +172,7 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
       setLoading(false)
     }
   }, [matchesFilter])
+   
 
   useEffect(() => {
     reload()

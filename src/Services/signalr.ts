@@ -130,6 +130,13 @@ export async function createHubConnection(token: string) {
     
   )
 
+  notificationsConnection.on(
+    'newMessage',
+    (dto: MessageDto) => {
+      console.log("Mensaje desde el singlar y el dto que se recibe es: ", dto);
+    }
+  )
+
   try {
     await Promise.all([
       chatConnection.start(),
@@ -161,24 +168,14 @@ export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
   chatConnection?.on('ReceiveMessage', (message, attachments) => {
+      console.log("Mensaje desde el signalr.ts: ");
     handler({ message, attachments })
   })
-  // play()
 }
 
 export function offNewMessage() {
   chatConnection?.off('ReceiveMessage')
 }
-
-
-//New contact on and off
-// export function onNewContact(
-//   handler: (payload: { contactLog: ContactLog}) => void
-// ) {
-//   chatConnection?.on('newContactValidation', (contactLog) => {
-//     handler({contactLog })
-//   })
-// }
 
 export function offNewContact(){
   userConeccion?.off("newContactValidation");

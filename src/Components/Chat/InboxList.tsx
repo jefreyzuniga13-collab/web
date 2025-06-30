@@ -3,6 +3,7 @@ import { useConversations } from '@/Hooks/useConversations'
 import { MessageSquareOff } from 'lucide-react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
+
 interface Props {
   selectedId?: number
   onSelect: (id: number) => void
@@ -147,6 +148,3 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
     </ul>
   )
 }
-
-//Se necesita poder ordenar de la siguiente forma las converaciones por los estados como lo hace whatspp y ademas agreagr un buscador com en la imagen. Y hacer que el usurio pueda ordenar el orden de los estados.
-//Si seleccione el orden pendiente, humano se cambie el orden de los opciones de los estados de filtro, com ves se co pop up o algfo asi

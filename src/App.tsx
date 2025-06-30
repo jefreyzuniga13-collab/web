@@ -38,13 +38,13 @@ export default function App() {
   const online = useOnline()
   const authRaw = localStorage.getItem('auth') ?? '{}'
   const { accessToken } = JSON.parse(authRaw) as AuthData
-  
-  useForceLogoutListener();
- 
+
+  useForceLogoutListener()
+
   if (!accessToken) {
     return <AppRouter />
   }
-  
+
   return (
     <SignalRProvider token={accessToken}>
       <NotificationsHandler />

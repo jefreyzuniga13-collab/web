@@ -34,7 +34,7 @@ const DEFAULT_OPTIONS: FilterOption[] = [
   { label: 'waiting', value: 'waiting', content: 'Pendiente' },
   { label: 'human', value: 'human', content: 'Asignado' },
   { label: 'closed', value: 'closed', content: 'Cerrado' },
-  { label: 'incomplete', value: 'incomplete', content: 'Incompleto' },
+  { label: 'incomplete', value: 'incomplete', content: 'Incompleto' }
 ]
 
 const FILTER_ORDER_STORAGE_KEY = 'filterOrder'
@@ -43,7 +43,14 @@ const SupportPage: React.FC = () => {
   const dispatch = useDispatch()
   const [convId, setConvId] = useState<number | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [filter, setFilter] = useState<string>('all')
+  
+  const [filter, setFilter] = useState<string>(
+    () => localStorage.getItem("selectedFilter") || "all"
+  );
+
+  const [selectedFilter, setSelectedFilter] = useState<string>(
+  () => localStorage.getItem("selectedFilter") || "all"
+);
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [contactDetailToggle, setContactDetailToggle] = useState(false)
   const [orderModalVisible, setOrderModalVisible] = useState(false)
@@ -52,7 +59,6 @@ const SupportPage: React.FC = () => {
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
-
   // Cargar orden de filtros desde localStorage o usar el predeterminado
   const [filterOrder, setFilterOrder] = useState<string[]>(() => {
     const stored = localStorage.getItem(FILTER_ORDER_STORAGE_KEY)
@@ -61,6 +67,10 @@ const SupportPage: React.FC = () => {
     }
     return DEFAULT_OPTIONS.map(o => o.value)
   })
+
+    useEffect(() => {
+      setFilter(selectedFilter);
+    }, [selectedFilter]);
 
   // Opciones ordenadas según filterOrder
   const sortedOptions = useMemo(() => {
@@ -98,10 +108,13 @@ const SupportPage: React.FC = () => {
     }
   }
 
-  const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value)
-    setConvId(null)
-  }
+
+ const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const val = e.target.value;
+  setFilter(val);
+  setSelectedFilter(val);
+  localStorage.setItem("selectedFilter", val);
+};
 
   // Guardar orden en localStorage
   const saveOrder = (newOrder: string[]) => {
@@ -123,10 +136,12 @@ const SupportPage: React.FC = () => {
               <FaFilter className='sort-button-icon'/>
             </button>
           </div>
+
           <div className="inbox-status__container">
             {sortedOptions.map(opt => (
-              <label key={opt.value} className={`inbox-status__label`} >
+                <>
                 <input
+                  id={opt.value}
                   type="radio"
                   name="filters"
                   value={opt.value}
@@ -134,8 +149,10 @@ const SupportPage: React.FC = () => {
                   onChange={handleOptionChange}
                   className="inbox-status__input"
                 />
+              <label htmlFor={opt.value} className="inbox-status__label">
                 {opt.content}
               </label>
+            </>
             ))}
           </div>
         </div>
