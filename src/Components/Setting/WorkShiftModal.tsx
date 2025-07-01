@@ -135,11 +135,12 @@ export default function WorkShiftModal({
                     {...params}
                     label="Horario"
                     size="small"
-                    error={!!errors.openingHourId}
-                    helperText={errors.openingHourId}
+                    // error={!!errors.openingHourId}
+                    // helperText={errors.openingHourId}
                   />
                 )}
               />
+              {errors.openingHourId && <div className="ws-modal__error">{errors.openingHourId}</div>}
             </div>
 
             <div className="ws-modal__col">
@@ -154,11 +155,12 @@ export default function WorkShiftModal({
                     {...params}
                     label="Usuario asignado"
                     size="small"
-                    error={!!errors.assignedUserId}
-                    helperText={errors.assignedUserId}
+                    // error={!!errors.assignedUserId}
+                    // helperText={errors.assignedUserId}
                   />
                 )}
               />
+            {errors.assignedUserId && <div className="ws-modal__error">{errors.assignedUserId}</div>}
             </div>
 
             {/* Date Picker */}

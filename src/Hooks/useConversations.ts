@@ -51,8 +51,6 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
       if (!isAdmin && c.status === 'Bot') return false
 
       switch (filter) {
-        case 'all':     return c.status !== 'Closed'
-        case 'new':
         case 'waiting': return c.status === 'Waiting'
         case 'bot':     return c.status === 'Bot'
         case 'human':   return c.status === 'Human'

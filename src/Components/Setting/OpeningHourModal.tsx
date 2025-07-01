@@ -5,7 +5,8 @@ import DatePickerField from '@/Components/Common/DatePickerField'
 import TimePickerField from '@/Components/Common/TimePickerField'
 import { useOpeningHourForm } from '@/Hooks/Setting/useOpeningHourForm'
 import '@/Styles/Setting/OpeningHourModal.css'
-
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 const WEEK_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] as const
 
 interface OpeningHourModalProps {
@@ -36,6 +37,25 @@ export default function OpeningHourModal({
   } = useOpeningHourForm({ mode, data, onSubmit })
 
 
+  //  const shouldDisableTime = (time: any, view: any) => {
+  //   const now = dayjs();
+  //   if (view === 'hours') {
+  //     return time.hour() < now.hour();
+  //   }
+  //   if (view === 'minutes') {
+  //     return time.hour() === now.hour() && time.minute() < now.minute();
+  //   }
+  //   if (view === 'seconds') {
+  //       return time.hour() === now.hour() && time.minute() === now.minute() && time.second() < now.second();
+  //   }
+  //   return false;
+  // };
+
+   function PastDatesDisabledDatePicker(date: Date) {
+      const today = new Date('es-NI');
+
+      return date <= today;
+  };
   
   if (!isOpen) return null
 
@@ -173,20 +193,32 @@ export default function OpeningHourModal({
                   <p className="oh-modal__inline-label">¿Es feriado largo?</p>
                   <div className="oh-modal__input-container">
                     <div className="oh-modal__col">
-                      <DatePickerField
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
                         label="Desde"
                         value={form.effectiveFrom}
                         onChange={d => setForm(f => ({ ...f, effectiveFrom: d }))}
                         disabled={isView}
+                        format="dd/MM/yyyy"
+                        shouldDisableDate={PastDatesDisabledDatePicker}
+                        className='ws-datePicker'
+                        sx={{width: "100%", marginBottom: "1rem"}}
                       />
+                       </LocalizationProvider>
                     </div>
                     <div className="oh-modal__col">
-                      <DatePickerField
+                       <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
                         label="Hasta"
                         value={form.effectiveTo}
                         onChange={d => setForm(f => ({ ...f, effectiveTo: d }))}
                         disabled={isView}
+                        shouldDisableDate={PastDatesDisabledDatePicker}
+                        format="dd/MM/yyyy"
+                        className='ws-datePicker'
+                        sx={{width: "100%"}}
                       />
+                       </LocalizationProvider>
                     </div>
                   </div>
                   {errors.range && <div className="oh-modal__error">{errors.range}</div>}

@@ -170,10 +170,12 @@
 .oh-modal__btn {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-base);
-  border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  min-width: 50%;
+  padding: var(--space-md);
+  border-radius: var(--space-lg);
+
 }
 
 .oh-modal__btn--cancel {

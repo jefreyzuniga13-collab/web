@@ -102,6 +102,11 @@
   font-size: var(--font-size-base);
   border-radius: var(--border-radius-sm);
   cursor: pointer;
+  min-width: 50%;
+  padding: var(--space-md);
+  border-radius: var(--space-lg);
+    background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .ws-modal__btn--cancel {
@@ -129,4 +134,13 @@
   font-size: var(--font-size-base);
       color: var(--color-warning);
       font-weight: var(--font-weight-semibold);
+}
+
+.ws-datePicker{
+  min-height: 100% !important;
+}
+.ws-modal__error{
+  min-width: 100%;
+  color: var(--color-error);
+  text-align: left;
 }

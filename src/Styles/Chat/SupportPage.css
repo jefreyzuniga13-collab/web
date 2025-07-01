@@ -179,7 +179,7 @@
   min-width: 100%;
   max-width: 100%;
   overflow-x: scroll;
-  padding: var(--space-lg) 2rem;
+  padding: var(--space-lg) 0;
   box-sizing: border-box;
   scrollbar-width: thin;
 }

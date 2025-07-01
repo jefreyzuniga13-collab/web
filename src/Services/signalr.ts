@@ -18,11 +18,6 @@ let chatConnection: signalR.HubConnection | null = null
 export let notificationsConnection: signalR.HubConnection | null = null
 export let presenceConnection: signalR.HubConnection | null = null
 export let userConeccion: signalR.HubConnection | null = null
-// const play = () => {
-//         if (!notificationSound.playing()) {
-//           notificationSound.play();
-//         }
-//       };
 
 export async function createHubConnection(token: string) {
   chatConnection = new signalR.HubConnectionBuilder()
@@ -130,13 +125,6 @@ export async function createHubConnection(token: string) {
     
   )
 
-  notificationsConnection.on(
-    'newMessage',
-    (dto: MessageDto) => {
-      console.log("Mensaje desde el singlar y el dto que se recibe es: ", dto);
-    }
-  )
-
   try {
     await Promise.all([
       chatConnection.start(),
@@ -167,8 +155,8 @@ export function leaveConversation(conversationId: number) {
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
+  console.log("Retrieve new message fro signalr.ts")
   chatConnection?.on('ReceiveMessage', (message, attachments) => {
-      console.log("Mensaje desde el signalr.ts: ");
     handler({ message, attachments })
   })
 }

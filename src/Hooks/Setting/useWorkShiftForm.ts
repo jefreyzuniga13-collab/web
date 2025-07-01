@@ -76,7 +76,8 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
       form.validTo &&
       form.validFrom > form.validTo
     ) {
-      newErrors.range = 'Desde debe ser anterior o igual a Hasta.'
+      newErrors.validFrom = 'Desde debe ser anterior o igual a Hasta.'
+      newErrors.validTo = 'Desde debe ser anterior o igual a Hasta.'
     }
 
     if (Object.keys(newErrors).length) {

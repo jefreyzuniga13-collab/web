@@ -20,6 +20,7 @@ import '@/i18n'
 import 'react-toastify/dist/ReactToastify.css'
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
 import { useForceLogoutListener } from '@/Hooks/Auth/useForceLogoutListener'
+import { GlobalSoundNotifier } from '@/Components/Common/GlobalSoundNotifier'
 
 function NotificationsHandler() {
   const lastEvent = useNotificationsHub()
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
     <SignalRProvider token={accessToken}>
+      <GlobalSoundNotifier />
       <NotificationsHandler />
       <SupportRequestedPopup />
       <ConversationAssignedPopup />
