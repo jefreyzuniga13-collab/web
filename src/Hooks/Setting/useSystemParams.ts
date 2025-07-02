@@ -1,189 +1,176 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { useState, useCallback } from 'react'
-import type { SystemParamRequestDto, SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface"
-import SystemParamService from "@/Services/SystemParamService"
+import { useState, useEffect, useCallback } from 'react'
+import type {
+  SystemParamRequestDto,
+  SystemParamResponseDto,
+} from '@/Interfaces/Auth/AuthInterface'
+import { SystemParamService } from '@/Services/SystemParamService'
 
 export function useSystemParams() {
   const [systemParams, setSystemParams] = useState<SystemParamResponseDto[]>([])
-  const [filteredParams, setFilteredParams] = useState<SystemParamResponseDto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt'>('name')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [selectedParam, setSelectedParam] = useState<SystemParamResponseDto | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+  const [loadingList, setLoadingList] = useState(false)
+  const [loadingItem, setLoadingItem] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [isModalOpen, setModalOpen] = useState(false)
 
-  const loadSystemParam = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = await SystemParamService.getSystemParams()
-      setSystemParams(params)
-      setFilteredParams(params)
-    } catch (err: any) {
-      setError(err.message || 'Error loading system parameters')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const filterAndSort = useCallback((params: SystemParamResponseDto[], search: string, sort: string, order: string) => {
-    // eslint-disable-next-line prefer-const
-    let filtered = params.filter(param => 
-      param.name.toLowerCase().includes(search.toLowerCase()) ||
-      param.description.toLowerCase().includes(search.toLowerCase()) ||
-      param.value.toLowerCase().includes(search.toLowerCase())
-    )
-
-    filtered.sort((a, b) => {
-      let aValue: any = a[sort as keyof SystemParamResponseDto]
-      let bValue: any = b[sort as keyof SystemParamResponseDto]
-      
-      if (sort === 'createdAt' || sort === 'updatedAt') {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+  // Fetch paginated list
+  const fetchPage = useCallback(
+    async (p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+        const resp = await SystemParamService.getAllAsync(p, s)
+        setSystemParams(resp.items)
+        setTotalCount(resp.meta.totalCount)
+        setPage(resp.meta.currentPage)
+        setPageSize(resp.meta.pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingList(false)
       }
-      
-      if (order === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
+    },
+    [page, pageSize]
+  )
+
+  // Fetch single item
+  const fetchById = useCallback(async (id: number) => {
+    setLoadingItem(true)
+    setError(null)
+    try {
+      const item = await SystemParamService.getByIdAsync(id)
+      setSelectedParam(item)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoadingItem(false)
+    }
+  }, [])
+
+  // Create
+  const create = useCallback(
+    async (values: SystemParamRequestDto) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        await SystemParamService.createAsync(values)
+        await fetchPage(1, pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
       }
-    })
+    },
+    [fetchPage, pageSize]
+  )
 
-    return filtered
+  // Update
+  const update = useCallback(
+    async (id: number, values: SystemParamRequestDto) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        await SystemParamService.updateAsync(id, values)
+        await fetchPage(page, pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    [fetchPage, page, pageSize]
+  )
+
+  // Toggle status
+  const toggleStatus = useCallback(
+    async (id: number) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        const toggled = await SystemParamService.toggleStatusAsync(id)
+        
+        setSystemParams(prev =>
+          prev.map(item => (item.id === toggled.id ? toggled : item))
+        )
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    []
+  )
+
+  // Modal controls
+  const openCreate = useCallback(() => {
+    setSelectedParam(null)
+    setModalMode('create')
+    setModalOpen(true)
   }, [])
 
-  const searchParams = useCallback((term: string) => {
-    setSearchTerm(term)
-    const filtered = filterAndSort(systemParams, term, sortBy, sortOrder)
-    setFilteredParams(filtered)
-  }, [systemParams, sortBy, sortOrder, filterAndSort])
+  const openEdit = useCallback(
+    (id: number) => {
+      const cache = systemParams.find(x => x.id === id) || null
+      setSelectedParam(cache)
+      setModalMode('edit')
+      setModalOpen(true)
+      fetchById(id)
+    },
+    [systemParams, fetchById]
+  )
 
-  const sortParams = useCallback((sort: 'name' | 'createdAt' | 'updatedAt', order: 'asc' | 'desc') => {
-    setSortBy(sort)
-    setSortOrder(order)
-    const filtered = filterAndSort(systemParams, searchTerm, sort, order)
-    setFilteredParams(filtered)
-  }, [systemParams, searchTerm, filterAndSort])
+  const openView = useCallback(
+    (id: number) => {
+      const cache = systemParams.find(x => x.id === id) || null
+      setSelectedParam(cache)
+      setModalMode('view')
+      setModalOpen(true)
+      fetchById(id)
+    },
+    [systemParams, fetchById]
+  )
 
-  const getSystemParamById = useCallback(async (id: number) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const param = await SystemParamService.getSystemParamById(id)
-      return param
-    } catch (err: any) {
-      setError(err.message || `Error getting parameter with ID ${id}`)
-      return null
-    } finally {
-      setLoading(false)
-    }
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+    setSelectedParam(null)
   }, [])
 
-  const getSystemParamByName = useCallback(async (name: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const param = await SystemParamService.getSystemParamByName(name)
-      return param
-    } catch (err: any) {
-      setError(err.message || `Error getting parameter with name ${name}`)
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const handleSubmit = useCallback(
+    (values: SystemParamRequestDto) => {
+      if (modalMode === 'create') create(values)
+      else if (modalMode === 'edit' && selectedParam) update(selectedParam.id, values)
+      closeModal()
+    },
+    [modalMode, selectedParam, create, update, closeModal]
+  )
 
-  const createSystemParam = useCallback(async (param: SystemParamRequestDto) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const newParam = await SystemParamService.createSystemParam(param)
-      const updatedParams = [...systemParams, newParam]
-      setSystemParams(updatedParams)
-      setFilteredParams(filterAndSort(updatedParams, searchTerm, sortBy, sortOrder))
-      return newParam
-    } catch (err: any) {
-      setError(err.message || 'Error creating parameter')
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [systemParams, searchTerm, sortBy, sortOrder, filterAndSort])
-
-  const updateSystemParam = useCallback(async (param: SystemParamRequestDto) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const updatedParam = await SystemParamService.updateSystemParams(param)
-      const updatedParams = systemParams.map(p => p.id === updatedParam.id ? updatedParam : p)
-      setSystemParams(updatedParams)
-      setFilteredParams(filterAndSort(updatedParams, searchTerm, sortBy, sortOrder))
-      return updatedParam
-    } catch (err: any) {
-      setError(err.message || 'Error updating parameter')
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [systemParams, searchTerm, sortBy, sortOrder, filterAndSort])
-
-  const toggleSystemParam = useCallback(async (id: number) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const param = systemParams.find(p => p.id === id)
-      if (!param) throw new Error('Parameter not found')
-      
-      const updatedParam = { ...param, isActive: !param.isActive }
-      const updatedParams = systemParams.map(p => p.id === id ? updatedParam : p)
-      setSystemParams(updatedParams)
-      setFilteredParams(filterAndSort(updatedParams, searchTerm, sortBy, sortOrder))
-      return true
-    } catch (err: any) {
-      setError(err.message || 'Error toggling parameter status')
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }, [systemParams, searchTerm, sortBy, sortOrder, filterAndSort])
-
-  const deleteSystemParam = useCallback(async (id: number) => {
-    setLoading(true)
-    setError(null)
-    try {
-      await SystemParamService.deleteSystemParam(id.toString())
-      const updatedParams = systemParams.filter(p => p.id !== id)
-      setSystemParams(updatedParams)
-      setFilteredParams(filterAndSort(updatedParams, searchTerm, sortBy, sortOrder))
-      return true
-    } catch (err: any) {
-      setError(err.message || 'Error deleting parameter')
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }, [systemParams, searchTerm, sortBy, sortOrder, filterAndSort])
+  // Initial load & reload
+  useEffect(() => {
+    fetchPage()
+  }, [fetchPage])
 
   return {
-    systemParams: filteredParams,
-    loading,
+    systemParams,
+    selectedParam,
+    loading: loadingList || loadingItem,
     error,
-    searchTerm,
-    sortBy,
-    sortOrder,
-    // pagination,
-    // handlePageChange,
-    // handlePageSizeChange,
-    loadSystemParam,
-    searchParams,
-    sortParams,
-    getSystemParamById,
-    getSystemParamByName,
-    createSystemParam,
-    updateSystemParam,
-    toggleSystemParam,
-    deleteSystemParam
+    page,
+    pageSize,
+    totalCount,
+    setPage: (p: number) => fetchPage(p, pageSize),
+    setPageSize: (s: number) => fetchPage(1, s),
+    modalMode,
+    isModalOpen,
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
+    toggleSystemParam: toggleStatus,
   }
 }

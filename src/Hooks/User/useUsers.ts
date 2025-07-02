@@ -1,176 +1,163 @@
-
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
+import { useState, useEffect, useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
 import {
   fetchUsers,
   fetchUserById,
   createUser,
   updateUser,
-  deleteUser,
+  toggleUserAsync,
   fetchRoles,
   fetchCompanies,
-  clearCurrentUser
-} from '@/Context/Slices/userSlice';
+  clearCurrentUser,
+} from '@/Context/Slices/userSlice'
+import type { AppDispatch, RootState } from '@/Context'
+import type { UpdateUserRequest } from '@/Interfaces/User/UserInterfaces'
 
-import type { AppDispatch, RootState } from '@/Context';
-import type { UpdateUserRequest, User } from '@/Interfaces/User/UserInterfaces';
-
-export const useUsers = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { users, currentUser, loading, error, pagination, roles, companies } = useSelector((state: RootState) => state.users);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showUserDetail, setShowUserDetail] = useState(false);
-  const [tempUserData, setTempUserData] = useState<User | null>(null);
-  
-  useEffect(() => {
-    loadUsers();
-    loadRoles();
-    loadCompanies();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadUsers = (page = 1) => {
-    dispatch(fetchUsers({ page, pageSize: pagination.pageSize, search: searchQuery }));
-  };
-
-  const loadRoles = () => {
-    dispatch(fetchRoles());
-  };
-
-  const loadCompanies = () => {
-    dispatch(fetchCompanies());
-  };
-
-  const getUserById = (userId: number) => {
-    dispatch(fetchUserById(userId))
-      .unwrap()
-      .then(() => {
-        setShowUserDetail(true);
-      })
-      .catch((error) => {
-        toast.error(`Error al cargar el usuario: ${error}`);
-      });
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    dispatch(fetchUsers({ page: 1, pageSize: pagination.pageSize, search: value }));
-  };
-
-  const handlePageChange = (page: number) => {
-    dispatch(fetchUsers({ page, pageSize: pagination.pageSize, search: searchQuery }));
-  };
-
-  const handlePageSizeChange = (pageSize: number) => {
-    dispatch(fetchUsers({ page: 1, pageSize, search: searchQuery }));
-  };
-
-  // Transform pagination to match expected interface
-  const transformedPagination = {
-    currentPage: pagination.currentPage,
-    totalPages: pagination.totalPages,
-    totalItems: pagination.totalCount,
-    itemsPerPage: pagination.pageSize
-  };
-
- const handleCreateUser = (formData: FormData) => {
-  dispatch(createUser(formData))
-      .unwrap()
-      .then(() => {
-        toast.success('Usuario creado exitosamente');
-        loadUsers();
-        setShowCreateModal(false);
-      })
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .catch((error) => {
-        //toast.error(`Error al crear usuario: ${error}`);
-        toast.error(`Error al crear usuario.`);
-        console.error(`Error al crear usuario: ${error}`);
-      });
-  };
-
-  const handleUpdateUser = (userId: number, userData: UpdateUserRequest) => {
-    dispatch(updateUser({ userId, userData }))
-      .unwrap()
-      .then(() => {
-        toast.success('Usuario actualizado exitosamente');
-        loadUsers();
-        setShowEditModal(false);
-      })
-      .catch((error) => {
-        toast.error(`Error al actualizar usuario: ${error}`);
-      });
-  };
-
-  const handleDeleteUser = (userId: number) => {
-    dispatch(deleteUser(userId))
-      .unwrap()
-      .then(() => {
-        toast.success('Usuario eliminado exitosamente');
-        loadUsers();
-        setShowDeleteConfirm(false);
-      })
-      .catch((error) => {
-        toast.error(`Error al eliminar usuario: ${error}`);
-      });
-  };
-
-  const openEditModal = (user: User) => {
-    dispatch(fetchUserById(user.userId))
-      .unwrap()
-      .then(() => {
-        setShowEditModal(true);
-      });
-  };
-
-  const openDeleteConfirm = (user: User) => {
-    setTempUserData(user);
-    setShowDeleteConfirm(true);
-  };
-
-  const openCreateModal = () => {
-    dispatch(clearCurrentUser());
-    setShowCreateModal(true);
-  };
-
-  const closeModals = () => {
-    setShowCreateModal(false);
-    setShowEditModal(false);
-    setShowDeleteConfirm(false);
-    setShowUserDetail(false);
-    dispatch(clearCurrentUser());
-  };
-
-  return {
+export function useUsers() {
+  const dispatch = useDispatch<AppDispatch>()
+  const {
     users,
     currentUser,
     loading,
     error,
-    pagination: transformedPagination,
+    pagination: { currentPage, pageSize, totalCount },
     roles,
     companies,
-    searchQuery,
-    showCreateModal,
-    showEditModal,
-    showDeleteConfirm,
-    showUserDetail,
-    tempUserData,
-    loadUsers,
-    getUserById,
-    handleSearch,
-    handlePageChange,
-    handlePageSizeChange,
-    handleCreateUser,
-    handleUpdateUser,
-    handleDeleteUser,
-    openEditModal,
-    openDeleteConfirm,
-    openCreateModal,
-    closeModals,
-    setShowUserDetail
-  };
-};
+  } = useSelector((state: RootState) => state.users)
+
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const fetchPage = useCallback(
+    (page = 1, size = pageSize) => {
+      dispatch(fetchUsers({ page, pageSize: size, search }))
+    },
+    [dispatch, pageSize, search]
+  )
+
+  const fetchOne = useCallback(
+    (id: number) => {
+      dispatch(fetchUserById(id)).unwrap()
+    },
+    [dispatch]
+  )
+
+  const create = useCallback(
+    (data: FormData) => {
+      dispatch(createUser(data))
+        .unwrap()
+        .then(() => {
+          toast.success('Usuario creado')
+          fetchPage(1)
+          closeModal()
+        })
+        .catch(() => toast.error('Error al crear usuario'))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, fetchPage]
+  )
+
+  const update = useCallback(
+    (id: number, data: UpdateUserRequest) => {
+      dispatch(updateUser({ userId: id, userData: data }))
+        .unwrap()
+        .then(() => {
+          toast.success('Usuario actualizado')
+          fetchPage(currentPage)
+          closeModal()
+        })
+        .catch(() => toast.error('Error al actualizar usuario'))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, fetchPage, currentPage]
+  )
+
+  const toggleUser = useCallback(
+    (id: number) => {
+      dispatch(toggleUserAsync(id))
+        .unwrap()
+        .then(() => {
+          toast.success('Estado de usuario cambiado')
+          // after toggling, just reload current page
+          fetchPage(currentPage)
+        })
+        .catch(() => toast.error('Error al cambiar estado de usuario'))
+    },
+    [dispatch, fetchPage, currentPage]
+  )
+
+  const openCreate = useCallback(() => {
+    dispatch(clearCurrentUser())
+    setModalMode('create')
+    setModalOpen(true)
+  }, [dispatch])
+
+  const openEdit = useCallback(
+    (id: number) => {
+      dispatch(clearCurrentUser())
+      setModalMode('edit')
+      setModalOpen(true)
+      fetchOne(id)
+    },
+    [dispatch, fetchOne]
+  )
+
+  const openView = useCallback(
+    (id: number) => {
+      setModalMode('view')
+      setModalOpen(true)
+      fetchOne(id)
+    },
+    [fetchOne]
+  )
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+    dispatch(clearCurrentUser())
+  }, [dispatch])
+
+  const handleSubmit = useCallback(
+    (data: FormData | UpdateUserRequest) => {
+      if (modalMode === 'create') {
+        create(data as FormData)
+      } else if (modalMode === 'edit' && currentUser) {
+        update(currentUser.userId, data as UpdateUserRequest)
+      }
+    },
+    [modalMode, create, update, currentUser]
+  )
+
+  useEffect(() => {
+    dispatch(fetchRoles())
+    dispatch(fetchCompanies())
+    fetchPage()
+  }, [dispatch, fetchPage])
+
+  return {
+    users,
+    currentUser,
+    roles,
+    companies,
+    loading,
+    error,
+    page: currentPage,
+    pageSize,
+    totalCount,
+    fetchOne,
+    setPage: (p: number) => fetchPage(p, pageSize),
+    setPageSize: (s: number) => fetchPage(1, s),
+    search,
+    setSearch,
+    fetchPage,
+    modalMode,
+    isModalOpen,
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
+    toggleUser,
+  }
+}

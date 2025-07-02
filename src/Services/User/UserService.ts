@@ -40,7 +40,7 @@ async createUserAsync(formData: FormData): Promise<User> {
     await api.put(`/Users/${userId}`, request)
   }
 
-  async deleteUserAsync(userId: number): Promise<void> {
+  async toggleUserAsync(userId: number): Promise<void> {
     await api.patch(`/Users/${userId}`)
   }
 

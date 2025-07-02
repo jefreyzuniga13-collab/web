@@ -1,284 +1,117 @@
-
-import React, { useState, useEffect } from 'react'
-import { Plus, Search, Filter } from 'lucide-react'
+import { useMemo } from 'react'
+import CustomTable from '@/Components/Common/CustomTable'
+import Button from '@/Components/Common/Button'
+import IconButton from '@mui/material/IconButton'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import EditIcon from '@mui/icons-material/Edit'
+import ToggleOnIcon from '@mui/icons-material/ToggleOn'
+import ToggleOffIcon from '@mui/icons-material/ToggleOff'
+import SystemParamForm from '@/Components/Setting/SystemParamForm'
 import { useSystemParams } from '@/Hooks/Setting/useSystemParams'
-import SystemParamsTable from '@/Components/Setting/SystemParamsTable'
-import { SystemParamModal } from '@/Components/Setting/SystemParamModal'
-import SystemParamDetails from '@/Components/Setting/SystemParamDetails'
-import DeleteParamDialog from '@/Components/Setting/DeleteParamConfirmation'
-import type { SystemParamResponseDto, SystemParamRequestDto } from "@/Interfaces/Auth/AuthInterface"
+import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
+import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
 
-export const SystemParamsPage: React.FC = () => {
+export default function SystemParamsPage() {
   const {
     systemParams,
-    loading,
-    error,
-    searchTerm,
-    sortBy,
-    sortOrder,
-    // pagination,
-    loadSystemParam,
-    searchParams,
-    sortParams,
-    // handlePageChange,
-    // handlePageSizeChange,
-    getSystemParamById,
-    // getSystemParamByName,
-    createSystemParam,
-    updateSystemParam,
+    selectedParam,
+    page,
+    pageSize,
+    totalCount,
+    setPage,
+    setPageSize,
+    modalMode,
+    isModalOpen,
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
     toggleSystemParam,
-    deleteSystemParam
   } = useSystemParams()
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
-  const [selectedParam, setSelectedParam] = useState<SystemParamResponseDto | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
-
-  useEffect(() => {
-    loadSystemParam()
-  }, [loadSystemParam])
-
-  const handleCreate = async (data: SystemParamRequestDto) => {
-    const result = await createSystemParam(data)
-    if (result) {
-      setIsCreateModalOpen(false)
-    }
-  }
-
-  const handleEdit = (param: SystemParamResponseDto) => {
-    setSelectedParam(param)
-    setIsEditModalOpen(true)
-  }
-
-  const handleUpdate = async (data: SystemParamRequestDto) => {
-    const result = await updateSystemParam(data)
-    if (result) {
-      setIsEditModalOpen(false)
-      setSelectedParam(null)
-    }
-  }
-
-  const handleView = async (param: SystemParamResponseDto) => {
-    const detailedParam = await getSystemParamById(param.id)
-    if (detailedParam) {
-      setSelectedParam(detailedParam)
-      setIsDetailsModalOpen(true)
-    } else {
-      setSelectedParam(param)
-      setIsDetailsModalOpen(true)
-    }
-  }
-
-  const handleDelete = (param: SystemParamResponseDto) => {
-    setSelectedParam(param)
-    if (param.isActive) {
-      setIsToggleDialogOpen(true)
-    } else {
-      setIsDeleteDialogOpen(true)
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (selectedParam) {
-      const result = await deleteSystemParam(selectedParam.id)
-      if (result) {
-        setIsDeleteDialogOpen(false)
-        setSelectedParam(null)
-      }
-    }
-  }
-
-  const handleConfirmToggle = async () => {
-    if (selectedParam) {
-      const result = await toggleSystemParam(selectedParam.id)
-      if (result) {
-        setIsToggleDialogOpen(false)
-        setSelectedParam(null)
-      }
-    }
-  }
-
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value)
-  }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    searchParams(searchInput)
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      searchParams(searchInput)
-    }
-  }
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    searchParams('')
-  }
-
-  const handleSortChange = (field: 'name' | 'createdAt' | 'updatedAt') => {
-    const newOrder = sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc'
-    sortParams(field, newOrder)
-  }
+  const columns: Column<SystemParamResponseDto>[] = useMemo(() => [
+    { id: 'name', label: 'Nombre', minWidth: 150 },
+    { id: 'type', label: 'Tipo', minWidth: 100 },
+    {
+      id: 'value',
+      label: 'Valor',
+      minWidth: 200,
+      render: row => (
+        <span title={row.value}>
+          {row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value}
+        </span>
+      ),
+    },
+    {
+      id: 'isActive',
+      label: 'Estado',
+      minWidth: 100,
+      render: row => (
+        <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
+          {row.isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      label: 'Acciones',
+      minWidth: 130,
+      align: 'center',
+      render: row => (
+        <>
+          <IconButton size="small" onClick={() => openView(row.id)}>
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => openEdit(row.id)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => toggleSystemParam(row.id)}>
+            {row.isActive
+              ? <ToggleOnIcon fontSize="small" color="success" />
+              : <ToggleOffIcon fontSize="small" />
+            }
+          </IconButton>
+        </>
+      ),
+    },
+  ], [openView, openEdit, toggleSystemParam])
 
   return (
-    <div className="system-params-page">
-      <div className="system-params-header">
-        <h1>Parámetros del Sistema</h1>
-      </div>
-
-      <div className="system-params-controls">
-        <form className="search-form" onSubmit={handleSearchSubmit}>
-          <div className="search-input-wrapper">
-            <div className="search-input-container">
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Buscar parámetros..."
-                value={searchInput}
-                onChange={handleSearchInput}
-                onKeyPress={handleKeyPress}
-                className="search-input"
-              />
-            </div>
-          </div>
-          <div className="search-buttons">
-            <button type="submit" className="btn btn-primary">Buscar</button>
-            {searchTerm && (
-              <button type="button" className="btn btn-tertiary" onClick={handleClearSearch}>
-                Limpiar
-              </button>
-            )}
-          </div>
-        </form>
-        
-        <div className="control-buttons">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="btn btn-secondary filter-btn"
-          >
-            <Filter size={18} />
-            Filtros
-          </button>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn btn-primary create-param-btn"
-          >
-            <Plus size={18} />
+    <div className="sp-page__container">
+      <div className="sp-page__header">
+        <div className="sp-page__header-content">
+          <h1 className="sp-page__title">Parámetros del Sistema</h1>
+          <p className="sp-page__subtitle">Administra tus parámetros del sistema</p>
+        </div>
+        <div className="sp-page__btnContainer">
+          <Button variant="primary" onClick={openCreate}>
             Nuevo Parámetro
-          </button>
+          </Button>
         </div>
       </div>
 
-      {showFilters && (
-        <div className="system-params-filters">
-          <div className="filter-group">
-            <div className="filter-control">
-              <label>Ordenar por:</label>
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as 'name' | 'createdAt' | 'updatedAt')}
-                className="filter-select"
-              >
-                <option value="name">Nombre</option>
-                <option value="createdAt">Fecha de Creación</option>
-                <option value="updatedAt">Última Actualización</option>
-              </select>
-            </div>
-            
-            <div className="filter-control">
-              <label>Orden:</label>
-              <select
-                value={sortOrder}
-                onChange={(e) => sortParams(sortBy, e.target.value as 'asc' | 'desc')}
-                className="filter-select"
-              >
-                <option value="asc">Ascendente</option>
-                <option value="desc">Descendente</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
 
-      {error && (
-        <div className="system-params-error">
-          Error: {error}
-        </div>
-      )}
-
-      <SystemParamsTable
-        data={systemParams}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
-        loading={loading}
-        // pagination={pagination}
-        // onPageChange={handlePageChange}
-        // onPageSizeChange={handlePageSizeChange}
+      <CustomTable<SystemParamResponseDto>
+        columns={columns}
+        rows={systemParams}
+        count={totalCount}
+        page={page - 1}
+        rowsPerPage={pageSize}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        onPageChange={(_, newPage) => setPage(newPage + 1)}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
       />
 
-      <SystemParamModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreate}
-        title="Crear Nuevo Parámetro"
-        isLoading={loading}
-      />
-
-      <SystemParamModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false)
-          setSelectedParam(null)
-        }}
-        onSubmit={handleUpdate}
-        initialData={selectedParam || undefined}
-        title="Editar Parámetro"
-        isLoading={loading}
-      />
-
-      {isDetailsModalOpen && selectedParam && (
-        <SystemParamDetails
-          param={selectedParam}
-          isOpen={isDetailsModalOpen}
-          onClose={() => {
-            setIsDetailsModalOpen(false)
-            setSelectedParam(null)
-          }}
-        />
-      )}
-
-      <DeleteParamDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false)
-          setSelectedParam(null)
-        }}
-        onConfirm={handleConfirmDelete}
-        param={selectedParam}
-      />
-
-      <DeleteParamDialog
-        isOpen={isToggleDialogOpen}
-        onClose={() => {
-          setIsToggleDialogOpen(false)
-          setSelectedParam(null)
-        }}
-        onConfirm={handleConfirmToggle}
-        param={selectedParam}
-        isToggle={true}
+      <SystemParamForm
+        mode={modalMode}
+        isOpen={isModalOpen}
+        data={selectedParam}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
       />
     </div>
   )
 }
-
-export default SystemParamsPage

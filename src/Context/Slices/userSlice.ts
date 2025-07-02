@@ -80,11 +80,11 @@ export const updateUser = createAsyncThunk(
   }
 );
 
-export const deleteUser = createAsyncThunk(
+export const toggleUserAsync = createAsyncThunk(
   'users/deleteUser',
   async (userId: number, { rejectWithValue }) => {
     try {
-      await userService.deleteUserAsync(userId);
+      await userService.toggleUserAsync(userId);
       return userId;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -172,15 +172,15 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(deleteUser.pending, (state) => {
+      .addCase(toggleUserAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteUser.fulfilled, (state, action) => {
+      .addCase(toggleUserAsync.fulfilled, (state, action) => {
         state.users = state.users.filter(user => user.userId !== action.payload);
         state.loading = false;
       })
-      .addCase(deleteUser.rejected, (state, action) => {
+      .addCase(toggleUserAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

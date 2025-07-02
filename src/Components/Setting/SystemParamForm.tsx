@@ -1,211 +1,142 @@
-
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/Components/ui/input';
-import { Button } from '@/Components/ui/CustomButton';
-import { Label } from '@/Components/ui/label';
-import { Textarea } from '@/Components/ui/textarea';
-import { Select } from '@/Components/ui/select';
-import type { SystemParamRequestDto, SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
+import Button from '@/Components/Common/Button'
+import Input from '@/Components/Common/Input'
+import { Label } from '@/Components/ui/label'
+import {Textarea} from '@/Components/ui/textarea'
+import Select from '@/Components/Common/Select'
+import { useSystemParamForm } from '@/Hooks/Setting/useSystemParamForm'
+import type {
+  SystemParamRequestDto,
+  SystemParamResponseDto,
+} from '@/Interfaces/Auth/AuthInterface'
 import '@/Styles/Setting/SystemParamForm.css'
-interface SystemParamFormProps {
-  initialData?: SystemParamResponseDto;
-  onSubmit: (data: SystemParamRequestDto) => void;
-  onCancel: () => void;
-  isLoading?: boolean;
+
+interface SystemParamModalProps {
+  mode: 'create' | 'edit' | 'view'
+  isOpen: boolean
+  data?: SystemParamResponseDto | null
+  onClose: () => void
+  onSubmit: (values: SystemParamRequestDto) => void
 }
 
-const SystemParamForm: React.FC<SystemParamFormProps> = ({
-  initialData,
+const typeOptions = [
+  { value: 'Prompts', label: 'Prompts' },
+  { value: 'Keywords', label: 'Keywords' },
+  { value: 'Temp', label: 'Temp' },
+]
+
+export default function SystemParamModal({
+  mode,
+  isOpen,
+  data,
+  onClose,
   onSubmit,
-  onCancel,
-  isLoading = false,
-}) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    value: '',
-    description: '',
-    type: '',
-  });
+}: SystemParamModalProps) {
+  const { form, errors, isView, handleChange, handleSelect, handleSubmit } =
+    useSystemParamForm({ mode, data: data || null, onSubmit })
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const typeOptions = [
-    { value: 'Prompts', label: 'Prompts' },
-    { value: 'Keywords', label: 'Keywords' },
-    { value: 'Temp', label: 'Temp' }
-  ];
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name || '',
-        value: initialData.value || '',
-        description: initialData.description || '',
-        type: initialData.type || '',
-      });
-    }
-  }, [initialData]);
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre del parámetro es obligatorio';
-    }
-
-    if (!formData.value.trim()) {
-      newErrors.value = 'El valor es obligatorio';
-    }
-
-    if (!formData.type) {
-      newErrors.type = 'El tipo es obligatorio';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'La descripción es obligatoria';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, type: value }));
-    if (errors.type) {
-      setErrors(prev => ({ ...prev, type: '' }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validate()) return;
-
-    const submitData: SystemParamRequestDto = {
-      id: initialData?.id || 0,
-      name: formData.name,
-      value: formData.value,
-      description: formData.description,
-      type: formData.type,
-    };
-
-    onSubmit(submitData);
-  };
+  if (!isOpen) return null
 
   return (
-    <form className="system-param-form" onSubmit={handleSubmit}>
-      <div className="system-param-form__container">
-        <div className="system-param-form__section">
-          <h3 className="system-param-form__section-title">Información del Parámetro</h3>
-          
-          <div className="system-param-form__grid">
-            <div className="system-param-form__field">
-              <Label htmlFor="name" className="system-param-form__label">
-                Nombre del Parámetro *
+    <div className="sp-modal__overlay">
+      <div className="sp-modal__container">
+        <header className="sp-modal__header">
+          <h2 className="sp-modal__title">
+            {mode === 'create' && 'Crear Parámetro'}
+            {mode === 'edit' && 'Editar Parámetro'}
+            {mode === 'view' && 'Detalle Parámetro'}
+          </h2>
+          <button type="button" className="sp-modal__close" onClick={onClose}>
+            ×
+          </button>
+        </header>
+
+        <form className="sp-modal__body" onSubmit={handleSubmit}>
+          <div className="sp-modal__grid">
+            
+            <div className="sp-modal__col">
+              <Label htmlFor="name" className="sp-modal__label">
+                Nombre *
               </Label>
               <Input
                 id="name"
                 name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`system-param-form__input ${errors.name ? 'system-param-form__input--error' : ''}`}
-                placeholder="Ej: max_connections"
+                value={form.name}
+                onChange={handleChange}
+                disabled={isView}
               />
-              {errors.name && (
-                <span className="system-param-form__error">{errors.name}</span>
-              )}
+              {errors.name && <div className="sp-modal__error">{errors.name}</div>}
             </div>
 
-            <div className="system-param-form__field">
-              <Label htmlFor="type" className="system-param-form__label">
+            <div className="sp-modal__col">
+              <Label htmlFor="type" className="sp-modal__label">
                 Tipo *
               </Label>
               <Select
-                value={formData.type}
-                onValueChange={handleSelectChange}
+                value={form.type}
+                // onValueChange={handleSelect}
+                onChange={e => handleSelect(e.target.value)}
                 options={typeOptions}
-                placeholder="Seleccione un tipo"
-                disabled={isLoading}
-                error={!!errors.type}
-                className={errors.type ? 'system-param-form__select--error' : ''}
+                disabled={isView}
+                className="sp-modal__select"
               />
-              {errors.type && (
-                <span className="system-param-form__error">{errors.type}</span>
-              )}
+              {errors.type && <div className="sp-modal__error">{errors.type}</div>}
             </div>
 
-            <div className="system-param-form__field system-param-form__field--full">
-              <Label htmlFor="value" className="system-param-form__label">
+            <div className="sp-modal__col sp-modal__col--full">
+              <Label htmlFor="value" className="sp-modal__label">
                 Valor *
               </Label>
               <Textarea
                 id="value"
                 name="value"
-                value={formData.value}
-                onChange={handleInputChange}
-                className={`system-param-form__textarea ${errors.value ? 'system-param-form__textarea--error' : ''}`}
-                placeholder="Valor del parámetro"
-                rows={4}
-                error={!!errors.value}
-                disabled={isLoading}
+                value={form.value}
+                onChange={handleChange}
+                rows={3}
+                disabled={isView}
+                className='sp-modal__input'
               />
-              {errors.value && (
-                <span className="system-param-form__error">{errors.value}</span>
-              )}
+              {errors.value && <div className="sp-modal__error">{errors.value}</div>}
             </div>
 
-            <div className="system-param-form__field system-param-form__field--full">
-              <Label htmlFor="description" className="system-param-form__label">
+            <div className="sp-modal__col sp-modal__col--full">
+              <Label htmlFor="description" className="sp-modal__label">
                 Descripción *
               </Label>
               <Textarea
                 id="description"
                 name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className={`system-param-form__textarea ${errors.description ? 'system-param-form__textarea--error' : ''}`}
-                placeholder="Describe el propósito de este parámetro..."
-                rows={3}
-                error={!!errors.description}
-                disabled={isLoading}
+                value={form.description}
+                onChange={handleChange}
+                rows={4}
+                disabled={isView}
+                className='sp-modal__input'
               />
               {errors.description && (
-                <span className="system-param-form__error">{errors.description}</span>
+                <div className="sp-modal__error">{errors.description}</div>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="system-param-form__actions">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-          className="system-param-form__button system-param-form__button--cancel"
-          disabled={isLoading}
-        >
-          Cancelar
-        </Button>
-        <Button 
-          type="submit"
-          className="system-param-form__button system-param-form__button--submit"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Guardando...' : (initialData ? 'Actualizar Parámetro' : 'Crear Parámetro')}
-        </Button>
+          <footer className="sp-modal__footer">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="sp-modal__btn sp-modal__btn--cancel"
+            >
+              Cancelar
+            </Button>
+            {!isView && (
+              <Button
+                variant="primary"
+                type="submit"
+                className="sp-modal__btn sp-modal__btn--confirm"
+              >
+                {mode === 'create' ? 'Crear' : 'Guardar'}
+              </Button>
+            )}
+          </footer>
+        </form>
       </div>
-    </form>
-  );
-};
-
-export default SystemParamForm;
+    </div>
+  )
+}

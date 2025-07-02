@@ -23,13 +23,13 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { currentUser, loading: userLoading, getUserById } = useUsers();
+  const { currentUser, loading: userLoading, fetchOne } = useUsers();
 
   useEffect(() => {
     if (!currentUser) {
-      getUserById(id);
+      fetchOne(id);
     }
-  }, [currentUser, getUserById, id]);
+  }, [currentUser, fetchOne, id]);
 
   const selectedUrl = location.pathname.replace(/^\//, '');
 

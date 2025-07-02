@@ -1,190 +1,138 @@
-import React, { useState } from 'react';
-import { useUsers } from '@/Hooks/User/useUsers';
-import UserTable from '@/Components/Users/UserTable';
-import Modal from '@/Components/Users/Modal';
-import UserForm from '@/Components/Users/UserForm';
-import UserDetail from '@/Components/Users/UserDetail';
-import DeleteConfirmation from '@/Components/Users/DeleteConfirmation';
-import Button from '@/Components/Common/Button';
-import Input from '@/Components/Common/Input2';
-import { Search, UserPlus } from 'lucide-react';
-import Spinner from '@/Components/Common/Spinner';
-import '@/Styles/Users/UsersPage.css';
-// import {useRoles} from '@/Hooks/useRoles'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import CustomTable from '@/Components/Common/CustomTable'
+import Button from '@/Components/Common/Button'
+import IconButton from '@mui/material/IconButton'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import EditIcon from '@mui/icons-material/Edit'
+import ToggleOnIcon from '@mui/icons-material/ToggleOn'
+import ToggleOffIcon from '@mui/icons-material/ToggleOff'
+import Modal from '@/Components/Users/Modal'
+import UserForm from '@/Components/Users/UserForm'
+import { useUsers } from '@/Hooks/User/useUsers'
+import '@/Styles/Users/UsersPage.css'
+import type { Column } from '@/Interfaces/Common/CustomTable'
 
-const UsersPage: React.FC = () => {
-  
+export default function UsersPage() {
   const {
     users,
     currentUser,
-    loading,
-    error,
-    pagination,
     companies,
-    searchQuery,
-    showCreateModal,
-    showEditModal,
-    showDeleteConfirm,
-    showUserDetail,
-    tempUserData,
-    getUserById,
-    handleSearch,
-    handlePageChange,
-    handlePageSizeChange,
-    handleCreateUser,
-    handleUpdateUser,
-    handleDeleteUser,
-    openEditModal,
-    openDeleteConfirm,
-    openCreateModal,
-    closeModals,
-    setShowUserDetail
-  } = useUsers();
+    error,
+    page,
+    pageSize,
+    totalCount,
+    setPage,
+    setPageSize,
+    modalMode,
+    isModalOpen,
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
+    toggleUser,
+  } = useUsers()
 
-  // const {roles} = useRoles();
-
-  const [searchInput, setSearchInput] = useState('');
-  
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSearch(searchInput);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch(searchInput);
+  const columns: Column<any>[] = [
+    { id: 'fullName', label: 'Nombre', minWidth: 150 },
+    { id: 'email',    label: 'Email',  minWidth: 200 },
+     {
+      id: 'roles',
+      label: 'Roles',
+      minWidth: 150,
+      render: row => row.roles.map((r: { roleName: string }) => r.roleName).join(', ')
+    },
+    {
+      id: 'isActive',
+      label: 'Estado',
+      minWidth: 100,
+      render: row => (
+        <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
+          {row.isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
+    {
+      id: 'actions',
+      label: 'Acciones',
+      minWidth: 130,
+      align: 'center',
+      render: row => (
+        <>
+          <IconButton size="small" onClick={() => openView(row.userId)}>
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => openEdit(row.userId)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => toggleUser(row.userId)}>
+            {row.isActive
+              ? <ToggleOnIcon fontSize="small" color="success" />
+              : <ToggleOffIcon fontSize="small" />
+            }
+          </IconButton>
+        </>
+      )
     }
-  };
-
-  const handleClearSearch = () => {
-    setSearchInput('');
-    handleSearch('');
-  };
-
-  const handleIconClick = (e: React.MouseEvent) => {
-    handleSearchSubmit(e);
-  };
+  ]
 
   return (
-    <div className="users-page">
-      <div className="users-header">
-        <h1>Administración de Usuarios</h1>
-      </div>
-
-      <div className="users-controls">
-        <form className="search-form" onSubmit={handleSearchSubmit}>
-          <div className="search-input-wrapper">
-            <Input
-              type="text"
-              placeholder="Buscar por nombre o email..."
-              value={searchInput}
-              onChange={handleSearchInput}
-              onKeyPress={handleKeyPress}
-              rightIcon={<Search size={18} />}
-              onIconClick={handleIconClick}
-            />
-          </div>
-          <div className="search-buttons">
-            <Button type="submit" variant="primary" className='btn--primary'>Buscar</Button>
-            {searchQuery && (
-              <Button type="button" variant="tertiary" className='btn-tertiary' onClick={handleClearSearch}>
-                Limpiar
-              </Button>
-            )}
-          </div>
-        </form>
-        <Button variant="primary" onClick={openCreateModal} className="create-user-btn">
-          <UserPlus size={18} />
-          Nuevo Usuario
-        </Button>
-      </div>
-
-      {error && <div className="users-error">Error: {error}</div>}
-      
-      {loading && !users.length ? (
-        <div className="users-loading">
-          <Spinner size={40} text="Cargando usuarios..." />
+    <div className="users-page__container">
+      <div className="users-page__header">
+        <div className="users-page__header-content">
+          <h1 className="users-page__title">Administración de Usuarios</h1>
+          <p className="users-page__subtitle">
+            Gestiona roles y estado de acceso de tu equipo
+          </p>
         </div>
-      ) : (
-        <UserTable
-          users={users}
-          onEdit={openEditModal}
-          onDelete={openDeleteConfirm}
-          onView={getUserById}
-          loading={loading}
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
-      )}
+        <div className="users-page__btnContainer">
+          <Button variant="primary" onClick={openCreate}>
+            Nuevo Usuario
+          </Button>
+        </div>
+      </div>
 
-      {/* Create User Modal */}
+      {error && <p className="users-page__error">Error: {error}</p>}
+
+      <CustomTable<any>
+        columns={columns}
+        rows={users}
+        count={totalCount}
+        page={page - 1}
+        rowsPerPage={pageSize}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        onPageChange={(_, newPage) => setPage(newPage + 1)}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
+      />
+
       <Modal
-        isOpen={showCreateModal}
-        onClose={closeModals}
-        title="Crear Nuevo Usuario"
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={
+          modalMode === 'create' ? 'Crear Usuario'
+          : modalMode === 'edit'   ? 'Editar Usuario'
+          :                          'Detalle Usuario'
+        }
         size="large"
       >
-        <UserForm
-          // roles={roles}
-          companies={companies}
-          onSubmit={handleCreateUser}
-          onCancel={closeModals}
-        />
-      </Modal>
-
-      {/* Edit User Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={closeModals}
-        title="Editar Usuario"
-        size="large"
-      >
-        {currentUser && (
+        { modalMode === 'create' && (
+          <UserForm
+            companies={companies}
+            onSubmit={handleSubmit}
+            onCancel={closeModal}
+          />
+        )}
+        { (modalMode === 'edit' || modalMode === 'view') && currentUser && (
           <UserForm
             initialData={currentUser}
-            // roles={roles}
             companies={companies}
-            isEditing={true}
-            onSubmit={(data) => handleUpdateUser(currentUser.userId, data)}
-            onCancel={closeModals}
+            isEditing={modalMode === 'edit'}
+            isViewing={modalMode === 'view'}
+            onSubmit={handleSubmit}
+            onCancel={closeModal}
           />
         )}
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteConfirm}
-        onClose={closeModals}
-        title="Confirmar Eliminación"
-        size="small"
-      >
-        {tempUserData && (
-          <DeleteConfirmation
-            userName={tempUserData.fullName}
-            isActive={tempUserData.isActive}
-            onConfirm={() => handleDeleteUser(tempUserData.userId)}
-            onCancel={closeModals}
-            loading={loading}
-          />
-        )}
-      </Modal>
-
-      {/* User Detail Modal */}
-      <Modal
-        isOpen={showUserDetail}
-        onClose={() => setShowUserDetail(false)}
-        title="Detalle de Usuario"
-        size="large"
-      >
-        {currentUser && <UserDetail user={currentUser} onClose={() => setShowUserDetail(false)} />}
       </Modal>
     </div>
-  );
-};
-
-export default UsersPage;
+)
+}

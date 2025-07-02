@@ -3,12 +3,12 @@
     flex-direction: column;
   }
   .select-field {
-    padding: 1rem 0.75rem;
+    width: 100%;
+    padding: 1rem 0.7rem;
     border: 1px solid var(--border-default);
     border-radius: 0.375rem;
-    font-size: 1rem;
-    background-color: var(--input-bg);
-    appearance: none;
+    font-size: var(--font-size-sm);
+    background: var(--input-bg);
     transition: border-color 0.2s ease;
   }
   .select-field:focus {
