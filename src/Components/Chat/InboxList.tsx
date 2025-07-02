@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useConversations } from '@/Hooks/useConversations'
 import { MessageSquareOff } from 'lucide-react'
+import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
 
@@ -18,8 +19,10 @@ const formatDuration = (ms: number): string => {
 }
 
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
-  const { conversations } = useConversations(filter)
+  const { conversations, reload } = useConversations(filter)
   const [now, setNow] = useState(Date.now())
+  const authRaw = localStorage.getItem('auth') || '{}'
+  const { userId } = JSON.parse(authRaw) as { userId: number }
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -48,7 +51,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
       case 'Waiting': return 'Pendiente'
       case 'Human': return 'Humano'
       case 'Closed': return 'Cerrado'
-      case 'Incomplete': return 'Imcompleta'
+      case 'Incomplete': return 'Incompleta'
       default: return status
     }
   }
@@ -64,6 +67,12 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
     )
   }
 
+  const handleSelect = async (id: number) => {
+    await markConversationRead(id)
+    reload()
+    onSelect(id)
+  }
+
   return (
     <ul className="inbox-list">
       {[...conversations]
@@ -77,7 +86,12 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
           const lastTime = formatTime(c.lastActivity || c.createdAt)
           const statusClass = getStatusClass(c.status)
           const statusText = getStatusText(c.status)
-          const hasUnread = (c.unreadCount ?? 0) > 0
+          const unread = userId === c.assignedAgentId
+            ? c.unreadForAgent ?? 0
+            : userId === c.assignedByUserId
+            ? c.unreadForAssigner ?? 0
+            : 0
+          const hasUnread = unread > 0
 
           let timeSinceRequest = ''
           if (!c.assignedAt && c.requestedAgentAt) {
@@ -94,13 +108,12 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
             timeToFirstResponse = formatDuration(diff)
           }
 
-          let previewText = `Cliente últ. msj:: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
-          
+          let previewText = `Cliente últ. msj: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
           if (!c.assignedAt && c.requestedAgentAt) {
-            previewText += ` · Tiempo desde solicitud: ${timeSinceRequest}`
+            previewText += ` · Desde solicitud: ${timeSinceRequest}`
           }
           if (c.assignedAt && timeToFirstResponse) {
-            previewText += ` · Tiempo hasta 1ª respuesta: ${timeToFirstResponse}`
+            previewText += ` · Hasta 1ª respuesta: ${timeToFirstResponse}`
           }
 
           return (
@@ -109,8 +122,8 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
               role="button"
               tabIndex={0}
               aria-pressed={isSelected}
-              onClick={() => onSelect(c.conversationId)}
-              onKeyDown={e => e.key === 'Enter' && onSelect(c.conversationId)}
+              onClick={() => handleSelect(c.conversationId)}
+              onKeyDown={e => e.key === 'Enter' && handleSelect(c.conversationId)}
               className={`inbox-list__item ${isSelected ? 'inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
@@ -119,9 +132,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
                 </div>
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
-                    <span className="inbox-list__name">
-                      {c.clientContactName || 'Usuario'}
-                    </span>
+                    <span className="inbox-list__name">{c.clientContactName || 'Usuario'}</span>
                     <span className="inbox-list__time">{lastTime}</span>
                   </div>
                   {c.assignedAgentName && (
@@ -132,15 +143,13 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
                   <span className="inbox-list__preview">{previewText}</span>
                 </div>
                 <div className="inbox-list__bottom">
-                <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
-                  {statusText}
-                </span>
-                {hasUnread && (
-                  <span className="inbox-list__unread-badge">
-                    {c.unreadCount}
+                  <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
+                    {statusText}
                   </span>
-                )}
-              </div>
+                  {hasUnread && (
+                    <span className="inbox-list__unread-badge">{unread}</span>
+                  )}
+                </div>
               </div>
             </li>
           )

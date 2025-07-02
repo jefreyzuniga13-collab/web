@@ -48,6 +48,10 @@ export interface ConversationDto {
   messages?: MessageDto[]
   tags: string[];
   assignmentStatus?: 'Assigned' | 'Unassigned' | 'Rejected';
+  agentLastReadMessageId?: number
+  assignerLastReadMessageId?: number
+  unreadForAgent?:      number
+  unreadForAssigner?:   number
 }
 
 export interface UpdateConversationRequest {

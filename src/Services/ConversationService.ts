@@ -88,3 +88,7 @@ export function forceAssign(
     {forced, assignmentComment}
   )
 }
+
+export function markConversationRead(conversationId: number) {
+  return api.post<void>(`/Conversations/${conversationId}/mark-read`);
+}

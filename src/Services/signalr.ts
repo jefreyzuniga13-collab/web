@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as signalR from '@microsoft/signalr'
 import type {
   MessageDto,
@@ -155,14 +156,14 @@ export function leaveConversation(conversationId: number) {
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
-  console.log("Retrieve new message fro signalr.ts")
-  chatConnection?.on('ReceiveMessage', (message, attachments) => {
+  chatConnection?.on('ReceiveMessage', (message, attachments) =>
     handler({ message, attachments })
-  })
+  );
 }
-
-export function offNewMessage() {
-  chatConnection?.off('ReceiveMessage')
+export function offNewMessage(
+  handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
+) {
+  chatConnection?.off('ReceiveMessage', handler);
 }
 
 export function offNewContact(){
@@ -277,4 +278,19 @@ export function offNewContactValidation(
   handler: (payload: { contactLog: ContactLog}) => void
 ) {
   notificationsConnection?.off('newContactValidation', handler)
+}
+
+export function onPlayNewMessageSound(
+  handler: (senderUserId: number) => void
+) {
+  notificationsConnection?.on(
+    'PlayNewMessageSound',
+    (senderUserId: any) => {
+      handler(Number(senderUserId));
+    }
+  );
+}
+
+export function offPlayNewMessageSound() {
+  notificationsConnection?.off('PlayNewMessageSound');
 }
