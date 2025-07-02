@@ -64,6 +64,18 @@ const VerifyNewContactPage: React.FC = () => {
             </div>
 
             <div className="verifyContact-grid-col">
+              <label htmlFor="idType">Tipo de Identificación</label>
+              <Input
+                id="idType"
+                name="IdType"
+                value={form.idType == "NationalCard" ? "Cédula Nacional" : form.idType == "Passport" ? "Pasaporte" : "Cédula de Residencia"}
+                onChange={handleChangeText}
+                disabled
+              />
+            </div>
+
+           { form.idType === "NationalCard" && (
+             <div className="verifyContact-grid-col">
               <label htmlFor="idCard">Cédula</label>
               <Input
                 id="idCard"
@@ -75,6 +87,37 @@ const VerifyNewContactPage: React.FC = () => {
                 <div className="verifyContact-error">{errors.idCard}</div>
               )}
             </div>
+           )}
+
+           { form.idType === "Passport" && (
+             <div className="verifyContact-grid-col">
+              <label htmlFor="passport">Numero de pasaporte</label>
+              <Input
+                id="passport"
+                name="passport"
+                value={form.passport}
+                onChange={handleChangeText}
+              />
+              {errors.password && (
+                <div className="verifyContact-error">{errors.password}</div>
+              )}
+            </div>
+           )}
+
+            { form.idType === "ResidenceCard" && (
+             <div className="verifyContact-grid-col">
+              <label htmlFor="idResidencia">Cédula de Residencia</label>
+              <Input
+                id="idResidencia"
+                name="idResidencia"
+                value={form.residenceCard}
+                onChange={handleChangeText}
+              />
+              {errors.residenceCard && (
+                <div className="verifyContact-error">{errors.residenceCard}</div>
+              )}
+            </div>
+           )}
 
             <div className="verifyContact-grid-col">
               <label htmlFor="idCard">Nombre compañía indica por el contacto</label>

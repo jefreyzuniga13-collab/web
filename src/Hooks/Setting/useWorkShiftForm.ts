@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import type { WorkShiftInterface, WorkShiftFormValues } from '@/Interfaces/Setting/WorkShiftInterface'
 
 type Errors = {
@@ -37,8 +37,8 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
       setForm({
         openingHourId: data.openingHourId,
         assignedUserId: data.assignedUserId,
-        validFrom: data.validFrom ? new Date(data.validFrom) : null,
-        validTo: data.validTo ? new Date(data.validTo) : null,
+        validFrom: data.validFrom ? parseISO(data.validFrom) : null,
+  validTo:   data.validTo   ? parseISO(data.validTo)   : null,
         isActive: data.isActive,
       })
     } else if (mode === 'create') {

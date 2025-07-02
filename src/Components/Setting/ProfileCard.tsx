@@ -10,7 +10,7 @@ import '@/Styles/Setting/ProfileCard.css';
 //import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 
 const ProfileCard: React.FC = () => {
-  const { currentUser, loading, handleUpdateUser, getUserById } = useUsers();
+  const { currentUser, loading, fetchOne } = useUsers();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -29,9 +29,9 @@ const ProfileCard: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) {
-      getUserById(Number(userId));
+      fetchOne(Number(userId));
     }
-  }, [currentUser, getUserById]);
+  }, [currentUser, fetchOne]);
 
   useEffect(() => {
     if (currentUser) {
@@ -64,11 +64,11 @@ const ProfileCard: React.FC = () => {
 
   const handleSave = () => {
     if (currentUser) {
-      const updateData = { ...formData };
+      // const updateData = { ...formData };
       if (selectedFile) {
         // manejar la subida de la imagen
       }
-      handleUpdateUser(currentUser.userId, updateData);
+      // handleUpdateUser(currentUser.userId, updateData);
       setIsEditing(false);
       setSelectedFile(null);
     }

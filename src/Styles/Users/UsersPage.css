@@ -23,6 +23,7 @@
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
+  text-align: left;
 }
 
 .users-page__subtitle {

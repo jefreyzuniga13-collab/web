@@ -4,7 +4,6 @@ import { MessageSquareOff } from 'lucide-react'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
-
 interface Props {
   selectedId?: number
   onSelect: (id: number) => void

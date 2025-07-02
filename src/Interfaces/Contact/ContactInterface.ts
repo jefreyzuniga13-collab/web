@@ -9,6 +9,11 @@ export type ContactStatus =
   | 'AwaitingIdCard'
   | 'Completed';
 
+export type IdType = 
+  | 'NationalCard'
+  | 'Passport'
+  | 'ResidenceCard';
+
   export interface ContactLogInterface{
     id: number;
     waName: string;
@@ -16,6 +21,9 @@ export type ContactStatus =
     waUserId?: string | null;
     phone: string;
     idCard?: string;
+    passport?: string;
+    idType: IdType;
+    residenceCard?: string;
     fullName?: string;
     companyName?: string;
     companyId?: number | null;

@@ -111,6 +111,8 @@ export default function WorkShiftModal({
   }, [isOpen])
   if (!isOpen) return null
 
+  console.log("Valid to:", form.validTo);
+  console.log("Valid from:", form.validFrom);
   return (
     <div className="ws-modal__overlay">
       <div className="ws-modal__container">
@@ -188,7 +190,7 @@ export default function WorkShiftModal({
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Valido hasta"
-                  value={form.validTo as Date | null}
+                  value={form.validTo as Date || null}
                   onChange={d => handleDate('validTo', d)}
                   disabled={isView}
                   format="dd/MM/yyyy"
@@ -196,6 +198,7 @@ export default function WorkShiftModal({
                   slotProps={{ textField: { className: 'date-picker-field', fullWidth: true } }}
                 />
               </LocalizationProvider>
+
                {isHolidaySunday && (
                 <p className="ws-modal__info">
                   <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo, crear turno para el siguiente lunes hábil y asignar agente.

@@ -179,18 +179,21 @@ export default function OpeningHourModal({
                 </div> */}
 
                 <div className="oh-modal__col">
-                  <p className="oh-modal__inline-label">¿Es feriado corto y fijo?</p>
-                  <DatePickerField
+                  <p className="oh-modal__inline-label">¿Es feriado fijo dd/MM?</p>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
                     label="Día feriado"
                     value={form.holidayDate}
                     onChange={d => setForm(f => ({ ...f, holidayDate: d }))}
                     disabled={isView}
+                    format="dd/MM"
                   />
+                  </LocalizationProvider>
                   {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
                 </div>
                 
                 <div className="oh-modal__col oh-modal__col--full">
-                  <p className="oh-modal__inline-label">¿Es feriado largo?</p>
+                  <p className="oh-modal__inline-label">¿Es feriado variable dd/MM/yyyy?</p>
                   <div className="oh-modal__input-container">
                     <div className="oh-modal__col">
                       <LocalizationProvider dateAdapter={AdapterDateFns}>

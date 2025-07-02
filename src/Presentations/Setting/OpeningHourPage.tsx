@@ -40,12 +40,31 @@ export default function OpeningHourPage() {
     () => [
       { id: 'name',       label: 'Nombre',       minWidth: 100 },
       { id: 'description',label: 'Descripción',  minWidth: 150 },
-      { id: 'recurrence', label: 'Recurrencia',  minWidth: 100 },
+      { id: 'recurrence', label: 'Recurrencia',  minWidth: 100,
+        render: row => {
+          if (row.recurrence === 'Weekly') return 'Semanal';
+          if (row.recurrence === 'OneTimeHoliday') return 'Anual';
+       },
+      },
       {
         id: 'daysOfWeek',
         label: 'Días',
         minWidth: 150,
-        render: row => row.daysOfWeek?.join(', ') || '-',
+        render: row => {
+          if (!row.daysOfWeek || row.daysOfWeek.length === 0) return '-';
+          return row.daysOfWeek.map(day => {
+            switch (day) {
+              case 'Monday': return 'Lunes';
+              case 'Tuesday': return 'Martes';
+              case 'Wednesday': return 'Miércoles';
+              case 'Thursday': return 'Jueves';
+              case 'Friday': return 'Viernes';
+              case 'Saturday': return 'Sábado';
+              case 'Sunday': return 'Domingo';
+              default: return day;
+            }
+          }).join(', ');
+        },
       },
       { id: 'startTime',     label: 'Inicio',           minWidth: 80 },
       { id: 'endTime',       label: 'Fin',              minWidth: 80 },

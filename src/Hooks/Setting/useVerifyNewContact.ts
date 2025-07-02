@@ -13,6 +13,8 @@ type FormErrors = {
   waUserId?: string;
   phone?: string;
   idCard?: string;
+  password?: string;
+  residenceCard?: string;
   fullName?: string;
   companyId?: string;
 };
@@ -30,6 +32,9 @@ export function useVerifyNewContact(phoneNumber: string) {
     fullName: "",
     isVerified: false,
     idCard: "",
+    passport: "",
+    idType: "NationalCard",
+    residenceCard: "",
     createdAt: "",
     updatedAt: "",
   };
@@ -129,11 +134,28 @@ export function useVerifyNewContact(phoneNumber: string) {
     } else if (!/^505\d{8}$/.test(form.phone)) {
       newErrors.phone = "Formato de número inválido.";
     }
-    // idCard: 3-6-4[A-Z]
-    if (!form.idCard!.trim()) {
-      newErrors.idCard = "El número de cédula es obligatorio.";
-    } else if (!/^\d{3}-\d{6}-\d{4}[A-Z]$/.test(form.idCard!)) {
-      newErrors.idCard = "Número de cédula inválido.";
+
+    if (form.idType === "NationalCard" && !form.idCard?.trim()) {
+      newErrors.idCard = "La cédula es obligatoria.";
+    } else if (
+      form.idType === "NationalCard" &&
+      !/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard!)
+    ) {
+      newErrors.idCard = "Formato de cédula inválido.";
+    }
+
+
+    //passport nicaraguense: 2 letras y 7 números
+    if(form.idType === "Passport" && !form.passport!.trim()) {
+      newErrors.password = "El pasaporte es obligatorio.";
+    } else if (form.idType === "Passport" && !/^[A-Z]{1,2}\d{7}$/.test(form.passport!)) {
+      newErrors.password = "Formato de pasaporte inválido.";
+    }
+
+    if(form.idType === "ResidenceCard" && !form.residenceCard!.trim()) {
+      newErrors.residenceCard = "La tarjeta de residencia es obligatoria.";
+    } else if (form.idType === "ResidenceCard" && !/^(?:[A-Z]{1, 2}\d{7}|\d{1,12}$)$/.test(form.residenceCard!)) {
+      newErrors.residenceCard = "Formato de tarjeta de residencia inválido.";
     }
 
     if (form.companyId == null || form.companyId <= 0) {
@@ -144,6 +166,7 @@ export function useVerifyNewContact(phoneNumber: string) {
       setErrors(newErrors);
       return;
     }
+
 
     setErrors({});
     await updateAsync();

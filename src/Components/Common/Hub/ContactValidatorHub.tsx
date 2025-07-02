@@ -13,7 +13,7 @@ export const ContactValidatorPopup: React.FC = () => {
 
   if (!current || current.type !== 'newContactValidation') return null
 
-  const { waName, createdAt, isVerified, phone } = current.payload
+  const { waName, fullName, createdAt, isVerified, phone } = current.payload
 
   const handleClose = () => {
     dispatch(dequeuePopup())
@@ -35,7 +35,7 @@ export const ContactValidatorPopup: React.FC = () => {
   return (
     <ModalPopup
       title="Nuevo contacto"
-      message={`Nuevo contacto ${waName} se registró el ${new Date(createdAt).toLocaleString()}. Estado actual: ${isVerified ? 'Verificado' : 'Sin verificar'}.`}
+      message={`Nuevo contacto ${fullName != null ? fullName : waName} se registró el ${new Date(createdAt).toLocaleString()}. Estado actual: ${isVerified ? 'Verificado' : 'Sin verificar'}.`}
       actions={actions}
       isOpen={true}
       onClose={handleClose}

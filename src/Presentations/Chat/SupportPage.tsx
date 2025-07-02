@@ -28,15 +28,6 @@ interface JwtPayload {
 // Tipo de cada opción de filtro
 type FilterOption = { label: string; value: string; content: string }
 
-const DEFAULT_OPTIONS: FilterOption[] = [
-  { label: 'all', value: 'all', content: 'Todos' },
-  { label: 'bot', value: 'bot', content: 'Bot' },
-  { label: 'waiting', value: 'waiting', content: 'Pendiente' },
-  { label: 'human', value: 'human', content: 'Asignado' },
-  { label: 'closed', value: 'closed', content: 'Cerrado' },
-  { label: 'incomplete', value: 'incomplete', content: 'Incompleto' }
-]
-
 const FILTER_ORDER_STORAGE_KEY = 'filterOrder'
 
 const SupportPage: React.FC = () => {
@@ -59,6 +50,26 @@ const SupportPage: React.FC = () => {
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
+  let DEFAULT_OPTIONS: FilterOption[];
+
+  if(isAdmin) {
+    DEFAULT_OPTIONS = [
+    { label: 'Todos', value: 'all', content: 'Todos' },
+    { label: 'Nuevo', value: 'new', content: 'Nuevo' },
+    { label: 'Bot', value: 'bot', content: 'Bot' },
+    { label: 'Pendiente', value: 'waiting', content: 'Pendiente' },
+    { label: 'Humano', value: 'human', content: 'Humano' },
+    { label: 'Cerrado', value: 'closed', content: 'Cerrado' },
+    { label: 'Incompleto', value: 'incomplete', content: 'Incompleto' }
+  ]
+  }else{
+    DEFAULT_OPTIONS = [
+    { label: 'Todos', value: 'all', content: 'Todos' },
+    { label: 'Humano', value: 'human', content: 'Humano' },
+    { label: 'Cerrado', value: 'closed', content: 'Cerrado' },
+    { label: 'Incompleto', value: 'incomplete', content: 'Incompleto' }
+  ]}
+    
   // Cargar orden de filtros desde localStorage o usar el predeterminado
   const [filterOrder, setFilterOrder] = useState<string[]>(() => {
     const stored = localStorage.getItem(FILTER_ORDER_STORAGE_KEY)
@@ -267,7 +278,8 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({ currentOrder, optio
         <h3 className='order-modal-title'>Ordenar filtros</h3>
         <ul className="order-list">
           {order.map((val, idx) => {
-            const opt = options.find(o => o.value === val)!
+            const opt = options.find(o => o.value === val)
+            if (!opt) return null
             return (
               <li
                 key={val}
@@ -281,6 +293,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({ currentOrder, optio
               </li>
             )
           })}
+
         </ul>
         <div className="order-modal-actions">
           <Button variant='secondary' onClick={onClose}>Cancelar</Button>
