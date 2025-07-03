@@ -15,23 +15,24 @@ export type IdType =
   | 'ResidenceCard';
 
   export interface ContactLogInterface{
-    id: number;
-    waName: string;
+    id: number | null;
+    waName: string | null;
     waId: string | null;
     waUserId?: string | null;
     phone: string;
-    idCard?: string;
-    passport?: string;
-    idType: IdType;
-    residenceCard?: string;
-    fullName?: string;
+    idCard?: string | null;
+    passport?: string | null;
+    idType: IdType | null;
+    residenceCard?: string | null;
+    fullName?: string | null;
     companyName?: string;
     companyId?: number | null;
-    isVerified?: boolean;
+    isVerified?: boolean | null;
+    isActive?: boolean | null;
     status: ContactStatus | null;
-    createdAt: string;
-    updatedAt?: string;
-    verifiedAt?: string;
-    verifiedId?: number;
-    verifiedBy?: User;
+    createdAt: string | null;
+    updatedAt?: string | null;
+    verifiedAt?: string | null;
+    verifiedId?: number | null;
+    verifiedBy?: User | null;
 }

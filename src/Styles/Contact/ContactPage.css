@@ -1,0 +1,53 @@
+.contact-page__container {
+  padding: var(--space-sm) var(--space-2xl);
+  display: grid;
+  max-height: 100vh;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-lg);
+}
+
+.contact-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.contact-page__content {
+  display: flex;
+  flex-direction: column;
+}
+.contact-page__btn{
+  display: flex;
+  justify-content: end;
+}
+
+.contact-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.contact-page__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  text-align: left;
+}
+
+.contact-page__loading,
+.contact-page__error {
+  font-size: var(--font-size-base);
+  color: var(--color-error);
+}
+
+.MuiInputBase-input{
+  font-size: var(--font-size-sm) !important;
+  padding: var(--space-md)!important;
+}
+
+.MuiFormLabel-root{
+  font-size: var(--font-size-xm) !important;
+}

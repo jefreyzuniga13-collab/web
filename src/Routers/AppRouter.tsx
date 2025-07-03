@@ -21,6 +21,7 @@ const PrivacyPolicy = lazy(() => import('@/Presentations/Setting/PrivacyPolicy')
 const VerifyNewContactPage = lazy(()=> import("@/Presentations/Setting/VerifyNewContactPage"))
 const OpeningHourPage = lazy(()=> import("@/Presentations/Setting/OpeningHourPage"))
 const WorkShiftPage = lazy(()=> import("@/Presentations/Setting/WorkShiftPage"))
+const ContactPage = lazy(()=> import("@/Presentations/Contact/ContactPage"))
 
 export function AppRouter() {
   return (
@@ -47,6 +48,7 @@ export function AppRouter() {
             <Route index element={<Navigate to="chat" replace />} />
             <Route path="dashboard" element={<DashboardPresentation />} />
             <Route path="chat"      element={<SupportPage />} />
+            <Route path="contacts"      element={<ContactPage />} />
             <Route path="users"  element={<UsersPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="system-params" element={<SystemParameterPage />} />

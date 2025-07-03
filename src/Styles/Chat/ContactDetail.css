@@ -131,7 +131,51 @@
   padding: var(--space-md) var(--space-lg);
   border-bottom: 0.1rem solid var(--color-gray-100);
 }
+.conversation-tone{
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  margin-left: var(--space-xs);
+}
+.Excelente{
+  color: var(--color-success);
+}
+.Bueno{
+  color: var(--color-success);
+}
 
+ .Aceptable{
+  color: var(--color-gray-500);
+}
+
+.Deficiente{
+  color: var(--color-warning);
+}
+
+.Muydeficiente{
+  color: var(--color-error);
+}
+
+.conversation-tone__Nodisponible{
+  background-color: var(--color-gray-500);
+}
+
+.conversation-tone__Muydeficiente{
+  background-color: var(--color-error);
+}
+
+.conversation-tone__Deficiente{
+  background-color: var(--color-error);
+}
+.conversation-tone__Aceptable{
+  background-color: var(--color-primary);
+}
+.conversation-tone__Bueno{
+  background-color: var(--color-success);
+}
+.conversation-tone__Excelente{
+  background-color: var(--color-success);
+}
 .contact-detail__section:last-child {
   border-bottom: none;
 }

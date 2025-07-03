@@ -1,5 +1,6 @@
 import api from '@/Utils/ApiConfig';
 import type { ConversationDto, UpdateConversationRequest,  ConversationHistoryDto } from '@/Interfaces/Chat/ChatInterfaces';
+import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface';
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>('/Conversations/getByRole');
@@ -7,6 +8,12 @@ export function getConversationsByRole() {
 
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/Conversations/${id}`);
+}
+
+export async function getConversationToneAsync(id: number) {
+  const data = await api.get<ApiResponse<number>>(`/Conversations/${id}/tone`);
+  console.log('Conversation Tone:', JSON.stringify(data.data.data));
+  return data.data.data;
 }
 
 export function getPendingConversations() {

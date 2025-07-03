@@ -175,7 +175,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
 
                 <div className="chat-window__message-info">
                   <span className="chat-window__message-time">
-                    {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(m.sentAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {getStatusIcon(m, isCurrentUser)}
                 </div>

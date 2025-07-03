@@ -69,9 +69,12 @@ export const useOpeningHour = () => {
     setLoadingItem(true)
     setError(null)
     try {
-      await OpeningHourService.updateOpeningHourAsync(id, values)
-      // refresh current page
-      await fetchPage(page, pageSize)
+      const res = await OpeningHourService.updateOpeningHourAsync(id, values)
+      
+     setOpeningHours(prev =>
+        prev.map(item => item.id === res.id ? res : item)
+      )
+
     } catch (err: any) {
       setError(err)
     } finally {

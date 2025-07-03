@@ -31,6 +31,7 @@
   border-color: var(--input-focus-border);
 }
 
+
 .inbox-list__item {
   display: flex;
   flex-direction: column;
@@ -323,4 +324,24 @@
 .order-modal-actions{
   display: flex;
   gap: var(--space-2xl);
+}
+
+
+.ixl_conversation-tone__Excelente{
+  background-color: var(--success-rolor);
+}
+.ixl_conversation-tone__Bueno{
+  background-color: var(--success-rolor);
+}
+.ixl_conversation-tone__Aceptable{
+  background-color: var(--success-rolor);
+}
+.ixl_conversation-tone__Deficiente{
+  background-color: var(--success-rolor);
+}
+.ixl_conversation-tone__Muydeficiente{
+  background-color: var(--success-rolor);
+}
+.ixl_conversation-tone__Nodisponible{
+  background-color: var(--success-rolor);
 }

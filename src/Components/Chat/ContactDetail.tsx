@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, type ChangeEvent } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { getConversation, updateTag } from '@/Services/ConversationService'
+import { getConversation, getConversationToneAsync, updateTag } from '@/Services/ConversationService'
 // import { User, Clock, AlertCircle, Tag, Edit, X, Check, Info, History, Hourglass, UserPen } from 'lucide-react'
 import {Book  , AlertCircle, Tag, Edit, X, Check, Info } from 'lucide-react'
 import { useSignalR } from '@/Context/SignalRContext'
@@ -22,8 +22,28 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
   const [error, setError] = useState<string | null>(null)
   const [isAddingTag, setIsAddingTag] = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [conversationTone, setConversationTone] = useState<string>('No disponible');
 
   const signalR = useSignalR()
+
+   const getConversatioToneMethod = useCallback(async (conversationId: number): Promise<string> => {
+
+    const toneResponse = await getConversationToneAsync(conversationId);
+    const tone = Number(toneResponse);
+
+   // console.log('Conversation Tone:', tone);
+
+    if (!tone) return 'No disponible';
+    if (tone < 0 || tone > 5) return 'No disponible';
+
+    if (tone == 1) return 'Excelente';
+    if (tone == 2) return 'Bueno';
+    if (tone == 3) return 'Aceptable';
+    if (tone == 4) return 'Deficiente';
+    if (tone == 5) return 'Muy deficiente';
+    return 'No disponible';
+
+  }, [conversationId]);
 
   // Carga o recarga datos de la conversación
   const fetchDetail = useCallback(async (id: number) => {
@@ -74,7 +94,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
       setTags([])
       return
     }
+    
     fetchDetail(conversationId)
+
+    getConversatioToneMethod(conversationId).then(tone => {
+      setConversationTone(tone);
+    });
 
     const handler = (updated: ConversationDto) => {
       if (updated.conversationId === conversationId) {
@@ -176,8 +201,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
       <section className={`contact-detail ${contactDetailToggle ? "show-container" : ""}`} aria-label="Detalles de contacto">
 
         <header className="contact-header">
-          <div className="contact-avatar" role="img" aria-label="Avatar del contacto">
-            {conv.clientContactName?.charAt(0).toUpperCase() || 'U'}
+          <div className={`contact-avatar conversation-tone__${conversationTone.trim()}`} role="img" aria-label="Avatar del contacto">
+
           </div>
           <div className="contact-info">
             <h3 className="contact-name">{conv.clientContactName || 'Usuario'}</h3>
@@ -201,7 +226,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
             <div className="section-header">
               <h4 className="section-title">
                 <Book size={14}/>
-                Información principal
+                  Información principal - <span className={`conversation-tone ${conversationTone.trim()}`}>{conversationTone}</span>
               </h4>
               {/* <button 
                 className="section-action"

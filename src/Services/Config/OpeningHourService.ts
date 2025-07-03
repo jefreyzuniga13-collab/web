@@ -79,8 +79,6 @@ class OpeningHour {
   ): Promise<OpeningHourInterface> {
     try {
       const payload = transformPayload(values);
-      console.log("Datos enviados desde el metodo update del serv...", payload);
-      
       const { data } = await api.put<ApiResponse<OpeningHourInterface>>(
         `/OpeningHour/${id}`,
         payload

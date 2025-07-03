@@ -35,7 +35,7 @@ export default function UsersPage() {
 
   const columns: Column<any>[] = [
     { id: 'fullName', label: 'Nombre', minWidth: 150 },
-    { id: 'email',    label: 'Email',  minWidth: 200 },
+    { id: 'email',    label: 'Email',  minWidth: 100 },
      {
       id: 'roles',
       label: 'Roles',
@@ -52,6 +52,17 @@ export default function UsersPage() {
         </span>
       )
     },
+     {
+      id: 'isOnline',
+      label: 'En Línea',
+      minWidth: 100,
+      render: row => (
+        <span className={row.lastOnline ? 'status status--active' : 'status status--inactive'}>
+          {row.isOnline ? 'Si' : 'No'}
+        </span>
+      )
+    },
+     { id: 'createdAt', label: 'Creado', minWidth: 110, render: row => new Date(row.createdAt!).toLocaleDateString('es-NI') },
     {
       id: 'actions',
       label: 'Acciones',
@@ -59,16 +70,16 @@ export default function UsersPage() {
       align: 'center',
       render: row => (
         <>
-          <IconButton size="small" onClick={() => openView(row.userId)}>
-            <VisibilityIcon fontSize="small" />
+          <IconButton size="medium" onClick={() => openView(row.userId)}>
+            <VisibilityIcon fontSize="medium" />
           </IconButton>
-          <IconButton size="small" onClick={() => openEdit(row.userId)}>
-            <EditIcon fontSize="small" />
+          <IconButton size="medium" onClick={() => openEdit(row.userId)}>
+            <EditIcon fontSize="medium" />
           </IconButton>
-          <IconButton size="small" onClick={() => toggleUser(row.userId)}>
+          <IconButton size="medium" onClick={() => toggleUser(row.userId)}>
             {row.isActive
-              ? <ToggleOnIcon fontSize="small" color="success" />
-              : <ToggleOffIcon fontSize="small" />
+              ? <ToggleOnIcon fontSize="medium" color="success" />
+              : <ToggleOffIcon fontSize="medium" />
             }
           </IconButton>
         </>

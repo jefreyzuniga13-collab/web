@@ -52,6 +52,7 @@ export interface ConversationDto {
   assignerLastReadMessageId?: number
   unreadForAgent?:      number
   unreadForAssigner?:   number
+  tone?: string;
 }
 
 export interface UpdateConversationRequest {

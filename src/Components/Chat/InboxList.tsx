@@ -4,6 +4,7 @@ import { MessageSquareOff } from 'lucide-react'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
+
 interface Props {
   selectedId?: number
   onSelect: (id: number) => void
@@ -30,7 +31,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return new Date(iso).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' })
   }
 
   const getStatusClass = (status: string) => {
@@ -126,8 +127,9 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
               className={`inbox-list__item ${isSelected ? 'inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
-                <div className="inbox-list__avatar">
-                  {(c.clientContactName || 'U').charAt(0).toUpperCase()}
+                <div className={`inbox-list__avatar ixl_conversation-tone__${c.tone}`}>
+                   {(c.clientContactName || 'U').charAt(0).toUpperCase()} 
+                  {/*<span className={`conversation-tone ${c.tone}`}>{c.tone}</span> */}
                 </div>
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
