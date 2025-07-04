@@ -1,0 +1,103 @@
+.cm-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(0.2rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  z-index: 1000;
+  animation: fadeIn var(--transition-normal) var(--transition-ease);
+}
+
+.cm-modal__container {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 64rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn var(--transition-normal) var(--transition-ease);
+  padding: var(--space-2xl);
+}
+
+.cm-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.cm-modal__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.cm-modal__close {
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-white);
+  transition: color var(--transition-fast);
+}
+.cm-modal__close:hover {
+  color: var(--text-primary);
+}
+
+.cm-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--space-md);
+}
+
+/* Aquí forzamos dos columnas */
+.cm-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+/* Si quieres que algún campo abarque las dos columnas */
+.cm-modal__col--full {
+  grid-column: span 2;
+}
+
+.cm-modal__col {
+  display: flex;
+  flex-direction: column;
+}
+
+.cm-modal__grid label,
+.cm-modal__grid .cm-modal__col > label {
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.cm-modal__error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+}
+
+.cm-modal__footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+.cm-modal__footer__btn{
+  min-width: 100% !important;
+}
+
+/* Asegura íconos MUI tamaño correcto */
+.MuiSvgIcon-root {
+  font-size: var(--font-size-xl) !important;
+}

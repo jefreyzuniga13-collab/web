@@ -28,7 +28,7 @@ export function useVerifyNewContact(phoneNumber: string) {
     phone: "",
     companyName: "",
     companyId: null,
-    status: null,
+    status: "New",
     fullName: "",
     isVerified: false,
     idCard: "",
@@ -121,7 +121,7 @@ export function useVerifyNewContact(phoneNumber: string) {
   const handleSubmit = async () => {
     const newErrors: FormErrors = {};
 
-    if (!form.waName.trim()) {
+    if (!form.waName!.trim()) {
       newErrors.waName = "El nombre de usuario es obligatorio.";
     }
 

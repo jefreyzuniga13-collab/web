@@ -189,3 +189,43 @@ body {
 .u-block { display: block; }
 .u-flex { display: flex; }
 .u-grid { display: grid; }
+
+.MuiAutocomplete-listbox .MuiAutocomplete-option {
+  font-size: var(--font-size-lg);
+  line-height: 1.4;  
+}
+
+.cm-modal__container .MuiAutocomplete-listbox .MuiAutocomplete-option {
+   font-size: var(--font-size-lg);
+}
+
+.date-picker-field .MuiInputBase-input {
+  font-size: var(--font-size-lg);
+}
+
+.MuiCalendarPicker-root,
+.MuiCalendarPicker-root .MuiTypography-root,
+.MuiCalendarPicker-root .MuiDayCalendar-day,
+.MuiCalendarPicker-root .MuiDayCalendar-weekDayLabel,
+.MuiCalendarPicker-root .MuiCalendarHeader-root,
+.MuiCalendarPicker-root .MuiCalendarHeader-label,
+.MuiCalendarPicker-root .MuiCalendarHeader-switchHeader {
+  font-size: var(--font-size-lg) !important;
+}
+
+.time-picker-field .MuiInputBase-input {
+  font-size: var(--font-size-lg);
+}
+.MuiClockNumber-clockNumber {
+  font-size: var(--font-size-3xl) !important;
+}
+.MuiPickersMeridiemSwitch-root .MuiButton-root {
+  font-size: var(--font-size-lg) !important;
+}
+.MuiPickerTimeListItem-root .MuiTypography-root {
+  font-size: var(--font-size-3xl) !important;
+}
+.MuiPickersActionBar-root .MuiButton-root {
+  font-size: var(--font-size-lg) !important;
+}
+

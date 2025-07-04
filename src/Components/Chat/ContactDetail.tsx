@@ -226,7 +226,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({ conversationId, co
             <div className="section-header">
               <h4 className="section-title">
                 <Book size={14}/>
-                  Información principal - <span className={`conversation-tone ${conversationTone.trim()}`}>{conversationTone}</span>
+                  Información principal - <span className={`conversation-toneText__${conversationTone.trim()}`}>{conversationTone}</span>
               </h4>
               {/* <button 
                 className="section-action"

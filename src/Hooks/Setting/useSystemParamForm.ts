@@ -38,7 +38,21 @@ export function useSystemParamForm({ mode, data, onSubmit }: UseSystemParamFormP
   const validate = useCallback(() => {
     const newErrors: Record<string, string> = {}
     if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio'
-    if (!form.type) newErrors.type = 'El tipo es obligatorio'
+    if (!form.value.trim()) {
+      newErrors.value = 'El valor es obligatorio'
+    } else if (form.type === 'Temp' && !/^[1-9]\d*$/.test(form.value)) {
+      newErrors.value = 'Para Temp solo dígitos (mayor que 0) son permitidos'
+    }
+    if (form.type === 'Keywords') {
+    try {
+      const arr = JSON.parse(form.value)
+      if (!Array.isArray(arr) || !arr.every(v => typeof v === 'string')) {
+        newErrors.value = 'Keywords debe ser un array de cadenas (ej: ["agente","humano"])'
+      }
+    } catch {
+      newErrors.value = 'Formato JSON inválido. Ejemplo válido: ["agente","humano"]'
+    }
+  }
     if (!form.value.trim()) newErrors.value = 'El valor es obligatorio'
     if (!form.description.trim()) newErrors.description = 'La descripción es obligatoria'
     setErrors(newErrors)

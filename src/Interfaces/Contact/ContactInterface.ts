@@ -9,30 +9,50 @@ export type ContactStatus =
   | 'AwaitingIdCard'
   | 'Completed';
 
-export type IdType = 
+export type IdType =
   | 'NationalCard'
   | 'Passport'
   | 'ResidenceCard';
 
-  export interface ContactLogInterface{
-    id: number | null;
-    waName: string | null;
-    waId: string | null;
-    waUserId?: string | null;
-    phone: string;
-    idCard?: string | null;
-    passport?: string | null;
-    idType: IdType | null;
-    residenceCard?: string | null;
-    fullName?: string | null;
-    companyName?: string;
-    companyId?: number | null;
-    isVerified?: boolean | null;
-    isActive?: boolean | null;
-    status: ContactStatus | null;
-    createdAt: string | null;
-    updatedAt?: string | null;
-    verifiedAt?: string | null;
-    verifiedId?: number | null;
-    verifiedBy?: User | null;
+export interface ContactLogInterface {
+  id: number;
+  waName: string | null;
+  waId: string | null;
+  waUserId?: string | null;
+  phone: string;
+  idType: IdType | null;
+  idCard?: string | null;
+  passport?: string | null;
+  residenceCard?: string | null;
+  fullName?: string | null;
+  companyName?: string | null;
+  companyId?: number | null;
+  isProvidingData?: boolean;
+  isVerified?: boolean;
+  isActive?: boolean;
+  status: ContactStatus;
+  createdAt: string;
+  updatedAt?: string | null;
+  verifiedAt?: string | null;
+  verifiedId?: number | null;
+  verifiedBy?: User | null;
+}
+
+export interface ContactFormValues {
+  waName: string | null;
+  waId: string | null;
+  waUserId: string | null;
+  phone: string;
+  idType: IdType | null;
+  idCard: string | null;
+  passport: string | null;
+  residenceCard: string | null;
+  fullName: string | null;
+  companyName: string | null;
+  companyId: number | null;
+  status: ContactStatus;
+  isVerified: boolean;
+  isActive: boolean;
+  verifiedAt: string | null;
+  verifiedBy: number | null;
 }

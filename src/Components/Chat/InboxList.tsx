@@ -18,6 +18,12 @@ const formatDuration = (ms: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
+const niFormatter = new Intl.DateTimeFormat('es-NI', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Managua'
+})
+
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
   const { conversations, reload } = useConversations(filter)
   const [now, setNow] = useState(Date.now())
@@ -31,29 +37,9 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
-    return new Date(iso).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const getStatusClass = (status: string) => {
-    const s = status.toLowerCase()
-    if (s.includes('human')) return 'human'
-    if (s.includes('bot')) return 'bot'
-    if (s.includes('waiting')) return 'waiting'
-    if (s.includes('closed')) return 'closed'
-    if (s.includes('incomplete')) return 'incomplete'
-    return 'default'
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'New': return 'Nuevo'
-      case 'Bot': return 'Bot'
-      case 'Waiting': return 'Pendiente'
-      case 'Human': return 'Humano'
-      case 'Closed': return 'Cerrado'
-      case 'Incomplete': return 'Incompleta'
-      default: return status
-    }
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    return niFormatter.format(d)
   }
 
   if (conversations.length === 0) {
@@ -75,40 +61,60 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
 
   return (
     <ul className="inbox-list">
-      {[...conversations]
-        .sort((a, b) => {
-          const tA = new Date(a.lastActivity || a.createdAt).getTime()
-          const tB = new Date(b.lastActivity || b.createdAt).getTime()
-          return tB - tA
-        })
+      {conversations
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.lastActivity || b.createdAt).getTime() -
+            new Date(a.lastActivity || a.createdAt).getTime()
+        )
         .map((c: ConversationDto) => {
           const isSelected = c.conversationId === selectedId
           const lastTime = formatTime(c.lastActivity || c.createdAt)
-          const statusClass = getStatusClass(c.status)
-          const statusText = getStatusText(c.status)
-          const unread = userId === c.assignedAgentId
-            ? c.unreadForAgent ?? 0
-            : userId === c.assignedByUserId
-            ? c.unreadForAssigner ?? 0
-            : 0
+          const statusClass = c.status.toLowerCase().includes('human')
+            ? 'human'
+            : c.status.toLowerCase().includes('bot')
+            ? 'bot'
+            : c.status.toLowerCase().includes('waiting')
+            ? 'waiting'
+            : c.status.toLowerCase().includes('closed')
+            ? 'closed'
+            : c.status.toLowerCase().includes('incomplete')
+            ? 'incomplete'
+            : 'default'
+          const statusTextMap: Record<string, string> = {
+            New: 'Nuevo',
+            Bot: 'Bot',
+            Waiting: 'Pendiente',
+            Human: 'Humano',
+            Closed: 'Cerrado',
+            Incomplete: 'Incompleta'
+          }
+          const statusText = statusTextMap[c.status] || c.status
+          const unread =
+            userId === c.assignedAgentId
+              ? c.unreadForAgent ?? 0
+              : userId === c.assignedByUserId
+              ? c.unreadForAssigner ?? 0
+              : 0
           const hasUnread = unread > 0
 
           let timeSinceRequest = ''
           if (!c.assignedAt && c.requestedAgentAt) {
-            const diff = now - new Date(c.requestedAgentAt).getTime()
-            timeSinceRequest = formatDuration(diff)
+            timeSinceRequest = formatDuration(now - new Date(c.requestedAgentAt).getTime())
           }
 
           let timeToFirstResponse = ''
           if (c.assignedAt && !c.agentFirstMessageAt) {
-            const diff = now - new Date(c.assignedAt).getTime()
-            timeToFirstResponse = formatDuration(diff)
+            timeToFirstResponse = formatDuration(now - new Date(c.assignedAt).getTime())
           } else if (c.assignedAt && c.agentFirstMessageAt) {
-            const diff = new Date(c.agentFirstMessageAt).getTime() - new Date(c.assignedAt).getTime()
-            timeToFirstResponse = formatDuration(diff)
+            timeToFirstResponse = formatDuration(
+              new Date(c.agentFirstMessageAt).getTime() - new Date(c.assignedAt).getTime()
+            )
           }
 
-          let previewText = `Cliente últ. msj: ${new Date(c.clientLastMessageAt).toLocaleTimeString()}`
+          const clientLast = formatTime(c.clientLastMessageAt)
+          let previewText = `Cliente últ. msj: ${clientLast}`
           if (!c.assignedAt && c.requestedAgentAt) {
             previewText += ` · Desde solicitud: ${timeSinceRequest}`
           }
@@ -123,14 +129,13 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
               tabIndex={0}
               aria-pressed={isSelected}
               onClick={() => handleSelect(c.conversationId)}
-              onKeyDown={e => e.key === 'Enter' && handleSelect(c.conversationId)}
-              className={`inbox-list__item ${isSelected ? 'inbox-list__item--selected' : ''}`}
+              onKeyDown={(e) => e.key === 'Enter' && handleSelect(c.conversationId)}
+              className={`inbox-list__item${isSelected ? ' inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
-                <div className={`inbox-list__avatar ixl_conversation-tone__${c.tone}`}>
-                   {(c.clientContactName || 'U').charAt(0).toUpperCase()} 
-                  {/*<span className={`conversation-tone ${c.tone}`}>{c.tone}</span> */}
-                </div>
+                {/* <div className={`inbox-list__avatar ixl_conversation-tone__${c.tone}`}>
+                  {(c.clientContactName || 'U').charAt(0).toUpperCase()}
+                </div> */}
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
                     <span className="inbox-list__name">{c.clientContactName || 'Usuario'}</span>
@@ -147,9 +152,7 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
                   <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
                     {statusText}
                   </span>
-                  {hasUnread && (
-                    <span className="inbox-list__unread-badge">{unread}</span>
-                  )}
+                  {hasUnread && <span className="inbox-list__unread-badge">{unread}</span>}
                 </div>
               </div>
             </li>

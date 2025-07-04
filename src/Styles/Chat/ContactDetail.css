@@ -131,13 +131,15 @@
   padding: var(--space-md) var(--space-lg);
   border-bottom: 0.1rem solid var(--color-gray-100);
 }
-.conversation-tone{
+
+/* .conversation-tone{
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
   font-size: var(--font-size-sm);
   margin-left: var(--space-xs);
-}
-.Excelente{
+} */
+
+/* .Excelente{
   color: var(--color-success);
 }
 .Bueno{
@@ -154,7 +156,7 @@
 
 .Muydeficiente{
   color: var(--color-error);
-}
+} */
 
 .conversation-tone__Nodisponible{
   background-color: var(--color-gray-500);
@@ -175,6 +177,26 @@
 }
 .conversation-tone__Excelente{
   background-color: var(--color-success);
+}
+.contact-detail__section:last-child {
+  border-bottom: none;
+}
+
+.conversation-toneText__Nodisponible{
+  color: var(--color-gray-500);
+}
+
+.conversation-toneText__Deficiente{
+  color: var(--color-error);
+}
+.conversation-toneText__Aceptable{
+  color: var(--color-primary);
+}
+.conversation-toneText__Bueno{
+  color: var(--color-success);
+}
+.conversation-toneText__Excelente{
+  color: var(--color-success);
 }
 .contact-detail__section:last-child {
   border-bottom: none;

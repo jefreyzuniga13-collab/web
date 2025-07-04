@@ -2,7 +2,19 @@ import React, { useEffect } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
-//import { IoMdResize } from 'react-icons/io'
+
+const niFormatter = new Intl.DateTimeFormat('es-NI', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Managua'
+})
+
+const formatTime = (iso?: string) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return niFormatter.format(d)
+}
 
 interface Props {
   conversationId?: number
@@ -39,12 +51,10 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
   useEffect(() => {
     setConversationId(Number(conversationId))
     setUserId(Number(userId))
-
     return () => {
       setConversationId(0)
       setUserId(0)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
   if (!conversationId) {
@@ -67,12 +77,10 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             <span className="chat-window__date-text">Hoy</span>
           </div>
         )}
-
         {messages.map((m, i) => {
           const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? messages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
-
           return (
             <div key={m.messageId} className={getMessagePosition(m)}>
               {showSender && !isCurrentUser && (
@@ -80,7 +88,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                   {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
                 </div>
               )}
-
               <div className={getMessageClassName(m)}>
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
@@ -91,9 +98,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                           <div className="chat-window__image-container">
                             <button
                               className="chat-window__download-btn"
-                              onClick={() =>
-                                handleDownload(m.attachments![0].mediaUrl!)
-                              }
+                              onClick={() => handleDownload(m.attachments![0].mediaUrl!)}
                               aria-label="Descargar imagen"
                             >
                               <Download size={16} />
@@ -103,21 +108,11 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               alt={m.attachments[0].fileName || 'Imagen'}
                               className="chat-window__image"
                               loading="lazy"
-                              onClick={() => openImagePreview(m.attachments[0].mediaUrl!)}
+                              onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
                             />
-                            {/* <div className="chat-window-container">
-                              <button
-                                className={`chat-window__maximize-btn ${ismaximize ? 'maximize' : ''}`}
-                                onClick={() => openImagePreview(m.attachments[0].mediaUrl!)}
-                                aria-label="maximizar"
-                              >
-                                <IoMdResize size={18} />
-                              </button>
-                            </div> */}
                           </div>
                         </div>
                       )}
-
                       {m.attachments[0].mimeType?.startsWith('video/') && (
                         <div className="chat-window__media-video">
                           <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
@@ -125,21 +120,25 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                           </video>
                         </div>
                       )}
-
                       {m.attachments[0].mimeType?.startsWith('audio/') && (
                         <div className="chat-window__media-audio">
                           <div className="chat-window__audio-container">
                             <div className="chat-window__audio-icon">🎵</div>
                             <div className="chat-window__audio-info">
-                              <div className="chat-window__audio-name">{m.attachments[0].fileName || 'Audio'}</div>
-                              <audio controls className="chat-window__audio-player" src={m.attachments[0].mediaUrl}>
+                              <div className="chat-window__audio-name">
+                                {m.attachments[0].fileName || 'Audio'}
+                              </div>
+                              <audio
+                                controls
+                                className="chat-window__audio-player"
+                                src={m.attachments[0].mediaUrl}
+                              >
                                 Tu navegador no soporta el elemento audio.
                               </audio>
                             </div>
                           </div>
                         </div>
                       )}
-
                       {m.messageType === 'Document' && (
                         <div className="chat-window__media-document">
                           <a
@@ -155,7 +154,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                               <div className="chat-window__document-name">
                                 {m.attachments[0].fileName || 'Documento'}
                               </div>
-                              <div className="chat-window__document-size">{m.attachments[0].mimeType || 'Archivo'}</div>
+                              <div className="chat-window__document-size">
+                                {m.attachments[0].mimeType || 'Archivo'}
+                              </div>
                             </div>
                             <div className="chat-window__document-download">
                               <Download size={16} />
@@ -163,19 +164,15 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                           </a>
                         </div>
                       )}
-
-                      {m.content && (
-                        <div className="chat-window__message-caption">{m.content}</div>
-                      )}
+                      {m.content && <div className="chat-window__message-caption">{m.content}</div>}
                     </div>
                   ) : (
                     <div className="chat-window__message-text">{m.content}</div>
                   )}
                 </div>
-
                 <div className="chat-window__message-info">
                   <span className="chat-window__message-time">
-                    {new Date(m.sentAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(m.sentAt)}
                   </span>
                   {getStatusIcon(m, isCurrentUser)}
                 </div>
@@ -185,7 +182,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         })}
         <div ref={bottomRef} />
       </div>
-
       <div className="chat-window__composer">
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
@@ -198,7 +194,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           onChange={handleFileChange}
           disabled={!conversationId || sending}
         />
-
         {file && (
           <div className="chat-window__composer-file-preview">
             <span className="chat-window__composer-file-name">{file.name}</span>
@@ -211,20 +206,18 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             </button>
           </div>
         )}
-
         <div className="chat-window__composer-input-container">
           <textarea
             className="chat-window__composer-input"
             placeholder="Escribe un mensaje…"
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyPress}
             onPaste={handlePaste}
             disabled={!conversationId || sending}
             rows={1}
           />
         </div>
-
         <button
           className="chat-window__composer-send"
           onClick={handleSend}
@@ -234,8 +227,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           <Send size={18} />
         </button>
       </div>
-
-      {/* Overlay para imagen maximizada */}
       {ismaximize && previewImageUrl && (
         <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
           <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
