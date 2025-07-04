@@ -1,6 +1,6 @@
 
 import * as React from "react"
-import '@/Styles/UI/label.css'
+import '@/Styles/Common/Label.css'
 const Label = React.forwardRef<
   HTMLLabelElement,
   React.LabelHTMLAttributes<HTMLLabelElement>

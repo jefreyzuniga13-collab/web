@@ -53,7 +53,11 @@ export default function WorkShiftPage() {
       id: "isActive",
       label: "Activo",
       minWidth: 90,
-      render: row => (row.isActive ? "Sí" : "No"),
+      render: row => (
+        <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
+           {row.isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      )
     },
     {
       id: "validFrom",

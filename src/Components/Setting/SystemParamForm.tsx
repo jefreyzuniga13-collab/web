@@ -1,7 +1,7 @@
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
-import { Label } from '@/Components/ui/label'
-import {Textarea} from '@/Components/ui/textarea'
+import { Label } from '@/Components/Common/Label'
+import {Textarea} from '@/Components/Common/Textarea'
 import Select from '@/Components/Common/Select'
 import { useSystemParamForm } from '@/Hooks/Setting/useSystemParamForm'
 import type {
@@ -9,6 +9,7 @@ import type {
   SystemParamResponseDto,
 } from '@/Interfaces/Auth/AuthInterface'
 import '@/Styles/Setting/SystemParamForm.css'
+import type { NameTranslation } from '@/Interfaces/Setting/OpeningHour'
 
 interface SystemParamModalProps {
   mode: 'create' | 'edit' | 'view'
@@ -19,10 +20,35 @@ interface SystemParamModalProps {
 }
 
 const typeOptions = [
-  { value: 'Prompts', label: 'Prompts' },
-  { value: 'Keywords', label: 'Keywords' },
-  { value: 'Temp', label: 'Temp' },
+  { value: 'Prompts', label: 'Mensaje' },
+  { value: 'Keywords', label: 'Palabra Clave' },
+  { value: 'Temp', label: 'Tiempo' },
 ]
+
+const nameTranslations: Record<NameTranslation, string> = {
+  WelcomeBot: "Bienvenida ChatBot",
+  AskFullName: "Pregunta Nombre",
+  AskIdCard: "Pregunta Cédula",
+  InvalidIdFormat: "Cédula Invalida",
+  DataComplete: "Datos Completos",
+  InactivityWarning: "Advertencia Inactividad",
+  InactivityClosed: "Inactividad Cerrada",
+  SupportRequestReceived: "Solicitud Soporte Recibida",
+  WaitWarningCloseTime: "Advertencia Cierre Espera",
+  InactivityWarningThresholdMesssage: "Mensaje Umbral Inactividad",
+  WaitWarningCloseMesssage: "Mensaje Advertencia Cierre",
+  BotGreetings: "Saludo Bot",
+  AskCompanyName: "Pregunta Nombre Empresa",
+  InvalidPasswordFormat: "Formato Contraseña Invalido",
+  InvalidResidenceCardFormat: "Formato Cédula Residencia Invalido",
+  RequestIdType: "Solicitud Tipo Identificación",
+  ContactComplete: "Contacto Completo",
+  OutOfBotContext: "Fuera Contexto Bot",
+  RequestUnderReviewMessage: "Mensaje Solicitud En Revisión",
+  RequestUnderReviewTime: "Tiempo Solicitud En Revisión",
+  UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
+  UnclosedConversationTime: "Tiempo Conversación No Cerrada",
+};
 
 export default function SystemParamModal({
   mode,
@@ -60,7 +86,7 @@ export default function SystemParamModal({
               <Input
                 id="name"
                 name="name"
-                value={form.name}
+                value={nameTranslations[form.name as NameTranslation] as string}
                 onChange={handleChange}
                 disabled={isView}
               />

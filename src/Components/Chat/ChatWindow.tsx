@@ -37,7 +37,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     handleFileChange,
     handlePaste,
     handleKeyPress,
-    handleDownload,
+    // handleDownload,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
@@ -96,13 +96,13 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                         m.attachments[0].mimeType === 'image/webp') && (
                         <div className="chat-window__media-image">
                           <div className="chat-window__image-container">
-                            <button
+                            {/* <button
                               className="chat-window__download-btn"
                               onClick={() => handleDownload(m.attachments![0].mediaUrl!)}
                               aria-label="Descargar imagen"
                             >
                               <Download size={16} />
-                            </button>
+                            </button> */}
                             <img
                               src={m.attachments[0].mediaUrl}
                               alt={m.attachments[0].fileName || 'Imagen'}

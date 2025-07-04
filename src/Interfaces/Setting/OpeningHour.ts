@@ -3,6 +3,35 @@ import type { User } from "@/Interfaces/User/UserInterfaces";
 
 export type RecurrenceType = 'Weekly' | 'AnnualHoliday' | 'OneTimeHoliday';
 
+export type NameTranslation =
+  | 'WelcomeBot'
+  | 'AskFullName'
+  | 'AskIdCard'
+  | 'InvalidIdFormat'
+  | 'DataComplete'
+  | 'InactivityWarning'
+  | 'InactivityClosed'
+  | 'SupportRequestReceived'
+  | 'WaitWarningCloseTime'
+  | 'InactivityWarningThresholdMesssage'
+  | 'WaitWarningCloseMesssage'
+  | 'BotGreetings'
+  | 'AskCompanyName'
+  | 'InvalidPasswordFormat'
+  | 'InvalidResidenceCardFormat'
+  | 'RequestIdType'
+  | 'ContactComplete'
+  | 'OutOfBotContext'
+  | 'RequestUnderReviewMessage'
+  | 'RequestUnderReviewTime'
+  | 'UnclosedConversationMessage'
+  | 'UnclosedConversationTime'
+
+  export type TypeTranslation =
+  | 'Prompts'
+  | 'Temp'
+  | 'Keyworks'
+
 export interface Column<T> {
   id: Extract<keyof T, string> | 'actions';
   label: string;

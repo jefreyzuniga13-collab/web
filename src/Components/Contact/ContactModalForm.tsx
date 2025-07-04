@@ -1,6 +1,6 @@
 import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
-import { Label } from '@/Components/ui/label'
+import { Label } from '@/Components/Common/Label'
 import Button from '@/Components/Common/Button'
 import { useContactForm } from '@/Hooks/Contact/UseContactForm'
 import '@/Styles/Contact/ContactModal.css'

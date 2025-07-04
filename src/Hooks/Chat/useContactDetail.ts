@@ -1,98 +1,86 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
-import { getConversation, updateTag } from '@/Services/ConversationService';
-import { useSignalR } from '@/Context/SignalRContext';
+import { useSignalR } from "@/Context/SignalRContext";
+import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
+import {
+  getConversation,
+  getConversationToneAsync,
+  updateTag,
+} from "@/Services/ConversationService";
+import React, { useEffect, useState, useCallback } from "react";
 
-interface UseContactDetailResult {
-  conv: ConversationDto | null;
-  tags: string[];
-  newTag: string;
-  loading: boolean;
-  error: string | null;
-  isAddingTag: boolean;
-  showHistoryModal: boolean;
-  setIsAddingTag: (adding: boolean) => void;
-  setNewTag: (tag: string) => void;
-  handleAddTag: () => void;
-  handleRemoveTag: (tag: string) => void;
-  handleKeyDown: (e: React.KeyboardEvent) => void;
-  openHistoryModal: () => void;
-  closeHistoryModal: () => void;
-  retryFetch: () => void;
-}
-
-export function useContactDetail(conversationId?: number): UseContactDetailResult {
+export function useContactDetail(conversationId: number) {
   const [conv, setConv] = useState<ConversationDto | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
+  const [newTag, setNewTag] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [conversationTone, setConversationTone] =
+    useState<string>("No disponible");
 
   const signalR = useSignalR();
 
-  const fetchDetail = useCallback(async () => {
-    if (!conversationId) return;
+  const getConversatioToneMethod = useCallback(
+    async (conversationId: number): Promise<string> => {
+      const toneResponse = await getConversationToneAsync(conversationId);
+      const tone = Number(toneResponse);
+
+      if (!tone) return "No disponible";
+      if (tone < 0 || tone > 5) return "No disponible";
+
+      if (tone == 1) return "Excelente";
+      if (tone == 2) return "Bueno";
+      if (tone == 3) return "Aceptable";
+      if (tone == 4) return "Deficiente";
+      if (tone == 5) return "Muy deficiente";
+      return "No disponible";
+    },
+    []
+  );
+
+  // Carga o recarga datos de la conversación
+  const fetchDetail = useCallback(async (id: number) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getConversation(conversationId);
-      const data = res.data.data;
-      setConv(data);
-      setTags(data.tags ?? []);
+      const res = await getConversation(id);
+      setConv(res.data.data);
+      setTags(res.data.data.tags ?? []);
     } catch (err) {
       console.error(err);
-      setError('Error al cargar los detalles de la conversación.');
+      setError("Error al cargar los detalles de la conversación.");
     } finally {
       setLoading(false);
     }
-  }, [conversationId]);
+  }, []);
 
+  // Persistir cambio de etiquetas
   const saveTags = useCallback(
     async (newTags: string[]) => {
       if (!conv) return;
-      setTags(newTags);
       try {
-        await updateTag(conv.conversationId, newTags);
+        setTags(newTags);
+        updateTag(conv.conversationId, newTags);
         setConv((v) => (v ? { ...v, tags: newTags } : v));
       } catch (err) {
-        console.error('Error al guardar etiquetas:', err);
+        console.error("Error al guardar etiquetas:", err);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [conv],
+    [conv]
   );
 
-  const handleAddTag = useCallback(() => {
+  const handleAddTag = () => {
     const name = newTag.trim();
     if (!name) return;
     saveTags([...tags, name]);
-    setNewTag('');
+    setNewTag("");
     setIsAddingTag(false);
-  }, [newTag, saveTags, tags]);
+  };
 
-  const handleRemoveTag = useCallback(
-    (tag: string) => {
-      saveTags(tags.filter((t) => t !== tag));
-    },
-    [saveTags, tags],
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        handleAddTag();
-      } else if (e.key === 'Escape') {
-        setIsAddingTag(false);
-        setNewTag('');
-      }
-    },
-    [handleAddTag],
-  );
-
-  const openHistoryModal = useCallback(() => setShowHistoryModal(true), []);
-  const closeHistoryModal = useCallback(() => setShowHistoryModal(false), []);
-  const retryFetch = useCallback(() => void fetchDetail(), [fetchDetail]);
+  const handleRemoveTag = (tag: string) => {
+    saveTags(tags.filter((t) => t !== tag));
+  };
 
   useEffect(() => {
     if (!conversationId) {
@@ -100,7 +88,12 @@ export function useContactDetail(conversationId?: number): UseContactDetailResul
       setTags([]);
       return;
     }
-    fetchDetail();
+
+    fetchDetail(conversationId);
+
+    getConversatioToneMethod(conversationId).then((tone) => {
+      setConversationTone(tone);
+    });
 
     const handler = (updated: ConversationDto) => {
       if (updated.conversationId === conversationId) {
@@ -109,30 +102,48 @@ export function useContactDetail(conversationId?: number): UseContactDetailResul
       }
     };
 
-    signalR.onConversationUpdated?.(handler);
-    signalR.onConversationCreated?.(handler);
+    // Handle SignalR events if available
+    if (signalR.onConversationUpdated) {
+      signalR.onConversationUpdated(handler);
+    }
+    if (signalR.onConversationCreated) {
+      signalR.onConversationCreated(handler);
+    }
 
     return () => {
-      signalR.offConversationUpdated?.(handler);
-      signalR.offConversationCreated?.(handler);
+      if (signalR.offConversationUpdated) {
+        signalR.offConversationUpdated(handler);
+      }
+      if (signalR.offConversationCreated) {
+        signalR.offConversationCreated(handler);
+      }
     };
-  }, [conversationId, fetchDetail, signalR]);
+  }, [conversationId, fetchDetail, getConversatioToneMethod, signalR]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleAddTag();
+    } else if (e.key === "Escape") {
+      setIsAddingTag(false);
+      setNewTag("");
+    }
+  };
 
   return {
-    conv,
-    tags,
+    showHistoryModal,
     newTag,
+    isAddingTag,
+    tags,
+    conversationTone,
+    conv,
     loading,
     error,
-    isAddingTag,
-    showHistoryModal,
-    setIsAddingTag,
-    setNewTag,
-    handleAddTag,
-    handleRemoveTag,
     handleKeyDown,
-    openHistoryModal,
-    closeHistoryModal,
-    retryFetch,
+    handleAddTag,
+    setNewTag,
+    setIsAddingTag,
+    setShowHistoryModal,
+    handleRemoveTag,
+    fetchDetail,
   };
 }

@@ -1,6 +1,6 @@
 
 import React from 'react'
-import '@/Styles/UI/textarea.css'
+import '@/Styles/Common/textarea.css'
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {

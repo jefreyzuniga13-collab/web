@@ -55,7 +55,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="fullName"
                 name="fullName"
-                value={form.fullName}
+                value={form.fullName ?? ""}
                 onChange={handleChangeText}
               />
               {errors.fullName && (
@@ -80,7 +80,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="idCard"
                 name="idCard"
-                value={form.idCard}
+                value={form.idCard ?? ""}
                 onChange={handleChangeText}
               />
               {errors.idCard && (
@@ -95,7 +95,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="passport"
                 name="passport"
-                value={form.passport}
+                value={form.passport ?? ""}
                 onChange={handleChangeText}
               />
               {errors.password && (
@@ -110,7 +110,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="idResidencia"
                 name="idResidencia"
-                value={form.residenceCard}
+                value={form.residenceCard ?? ""}
                 onChange={handleChangeText}
               />
               {errors.residenceCard && (
@@ -124,7 +124,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="companyName"
                 name="companyName"
-                value={form.companyName}
+                value={form.companyName ?? ""}
                 onChange={handleChangeText}
                 disabled
               />
@@ -180,7 +180,7 @@ const VerifyNewContactPage: React.FC = () => {
               <Input
                 id="waName"
                 name="waName"
-                value={form.waName}
+                value={form.waName ?? ""}
                 disabled
               />
             </div>

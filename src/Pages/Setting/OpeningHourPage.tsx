@@ -13,12 +13,10 @@ import type { OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/OpeningHourPage.css'
 import { format, parseISO } from 'date-fns';
-// import { ThreeDot } from 'react-loading-indicators'
 
 export default function OpeningHourPage() {
   const {
     openingHours,
-    // loading,
     error,
     page,
     pageSize,
@@ -38,7 +36,8 @@ export default function OpeningHourPage() {
 
   const columns: Column<OpeningHourInterface>[] = useMemo(
     () => [
-      { id: 'name',       label: 'Nombre',       minWidth: 100 },
+      { id: 'name',       label: 'Nombre',       minWidth: 100,
+       },
       { id: 'description',label: 'Descripción',  minWidth: 150 },
       { id: 'recurrence', label: 'Recurrencia',  minWidth: 100,
         render: row => {

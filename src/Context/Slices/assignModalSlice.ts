@@ -3,12 +3,12 @@ import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
 
 interface AssignModalState {
   isOpen: boolean;
-  conversation?: ConversationDto;
+  conversation?: ConversationDto | null;
 }
 
 const initialState: AssignModalState = {
   isOpen: false,
-  conversation: undefined
+  conversation: null
 };
 
 const assignModalSlice = createSlice({
