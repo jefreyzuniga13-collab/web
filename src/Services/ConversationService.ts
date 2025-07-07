@@ -1,9 +1,14 @@
-import api from '@/Utils/ApiConfig';
-import type { ConversationDto, UpdateConversationRequest,  ConversationHistoryDto } from '@/Interfaces/Chat/ChatInterfaces';
-import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface';
+import api from "@/Utils/ApiConfig";
+import type {
+  ConversationDto,
+  UpdateConversationRequest,
+  ConversationHistoryDto,
+} from "@/Interfaces/Chat/ChatInterfaces";
+import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
+import type { AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 
 export function getConversationsByRole() {
-  return api.get<{ data: ConversationDto[] }>('/Conversations/getByRole');
+  return api.get<{ data: ConversationDto[] }>("/Conversations/getByRole");
 }
 
 export function getConversation(id: number) {
@@ -12,12 +17,11 @@ export function getConversation(id: number) {
 
 export async function getConversationToneAsync(id: number) {
   const data = await api.get<ApiResponse<number>>(`/Conversations/${id}/tone`);
-  console.log('Conversation Tone:', JSON.stringify(data.data.data));
   return data.data.data;
 }
 
 export function getPendingConversations() {
-  return api.get<{ data: ConversationDto[] }>('/Conversations/pending');
+  return api.get<{ data: ConversationDto[] }>("/Conversations/pending");
 }
 
 export function assignAgent(
@@ -25,11 +29,9 @@ export function assignAgent(
   agentUserId: string,
   status: string
 ) {
-  return api.put(
-    `/Conversations/${conversationId}/assign`,
-    null,
-    { params: { agentUserId, status } }
-  );
+  return api.put(`/Conversations/${conversationId}/assign`, null, {
+    params: { agentUserId, status },
+  });
 }
 
 export function closeConversation(conversationId: number) {
@@ -43,12 +45,11 @@ export function updateConversation(
   conversationId: number,
   payload: Partial<UpdateConversationRequest>
 ) {
-  return api.put(`/Conversations/${conversationId}`, payload)
+  return api.put(`/Conversations/${conversationId}`, payload);
 }
 
-export function updateTag(conversationId: number, 
-  payload: string[]){
-  return api.put(`/Conversations/tags/${conversationId}`, payload)
+export function updateTag(conversationId: number, payload: string[]) {
+  return api.put(`/Conversations/tags/${conversationId}`, payload);
 }
 
 /**
@@ -62,40 +63,70 @@ export function getHistoryByContact(contactId: number) {
 }
 
 export function summarizeAllByContact(contactId: number) {
-  return api.post<{ data: string }>(
-    `/Conversations/${contactId}/summary`
-  );
+  return api.post<{ data: string }>(`/Conversations/${contactId}/summary`);
 }
 
-  //Update conversation assigment status by id
-  export function updateConversationState(
-    payload: {conversationId: number,  assignmentStatus: 'Assigned' | 'Rejected'; justification?: string }
-  ) {
-    return api.put(`/Conversations/assignment`, payload);
-  }
+//Update conversation assigment status by id
+export function updateConversationState(payload: {
+  conversationId: number;
+  assignmentStatus: "Assigned" | "Rejected";
+  justification?: string;
+}) {
+  return api.put(`/Conversations/assignment`, payload);
+}
 
 export function respondAssignment(
   conversationId: number,
   accepted: boolean,
   comment?: string
 ) {
-  return api.post(
-    `/Conversations/${conversationId}/respond`,
-    { accepted, comment }
-  )
+  return api.post(`/Conversations/${conversationId}/respond`, {
+    accepted,
+    comment,
+  });
 }
 
 export function forceAssign(
   conversationId: number,
   forced: boolean,
-  assignmentComment: string,
+  assignmentComment: string
 ) {
-  return api.post(
-    `/Conversations/${conversationId}/force`,
-    {forced, assignmentComment}
-  )
+  return api.post(`/Conversations/${conversationId}/force`, {
+    forced,
+    assignmentComment,
+  });
 }
 
 export function markConversationRead(conversationId: number) {
   return api.post<void>(`/Conversations/${conversationId}/mark-read`);
 }
+
+class ConversationServ {
+
+  async getByDateRange(
+    from: Date,
+    to:   Date
+  ): Promise<ConversationStatusCountResponseDto[]> {
+    const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
+      "/Conversations/dateRange",
+      {
+        params: {
+          from: from.toISOString(),
+          to:   to.toISOString(),
+        },
+      }
+    );
+
+    return data.data;
+  }
+
+  
+  async getAverageAssignmentTime(
+  ): Promise<AverageAssignmentTimeResponseDto[]> {
+    const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>("/Conversations/agentAverage");
+
+    return data.data;
+  }
+}
+
+export const ConversationService = new ConversationServ();

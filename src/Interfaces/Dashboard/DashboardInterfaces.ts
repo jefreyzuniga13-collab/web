@@ -24,3 +24,19 @@ export interface DashboardData {
   messagesSentReceived: MessagesSentReceived;
   activeUsersPerDay: DateCountItem[];
 }
+
+export type ConversationStatus = 
+  | 'Bot'
+  | 'Closed';
+
+export interface ConversationStatusCountResponseDto {
+  status: ConversationStatus ;
+  count: number;
+}
+
+
+export interface AverageAssignmentTimeResponseDto{
+  agentId: number;
+  agentName: string;
+  averageSeconds: number
+}

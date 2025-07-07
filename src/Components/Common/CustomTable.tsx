@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Paper,
   Table,
@@ -10,6 +11,7 @@ import {
 } from '@mui/material'
 import type { Props } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Common/CustomTable.css'
+// import { useState } from 'react'
 
 export default function CustomTable<T>({
   columns,
@@ -21,6 +23,17 @@ export default function CustomTable<T>({
   onPageChange,
   onRowsPerPageChange,
 }: Props<T>) {
+
+  // const {search, setSearch} = useState<string | null>();
+
+  // const handleSearch = (e)=>{
+  //   setSearch(e.target.value);
+  // }
+
+  // const FilteredRows = rows.filter((row: any) =>{
+  //     row.name.toLowerCase().includes(search.toLowerCase()) || 
+  // })
+
   return (
     <Paper className="table__container">
       <TableContainer className="table__scroll-container">

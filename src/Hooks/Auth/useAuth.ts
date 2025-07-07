@@ -69,7 +69,7 @@ export function useAuth() {
       call(authService.loginAsync, creds, {
         onSuccess: (data: AuthData) => {
           dispatch(setCredentials(data))
-          navigate('/chat')
+          navigate('/dashboard')
           navigate(0);// Rvisar esta recarga
         },
         successKey: 'login.notifications.loginSuccess',
