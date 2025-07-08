@@ -195,6 +195,7 @@ export default function OpeningHourModal({
                 <div className="oh-modal__col oh-modal__col--full">
                   <p className="oh-modal__inline-label">¿Es feriado variable dd/MM/yyyy?</p>
                   <div className="oh-modal__input-container">
+                    
                     <div className="oh-modal__col">
                       <LocalizationProvider dateAdapter={AdapterDateFns}>
                       <DatePicker
@@ -223,6 +224,7 @@ export default function OpeningHourModal({
                       />
                        </LocalizationProvider>
                     </div>
+
                   </div>
                   {errors.range && <div className="oh-modal__error">{errors.range}</div>}
                 </div>

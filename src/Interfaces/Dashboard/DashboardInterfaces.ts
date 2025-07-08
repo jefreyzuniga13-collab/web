@@ -36,7 +36,26 @@ export interface ConversationStatusCountResponseDto {
 
 
 export interface AverageAssignmentTimeResponseDto{
-  agentId: number;
-  agentName: string;
-  averageSeconds: number
+  id: number;
+   name: string;
+   averageTime: number
+}
+
+export interface FilterForm {
+  from: Date | null | string;
+  to: Date | null | string;
+  startTime: Date | null;
+  endTime: Date | null;
+  agentId: number | "";
+  adminUser: number | "";
+  customerId: number | "";
+  today: boolean;
+  yesterday: boolean;
+  tomorrow: boolean;
+}
+
+export interface AdminAsigmentResponseTimeResponseDto{
+    id: number;
+   name: string;
+   averageTime: number
 }

@@ -32,6 +32,7 @@ export default function Select({
         className={`select-field ${className} ${error ? 'select-field--error' : ''}`}
         multiple={multiple}
         aria-invalid={!!error}
+        
         aria-describedby={error ? `${selectId}-error` : undefined}
         {...props}
       >

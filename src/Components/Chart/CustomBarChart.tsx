@@ -1,11 +1,10 @@
-import * as React from 'react'
 import { BarChart } from '@mui/x-charts/BarChart'
-import type { AverageAssignmentTimeResponseDto } from '@/Interfaces/Dashboard/DashboardInterfaces'
-
+import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto,  } from '@/Interfaces/Dashboard/DashboardInterfaces'
+import "@/Styles/Dashboard/CustomBarChart.css"
 interface Props {
   title:    string
   subtitle: string
-  data:     AverageAssignmentTimeResponseDto[] | null
+  data:     AverageAssignmentTimeResponseDto[] | AdminAsigmentResponseTimeResponseDto[] | null
 }
 
 export default function CustomBarChart({ title, subtitle, data }: Props) {
@@ -13,21 +12,19 @@ export default function CustomBarChart({ title, subtitle, data }: Props) {
     return <div>No hay datos para mostrar.</div>
   }
 
-  // 1) Extraigo las etiquetas para el eje X (puedes usar agentName en lugar de agentId)
-  const xLabels = data.map(item => item.agentName ?? String(item.agentId))
+  const xLabels = data.map(item => item.name ?? String(item.id))
 
-  // 2) Preparo la serie de datos
   const series = [
     {
-      data:  data.map(item => item.averageSeconds),      // valores de altura de cada barra
-      label: 'Tiempo promedio (s)',                      // leyenda de la serie
+      data:  data.map(item => item.averageTime),
+      label: 'Tiempo promedio (s)',
     },
   ]
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+    <div style={{ textAlign: 'center' }} className='barChart__Container'>
+      <h2 className='custom__barChart-title'>{title}</h2>
+      <p className='custom__barChart-subtitle'>{subtitle}</p>
 
       <BarChart
         height={300}

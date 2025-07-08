@@ -108,12 +108,6 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     })
   }, [matchesFilter])
 
-    // const play = () => {
-    //     if (!notificationSound.playing()) {
-    //       notificationSound.play();
-    //     }
-    //   };
-
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
       const msg = payload.message

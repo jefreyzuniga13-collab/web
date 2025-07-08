@@ -21,6 +21,7 @@ export default function TimePickerField({
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <TimePicker
         label={label}
+        sx={{ width: "100%", mb: 2 }}
         value={value}
         disabled={disabled}
         onChange={(newValue: Date | null) => onChange(newValue)}

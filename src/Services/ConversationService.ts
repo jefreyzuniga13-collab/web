@@ -5,7 +5,7 @@ import type {
   ConversationHistoryDto,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-import type { AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>("/Conversations/getByRole");
@@ -104,26 +104,46 @@ export function markConversationRead(conversationId: number) {
 class ConversationServ {
 
   async getByDateRange(
-    from: Date,
-    to:   Date
+    form: FilterForm
   ): Promise<ConversationStatusCountResponseDto[]> {
     const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
       "/Conversations/dateRange",
       {
         params: {
-          from: from.toISOString(),
-          to:   to.toISOString(),
+          from: form.from,
+          to:   form.to,
         },
       }
     );
 
     return data.data;
   }
-
   
+  async getAverageAssigmentAdminTime(
+    form: FilterForm
+  ): Promise<AdminAsigmentResponseTimeResponseDto[]>{
+    const {data} = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>
+    ("conversations/adminAverage", {
+      params:{
+         from: form.from,
+          to:   form.to,
+      }
+    })
+    return data.data;
+  }
+
+
   async getAverageAssignmentTime(
+    form: FilterForm
   ): Promise<AverageAssignmentTimeResponseDto[]> {
-    const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>("/Conversations/agentAverage");
+    const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>("/Conversations/agentAverage",
+            {
+        params: {
+          from: form.from,
+          to:   form.to,
+        },
+      }
+    );
 
     return data.data;
   }

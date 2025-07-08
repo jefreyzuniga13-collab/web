@@ -1,6 +1,6 @@
 import { PieChart } from '@mui/x-charts/PieChart'
 import type { ConversationStatusCountResponseDto } from '@/Interfaces/Dashboard/DashboardInterfaces'
-
+import "@/Styles/Dashboard/CustomPieChart.css"
 interface Props {
   title:   string
   subtitle:string
@@ -12,6 +12,9 @@ export default function CustomPieChart({ title, subtitle, data }: Props) {
   if (!data || data.length === 0) {
     return <div>No hay datos para mostrar.</div>
   }
+
+  console.log(JSON.stringify(data));
+
   const seriesData = data.map(item => ({
     id:    item.status, 
     value: item.count,
@@ -20,8 +23,8 @@ export default function CustomPieChart({ title, subtitle, data }: Props) {
 
   return (
     <div style={{ textAlign: 'center' }} className='pieChar__Container'>
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2 className='pieChar__title'>{title}</h2>
+      <p className='pieChar__subtitle'>{subtitle}</p>
       <PieChart
         series={[{
           data:           seriesData,
