@@ -5,7 +5,9 @@ import type {
   ConversationHistoryDto,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type { PagedResponse } from "@/Interfaces/GlobalInterface";
+import { formatoNicaragua } from "@/Utils/LocalDateFormat";
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>("/Conversations/getByRole");
@@ -146,6 +148,55 @@ class ConversationServ {
     );
 
     return data.data;
+  }
+
+  async getByState(
+    state: string,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+    const { data } = await api.get<
+      ApiResponse<PagedResponse<ConversationDto>>
+    >(
+      `/Conversations/${encodeURIComponent(state)}/getByState`,
+      {
+        params: {
+          PageNumber: page,
+          PageSize: pageSize,
+        },
+      }
+    );
+    return data.data;
+  }
+  
+  async getWaitingClient(
+  filters: FilterForm
+  ): Promise<WaitingClientResponseDto[]> {
+  const normalized = {
+    ...filters,
+    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
+    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+  }
+  const { data } = await api.get<ApiResponse<WaitingClientResponseDto[]>>(
+    `/Conversations/getClientWaiting`,
+    { params: normalized }
+  )
+  return data.data
+}
+
+  async responseAgentAverageAsync(
+    filters: FilterForm
+    ): Promise<ResponseAgentAverageResponseDto> {
+    const normalized = {
+      ...filters,
+      from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
+      to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+    }
+    const { data } = await api.get<ApiResponse<ResponseAgentAverageResponseDto>>(
+      `/Conversations/responseAgentAverageAsync`,
+      { params: normalized }
+    )
+    return data.data
   }
 }
 

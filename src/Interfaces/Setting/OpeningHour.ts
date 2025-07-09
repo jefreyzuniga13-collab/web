@@ -26,6 +26,7 @@ export type NameTranslation =
   | 'RequestUnderReviewTime'
   | 'UnclosedConversationMessage'
   | 'UnclosedConversationTime'
+  | "UseMultimediaContext"
 
   export type TypeTranslation =
   | 'Prompts'

@@ -1,0 +1,96 @@
+.conversations-page__container {
+  padding: var(--space-sm) var(--space-2xl);
+  display: grid;
+  max-height: 100vh;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-lg);
+}
+
+.conversations-page__header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-md);
+}
+
+.conversations-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.conversations-page__subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  text-align: left;
+}
+
+.conversations-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+.conversations-page__btn-refresh {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  background: var(--color-secondary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.conversations-page__btn-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.conversations-page__loading,
+.conversations-page__error {
+  font-size: var(--font-size-base);
+  color: var(--color-error);
+  text-align: center;
+  margin-top: var(--space-md);
+}
+
+.conversations-page__table {
+  overflow: auto;
+}
+
+.MuiInputBase-input {
+  font-size: var(--font-size-sm) !important;
+  padding: var(--space-md) !important;
+}
+
+.MuiFormLabel-root {
+  font-size: var(--font-size-sm) !important;
+}
+
+.status{
+  padding: var(--space-sm);
+  border-radius: var(--radius-xl);
+  color: var(--text-white);
+}
+
+.status_Incomplete{
+  background-color: var(--color-error);
+}
+
+.status_Human{
+  background-color: var(--color-success);
+}
+
+.status_Bot{
+  background-color: var(--grayColor);
+}
+
+.status_Closed{
+  background-color: var(--grayColor);
+}
+
+.status_Waiting{
+  background-color: var(--color-warning);
+}

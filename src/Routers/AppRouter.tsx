@@ -22,6 +22,7 @@ const VerifyNewContactPage = lazy(()=> import("@/Pages/Setting/VerifyNewContactP
 const OpeningHourPage = lazy(()=> import("@/Pages/Setting/OpeningHourPage"))
 const WorkShiftPage = lazy(()=> import("@/Pages/Setting/WorkShiftPage"))
 const ContactPage = lazy(()=> import("@/Pages/Contact/ContactPage"))
+const ConversationsPage = lazy(()=> import("@/Pages/Conversation/ConversationsPage"))
 
 export function AppRouter() {
   return (
@@ -56,6 +57,7 @@ export function AppRouter() {
             <Route path="opening-hour" element={<OpeningHourPage />} />
             <Route path="work-shift" element={<WorkShiftPage />} />
             <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
+           <Route path="conversation/:state" element={<ConversationsPage />} />
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>
 

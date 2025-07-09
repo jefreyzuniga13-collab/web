@@ -1,21 +1,15 @@
 import React from "react";
-// import { useDashboard } from "@/Hooks/useDashboard";
 import CustomPieChart from "@/Components/Chart/CustomPieChart";
 import { useConversationChart } from "@/Hooks/Chart/useChart";
 import Spinner from "@/Components/Common/Spinner";
 import { MdFilterListAlt } from "react-icons/md";
-import { DashboardProvider } from "@/Context/DashboardContext";
-import "@/Styles/Dashboard/Dashboard.css";
 import CustomBarChart from "@/Components/Chart/CustomBarChart";
-// import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-// import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import Button from "@/Components/Common/Button";
 import DashboardFilterModal from "@/Components/Dashboard/DashboardFilter";
+import "@/Styles/Dashboard/Dashboard.css";
+import AgentResponseChart from "@/Hooks/Chart/AgentResponseChart";
 
-const DashboardContent: React.FC = () => {
-  // const { dateRange, loading: dashLoading } = useDashboard();
-  // const { from, to } = dateRange;
+const DashboardPresentation: React.FC = () => {
 
   const {
     statusData,
@@ -23,14 +17,15 @@ const DashboardContent: React.FC = () => {
     adminAvgAssignmentTime,
     loading,
     error,
-    // updateDate,
-    isFiterOpen,
-    setIsFiterOpen,
-    handleApply
+    isFilterOpen,
+    setIsFilterOpen,
+    handleApply,
+    waitingClient,
+    responseAgentAverage,
   } = useConversationChart();
 
   const handleOpenFilterModal = () => {
-    setIsFiterOpen(true);
+    setIsFilterOpen(true);
   }
 
   return (
@@ -43,37 +38,7 @@ const DashboardContent: React.FC = () => {
           </div>
 
           <section className="dashboard-filter">
-            {/* <div className="dashboard-header__col">
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Filtrar Desde"
-                  value={from as Date | null}
-                  onChange={(d) => updateDate("from", d)}
-                  format="dd/MM/yyyy"
-                  slotProps={{
-                    textField: { className: "date-picker-field", fullWidth: true },
-                  }}
-                />
-              </LocalizationProvider>
-            </div> */}
-
-            {/* <div className="dashboard-header__col">
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Filtrar Hasta"
-                  value={from as Date | null}
-                  onChange={(d) => updateDate("to", d)}
-                  format="dd/MM/yyyy"
-                  slotProps={{
-                    textField: { className: "date-picker-field", fullWidth: true },
-                  }}
-                />
-              </LocalizationProvider>
-            </div> */}
             <div className="dashboard-header-btn">
-              {/* <Button onClick={handleRefresh} disabled={loading || dashLoading}>
-            <MdFilterListAlt  size={14}/> Filtros
-          </Button> */}
 
               <Button onClick={() => handleOpenFilterModal()} disabled={loading}>
                 <MdFilterListAlt size={14} /> Filtros
@@ -86,19 +51,12 @@ const DashboardContent: React.FC = () => {
           <Spinner size={40} text="Cargando datos..." />
         )}
 
-        {/* {(error || dashError) && (
-        <div className="error">
-          {error ?? dashError}
-        </div>
-      )} */}
-
         {!loading && !error && (
           <section className="dashboard__chart-containers">
             <CustomPieChart
               data={statusData}
               title="Conversaciones Por Estado"
               subtitle="Porcentaje de conversaciones por estado actual."
-              // subtitle={`Del ${from.toLocaleDateString()} al ${to.toLocaleDateString()}`}
             />
 
             <CustomBarChart
@@ -113,21 +71,28 @@ const DashboardContent: React.FC = () => {
               subtitle={`Tiempo promedio de asignación manual de un gente por administradora.`}
             />
 
+            {waitingClient != null &&(
+              <CustomBarChart
+              data={waitingClient}
+              title="Clientes criticos"
+              subtitle={`Clientes sin ninguna gestión y con 1 minuto en espera desde su último mensaje`}
+            />
+            )}
+
+            {responseAgentAverage && (
+              <AgentResponseChart
+              data={responseAgentAverage!.ClienteData}
+              agentName={responseAgentAverage!.agentName!}
+            />
+            )}
+
           </section>
         )}
       </div>
 
         <DashboardFilterModal
-          onClosed={() => setIsFiterOpen(false)} isFilterOpen={isFiterOpen} handleApply={handleApply}/>
+          onClosed={() => setIsFilterOpen(false)} isFilterOpen={isFilterOpen} handleApply={handleApply}/>
     </div>
-  );
-};
-
-const DashboardPresentation: React.FC = () => {
-  return (
-    <DashboardProvider>
-      <DashboardContent />
-    </DashboardProvider>
   );
 };
 

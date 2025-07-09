@@ -1,27 +1,14 @@
-// useDashboardFilterModal.ts
+import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { useState } from "react";
-
-export interface FilterForm {
-  from: Date | null;
-  to: Date | null;
-  startTime: Date | null;
-  endTime: Date | null;
-  agentId: number | "";
-  adminUser: number | "";
-  customerId: number | "";
-  today: boolean;
-  yesterday: boolean;
-  tomorrow: boolean;
-}
 
 const initialForm: FilterForm = {
   from: new Date(),
   to: new Date(),
   startTime: null,
   endTime: null,
-  agentId: "",
-  adminUser: "",
-  customerId: "",
+  agentId: null,
+  adminUserId: null,
+  customerId: null,
   today: false,
   yesterday: false,
   tomorrow: false,
@@ -41,7 +28,7 @@ const useDashboardFilterModal = () => {
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const val = e.target.value;
       // convertir a número si corresponde
-      const parsed = name === "agentId" || name === "adminUser" || name === "customerId"
+      const parsed = name === "agentId" || name === "adminUserId" || name === "customerId"
         ? (val === "" ? "" : Number(val))
         : val;
       setForm(f => ({ ...f, [name]: parsed }));

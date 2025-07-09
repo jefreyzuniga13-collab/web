@@ -1,0 +1,143 @@
+.conversation-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.conversation-modal__container {
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.conversation-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  background: var(--bg-tertiary);
+}
+
+.conversation-modal__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.conversation-modal__close {
+  color: var(--text-secondary);
+}
+
+.conversation-modal__section {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.conversation-modal__section:last-of-type {
+  border-bottom: none;
+}
+
+.conversation-modal__section-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+.conversation-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.conversation-modal__cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.conversation-modal__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+.conversation-modal__value {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.conversation-modal__section--messages{
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.conversation-modal__messages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.conversation-modal__message {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.conversation-modal__message:last-child {
+  border-bottom: none;
+}
+
+.conversation-modal__message-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.conversation-modal__message-sender {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.conversation-modal__message-time {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.conversation-modal__message-content {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+.conversation-modal__attachments {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-sm) 0 0;
+}
+
+.conversation-modal__attachment + .conversation-modal__attachment {
+  margin-top: var(--space-xs);
+}
+
+.conversation-modal__attachment a {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.conversation-modal__attachment a:hover {
+  text-decoration: underline;
+}

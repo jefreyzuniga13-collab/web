@@ -41,6 +41,7 @@ const nameTranslations: Record<NameTranslation, string> = {
   RequestUnderReviewTime: "Tiempo Solicitud En Revisión",
   UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
   UnclosedConversationTime: "Tiempo Conversación No Cerrada",
+  UseMultimediaContext: "Uso contenido multimedia en el contexto"
 };
 
 export default function SystemParamsPage() {
@@ -77,7 +78,7 @@ export default function SystemParamsPage() {
       label: 'Valor',
       minWidth: 200,
       render: row => (
-        <span title={row.value}>
+        <span title={row.value} className={row.value == "true" ? 'status status--active' : ''}>
           {row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value}
         </span>
       ),

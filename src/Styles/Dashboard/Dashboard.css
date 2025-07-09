@@ -6,6 +6,11 @@
   gap: var(--space-lg);
 }
 
+.dashboard{
+  max-height: 100%;
+  overflow: hidden;
+  padding-bottom: 10rem;
+}
 .dashboard-header{
   display: flex;
   justify-content: space-between;
@@ -54,5 +59,6 @@
   row-gap: var(--space-2xl);
   min-width: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
+  max-height: 100%;
+  overflow-y: scroll;
 }

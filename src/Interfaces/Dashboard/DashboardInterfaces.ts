@@ -1,4 +1,3 @@
-
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -34,7 +33,6 @@ export interface ConversationStatusCountResponseDto {
   count: number;
 }
 
-
 export interface AverageAssignmentTimeResponseDto{
   id: number;
    name: string;
@@ -46,16 +44,36 @@ export interface FilterForm {
   to: Date | null | string;
   startTime: Date | null;
   endTime: Date | null;
-  agentId: number | "";
-  adminUser: number | "";
-  customerId: number | "";
-  today: boolean;
-  yesterday: boolean;
-  tomorrow: boolean;
+  agentId: number | null;
+  adminUserId: number | null;
+  customerId: number | null;
+  today?: boolean;
+  yesterday?: boolean;
+  tomorrow?: boolean;
 }
+
+
 
 export interface AdminAsigmentResponseTimeResponseDto{
     id: number;
    name: string;
    averageTime: number
+}
+export interface WaitingClientResponseDto{
+  id: number;
+  name: string;
+  averageTime: number | null;
+}
+
+export interface ResponseAgentAverageClienteDataResponseDto{
+  ClienteId: number;
+  ClientName: string;
+  AverageSeconds: number;
+  ConversationCount: number;
+}
+
+export interface ResponseAgentAverageResponseDto{
+  id: number;
+  agentName: string;
+  ClienteData: ResponseAgentAverageClienteDataResponseDto [];
 }

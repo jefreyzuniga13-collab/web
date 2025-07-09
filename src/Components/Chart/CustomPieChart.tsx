@@ -1,40 +1,113 @@
-import { PieChart } from '@mui/x-charts/PieChart'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// CustomPieChart.tsx
+
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 import type { ConversationStatusCountResponseDto } from '@/Interfaces/Dashboard/DashboardInterfaces'
-import "@/Styles/Dashboard/CustomPieChart.css"
+
+const COLORS = ['#356ace', '#10b981', '#f59e0b', '#dc2626', '#3b82f6', '#9ca3af']
+
 interface Props {
-  title:   string
-  subtitle:string
-  data:    ConversationStatusCountResponseDto[] | null
+  title:    string
+  subtitle: string
+  data:     ConversationStatusCountResponseDto[] | null
 }
 
 export default function CustomPieChart({ title, subtitle, data }: Props) {
+  const navigate = useNavigate()
 
   if (!data || data.length === 0) {
     return <div>No hay datos para mostrar.</div>
   }
 
-  console.log(JSON.stringify(data));
-
-  const seriesData = data.map(item => ({
-    id:    item.status, 
+  // Preparamos el array { name, value }
+  const chartData = data.map(item => ({
+    name:  item.status,
     value: item.count,
-    label: item.status,   
   }))
 
+  const RADIAN = Math.PI / 180
+
+  // Función que dibuja porcentaje (dentro) y nombre (fuera)
+  const renderAllLabels = ({
+    cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload,
+  }: any) => {
+    // coordenadas para el % (entre inner y outer)
+    const radius   = innerRadius + (outerRadius - innerRadius) * 0.5
+    const xPercent = cx + radius * Math.cos(-midAngle * RADIAN)
+    const yPercent = cy + radius * Math.sin(-midAngle * RADIAN)
+
+    // coordenadas para el nombre (apenas un poco más fuera)
+    const outerOffset = outerRadius + 20
+    const xName = cx + outerOffset * Math.cos(-midAngle * RADIAN)
+    const yName = cy + outerOffset * Math.sin(-midAngle * RADIAN)
+
+    return (
+      <g>
+        {/* Porcentaje dentro */}
+        <text
+          x={xPercent}
+          y={yPercent}
+          fill="white"
+          textAnchor={xPercent > cx ? 'start' : 'end'}
+          dominantBaseline="central"
+          fontSize={12}
+        >
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+
+        {/* Nombre fuera, con el color del sector */}
+        <text
+          x={xName}
+          y={yName}
+          fill={COLORS[index % COLORS.length]}
+          textAnchor={xName > cx ? 'start' : 'end'}
+          dominantBaseline="central"
+          fontSize={12}
+        >
+          {payload.name}
+        </text>
+      </g>
+    )
+  }
+
   return (
-    <div style={{ textAlign: 'center' }} className='pieChar__Container'>
-      <h2 className='pieChar__title'>{title}</h2>
-      <p className='pieChar__subtitle'>{subtitle}</p>
-      <PieChart
-        series={[{
-          data:           seriesData,
-          highlightScope: { fade: 'global', highlight: 'item' },
-          faded:          { innerRadius: 10, additionalRadius: -10, color: 'gray' },
-          valueFormatter: val => String(val),
-        }]}
-        width={400}
-        height={400}
-      />
+    <div className="pieChart__container">
+      <h2 className="pieChart__title">{title}</h2>
+      <p className="pieChart__subtitle">{subtitle}</p>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={100}
+            // labelLine dibuja la línea guía
+            labelLine={true}
+            // renderAllLabels dibuja % y nombre con sus colores
+            label={renderAllLabels}
+            onClick={(entry) => {
+              const status = (entry as any).name
+              navigate(`/conversation/${encodeURIComponent(status)}`)
+            }}
+          >
+            {chartData.map((_, idx) => (
+              <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(val: number) => [`${val}`, 'Count']} />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   )
 }

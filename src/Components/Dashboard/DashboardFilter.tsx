@@ -1,6 +1,6 @@
 import { IoMdClose } from "react-icons/io";
 import TimePickerField from "@/Components/Common/TimePickerField";
-import useDashboardFilterModal, { type FilterForm } from "@/Hooks/Chart/useDashboardFilterModal";
+import useDashboardFilterModal from "@/Hooks/Chart/useDashboardFilterModal";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useUsers } from "@/Hooks/User/useUsers";
@@ -10,6 +10,8 @@ import Button from "../Common/Button";
 import "@/Styles/Dashboard/DashboardFilterModal.css";
 import { CgTrashEmpty } from "react-icons/cg";
 import { FaFilter } from "react-icons/fa";
+import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import {parseISO } from 'date-fns'
 
 interface Props {
   onClosed: () => void;
@@ -41,8 +43,6 @@ export default function DashboardFilterModal({
     u.roles.some((r) => r.roleName === "Admin")
   );
 
-  console.log("Usuarios", users)
-
   if (!isFilterOpen) return null;
 
   return (
@@ -65,7 +65,7 @@ export default function DashboardFilterModal({
                 { label: "Todos", value: "" },
                 ...agents.map((a) => ({ label: a.fullName, value: a.userId })),
               ]}
-              value={form.agentId}
+              value={form.agentId!}
               onChange={handleSelectChange("agentId")}
               className="filter__select"
             />
@@ -78,8 +78,8 @@ export default function DashboardFilterModal({
                 { label: "Todos", value: "" },
                 ...admins.map((a) => ({ label: a.fullName, value: a.userId })),
               ]}
-              value={form.adminUser}
-              onChange={handleSelectChange("adminUser")}
+              value={form.adminUserId!}
+              onChange={handleSelectChange("adminUserId")}
               className="filter__select"
             />
 
@@ -91,7 +91,7 @@ export default function DashboardFilterModal({
               { label: "Todos", value: "" },
               ...contacts.map((c) => ({ label: c.fullName!, value: c.id })),
             ]}
-            value={form.customerId}
+            value={form.customerId!}
             onChange={handleSelectChange("customerId")}
             className="filter__select"
           />
@@ -123,7 +123,9 @@ export default function DashboardFilterModal({
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Desde"
-                  value={form.from}
+                  value={ typeof form.from === 'string'
+                  ? parseISO(form.from)
+                  : form.from}
                   onChange={(d) => setForm((f) => ({ ...f, from: d }))}
                   format="dd/MM/yyyy"
                   sx={{ width: "100%", mb: 2 }}
@@ -134,7 +136,9 @@ export default function DashboardFilterModal({
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Hasta"
-                  value={form.to}
+                  value={ typeof form.to === 'string'
+                    ? parseISO(form.to)
+                    : form.to}
                   onChange={(d) => setForm((f) => ({ ...f, to: d }))}
                   format="dd/MM/yyyy"
                   sx={{ width: "100%" }}
