@@ -41,7 +41,8 @@ const nameTranslations: Record<NameTranslation, string> = {
   RequestUnderReviewTime: "Tiempo Solicitud En Revisión",
   UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
   UnclosedConversationTime: "Tiempo Conversación No Cerrada",
-  UseMultimediaContext: "Uso contenido multimedia en el contexto"
+  UseMultimediaContext: "Uso contenido multimedia en el contexto",
+  ClientCriticalStateTime: "Tiempo critico de espera de cliente"
 };
 
 export default function SystemParamsPage() {

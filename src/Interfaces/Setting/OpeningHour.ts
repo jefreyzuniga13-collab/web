@@ -27,6 +27,7 @@ export type NameTranslation =
   | 'UnclosedConversationMessage'
   | 'UnclosedConversationTime'
   | "UseMultimediaContext"
+  | "ClientCriticalStateTime"
 
   export type TypeTranslation =
   | 'Prompts'

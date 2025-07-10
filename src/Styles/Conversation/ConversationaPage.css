@@ -94,3 +94,8 @@
 .status_Waiting{
   background-color: var(--color-warning);
 }
+
+.conversationList{
+  max-height: 500px;
+  overflow-y: scroll;
+}

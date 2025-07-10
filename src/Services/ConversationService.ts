@@ -177,10 +177,11 @@ class ConversationServ {
     from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
     to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
   }
-  const { data } = await api.get<ApiResponse<WaitingClientResponseDto[]>>(
+  const { data } = await api.get<ApiResponse<WaitingClientResponseDto []>>(
     `/Conversations/getClientWaiting`,
     { params: normalized }
   )
+
   return data.data
 }
 
@@ -196,8 +197,45 @@ class ConversationServ {
       `/Conversations/responseAgentAverageAsync`,
       { params: normalized }
     )
+
     return data.data
   }
+
+ async getConversationByClient(
+  filters: FilterForm,
+  page: number,
+  pageSize: number
+): Promise<PagedResponse<ConversationDto>> {
+  // Normalizas las fechas
+  const normalized = {
+    ...filters,
+    from: typeof filters.from === 'string'
+      ? filters.from
+      : formatoNicaragua(filters.from as Date),
+    to: typeof filters.to === 'string'
+      ? filters.to
+      : formatoNicaragua(filters.to as Date),
+  };
+
+  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+    `/Conversations/getConversationByClient`,
+    {
+      params: {
+        AgentId: normalized.agentId,
+        From: normalized.from,
+        To: normalized.to,
+        customerId: normalized.customerId,
+        companiesId: normalized.companiesId,
+        PageNumber: page,
+        PageSize: pageSize,
+      },
+    }
+  );
+
+  console.log("Data obtenida getConversationByClient", JSON.stringify(data.data))
+  return data.data;
+}
+
 }
 
 export const ConversationService = new ConversationServ();

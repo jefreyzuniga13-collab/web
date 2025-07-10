@@ -8,6 +8,7 @@ import Button from "@/Components/Common/Button";
 import DashboardFilterModal from "@/Components/Dashboard/DashboardFilter";
 import "@/Styles/Dashboard/Dashboard.css";
 import AgentResponseChart from "@/Hooks/Chart/AgentResponseChart";
+import { ListComponent } from "@/Components/Chart/ListComponent";
 
 const DashboardPresentation: React.FC = () => {
 
@@ -22,6 +23,13 @@ const DashboardPresentation: React.FC = () => {
     handleApply,
     waitingClient,
     responseAgentAverage,
+    criticialClientTime,
+    conversationClient,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalCount
   } = useConversationChart();
 
   const handleOpenFilterModal = () => {
@@ -59,6 +67,23 @@ const DashboardPresentation: React.FC = () => {
               subtitle="Porcentaje de conversaciones por estado actual."
             />
 
+           {conversationClient != null ? (
+             <div className="conversationList">
+                <ListComponent 
+              conversation={conversationClient!}
+              page={page}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              setPage={setPage}
+              setPageSize={setPageSize}
+            />
+             </div>
+           ): (
+              <>
+                <p className="empty__dashboard-list">Lista de convesaciones del cliente</p>
+              </>
+            )}
+
             <CustomBarChart
               data={averageAssignmentTime}
               title="Promedia de Aceptación"
@@ -68,22 +93,30 @@ const DashboardPresentation: React.FC = () => {
             <CustomBarChart
               data={adminAvgAssignmentTime}
               title="Promedio de Asignación"
-              subtitle={`Tiempo promedio de asignación manual de un gente por administradora.`}
+              subtitle={`Tiempo promedio de asignación agente por administradora.`}
             />
 
-            {waitingClient != null &&(
+            {!waitingClient || waitingClient.length !== 0 ? (
               <CustomBarChart
               data={waitingClient}
               title="Clientes criticos"
-              subtitle={`Clientes sin ninguna gestión y con 1 minuto en espera desde su último mensaje`}
+              subtitle={`Clientes sin ninguna gestión y con ${criticialClientTime} minuto en espera desde su último mensaje`}
             />
+            ): (
+              <>
+                <p className="empty-dashboard"> No hay clientes con estado criticos</p>
+              </>
             )}
 
-            {responseAgentAverage && (
+            {responseAgentAverage != null ? (
               <AgentResponseChart
-              data={responseAgentAverage!.ClienteData}
+              data={responseAgentAverage!.clienteData!}
               agentName={responseAgentAverage!.agentName!}
             />
+            ): (
+              <>
+                <p className="empty-dashboard">Agente sin mensajes de respuesta</p>
+              </>
             )}
 
           </section>

@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// CustomPieChart.tsx
-
-import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   PieChart,
@@ -11,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { ConversationStatusCountResponseDto } from '@/Interfaces/Dashboard/DashboardInterfaces'
-
+import  '@/Styles/Dashboard/CustomPieChart.css'
 const COLORS = ['#356ace', '#10b981', '#f59e0b', '#dc2626', '#3b82f6', '#9ca3af']
 
 interface Props {
@@ -80,8 +77,8 @@ export default function CustomPieChart({ title, subtitle, data }: Props) {
 
   return (
     <div className="pieChart__container">
-      <h2 className="pieChart__title">{title}</h2>
-      <p className="pieChart__subtitle">{subtitle}</p>
+      <h2 className="pieChar__title">{title}</h2>
+      <p className="pieChar__subtitle">{subtitle}</p>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie

@@ -46,6 +46,7 @@ export interface FilterForm {
   endTime: Date | null;
   agentId: number | null;
   adminUserId: number | null;
+  companiesId?: number | null;
   customerId: number | null;
   today?: boolean;
   yesterday?: boolean;
@@ -66,14 +67,14 @@ export interface WaitingClientResponseDto{
 }
 
 export interface ResponseAgentAverageClienteDataResponseDto{
-  ClienteId: number;
-  ClientName: string;
-  AverageSeconds: number;
-  ConversationCount: number;
+  clienteId?: number;
+  clientName?: string;
+  averageSeconds?: number;
+  conversationCount?: number;
 }
 
 export interface ResponseAgentAverageResponseDto{
   id: number;
-  agentName: string;
-  ClienteData: ResponseAgentAverageClienteDataResponseDto [];
+  agentName?: string;
+  clienteData?: ResponseAgentAverageClienteDataResponseDto [];
 }
