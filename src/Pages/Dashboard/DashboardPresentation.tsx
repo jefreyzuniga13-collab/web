@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useMemo } from "react";
 import CustomPieChart from "@/Components/Chart/CustomPieChart";
 import { useConversationChart } from "@/Hooks/Chart/useChart";
 import Spinner from "@/Components/Common/Spinner";
@@ -9,7 +8,10 @@ import Button from "@/Components/Common/Button";
 import DashboardFilterModal from "@/Components/Dashboard/DashboardFilter";
 import "@/Styles/Dashboard/Dashboard.css";
 import AgentResponseChart from "@/Hooks/Chart/AgentResponseChart";
-import { ListComponent } from "@/Components/Chart/ListComponent";
+import { ListComponent, type Column } from "@/Components/Chart/ListComponent";
+import { HiRefresh } from "react-icons/hi";
+import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
+import type { WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 
 const DashboardPresentation: React.FC = () => {
   const {
@@ -25,18 +27,101 @@ const DashboardPresentation: React.FC = () => {
     setPageSize,
     totalCount,
     threshold,
-    setThreshold,
+    // setThreshold,
     loadingCharts,
     loadingList,
     error,
     isFilterOpen,
     setIsFilterOpen,
-    handleApply
+    handleApply,
+    handleRefresh
   } = useConversationChart();
 
-  const handleOpenFilterModal = () => {
-    setIsFilterOpen(true);
-  };
+
+  const columnsWaitingClient = useMemo<Column<WaitingClientResponseDto>[]>(() => [
+      { field: "agentName", headerName: "Agente" },
+      { field: "clientName", headerName: "Contacto" },
+      { field: "clienteLastMessage", headerName: "Cliente Ult. Mensaje" },
+      { field: "averageTime", headerName: "Tiempo de espera" },
+  
+  ], [])
+
+  const columns = useMemo<Column<ConversationDto>[]>(() => [
+    { field: "clientContactName", headerName: "Contacto" },
+    { field: "contactNumber", headerName: "Teléfono" },
+    {
+      field: "createdAt",
+      headerName: "Creado",
+      render: c => new Date(c.createdAt).toLocaleString("es-NI")
+    },
+    {
+      field: "requestedAgentAt",
+      headerName: "Solicitud agente",
+      render: c =>
+        c.requestedAgentAt
+          ? new Date(c.requestedAgentAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
+      field: "clientLastMessageAt",
+      headerName: "Últ. Mensaje Cliente",
+      render: c =>
+        c.clientLastMessageAt
+          ? new Date(c.clientLastMessageAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
+      field: "assignedAt",
+      headerName: "Asignación agente",
+      render: c =>
+        c.assignedAt
+          ? new Date(c.assignedAt).toLocaleString("es-NI")
+          : "-"
+    },
+    { field: "assignedAgentName", headerName: "Agente Asignado" },
+    {
+      field: "agentLastMessageAt",
+      headerName: "Últ. Mensaje Agente",
+      render: c =>
+        c.agentLastMessageAt
+          ? new Date(c.agentLastMessageAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
+      field: "closedAt",
+      headerName: "Cierre conversación",
+      render: c =>
+        c.closedAt
+          ? new Date(c.closedAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
+      field: "incompletedAt",
+      headerName: "Incompleta a",
+      render: c =>
+        c.incompletedAt
+          ? new Date(c.incompletedAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
+      field: "duration",
+      headerName: "Duración",
+      render: c => {
+        const start = new Date(c.createdAt);
+        const end = c.closedAt
+          ? new Date(c.closedAt)
+          : c.incompletedAt
+            ? new Date(c.incompletedAt)
+            : new Date();
+        const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
+        const m = Math.floor(diff / 60);
+        const s = diff % 60;
+        return `${m}m ${s}s`;
+      }
+    }
+  ], []);
+
+  const handleOpenFilterModal = () => setIsFilterOpen(true);
 
   return (
     <div className="dashboard-container">
@@ -50,14 +135,21 @@ const DashboardPresentation: React.FC = () => {
           </div>
           <section className="dashboard-filter">
             <div className="dashboard-header-btn">
+              <Button
+                onClick={handleRefresh}
+                variant="destructive"
+                disabled={loadingCharts}
+              >
+                <HiRefresh size={14} /> Refrescar
+              </Button>
+            </div>
+            <div className="dashboard-header-btn">
               <Button onClick={handleOpenFilterModal} disabled={loadingCharts}>
                 <MdFilterListAlt size={14} /> Filtros
               </Button>
             </div>
           </section>
         </header>
-
-        {loadingCharts && <Spinner size={40} text="Cargando datos..." />}
 
         {!loadingCharts && !error && (
           <section className="dashboard__chart-containers">
@@ -67,17 +159,33 @@ const DashboardPresentation: React.FC = () => {
               subtitle="Porcentaje de conversaciones por estado actual."
             />
 
+            <CustomBarChart
+              data={adminAvgAssignmentTime}
+              title="Promedio de Asignación"
+              subtitle="Tiempo promedio de asignación agente por administradora."
+            />
+
+            <CustomBarChart
+              data={averageAssignmentTime}
+              title="Promedio de Aceptación"
+              subtitle="Tiempo promedio de aceptación de conversación por agente."
+            />
+
             <div className="conversationList">
               {loadingList ? (
                 <Spinner size={24} text="Cargando lista..." />
               ) : conversationClient && conversationClient.length > 0 ? (
-                <ListComponent
-                  conversation={conversationClient}
+                <ListComponent<ConversationDto>
+                  rows={conversationClient}
+                  columns={columns}
+                  filterField="clientContactName"
+                  filterLabel="Filtrar por cliente"
                   page={page}
                   pageSize={pageSize}
                   totalCount={totalCount}
                   setPage={setPage}
                   setPageSize={setPageSize}
+                  maxHeight={400}
                 />
               ) : (
                 <p className="empty__dashboard-list">
@@ -86,25 +194,31 @@ const DashboardPresentation: React.FC = () => {
               )}
             </div>
 
-            <CustomBarChart
-              data={averageAssignmentTime}
-              title="Promedia de Aceptación"
-              subtitle="Tiempo promedio de aceptación de conversación por agente"
-            />
-
-            <CustomBarChart
-              data={adminAvgAssignmentTime}
-              title="Promedio de Asignación"
-              subtitle="Tiempo promedio de asignación agente por administradora."
-            />
-
-            <CustomBarChart
+            {/* <CustomBarChart
               data={waitingClient}
               title="Clientes críticos"
               subtitle={`Clientes sin gestión y con ≥ ${threshold} min en espera`}
               threshold={threshold}
               onThresholdChange={setThreshold}
+            /> */}
+
+            <div className="dashboard-waiting__container">
+              <h3 className="dashboard-waiting__title">Clientes críticos</h3>
+            <p className="dashboard-waiting__subtitle">Clientes sin gestión y con ≥ {threshold} min en espera</p>
+            <ListComponent
+            rows={waitingClient}
+            columns={columnsWaitingClient}
+            filterField="clientName"
+            filterLabel="Filtrar por cliente"
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            setPage={setPage}
+            setPageSize={setPageSize}
+          maxHeight={400}
+
             />
+            </div>
 
             {responseAgentAverage ? (
               <AgentResponseChart

@@ -11,6 +11,7 @@ import type {
   ResponseAgentAverageResponseDto,
   FilterForm
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
+// import { useNavigate } from 'react-router-dom'
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 
 const getInitialFilters = (): FilterForm => {
@@ -48,7 +49,7 @@ export const useConversationChart = () => {
   const [averageAssignmentTime, setAverageAssignmentTime] = useState<AverageAssignmentTimeResponseDto[]>([]);
   const [adminAvgAssignmentTime, setAdminAvgAssignmentTime] = useState<AdminAsigmentResponseTimeResponseDto[]>([]);
   const [waitingClient, setWaitingClient] = useState<WaitingClientResponseDto[]>([]);
-  const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto>();
+  const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto | null>();
   const [conversationClient, setConversationClient] = useState<ConversationDto[]>();
   const [criticialClientTime, setCriticialClientTime] = useState<string>("");
   const [threshold, setThreshold] = useState<number>(() => getInitialThreshold(60));
@@ -59,6 +60,8 @@ export const useConversationChart = () => {
   const [loadingCharts, setLoadingCharts] = useState<boolean>(false);
   const [loadingList, setLoadingList] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  //  const navigate = useNavigate();
+   const [refresh, setRefresh] = useState<boolean>(false)
 
   useEffect(() => {
     localStorage.setItem("dashboardFilters", JSON.stringify(filters));
@@ -73,7 +76,7 @@ export const useConversationChart = () => {
         setThreshold(def);
       }
     })();
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     localStorage.setItem("criticalThreshold", String(threshold));
@@ -94,6 +97,8 @@ export const useConversationChart = () => {
       if (filters.agentId != null && filters.agentId >= 0) {
         const resp = await ConversationService.responseAgentAverageAsync(filters);
         setResponseAgentAverage(resp);
+      }else{
+        setResponseAgentAverage(null)
       }
     } catch (err: any) {
       setError(err instanceof Error ? err.message : String(err));
@@ -157,6 +162,19 @@ export const useConversationChart = () => {
     setIsFilterOpen(false);
   };
 
+  const handleRefresh = async()=>{
+    // navigate(0) //Recargar la pagina
+        // Cambiar el estado para forzar la re-renderización
+    setRefresh(prevRefresh => !prevRefresh);
+  }
+
+   useEffect(() => {
+    localStorage.removeItem("dashboardFilters");
+    localStorage.removeItem("criticalThreshold");
+    setFilters(getInitialFilters)
+  }, [refresh]);
+
+
   return {
     statusData,
     averageAssignmentTime,
@@ -181,6 +199,7 @@ export const useConversationChart = () => {
     error,
     updateDate,
     handleApply,
-    fetchConversationByClientPage
+    fetchConversationByClientPage,
+    handleRefresh
   };
 };

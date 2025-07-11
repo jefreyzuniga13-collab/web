@@ -13,3 +13,26 @@
     text-align: left;
     text-overflow: ellipsis;
 }
+
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-toolbar,
+	.MuiTablePagination-selectLabel,
+    .MuiTablePagination-select,
+        .MuiTablePagination-menuItem,
+        .MuiTablePagination-input,
+        .MuiTablePagination-selectIcon,
+        	.MuiTablePagination-actions,
+            .MuiTablePagination-displayedRows,
+            .MuiAutocomplete-option
+            .MuiAutocomplete-noOptions
+            .MuiAutocomplete-input
+            .MuiAutocomplete-hasPopupIcon,
+            .MuiAutocomplete-groupLabel,
+            .MuiAutocomplete-inputRoot
+            .MuiAutocomplete-tagSizeMedium
+            .MuiAutocomplete-tag
+            .MuiAutocomplete-tagSizeSmall{
+    font-size: var(--font-size-sm) !important;
+    size: var(--font-size-base);
+}
+

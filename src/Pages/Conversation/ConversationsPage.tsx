@@ -8,6 +8,8 @@ import type { Column } from '@/Interfaces/Common/CustomTable'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import ConversationDetailModal from '@/Components/Conversation/ConversationDetailModalProps'
 import "@/Styles/Conversation/ConversationaPage.css"
+import Button from '@/Components/Common/Button'
+// import Spinner from '@/Components/Common/Spinner'
 
 export default function ConversationsPage() {
   const { state = '' } = useParams<{ state: string }>()
@@ -26,6 +28,7 @@ export default function ConversationsPage() {
     closeModal,
     isModalOpen,
     selectedConversation,
+    navigationBack
   } = useConversations({ initialState: state })
 
   useEffect(() => {
@@ -43,11 +46,11 @@ export default function ConversationsPage() {
         </span>
       )
     },
-    { id: 'createdAt', label: 'Creado', minWidth: 120, render: r => new Date(r.createdAt).toLocaleString('es-NI') },
-    { id: 'assignedAgentName', label: 'Asignada', minWidth: 120, render: r => r.assignedAgentName ?? '-' },
-    { id: 'clientFirstMessage', label: 'Primer Mensaje Cliente', minWidth: 120, render: r => new Date(r.clientFirstMessage).toLocaleString('es-NI') ?? '-' },
-    { id: 'clientLastMessageAt', label: 'Ultimo Mensaje Cliente', minWidth: 120, render: r => new Date(r.clientLastMessage).toLocaleString('es-NI') ?? '-' },
-    { id: 'lastActivity', label: 'Última Actividad', minWidth: 140, render: r => new Date(r.lastActivity).toLocaleString('es-NI') },
+    { id: 'createdAt', label: 'Creado', minWidth: 110, render: r => new Date(r.createdAt).toLocaleString('es-NI') },
+    { id: 'assignedAgentName', label: 'Asignada', minWidth: 110, render: r => r.assignedAgentName ?? '-' },
+    { id: 'clientFirstMessage', label: 'Primer Mensaje Cliente', minWidth: 110, render: r => new Date(r.clientFirstMessage).toLocaleString('es-NI') ?? '-' },
+    // { id: 'clientLastMessageAt', label: 'Ultimo Mensaje Cliente', minWidth: 120, render: r => new Date(r.clientLastMessage).toLocaleString('es-NI') ?? '-' },
+    { id: 'clientLastMessageAt', label: 'Último mensaje cliente', minWidth: 110, render: r => new Date(r.clientLastMessageAt!).toLocaleString('es-NI') },
     {
       id: 'actions',
       label: 'Acciones',
@@ -63,13 +66,21 @@ export default function ConversationsPage() {
   return (
     <div className="conversations-page__container">
       <header className="conversations-page__header">
-        <h1 className="conversations-page__title">Conversaciones</h1>
+        <div className='conversations-page__text'>
+          <h1 className="conversations-page__title">Conversaciones</h1>
         <p className="conversations-page__subtitle">
           Filtradas por estado: {stateFilter || 'Todos'}
         </p>
+        </div>
+
+         <div className='conversations-page__btnContainer'>
+                  <Button variant="primary" onClick={navigationBack} className='oh-page_btn'>
+                    Regresar
+                  </Button>
+        </div>
       </header>
 
-      {loading && <p className="conversations-page__loading">Cargando…</p>}
+      {/* {loading && <Spinner size={40} text="Cargando datos..." />} */}
       {error && <p className="conversations-page__error">Error: {error.message}</p>}
 
       {!loading && !error && (

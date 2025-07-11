@@ -61,9 +61,11 @@ export interface AdminAsigmentResponseTimeResponseDto{
    averageTime: number
 }
 export interface WaitingClientResponseDto{
-  id: number;
-  name: string;
-  averageTime: number | null;
+  id?: number;
+  clientName?: string;
+  agentName?: string;
+  clienteLastMessage?: string;
+  averageTime?: number | null;
 }
 
 export interface ResponseAgentAverageClienteDataResponseDto{

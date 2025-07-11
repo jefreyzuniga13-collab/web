@@ -1,8 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useEffect } from 'react';
 import {
   Box,
-  TextField,
-  Autocomplete,
   TableContainer,
   Paper,
   Table,
@@ -10,138 +9,100 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TablePagination
+  TablePagination,
+  Autocomplete,
+  TextField
 } from '@mui/material';
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
 import "@/Styles/Dashboard/ListComponent.css"
+export interface Column<T> {
+  field: keyof T;
+  headerName: string;
+  render?: (row: T) => React.ReactNode;
+}
 
-interface Props {
-  conversation: ConversationDto[];
+export interface DataTableProps<T> {
+  rows: T[];
+  columns: Column<T>[];
+  filterField?: keyof T;
+  filterLabel?: string;
   page: number;
   pageSize: number;
   totalCount: number;
   setPage: (page: number) => void;
-  setPageSize: (pageSize: number) => void;
+  setPageSize: (size: number) => void;
+  maxHeight?: number;
 }
 
-const getDuration = (c: ConversationDto): string => {
-  const start = new Date(c.createdAt);
-  const end = c.closedAt
-    ? new Date(c.closedAt)
-    : c.IncompletedAt
-      ? new Date(c.IncompletedAt)
-      : new Date();
-  const diffMs = end.getTime() - start.getTime();
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds}s`;
-};
+export function ListComponent<T extends Record<string, any>>({
+  rows,
+  columns,
+  filterField,
+  filterLabel = 'Filtrar',
+  page, pageSize, totalCount, setPage, setPageSize,
+  maxHeight = 500
+}: DataTableProps<T>) {
+  const [filterValue, setFilterValue] = React.useState<string | null>(null);
 
-export const ListComponent: React.FC<Props> = ({
-  conversation,
-  page,
-  pageSize,
-  totalCount,
-  setPage,
-  setPageSize,
-}) => {
-  const [clientFilter, setClientFilter] = React.useState<string | null>(null);
-
-  const clientOptions = useMemo(
-    () => Array.from(new Set(conversation.map(c => c.clientContactName ?? '-'))),
-    [conversation]
-  );
+  const filterOptions = useMemo(() => {
+    if (!filterField) return [];
+    return Array.from(new Set(rows.map(r => `${r[filterField] ?? ''}`)));
+  }, [rows, filterField]);
 
   const filtered = useMemo(() => {
-    if (!clientFilter) return conversation;
-    return conversation.filter(c => (c.clientContactName ?? '-') === clientFilter);
-  }, [conversation, clientFilter]);
+    if (!filterField || !filterValue) return rows;
+    return rows.filter(r => `${r[filterField]}` === filterValue);
+  }, [rows, filterField, filterValue]);
 
   useEffect(() => {
     setPage(1);
-  }, [clientFilter, pageSize, setPage]);
+  }, [filterValue, pageSize, setPage]);
 
   return (
     <Box sx={{ p: 2 }}>
-      <h3 className='dashboard__list-title'>Resumen global de conversaciones</h3>
-      <p style={{ marginTop: 0 }} className='dashboard__list-subtitle'>
-        Todos los tiempos que están marcados en el ciclo de vida de la conversación
-        por cliente definidas por un rango de fecha.
-      </p>
+      {filterField && (
+        <Autocomplete
+          size="small"
+          options={filterOptions}
+          value={filterValue}
+          onChange={(_, v) => setFilterValue(v)}
+          renderInput={params => <TextField {...params} label={filterLabel} />}
+          sx={{ mb: 2, width: 300 }}
+          clearOnEscape
+        />
+      )}
 
-      <Autocomplete
-        size="small"
-        options={clientOptions}
-        value={clientFilter}
-        onChange={(_, v) => setClientFilter(v)}
-        renderInput={params => <TextField {...params} label="Filtrar por cliente" />}
-        sx={{ mb: 2, width: 300 }}
-        clearOnEscape
-      />
-
-      <TableContainer component={Paper} sx={{ maxHeight: 500, borderRadius: 2, boxShadow: 3 }}>
+      <TableContainer component={Paper} sx={{ maxHeight, borderRadius: 2 }}>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              {[
-                'Contacto',
-                'Teléfono',
-                'Creado',
-                'Solicitud agente',
-                'Asignación agente',
-                'Agente primer mensaje',
-                'Cierre conversación',
-                'Incompleta a',
-                'Duración'
-              ].map(title => (
-                <TableCell key={title}>
-                  <strong>{title}</strong>
+              {columns.map(col => (
+                <TableCell key={String(col.field)}>
+                  <strong>{col.headerName}</strong>
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {filtered.length > 0 ? (
-              filtered.map((c, idx) => (
+              filtered.map((row, idx) => (
                 <TableRow
                   key={idx}
                   hover
                   sx={{ '&:nth-of-type(odd)': { bgcolor: 'action.hover' } }}
                 >
-                  <TableCell>{c.clientContactName ?? '-'}</TableCell>
-                  <TableCell>{c.contactNumber}</TableCell>
-                  <TableCell>{new Date(c.createdAt).toLocaleString('es-NI')}</TableCell>
-                  <TableCell>
-                    {c.requestedAgentAt
-                      ? new Date(c.requestedAgentAt).toLocaleString('es-NI')
-                      : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {c.assignedAt
-                      ? new Date(c.assignedAt).toLocaleString('es-NI')
-                      : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {c.agentFirstMessageAt
-                      ? new Date(c.agentFirstMessageAt).toLocaleString('es-NI')
-                      : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {c.closedAt ? new Date(c.closedAt).toLocaleString('es-NI') : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {c.IncompletedAt
-                      ? new Date(c.IncompletedAt).toLocaleString('es-NI')
-                      : '-'}
-                  </TableCell>
-                  <TableCell>{getDuration(c)}</TableCell>
+                  {columns.map(col => (
+                    <TableCell key={String(col.field)} sx={{ fontSize: 12, py: 1 }}>
+                      {col.render
+                        ? col.render(row)
+                        : `${row[col.field] ?? '-'}`}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} align="center">
-                  No hay conversaciones para mostrar.
+                <TableCell colSpan={columns.length} align="center">
+                  No hay datos para mostrar.
                 </TableCell>
               </TableRow>
             )}
@@ -159,10 +120,10 @@ export const ListComponent: React.FC<Props> = ({
           setPageSize(parseInt(e.target.value, 10));
           setPage(1);
         }}
-        rowsPerPageOptions={[3, 5, 10, 20, 50]}
+        rowsPerPageOptions={[3, 5, 10]}
         labelRowsPerPage="Filas"
-        sx={{ mt: 2 }}
+        sx={{ mt: 2, fontSize: 12 }}
       />
     </Box>
   );
-};
+}

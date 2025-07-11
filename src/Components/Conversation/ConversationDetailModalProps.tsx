@@ -15,7 +15,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
   if (!isOpen || !data) return null
 
   return (
-    <div className="conversation-modal__overlay">
+    <div className="conversation-modal__overlay" onClick={onClose}>
       <div className="conversation-modal__container">
         <header className="conversation-modal__header">
           <h2 className="conversation-modal__title">Detalle de Conversación</h2>
@@ -32,17 +32,17 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
               <span className="conversation-modal__value">{data.conversationId}</span>
             </div> */}
             <div className="conversation-modal__cell">
-              <span className="conversation-modal__label">Contacto</span>
+              <span className="conversation-modal__label">Numero</span>
               <span className="conversation-modal__value">{data.contactNumber}</span>
             </div>
             <div className="conversation-modal__cell">
-              <span className="conversation-modal__label">Cliente</span>
+              <span className="conversation-modal__label">Contacto</span>
               <span className="conversation-modal__value">{data.clientContactName || '-'}</span>
             </div>
-            <div className="conversation-modal__cell">
+            {/* <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Prioridad</span>
               <span className="conversation-modal__value">{data.priority}</span>
-            </div>
+            </div> */}
             <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Estado</span>
               <span className="conversation-modal__value">{data.status}</span>
@@ -59,13 +59,15 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
           <div className="conversation-modal__grid">
             {[
               ['Creado', data.createdAt],
+              ['Solicitud asignación cliente', data.agentRequestAt],
+              ['Solicitud asignación admin', data.requestedAgentAt],
               ['Asignado', data.assignedAt],
-              ['Primera respuesta', data.firstResponseAt],
-              ['Petición agente', data.requestedAgentAt],
-              ['Última actividad', data.lastActivity],
-              ['Actualizado', data.updatedAt],
+             
+              // ['Primera respuesta', data.firstResponseAt]
+              // ['Actualizado', data.updatedAt],
               ['Cerrado', data.closedAt],
-              ['Incompleto', data.IncompletedAt],
+              ['Incompleto', data.incompletedAt],
+               ['Última actividad', data.lastActivity],
             ].map(([label, value]) => (
               <div key={label} className="conversation-modal__cell">
                 <span className="conversation-modal__label">{label}</span>
@@ -75,7 +77,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
           </div>
         </section>
 
-        <section className="conversation-modal__section conversation-modal__section--metrics">
+        {/* <section className="conversation-modal__section conversation-modal__section--metrics">
           <h3 className="conversation-modal__section-title">Métricas y Mensajes</h3>
           <div className="conversation-modal__grid">
             {[
@@ -91,7 +93,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
 
         {data.messages && (
           <section className="conversation-modal__section conversation-modal__section--messages">
@@ -101,7 +103,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
                 <li key={msg.messageId} className="conversation-modal__message">
                   <div className="conversation-modal__message-header">
                     <span className="conversation-modal__message-sender">
-                      {msg.isIncoming ? msg.senderContactName || 'Cliente' : msg.senderUserName || 'Agente'}
+                      {msg.isIncoming ? msg.senderContactName || 'Contacto' : msg.senderUserName || 'Agente'}
                     </span>
                     <span className="conversation-modal__message-time">
                       {formatDate(msg.sentAt)}

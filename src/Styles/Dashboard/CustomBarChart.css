@@ -14,3 +14,13 @@
     text-overflow: ellipsis;
      text-align: left;
 }
+
+.MuiTableContainer-root{
+    overflow: auto !important;
+    overflow-y: hidden !important;
+    font-size: 10px !important;
+}
+
+strong{
+    font: var(--font-size-base) I !important;
+}

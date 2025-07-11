@@ -30,13 +30,13 @@ export interface ConversationDto {
   firstResponseAt?: string
   agentRequestAt?: string
   clientFirstMessage: string;
-  clientLastMessageAt: string;
+  clientLastMessageAt?: string;
   agentFirstMessageAt: string;
   agentLastMessageAt: string;
   requestedAgentAt: string
   updatedAt?: string
   closedAt?: string
-  IncompletedAt?: string;
+  incompletedAt?: string;
   clientLastMessage: string;
   isArchived: boolean
   totalMessages: number

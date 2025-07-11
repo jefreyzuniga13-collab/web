@@ -1,5 +1,5 @@
 import { IoMdClose } from "react-icons/io";
-import TimePickerField from "@/Components/Common/TimePickerField";
+// import TimePickerField from "@/Components/Common/TimePickerField";
 import useDashboardFilterModal from "@/Hooks/Chart/useDashboardFilterModal";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -24,7 +24,7 @@ export default function DashboardFilterModal({
   isFilterOpen,
   handleApply,
 }: Props) {
-  const { form, handleCheckbox, handleSelectChange, setForm, handleClear } =
+  const { form, handleSelectChange, setForm, handleClear } =
     useDashboardFilterModal();
 
     const handleApplyMethod = ()=>{
@@ -62,7 +62,7 @@ export default function DashboardFilterModal({
               name="agentId"
               placeholder="Filtrar por agente"
               options={[
-                { label: "Todos", value: "" },
+                { label: "Filtrar por agente", value: "" },
                 ...agents.map((a) => ({ label: a.fullName, value: a.userId })),
               ]}
               value={form.agentId!}
@@ -75,7 +75,7 @@ export default function DashboardFilterModal({
               name="adminUser"
               placeholder="Filtrar por administrador"
               options={[
-                { label: "Todos", value: "" },
+                { label: "Filtrar por administrador", value: "" },
                 ...admins.map((a) => ({ label: a.fullName, value: a.userId })),
               ]}
               value={form.adminUserId!}
@@ -88,7 +88,7 @@ export default function DashboardFilterModal({
             name="customerId"
             placeholder="Filtrar por cliente"
             options={[
-              { label: "Todos", value: "" },
+              { label: "Filtrar por cliente", value: "" },
               ...contacts.map((c) => ({ label: c.fullName!, value: c.id })),
             ]}
             value={form.customerId!}
@@ -98,7 +98,7 @@ export default function DashboardFilterModal({
           </section>
 
           <section>
-            <p className="filter-subtitle">Filtrar por Hora</p>
+            {/* <p className="filter-subtitle">Filtrar por Hora</p>
             <section className="input-container">
                             <div className="oh-modal__col">
               <TimePickerField
@@ -115,7 +115,7 @@ export default function DashboardFilterModal({
 
               />
             </div>
-            </section>
+            </section> */}
 
              <p className="filter-subtitle">Filtrar por Fecha</p>
              <section className="input-container">
@@ -149,7 +149,7 @@ export default function DashboardFilterModal({
            
           </section>
 
-        <p className="filter-subtitle">Filtrar por dia</p>
+        {/* <p className="filter-subtitle">Filtrar por dia</p>
         <section className="filter-modal__toggles">
           <label className="filter-modal__toggles__label">
             <input
@@ -180,7 +180,7 @@ export default function DashboardFilterModal({
             />{" "}
             Mañana
           </label>
-        </section>
+        </section> */}
 
         <div className="filter-btn">
           <Button onClick={handleClear} variant="destructive">

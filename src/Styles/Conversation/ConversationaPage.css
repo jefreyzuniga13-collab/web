@@ -8,8 +8,15 @@
 
 .conversations-page__header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   margin-bottom: var(--space-md);
+}
+.conversations-page__text{
+ width: 100%
+}
+
+.conversations-page__btnContainer{
+
 }
 
 .conversations-page__title {

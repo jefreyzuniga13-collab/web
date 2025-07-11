@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ConversationService } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { useNavigate } from 'react-router-dom'
 
 interface UseConversationsOptions {
   initialState?: string
@@ -23,6 +24,7 @@ export default function useConversations({
   const [error, setError] = useState<Error | null>(null)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [selectedConversation, setSelectedConversation] = useState<ConversationDto | null>(null)
+   const navigate = useNavigate();
 
   const fetchPage = useCallback(
     async (st = stateFilter, pg = page, ps = pageSize) => {
@@ -65,6 +67,9 @@ export default function useConversations({
     setSelectedConversation(null)
   }, [])
 
+  const navigationBack = async()=>{
+    navigate(-1)
+  }
   return {
     data,
     page,
@@ -81,5 +86,6 @@ export default function useConversations({
     refresh: () => fetchPage(),
     openView,
     closeModal,
+    navigationBack
   }
 }

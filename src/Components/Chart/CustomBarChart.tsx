@@ -53,7 +53,7 @@ function CustomBarChart({
     {
       data: items.map(i => (i.seconds < 60 ? i.seconds : i.minutes)),
       label: 'Tiempo promedio',
-      color: title === 'Clientes criticos' ? '#dc2626' : '#356ace',
+      color: title === 'Promedio de Asignación' ? '#356ace' : '#3b7ec1ff',
       showLabel: true,
       valueFormatter: (_: number, context: any) => items[context.dataIndex].displayLabel
     }
