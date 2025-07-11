@@ -1,3 +1,4 @@
+
 import React from "react";
 import CustomPieChart from "@/Components/Chart/CustomPieChart";
 import { useConversationChart } from "@/Hooks/Chart/useChart";
@@ -11,30 +12,31 @@ import AgentResponseChart from "@/Hooks/Chart/AgentResponseChart";
 import { ListComponent } from "@/Components/Chart/ListComponent";
 
 const DashboardPresentation: React.FC = () => {
-
   const {
     statusData,
     averageAssignmentTime,
     adminAvgAssignmentTime,
-    loading,
-    error,
-    isFilterOpen,
-    setIsFilterOpen,
-    handleApply,
     waitingClient,
     responseAgentAverage,
-    criticialClientTime,
     conversationClient,
     page,
     setPage,
     pageSize,
     setPageSize,
-    totalCount
+    totalCount,
+    threshold,
+    setThreshold,
+    loadingCharts,
+    loadingList,
+    error,
+    isFilterOpen,
+    setIsFilterOpen,
+    handleApply
   } = useConversationChart();
 
   const handleOpenFilterModal = () => {
     setIsFilterOpen(true);
-  }
+  };
 
   return (
     <div className="dashboard-container">
@@ -42,24 +44,22 @@ const DashboardPresentation: React.FC = () => {
         <header className="dashboard-header">
           <div>
             <h1 className="dashboard-header-title">Dashboard</h1>
-            <p className="dashboard-header-subtitle">Resumen general de rendimiento y analisis de información.</p>
+            <p className="dashboard-header-subtitle">
+              Resumen general de rendimiento y análisis de información.
+            </p>
           </div>
-
           <section className="dashboard-filter">
             <div className="dashboard-header-btn">
-
-              <Button onClick={() => handleOpenFilterModal()} disabled={loading}>
+              <Button onClick={handleOpenFilterModal} disabled={loadingCharts}>
                 <MdFilterListAlt size={14} /> Filtros
               </Button>
             </div>
           </section>
         </header>
 
-        {(loading) && (
-          <Spinner size={40} text="Cargando datos..." />
-        )}
+        {loadingCharts && <Spinner size={40} text="Cargando datos..." />}
 
-        {!loading && !error && (
+        {!loadingCharts && !error && (
           <section className="dashboard__chart-containers">
             <CustomPieChart
               data={statusData}
@@ -67,64 +67,64 @@ const DashboardPresentation: React.FC = () => {
               subtitle="Porcentaje de conversaciones por estado actual."
             />
 
-           {conversationClient != null ? (
-             <div className="conversationList">
-                <ListComponent 
-              conversation={conversationClient!}
-              page={page}
-              pageSize={pageSize}
-              totalCount={totalCount}
-              setPage={setPage}
-              setPageSize={setPageSize}
-            />
-             </div>
-           ): (
-              <>
-                <p className="empty__dashboard-list">Lista de convesaciones del cliente</p>
-              </>
-            )}
+            <div className="conversationList">
+              {loadingList ? (
+                <Spinner size={24} text="Cargando lista..." />
+              ) : conversationClient && conversationClient.length > 0 ? (
+                <ListComponent
+                  conversation={conversationClient}
+                  page={page}
+                  pageSize={pageSize}
+                  totalCount={totalCount}
+                  setPage={setPage}
+                  setPageSize={setPageSize}
+                />
+              ) : (
+                <p className="empty__dashboard-list">
+                  Lista de conversaciones del cliente
+                </p>
+              )}
+            </div>
 
             <CustomBarChart
               data={averageAssignmentTime}
               title="Promedia de Aceptación"
-              subtitle={`Tiempo promedio de aceptación de conversación por agente`}
+              subtitle="Tiempo promedio de aceptación de conversación por agente"
             />
 
             <CustomBarChart
               data={adminAvgAssignmentTime}
               title="Promedio de Asignación"
-              subtitle={`Tiempo promedio de asignación agente por administradora.`}
+              subtitle="Tiempo promedio de asignación agente por administradora."
             />
 
-            {!waitingClient || waitingClient.length !== 0 ? (
-              <CustomBarChart
+            <CustomBarChart
               data={waitingClient}
-              title="Clientes criticos"
-              subtitle={`Clientes sin ninguna gestión y con ${criticialClientTime} minuto en espera desde su último mensaje`}
+              title="Clientes críticos"
+              subtitle={`Clientes sin gestión y con ≥ ${threshold} min en espera`}
+              threshold={threshold}
+              onThresholdChange={setThreshold}
             />
-            ): (
-              <>
-                <p className="empty-dashboard"> No hay clientes con estado criticos</p>
-              </>
-            )}
 
-            {responseAgentAverage != null ? (
+            {responseAgentAverage ? (
               <AgentResponseChart
-              data={responseAgentAverage!.clienteData!}
-              agentName={responseAgentAverage!.agentName!}
-            />
-            ): (
-              <>
-                <p className="empty-dashboard">Agente sin mensajes de respuesta</p>
-              </>
+                data={responseAgentAverage.clienteData!}
+                agentName={responseAgentAverage.agentName!}
+              />
+            ) : (
+              <p className="empty-dashboard">
+                Agente sin mensajes de respuesta
+              </p>
             )}
-
           </section>
         )}
       </div>
 
-        <DashboardFilterModal
-          onClosed={() => setIsFilterOpen(false)} isFilterOpen={isFilterOpen} handleApply={handleApply}/>
+      <DashboardFilterModal
+        onClosed={() => setIsFilterOpen(false)}
+        isFilterOpen={isFilterOpen}
+        handleApply={handleApply}
+      />
     </div>
   );
 };

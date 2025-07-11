@@ -106,45 +106,48 @@ export function markConversationRead(conversationId: number) {
 class ConversationServ {
 
   async getByDateRange(
-    form: FilterForm
+    filters: FilterForm
   ): Promise<ConversationStatusCountResponseDto[]> {
+    const normalized = {
+    ...filters,
+    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
+    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+  }
     const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
       "/Conversations/dateRange",
-      {
-        params: {
-          from: form.from,
-          to:   form.to,
-        },
-      }
+      { params: normalized }
     );
 
     return data.data;
   }
   
   async getAverageAssigmentAdminTime(
-    form: FilterForm
+    filters: FilterForm
   ): Promise<AdminAsigmentResponseTimeResponseDto[]>{
+    const normalized = {
+    ...filters,
+    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
+    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+  }
     const {data} = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>
-    ("conversations/adminAverage", {
-      params:{
-         from: form.from,
-          to:   form.to,
-      }
-    })
+    ("conversations/adminAverage", 
+       { params: normalized }
+    )
+    
     return data.data;
   }
 
 
   async getAverageAssignmentTime(
-    form: FilterForm
+    filters: FilterForm
   ): Promise<AverageAssignmentTimeResponseDto[]> {
+    const normalized = {
+    ...filters,
+    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
+    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+  }
     const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>("/Conversations/agentAverage",
-            {
-        params: {
-          from: form.from,
-          to:   form.to,
-        },
-      }
+            { params: normalized }
     );
 
     return data.data;
@@ -170,12 +173,14 @@ class ConversationServ {
   }
   
   async getWaitingClient(
-  filters: FilterForm
+  filters: FilterForm,
+   criticalMinutes: number
   ): Promise<WaitingClientResponseDto[]> {
   const normalized = {
     ...filters,
     from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
+    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date),
+    criticalMinutes
   }
   const { data } = await api.get<ApiResponse<WaitingClientResponseDto []>>(
     `/Conversations/getClientWaiting`,
