@@ -103,13 +103,23 @@ export function markConversationRead(conversationId: number) {
   return api.post<void>(`/Conversations/${conversationId}/mark-read`);
 }
 
+//Por que no se enviand siempre todas las propiedades
+//Filtrar en base a todos los campos
 class ConversationServ {
+  private normalizeFilters(filters: FilterForm) {
+    return Object.entries(filters).reduce((acc, [key, val]) => {
+      acc[key] = val == null ? "" : val;
+      return acc;
+    }, {} as Record<string, string | number | boolean>);
+  }
+
   async getByDateRange(
     filters: FilterForm
   ): Promise<ConversationStatusCountResponseDto[]> {
+    const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
       "/Conversations/dateRange",
-      { params: filters }
+      { params }
     );
     return data.data;
   }
@@ -117,9 +127,13 @@ class ConversationServ {
   async getAverageAssigmentAdminTime(
     filters: FilterForm
   ): Promise<AdminAsigmentResponseTimeResponseDto[]> {
+    filters.customerId = null;
+    filters.startTime = null;
+    filters.endTime = null;
+    const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>(
       "/Conversations/adminAverage",
-      { params: filters }
+      { params }
     );
     return data.data;
   }
@@ -127,26 +141,45 @@ class ConversationServ {
   async getAverageAssignmentTime(
     filters: FilterForm
   ): Promise<AverageAssignmentTimeResponseDto[]> {
+    filters.adminUserId = null;
+    const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>(
       "/Conversations/agentAverage",
-      { params: filters }
+      { params }
     );
     return data.data;
   }
 
   async getByState(
     state: string,
+    filters: FilterForm,
     page: number,
     pageSize: number
   ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      ...this.normalizeFilters(filters),
+      PageNumber: page,
+      PageSize: pageSize
+    };
     const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
       `/Conversations/${encodeURIComponent(state)}/getByState`,
-      {
-        params: {
-          PageNumber: page,
-          PageSize: pageSize
-        }
-      }
+      { params }
+    );
+    return data.data;
+  }
+
+  async getByStateWithOut(
+    stateWithOut: string,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      PageNumber: page,
+      PageSize: pageSize
+    };
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      `/Conversations/${encodeURIComponent(stateWithOut)}/getBystateWithout`,
+      { params }
     );
     return data.data;
   }
@@ -157,16 +190,16 @@ class ConversationServ {
     pageSize: number,
     criticalMinutes: number
   ): Promise<PagedResponse<WaitingClientResponseDto>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<WaitingClientResponseDto>>>(
-      "/Conversations/getClientWaiting",
-      {
-    params: {
-      ...filters,
+    filters.adminUserId = null;
+    const params = {
+      ...this.normalizeFilters(filters),
       criticalMinutes,
       PageNumber: page,
       PageSize: pageSize
-    }
-  }
+    };
+    const { data } = await api.get<ApiResponse<PagedResponse<WaitingClientResponseDto>>>(
+      "/Conversations/getClientWaiting",
+      { params }
     );
     return data.data;
   }
@@ -174,9 +207,11 @@ class ConversationServ {
   async responseAgentAverageAsync(
     filters: FilterForm
   ): Promise<ResponseAgentAverageResponseDto> {
+    filters.adminUserId = null;
+    const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<ResponseAgentAverageResponseDto>>(
       "/Conversations/responseAgentAverageAsync",
-      { params: filters }
+      { params }
     );
     return data.data;
   }
@@ -187,11 +222,7 @@ class ConversationServ {
     pageSize: number
   ): Promise<PagedResponse<ConversationDto>> {
     const params = {
-      AgentId: filters.agentId,
-      From: filters.from,
-      To: filters.to,
-      customerId: filters.customerId,
-      companiesId: filters.companiesId,
+      ...this.normalizeFilters(filters),
       PageNumber: page,
       PageSize: pageSize
     };

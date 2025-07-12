@@ -36,3 +36,6 @@
     size: var(--font-size-base);
 }
 
+.listComponente__autocomplete{
+    text-align: left;
+}

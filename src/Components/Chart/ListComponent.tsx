@@ -71,6 +71,7 @@ export function ListComponent<T extends Record<string, any>>({
       {filterField && (
         <Autocomplete
           size="small"
+          className='listComponente__autocomplete'
           options={filterOptions}
           value={filterValue}
           onChange={(_, v) => setFilterValue(v)}
@@ -97,20 +98,21 @@ export function ListComponent<T extends Record<string, any>>({
 
       {threshold !== undefined && onThresholdChange && (
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-          <label style={{ fontSize: 12 }}>
+          <label style={{ fontSize: 16 }}>
             Minutos mínimos:{' '}
             <input
               type="number"
               value={threshold}
               min={1}
               onChange={e => onThresholdChange(Number(e.target.value))}
-              style={{ width: 60, marginLeft: 8 }}
+              style={{ width: 40, marginLeft: 8, fontSize: 14, padding: 4, textAlign: 'center' }}
             />
           </label>
         </Box>
       )}
-
-      <TableContainer component={Paper} sx={{ maxHeight, borderRadius: 2 }}>
+     
+      {rows.length > 0 ?<>
+        <TableContainer component={Paper} sx={{ maxHeight, borderRadius: 2 }}>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
@@ -163,6 +165,9 @@ export function ListComponent<T extends Record<string, any>>({
         labelRowsPerPage="Filas"
         sx={{ mt: 2, fontSize: 12 }}
       />
+      </>  : <>
+        <p>No hay clientes críticos para mostrar.</p>
+      </>}
     </Box>
   );
 }

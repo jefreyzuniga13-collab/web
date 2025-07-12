@@ -12,16 +12,16 @@ import  '@/Styles/Dashboard/CustomPieChart.css'
 const COLORS = ['#356ace', '#10b981', '#f59e0b', '#dc2626', '#3b82f6', '#9ca3af']
 
 interface Props {
-  title:    string
-  subtitle: string
+  // title:    string
+  // subtitle: string
   data:     ConversationStatusCountResponseDto[] | null
 }
 
-export default function CustomPieChart({ title, subtitle, data }: Props) {
+export default function CustomPieChart({ data }: Props) {
   const navigate = useNavigate()
 
   if (!data || data.length === 0) {
-    return <div>No hay datos para mostrar.</div>
+    return <div>No hay datos para mostrar recientes hoy.</div>
   }
 
   // Preparamos el array { name, value }
@@ -77,8 +77,6 @@ export default function CustomPieChart({ title, subtitle, data }: Props) {
 
   return (
     <div className="pieChart__container">
-      <h2 className="pieChar__title">{title}</h2>
-      <p className="pieChar__subtitle">{subtitle}</p>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie

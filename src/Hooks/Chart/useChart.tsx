@@ -11,26 +11,24 @@ import type {
   ResponseAgentAverageResponseDto,
   FilterForm
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
-// import { useNavigate } from 'react-router-dom'
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
-import { toZonedTime, format } from "date-fns-tz";
 
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem("dashboardFilters");
   if (saved) return JSON.parse(saved) as FilterForm;
-    const zone        = "America/Managua";
-   const nowInManagua = toZonedTime(new Date(), zone);
-  const fmt          = format(nowInManagua, "yyyy-MM-dd", { timeZone: zone });
-
+  const fmt = formatoNicaragua(new Date());
   return {
     from: fmt,
     to: fmt,
     startTime: null,
     endTime: null,
     agentId: null,
+    agentName: null,
     adminUserId: null,
+    adminUserName: null,
     companiesId: null,
     customerId: null,
+    customerName: null,
     today: false,
     yesterday: false,
     tomorrow: false
@@ -39,11 +37,7 @@ const getInitialFilters = (): FilterForm => {
 
 const getInitialThreshold = (defaultMinutes: number): number => {
   const saved = localStorage.getItem("criticalThreshold");
-  if (saved) {
-    const v = parseInt(saved, 10);
-    if (!isNaN(v)) return v;
-  }
-  return defaultMinutes;
+  return saved ? parseInt(saved, 10) : defaultMinutes;
 };
 
 export const useConversationChart = () => {
@@ -52,24 +46,22 @@ export const useConversationChart = () => {
   const [averageAssignmentTime, setAverageAssignmentTime] = useState<AverageAssignmentTimeResponseDto[]>([]);
   const [adminAvgAssignmentTime, setAdminAvgAssignmentTime] = useState<AdminAsigmentResponseTimeResponseDto[]>([]);
   const [waitingClient, setWaitingClient] = useState<WaitingClientResponseDto[]>([]);
-  const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto | null>();
-  const [conversationClient, setConversationClient] = useState<ConversationDto[]>();
+  const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto | null>(null);
+  const [conversationClient, setConversationClient] = useState<ConversationDto[]>([]);
   const [criticialClientTime, setCriticialClientTime] = useState<string>("");
   const [threshold, setThreshold] = useState<number>(() => getInitialThreshold(60));
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
   const [totalCount, setTotalCount] = useState<number>(0);
-const [loadingWaiting, setLoadingWaiting] = useState(false);
-  const [waitingPage, setWaitingPage] = useState(1);
-  const [waitingPageSize, setWaitingPageSize] = useState(5);
+  const [waitingPage, setWaitingPage] = useState<number>(1);
+  const [waitingPageSize, setWaitingPageSize] = useState<number>(5);
   const [totalCountWaiting, setTotalCountWaiting] = useState<number>(0);
-
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [loadingCharts, setLoadingCharts] = useState<boolean>(false);
+  const [loadingWaiting, setLoadingWaiting] = useState<boolean>(false);
   const [loadingList, setLoadingList] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  //  const navigate = useNavigate();
-   const [refresh, setRefresh] = useState<boolean>(false)
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem("dashboardFilters", JSON.stringify(filters));
@@ -84,7 +76,7 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
         setThreshold(def);
       }
     })();
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("criticalThreshold", String(threshold));
@@ -102,14 +94,14 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
       setStatusData(statusRes);
       setAverageAssignmentTime(avgRes);
       setAdminAvgAssignmentTime(adminRes);
-      if (filters.agentId != null && filters.agentId >= 0) {
+      if (filters.agentId != null) {
         const resp = await ConversationService.responseAgentAverageAsync(filters);
         setResponseAgentAverage(resp);
-      }else{
-        setResponseAgentAverage(null)
+      } else {
+        setResponseAgentAverage(null);
       }
     } catch (err: any) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err.message || String(err));
     } finally {
       setLoadingCharts(false);
     }
@@ -120,18 +112,18 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
   }, [fetchData]);
 
   const fetchWaiting = useCallback(async (pg = waitingPage, ps = waitingPageSize) => {
+    setLoadingWaiting(true);
+    setError(null);
     try {
-      setLoadingWaiting(true)
       const list = await ConversationService.getWaitingClient(filters, pg, ps, threshold);
       setWaitingClient(list.items);
       setTotalCountWaiting(list.meta.totalCount);
       setWaitingPage(pg);
       setWaitingPageSize(ps);
     } catch (err: any) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-    finally{
-      setLoadingWaiting(false)
+      setError(err.message || String(err));
+    } finally {
+      setLoadingWaiting(false);
     }
   }, [filters, threshold, waitingPage, waitingPageSize]);
 
@@ -139,37 +131,35 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
     fetchWaiting();
   }, [fetchWaiting]);
 
-  const fetchConversationByClientPage = useCallback(
-    async (st = filters, pg = page, ps = pageSize) => {
-      setLoadingList(true);
-      setError(null);
-      const normalized = {
-        ...st,
-        from: typeof st.from === "string" ? st.from : formatoNicaragua(st.from as Date),
-        to: typeof st.to === "string" ? st.to : formatoNicaragua(st.to as Date)
-      };
-      try {
-        const res = await ConversationService.getConversationByClient(normalized, pg, ps);
-        setConversationClient(res.items);
-        setTotalCount(res.meta.totalCount);
-        setPage(pg);
-        setPageSize(ps);
-      } catch (err: any) {
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoadingList(false);
-      }
-    },
-    [filters, page, pageSize]
-  );
+  const fetchConversationByClientPage = useCallback(async (pg = page, ps = pageSize) => {
+    setLoadingList(true);
+    setError(null);
+    const normalized = {
+      ...filters,
+      from: typeof filters.from === "string" ? filters.from : formatoNicaragua(filters.from as Date),
+      to: typeof filters.to === "string" ? filters.to : formatoNicaragua(filters.to as Date)
+    };
+    try {
+      const res = await ConversationService.getConversationByClient(normalized as FilterForm, pg, ps);
+      setConversationClient(res.items);
+      setTotalCount(res.meta.totalCount);
+      setPage(pg);
+      setPageSize(ps);
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setLoadingList(false);
+    }
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     fetchConversationByClientPage();
-  }, [fetchConversationByClientPage]);
+  }, [fetchConversationByClientPage, refresh]);
 
   const updateDate = (field: keyof FilterForm, date: Date | null) => {
-    if (!date) return;
-    setFilters(prev => ({ ...prev, [field]: formatoNicaragua(date) }));
+    if (date) {
+      setFilters(prev => ({ ...prev, [field]: formatoNicaragua(date) }));
+    }
   };
 
   const handleApply = (form: FilterForm) => {
@@ -177,18 +167,9 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
     setIsFilterOpen(false);
   };
 
-  const handleRefresh = async()=>{
-    // navigate(0) //Recargar la pagina
-        // Cambiar el estado para forzar la re-renderización
-    setRefresh(prevRefresh => !prevRefresh);
-  }
-
-   useEffect(() => {
-    localStorage.removeItem("dashboardFilters");
-    localStorage.removeItem("criticalThreshold");
-    setFilters(getInitialFilters)
-  }, [refresh]);
-
+  const handleRefresh = () => {
+    setRefresh(prev => !prev);
+  };
 
   return {
     statusData,
@@ -211,7 +192,6 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
     setWaitingPageSize,
     totalCountWaiting,
     loadingWaiting,
-    setPageSize,
     totalCount,
     isFilterOpen,
     setIsFilterOpen,
@@ -220,7 +200,7 @@ const [loadingWaiting, setLoadingWaiting] = useState(false);
     error,
     updateDate,
     handleApply,
-    fetchConversationByClientPage,
+    setPageSize,
     handleRefresh
   };
 };

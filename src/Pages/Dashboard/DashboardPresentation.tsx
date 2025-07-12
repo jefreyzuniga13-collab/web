@@ -12,6 +12,8 @@ import { ListComponent, type Column } from "@/Components/Chart/ListComponent";
 import { HiRefresh } from "react-icons/hi";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import type { WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import { format, toZonedTime } from "date-fns-tz";
+import { parseISO, parse } from "date-fns";
 
 const DashboardPresentation: React.FC = () => {
   const {
@@ -44,40 +46,70 @@ const DashboardPresentation: React.FC = () => {
     loadingWaiting
   } = useConversationChart();
 
-const formatTime = (d: Date | string) => {
-  const dt = typeof d === "string" ? new Date(d) : d;
-  return dt.toTimeString().slice(0,5);
-};
+  const formatTime = (d: Date | string) => {
+    const date = typeof d === "string" ? parse(d, "HH:mm:ss", new Date()) : d;
+    return date instanceof Date && !isNaN(date.getTime())
+      ? date.toTimeString().slice(0, 5)
+      : "";
+  };
 
-const filterSummary = useMemo(() => {
-  const parts: string[] = [];
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [];
+    const zone = "America/Managua";
 
-  if (filters.from && filters.to) {
-    parts.push(`Fecha: ${filters.from} – ${filters.to}`);
-  }
-  if (filters.startTime && filters.endTime) {
-    parts.push(`Hora: ${formatTime(filters.startTime)} – ${formatTime(filters.endTime)}`);
-  }
-  if (filters.agentId != null) {
-    parts.push(`Agente: ${filters.agentId}`);
-  }
-  if (filters.adminUserId != null) {
-    parts.push(`Admin: ${filters.adminUserId}`);
-  }
-  if (filters.customerId != null) {
-    parts.push(`Cliente: ${filters.customerId}`);
-  }
+    if (filters.from && filters.to) {
+      const fromDate =
+        typeof filters.from === "string" ? parseISO(filters.from) : filters.from;
+      const toDate =
+        typeof filters.to === "string" ? parseISO(filters.to) : filters.to;
+      if (
+        fromDate instanceof Date &&
+        !isNaN(fromDate.getTime()) &&
+        toDate instanceof Date &&
+        !isNaN(toDate.getTime())
+      ) {
+        const fromManagua = toZonedTime(fromDate, zone);
+        const toManagua = toZonedTime(toDate, zone);
+        parts.push(
+          `Fecha: ${format(fromManagua, "dd-MM-yyyy", {
+            timeZone: zone
+          })} – ${format(toManagua, "dd-MM-yyyy", { timeZone: zone })}`
+        );
+      }
+    }
+    if (filters.startTime && filters.endTime) {
+      const start = formatTime(filters.startTime);
+      const end = formatTime(filters.endTime);
+      if (start && end) {
+        parts.push(`Hora: ${start} – ${end}`);
+      }
+    }
+    if (filters.agentId != null) {
+      parts.push(`Agente: ${filters.agentId}`);
+    }
+    if (filters.adminUserId != null) {
+      parts.push(`Admin: ${filters.adminUserId}`);
+    }
+    if (filters.customerId != null) {
+      parts.push(`Cliente: ${filters.customerId}`);
+    }
 
-  return parts.length > 0 ? parts.join(", ") : "Todos los registros";
-}, [filters]);
+    return parts.length > 0 ? parts.join(", ") : "Todos los registros";
+  }, [filters]);
 
   const columnsWaitingClient = useMemo<Column<WaitingClientResponseDto>[]>(() => [
-      { field: "agentName", headerName: "Agente" },
-      { field: "clientName", headerName: "Contacto" },
-      { field: "clienteLastMessage", headerName: "Cliente Ult. Mensaje" },
-      { field: "averageTime", headerName: "Tiempo de espera" },
-  
-  ], [])
+    { field: "name", headerName: "Agente" },
+    { field: "clientName", headerName: "Contacto" },
+    {
+      field: "clienteLastMessage",
+      headerName: "Cliente Ult. Mensaje",
+      render: c =>
+        c.clienteLastMessage
+          ? new Date(c.clienteLastMessage).toLocaleString("es-NI")
+          : "-"
+    },
+    { field: "averageTime", headerName: "Tiempo de espera" }
+  ], []);
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
     { field: "clientContactName", headerName: "Contacto" },
@@ -88,8 +120,16 @@ const filterSummary = useMemo(() => {
       render: c => new Date(c.createdAt).toLocaleString("es-NI")
     },
     {
+      field: "agentRequestAt",
+      headerName: "Solicitud agente del cliente al admin",
+      render: c =>
+        c.agentRequestAt
+          ? new Date(c.agentRequestAt).toLocaleString("es-NI")
+          : "-"
+    },
+    {
       field: "requestedAgentAt",
-      headerName: "Solicitud agente",
+      headerName: "Solicitud enviada de admin al agente",
       render: c =>
         c.requestedAgentAt
           ? new Date(c.requestedAgentAt).toLocaleString("es-NI")
@@ -144,8 +184,8 @@ const filterSummary = useMemo(() => {
         const end = c.closedAt
           ? new Date(c.closedAt)
           : c.incompletedAt
-            ? new Date(c.incompletedAt)
-            : new Date();
+          ? new Date(c.incompletedAt)
+          : new Date();
         const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
         const m = Math.floor(diff / 60);
         const s = diff % 60;
@@ -186,11 +226,21 @@ const filterSummary = useMemo(() => {
 
         {!loadingCharts && !error && (
           <section className="dashboard__chart-containers">
-            <CustomPieChart
-              data={statusData}
-              title="Conversaciones Por Estado"
-              subtitle={`Porcentaje de conversaciones por estado actual (${filterSummary})`}
-            />
+            <div>
+              <h4 className="dashboard-waiting__title">
+                Conversaciones Por Estado
+              </h4>
+              <p className="dashboard-waiting__subtitle">
+                {`Porcentaje de conversaciones por estado actual (${filterSummary})`}
+              </p>
+              {statusData.length > 0 ? (
+                <CustomPieChart data={statusData} />
+              ) : (
+                <p className="empty__dashboard-list">
+                  No hay conversaciones recientes hoy
+                </p>
+              )}
+            </div>
 
             <CustomBarChart
               data={adminAvgAssignmentTime}
@@ -205,11 +255,13 @@ const filterSummary = useMemo(() => {
             />
 
             <div className="conversationList">
-               <h4 className="list-title">Conversaciones recientes de contactos</h4>
-                <p className="list-subtitle">{filterSummary}</p>
+              <h4 className="dashboard-waiting__title">
+                Conversaciones recientes de contactos
+              </h4>
+              <p className="dashboard-waiting__subtitle">{filterSummary}</p>
               {loadingList ? (
                 <Spinner size={24} text="Cargando lista..." />
-              ) : conversationClient && conversationClient.length > 0 ? (
+              ) : conversationClient.length > 0 ? (
                 <ListComponent<ConversationDto>
                   rows={conversationClient}
                   columns={columns}
@@ -224,59 +276,54 @@ const filterSummary = useMemo(() => {
                 />
               ) : (
                 <p className="empty__dashboard-list">
-                  Lista de conversaciones del cliente
+                  No hay conversaciones recientes hoy
                 </p>
               )}
             </div>
-
-            {/* <CustomBarChart
-              data={waitingClient}
-              title="Clientes críticos"
-              subtitle={`Clientes sin gestión y con ≥ ${threshold} min en espera`}
-              threshold={threshold}
-              onThresholdChange={setThreshold}
-            /> */}
 
             <div className="dashboard-waiting__container">
               <h3 className="dashboard-waiting__title">Clientes críticos</h3>
               <p className="dashboard-waiting__subtitle">
                 {filterSummary}, Clientes sin gestión y con ≥ {threshold} min en espera
               </p>
-            
-            {loadingWaiting ? (
-              <Spinner size={24} text="Cargando clientes críticos..." />
-            ) : waitingClient.length > 0 ? (
-              <ListComponent
-                rows={waitingClient}
-                columns={columnsWaitingClient}
-                filterField="clientName"
-                filterLabel="Filtrar por cliente"
-                threshold={threshold}
-                onThresholdChange={setThreshold}
-                page={waitingPage}
-                pageSize={waitingPageSize}
-                totalCount={totalCountWaiting}
-                setPage={setWaitingPage}
-                setPageSize={setWaitingPageSize}
-                maxHeight={400}
-              />
-            ) : (
-              <p>No hay clientes críticos para mostrar.</p>
-            )}
+              {loadingWaiting ? (
+                <Spinner size={24} text="Cargando clientes críticos..." />
+              ) : (
+                <ListComponent<WaitingClientResponseDto>
+                  rows={waitingClient}
+                  columns={columnsWaitingClient}
+                  filterField="clientName"
+                  filterLabel="Filtrar por cliente"
+                  threshold={threshold}
+                  onThresholdChange={setThreshold}
+                  page={waitingPage}
+                  pageSize={waitingPageSize}
+                  totalCount={totalCountWaiting}
+                  setPage={setWaitingPage}
+                  setPageSize={setWaitingPageSize}
+                  maxHeight={400}
+                />
+              )}
             </div>
 
-            {responseAgentAverage ? (
-              <AgentResponseChart
-                data={responseAgentAverage.clienteData!}
-                agentName={responseAgentAverage.agentName!}
-                title="Tiempo de respuesta por agente"
-                subtitle={`Top 10 promedio de respuesta a clientes. Filtrador por ${filterSummary}`}
-              />
-            ) : (
-              <p className="empty-dashboard">
-                Agente sin mensajes de respuesta
+            <div>
+              <h4 className="dashboard-waiting__title">Promedio de respuestas</h4>
+              <p className="dashboard-waiting__subtitle">
+                {`Porcentaje de conversaciones por estado actual (${filterSummary})`}
               </p>
-            )}
+              {responseAgentAverage ? (
+                <AgentResponseChart
+                  data={responseAgentAverage.clienteData!}
+                  agentName={responseAgentAverage.name!}
+                  title="Tiempo de respuesta por agente"
+                  subtitle=""
+                />
+              ) : (
+                <p className="empty-dashboard">
+                  Agente sin mensajes de respuesta el dia de hoy.
+                </p>
+              )}
+            </div>
           </section>
         )}
       </div>

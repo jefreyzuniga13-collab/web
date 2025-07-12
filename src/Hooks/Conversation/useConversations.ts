@@ -31,7 +31,7 @@ export default function useConversations({
       setLoading(true)
       setError(null)
       try {
-        const res = await ConversationService.getByState(st, pg, ps)
+        const res = await ConversationService.getByStateWithOut(st, pg, ps)
           
         console.log("Valores obtrenidos son: ", JSON.stringify(res.items))
 

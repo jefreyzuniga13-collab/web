@@ -45,14 +45,16 @@ export interface FilterForm {
   startTime: Date | null;
   endTime: Date | null;
   agentId: number | null;
+  agentName: string | null;
   adminUserId: number | null;
+  adminUserName:string | null;
   companiesId?: number | null;
   customerId: number | null;
+  customerName:string | null;
   today?: boolean;
   yesterday?: boolean;
   tomorrow?: boolean;
 }
-
 
 export interface AdminAsigmentResponseTimeResponseDto{
     id: number;
@@ -62,7 +64,7 @@ export interface AdminAsigmentResponseTimeResponseDto{
 export interface WaitingClientResponseDto{
   id?: number;
   clientName?: string;
-  agentName?: string;
+  name?: string;
   clienteLastMessage?: string;
   averageTime?: number | null;
 }
@@ -76,6 +78,6 @@ export interface ResponseAgentAverageClienteDataResponseDto{
 
 export interface ResponseAgentAverageResponseDto{
   id: number;
-  agentName?: string;
+  name?: string;
   clienteData?: ResponseAgentAverageClienteDataResponseDto [];
 }

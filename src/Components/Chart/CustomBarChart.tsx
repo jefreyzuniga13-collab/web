@@ -17,8 +17,8 @@ interface ChartItem {
 }
 
 interface Props {
-  title: string
-  subtitle: string
+  title?: string
+  subtitle?: string
   data:
     | AverageAssignmentTimeResponseDto[]
     | AdminAsigmentResponseTimeResponseDto[]
@@ -30,7 +30,7 @@ interface Props {
 
 function CustomBarChart({
   title,
-  subtitle,
+   subtitle,
   data,
   threshold,
   onThresholdChange
@@ -43,7 +43,7 @@ function CustomBarChart({
         const rawSeconds = (item as any).averageTime ?? (item as any).averageSeconds ?? 0
         const seconds = Math.floor(rawSeconds)
         const minutes = Math.floor(rawSeconds / 60)
-        const name = (item as any).clientName ?? item.name ?? String((item as any).id)
+        const name = (item as any).clientName ?? item.name ?? 'Pendiente'
         const displayLabel = seconds < 60 ? `${seconds}s` : `${minutes}min`
         return { name, minutes, seconds, label: `${name} (${displayLabel} / ${seconds}s)`, displayLabel }
       })

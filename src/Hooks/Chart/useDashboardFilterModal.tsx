@@ -1,65 +1,87 @@
 import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toZonedTime, format } from "date-fns-tz";
+
 const initialForm: FilterForm = (() => {
-  const zone        = "America/Managua";
-   const nowInManagua = toZonedTime(new Date(), zone);
+  const zone         = "America/Managua";
+  const nowInManagua = toZonedTime(new Date(), zone);
   const fmt          = format(nowInManagua, "yyyy-MM-dd", { timeZone: zone });
 
   return {
-    from: fmt,
-    to:   fmt,
-    startTime: null,
-    endTime:   null,
-    agentId:      null,
-    adminUserId:  null,
-    customerId:   null,
-    today:     false,
-    yesterday: false,
-    tomorrow:  false
+    from:           fmt,
+    to:             fmt,
+    startTime:      null,
+    endTime:        null,
+    agentId:        null,
+    agentName:      null,
+    adminUserId:    null,
+    adminUserName:  null,
+    customerId:     null,
+    customerName:   null,
+    today:          false,
+    yesterday:      false,
+    tomorrow:       false
   };
 })();
 
-const STORAGE_KEY = "dashboardFilters";
 const useDashboardFilterModal = () => {
   const [form, setForm] = useState<FilterForm>(() => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  return saved ? JSON.parse(saved) as FilterForm : initialForm;
-});
+    const saved = localStorage.getItem("dashboardFilters");
+    if (!saved) return initialForm;
 
+    const parsed = JSON.parse(saved) as Partial<FilterForm>;
+    return { ...initialForm, ...parsed };
+  });
 
-useEffect(() => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
-}, [form]);
+  // useEffect(() => {
+  //   localStorage.setItem("dashboardFilters", JSON.stringify(form));
+  // }, [form]);
 
   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setForm(f => ({ ...f, [name]: checked }));
   };
 
-  // Para selects que pasan valores numéricos o strings
   const handleSelectChange =
     (name: keyof FilterForm) =>
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const val = e.target.value;
-      // convertir a número si corresponde
-      const parsed = name === "agentId" || name === "adminUserId" || name === "customerId"
-        ? (val === "" ? "" : Number(val))
-        : val;
+      // Si viene cadena vacía => null, si no => número
+      const parsed =
+        val === ""
+          ? null
+          : Number(val);
       setForm(f => ({ ...f, [name]: parsed }));
     };
 
-    const handleClear =()=>{
-      setForm(initialForm);
-      localStorage.removeItem(STORAGE_KEY);
-    }
+  const handleClear = () => {
+    setForm(initialForm);
+    localStorage.removeItem("dashboardFilters");
+  };
+
+  const handleTimeChange =
+    (name: "startTime" | "endTime") =>
+
+    (date: Date | null) => {
+            const zone = "America/Managua";
+            
+      if (date === null) {
+        setForm(f => ({ ...f, [name]: null }));
+      } else {
+        // Convertimos a la hora local en Managua, en formato HH:mm:ss
+        const zonedDate = toZonedTime(date, zone);
+        const timeStr = format(zonedDate, "HH:mm:ss", { timeZone: zone });
+        setForm(f => ({ ...f, [name]: timeStr }));
+      }
+    };
 
   return {
     form,
     setForm,
     handleCheckbox,
     handleSelectChange,
-    handleClear
+    handleClear,
+    handleTimeChange
   };
 };
 
