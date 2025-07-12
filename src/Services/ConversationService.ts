@@ -7,7 +7,7 @@ import type {
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
-import { formatoNicaragua } from "@/Utils/LocalDateFormat";
+// import { formatoNicaragua } from "@/Utils/LocalDateFormat";
 
 export function getConversationsByRole() {
   return api.get<{ data: ConversationDto[] }>("/Conversations/getByRole");
@@ -104,52 +104,33 @@ export function markConversationRead(conversationId: number) {
 }
 
 class ConversationServ {
-
   async getByDateRange(
     filters: FilterForm
   ): Promise<ConversationStatusCountResponseDto[]> {
-    const normalized = {
-    ...filters,
-    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
-  }
     const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
       "/Conversations/dateRange",
-      { params: normalized }
+      { params: filters }
     );
-
     return data.data;
   }
-  
+
   async getAverageAssigmentAdminTime(
     filters: FilterForm
-  ): Promise<AdminAsigmentResponseTimeResponseDto[]>{
-    const normalized = {
-    ...filters,
-    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
-  }
-    const {data} = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>
-    ("conversations/adminAverage", 
-       { params: normalized }
-    )
-    
+  ): Promise<AdminAsigmentResponseTimeResponseDto[]> {
+    const { data } = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>(
+      "/Conversations/adminAverage",
+      { params: filters }
+    );
     return data.data;
   }
-
 
   async getAverageAssignmentTime(
     filters: FilterForm
   ): Promise<AverageAssignmentTimeResponseDto[]> {
-    const normalized = {
-    ...filters,
-    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
-  }
-    const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>("/Conversations/agentAverage",
-            { params: normalized }
+    const { data } = await api.get<ApiResponse<AverageAssignmentTimeResponseDto[]>>(
+      "/Conversations/agentAverage",
+      { params: filters }
     );
-
     return data.data;
   }
 
@@ -158,89 +139,68 @@ class ConversationServ {
     page: number,
     pageSize: number
   ): Promise<PagedResponse<ConversationDto>> {
-    const { data } = await api.get<
-      ApiResponse<PagedResponse<ConversationDto>>
-    >(
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
       `/Conversations/${encodeURIComponent(state)}/getByState`,
       {
         params: {
           PageNumber: page,
-          PageSize: pageSize,
-        },
+          PageSize: pageSize
+        }
       }
     );
     return data.data;
   }
-  
-  async getWaitingClient(
-  filters: FilterForm,
-   criticalMinutes: number
-  ): Promise<WaitingClientResponseDto[]> {
-  const normalized = {
-    ...filters,
-    from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-    to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date),
-    criticalMinutes
-  }
-  const { data } = await api.get<ApiResponse<WaitingClientResponseDto []>>(
-    `/Conversations/getClientWaiting`,
-    { params: normalized }
-  )
 
-  return data.data
-}
+  async getWaitingClient(
+    filters: FilterForm,
+    page: number,
+    pageSize: number,
+    criticalMinutes: number
+  ): Promise<PagedResponse<WaitingClientResponseDto>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<WaitingClientResponseDto>>>(
+      "/Conversations/getClientWaiting",
+      {
+    params: {
+      ...filters,
+      criticalMinutes,
+      PageNumber: page,
+      PageSize: pageSize
+    }
+  }
+    );
+    return data.data;
+  }
 
   async responseAgentAverageAsync(
     filters: FilterForm
-    ): Promise<ResponseAgentAverageResponseDto> {
-    const normalized = {
-      ...filters,
-      from: typeof filters.from === 'string' ? filters.from : formatoNicaragua(filters.from as Date),
-      to:   typeof filters.to   === 'string' ? filters.to   : formatoNicaragua(filters.to   as Date)
-    }
+  ): Promise<ResponseAgentAverageResponseDto> {
     const { data } = await api.get<ApiResponse<ResponseAgentAverageResponseDto>>(
-      `/Conversations/responseAgentAverageAsync`,
-      { params: normalized }
-    )
-
-    return data.data
+      "/Conversations/responseAgentAverageAsync",
+      { params: filters }
+    );
+    return data.data;
   }
 
- async getConversationByClient(
-  filters: FilterForm,
-  page: number,
-  pageSize: number
-): Promise<PagedResponse<ConversationDto>> {
-  // Normalizas las fechas
-  const normalized = {
-    ...filters,
-    from: typeof filters.from === 'string'
-      ? filters.from
-      : formatoNicaragua(filters.from as Date),
-    to: typeof filters.to === 'string'
-      ? filters.to
-      : formatoNicaragua(filters.to as Date),
-  };
-
-  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-    `/Conversations/getConversationByClient`,
-    {
-      params: {
-        AgentId: normalized.agentId,
-        From: normalized.from,
-        To: normalized.to,
-        customerId: normalized.customerId,
-        companiesId: normalized.companiesId,
-        PageNumber: page,
-        PageSize: pageSize,
-      },
-    }
-  );
-
-  console.log("Data obtenida getConversationByClient", JSON.stringify(data.data))
-  return data.data;
-}
-
+  async getConversationByClient(
+    filters: FilterForm,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      AgentId: filters.agentId,
+      From: filters.from,
+      To: filters.to,
+      customerId: filters.customerId,
+      companiesId: filters.companiesId,
+      PageNumber: page,
+      PageSize: pageSize
+    };
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/getConversationByClient",
+      { params }
+    );
+    return data.data;
+  }
 }
 
 export const ConversationService = new ConversationServ();

@@ -13,20 +13,23 @@ import type {
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
 // import { useNavigate } from 'react-router-dom'
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
+import { toZonedTime, format } from "date-fns-tz";
 
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem("dashboardFilters");
   if (saved) return JSON.parse(saved) as FilterForm;
-  const today = new Date();
-  const fmt = formatoNicaragua(today);
+    const zone        = "America/Managua";
+   const nowInManagua = toZonedTime(new Date(), zone);
+  const fmt          = format(nowInManagua, "yyyy-MM-dd", { timeZone: zone });
+
   return {
     from: fmt,
     to: fmt,
-    startTime: today,
-    endTime: today,
+    startTime: null,
+    endTime: null,
     agentId: null,
     adminUserId: null,
-    companiesId: 2,
+    companiesId: null,
     customerId: null,
     today: false,
     yesterday: false,
@@ -56,6 +59,11 @@ export const useConversationChart = () => {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
   const [totalCount, setTotalCount] = useState<number>(0);
+const [loadingWaiting, setLoadingWaiting] = useState(false);
+  const [waitingPage, setWaitingPage] = useState(1);
+  const [waitingPageSize, setWaitingPageSize] = useState(5);
+  const [totalCountWaiting, setTotalCountWaiting] = useState<number>(0);
+
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [loadingCharts, setLoadingCharts] = useState<boolean>(false);
   const [loadingList, setLoadingList] = useState<boolean>(false);
@@ -111,14 +119,21 @@ export const useConversationChart = () => {
     fetchData();
   }, [fetchData]);
 
-  const fetchWaiting = useCallback(async () => {
+  const fetchWaiting = useCallback(async (pg = waitingPage, ps = waitingPageSize) => {
     try {
-      const list = await ConversationService.getWaitingClient(filters, threshold);
-      setWaitingClient(list);
+      setLoadingWaiting(true)
+      const list = await ConversationService.getWaitingClient(filters, pg, ps, threshold);
+      setWaitingClient(list.items);
+      setTotalCountWaiting(list.meta.totalCount);
+      setWaitingPage(pg);
+      setWaitingPageSize(ps);
     } catch (err: any) {
       setError(err instanceof Error ? err.message : String(err));
     }
-  }, [filters, threshold]);
+    finally{
+      setLoadingWaiting(false)
+    }
+  }, [filters, threshold, waitingPage, waitingPageSize]);
 
   useEffect(() => {
     fetchWaiting();
@@ -190,6 +205,12 @@ export const useConversationChart = () => {
     page,
     setPage,
     pageSize,
+    waitingPage,
+    setWaitingPage,
+    waitingPageSize,
+    setWaitingPageSize,
+    totalCountWaiting,
+    loadingWaiting,
     setPageSize,
     totalCount,
     isFilterOpen,

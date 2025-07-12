@@ -1,5 +1,5 @@
 import { IoMdClose } from "react-icons/io";
-// import TimePickerField from "@/Components/Common/TimePickerField";
+import TimePickerField from "@/Components/Common/TimePickerField";
 import useDashboardFilterModal from "@/Hooks/Chart/useDashboardFilterModal";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -97,26 +97,6 @@ export default function DashboardFilterModal({
           />
           </section>
 
-          <section>
-            {/* <p className="filter-subtitle">Filtrar por Hora</p>
-            <section className="input-container">
-                            <div className="oh-modal__col">
-              <TimePickerField
-                label="Hora inicio"
-                value={form.startTime}
-                onChange={(d) => setForm((f) => ({ ...f, startTime: d }))}
-              />
-            </div>
-            <div className="oh-modal__col">
-              <TimePickerField
-                label="Hora fin"
-                value={form.endTime}
-                onChange={(d) => setForm((f) => ({ ...f, endTime: d }))}
-
-              />
-            </div>
-            </section> */}
-
              <p className="filter-subtitle">Filtrar por Fecha</p>
              <section className="input-container">
                      <div className="oh-modal__col">
@@ -146,41 +126,30 @@ export default function DashboardFilterModal({
               </LocalizationProvider>
             </div>
              </section>
-           
+
+
+          <section>
+            <p className="filter-subtitle">Filtrar por Hora</p>
+            <section className="input-container">
+                            <div className="oh-modal__col">
+              <TimePickerField
+                label="Hora inicio"
+                value={form.startTime}
+                onChange={(d) => setForm((f) => ({ ...f, startTime: d }))}
+              />
+            </div>
+            <div className="oh-modal__col">
+              <TimePickerField
+                label="Hora fin"
+                value={form.endTime}
+                onChange={(d) => setForm((f) => ({ ...f, endTime: d }))}
+
+              />
+            </div>
+            </section>
+
+                       
           </section>
-
-        {/* <p className="filter-subtitle">Filtrar por dia</p>
-        <section className="filter-modal__toggles">
-          <label className="filter-modal__toggles__label">
-            <input
-              type="checkbox"
-              name="today"
-              checked={form.today}
-              onChange={handleCheckbox}
-            />{" "}
-            Hoy
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              name="yesterday"
-              checked={form.yesterday}
-              onChange={handleCheckbox}
-            />{" "}
-            Ayer
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              name="tomorrow"
-              checked={form.tomorrow}
-              onChange={handleCheckbox}
-            />{" "}
-            Mañana
-          </label>
-        </section> */}
 
         <div className="filter-btn">
           <Button onClick={handleClear} variant="destructive">

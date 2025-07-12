@@ -4,9 +4,11 @@ import '@/Styles/Dashboard/CustomBarChart.css'
 interface Props {
   data: ResponseAgentAverageClienteDataResponseDto[];
   agentName: string;
+  title: string;
+  subtitle: string;
 }
 
-export default function AgentResponseChart({ data, agentName }: Props) {
+export default function AgentResponseChart({ data, agentName, title, subtitle }: Props) {
   if (!data?.length) return <div>No hay datos para mostrar.</div>;
 
   // 1. Datos completos
@@ -36,12 +38,11 @@ export default function AgentResponseChart({ data, agentName }: Props) {
   return (
     <div style={{ textAlign: 'center' }} className='barChart__Container'>
       <h2 className='custom__barChart-title'>Respuesta de {agentName}</h2>
-
-      <p className='custom__barChart-subtitle'>
+      {title && <h3 className="chart-title">{title}</h3>}
+      {subtitle && <p className="chart-subtitle">{subtitle}</p>}
+     <p className='custom__barChart-subtitle'>
         Promedio global: <strong>{formatTime(globalAvgSeconds)}</strong> (<em>{totalClients} clientes</em>)
       </p>
-
-      <p className='custom__barChart-subtitle'>Top 10 promedio de respuesta a clientes</p>
 
       <BarChart
         height={300}

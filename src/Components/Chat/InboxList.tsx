@@ -4,6 +4,8 @@ import { MessageSquareOff } from 'lucide-react'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
+import { parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 interface Props {
   selectedId?: number
@@ -18,12 +20,6 @@ const formatDuration = (ms: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
-const niFormatter = new Intl.DateTimeFormat('es-NI', {
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'America/Managua'
-})
-
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
   const { conversations, reload } = useConversations(filter)
   const [now, setNow] = useState(Date.now())
@@ -36,11 +32,14 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
   }, [])
 
   const formatTime = (iso?: string) => {
-    if (!iso) return ''
-    const d = new Date(iso)
-    if (isNaN(d.getTime())) return ''
-    return niFormatter.format(d)
+  if (!iso) return '';
+  try {
+    const date = parseISO(iso);
+    return formatInTimeZone(date, 'America/Managua', 'HH:mm');
+  } catch {
+    return '';
   }
+};
 
   if (conversations.length === 0) {
     return (

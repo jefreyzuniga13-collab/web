@@ -27,16 +27,49 @@ const DashboardPresentation: React.FC = () => {
     setPageSize,
     totalCount,
     threshold,
-    // setThreshold,
+    setThreshold,
     loadingCharts,
     loadingList,
     error,
     isFilterOpen,
     setIsFilterOpen,
     handleApply,
-    handleRefresh
+    handleRefresh,
+    waitingPage,
+    waitingPageSize,
+    totalCountWaiting,
+    setWaitingPage,
+    setWaitingPageSize,
+    filters,
+    loadingWaiting
   } = useConversationChart();
 
+const formatTime = (d: Date | string) => {
+  const dt = typeof d === "string" ? new Date(d) : d;
+  return dt.toTimeString().slice(0,5);
+};
+
+const filterSummary = useMemo(() => {
+  const parts: string[] = [];
+
+  if (filters.from && filters.to) {
+    parts.push(`Fecha: ${filters.from} – ${filters.to}`);
+  }
+  if (filters.startTime && filters.endTime) {
+    parts.push(`Hora: ${formatTime(filters.startTime)} – ${formatTime(filters.endTime)}`);
+  }
+  if (filters.agentId != null) {
+    parts.push(`Agente: ${filters.agentId}`);
+  }
+  if (filters.adminUserId != null) {
+    parts.push(`Admin: ${filters.adminUserId}`);
+  }
+  if (filters.customerId != null) {
+    parts.push(`Cliente: ${filters.customerId}`);
+  }
+
+  return parts.length > 0 ? parts.join(", ") : "Todos los registros";
+}, [filters]);
 
   const columnsWaitingClient = useMemo<Column<WaitingClientResponseDto>[]>(() => [
       { field: "agentName", headerName: "Agente" },
@@ -156,7 +189,7 @@ const DashboardPresentation: React.FC = () => {
             <CustomPieChart
               data={statusData}
               title="Conversaciones Por Estado"
-              subtitle="Porcentaje de conversaciones por estado actual."
+              subtitle={`Porcentaje de conversaciones por estado actual (${filterSummary})`}
             />
 
             <CustomBarChart
@@ -168,10 +201,12 @@ const DashboardPresentation: React.FC = () => {
             <CustomBarChart
               data={averageAssignmentTime}
               title="Promedio de Aceptación"
-              subtitle="Tiempo promedio de aceptación de conversación por agente."
+              subtitle={`Tiempo promedio de asignación agente por administradora (${filterSummary})`}
             />
 
             <div className="conversationList">
+               <h4 className="list-title">Conversaciones recientes de contactos</h4>
+                <p className="list-subtitle">{filterSummary}</p>
               {loadingList ? (
                 <Spinner size={24} text="Cargando lista..." />
               ) : conversationClient && conversationClient.length > 0 ? (
@@ -204,26 +239,38 @@ const DashboardPresentation: React.FC = () => {
 
             <div className="dashboard-waiting__container">
               <h3 className="dashboard-waiting__title">Clientes críticos</h3>
-            <p className="dashboard-waiting__subtitle">Clientes sin gestión y con ≥ {threshold} min en espera</p>
-            <ListComponent
-            rows={waitingClient}
-            columns={columnsWaitingClient}
-            filterField="clientName"
-            filterLabel="Filtrar por cliente"
-            page={page}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            setPage={setPage}
-            setPageSize={setPageSize}
-          maxHeight={400}
-
-            />
+              <p className="dashboard-waiting__subtitle">
+                {filterSummary}, Clientes sin gestión y con ≥ {threshold} min en espera
+              </p>
+            
+            {loadingWaiting ? (
+              <Spinner size={24} text="Cargando clientes críticos..." />
+            ) : waitingClient.length > 0 ? (
+              <ListComponent
+                rows={waitingClient}
+                columns={columnsWaitingClient}
+                filterField="clientName"
+                filterLabel="Filtrar por cliente"
+                threshold={threshold}
+                onThresholdChange={setThreshold}
+                page={waitingPage}
+                pageSize={waitingPageSize}
+                totalCount={totalCountWaiting}
+                setPage={setWaitingPage}
+                setPageSize={setWaitingPageSize}
+                maxHeight={400}
+              />
+            ) : (
+              <p>No hay clientes críticos para mostrar.</p>
+            )}
             </div>
 
             {responseAgentAverage ? (
               <AgentResponseChart
                 data={responseAgentAverage.clienteData!}
                 agentName={responseAgentAverage.agentName!}
+                title="Tiempo de respuesta por agente"
+                subtitle={`Top 10 promedio de respuesta a clientes. Filtrador por ${filterSummary}`}
               />
             ) : (
               <p className="empty-dashboard">

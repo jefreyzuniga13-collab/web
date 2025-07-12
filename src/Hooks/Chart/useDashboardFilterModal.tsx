@@ -1,21 +1,36 @@
 import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toZonedTime, format } from "date-fns-tz";
+const initialForm: FilterForm = (() => {
+  const zone        = "America/Managua";
+   const nowInManagua = toZonedTime(new Date(), zone);
+  const fmt          = format(nowInManagua, "yyyy-MM-dd", { timeZone: zone });
 
-const initialForm: FilterForm = {
-  from: new Date(),
-  to: new Date(),
-  startTime: null,
-  endTime: null,
-  agentId: null,
-  adminUserId: null,
-  customerId: null,
-  today: false,
-  yesterday: false,
-  tomorrow: false,
-};
+  return {
+    from: fmt,
+    to:   fmt,
+    startTime: null,
+    endTime:   null,
+    agentId:      null,
+    adminUserId:  null,
+    customerId:   null,
+    today:     false,
+    yesterday: false,
+    tomorrow:  false
+  };
+})();
 
+const STORAGE_KEY = "dashboardFilters";
 const useDashboardFilterModal = () => {
-  const [form, setForm] = useState<FilterForm>(initialForm);
+  const [form, setForm] = useState<FilterForm>(() => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved ? JSON.parse(saved) as FilterForm : initialForm;
+});
+
+
+useEffect(() => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+}, [form]);
 
   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
@@ -36,6 +51,7 @@ const useDashboardFilterModal = () => {
 
     const handleClear =()=>{
       setForm(initialForm);
+      localStorage.removeItem(STORAGE_KEY);
     }
 
   return {

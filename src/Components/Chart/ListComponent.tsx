@@ -13,7 +13,8 @@ import {
   Autocomplete,
   TextField
 } from '@mui/material';
-import "@/Styles/Dashboard/ListComponent.css"
+import '@/Styles/Dashboard/ListComponent.css';
+
 export interface Column<T> {
   field: keyof T;
   headerName: string;
@@ -25,6 +26,8 @@ export interface DataTableProps<T> {
   columns: Column<T>[];
   filterField?: keyof T;
   filterLabel?: string;
+  threshold?: number;
+  onThresholdChange?: (value: number) => void;
   page: number;
   pageSize: number;
   totalCount: number;
@@ -38,7 +41,13 @@ export function ListComponent<T extends Record<string, any>>({
   columns,
   filterField,
   filterLabel = 'Filtrar',
-  page, pageSize, totalCount, setPage, setPageSize,
+  threshold,
+  onThresholdChange,
+  page,
+  pageSize,
+  totalCount,
+  setPage,
+  setPageSize,
   maxHeight = 500
 }: DataTableProps<T>) {
   const [filterValue, setFilterValue] = React.useState<string | null>(null);
@@ -65,10 +74,40 @@ export function ListComponent<T extends Record<string, any>>({
           options={filterOptions}
           value={filterValue}
           onChange={(_, v) => setFilterValue(v)}
-          renderInput={params => <TextField {...params} label={filterLabel} />}
-          sx={{ mb: 2, width: 300 }}
+          renderInput={params => (
+            <TextField
+              {...params}
+              placeholder={filterLabel}
+              InputProps={{
+                ...params.InputProps,
+                sx: { fontSize: '1.2rem' }
+              }}
+              sx={{
+                mb: 2,
+                width: 300,
+                '& .MuiInputBase-input::placeholder': {
+                  fontSize: '1.2rem'
+                }
+              }}
+            />
+          )}
           clearOnEscape
         />
+      )}
+
+      {threshold !== undefined && onThresholdChange && (
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+          <label style={{ fontSize: 12 }}>
+            Minutos mínimos:{' '}
+            <input
+              type="number"
+              value={threshold}
+              min={1}
+              onChange={e => onThresholdChange(Number(e.target.value))}
+              style={{ width: 60, marginLeft: 8 }}
+            />
+          </label>
+        </Box>
       )}
 
       <TableContainer component={Paper} sx={{ maxHeight, borderRadius: 2 }}>
