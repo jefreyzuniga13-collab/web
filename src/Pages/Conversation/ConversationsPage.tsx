@@ -9,6 +9,8 @@ import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import ConversationDetailModal from '@/Components/Conversation/ConversationDetailModalProps'
 import "@/Styles/Conversation/ConversationaPage.css"
 import Button from '@/Components/Common/Button'
+import type { StateTranslation } from '@/Interfaces/GlobalInterface'
+import { stateTranslations } from '@/Utils/Translation/stateTranslations'
 // import Spinner from '@/Components/Common/Spinner'
 
 export default function ConversationsPage() {
@@ -42,7 +44,7 @@ export default function ConversationsPage() {
       id: 'status', label: 'Estado', minWidth: 90,
       render: row => (
         <span className={`status_${row.status} status`}>
-          {row.status}
+          {stateTranslations[row.status as StateTranslation]}
         </span>
       )
     },
@@ -69,7 +71,8 @@ export default function ConversationsPage() {
         <div className='conversations-page__text'>
           <h1 className="conversations-page__title">Conversaciones</h1>
         <p className="conversations-page__subtitle">
-          Filtradas por estado: {stateFilter || 'Todos'}
+          Filtradas por estado: {stateTranslations[stateFilter as StateTranslation]}
+           {/* {stateFilter || 'Todos'} */}
         </p>
         </div>
 

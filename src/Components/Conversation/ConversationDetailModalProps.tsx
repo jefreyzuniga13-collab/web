@@ -2,6 +2,8 @@ import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
 import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Conversation/ConversationDetailModal.css'
+import type { StateTranslation } from '@/Interfaces/GlobalInterface'
+import { stateTranslations } from '@/Utils/Translation/stateTranslations'
 
 interface ConversationDetailModalProps {
   isOpen: boolean
@@ -45,7 +47,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
             </div> */}
             <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Estado</span>
-              <span className="conversation-modal__value">{data.status}</span>
+              <span className="conversation-modal__value"> {stateTranslations[data.status as StateTranslation]}</span>
             </div>
             {/* <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Archivada</span>
@@ -59,12 +61,13 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
           <div className="conversation-modal__grid">
             {[
               ['Creado', data.createdAt],
+              ['Cliente primer menasaje', data.clientFirstMessage],
+              ['Último mensaje cliente', data.clientLastMessageAt],
               ['Solicitud asignación cliente', data.agentRequestAt],
               ['Solicitud asignación admin', data.requestedAgentAt],
-              ['Asignado', data.assignedAt],
-             
-              // ['Primera respuesta', data.firstResponseAt]
-              // ['Actualizado', data.updatedAt],
+              ['Aceptación asignación del admin', data.assignedAt],
+              ['Primer mensaje agente', data.agentFirstMessageAt],
+              ['Último mensaje agente', data.agentLastMessageAt],
               ['Cerrado', data.closedAt],
               ['Incompleto', data.incompletedAt],
                ['Última actividad', data.lastActivity],

@@ -1,50 +1,60 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useNavigate } from 'react-router-dom'
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-import type { ConversationStatusCountResponseDto } from '@/Interfaces/Dashboard/DashboardInterfaces'
-import  '@/Styles/Dashboard/CustomPieChart.css'
-const COLORS = ['#356ace', '#10b981', '#f59e0b', '#dc2626', '#3b82f6', '#9ca3af']
+import { useNavigate } from "react-router-dom";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import type { ConversationStatusCountResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import "@/Styles/Dashboard/CustomPieChart.css";
+import type { StateTranslation } from "@/Interfaces/GlobalInterface";
+import { stateTranslations } from "@/Utils/Translation/stateTranslations";
+const COLORS = [
+  "#356ace",
+  "#10b981",
+  "#f59e0b",
+  "#dc2626",
+  "#3b82f6",
+  "#9ca3af",
+];
 
 interface Props {
   // title:    string
   // subtitle: string
-  data:     ConversationStatusCountResponseDto[] | null
+  data: ConversationStatusCountResponseDto[] | null;
 }
 
 export default function CustomPieChart({ data }: Props) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   if (!data || data.length === 0) {
-    return <div>No hay datos para mostrar recientes hoy.</div>
+    return <div>No hay datos para mostrar recientes hoy.</div>;
   }
 
   // Preparamos el array { name, value }
-  const chartData = data.map(item => ({
-    name:  item.status,
+  const chartData = data.map((item) => ({
+    name: item.status,
     value: item.count,
-  }))
+  }));
 
-  const RADIAN = Math.PI / 180
+  const RADIAN = Math.PI / 180;
 
   // Función que dibuja porcentaje (dentro) y nombre (fuera)
   const renderAllLabels = ({
-    cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload,
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    index,
+    payload,
   }: any) => {
     // coordenadas para el % (entre inner y outer)
-    const radius   = innerRadius + (outerRadius - innerRadius) * 0.5
-    const xPercent = cx + radius * Math.cos(-midAngle * RADIAN)
-    const yPercent = cy + radius * Math.sin(-midAngle * RADIAN)
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const xPercent = cx + radius * Math.cos(-midAngle * RADIAN);
+    const yPercent = cy + radius * Math.sin(-midAngle * RADIAN);
 
     // coordenadas para el nombre (apenas un poco más fuera)
-    const outerOffset = outerRadius + 20
-    const xName = cx + outerOffset * Math.cos(-midAngle * RADIAN)
-    const yName = cy + outerOffset * Math.sin(-midAngle * RADIAN)
+    const outerOffset = outerRadius + 20;
+    const xName = cx + outerOffset * Math.cos(-midAngle * RADIAN);
+    const yName = cy + outerOffset * Math.sin(-midAngle * RADIAN);
 
     return (
       <g>
@@ -53,7 +63,7 @@ export default function CustomPieChart({ data }: Props) {
           x={xPercent}
           y={yPercent}
           fill="white"
-          textAnchor={xPercent > cx ? 'start' : 'end'}
+          textAnchor={xPercent > cx ? "start" : "end"}
           dominantBaseline="central"
           fontSize={12}
         >
@@ -65,15 +75,15 @@ export default function CustomPieChart({ data }: Props) {
           x={xName}
           y={yName}
           fill={COLORS[index % COLORS.length]}
-          textAnchor={xName > cx ? 'start' : 'end'}
+          textAnchor={xName > cx ? "start" : "end"}
           dominantBaseline="central"
           fontSize={12}
         >
-          {payload.name}
+          {stateTranslations[payload.name as StateTranslation]}
         </text>
       </g>
-    )
-  }
+    );
+  };
 
   return (
     <div className="pieChart__container">
@@ -92,17 +102,17 @@ export default function CustomPieChart({ data }: Props) {
             // renderAllLabels dibuja % y nombre con sus colores
             label={renderAllLabels}
             onClick={(entry) => {
-              const status = (entry as any).name
-              navigate(`/conversation/${encodeURIComponent(status)}`)
+              const status = (entry as any).name;
+              navigate(`/conversation/${encodeURIComponent(status)}`);
             }}
           >
             {chartData.map((_, idx) => (
               <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(val: number) => [`${val}`, 'Count']} />
+          <Tooltip formatter={(val: number) => [`${val}`, "Cantidad "]} />
         </PieChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

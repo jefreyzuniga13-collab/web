@@ -38,3 +38,11 @@ export interface DataTableProps<T> {
   maxHeight?: string;
   className?: string;
 }
+
+
+  export type StateTranslation =
+  | 'Incomplete'
+  | 'Human'
+  | 'Closed'
+  | 'Waiting'
+  | 'Bot'

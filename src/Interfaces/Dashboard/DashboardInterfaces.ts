@@ -26,11 +26,19 @@ export interface DashboardData {
 
 export type ConversationStatus = 
   | 'Bot'
-  | 'Closed';
+  | 'Closed'
+  | "Waiting"
+  | "Incompleted"
+  | "Human";
 
 export interface ConversationStatusCountResponseDto {
   status: ConversationStatus ;
   count: number;
+}
+
+export interface statusMapColor {
+  status: ConversationStatus;
+  color: string;
 }
 
 export interface AverageAssignmentTimeResponseDto{

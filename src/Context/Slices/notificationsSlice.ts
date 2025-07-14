@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { getNotifications, getUnreadCount } from '@/Services/NotificationService'
+import { getNotifications, getUnreadCount } from '@/Services/Notification/NotificationService'
 import type { NotificationsResponse, NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 interface NotificationsState {

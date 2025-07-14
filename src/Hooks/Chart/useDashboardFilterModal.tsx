@@ -43,15 +43,19 @@ const useDashboardFilterModal = () => {
   };
 
   const handleSelectChange =
-    (name: keyof FilterForm) =>
+    (name: keyof FilterForm, label: keyof FilterForm) =>
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const val = e.target.value;
+
+      const selectedIndex = e.target.selectedIndex;
+      const selectedOption = e.target.options[selectedIndex]
       // Si viene cadena vacía => null, si no => número
       const parsed =
         val === ""
           ? null
           : Number(val);
       setForm(f => ({ ...f, [name]: parsed }));
+      setForm(f => ({ ...f, [label]: selectedOption.textContent}));
     };
 
   const handleClear = () => {

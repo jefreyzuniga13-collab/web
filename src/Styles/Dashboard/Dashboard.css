@@ -78,7 +78,8 @@
     color: var(--text-primary);
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
-     text-align: left;
+    text-align: left;
+    margin: 2px 0;
 }
 
 .dashboard-waiting__subtitle{
@@ -86,5 +87,12 @@
     font-size: var(--font-size-base);
     text-wrap: wrap;
     text-overflow: ellipsis;
-     text-align: left;
+    text-align: left;
+    margin: var(--space-xs) 0;
+}
+
+.MuiChartsLabel-root,
+.MuiChartsLegend-label{
+  font-size: var(--font-size-base);
+
 }

@@ -15,7 +15,7 @@ import type { WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardI
 import { format, toZonedTime } from "date-fns-tz";
 import { parseISO, parse } from "date-fns";
 
-const DashboardPresentation: React.FC = () => {
+const DashboardPage: React.FC = () => {
   const {
     statusData,
     averageAssignmentTime,
@@ -85,13 +85,13 @@ const DashboardPresentation: React.FC = () => {
       }
     }
     if (filters.agentId != null) {
-      parts.push(`Agente: ${filters.agentId}`);
+      parts.push(`Agente: ${filters.agentName}`);
     }
     if (filters.adminUserId != null) {
-      parts.push(`Admin: ${filters.adminUserId}`);
+      parts.push(`Admin: ${filters.adminUserName}`);
     }
     if (filters.customerId != null) {
-      parts.push(`Cliente: ${filters.customerId}`);
+      parts.push(`Cliente: ${filters.customerName}`);
     }
 
     return parts.length > 0 ? parts.join(", ") : "Todos los registros";
@@ -108,7 +108,21 @@ const DashboardPresentation: React.FC = () => {
           ? new Date(c.clienteLastMessage).toLocaleString("es-NI")
           : "-"
     },
-    { field: "averageTime", headerName: "Tiempo de espera" }
+    {
+      field: "averageTime",
+      headerName: "Tiempo de espera",
+      render: c => {
+        const s = c.averageTime!;
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+
+        const sr = s % 60;
+        const mr = m % 60;
+        const hr = h % 24
+
+        return `${hr >= 1 ? hr + 'hr' : ''} ${mr}m ${sr}s`;
+      }
+    }
   ], []);
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
@@ -145,7 +159,7 @@ const DashboardPresentation: React.FC = () => {
     },
     {
       field: "assignedAt",
-      headerName: "Asignación agente",
+      headerName: "Aceptación solicitud asignación por el agente  ",
       render: c =>
         c.assignedAt
           ? new Date(c.assignedAt).toLocaleString("es-NI")
@@ -186,10 +200,17 @@ const DashboardPresentation: React.FC = () => {
           : c.incompletedAt
           ? new Date(c.incompletedAt)
           : new Date();
-        const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
-        const m = Math.floor(diff / 60);
-        const s = diff % 60;
-        return `${m}m ${s}s`;
+
+        const diff = end.getTime() - start.getTime();
+        const s = Math.floor(diff / 1000);
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+
+        const sr = s % 60;
+        const mr = m % 60;
+        const hr = h % 24
+
+        return `${hr >= 1 ? hr + 'hr' : ''} ${mr}m ${sr}s`;
       }
     }
   ], []);
@@ -203,14 +224,16 @@ const DashboardPresentation: React.FC = () => {
           <div>
             <h1 className="dashboard-header-title">Dashboard</h1>
             <p className="dashboard-header-subtitle">
-              Resumen general de rendimiento y análisis de información.
+             {filterSummary == null ?  "Resumen general de rendimiento y análisis de información."
+             : "Filtro: " + filterSummary
+             }
             </p>
           </div>
           <section className="dashboard-filter">
             <div className="dashboard-header-btn">
               <Button
                 onClick={handleRefresh}
-                variant="destructive"
+                variant="tertiary"
                 disabled={loadingCharts}
               >
                 <HiRefresh size={14} /> Refrescar
@@ -231,7 +254,7 @@ const DashboardPresentation: React.FC = () => {
                 Conversaciones Por Estado
               </h4>
               <p className="dashboard-waiting__subtitle">
-                {`Porcentaje de conversaciones por estado actual (${filterSummary})`}
+                {`Porcentaje de conversaciones por estado actual`}
               </p>
               {statusData.length > 0 ? (
                 <CustomPieChart data={statusData} />
@@ -251,14 +274,16 @@ const DashboardPresentation: React.FC = () => {
             <CustomBarChart
               data={averageAssignmentTime}
               title="Promedio de Aceptación"
-              subtitle={`Tiempo promedio de asignación agente por administradora (${filterSummary})`}
+              subtitle={`Tiempo promedio de asignación agente por administradora`}
             />
 
             <div className="conversationList">
               <h4 className="dashboard-waiting__title">
                 Conversaciones recientes de contactos
               </h4>
-              <p className="dashboard-waiting__subtitle">{filterSummary}</p>
+               <p className="dashboard-waiting__subtitle">
+                {`Lista de las convesaiones mas recientes incluyendo el ciclo de desde la creación hasta el cierre o incompleta`}
+              </p>
               {loadingList ? (
                 <Spinner size={24} text="Cargando lista..." />
               ) : conversationClient.length > 0 ? (
@@ -284,7 +309,7 @@ const DashboardPresentation: React.FC = () => {
             <div className="dashboard-waiting__container">
               <h3 className="dashboard-waiting__title">Clientes críticos</h3>
               <p className="dashboard-waiting__subtitle">
-                {filterSummary}, Clientes sin gestión y con ≥ {threshold} min en espera
+                Clientes sin gestión y con ≥ {threshold} min en espera
               </p>
               {loadingWaiting ? (
                 <Spinner size={24} text="Cargando clientes críticos..." />
@@ -309,7 +334,7 @@ const DashboardPresentation: React.FC = () => {
             <div>
               <h4 className="dashboard-waiting__title">Promedio de respuestas</h4>
               <p className="dashboard-waiting__subtitle">
-                {`Porcentaje de conversaciones por estado actual (${filterSummary})`}
+                {`Promedio de respuesta a mensajes del clientes`}
               </p>
               {responseAgentAverage ? (
                 <AgentResponseChart
@@ -337,4 +362,4 @@ const DashboardPresentation: React.FC = () => {
   );
 };
 
-export default DashboardPresentation;
+export default DashboardPage;

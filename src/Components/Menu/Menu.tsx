@@ -7,16 +7,17 @@ import { useDispatch } from 'react-redux';
 import { logout } from '@/Context/Slices/authSlice';
 import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Menu/Navbar.css';
-import { ThreeDot } from 'react-loading-indicators';
+// import { ThreeDot } from 'react-loading-indicators';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/User/useUsers';
+import Tooltip from '@mui/material/Tooltip';
 
 interface NavbarProps {
   id: number;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ id }) => {
-  const { menus, loading, error } = useMenus();
+  const { menus, error } = useMenus();
   const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -42,13 +43,13 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
     }
   };
 
-  if (loading) return (
-    <div className="navbar__loading">
-      <div className="navbar__loader">
-        <ThreeDot color="#356ace" size="medium" />
-      </div>
-    </div>
-  );
+  // if (loading) return (
+  //   <div className="navbar__loading">
+  //     <div className="navbar__loader">
+  //       <ThreeDot color="#356ace" size="medium" />
+  //     </div>
+  //   </div>
+  // );
   
   if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
@@ -84,15 +85,17 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           const showBadge = m.url === 'notifications' && unreadCount > 0;
 
           return (
-            <MenuItem
-              key={m.menuId}
-              icon={<Icon size={20} />}
-              text={m.name}
-              onClick={() => onClick(m.url, m.name)}
-              selected={isSelected}
-              badge={showBadge ? unreadCount : undefined}
-              className = {collapsed ? 'collapsed-styles' : ''}
-            />
+            <Tooltip describeChild title={m.name}>
+                 <MenuItem
+                    key={m.menuId}
+                    icon={<Icon size={20} />}
+                    text={m.name}
+                    onClick={() => onClick(m.url, m.name)}
+                    selected={isSelected}
+                    badge={showBadge ? unreadCount : undefined}
+                    className = {collapsed ? 'collapsed-styles' : ''}
+                  />
+            </Tooltip>
           );
         })}
       </ul>

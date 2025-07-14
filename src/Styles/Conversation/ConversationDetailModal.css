@@ -66,6 +66,7 @@
 .conversation-modal__cell {
   display: flex;
   flex-direction: column;
+  margin-top: var(--space-lg);
 }
 
 .conversation-modal__label {

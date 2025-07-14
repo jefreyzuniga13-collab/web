@@ -16,7 +16,8 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   width: 100%;
-  max-width: 64rem;
+  height: 70%;
+  max-width: 90rem;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -29,7 +30,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .cm-modal__title {

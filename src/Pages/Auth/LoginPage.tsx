@@ -8,7 +8,6 @@ import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-
 export default function LoginPresentation() {
   const { t } = useTranslation();
   const {
@@ -101,7 +100,7 @@ export default function LoginPresentation() {
               </Link>
             </div>
 
-            <Button
+               <Button
               type="submit"
               variant="primary"
               disabled={!canSubmit || loading}

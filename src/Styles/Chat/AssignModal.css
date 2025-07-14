@@ -20,8 +20,10 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   width: 100%;
-  max-width: 52rem;
+  height: 80%;
+  max-width: 70rem;
   max-height: 90vh;
+  padding: var(--space-2xl);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -528,7 +530,7 @@
 
 @media (min-width: 120rem) {
   .assign-modal__container {
-    max-width: 60rem;
+   max-height: 95vh;
   }
   
   .assign-modal__status-grid {
@@ -542,7 +544,7 @@
   }
   
   .assign-modal__container {
-    max-height: 85vh;
+   max-height: 95vh;
   }
   
   .assign-modal__body {

@@ -15,7 +15,6 @@ const NotificationsPage: React.FC = () => {
           <p>{n.payload}</p>
         </li>
       ))}
-      {/* aquí podrías poner paginación usando meta */}
     </ul>
   );
 };

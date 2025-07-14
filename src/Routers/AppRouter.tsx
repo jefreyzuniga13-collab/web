@@ -12,7 +12,7 @@ const Activation      = lazy(() => import('@/Pages/Auth/ActivationAccountPage'))
 const Unauthorized    = lazy(() => import('@/Components/Common/Unauthorized'))
 const SupportPage     = lazy(() => import('@/Pages/Chat/SupportPage'))
 const UsersPage       = lazy(() => import('@/Pages/User/UsersPage'))
-const DashboardPresentation       = lazy(() => import('@/Pages/Dashboard/DashboardPresentation'))
+const DashboardPage       = lazy(() => import('@/Pages/Dashboard/DashboardPage'))
 const NotificationsPage       = lazy(() => import('@/Pages/Notification/NotificationsPage'))
 const NotFound        = lazy(() => import('@/Pages/NotFound'))
 const SystemParameterPage = lazy(() => import('@/Pages/Setting/SystemParameterPage'))
@@ -47,7 +47,7 @@ export function AppRouter() {
         <Route path="/unauthorized"    element={<Unauthorized />} />
           <Route element={<MainLayout />}>
             <Route index element={<Navigate to="chat" replace />} />
-            <Route path="dashboard" element={<DashboardPresentation />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="chat"      element={<SupportPage />} />
             <Route path="contacts"      element={<ContactPage />} />
             <Route path="users"  element={<UsersPage />} />

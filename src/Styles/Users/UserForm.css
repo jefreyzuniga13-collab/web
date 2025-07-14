@@ -50,7 +50,7 @@
 
 .user-form__label {
   margin-bottom: var(--space-xs);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-base) !important;
   color: var(--text-primary);
 }
 

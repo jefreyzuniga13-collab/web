@@ -127,9 +127,6 @@ class ConversationServ {
   async getAverageAssigmentAdminTime(
     filters: FilterForm
   ): Promise<AdminAsigmentResponseTimeResponseDto[]> {
-    filters.customerId = null;
-    filters.startTime = null;
-    filters.endTime = null;
     const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<AdminAsigmentResponseTimeResponseDto[]>>(
       "/Conversations/adminAverage",

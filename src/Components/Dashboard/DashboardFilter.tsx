@@ -76,7 +76,7 @@ export default function DashboardFilterModal({
               })),
             ]}
             value={form.agentId ?? ""}
-            onChange={handleSelectChange("agentId")}
+            onChange={handleSelectChange("agentId", "agentName")}
             className="filter__select"
           />
 
@@ -92,7 +92,7 @@ export default function DashboardFilterModal({
               })),
             ]}
             value={form.adminUserId ?? ""}
-            onChange={handleSelectChange("adminUserId")}
+            onChange={handleSelectChange("adminUserId", "adminUserName")}
             className="filter__select"
           />
 
@@ -108,7 +108,7 @@ export default function DashboardFilterModal({
               })),
             ]}
             value={form.customerId ?? ""}
-            onChange={handleSelectChange("customerId")}
+            onChange={handleSelectChange("customerId", "customerName")}
             className="filter__select"
           />
         </section>
