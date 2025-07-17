@@ -11,6 +11,8 @@ import '@/Styles/Dashboard/CustomBarChart.css'
 interface ChartItem {
   name: string
   label: string
+  days: number
+  hours: number
   minutes: number
   seconds: number
   displayLabel: string
@@ -30,7 +32,7 @@ interface Props {
 
 function CustomBarChart({
   title,
-   subtitle,
+  subtitle,
   data,
   threshold,
   onThresholdChange
@@ -40,22 +42,47 @@ function CustomBarChart({
 
   const items: ChartItem[] = Array.isArray(data)
     ? data.map(item => {
-        const rawSeconds = (item as any).averageTime ?? (item as any).averageSeconds ?? 0
-        const seconds = Math.floor(rawSeconds)
-        const minutes = Math.floor(rawSeconds / 60)
-        const name = (item as any).clientName ?? item.name ?? 'Pendiente'
-        const displayLabel = seconds < 60 ? `${seconds}s` : `${minutes}min`
-        return { name, minutes, seconds, label: `${name} (${displayLabel} / ${seconds}s)`, displayLabel }
+        const raw = (item as any).averageTime ?? (item as any).averageSeconds ?? 0
+        let remaining = Math.floor(raw)
+
+        const days = Math.floor(remaining / 86400)
+        remaining %= 86400
+
+        const hours = Math.floor(remaining / 3600)
+        remaining %= 3600
+
+        const minutes = Math.floor(remaining / 60)
+        const seconds = remaining % 60
+
+        const parts: string[] = []
+        if (days) parts.push(`${days}d`)
+        if (hours) parts.push(`${hours}h`)
+        if (minutes) parts.push(`${minutes}m`)
+        if (seconds) parts.push(`${seconds}s`)
+
+        const displayLabel = parts.join(' ') || '0s'
+        const name = (item as any).clientName ?? (item as any).name ?? 'Pendiente'
+
+        return {
+          name,
+          days,
+          hours,
+          minutes,
+          seconds,
+          displayLabel,
+          label: `${name} (${displayLabel})`
+        }
       })
     : []
 
   const series = [
     {
-      data: items.map(i => (i.seconds < 60 ? i.seconds : i.minutes)),
+      data: items.map(i =>
+        i.days * 86400 + i.hours * 3600 + i.minutes * 60 + i.seconds
+      ),
       label: 'Tiempo promedio',
-      color: title === 'Promedio de Asignación' ? '#356ace' : '#3b7ec1ff',
       showLabel: true,
-      valueFormatter: (_: number, context: any) => items[context.dataIndex].displayLabel
+      valueFormatter: (_: number, ctx: any) => items[ctx.dataIndex].displayLabel
     }
   ]
 
@@ -65,8 +92,8 @@ function CustomBarChart({
 
   return (
     <div className="barChart__Container" style={{ textAlign: 'center' }}>
-      <h2 className="custom__barChart-title">{title}</h2>
-      <p className="custom__barChart-subtitle">{subtitle}</p>
+      {title && <h2 className="custom__barChart-title">{title}</h2>}
+      {subtitle && <p className="custom__barChart-subtitle">{subtitle}</p>}
       {hasInput && (
         <div style={{ margin: '8px 0', display: 'flex', justifyContent: 'center' }}>
           <label>
@@ -81,7 +108,6 @@ function CustomBarChart({
           </label>
         </div>
       )}
-
       {items.length > 0 ? (
         <BarChart
           height={300}

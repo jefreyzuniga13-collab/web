@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   TableContainer,
@@ -62,33 +62,29 @@ export function ListComponent<T extends Record<string, any>>({
     return rows.filter((r) => `${r[filterField]}` === filterValue);
   }, [rows, filterField, filterValue]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filterValue, pageSize, setPage]);
+  // useEffect(() => {
+  //   setPage(1);
+  // }, [filterValue, pageSize, setPage]);
 
   return (
     <Box sx={{ p: 2 }}>
       {filterField && (
-        <Autocomplete
+         <Autocomplete
           size="small"
           className="listComponente__autocomplete"
           options={filterOptions}
           value={filterValue}
           onChange={(_, v) => setFilterValue(v)}
+          sx={{ width: 300, mb: 3 }}
           renderInput={(params) => (
             <TextField
               {...params}
               placeholder={filterLabel}
-              InputProps={{
-                ...params.InputProps,
-                sx: { fontSize: "1.2rem" },
-              }}
-              sx={{
-                mb: 2,
-                width: 300,
-                "& .MuiInputBase-input::placeholder": {
-                  fontSize: "1.2rem",
-                },
+              fullWidth
+              InputProps={params.InputProps}
+              inputProps={{
+                ...params.inputProps,
+                style: { fontSize: "1.2rem" },
               }}
             />
           )}

@@ -4,8 +4,7 @@ import { MessageSquareOff } from 'lucide-react'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Chat/InboxList.css'
-import { parseISO } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { format } from 'date-fns'
 
 interface Props {
   selectedId?: number
@@ -23,8 +22,7 @@ const formatDuration = (ms: number): string => {
 export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all' }) => {
   const { conversations, reload } = useConversations(filter)
   const [now, setNow] = useState(Date.now())
-  const authRaw = localStorage.getItem('auth') || '{}'
-  const { userId } = JSON.parse(authRaw) as { userId: number }
+  const { userId } = JSON.parse(localStorage.getItem('auth') || '{}') as { userId: number }
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -32,14 +30,13 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
   }, [])
 
   const formatTime = (iso?: string) => {
-  if (!iso) return '';
-  try {
-    const date = parseISO(iso);
-    return formatInTimeZone(date, 'America/Managua', 'HH:mm');
-  } catch {
-    return '';
+    if (!iso) return ''
+    try {
+      return format(iso, 'HH:mm')
+    } catch {
+      return ''
+    }
   }
-};
 
   if (conversations.length === 0) {
     return (
@@ -64,12 +61,13 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
         .slice()
         .sort(
           (a, b) =>
-            new Date(b.lastActivity || b.createdAt).getTime() -
-            new Date(a.lastActivity || a.createdAt).getTime()
+            new Date(b.updatedAt || b.createdAt).getTime() -
+            new Date(a.updatedAt || a.createdAt).getTime()
         )
         .map((c: ConversationDto) => {
           const isSelected = c.conversationId === selectedId
-          const lastTime = formatTime(c.lastActivity || c.createdAt)
+          const lastTime = formatTime(c.updatedAt || c.createdAt)
+
           const statusClass = c.status.toLowerCase().includes('human')
             ? 'human'
             : c.status.toLowerCase().includes('bot')
@@ -82,14 +80,14 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
             ? 'incomplete'
             : 'default'
           const statusTextMap: Record<string, string> = {
-            New: 'Nuevo',
             Bot: 'Bot',
             Waiting: 'Pendiente',
             Human: 'Humano',
             Closed: 'Cerrado',
-            Incomplete: 'Incompleta'
+            Incomplete: 'Incompleta',
           }
           const statusText = statusTextMap[c.status] || c.status
+
           const unread =
             userId === c.assignedAgentId
               ? c.unreadForAgent ?? 0
@@ -103,22 +101,10 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
             timeSinceRequest = formatDuration(now - new Date(c.requestedAgentAt).getTime())
           }
 
-          let timeToFirstResponse = ''
-          if (c.assignedAt && !c.agentFirstMessageAt) {
-            timeToFirstResponse = formatDuration(now - new Date(c.assignedAt).getTime())
-          } else if (c.assignedAt && c.agentFirstMessageAt) {
-            timeToFirstResponse = formatDuration(
-              new Date(c.agentFirstMessageAt).getTime() - new Date(c.assignedAt).getTime()
-            )
-          }
-
           const clientLast = formatTime(c.clientLastMessageAt)
           let previewText = `Cliente últ. msj: ${clientLast}`
           if (!c.assignedAt && c.requestedAgentAt) {
             previewText += ` · Desde solicitud: ${timeSinceRequest}`
-          }
-          if (c.assignedAt && timeToFirstResponse) {
-            previewText += ` · Hasta 1ª respuesta: ${timeToFirstResponse}`
           }
 
           return (
@@ -132,9 +118,6 @@ export const InboxList: React.FC<Props> = ({ selectedId, onSelect, filter = 'all
               className={`inbox-list__item${isSelected ? ' inbox-list__item--selected' : ''}`}
             >
               <div className="inbox-list__top">
-                {/* <div className={`inbox-list__avatar ixl_conversation-tone__${c.tone}`}>
-                  {(c.clientContactName || 'U').charAt(0).toUpperCase()}
-                </div> */}
                 <div className="inbox-list__details">
                   <div className="inbox-list__name-row">
                     <span className="inbox-list__name">{c.clientContactName || 'Usuario'}</span>

@@ -18,7 +18,8 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   width: 100%;
-  max-width: 70rem;
+  height: 70%;
+  max-width: 90rem;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -156,4 +157,9 @@
     width: 100%;
     padding: 1rem 0.7rem;
     font-size: var(--font-size-sm) ;
+}
+
+.sp_helpText{
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-400);
 }

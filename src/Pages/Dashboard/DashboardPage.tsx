@@ -112,18 +112,22 @@ const DashboardPage: React.FC = () => {
       field: "averageTime",
       headerName: "Tiempo de espera",
       render: c => {
-        const s = c.averageTime!;
-        const m = Math.floor(s / 60);
-        const h = Math.floor(m / 60);
+       const totalSeconds = c.averageTime ?? 0;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
 
-        const sr = s % 60;
-        const mr = m % 60;
-        const hr = h % 24
-
-        return `${hr >= 1 ? hr + 'hr' : ''} ${mr}m ${sr}s`;
+        return `${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s`;
       }
     }
   ], []);
+  
+//   const totalSeconds = c.averageTime ?? 0;
+// const hours = Math.floor(totalSeconds / 3600);
+// const minutes = Math.floor((totalSeconds % 3600) / 60);
+// const seconds = totalSeconds % 60;
+
+// return ${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s;
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
     { field: "clientContactName", headerName: "Contacto" },
@@ -201,19 +205,24 @@ const DashboardPage: React.FC = () => {
           ? new Date(c.incompletedAt)
           : new Date();
 
-        const diff = end.getTime() - start.getTime();
-        const s = Math.floor(diff / 1000);
-        const m = Math.floor(s / 60);
-        const h = Math.floor(m / 60);
+          const diffMs = end.getTime() - start.getTime();
+          const totalSeconds = Math.floor(diffMs / 1000);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
 
-        const sr = s % 60;
-        const mr = m % 60;
-        const hr = h % 24
-
-        return `${hr >= 1 ? hr + 'hr' : ''} ${mr}m ${sr}s`;
+          return `${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s`;
       }
     }
   ], []);
+
+//   const diffMs = end.getTime() - start.getTime();
+// const totalSeconds = Math.floor(diffMs / 1000);
+// const hours = Math.floor(totalSeconds / 3600);
+// const minutes = Math.floor((totalSeconds % 3600) / 60);
+// const seconds = totalSeconds % 60;
+
+// return ${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s;
 
   const handleOpenFilterModal = () => setIsFilterOpen(true);
 
@@ -309,7 +318,7 @@ const DashboardPage: React.FC = () => {
             <div className="dashboard-waiting__container">
               <h3 className="dashboard-waiting__title">Clientes críticos</h3>
               <p className="dashboard-waiting__subtitle">
-                Clientes sin gestión y con ≥ {threshold} min en espera
+                Clientes sin gestión y con ≥ {threshold} min en espera (Sin mensaje de respuesta)
               </p>
               {loadingWaiting ? (
                 <Spinner size={24} text="Cargando clientes críticos..." />
@@ -332,9 +341,9 @@ const DashboardPage: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="dashboard-waiting__title">Promedio de respuestas</h4>
+              <h4 className="dashboard-waiting__title">Promedio respuestas agente por clientes.</h4>
               <p className="dashboard-waiting__subtitle">
-                {`Promedio de respuesta a mensajes del clientes`}
+                {`Promedio de respuesta a mensajes del clientes por agente. Seleccione un agente en el filtro.`}
               </p>
               {responseAgentAverage ? (
                 <AgentResponseChart

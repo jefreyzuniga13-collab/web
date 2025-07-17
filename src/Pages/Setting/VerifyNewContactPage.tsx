@@ -154,27 +154,6 @@ const VerifyNewContactPage: React.FC = () => {
               )}
             </div> 
 
-            {/* <div className="verifyContact-grid-col">
-                  <label htmlFor="companyId">Seleccione una compañía</label>
-                          <Autocomplete
-                            options={companiesList}
-                             className="verifyContact__select"
-                            getOptionLabel={h => h.name}
-                            value={companiesList.find(h => h.companyId === form.companyId) || null}
-                            onChange={(_, h) => handleSelectUser(h?.companyId || 0)}
-                            renderInput={params => (
-                              <TextField
-                                {...params}
-                                label="Horario"
-                                size="small"
-                                error={!!errors.companyId}
-                                helperText={errors.companyId}
-                                className="verifyContact__select-text"
-                              />
-                            )}
-                          />
-                        </div> */}
-
             <div className="verifyContact-grid-col">
               <label htmlFor="waName">Nombre de WhatsApp</label>
               <Input

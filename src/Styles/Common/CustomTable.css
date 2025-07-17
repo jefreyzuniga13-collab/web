@@ -22,12 +22,12 @@
 }
 
 .table__cell--body {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--font-size-sm) !important;
 }
 
 .table__pagination,
 .table__pagination p {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--font-size-sm) !important;
 }
 
 .status {
@@ -68,12 +68,12 @@
 }
 
 .table__cell--body {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--font-size-sm) !important;
 }
 
 .table__pagination,
 .table__pagination p {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--font-size-sm) !important;
 }
 
 /* Status badge (if used) */
@@ -104,6 +104,6 @@
 }
 
 .MuiTableCell-root{
-  font-size: var(--font-size-base) !important;
+  font-size: var(--font-size-sm) !important;
   pad: var(--space-sm) 0 !important;
 }

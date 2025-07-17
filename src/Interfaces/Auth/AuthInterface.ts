@@ -87,7 +87,8 @@ export interface SystemParamResponseDto {
 export interface SystemParamRequestDto {
   id: number;
   name: string;
-  value: string;
+  value?: string;
   description: string;
   type: string;
+  isActive?: boolean;
 }

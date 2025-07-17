@@ -17,7 +17,8 @@ import { nameTranslations } from '@/Utils/Translation/nameTranslations'
 const typeTranslations: Record<TypeTranslation, string> = {
   Prompts: "Mensaje",
   Temp: "Tiempo",
-  Keyworks: "Palabra clave"
+  Keywords: "Palabra clave",
+  Conditional: "Condicional"
 }
 
 export default function SystemParamsPage() {
@@ -55,7 +56,7 @@ export default function SystemParamsPage() {
       minWidth: 200,
       render: row => (
         <span title={row.value} className={row.value == "true" ? 'status status--active' : ''}>
-          {row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value}
+          {row.value!= null ? row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value : "---"}
         </span>
       ),
     },

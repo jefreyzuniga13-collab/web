@@ -114,6 +114,7 @@ export const AssignModal: React.FC = () => {
           <div className="assign-modal__field">
             <label className="assign-modal__label">Estado de la conversación</label>
             <div className="assign-modal__status-grid">
+
               {statusOptions.map(option => (
                 <label
                   key={option.value}
@@ -139,6 +140,7 @@ export const AssignModal: React.FC = () => {
                   <span className="assign-modal__status-label">{option.label}</span>
                 </label>
               ))}
+              
             </div>
           </div>
         </div>

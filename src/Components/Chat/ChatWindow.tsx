@@ -2,20 +2,18 @@ import React, { useEffect } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
+import { format, parseISO } from 'date-fns'
 
-const niFormatter = new Intl.DateTimeFormat('es-NI', {
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'America/Managua'
-})
-
-const formatTime = (iso?: string) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ''
-  return niFormatter.format(d)
-}
-
+ const formatTime = (iso?: string) => {
+    if (!iso) return ''
+    try {
+      const dt = parseISO(iso)
+      return format(dt, 'HH:mm')  
+    } catch {
+      return ''
+    }
+  }
+  
 interface Props {
   conversationId?: number
   userId: number
@@ -81,6 +79,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? messages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
+
+          const sentAt = formatTime(m.sentAt);
+
           return (
             <div key={m.messageId} className={getMessagePosition(m)}>
               {showSender && !isCurrentUser && (
@@ -172,7 +173,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                 </div>
                 <div className="chat-window__message-info">
                   <span className="chat-window__message-time">
-                    {formatTime(m.sentAt)}
+                    {sentAt}
                   </span>
                   {getStatusIcon(m, isCurrentUser)}
                 </div>

@@ -103,8 +103,6 @@ export function markConversationRead(conversationId: number) {
   return api.post<void>(`/Conversations/${conversationId}/mark-read`);
 }
 
-//Por que no se enviand siempre todas las propiedades
-//Filtrar en base a todos los campos
 class ConversationServ {
   private normalizeFilters(filters: FilterForm) {
     return Object.entries(filters).reduce((acc, [key, val]) => {

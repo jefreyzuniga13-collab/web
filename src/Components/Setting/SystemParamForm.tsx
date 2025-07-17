@@ -10,6 +10,7 @@ import type {
 } from '@/Interfaces/Auth/AuthInterface'
 import '@/Styles/Setting/SystemParamForm.css'
 import type { NameTranslation } from '@/Interfaces/Setting/OpeningHour'
+import { nameTranslations } from '@/Utils/Translation/nameTranslations'
 
 interface SystemParamModalProps {
   mode: 'create' | 'edit' | 'view'
@@ -23,34 +24,8 @@ const typeOptions = [
   { value: 'Prompts', label: 'Mensaje' },
   { value: 'Keywords', label: 'Palabra Clave' },
   { value: 'Temp', label: 'Tiempo' },
+  { value: 'Conditional', label: 'Condicional' },
 ]
-
-const nameTranslations: Record<NameTranslation, string> = {
-  WelcomeBot: "Bienvenida ChatBot",
-  AskFullName: "Pregunta Nombre",
-  AskIdCard: "Pregunta Cédula",
-  InvalidIdFormat: "Cédula Invalida",
-  DataComplete: "Datos Completos",
-  InactivityWarning: "Advertencia Inactividad",
-  InactivityClosed: "Inactividad Cerrada",
-  SupportRequestReceived: "Solicitud Soporte Recibida",
-  WaitWarningCloseTime: "Advertencia Cierre Espera",
-  InactivityWarningThresholdMesssage: "Mensaje Umbral Inactividad",
-  WaitWarningCloseMesssage: "Mensaje Advertencia Cierre",
-  BotGreetings: "Saludo Bot",
-  AskCompanyName: "Pregunta Nombre Empresa",
-  InvalidPasswordFormat: "Formato Contraseña Invalido",
-  InvalidResidenceCardFormat: "Formato Cédula Residencia Invalido",
-  RequestIdType: "Solicitud Tipo Identificación",
-  ContactComplete: "Contacto Completo",
-  OutOfBotContext: "Fuera Contexto Bot",
-  RequestUnderReviewMessage: "Mensaje Solicitud En Revisión",
-  RequestUnderReviewTime: "Tiempo Solicitud En Revisión",
-  UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
-  UnclosedConversationTime: "Tiempo Conversación No Cerrada",
-  ClientCriticalStateTime: '',
-  UseMultimediaContext: ''
-};
 
 export default function SystemParamModal({
   mode,
@@ -59,7 +34,7 @@ export default function SystemParamModal({
   onClose,
   onSubmit,
 }: SystemParamModalProps) {
-  const { form, errors, isView, handleChange, handleSelect, handleSubmit } =
+  const { form, errors, isView, handleChange, handleSelect, handleCheckbox, handleSubmit } =
     useSystemParamForm({ mode, data: data || null, onSubmit })
 
   if (!isOpen) return null
@@ -110,21 +85,59 @@ export default function SystemParamModal({
               {errors.type && <div className="sp-modal__error">{errors.type}</div>}
             </div>
 
+                        {/* {form.type === "keyValue" && (
+              <div className="sp-modal__col sp-modal__col--full">
+                <Label htmlFor="description" className="sp-modal__label">
+                  Clave *
+                </Label>
+                <Textarea
+                  id="keyValue"
+                  name="keyValue"
+                  value={form.keyValue}
+                  onChange={handleChange}
+                  rows={4}
+                  disabled={isView}
+                  className='sp-modal__input'
+                />
+                {errors.description && (
+                  <div className="sp-modal__error">{errors.keyValue}</div>
+                )}
+              </div>
+            )} */}
+
+            {form.type === "Conditional" ? (
+
             <div className="sp-modal__col sp-modal__col--full">
               <Label htmlFor="value" className="sp-modal__label">
-                Valor *
+                Activa
               </Label>
-              <Textarea
-                id="value"
-                name="value"
-                value={form.value}
-                onChange={handleChange}
-                rows={3}
-                disabled={isView}
-                className='sp-modal__input'
-              />
-              {errors.value && <div className="sp-modal__error">{errors.value}</div>}
+              <input type='checkbox' checked={form.isActive} name='isActive' id='isActive' onChange={handleCheckbox}/>
             </div>
+            ): (
+              
+                 <div className="sp-modal__col sp-modal__col--full">
+                  <Label htmlFor="value" className="sp-modal__label">
+                    Valor *
+                  </Label>
+                  <Textarea
+                    id="value"
+                    name="value"
+                    value={form.value}
+                    onChange={handleChange}
+                    rows={3}
+                    disabled={isView}
+                    className='sp-modal__input'
+                  />
+                  {form.type ===  "Keywords" && (
+                    <p className='sp_helpText'>El formato deve de ser un JSON. Ejemplo válido: ["valor1","valor2"]</p>
+                  )}
+                  {form.type ===  "Conditional" && (
+                    <p className='sp_helpText'>Los valors permitidos son Si/No</p>
+                  )}
+                  {errors.value && <div className="sp-modal__error">{errors.value}</div>}
+                </div>
+              
+            )}
 
             <div className="sp-modal__col sp-modal__col--full">
               <Label htmlFor="description" className="sp-modal__label">

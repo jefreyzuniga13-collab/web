@@ -29,7 +29,7 @@ export async function createHubConnection(token: string) {
   chatConnection.onreconnecting(err => console.warn('Reconnecting to Chat Hub...', err))
   chatConnection.onreconnected(() => console.info('Reconnected to Chat Hub'))
   chatConnection.onclose(err => {
-    console.error('Chat Hub connection closed', err)
+     console.info("Coneccion cerrada", err)
     // toast.warn('La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.')
   })
 
@@ -41,7 +41,7 @@ export async function createHubConnection(token: string) {
   userConeccion.onreconnecting(err=> console.warn("Reconnecting to User Hub...", err))
   userConeccion.onreconnected(()=> console.info("Reconnected to User Chat Hub"));
   userConeccion.onclose(err =>{
-    console.error("USER HUB conection closed", err);
+    console.info("Coneccion cerrada", err)
   })
 
   notificationsConnection = new signalR.HubConnectionBuilder()
@@ -58,7 +58,7 @@ export async function createHubConnection(token: string) {
   )
 
   notificationsConnection.onclose(err =>
-    console.error('Notifications Hub connection closed', err)
+     console.info("Coneccion cerrada", err)
   )
 
   presenceConnection = new signalR.HubConnectionBuilder()
@@ -135,7 +135,7 @@ export async function createHubConnection(token: string) {
     ])
     return { chatConnection, notificationsConnection, presenceConnection, userConeccion }
   } catch (error) {
-    console.error('Error starting SignalR connections:', error)
+     console.info("Coneccion cerrada", error)
     throw error
   }
 }

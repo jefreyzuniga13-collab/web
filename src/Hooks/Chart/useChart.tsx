@@ -169,6 +169,11 @@ export const useConversationChart = () => {
 
   const handleRefresh = () => {
     setRefresh(prev => !prev);
+    setPage(1)
+    setWaitingPage(1)
+      fetchData();
+    fetchWaiting(1, waitingPageSize);
+    fetchConversationByClientPage(1, pageSize);
   };
 
   return {

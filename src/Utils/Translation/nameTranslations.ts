@@ -24,5 +24,14 @@ export const nameTranslations: Record<NameTranslation, string> = {
   UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
   UnclosedConversationTime: "Tiempo Conversación No Cerrada",
   UseMultimediaContext: "Uso contenido multimedia en el contexto",
-  ClientCriticalStateTime: "Tiempo critico de espera de cliente"
+  ClientCriticalStateTime: "Tiempo critico de espera de cliente",
+  AgentMaxConversationLimit: "Cantidad maxima de conversaciónes posibles a asignar.",
+  ConversationRatingMessageHeader: "Cabezera del mensaje de petición de encuesta atención al cliente",
+  ConversationRatingMessageBody: "Cuerpo del mensaje de petición encuesta atención al cliente",
+  ConversationRatingMessageFooter: "Pie de pagina del mensaje de encuesta de atención al cliente",
+  ConversationRatingValues: "Scala de encuesta enviada al clente",
+  RatingMessageHeader: "Cabezera del mensaje de encuesta enviado al cliente",
+  RatingMessageBody: "Cuerpo del mensaje de encuesta enviado al cliente",
+  RatingMessageFooter: "Pie de pagina del mensaje de encuesta enviado al cliente",
+  IsGeneralRatingActive: "Envio de encuesta generales activas"
 };

@@ -189,11 +189,11 @@ body {
 .u-block { display: block; }
 .u-flex { display: flex; }
 .u-grid { display: grid; }
-
+/* 
 .MuiAutocomplete-listbox .MuiAutocomplete-option {
   font-size: var(--font-size-lg);
   line-height: 1.4;  
-}
+} */
 
 .cm-modal__container .MuiAutocomplete-listbox .MuiAutocomplete-option {
    font-size: var(--font-size-lg);

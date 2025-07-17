@@ -28,11 +28,21 @@ export type NameTranslation =
   | 'UnclosedConversationTime'
   | "UseMultimediaContext"
   | "ClientCriticalStateTime"
+  | "AgentMaxConversationLimit"
+  | "ConversationRatingMessageHeader"
+  | "ConversationRatingMessageBody"
+  | "ConversationRatingMessageFooter"
+  | "ConversationRatingValues"
+  | "RatingMessageHeader"
+  | "RatingMessageBody"
+  | "RatingMessageFooter"
+  | "IsGeneralRatingActive"
 
   export type TypeTranslation =
   | 'Prompts'
   | 'Temp'
-  | 'Keyworks'
+  | 'Keywords'
+  | 'Conditional'
 
 export interface Column<T> {
   id: Extract<keyof T, string> | 'actions';

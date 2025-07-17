@@ -2,8 +2,8 @@ import api from "@/Utils/ApiConfig";
 import { store } from "@/Context/index";
 import { refreshTokenThunk, logout } from "@/Context/Slices/authSlice";
 //import { openReLoginModal } from "@/Context/Slices/uiSlice";
-import { toast } from "react-toastify";
-import { t } from "i18next";
+// import { toast } from "react-toastify";
+// import { t } from "i18next";
 
 export function setupResponseInterceptor() {
   api.interceptors.response.use(
@@ -38,7 +38,7 @@ export function setupResponseInterceptor() {
 
       // 429 → too many requests
       if (status === 429) {
-        toast.error(t("errors.tooManyRequests"));
+        // toast.error(t("errors.tooManyRequests"));
         return Promise.reject(error);
       }
 
