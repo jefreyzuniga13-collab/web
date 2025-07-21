@@ -7,11 +7,6 @@ import type {
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
-// import { formatoNicaragua } from "@/Utils/LocalDateFormat";
-
-export function getConversationsByRole() {
-  return api.get<{ data: ConversationDto[] }>("/Conversations/getByRole");
-}
 
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/Conversations/${id}`);
@@ -227,6 +222,68 @@ class ConversationServ {
     );
     return data.data;
   }
+
+
+  async getConversationByDate(
+    from: Date,
+    to: Date,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+
+
+    const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/getConversationByDate",
+      {
+        params: {
+          from: from.toISOString(),
+          to: to.toISOString(),
+          PageNumber: page,
+          PageSize: pageSize
+        }
+      }
+    );
+    return data.data;
+  }
+
+  // async getConversationsByRole(
+  //   from: Date,
+  //   to: Date,
+  //   page: number,
+  //   pageSize: number
+  // ): Promise<PagedResponse<ConversationDto>> {
+  //   const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
+  //     "/Conversations/getByRole",
+  //     { from: from.toISOString(), to: to.toISOString() },
+  //     { params: { PageNumber: page, PageSize: pageSize } }
+  //   );
+
+  //   return data.data;
+  // }
+
+async getConversationsByRole(
+  from: Date,
+  to: Date,
+  page: number,
+  pageSize: number
+): Promise<PagedResponse<ConversationDto>> {
+  const fromIso = from.toISOString();
+  const toIso   = to.toISOString();
+
+  const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
+    "/Conversations/getByRole",
+    null,
+    {
+      params: {
+        from:       fromIso,
+        to:         toIso,
+        pageNumber: page,
+        pageSize:   pageSize
+      }
+    }
+  );
+  return data.data;
+}
 }
 
 export const ConversationService = new ConversationServ();

@@ -13,6 +13,7 @@ import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 
 const SupportPage: React.FC = () => {
   const {
+    conversation,
     setOrderModalVisible,
     saveOrder,
     filterOrder,
@@ -101,8 +102,8 @@ const SupportPage: React.FC = () => {
               </>
             )}
             <button
-              className={`assign-button ${isAdmin ? "" : "button-cerrar"}`}
-              disabled={!convId}
+              className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${conversation?.status == "Closed" ? "btnDisabled" : ""}`}
+              disabled={!convId || conversation?.status == "Closed"}
               onClick={handleAssignClick}
             >
               <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}

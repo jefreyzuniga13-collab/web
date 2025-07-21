@@ -50,6 +50,10 @@
 .button-cerrar{
   background-color: var(--color-error);
 }
+
+.btnDisabled{
+  background-color: var(--border-secondary);
+}
 .contact-detail-button {
   background-color: transparent;
   border: 0.1rem solid var(--color-primary);

@@ -22,7 +22,6 @@ const idTypeOptions = [
 ]
 
 const statusOptions = [
-  { value: 'New', label: 'Nuevo' },
   { value: 'PendingApproval', label: 'Pendiente Aprobación' },
   { value: 'Approved', label: 'Aprobado' },
   { value: 'Rejected', label: 'Rechazado' },

@@ -7,18 +7,15 @@ import {
 } from "@/Services/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/assignModalSlice";
-
 interface AuthStorage {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
   userId: number;
 }
-
 interface JwtPayload {
   role: string;
 }
-
 // Tipo de cada opción de filtro
 type FilterOption = { label: string; value: string; content: string };
 
@@ -51,7 +48,6 @@ export function useSupportPage() {
   if (isAdmin) {
     DEFAULT_OPTIONS = [
       { label: "Todos", value: "all", content: "Todos" },
-      { label: "Nuevo", value: "new", content: "Nuevo" },
       { label: "Bot", value: "bot", content: "Bot" },
       { label: "Pendiente", value: "waiting", content: "Pendiente" },
       { label: "Humano", value: "human", content: "Humano" },
@@ -132,6 +128,7 @@ export function useSupportPage() {
   };
 
   return {
+    conversation,
     setOrderModalVisible,
     saveOrder,
     filterOrder,

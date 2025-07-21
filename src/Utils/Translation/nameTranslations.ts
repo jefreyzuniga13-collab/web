@@ -33,5 +33,7 @@ export const nameTranslations: Record<NameTranslation, string> = {
   RatingMessageHeader: "Cabezera del mensaje de encuesta enviado al cliente",
   RatingMessageBody: "Cuerpo del mensaje de encuesta enviado al cliente",
   RatingMessageFooter: "Pie de pagina del mensaje de encuesta enviado al cliente",
-  IsGeneralRatingActive: "Envio de encuesta generales activas"
+  IsGeneralRatingActive: "Envio de encuesta generales activas",
+  RatingReceivedAtAtMessage: "Mensaje validación encuesta completada",
+  SurveyRequestReceivedAtMessage: "Mensaje validación decisión realizar o no encuesta"
 };

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import Button from "@/Components/Common/Button";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { useConversations } from "@/Hooks/useConversations";
 
 type FilterOption = { label: string; value: string; content: string };
 interface FilterOrderModalProps {
@@ -17,16 +20,11 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
 }) => {
   const [order, setOrder] = useState<string[]>(currentOrder);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const { form, handleDate, applyDateFilter } = useConversations();
 
-  const handleDragStart = (idx: number) => {
-    setDragIndex(idx);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (idx: number) => {
+  const handleDragStart = (idx: number) => setDragIndex(idx);
+  const handleDragOver  = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop      = (idx: number) => {
     if (dragIndex === null) return;
     const newOrder = [...order];
     const [moved] = newOrder.splice(dragIndex, 1);
@@ -35,13 +33,19 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
     setDragIndex(null);
   };
 
+  const handleSave = () => {
+    onSave(order);
+    applyDateFilter(); 
+    onClose();
+  };
+
   return (
     <div className="modal-overlay">
       <div className="order-modal">
         <h3 className="order-modal-title">Ordenar filtros</h3>
         <ul className="order-list">
           {order.map((val, idx) => {
-            const opt = options.find((o) => o.value === val);
+            const opt = options.find(o => o.value === val);
             if (!opt) return null;
             return (
               <li
@@ -57,11 +61,51 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
             );
           })}
         </ul>
+
+        <div className="ws-modal-dateFilter">
+     
+
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Válido desde"
+                value={form.validFrom}
+                onChange={d => d && handleDate("validFrom", d)}
+                format="dd/MM/yyyy"
+                slotProps={{
+                  textField: {
+                    className: "date-picker-field",
+                    fullWidth: true,
+                    size: "medium"
+                  },
+                }}
+              />
+            </LocalizationProvider>
+       
+
+
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Válido hasta"
+                value={form.validTo}
+                onChange={d => d && handleDate("validTo", d)}
+                format="dd/MM/yyyy"
+                slotProps={{
+                  textField: {
+                    className: "date-picker-field",
+                    fullWidth: true,
+                     size: "medium"
+                  },
+                }}
+              />
+            </LocalizationProvider>
+ 
+        </div>
+
         <div className="order-modal-actions">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={() => onSave(order)}>
+          <Button variant="primary" onClick={handleSave}>
             Guardar
           </Button>
         </div>

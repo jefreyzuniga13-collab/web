@@ -302,7 +302,15 @@
 
 .order-modal-title{
   font-size: var(--font-size-xl);
-  text-align: left;
+  text-align: center;
+}
+
+.ws-modal-dateFilter{
+  display: flex !important;
+  flex-direction: row !important;
+  gap: var(--space-lg);
+  padding: 0 !important;
+  margin: var(--space-2xl) 0 !important;
 }
 
 .order-list{

@@ -37,6 +37,8 @@ export type NameTranslation =
   | "RatingMessageBody"
   | "RatingMessageFooter"
   | "IsGeneralRatingActive"
+  | "RatingReceivedAtAtMessage"
+  | "SurveyRequestReceivedAtMessage"
 
   export type TypeTranslation =
   | 'Prompts'
