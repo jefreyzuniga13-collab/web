@@ -61,7 +61,6 @@ export function AppRouter() {
             <Route path="settings" element={<Navigate to="/system-params" replace />} />
         </Route>
 
-        {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
