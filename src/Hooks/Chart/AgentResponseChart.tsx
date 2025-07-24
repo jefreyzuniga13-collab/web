@@ -44,21 +44,24 @@ export default function AgentResponseChart({ data, agentName, title, subtitle }:
         Promedio global: <strong>{formatTime(globalAvgSeconds)}</strong> (<em>{totalClients} clientes</em>)
       </p>
 
-      <BarChart
-        height={300}
-        series={[
-          {
-            data: top10.map(i => i.value),
-            label: 'Tiempo de respuesta',
-            valueFormatter: formatTime,
-          },
-        ]}
-        xAxis={[{ data: top10.map(i => i.name), scaleType: 'band' }]}
-        yAxis={[{ width: 60, valueFormatter: formatTime }]}
-        slotProps={{
-          tooltip: { trigger: 'item' },
-        }}
-      />
+     <BarChart
+      height={300}
+      series={[{
+        data: top10.map(i => i.value),
+        label: 'Tiempo de respuesta',
+        valueFormatter: formatTime,
+      }]}
+      xAxis={[{
+        data: top10.map(i => i.name),
+      }]}
+      yAxis={[{ width: 60, valueFormatter: formatTime }]}
+      slotProps={{
+        tooltip: {
+          trigger: 'axis'
+        }
+      }}
+    />
+
     </div>
   );
 }

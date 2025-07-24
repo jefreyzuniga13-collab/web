@@ -34,18 +34,18 @@ export default function UsersPage() {
   } = useUsers()
 
   const columns: Column<any>[] = [
-    { id: 'fullName', label: 'Nombre', minWidth: 150 },
-    { id: 'email',    label: 'Email',  minWidth: 100 },
+    { id: 'fullName', label: 'Nombre', minWidth: 110 },
+    { id: 'email',    label: 'Email',  minWidth: 70 },
      {
       id: 'roles',
       label: 'Roles',
-      minWidth: 150,
+      minWidth: 80,
       render: row => row.roles.map((r: { roleName: string }) => r.roleName).join(', ')
     },
     {
       id: 'isActive',
       label: 'Estado',
-      minWidth: 100,
+      minWidth: 80,
       render: row => (
         <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
           {row.isActive ? 'Activo' : 'Inactivo'}
@@ -55,18 +55,18 @@ export default function UsersPage() {
      {
       id: 'isOnline',
       label: 'En Línea',
-      minWidth: 100,
+      minWidth: 70,
       render: row => (
         <span className={row.lastOnline ? 'status status--active' : 'status status--inactive'}>
           {row.isOnline ? 'Si' : 'No'}
         </span>
       )
     },
-     { id: 'createdAt', label: 'Creado', minWidth: 110, render: row => new Date(row.createdAt!).toLocaleDateString('es-NI') },
+     { id: 'createdAt', label: 'Creado', minWidth: 80, render: row => new Date(row.createdAt!).toLocaleDateString('es-NI') },
     {
       id: 'actions',
       label: 'Acciones',
-      minWidth: 130,
+      minWidth: 100,
       align: 'center',
       render: row => (
         <>

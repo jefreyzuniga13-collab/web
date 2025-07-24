@@ -111,22 +111,20 @@ export const AssignModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="assign-modal__field">
+           <div className="assign-modal__field">
             <label className="assign-modal__label">Estado de la conversación</label>
             <div className="assign-modal__status-grid">
 
               {statusOptions.map(option => (
                 <label
                   key={option.value}
-                  className={`assign-modal__status-option assign-modal__status-option--${option.color} ${
-                    status === option.value ? 'assign-modal__status-option--selected' : ''
-                  }`}
+                  className={`assign-modal__status-option assign-modal__status-option--${option.color} 
+                  assign-modal__status-option--selected`}
                 >
                   <input
                     type="radio"
                     name="conversation-status"
                     value={option.value}
-                    checked={status === option.value}
                     disabled={
                       option.value === 'Human'
                         ? !(selectedAgent && selectedIsOnline)
@@ -143,6 +141,7 @@ export const AssignModal: React.FC = () => {
               
             </div>
           </div>
+          
         </div>
 
 

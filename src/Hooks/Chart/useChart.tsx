@@ -16,7 +16,9 @@ import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem("dashboardFilters");
   if (saved) return JSON.parse(saved) as FilterForm;
+  
   const fmt = formatoNicaragua(new Date());
+
   return {
     from: fmt,
     to: fmt,
@@ -48,7 +50,7 @@ export const useConversationChart = () => {
   const [waitingClient, setWaitingClient] = useState<WaitingClientResponseDto[]>([]);
   const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto | null>(null);
   const [conversationClient, setConversationClient] = useState<ConversationDto[]>([]);
-  const [criticialClientTime, setCriticialClientTime] = useState<string>("");
+  // const [criticialClientTime, setCriticialClientTime] = useState<string>("");
   const [threshold, setThreshold] = useState<number>(() => getInitialThreshold(60));
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
@@ -69,15 +71,20 @@ export const useConversationChart = () => {
 
   useEffect(() => {
     (async () => {
+      
       const res = await SystemParamService.getByNameAsync("ClientCriticalStateTime");
-      setCriticialClientTime(res.value);
-      const def = parseInt(res.value, 10);
-      if (!isNaN(def) && localStorage.getItem("criticalThreshold") === null) {
+      // setCriticialClientTime(res.value); 
+      const def = parseInt(res.value, 10);   
+      if (localStorage.getItem("criticalThreshold") === null) {
         setThreshold(def);
+        console.log("Valor del def una ves aplicado el set", def)
       }
     })();
+
   }, []);
 
+
+  //Esta seccio se deve de correjir la asuncronaia
   useEffect(() => {
     localStorage.setItem("criticalThreshold", String(threshold));
   }, [threshold]);
@@ -183,7 +190,7 @@ export const useConversationChart = () => {
     waitingClient,
     responseAgentAverage,
     conversationClient,
-    criticialClientTime,
+    // criticialClientTime,
     threshold,
     setThreshold,
     filters,

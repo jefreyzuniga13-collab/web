@@ -13,7 +13,9 @@ export type NameTranslation =
   | 'InactivityClosed'
   | 'SupportRequestReceived'
   | 'WaitWarningCloseTime'
+  | 'Keywords'
   | 'InactivityWarningThresholdMesssage'
+  | 'InactivityWarningThresholdTime'
   | 'WaitWarningCloseMesssage'
   | 'BotGreetings'
   | 'AskCompanyName'
@@ -39,6 +41,9 @@ export type NameTranslation =
   | "IsGeneralRatingActive"
   | "RatingReceivedAtAtMessage"
   | "SurveyRequestReceivedAtMessage"
+  | "RequestUnderReviewContactResponseMessage"
+  | "PreviewAgentWarningMessage"
+  | "PreviewAgentWarningMessageTime"
 
   export type TypeTranslation =
   | 'Prompts'

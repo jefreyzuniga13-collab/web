@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import { logout } from '@/Context/Slices/authSlice';
 import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Menu/Navbar.css';
-// import { ThreeDot } from 'react-loading-indicators';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/User/useUsers';
 import Tooltip from '@mui/material/Tooltip';
@@ -20,7 +19,6 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, error } = useMenus();
   const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -43,14 +41,6 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
     }
   };
 
-  // if (loading) return (
-  //   <div className="navbar__loading">
-  //     <div className="navbar__loader">
-  //       <ThreeDot color="#356ace" size="medium" />
-  //     </div>
-  //   </div>
-  // );
-  
   if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
   return (
@@ -61,6 +51,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           alt="PC Group S.A logo"
           className="navbar__logo"
         />
+        
         <button 
           className="navbar__collapse-btn" 
           onClick={() => setCollapsed(!collapsed)}
@@ -69,15 +60,10 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
             ? <SquareArrowRight size={20} />
             : <SquareArrowLeft size={20} />}
         </button>
-        <button 
-          className="navbar__mobile-toggle" 
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          <Icons.Menu size={24} />
-        </button>
+
       </div>
 
-      <ul className={`navbar__menu ${mobileOpen ? 'navbar__menu--open' : ''}`}>
+      <ul className={`navbar__menu`}>
         {menus.map(m => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const Icon = (Icons as any)[m.icon] ?? Icons.Menu;
@@ -100,7 +86,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
         })}
       </ul>
 
-      <div className="navbar__footer">
+      <div className="general-container">
         {userLoading ? (
           <div className="navbar__profile">
             <div className="navbar__profile-loading">Cargando usuario...</div>

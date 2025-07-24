@@ -54,19 +54,6 @@
     background-color: var(--bg-secondary);
     color: var(--color-primary);
   }
-
-  .navbar__mobile-toggle {
-    display: none;
-    padding: var(--space-md);
-    cursor: pointer;
-    background-color: var(--bg-primary);
-    border: none;
-    border-bottom: 0.1rem solid var(--border-secondary);
-    align-items: center;
-    gap: var(--space-sm);
-    color: var(--text-primary);
-  }
-
   .navbar__menu {
     list-style-type: none;
     padding: 0;
@@ -267,77 +254,6 @@
     padding: var(--space-lg);
   }
 
-  /* TABLETS (768px - 1024px) */
-  @media (max-width: 76.8rem) {
-    .navbar {
-      width: 100%;
-      height: auto;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      border-right: none;
-      border-bottom: 0.1rem solid var(--border-secondary);
-    }
-
-    .navbar--collapsed {
-      width: 100%;
-    }
-
-    .navbar__header {
-      display: none;
-    }
-
-    .navbar__mobile-toggle {
-      display: flex;
-    }
-
-    .navbar__menu {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height var(--transition-normal) var(--transition-ease);
-      background: var(--bg-primary);
-    }
-
-    .navbar__menu--open {
-      max-height: 30rem;
-    }
-
-    .navbar--collapsed .menu-item__text {
-      opacity: 1;
-      width: auto;
-    }
-
-    .navbar__footer {
-      display: none;
-    }
-
-    .navbar__loading,
-    .navbar__error {
-      width: 100%;
-      height: auto;
-      min-height: 6rem;
-    }
-  }
-
-  /* MÓVILES PEQUEÑOS (hasta 768px) */
-  @media (max-width: 48rem) {
-    .navbar__menu--open {
-      max-height: 25rem;
-    }
-
-    .menu-item {
-      padding: 0 var(--space-md);
-    }
-
-    .menu-item__content {
-      padding: var(--space-sm) var(--space-md);
-    }
-
-    .menu-item__text {
-      font-size: var(--font-size-sm);
-    }
-  }
-
   /* LAPTOPS (1024px - 1200px) */
   @media (min-width: 76.8rem) and (max-width: 120rem) {
     .navbar {
@@ -353,17 +269,17 @@
     }
 
     .navbar--collapsed .navbar__logo {
-      width: 3.6rem;
+      width: 3rem;
     }
 
     .navbar__profile-photo {
-      width: 4.5rem;
-      height: 4.5rem;
+      width: 4rem;
+      height: 4rem;
     }
 
     .navbar--collapsed .navbar__profile-photo {
-      width: 3.5rem;
-      height: 3.5rem;
+      width: 3rem;
+      height: 3rem;
     }
 
     .navbar__profile-name {
@@ -540,12 +456,6 @@
     animation: slideIn var(--transition-normal) var(--transition-ease);
   }
 
-  .navbar__collapse-btn:focus,
-  .navbar__mobile-toggle:focus {
-    outline: 0.2rem solid var(--color-primary);
-    outline-offset: 0.2rem;
-  }
-
   .menu-item:focus-within {
     outline: 0.2rem solid var(--color-primary);
     outline-offset: -0.2rem;
@@ -560,17 +470,36 @@
     box-shadow: var(--shadow-sm);
   }
 
-  @media (min-width: 100rem) {
-    .navbar:hover {
-      box-shadow: var(--shadow-xl);
-    }
-
-    .menu-item:not(.menu-item--selected):hover .menu-item__content {
-      transform: translateX(0.4rem);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .navbar__collapse-btn:hover {
-      transform: scale(1.05);
-    }
+  @media (max-width: 1200px) {
+  .general-container{
+    max-width: 100%;
   }
+
+  .navbar__profile{
+    width: 50px;
+  }
+  .navbar__copyright{
+    display: none;
+  }
+  .navbar__profile-loading{
+    font-size: 0.7rem;
+  }
+
+  .navbar__collapse-btn{
+    display: none;
+  }
+
+  .navbar__menu,
+  .navbar{
+    width: 50px;
+  }
+
+  .navbar__logo{
+    width: 30px;
+    height: 30px;
+  }
+
+  .menu-item__icon{
+    max-width: 15px;
+  }
+}

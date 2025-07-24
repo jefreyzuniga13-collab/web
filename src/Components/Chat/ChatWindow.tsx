@@ -2,17 +2,14 @@ import React, { useEffect } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
-import { format, parseISO } from 'date-fns'
 
- const formatTime = (iso?: string) => {
-    if (!iso) return ''
-    try {
-      const dt = parseISO(iso)
-      return format(dt, 'HH:mm')  
-    } catch {
-      return ''
-    }
-  }
+
+const formatTime = (iso?: string) => {
+  if (!iso) return ''
+  const match = iso.match(/T(\d{2}:\d{2})/)
+  return match ? match[1] : ''
+}
+
   
 interface Props {
   conversationId?: number

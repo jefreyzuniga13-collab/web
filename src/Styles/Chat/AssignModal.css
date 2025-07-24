@@ -213,19 +213,20 @@
   background-color: var(--bg-primary);
 }
 
-.assign-modal__status-option:hover {
-  border-color: var(--color-primary);
+/* .assign-modal__status-option:hover {
   background-color: var(--bg-tertiary);
   transform: translateY(-0.1rem);
   box-shadow: var(--shadow-md);
+} */
+
+.assign-modal__status-option:has(.assign-modal__status-radio:checked) {
+ border-color: var(--color-success) !important;
+ background-color: rgba(16, 185, 129, 0.1) !important;
 }
 
-.assign-modal__status-option--selected {
-  border-color: var(--color-primary);
-  background-color: rgba(53, 106, 206, 0.05);
-}
 
-.assign-modal__status-option--bot.assign-modal__status-option--selected {
+
+/* .assign-modal__status-option--bot.assign-modal__status-option--selected {
   border-color: var(--color-primary);
   background-color: rgba(53, 106, 206, 0.1);
 }
@@ -238,7 +239,7 @@
 .assign-modal__status-option--closed.assign-modal__status-option--selected {
   border-color: var(--text-muted);
   background-color: rgba(107, 114, 128, 0.1);
-}
+} */
 
 .assign-modal__status-radio {
   position: absolute;

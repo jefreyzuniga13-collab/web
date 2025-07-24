@@ -34,6 +34,7 @@ export interface DataTableProps<T> {
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
   maxHeight?: number;
+  showAutoComplete: boolean;
 }
 
 export function ListComponent<T extends Record<string, any>>({
@@ -49,6 +50,7 @@ export function ListComponent<T extends Record<string, any>>({
   setPage,
   setPageSize,
   maxHeight = 500,
+  showAutoComplete,
 }: DataTableProps<T>) {
   const [filterValue, setFilterValue] = React.useState<string | null>(null);
 
@@ -62,34 +64,58 @@ export function ListComponent<T extends Record<string, any>>({
     return rows.filter((r) => `${r[filterField]}` === filterValue);
   }, [rows, filterField, filterValue]);
 
-  // useEffect(() => {
-  //   setPage(1);
-  // }, [filterValue, pageSize, setPage]);
-
   return (
     <Box sx={{ p: 2 }}>
-      {filterField && (
-         <Autocomplete
-          size="small"
-          className="listComponente__autocomplete"
-          options={filterOptions}
-          value={filterValue}
-          onChange={(_, v) => setFilterValue(v)}
-          sx={{ width: 300, mb: 3 }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder={filterLabel}
-              fullWidth
-              InputProps={params.InputProps}
-              inputProps={{
-                ...params.inputProps,
-                style: { fontSize: "1.2rem" },
+
+      {showAutoComplete && (
+        <>
+          {filterField && (
+
+            <Autocomplete
+              size="medium"
+              options={filterOptions}
+              value={filterValue}
+              onChange={(_, v) => setFilterValue(v)}
+              clearOnEscape
+              sx={{
+                width: 300,
+                mb: 3,
+                "& .MuiInputBase-root": {
+                  fontSize: 12,
+                  padding: 0,
+                  height: 40,
+                  "& .MuiAutocomplete-input": {
+                    padding: 0,
+                  }
+                },
+                "& .MuiAutocomplete-option": {
+                  fontSize: 12,
+                  py: 0,
+                }
               }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={filterLabel}
+                  fullWidth
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    fontSize: 16,
+                    py: 0,
+                  }}
+                >
+                  {option || option}
+                </Box>
+              )}
             />
+
           )}
-          clearOnEscape
-        />
+        </>
       )}
 
       {threshold !== undefined && onThresholdChange && (

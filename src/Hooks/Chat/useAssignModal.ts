@@ -40,8 +40,8 @@ export function useAssignModal () :  AssignModalHook{
   const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId)
 
   const statusOptions: { value: ConversationStatus; label: string; color: string }[] = [
-    { value: 'Human', label: 'Asignar', color: 'human' },
     { value: 'Closed', label: 'Cerrar', color: 'closed' },
+     { value: 'Human', label: 'Asignar', color: 'human' },
   ]
 
   // Al abrir, cargar agentes y estado inicial

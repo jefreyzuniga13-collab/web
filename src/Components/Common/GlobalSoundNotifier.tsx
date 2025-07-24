@@ -12,7 +12,6 @@ export function GlobalSoundNotifier() {
   useEffect(() => {
     const playIfNotMine = (senderUserId: number) => {
       if (senderUserId !== myUserId) {
-        console.log('Playing notification sound for new message from user:', senderUserId)
         notificationSound.play()
       }
     }

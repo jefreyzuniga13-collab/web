@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
 import {jwtDecode} from 'jwt-decode'
 import { useSignalR } from '@/Context/SignalRContext'
@@ -5,6 +6,7 @@ import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Ch
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
 import { joinConversation } from '@/Services/signalr'
 import { ConversationService } from '@/Services/ConversationService'
+import { formatInTimeZone } from 'date-fns-tz'
 
 export type Filter = 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
 
@@ -14,6 +16,9 @@ export interface FormInterface {
   validFrom: Date | null
   validTo: Date | null
 }
+
+const zone = 'America/Managua'
+const PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX" 
 
 export interface UseConversationsResult {
   conversations: ConversationDto[]
@@ -169,13 +174,21 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
   const applyDateFilter = () => {
     if (!form.validFrom || !form.validTo) return
-    localStorage.setItem('convFrom', form.validFrom.toISOString())
-    localStorage.setItem('convTo', form.validTo.toISOString())
-    setPage(1)
-    setAppliedRange({
-      validFrom: form.validFrom,
-      validTo: form.validTo
-    })
+
+      const fromLocal = formatInTimeZone(form.validFrom, zone, PATTERN)
+      const toLocal   = formatInTimeZone(form.validTo,   zone, PATTERN)
+
+      localStorage.setItem('convFrom', fromLocal)
+      localStorage.setItem('convTo',   toLocal)
+  
+    localStorage.setItem('convFrom', fromLocal)
+  localStorage.setItem('convTo',   toLocal)
+
+  setAppliedRange({ 
+    validFrom: fromLocal as any,  
+    validTo:   toLocal   as any  
+  })
+  setPage(1)
   }
 
   useEffect(() => {

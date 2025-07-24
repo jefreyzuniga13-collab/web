@@ -1,5 +1,3 @@
-// src/Services/chatService.ts
-
 import api from '@/Utils/ApiConfig';
 import type { MessageDto, SentMessage } from '@/Interfaces/Chat/ChatInterfaces';
 

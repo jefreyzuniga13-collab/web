@@ -9,8 +9,10 @@ export const nameTranslations: Record<NameTranslation, string> = {
   InactivityWarning: "Advertencia Inactividad",
   InactivityClosed: "Inactividad Cerrada",
   SupportRequestReceived: "Solicitud Soporte Recibida",
-  WaitWarningCloseTime: "Advertencia Cierre Espera",
+  WaitWarningCloseTime: "Cierre de conversación por inactividad",
+  Keywords: "Palabras detección intención contactar con agente",
   InactivityWarningThresholdMesssage: "Mensaje Umbral Inactividad",
+  InactivityWarningThresholdTime: "Tiempo Umbral Inactividad",
   WaitWarningCloseMesssage: "Mensaje Advertencia Cierre",
   BotGreetings: "Saludo Bot",
   AskCompanyName: "Pregunta Nombre Empresa",
@@ -22,7 +24,7 @@ export const nameTranslations: Record<NameTranslation, string> = {
   RequestUnderReviewMessage: "Mensaje Solicitud En Revisión",
   RequestUnderReviewTime: "Tiempo Solicitud En Revisión",
   UnclosedConversationMessage: "Mensaje Conversación No Cerrada",
-  UnclosedConversationTime: "Tiempo Conversación No Cerrada",
+  UnclosedConversationTime: "Tiempo de cierre conversación estado asignado sin actividad",
   UseMultimediaContext: "Uso contenido multimedia en el contexto",
   ClientCriticalStateTime: "Tiempo critico de espera de cliente",
   AgentMaxConversationLimit: "Cantidad maxima de conversaciónes posibles a asignar.",
@@ -35,5 +37,8 @@ export const nameTranslations: Record<NameTranslation, string> = {
   RatingMessageFooter: "Pie de pagina del mensaje de encuesta enviado al cliente",
   IsGeneralRatingActive: "Envio de encuesta generales activas",
   RatingReceivedAtAtMessage: "Mensaje validación encuesta completada",
-  SurveyRequestReceivedAtMessage: "Mensaje validación decisión realizar o no encuesta"
+  SurveyRequestReceivedAtMessage: "Mensaje validación decisión realizar o no encuesta",
+  RequestUnderReviewContactResponseMessage:"Conversacion en espera. Respuesta al contacto a su mensaje",
+  PreviewAgentWarningMessage: "Mensaje de aviso de cierre de conversación por inactividad con estado asignado.",
+  PreviewAgentWarningMessageTime: "Tiempo de mensaje de aviso de cierre de conversación por inactividad con estado asignado."
 };

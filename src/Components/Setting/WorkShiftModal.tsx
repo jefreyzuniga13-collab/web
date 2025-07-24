@@ -111,8 +111,6 @@ export default function WorkShiftModal({
   }, [isOpen])
   if (!isOpen) return null
 
-  console.log("Valid to:", form.validTo);
-  console.log("Valid from:", form.validFrom);
   return (
     <div className="ws-modal__overlay">
       <div className="ws-modal__container">
@@ -137,8 +135,6 @@ export default function WorkShiftModal({
                     {...params}
                     label="Horario"
                     size="small"
-                    // error={!!errors.openingHourId}
-                    // helperText={errors.openingHourId}
                   />
                 )}
               />
@@ -157,10 +153,10 @@ export default function WorkShiftModal({
                     {...params}
                     label="Usuario asignado"
                     size="small"
-                    // error={!!errors.assignedUserId}
-                    // helperText={errors.assignedUserId}
+                    sx={{fontSize: 16, padding: 0}}
                   />
                 )}
+                
               />
             {errors.assignedUserId && <div className="ws-modal__error">{errors.assignedUserId}</div>}
             </div>

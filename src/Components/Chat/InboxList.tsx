@@ -106,6 +106,7 @@ export const InboxList: React.FC<Props> = ({
           closed: 'Cerrado',
           incomplete: 'Incompleta'
         }
+
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
         const unread =
           userId === c.assignedAgentId
@@ -140,8 +141,7 @@ export const InboxList: React.FC<Props> = ({
             }
             className={`inbox-list__item${
               isSelected ? ' inbox-list__item--selected' : ''
-            }`}
-          >
+            }`}>
             <div className="inbox-list__top">
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">

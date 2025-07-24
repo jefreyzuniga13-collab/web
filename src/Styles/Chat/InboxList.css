@@ -222,78 +222,6 @@
   color: var(--color-gray-400);
 }
 
-@media (max-width: 48rem) {
-  .inbox-header {
-    padding: var(--space-sm) var(--space-md);
-  }
-  
-  .inbox-list__item {
-    padding: var(--space-xs) var(--space-md);
-  }
-  
-  .inbox-list__avatar {
-    width: 1rem;
-    height: 1rem;
-    font-size: var(--font-size-base);
-  }
-  
-  .inbox-list__name {
-    font-size: var(--font-size-base);
-  }
-  
-  .inbox-list__preview {
-    font-size: var(--font-size-xs);
-  }
-  
-  .inbox-list__unread-indicator {
-    right: var(--space-md);
-  }
-  
-  .inbox-list__empty {
-    padding: var(--space-lg);
-  }
-}
-
-@media (min-width: 48.1rem) and (max-width: 76.8rem) {
-  .inbox-list__top {
-    gap: var(--space-sm);
-  }
-  
-  .inbox-list__avatar {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-}
-
-@media (min-width: 76.9rem) and (max-width: 120rem) {
-  .inbox-list__item {
-    padding: var(--space-xs) var(--space-xl);
-  }
-  
-  .inbox-list__unread-indicator {
-    right: var(--space-xl);
-  }
-}
-
-@media (min-width: 120.1rem) {
-  .inbox-header {
-    padding: var(--space-lg) var(--space-2xl);
-  }
-  
-  .inbox-list__item {
-    padding: var(--space-xs) var(--space-2xl);
-  }
-  
-  .inbox-list__avatar {
-    width: 2rem;
-    height: 2rem;
-  }
-  
-  .inbox-list__unread-indicator {
-    right: var(--space-2xl);
-  }
-}
-
 .order-modal{
   background-color: var(--bg-primary);
   padding: var(--space-2xl) var(--space-3xl);
@@ -352,4 +280,39 @@
 }
 .ixl_conversation-tone__Nodisponible{
   background-color: var(--success-rolor);
+}
+
+@media (max-width: 1239px) {
+  .inbox-list__name,
+  .inbox-list__agent,
+  .inbox-list__preview,
+  .inbox-list__status,
+  .inbox-list__unread-badge,
+  .inbox-list__status,
+  .inbox-status__label{
+    font-size: var(--font-size-xs);
+  }
+
+  .inbox-list__unread-badge,
+  .inbox-list__status,
+  .inbox-status__label{
+    font-size: var(--font-size-1xs);
+  }
+  
+}
+
+@media (max-width: 1239px) {
+  .inbox-status__input,
+  .inbox-status__label{
+    font-size: var(-font-size-1xs);
+  }
+}
+
+
+@media (max-width: 1350px) {
+    .inbox-list__bottom{
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
 }

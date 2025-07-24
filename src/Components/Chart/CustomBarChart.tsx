@@ -41,38 +41,42 @@ function CustomBarChart({
   const hasInput = threshold !== undefined && typeof onThresholdChange === 'function'
 
   const items: ChartItem[] = Array.isArray(data)
-    ? data.map(item => {
-        const raw = (item as any).averageTime ?? (item as any).averageSeconds ?? 0
-        let remaining = Math.floor(raw)
+    ? data
+        .map(item => {
+          const raw = (item as any).averageTime ?? (item as any).averageSeconds ?? 0
+          let remaining = Math.floor(raw)
 
-        const days = Math.floor(remaining / 86400)
-        remaining %= 86400
+          const days = Math.floor(remaining / 86400)
+          remaining %= 86400
 
-        const hours = Math.floor(remaining / 3600)
-        remaining %= 3600
+          const hours = Math.floor(remaining / 3600)
+          remaining %= 3600
 
-        const minutes = Math.floor(remaining / 60)
-        const seconds = remaining % 60
+          const minutes = Math.floor(remaining / 60)
+          const seconds = remaining % 60
 
-        const parts: string[] = []
-        if (days) parts.push(`${days}d`)
-        if (hours) parts.push(`${hours}h`)
-        if (minutes) parts.push(`${minutes}m`)
-        if (seconds) parts.push(`${seconds}s`)
+          const parts: string[] = []
+          if (days) parts.push(`${days}d`)
+          if (hours) parts.push(`${hours}h`)
+          if (minutes) parts.push(`${minutes}m`)
+          if (seconds) parts.push(`${seconds}s`)
 
-        const displayLabel = parts.join(' ') || '0s'
-        const name = (item as any).clientName ?? (item as any).name ?? 'Pendiente'
+          const displayLabel = parts.join(' ') || '0s'
+          const name = (item as any).clientName ?? (item as any).name ?? ''
 
-        return {
-          name,
-          days,
-          hours,
-          minutes,
-          seconds,
-          displayLabel,
-          label: `${name} (${displayLabel})`
-        }
-      })
+          if (!name || name.trim() === '' || name === 'Pendiente') return null
+
+          return {
+            name,
+            days,
+            hours,
+            minutes,
+            seconds,
+            displayLabel,
+            label: `${name} (${displayLabel})`
+          }
+        })
+        .filter((i): i is ChartItem => i !== null)
     : []
 
   const series = [

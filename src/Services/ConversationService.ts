@@ -246,21 +246,6 @@ class ConversationServ {
     return data.data;
   }
 
-  // async getConversationsByRole(
-  //   from: Date,
-  //   to: Date,
-  //   page: number,
-  //   pageSize: number
-  // ): Promise<PagedResponse<ConversationDto>> {
-  //   const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
-  //     "/Conversations/getByRole",
-  //     { from: from.toISOString(), to: to.toISOString() },
-  //     { params: { PageNumber: page, PageSize: pageSize } }
-  //   );
-
-  //   return data.data;
-  // }
-
 async getConversationsByRole(
   from: Date,
   to: Date,

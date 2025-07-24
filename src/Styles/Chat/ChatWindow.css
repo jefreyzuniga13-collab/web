@@ -749,3 +749,9 @@
     max-height: 40rem;
   }
 }
+
+@media (max-width: 1239px) {
+  .chat-window__message-text{
+    font-size: var(--font-size-sm);
+  }
+}

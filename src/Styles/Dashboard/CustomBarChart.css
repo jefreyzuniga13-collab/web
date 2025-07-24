@@ -26,3 +26,8 @@ margin: 2px 0;
 strong{
     font: var(--font-size-base) I !important;
 }
+
+.barChart__Container {
+  overflow-x: auto;
+  padding-bottom: 1rem; /* espacio para etiquetas rotadas */
+}

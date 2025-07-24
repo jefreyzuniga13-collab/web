@@ -121,13 +121,6 @@ const DashboardPage: React.FC = () => {
       }
     }
   ], []);
-  
-//   const totalSeconds = c.averageTime ?? 0;
-// const hours = Math.floor(totalSeconds / 3600);
-// const minutes = Math.floor((totalSeconds % 3600) / 60);
-// const seconds = totalSeconds % 60;
-
-// return ${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s;
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
     { field: "clientContactName", headerName: "Contacto" },
@@ -216,14 +209,6 @@ const DashboardPage: React.FC = () => {
     }
   ], []);
 
-//   const diffMs = end.getTime() - start.getTime();
-// const totalSeconds = Math.floor(diffMs / 1000);
-// const hours = Math.floor(totalSeconds / 3600);
-// const minutes = Math.floor((totalSeconds % 3600) / 60);
-// const seconds = totalSeconds % 60;
-
-// return ${hours > 0 ? `${hours}h ` : ""}${minutes}m ${seconds}s;
-
   const handleOpenFilterModal = () => setIsFilterOpen(true);
 
   return (
@@ -258,6 +243,7 @@ const DashboardPage: React.FC = () => {
 
         {!loadingCharts && !error && (
           <section className="dashboard__chart-containers">
+            
             <div>
               <h4 className="dashboard-waiting__title">
                 Conversaciones Por Estado
@@ -277,13 +263,13 @@ const DashboardPage: React.FC = () => {
             <CustomBarChart
               data={adminAvgAssignmentTime}
               title="Promedio de Asignación"
-              subtitle="Tiempo promedio de asignación agente por administradora."
+              subtitle="Tiempo promedio de asignación agente por administradora desde solicitud del cliente."
             />
 
             <CustomBarChart
               data={averageAssignmentTime}
               title="Promedio de Aceptación"
-              subtitle={`Tiempo promedio de asignación agente por administradora`}
+              subtitle={`Tiempo promedio de respuesta asignaciónes de conversación del administrador.`}
             />
 
             <div className="conversationList">
@@ -307,6 +293,7 @@ const DashboardPage: React.FC = () => {
                   setPage={setPage}
                   setPageSize={setPageSize}
                   maxHeight={400}
+                  showAutoComplete={false}
                 />
               ) : (
                 <p className="empty__dashboard-list">
@@ -336,6 +323,7 @@ const DashboardPage: React.FC = () => {
                   setPage={setWaitingPage}
                   setPageSize={setWaitingPageSize}
                   maxHeight={400}
+                  showAutoComplete= {false}
                 />
               )}
             </div>

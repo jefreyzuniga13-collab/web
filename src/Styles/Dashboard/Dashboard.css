@@ -96,3 +96,27 @@
   font-size: var(--font-size-base);
 
 }
+
+
+@media (max-width: 1000px) {
+  .dashboard__chart-containers {
+    display: block;
+  }
+
+  .dashboard-header-title {
+    font-size: 1.5rem;    
+  }
+  .dashboard-header-subtitle {
+    font-size: 1rem;   
+  }
+
+  .dashboard-waiting__title,
+  .empty__dashboard-list {
+    font-size: 1.25rem;    
+  }
+  .dashboard-waiting__subtitle,
+  .MuiChartsLabel-root,
+  .MuiChartsLegend-label {
+    font-size: 0.85rem;
+  }
+}
