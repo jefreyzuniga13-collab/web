@@ -246,29 +246,23 @@ class ConversationServ {
     return data.data;
   }
 
-async getConversationsByRole(
-  from: Date,
-  to: Date,
-  page: number,
-  pageSize: number
-): Promise<PagedResponse<ConversationDto>> {
-  const fromIso = from.toISOString();
-  const toIso   = to.toISOString();
+  async getConversationsByRole(
+    from?: Date,
+    to?: Date,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<PagedResponse<ConversationDto>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const params: Record<string, any> = { pageNumber: page, pageSize }
+    if (from) params.from = from.toISOString()
+    if (to)   params.to   = to.toISOString()
 
-  const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
-    "/Conversations/getByRole",
-    null,
-    {
-      params: {
-        from:       fromIso,
-        to:         toIso,
-        pageNumber: page,
-        pageSize:   pageSize
-      }
-    }
-  );
-  return data.data;
-}
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/getByRole",
+      { params }
+    )
+    return data.data
+  }
 }
 
 export const ConversationService = new ConversationServ();

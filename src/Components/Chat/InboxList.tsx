@@ -23,7 +23,9 @@ export const InboxList: React.FC<Props> = ({
   onSelect,
   filter = 'all'
 }) => {
+  
   const loaderRef = useRef<HTMLLIElement>(null)
+
   const {
     conversations,
     loading,

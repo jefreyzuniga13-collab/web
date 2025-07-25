@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
-import {jwtDecode} from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import { useSignalR } from '@/Context/SignalRContext'
 import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
 import { joinConversation } from '@/Services/signalr'
 import { ConversationService } from '@/Services/ConversationService'
-import { formatInTimeZone } from 'date-fns-tz'
 
 export type Filter = 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
 
@@ -14,82 +13,67 @@ interface JwtPayload { role: string }
 
 export interface FormInterface {
   validFrom: Date | null
-  validTo: Date | null
+  validTo:   Date | null
 }
 
-const zone = 'America/Managua'
-const PATTERN = "yyyy-MM-dd'T'HH:mm:ssXXX" 
-
 export interface UseConversationsResult {
-  conversations: ConversationDto[]
-  loading: boolean
-  error?: string
-  form: FormInterface
-  handleDate: (field: keyof FormInterface, d: Date | null) => void
+  conversations:   ConversationDto[]
+  loading:         boolean
+  error?:          string
+  form:            FormInterface
+  handleDate:      (field: keyof FormInterface, d: Date | null) => void
   applyDateFilter: () => void
-  page: number
-  pageSize: number
-  pagination: PaginationInfo
-  onPageChange: (page: number) => void
-  onPageSizeChange: (size: number) => void
+  clearFilter:     () => void
+  page:            number
+  pageSize:        number
+  pagination:      PaginationInfo
+  onPageChange:    (page: number) => void
+  onPageSizeChange:(size: number) => void
 }
 
 const initialRange = (): FormInterface => {
-  const now = new Date()
   const f = localStorage.getItem('convFrom')
   const t = localStorage.getItem('convTo')
-  return {
-    validFrom: f ? new Date(f) : now,
-    validTo: t ? new Date(t) : now
-  }
+  return f && t
+    ? { validFrom: new Date(f), validTo: new Date(t) }
+    : { validFrom: null, validTo: null }
 }
 
 export function useConversations(filter: Filter = 'all'): UseConversationsResult {
-  const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
-  const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin'
-
-  const [form, setForm] = useState<FormInterface>(initialRange())
+  const authRaw           = localStorage.getItem('auth') || '{}'
+  const { accessToken }   = JSON.parse(authRaw) as { accessToken: string }
+  const { role }          = jwtDecode<JwtPayload>(accessToken)
+  const isAdmin           = role.toLowerCase() === 'admin'
+  const [form, setForm]                 = useState<FormInterface>(initialRange())
   const [appliedRange, setAppliedRange] = useState<FormInterface>(initialRange())
   const [conversations, setConversations] = useState<ConversationDto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [pagination, setPagination] = useState<PaginationInfo>({
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState<string>()
+  const [page, setPage]                 = useState(1)
+  const [pageSize, setPageSize]         = useState(10)
+  const [pagination, setPagination]     = useState<PaginationInfo>({
     currentPage: 1,
-    totalPages: 0,
-    totalItems: 0,
-    itemsPerPage: 10
+    totalPages:  0,
+    totalItems:  0,
+    itemsPerPage:10
   })
 
   const {
-    onConversationCreated,
-    offConversationCreated,
-    onConversationUpdated,
-    offConversationUpdated,
-    onNewMessage,
-    offNewMessage,
-    onNewHumanRequest,
-    offNewHumanRequest
+    onConversationCreated, offConversationCreated,
+    onConversationUpdated, offConversationUpdated,
+    onNewMessage,         offNewMessage,
+    onNewHumanRequest,    offNewHumanRequest
   } = useSignalR()
 
   const matchesFilter = useCallback(
     (c: ConversationDto) => {
       switch (filter) {
-        case 'waiting':
-          return c.status === 'Waiting'
-        case 'bot':
-          return c.status === 'Bot'
-        case 'human':
-          return c.status === 'Human'
-        case 'closed':
-          return c.status === 'Closed'
-        case 'incomplete':
-          return c.status === 'Incomplete'
-        default:
-          return true
+        case 'waiting':    return c.status === 'Waiting'
+        case 'bot':        return c.status === 'Bot'
+        case 'human':      return c.status === 'Human'
+        case 'closed':     return c.status === 'Closed'
+        case 'incomplete': return c.status === 'Incomplete'
+        default:           return true
       }
     },
     [filter]
@@ -107,96 +91,100 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
   const handleHumanRequest = useCallback((payload: { conversationId: number }) => {
     setConversations(prev =>
-      prev.map(c =>
-        c.conversationId === payload.conversationId
-          ? { ...c, status: 'Human' }
-          : c
-      ).filter(matchesFilter.arguments)
+      prev
+        .map(c =>
+          c.conversationId === payload.conversationId
+            ? { ...c, status: 'Human' as ConversationDto['status'] }
+            : c
+        )
+        .filter(matchesFilter)
     )
   }, [matchesFilter])
 
-  const handleUpdatedConvo = useCallback(
-    (updated: ConversationDto) => {
-      setConversations(prev => {
-        const exists = prev.some(c => c.conversationId === updated.conversationId)
-        const ok = matchesFilter(updated)
-        let next
-        if (exists) {
-          next = ok
-            ? prev.map(c => (c.conversationId === updated.conversationId ? updated : c))
-            : prev.filter(c => c.conversationId !== updated.conversationId)
-        } else {
-          next = ok ? [updated, ...prev] : prev
-        }
-        return sortByActivity(next)
-      })
-    },
-    [matchesFilter, sortByActivity]
-  )
+  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+    setConversations(prev => {
+      const exists = prev.some(c => c.conversationId === updated.conversationId)
+      const ok     = matchesFilter(updated)
+      const next   = exists
+        ? ok
+          ? prev.map(c => c.conversationId === updated.conversationId ? updated : c)
+          : prev.filter(c => c.conversationId !== updated.conversationId)
+        : ok
+        ? [updated, ...prev]
+        : prev
+      return sortByActivity(next)
+    })
+  }, [matchesFilter, sortByActivity])
 
-  const handleNewMessage = useCallback(
-    (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
-      const msg = payload.message
-      setConversations(prev =>
-        sortByActivity(
-          prev.map(c =>
+  const handleNewMessage = useCallback((payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
+    const msg = payload.message
+    setConversations(prev =>
+      sortByActivity(
+        prev
+          .map(c =>
             c.conversationId === msg.conversationId
               ? {
                   ...c,
                   totalMessages: (c.totalMessages || 0) + 1,
-                  lastActivity: msg.sentAt,
-                  unreadCount: (c.unreadCount || 0) + 1
+                  lastActivity:  msg.sentAt,
+                  unreadCount:   (c.unreadCount  || 0) + 1
                 }
               : c
-          ).filter(matchesFilter)
-        )
+          )
+          .filter(matchesFilter)
       )
-    },
-    [matchesFilter, sortByActivity]
-  )
+    )
+  }, [matchesFilter, sortByActivity])
 
-  const handleNewConvo = useCallback(
-    (newConvo: ConversationDto) => {
-      if (!matchesFilter(newConvo)) return
-      joinConversation(newConvo.conversationId)
-      setConversations(prev =>
-        prev.some(c => c.conversationId === newConvo.conversationId)
-          ? prev
-          : sortByActivity([newConvo, ...prev])
-      )
-    },
-    [matchesFilter, sortByActivity]
-  )
+  const handleNewConvo = useCallback((newConvo: ConversationDto) => {
+    if (!matchesFilter(newConvo)) return
+    joinConversation(newConvo.conversationId)
+    setConversations(prev =>
+      prev.some(c => c.conversationId === newConvo.conversationId)
+        ? prev
+        : sortByActivity([newConvo, ...prev])
+    )
+  }, [matchesFilter, sortByActivity])
 
-  const handleDate = useCallback((field: keyof FormInterface, d: Date | null) => {
-    setForm(f => ({ ...f, [field]: d }))
-  }, [])
+  const handleDate = useCallback((field: keyof FormInterface, d: Date | null) =>
+    setForm(f => ({ ...f, [field]: d })), [])
 
-  const applyDateFilter = () => {
-    if (!form.validFrom || !form.validTo) return
+const applyDateFilter = () => {
+  if (!form.validFrom && !form.validTo) return
 
-      const fromLocal = formatInTimeZone(form.validFrom, zone, PATTERN)
-      const toLocal   = formatInTimeZone(form.validTo,   zone, PATTERN)
+  if (form.validFrom) localStorage.setItem('convFrom', form.validFrom.toISOString())
+  if (form.validTo)   localStorage.setItem('convTo', form.validTo.toISOString())
 
-      localStorage.setItem('convFrom', fromLocal)
-      localStorage.setItem('convTo',   toLocal)
-  
-    localStorage.setItem('convFrom', fromLocal)
-  localStorage.setItem('convTo',   toLocal)
-
-  setAppliedRange({ 
-    validFrom: fromLocal as any,  
-    validTo:   toLocal   as any  
+  setAppliedRange({
+    validFrom: form.validFrom ? new Date(form.validFrom) : null,
+    validTo:   form.validTo   ? new Date(form.validTo)   : null,
   })
+
   setPage(1)
+}
+
+//En no se atualiza appliedRange.validFrom, appliedRange.validTo en applyDateFilter en la seccion desetAppliedRange. 
+// por lo quie no se ejecuta el effecto
+useEffect(() => {
+  console.log("cambió appliedRange:", appliedRange.validFrom, appliedRange.validTo)
+}, [appliedRange.validFrom, appliedRange.validTo])
+
+  const clearFilter = () => {
+    localStorage.removeItem('convFrom')
+    localStorage.removeItem('convTo')
+    setForm({ validFrom: null, validTo: null })
+
+    setAppliedRange({ validFrom: null, validTo: null })
+    setPage(1)
   }
 
   useEffect(() => {
     setLoading(true)
     setError('')
+
     ConversationService.getConversationsByRole(
-      appliedRange.validFrom!,
-      appliedRange.validTo!,
+      appliedRange.validFrom ?? undefined,
+      appliedRange.validTo   ?? undefined,
       page,
       pageSize
     )
@@ -204,75 +192,41 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
         const items = res.items.map(conv => ({
           ...conv,
           lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
-          unreadCount: conv.unreadCount || 0
+          unreadCount:  conv.unreadCount  || 0
         }))
-
         const filtered = items.filter(matchesFilter)
-
         setPagination({
           currentPage: res.meta.currentPage,
-          totalPages: res.meta.totalPages,
-          totalItems: res.meta.totalCount,
-          itemsPerPage: res.meta.pageSize
+          totalPages:  res.meta.totalPages,
+          totalItems:  res.meta.totalCount,
+          itemsPerPage:res.meta.pageSize
         })
-
         setConversations(prev =>
           page === 1 ? filtered : [...prev, ...filtered]
         )
-
         filtered.forEach(c => joinConversation(c.conversationId))
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [
-    appliedRange.validFrom,
-    appliedRange.validTo,
-    filter,
-    page,
-    pageSize,
-    matchesFilter
-  ])
+  }, [appliedRange.validFrom, appliedRange.validTo, filter, page, pageSize, matchesFilter])
 
   useEffect(() => {
     if (isAdmin) onConversationCreated(handleNewConvo)
     onConversationUpdated(handleUpdatedConvo)
     onNewMessage(handleNewMessage)
     onNewHumanRequest(handleHumanRequest)
-
     return () => {
       if (isAdmin) offConversationCreated(handleNewConvo)
       offConversationUpdated(handleUpdatedConvo)
       offNewMessage(handleNewMessage)
       offNewHumanRequest(handleHumanRequest)
     }
-  }, [
-    isAdmin,
-    onConversationCreated,
-    offConversationCreated,
-    onConversationUpdated,
-    offConversationUpdated,
-    onNewMessage,
-    offNewMessage,
-    onNewHumanRequest,
-    offNewHumanRequest,
-    handleNewConvo,
-    handleUpdatedConvo,
-    handleNewMessage,
-    handleHumanRequest
-  ])
+  }, [isAdmin, onConversationCreated, offConversationCreated, onConversationUpdated, offConversationUpdated, onNewMessage, offNewMessage, onNewHumanRequest, offNewHumanRequest, handleNewConvo, handleUpdatedConvo, handleNewMessage, handleHumanRequest])
 
-  useEffect(() => {
-    setPage(1)
-  }, [filter])
+  useEffect(() => { setPage(1) }, [filter])
 
-  const onPageChange = useCallback((newPage: number) => {
-    setPage(newPage)
-  }, [])
-
-  const onPageSizeChange = useCallback((newSize: number) => {
-    setPageSize(newSize)
-    setPage(1)
-  }, [])
+  const onPageChange = useCallback((newPage: number) => { setPage(newPage) }, [])
+  const onPageSizeChange = useCallback((newSize: number) => { setPageSize(newSize); setPage(1) }, [])
 
   return {
     conversations,
@@ -281,6 +235,7 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     form,
     handleDate,
     applyDateFilter,
+    clearFilter,
     page,
     pageSize,
     pagination,

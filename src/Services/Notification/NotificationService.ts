@@ -1,5 +1,8 @@
 import api from '@/Utils/ApiConfig'
 import type { NotificationsResponse } from '@/Interfaces/Chat/ChatInterfaces'
+import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
+import type { NotificationRequestDto, NotificationResponseDto } from '@/Interfaces/Notification/NotificationInterfaces'
 
 export const getNotifications = (page = 1, pageSize = 10) => {
   return api.get<NotificationsResponse>(`/Notifications`, {
@@ -10,3 +13,57 @@ export const getNotifications = (page = 1, pageSize = 10) => {
 export const getUnreadCount = () => {
   return api.get<number>(`/Notifications/unread-count`)
 }
+
+class NotificationServ {
+  async GetAllAsync(
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<NotificationResponseDto>>{
+
+    const params = {
+      PageNumber: page,
+      PageSize: pageSize,
+    };
+
+    const {data} = await api.get<ApiResponse<PagedResponse<NotificationResponseDto>>>(
+      `/Notification`,
+      {params}
+    );
+
+    return data.data;
+  }
+
+  async GetByIdAsync(id: number): 
+  Promise<NotificationResponseDto>{
+   const {data} = await api.get<ApiResponse<NotificationResponseDto>>(
+      `/Notification/${id}` )
+
+    return data.data;
+  }
+
+  async CreateAsync(request: NotificationRequestDto): 
+  Promise<NotificationResponseDto>{
+   const {data} = await api.post<ApiResponse<NotificationResponseDto>>(
+      `/Notification`,
+    {request}
+    )
+    return data.data;
+  }
+
+  async ToggleActiveAsync(id: number): Promise<NotificationResponseDto>{
+    const {data} = await api.put(`/Notification/${id}`);
+
+    return data.data;
+  }
+
+  async UpdateAsync(id: number, request: NotificationRequestDto): Promise<NotificationResponseDto>{
+    const {data} = await api.patch<ApiResponse<NotificationResponseDto>>(`/Notification/${id}`,
+      {request}
+    )
+    return data.data;
+  }
+}
+
+export const NotificationService = new NotificationServ();
+
+//dime esta bien el como se consume los endpoint?

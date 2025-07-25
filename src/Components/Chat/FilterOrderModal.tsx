@@ -20,7 +20,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
 }) => {
   const [order, setOrder] = useState<string[]>(currentOrder);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const { form, handleDate, applyDateFilter } = useConversations();
+  const { form, handleDate, applyDateFilter, clearFilter } = useConversations();
 
   const handleDragStart = (idx: number) => setDragIndex(idx);
   const handleDragOver  = (e: React.DragEvent) => e.preventDefault();
@@ -34,8 +34,14 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   };
 
   const handleSave = () => {
+    
     onSave(order);
     applyDateFilter(); 
+    onClose();
+  };
+
+  const handleClearFilter = () => {
+    clearFilter(); 
     onClose();
   };
 
@@ -105,8 +111,11 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
+          <Button variant="destructive" onClick={handleClearFilter}>
+            Limpiar Filtros
+          </Button>
           <Button variant="primary" onClick={handleSave}>
-            Guardar
+            Aplicar Filtros
           </Button>
         </div>
       </div>

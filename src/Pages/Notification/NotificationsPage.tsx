@@ -1,22 +1,17 @@
-import React from 'react';
-import { useNotifications } from '@/Hooks/useNotifications';
+// import useNotification from "@/Hooks/Notification/useNotification";
 
-const NotificationsPage: React.FC = () => {
-  const { list, loadingList } = useNotifications();
+export default function NotificationsPage(){
+  // const {
+  //   data,
+  //   selectedData,
+  //   openCreateAsync,
+  //   openEditAsync,
+  //   openViewAsync,
+  //   isModalOpen,
+  //   error,
+  //   loadingList,
+  //   loadingItem,
+  //   closeModalAsync,
+  // } = useNotification();
 
-  if (loadingList) return <p>Cargando…</p>;
-  if (!list.length) return <p>No tienes notificaciones.</p>;
-
-  return (
-    <ul>
-      {list.map(n => (
-        <li key={n.notificationRecipientId} className={n.isRead ? '' : 'unread'}>
-          <small>{new Date(n.createdAt).toLocaleString()}</small>
-          <p>{n.payload}</p>
-        </li>
-      ))}
-    </ul>
-  );
-};
-
-export default NotificationsPage;
+}
