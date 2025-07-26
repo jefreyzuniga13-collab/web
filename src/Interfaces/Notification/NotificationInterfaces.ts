@@ -28,8 +28,8 @@ export interface NotificationRequestDto{
   payload: string;
   isActive: boolean;
   rolesId: number[],
-
 }
+
 export interface NotificationResponseDto{
   id: number;
    name: string;

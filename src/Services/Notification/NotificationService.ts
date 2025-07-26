@@ -26,7 +26,7 @@ class NotificationServ {
     };
 
     const {data} = await api.get<ApiResponse<PagedResponse<NotificationResponseDto>>>(
-      `/Notification`,
+      `/Notifications`,
       {params}
     );
 
@@ -44,7 +44,7 @@ class NotificationServ {
   async CreateAsync(request: NotificationRequestDto): 
   Promise<NotificationResponseDto>{
    const {data} = await api.post<ApiResponse<NotificationResponseDto>>(
-      `/Notification`,
+      `/Notifications`,
     {request}
     )
     return data.data;
@@ -65,5 +65,3 @@ class NotificationServ {
 }
 
 export const NotificationService = new NotificationServ();
-
-//dime esta bien el como se consume los endpoint?

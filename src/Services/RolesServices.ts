@@ -9,6 +9,7 @@ function formatError(error: unknown): Error{
     return new Error(message);
 }
 class RoleService {
+  
   async getRolesAsync(): Promise<RoleResponseDto[]> {
     try {
       const { data } = await api.get<
@@ -16,6 +17,7 @@ class RoleService {
       >("/Roles", {
         params: { PageNumber: 1, PageSize: 10 }
       });
+
       return data.data.items;
     } catch (err) {
       throw formatError(err);

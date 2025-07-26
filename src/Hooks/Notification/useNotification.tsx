@@ -113,8 +113,8 @@ const useNotification = () => {
       []
     )
 
-    const openCreateAsync = useCallback((item: NotificationResponseDto)=>{
-      setSelectedData(item)
+    const openCreateAsync = useCallback(()=>{
+      setSelectedData(null)
       setModalMode('create')
       setIsModalOpen(true)
     }, [])
