@@ -9,7 +9,6 @@ import type {
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
 
-
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
   'https://localhost:7108/api/v1'

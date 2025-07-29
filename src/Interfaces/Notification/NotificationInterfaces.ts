@@ -21,7 +21,6 @@ type NotificationType =
   | 'ConversationClosed'
 
 export interface NotificationRequestDto{
-  id?: number
   name: string;
   description: string;
   type: NotificationType;

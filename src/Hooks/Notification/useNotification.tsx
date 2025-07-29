@@ -78,7 +78,7 @@ const useNotification = () => {
       setLoadingItem(true)
       setError(null)
       try{
-        const payload = { ...(selectedData ?? {}), ...values, id } as NotificationRequestDto;
+        const payload = { ...(selectedData ?? {}), ...values} as NotificationRequestDto;
         const updateItem = await NotificationService.UpdateAsync(id, payload);
         setData(prev=> prev.map(item=> (item.id == id ? updateItem: item)));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,9 +144,9 @@ const useNotification = () => {
     }, [fetchPage, page, pageSize])
 
     const handleSubmit = useCallback(
-      (values: NotificationRequestDto)=>{
+      (id: number, values: NotificationRequestDto)=>{
         if(modalMode === 'create') createAsync(values)
-          else if(modalMode === 'edit') updateAsync(values.id!, values)
+          else if(modalMode === 'edit') updateAsync(id, values)
         closeModalAsync()
       },
       [modalMode, selectedData, createAsync, updateAsync, closeModalAsync]

@@ -86,7 +86,7 @@ export function useVerifyNewContact(phoneNumber: string) {
 
 
   const handleBack = () => {
-    navigate('chat', { replace: true });
+    navigate('/chat');
   };
 
   const updateAsync = useCallback(async () => {
@@ -95,7 +95,7 @@ export function useVerifyNewContact(phoneNumber: string) {
       await contactService.updateContactAsync(form);
       await verifyNewContactAsync(form.id)
       toast.success("Contacto verificado con éxito.");
-       navigate('chat', { replace: true });
+        navigate('/chat');
     } catch (err: any) {
         setErrors(err)
       toast.error("Error. No se pudo verificar al nuevo contacto.");

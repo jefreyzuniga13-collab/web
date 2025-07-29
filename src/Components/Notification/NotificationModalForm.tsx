@@ -12,7 +12,7 @@ interface NotificationModalProps {
   isOpen: boolean
   data?: NotificationResponseDto | NotificationRequestDto | null
   onClose: () => void
-  onSubmit: (values: NotificationRequestDto) => void
+  onSubmit: (id: number, values: NotificationRequestDto) => void
 }
 
 const notificationTypeOptions = [
@@ -159,5 +159,3 @@ const {roles} = useRoles();
     </div>
   )
 }
-
-///Dame l update de, usando el useRole, para recibir los roles.
