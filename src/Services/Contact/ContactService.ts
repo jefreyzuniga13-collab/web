@@ -71,10 +71,10 @@ async getClienteDetailsAsync(codCliente: string) {
   return data.data;
 }
 
-async verifyAndLinkAsync(id: number, codcli: string, codigo: number) {
+async verifyAndLinkAsync(id: number, codcli: string) {
   const { data } = await api.put<ApiResponse<ContactLogInterface>>(
     `/ContactLogs/verifyContact/${id}`,
-    { codcli, codigo }
+    { codcli }
   );
   return data.data;
 }

@@ -16,9 +16,11 @@ const VerifyNewContactPage: React.FC = () => {
     form,
     errors,
     loading,
+    filter,
+    handleFilterChange,
     handleChangeText,
     handleSelectCliente,
-    handleChangeCodigo,
+    // handleChangeCodigo,
     handleSubmit,
     handleBack
   } = useVerifyNewContact(phoneNumber!)
@@ -27,7 +29,7 @@ const VerifyNewContactPage: React.FC = () => {
     <div className="verifyContact__general-container">
       <div className="verifyContact-container">
         <header className="verifyContact-header">
-          <h1 className="verifyContact-title">Verificar usuario</h1>
+          <h1 className="verifyContact-title">Verificar contato</h1>
           <h3 className="verifyContact-subtitle">
             Nuevo contacto creado, verificar los datos y validar su confiabilidad.
           </h3>
@@ -111,6 +113,26 @@ const VerifyNewContactPage: React.FC = () => {
                 )}
               </div>
             )}
+
+            <div className="verifyContact-grid-col">
+              <label htmlFor="companyName">Empresa Indicada Conacto</label>
+              <Input
+                id="companyName"
+                name="companyName"
+                value={form.companyName}
+                disabled
+              />
+            </div>
+
+            <div className="verifyContact-grid-col">
+              <label htmlFor="filter">Buscar Cliente</label>
+              <Input
+                id="filter"
+                name="filter"
+                value={filter}
+                onChange={handleFilterChange}
+              />
+            </div>
             <div className="verifyContact-grid-col">
               <label htmlFor="codcli">Cliente Innova</label>
               <select
@@ -129,18 +151,6 @@ const VerifyNewContactPage: React.FC = () => {
               </select>
               {errors.codcli && (
                 <div className="verifyContact-error">{errors.codcli}</div>
-              )}
-            </div>
-            <div className="verifyContact-grid-col">
-              <label htmlFor="codigo">Código Innova</label>
-              <Input
-                id="codigo"
-                name="codigo"
-                value={form.codigo.toString()}
-                onChange={handleChangeCodigo}
-              />
-              {errors.codigo && (
-                <div className="verifyContact-error">{errors.codigo}</div>
               )}
             </div>
             <div className="verifyContact-grid-col">

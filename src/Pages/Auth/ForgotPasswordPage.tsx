@@ -72,7 +72,7 @@ export default function ForgotPasswordPresentation() {
                 : t("forgotPassword.handleSubmit")}
             </Button>
             <p className="forgot-password__back-link">
-              <Link to="/login" className="forgot-password__link">
+              <Link to="/login"  className="forgot-password__link">
                 {t("forgotPassword.backToLogin")}
               </Link>
             </p>

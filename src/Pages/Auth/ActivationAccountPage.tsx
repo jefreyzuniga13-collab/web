@@ -10,7 +10,7 @@ export default function ActivationAccountPresentation() {
   return (
     <div className="activationAccount-container">
       <img
-        src="https://i.imgur.com/2vPnva2.png"
+        src="https://i.ibb.co/KjdZCt31/verify.png"
         className="activationAccount-image"
         alt={t('activationAccount.title')}
       />

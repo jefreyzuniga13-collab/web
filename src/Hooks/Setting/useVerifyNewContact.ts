@@ -32,7 +32,7 @@ export function useVerifyNewContact(phoneNumber: string) {
     passport: '',
     residenceCard: '',
     codcli: '',
-    codigo: 0
+    companyName: ''
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
@@ -49,7 +49,8 @@ export function useVerifyNewContact(phoneNumber: string) {
           passport: data.passport ?? '',
           residenceCard: data.residenceCard ?? '',
           codcli: '',
-          codigo: 0
+          companyName:  data.companyName ?? ''
+          
         })
       })
       .catch(() => toast.error('No se encontró el contacto'))
@@ -106,20 +107,33 @@ export function useVerifyNewContact(phoneNumber: string) {
   }, [navigate])
 
   const handleSubmit = useCallback(async () => {
+
+    //Metodo handlSubmi
+    console.log("Before handleSumit")
     const newErrors: FormErrors = {}
     if (!form.fullName.trim()) newErrors.fullName = 'Nombre completo requerido'
-    if (form.idType === 'NationalCard' && !/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard))
-      newErrors.idCard = 'Formato de cédula inválido'
+    
+    //Ejemplos formatos validos 0010022112360Q o 123-456789-0123A
+   if (
+  form.idType === 'NationalCard' &&
+  !/^(\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)
+    ) {
+      newErrors.idCard = 'Formato de cédula inválido';
+    }
+
+    
     if (form.idType === 'Passport' && !/^[A-Z]{1,2}\d{7}$/.test(form.passport))
       newErrors.passport = 'Formato de pasaporte inválido'
     if (form.idType === 'ResidenceCard' && !/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard))
       newErrors.residenceCard = 'Formato de residencia inválido'
     if (!form.codcli) newErrors.codcli = 'Seleccione un cliente'
-    if (form.codigo <= 0) newErrors.codigo = 'Ingrese código válido'
+    // if (form.codigo <= 0) newErrors.codigo = 'Ingrese código válido'
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)
       return
     }
+    console.log("After handleSumit")
+
     setErrors({})
     setLoading(true)
     try {
@@ -135,8 +149,7 @@ export function useVerifyNewContact(phoneNumber: string) {
       }
       await contactService.verifyAndLinkAsync(
         contact?.id ?? 0,
-        form.codcli,
-        form.codigo
+        form.codcli
       )
       toast.success('Contacto verificado')
       navigate('/chat')
