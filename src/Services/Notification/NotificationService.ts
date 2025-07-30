@@ -61,14 +61,14 @@ class NotificationServ {
   // }
 
   async ToggleActiveAsync(id: number): Promise<NotificationResponseDto>{
-    const {data} = await api.put(`/Notifications/${id}`);
+    const {data} = await api.patch(`/Notifications/${id}`);
 
     return data.data;
   }
 
   async UpdateAsync(id: number, request: NotificationRequestDto): Promise<NotificationResponseDto>{
-    const {data} = await api.patch<ApiResponse<NotificationResponseDto>>(`/Notifications/${id}`,
-      {request}
+    const {data} = await api.put<ApiResponse<NotificationResponseDto>>(`/Notifications/${id}`,
+      request
     )
     return data.data;
   }

@@ -12,7 +12,7 @@ interface NotificationModalProps {
   isOpen: boolean
   data?: NotificationResponseDto | NotificationRequestDto | null
   onClose: () => void
-  onSubmit: (id: number, values: NotificationRequestDto) => void
+  onSubmit: (values: NotificationRequestDto) => void
 }
 
 const notificationTypeOptions = [

@@ -8,7 +8,7 @@ type Mode = 'create' | 'edit' | 'view'
 interface UseNotificationFormArgs {
   mode: Mode
   data?: NotificationResponseDto | NotificationRequestDto | null
-  onSubmit: (id: number, values: NotificationRequestDto) => void
+  onSubmit: (values: NotificationRequestDto) => void
   availableRoles: RoleResponseDto[]
 }
 
@@ -29,6 +29,7 @@ export function useNotificationModalForm({
   const isView = mode === 'view'
 
   const [form, setForm] = useState<NotificationRequestDto>({
+    id: 0,
     name: '',
     description: '',
     type: 'NewContact',
@@ -42,6 +43,7 @@ export function useNotificationModalForm({
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && data) {
       setForm({
+        id: data.id,
         name: data.name,
         description: data.description,
         type: data.type as any,
@@ -51,6 +53,7 @@ export function useNotificationModalForm({
       })
     } else {
       setForm({
+        id: 0,
         name: '',
         description: '',
         type: 'NewContact',
@@ -108,9 +111,7 @@ export function useNotificationModalForm({
       if (isView) return
       //if (validate()) 
       //En el caso que no hay usuario seleccionado se manda 0, pero al crear no se pasa como parametro
-        onSubmit(0, form)
-
-        console.log("Datos enviados", JSON.stringify(form))
+        onSubmit(form)
     },
     [form, isView, onSubmit]
   )

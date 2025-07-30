@@ -11,6 +11,7 @@ import Button from "@/Components/Common/Button";
 import CustomTable from "@/Components/Common/CustomTable";
 import '@/Styles/Contact/ContactPage.css'
 import NotificationModalForm from "@/Components/Notification/NotificationModalForm";
+
 export default function NotificationsPage(){
   const {
     data,
