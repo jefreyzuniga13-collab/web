@@ -1,185 +1,165 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-
-import type { ContactLogInterface } from "@/Interfaces/Contact/ContactInterface";
-import { contactService } from "@/Services/Contact/ContactService";
+import { useState, useEffect, useCallback, type ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { contactService } from '@/Services/Contact/ContactService'
+import type {
+  ContactLogInterface,
+  ClienteResponseDto,
+  ClienteDetalleResponseDto
+} from '@/Interfaces/Contact/ContactInterface'
 
 type FormErrors = {
-  waName?: string;
-  waId?: string;
-  waUserId?: string;
-  phone?: string;
-  idCard?: string;
-  password?: string;
-  residenceCard?: string;
-  fullName?: string;
-  companyId?: string;
-};
+  fullName?: string
+  idCard?: string
+  passport?: string
+  residenceCard?: string
+  codcli?: string
+  codigo?: string
+}
 
 export function useVerifyNewContact(phoneNumber: string) {
-  const initialForm: ContactLogInterface = {
-    id: 0,
-    waName: "",
-    waId: null,
-    waUserId: "",
-    phone: "",
-    companyName: "",
-    companyId: null,
-    status: "New",
-    fullName: "",
-    isVerified: false,
-    idCard: "",
-    passport: "",
-    idType: "NationalCard",
-    residenceCard: "",
-    createdAt: "",
-    updatedAt: "",
-  };
+  const navigate = useNavigate()
 
-  const [form, setForm] = useState<ContactLogInterface>(initialForm);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<Error | null>(null);
+  const [contact, setContact] = useState<ContactLogInterface | null>(null)
+  const [clientes, setClientes] = useState<ClienteResponseDto[]>([])
+  const [detalle, setDetalle] = useState<ClienteDetalleResponseDto | null>(null)
+  const [filter, setFilter] = useState('')
 
-  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    fullName: '',
+    idType: 'NationalCard' as ContactLogInterface['idType'],
+    idCard: '',
+    passport: '',
+    residenceCard: '',
+    codcli: '',
+    codigo: 0
+  })
+
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    getByPhoneAsync(phoneNumber);
-  }, [phoneNumber]);
+    contactService.getContactByPhoneAsync(phoneNumber)
+      .then(data => {
+        setContact(data)
+        setForm({
+          fullName: data.fullName ?? '',
+          idType: data.idType,
+          idCard: data.idCard ?? '',
+          passport: data.passport ?? '',
+          residenceCard: data.residenceCard ?? '',
+          codcli: '',
+          codigo: 0
+        })
+      })
+      .catch(() => toast.error('No se encontró el contacto'))
+  }, [phoneNumber])
 
-  const getByPhoneAsync = useCallback(async (phone: string) => {
-    setLoading(true);
-    setFetchError(null);
+  const handleFilterChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      setFilter(value)
+      if (value.trim()) {
+        contactService.searchClientesAsync(value)
+          .then(setClientes)
+          .catch(() => toast.error('Error al buscar clientes'))
+      } else {
+        setClientes([])
+        setDetalle(null)
+      }
+    },
+    []
+  )
+
+  const handleChangeText = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target
+      setForm(f => ({ ...f, [name]: value }))
+    },
+    []
+  )
+
+  const handleSelectCliente = useCallback(
+    async (e: ChangeEvent<HTMLSelectElement>) => {
+      const codcli = e.target.value
+      setForm(f => ({ ...f, codcli }))
+      try {
+        const det = await contactService.getClienteDetailsAsync(codcli)
+        setDetalle(det)
+      } catch {
+        toast.error('Error al obtener detalles de cliente')
+      }
+    },
+    []
+  )
+
+  const handleChangeCodigo = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const codigo = parseInt(e.target.value, 10) || 0
+      setForm(f => ({ ...f, codigo }))
+    },
+    []
+  )
+
+  const handleBack = useCallback(() => {
+    navigate('/chat')
+  }, [navigate])
+
+  const handleSubmit = useCallback(async () => {
+    const newErrors: FormErrors = {}
+    if (!form.fullName.trim()) newErrors.fullName = 'Nombre completo requerido'
+    if (form.idType === 'NationalCard' && !/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard))
+      newErrors.idCard = 'Formato de cédula inválido'
+    if (form.idType === 'Passport' && !/^[A-Z]{1,2}\d{7}$/.test(form.passport))
+      newErrors.passport = 'Formato de pasaporte inválido'
+    if (form.idType === 'ResidenceCard' && !/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard))
+      newErrors.residenceCard = 'Formato de residencia inválido'
+    if (!form.codcli) newErrors.codcli = 'Seleccione un cliente'
+    if (form.codigo <= 0) newErrors.codigo = 'Ingrese código válido'
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors)
+      return
+    }
+    setErrors({})
+    setLoading(true)
     try {
-      const data = await contactService.getContactByPhoneAsync(phone);
-      setForm(data);
-    } catch (err: any) {
-      setFetchError(err);
-      toast.error("No se encontró el contacto.");
+      if (contact) {
+        await contactService.updateContactAsync({
+          ...contact,
+          fullName: form.fullName,
+          idType: form.idType,
+          idCard: form.idCard,
+          passport: form.passport,
+          residenceCard: form.residenceCard
+        })
+      }
+      await contactService.verifyAndLinkAsync(
+        contact?.id ?? 0,
+        form.codcli,
+        form.codigo
+      )
+      toast.success('Contacto verificado')
+      navigate('/chat')
+    } catch {
+      toast.error('Error al verificar contacto')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
-
-  const handleChangeText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setForm((f) => ({ ...f, [name]: checked }));
-  };
-
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  const { name, value } = e.target;
-  setForm(prev => ({
-    ...prev,
-    [name]: value !== "" ? parseInt(value, 10) : null
-  }));
-};
-  const handleSelectUser = (id: number) =>
-    setForm(f => ({ ...f, assignedUserId: id }))
-
-
-  const handleBack = () => {
-    navigate('/chat');
-  };
-
-  const updateAsync = useCallback(async () => {
-    setLoading(true);
-    try {
-      await contactService.updateContactAsync(form);
-      await verifyNewContactAsync(form.id)
-      toast.success("Contacto verificado con éxito.");
-        navigate('/chat');
-    } catch (err: any) {
-        setErrors(err)
-      toast.error("Error. No se pudo verificar al nuevo contacto.");
-    } finally {
-      setLoading(false);
-    }
-  }, [form, navigate]);
-  
-  const verifyNewContactAsync = async(id: number)=>{
-    setLoading(true);
-    try{
-        await contactService.verifyContactAsync(id);
-    }catch(err: any){
-      setErrors(err);
-    }finally{
-      setLoading(false);
-    }
-  }
-
-
-  const handleSubmit = async () => {
-    const newErrors: FormErrors = {};
-
-    if (!form.waName!.trim()) {
-      newErrors.waName = "El nombre de usuario es obligatorio.";
-    }
-
-    if (!form.fullName!.trim()) {
-      newErrors.fullName = "El nombre completo es obligatorio.";
-    }
-    // phone: debe comenzar con 505 y tener 8 dígitos más
-    if (!form.phone.trim()) {
-      newErrors.phone = "El número de teléfono es obligatorio.";
-    } else if (!/^505\d{8}$/.test(form.phone)) {
-      newErrors.phone = "Formato de número inválido.";
-    }
-
-    if (form.idType === "NationalCard" && !form.idCard?.trim()) {
-      newErrors.idCard = "La cédula es obligatoria.";
-    } else if (
-      form.idType === "NationalCard" &&
-      !/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard!)
-    ) {
-      newErrors.idCard = "Formato de cédula inválido.";
-    }
-
-
-    //passport nicaraguense: 2 letras y 7 números
-    if(form.idType === "Passport" && !form.passport!.trim()) {
-      newErrors.password = "El pasaporte es obligatorio.";
-    } else if (form.idType === "Passport" && !/^[A-Z]{1,2}\d{7}$/.test(form.passport!)) {
-      newErrors.password = "Formato de pasaporte inválido.";
-    }
-
-    if(form.idType === "ResidenceCard" && !form.residenceCard!.trim()) {
-      newErrors.residenceCard = "La tarjeta de residencia es obligatoria.";
-    } else if (form.idType === "ResidenceCard" && !/^(?:[A-Z]{1, 2}\d{7}|\d{1,12}$)$/.test(form.residenceCard!)) {
-      newErrors.residenceCard = "Formato de tarjeta de residencia inválido.";
-    }
-
-    if (form.companyId == null || form.companyId <= 0) {
-      newErrors.companyId = "La empresa es obligatoria.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-
-    setErrors({});
-    await updateAsync();
-  };
+  }, [form, contact, navigate])
 
   return {
+    contact,
+    clientes,
+    detalle,
+    filter,
     form,
     errors,
     loading,
-    fetchError,
+    handleFilterChange,
     handleChangeText,
-    handleCheckbox,
-    handleBack,
+    handleSelectCliente,
+    handleChangeCodigo,
     handleSubmit,
-    handleSelectChange,
-    handleSelectUser
-  };
+    handleBack
+  }
 }

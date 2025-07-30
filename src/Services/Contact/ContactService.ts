@@ -1,5 +1,5 @@
 import api from '@/Utils/ApiConfig'
-import type { ContactLogInterface } from '@/Interfaces/Contact/ContactInterface';
+import type { ClienteDetalleResponseDto, ClienteResponseDto, ContactLogInterface } from '@/Interfaces/Contact/ContactInterface';
 import type { ApiResponse } from '@/Interfaces/User/UserInterfaces';
 import type { PagedResponse } from '@/Interfaces/GlobalInterface';
 
@@ -47,14 +47,37 @@ class ContactService{
         }
     }
 
-    async verifyContactAsync(id: number){
-        try{
-            const response = await api.put<ApiResponse<ContactLogInterface>>(`/Contactlogs/verifyContact/${id}`);
-            return response.data;
-        }catch(error){
-            console.error(error);
-        }
-    }
+    // async verifyContactAsync(id: number){
+    //     try{
+    //         const response = await api.put<ApiResponse<ContactLogInterface>>(`/Contactlogs/verifyContact/${id}`);
+    //         return response.data;
+    //     }catch(error){
+    //         console.error(error);
+    //     }
+    // }
+
+    async searchClientesAsync(filtro: string) {
+  const { data } = await api.get<ApiResponse<ClienteResponseDto[]>>(
+    `/innova/clientes`,
+    { params: { filtro } }
+  );
+  return data.data;
+}
+
+async getClienteDetailsAsync(codCliente: string) {
+  const { data } = await api.get<ApiResponse<ClienteDetalleResponseDto>>(
+    `/innova/clientes/${codCliente}`
+  );
+  return data.data;
+}
+
+async verifyAndLinkAsync(id: number, codcli: string, codigo: number) {
+  const { data } = await api.put<ApiResponse<ContactLogInterface>>(
+    `/ContactLogs/verifyContact/${id}`,
+    { codcli, codigo }
+  );
+  return data.data;
+}
     async toggleAsync(id: number) : Promise<ContactLogInterface> {
          try {
             const {data} = await api.patch<ApiResponse<ContactLogInterface>>(`/ContactLogs/${id}`);

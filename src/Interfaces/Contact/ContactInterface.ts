@@ -36,6 +36,8 @@ export interface ContactLogInterface {
   verifiedAt?: string | null;
   verifiedId?: number | null;
   verifiedBy?: User | null;
+  clienteCodigo?: number;
+  clienteNombre?: string;
 }
 
 export interface ContactFormValues {
@@ -56,3 +58,18 @@ export interface ContactFormValues {
   verifiedAt: string | null;
   verifiedBy: number | null;
 }
+
+/**
+ * Resultado de sp_SearchClientes
+ */
+export interface ClienteResponseDto {
+  codCliente: string;
+  nombre: string;
+  telefono: string;
+  celular?: string;
+  direccion: string;
+  finalContrato?: string;
+  saldoUltimoCorte?: number;
+}
+
+export type ClienteDetalleResponseDto = ClienteResponseDto;
