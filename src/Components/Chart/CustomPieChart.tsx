@@ -1,41 +1,103 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import type { ConversationStatusCountResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type {
+  ConversationRatingByAgents,
+  ConversationStatusCountResponseDto,
+} from "@/Interfaces/Dashboard/DashboardInterfaces";
 import "@/Styles/Dashboard/CustomPieChart.css";
 import type { StateTranslation } from "@/Interfaces/GlobalInterface";
 import { stateTranslations } from "@/Utils/Translation/stateTranslations";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import { useUsers } from "@/Hooks/User/useUsers";
+
 const COLORS = [
   "#356ace",
   "#10b981",
   "#f59e0b",
   "#dc2626",
-  "#3b82f6",
+  "#645957ff",
+  "#3bb2f6ff",
   "#9ca3af",
 ];
 
 interface Props {
-  // title:    string
-  // subtitle: string
-  data: ConversationStatusCountResponseDto[] | null;
+  data: ConversationStatusCountResponseDto[] | ConversationRatingByAgents[] | null;
+  filterableByAgent?: boolean;
+  enableNavigation?: boolean;
+  selectedAgentId?: number | null;
+  setSelectedAgentId?: (agentId: number | null) => void;
+  fetchRatingByAgent?: (agentId: number | null, pg: number, ps: number) => Promise<void>;
 }
 
-export default function CustomPieChart({ data }: Props) {
+export default function CustomPieChart({
+  data,
+  filterableByAgent = false,
+  enableNavigation = true,
+  selectedAgentId = null,
+  setSelectedAgentId,
+  fetchRatingByAgent,
+}: Props) {
   const navigate = useNavigate();
+  const { agents, getAgents } = useUsers();
 
-  if (!data || data.length === 0) {
-    return <div>No hay datos para mostrar recientes hoy.</div>;
+  useEffect(() => {
+    if (filterableByAgent) {
+      getAgents();
+    }
+  }, [filterableByAgent, getAgents]);
+
+  let filteredData = data;
+
+  if (
+    filterableByAgent &&
+    selectedAgentId &&
+    data &&
+    data.length > 0 &&
+    (data[0] as any).agentId !== undefined
+  ) {
+    filteredData = (data as ConversationRatingByAgents[]).filter(
+      (item) => item.agentId === selectedAgentId.toString()
+    );
   }
 
-  // Preparamos el array { name, value }
-  const chartData = data.map((item) => ({
-    name: item.status,
-    value: item.count,
-  }));
+  const isRatingByAgent = data && data[0] && (data[0] as any).excelentRatings !== undefined;
+
+  const chartData = isRatingByAgent
+    ? [
+        {
+          name: "Excelente",
+          value: (filteredData as ConversationRatingByAgents[]).reduce(
+            (acc, cur) => acc + cur.excelentRatings,
+            0
+          ),
+        },
+        {
+          name: "Regular",
+          value: (filteredData as ConversationRatingByAgents[]).reduce(
+            (acc, cur) => acc + cur.regularRatings,
+            0
+          ),
+        },
+        {
+          name: "Negativo",
+          value: (filteredData as ConversationRatingByAgents[]).reduce(
+            (acc, cur) => acc + cur.negativeRatings,
+            0
+          ),
+        },
+      ]
+    : filteredData?.map((item) => ({
+        name: (item as any).status,
+        value: (item as any).count,
+      })) ?? [];
 
   const RADIAN = Math.PI / 180;
 
-  // Función que dibuja porcentaje (dentro) y nombre (fuera)
   const renderAllLabels = ({
     cx,
     cy,
@@ -46,19 +108,15 @@ export default function CustomPieChart({ data }: Props) {
     index,
     payload,
   }: any) => {
-    // coordenadas para el % (entre inner y outer)
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const xPercent = cx + radius * Math.cos(-midAngle * RADIAN);
     const yPercent = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    // coordenadas para el nombre (apenas un poco más fuera)
     const outerOffset = outerRadius + 20;
     const xName = cx + outerOffset * Math.cos(-midAngle * RADIAN);
     const yName = cy + outerOffset * Math.sin(-midAngle * RADIAN);
 
     return (
       <g>
-        {/* Porcentaje dentro */}
         <text
           x={xPercent}
           y={yPercent}
@@ -69,8 +127,6 @@ export default function CustomPieChart({ data }: Props) {
         >
           {`${(percent * 100).toFixed(0)}%`}
         </text>
-
-        {/* Nombre fuera, con el color del sector */}
         <text
           x={xName}
           y={yName}
@@ -79,40 +135,78 @@ export default function CustomPieChart({ data }: Props) {
           dominantBaseline="central"
           fontSize={12}
         >
-          {stateTranslations[payload.name as StateTranslation]}
+          {stateTranslations[payload.name as StateTranslation] || payload.name}
         </text>
       </g>
     );
   };
 
+  const handleClick = (entry: any) => {
+    if (!enableNavigation) return;
+    const status = entry.name;
+    navigate(`/conversation/${encodeURIComponent(status)}`);
+  };
+
   return (
     <div className="pieChart__container">
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={100}
-            // labelLine dibuja la línea guía
-            labelLine={true}
-            // renderAllLabels dibuja % y nombre con sus colores
-            label={renderAllLabels}
-            onClick={(entry) => {
-              const status = (entry as any).name;
-              navigate(`/conversation/${encodeURIComponent(status)}`);
+      {filterableByAgent && (
+        <FormControl fullWidth size="small" style={{ marginBottom: "1rem" }}>
+          <InputLabel>Agente</InputLabel>
+          <Select
+            value={selectedAgentId !== null ? selectedAgentId.toString() : ""}
+            label="Agente"
+            onChange={(e) => {
+              const value = e.target.value as string;
+              const selected = value === "" ? null : parseInt(value, 10);
+              setSelectedAgentId?.(selected);
+              fetchRatingByAgent?.(selected, 1, 5);
+            }}
+            sx={{ maxWidth: "40%", maxHeight: "40px", minHeight: "40px" }}
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  maxHeight: 200,
+                },
+              },
             }}
           >
-            {chartData.map((_, idx) => (
-              <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+            <MenuItem value="" sx={{ fontSize: "1.2rem" }}>
+              Todos
+            </MenuItem>
+            {agents.slice(0, 5).map((agent) => (
+              <MenuItem key={agent.userId} value={agent.userId.toString()} sx={{ fontSize: "1.2rem" }}>
+                {agent.fullName}
+              </MenuItem>
             ))}
-          </Pie>
-          <Tooltip formatter={(val: number) => [`${val}`, "Cantidad "]} />
-        </PieChart>
-      </ResponsiveContainer>
+          </Select>
+        </FormControl>
+      )}
+
+      {chartData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={30}
+              outerRadius={100}
+              labelLine={true}
+              label={renderAllLabels}
+              onClick={handleClick}
+            >
+              {chartData.map((_, idx) => (
+                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(val: number) => [`${val}`, "Cantidad"]} />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="no-data-message">No hay datos para mostrar.</div>
+      )}
     </div>
   );
 }

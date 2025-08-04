@@ -26,10 +26,14 @@ margin: 0;
 .verifyContact-subtitle{
     margin: 0;
     font-size: var(--font-size-base);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     text-align: left;
 }
 
+.filter-span{
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+}
 .verifyContact-grid{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;

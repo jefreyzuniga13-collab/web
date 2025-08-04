@@ -9,7 +9,8 @@ import type {
   AdminAsigmentResponseTimeResponseDto,
   WaitingClientResponseDto,
   ResponseAgentAverageResponseDto,
-  FilterForm
+  FilterForm,
+  ConversationRatingByAgents
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 
@@ -45,6 +46,8 @@ const getInitialThreshold = (defaultMinutes: number): number => {
 export const useConversationChart = () => {
   const [filters, setFilters] = useState<FilterForm>(getInitialFilters);
   const [statusData, setStatusData] = useState<ConversationStatusCountResponseDto[]>([]);
+  const [ratingConversationData, setRatingConversationData] = useState<ConversationRatingByAgents[]>([]);
+  const [RatingConversation, setRatingConversation] = useState<ConversationDto[]>([]);
   const [averageAssignmentTime, setAverageAssignmentTime] = useState<AverageAssignmentTimeResponseDto[]>([]);
   const [adminAvgAssignmentTime, setAdminAvgAssignmentTime] = useState<AdminAsigmentResponseTimeResponseDto[]>([]);
   const [waitingClient, setWaitingClient] = useState<WaitingClientResponseDto[]>([]);
@@ -58,6 +61,17 @@ export const useConversationChart = () => {
   const [waitingPage, setWaitingPage] = useState<number>(1);
   const [waitingPageSize, setWaitingPageSize] = useState<number>(5);
   const [totalCountWaiting, setTotalCountWaiting] = useState<number>(0);
+
+  const [loadingRatingConversation, setLoadingRatingConversation] = useState<boolean>(false);
+  const [ratingConversationPage, setRatingConversationPage] = useState<number>(1);
+  const [filterRatingConversationByAgent, setFilterRatingConversationByAgent] = useState<number>();
+  const [ratingConversationPageSize, setRatingConversationPageSize] = useState<number>(5);
+  const [ratingConversationPageTotalCount, setRatingConversationPageTotalCount] = useState<number>(0);
+
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(
+    localStorage.getItem("selectedAgentId") ? parseInt(localStorage.getItem("selectedAgentId")!, 10) : null
+  );
+
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [loadingCharts, setLoadingCharts] = useState<boolean>(false);
   const [loadingWaiting, setLoadingWaiting] = useState<boolean>(false);
@@ -84,7 +98,6 @@ export const useConversationChart = () => {
   }, []);
 
 
-  //Esta seccio se deve de correjir la asuncronaia
   useEffect(() => {
     localStorage.setItem("criticalThreshold", String(threshold));
   }, [threshold]);
@@ -92,21 +105,34 @@ export const useConversationChart = () => {
   const fetchData = useCallback(async () => {
     setLoadingCharts(true);
     setError(null);
+
     try {
       const [statusRes, avgRes, adminRes] = await Promise.all([
         ConversationService.getByDateRange(filters),
         ConversationService.getAverageAssignmentTime(filters),
         ConversationService.getAverageAssigmentAdminTime(filters)
       ]);
+      const result = await ConversationService.getConversationRatingByAgents(selectedAgentId!);
+
+      setRatingConversationData(result);
       setStatusData(statusRes);
       setAverageAssignmentTime(avgRes);
       setAdminAvgAssignmentTime(adminRes);
+
+      //new fetch for conversation rating by agents
+      // const ratingRes = await ConversationService.getConversationRatingByAgents();
+      // setRatingConversationData(ratingRes);
+
+      // const conversationRating = await ConversationService.getByStateWithOut("rating", 1, 1000);
+      // setRatingConversation(conversationRating.items);
+
       if (filters.agentId != null) {
         const resp = await ConversationService.responseAgentAverageAsync(filters);
         setResponseAgentAverage(resp);
       } else {
         setResponseAgentAverage(null);
       }
+
     } catch (err: any) {
       setError(err.message || String(err));
     } finally {
@@ -117,6 +143,51 @@ export const useConversationChart = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  
+  const fetchRatingConversation = useCallback(async (pg = ratingConversationPage, ps = ratingConversationPageSize) => {
+    
+    setLoadingRatingConversation(true);
+    setError(null);
+    try {
+      const list = await ConversationService.getRatingConversation(pg, ps);
+
+      setRatingConversation(list.items);
+
+      setRatingConversationPageTotalCount(list.meta.totalCount);
+      setRatingConversationPage(pg);
+      setRatingConversationPageSize(ps);
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setLoadingRatingConversation(false);
+    }
+  }, [ratingConversationPage, ratingConversationPageSize]);
+
+
+  const fetchRatingByAgent = useCallback(async (agentId?: number | null, pg: number = 1, ps: number =5) => {
+  setLoadingRatingConversation(true);
+  setError(null);
+
+  try {
+    const list = await ConversationService.getRatingConversation(pg, ps, agentId !== null ? agentId : undefined);
+    const result = await ConversationService.getConversationRatingByAgents(agentId !== null ? agentId : undefined);
+
+    setRatingConversation(list.items);
+    setRatingConversationData(result);
+
+    setRatingConversationPageTotalCount(list.meta.totalCount);
+    setRatingConversationPage(pg);
+    setRatingConversationPageSize(ps);
+
+    localStorage.setItem("selectedAgentId", agentId ? agentId.toString() : "");
+  } catch (err: any) {
+    setError(err.message || String(err));
+  } finally {
+    setLoadingRatingConversation(false);
+  }
+}, []);
+
 
   const fetchWaiting = useCallback(async (pg = waitingPage, ps = waitingPageSize) => {
     setLoadingWaiting(true);
@@ -137,6 +208,10 @@ export const useConversationChart = () => {
   useEffect(() => {
     fetchWaiting();
   }, [fetchWaiting]);
+
+    useEffect(() => {
+    fetchRatingConversation();
+  }, [fetchWaiting, fetchRatingConversation]);
 
   const fetchConversationByClientPage = useCallback(async (pg = page, ps = pageSize) => {
     setLoadingList(true);
@@ -193,6 +268,8 @@ export const useConversationChart = () => {
     // criticialClientTime,
     threshold,
     setThreshold,
+    filterRatingConversationByAgent,
+    setFilterRatingConversationByAgent,
     filters,
     setFilters,
     page,
@@ -213,6 +290,21 @@ export const useConversationChart = () => {
     updateDate,
     handleApply,
     setPageSize,
-    handleRefresh
+    handleRefresh,
+
+    // New data
+    ratingConversationData,
+    RatingConversation,
+    fetchRatingConversation,
+    loadingRatingConversation,
+    ratingConversationPage,
+    ratingConversationPageSize,
+    ratingConversationPageTotalCount,
+    setRatingConversationPage,
+    setRatingConversationPageSize,
+    setRatingConversationPageTotalCount,
+    selectedAgentId,
+    setSelectedAgentId,
+    fetchRatingByAgent
   };
 };

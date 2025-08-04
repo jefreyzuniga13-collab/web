@@ -13,6 +13,7 @@ import { FaFilter } from "react-icons/fa";
 import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { parseISO, parse } from "date-fns";
 import { format } from "date-fns-tz";
+import { useEffect } from "react";
 
 interface Props {
   onClosed: () => void;
@@ -37,12 +38,18 @@ export default function DashboardFilterModal({
     handleApply(form);
   };
 
-  const { users } = useUsers();
+  const { users, getAgents, agents } = useUsers();
   const { data: contacts } = useContact();
 
-  const agents = users.filter((u) =>
-    u.roles.some((r) => r.roleName === "Support")
-  );
+    useEffect(() => {
+    getAgents()
+  }, [])
+  
+
+  // const agents = users.filter((u) =>
+  //   u.roles.some((r) => r.roleName === "Support")
+  // );
+  
   const admins = users.filter((u) =>
     u.roles.some((r) => r.roleName === "Admin")
   );
@@ -75,6 +82,7 @@ export default function DashboardFilterModal({
                 value: a.userId,
               })),
             ]}
+
             value={form.agentId ?? ""}
             onChange={handleSelectChange("agentId", "agentName")}
             className="filter__select"

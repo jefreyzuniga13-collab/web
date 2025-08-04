@@ -1,33 +1,70 @@
-.barChart__Container{
-
+.barChart__Container {
 }
-.custom__barChart-title{
-    color: var(--text-primary);
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-     text-align: left;
-margin: 2px 0;
+.custom__barChart-title {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  margin: 2px 0;
 }
-.custom__barChart-subtitle{
-    color: var(--text-secondary);
-    font-size: var(--font-size-base);
-    text-wrap: wrap;
-    text-overflow: ellipsis;
-     text-align: left;
-     margin: var(--space-xs) 0 !important;
-}
-
-.MuiTableContainer-root{
-    overflow: auto !important;
-    overflow-y: hidden !important;
-    font-size: 10px !important;
+.custom__barChart-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  text-wrap: wrap;
+  text-overflow: ellipsis;
+  text-align: left;
+  margin: var(--space-xs) 0 !important;
 }
 
-strong{
-    font: var(--font-size-base) I !important;
+.MuiTableContainer-root {
+  overflow: auto !important;
+  overflow-y: hidden !important;
+  font-size: 10px !important;
+}
+
+strong {
+  font: var(--font-size-base) I !important;
 }
 
 .barChart__Container {
   overflow-x: auto;
   padding-bottom: 1rem; /* espacio para etiquetas rotadas */
+}
+
+.custom__barChart-select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  border-color: var(--border-color);
+  transition: border-color 0.3s ease;
+}
+.custom__barChart-select:hover {
+  border-color: var(--border-hover-color);
+}
+.custom__barChart-select:focus {
+  outline: none;
+  border-color: var(--border-focus-color);
+}
+.custom-barChart-select__option__header {
+  font-weight: bold;
+  color: var(--text-secondary);
+  background-color: var(--background-primary);
+}
+
+.custom-barChart-select__option{
+  color: var(--text-primary);
+  background-color: var(--background-secondary);
+}
+.custom-barChart-select__option:hover {
+  background-color: var(--background-hover);
+}
+.no-data-message{
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  text-align: center;
+  margin-top: 1rem;
 }

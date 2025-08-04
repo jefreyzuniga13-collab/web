@@ -44,6 +44,8 @@ export type NameTranslation =
   | "RequestUnderReviewContactResponseMessage"
   | "PreviewAgentWarningMessage"
   | "PreviewAgentWarningMessageTime"
+  | "AssignedAgentMesage"
+  | "PendingRegistration"
 
   export type TypeTranslation =
   | 'Prompts'

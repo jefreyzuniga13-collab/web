@@ -125,7 +125,7 @@ const VerifyNewContactPage: React.FC = () => {
             </div>
 
             <div className="verifyContact-grid-col">
-              <label htmlFor="filter">Buscar Cliente</label>
+              <label htmlFor="filter">Buscar Cliente <span className='filter-span'>(Nombre o Razon social)</span></label>
               <Input
                 id="filter"
                 name="filter"

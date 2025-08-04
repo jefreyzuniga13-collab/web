@@ -5,7 +5,7 @@ import type {
   ConversationHistoryDto,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 
 export function getConversation(id: number) {
@@ -240,6 +240,43 @@ class ConversationServ {
           to: to.toISOString(),
           PageNumber: page,
           PageSize: pageSize
+        }
+      }
+    );
+    return data.data;
+  }
+
+  //New Methods for Rating Conversations
+  //1. 
+  async getRatingConversation(
+    page: number,
+    pageSize: number,
+    agentId?: number
+  ): Promise<PagedResponse<ConversationDto>> {
+
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/ratingConversation",
+      {
+        params: {
+          PageNumber: page,
+          PageSize: pageSize,
+          agentId: agentId || null  // If agentId is not provided, it will be null
+        }
+      }
+    );
+    return data.data;
+  }
+
+  //2. 
+  async getConversationRatingByAgents(
+    agentId?: number
+  ): Promise<ConversationRatingByAgents[]> {
+
+    const { data } = await api.get<ApiResponse<ConversationRatingByAgents[]>>(
+      "/Conversations/ratingByAgents",
+      {
+        params: {
+          agentId: agentId || null  // If agentId is not provided, it will be null
         }
       }
     );

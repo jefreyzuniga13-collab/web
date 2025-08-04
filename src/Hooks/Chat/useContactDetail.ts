@@ -48,7 +48,7 @@ export function useContactDetail(conversationId: number) {
       setTags(res.data.data.tags ?? []);
     } catch (err) {
       console.error(err);
-      setError("Error al cargar los detalles de la conversación.");
+      // setError("Error al cargar los detalles de la conversación.");
     } finally {
       setLoading(false);
     }

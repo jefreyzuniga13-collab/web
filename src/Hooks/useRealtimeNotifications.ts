@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
-import { fetchUnreadCount, fetchNotifications } from '@/Context/Slices/notificationsSlice'
+import { fetchNotifications } from '@/Context/Slices/notificationsSlice'
 import type { AppDispatch } from '@/Context'
 import { notificationsConnection } from '@/Services/signalr'
 import type { NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
@@ -14,7 +14,7 @@ export function useRealtimeNotifications(
   useEffect(() => {
     const handler = (dto: NotificationDto) => {
       toast.info(`📬 ${dto.payload}`) 
-      dispatch(fetchUnreadCount())
+      // dispatch(fetchUnreadCount())
       dispatch(fetchNotifications({ page: currentPage, pageSize }))
     }
 

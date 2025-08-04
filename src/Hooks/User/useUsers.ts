@@ -13,9 +13,12 @@ import {
 } from '@/Context/Slices/userSlice'
 import type { AppDispatch, RootState } from '@/Context'
 import type { UpdateUserRequest } from '@/Interfaces/User/UserInterfaces'
+import { AgentService } from '@/Services/AgentService'
+import type { AgentDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 export function useUsers() {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
+  
   const {
     users,
     currentUser,
@@ -29,6 +32,7 @@ export function useUsers() {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [agents, setAgents] = useState<AgentDto[]>([])
 
   const fetchPage = useCallback(
     (page = 1, size = pageSize) => {
@@ -104,6 +108,16 @@ export function useUsers() {
     [dispatch, fetchOne]
   )
 
+  const getAgents = useCallback(async () => {
+  try {
+    const agents = await AgentService.getAgentsAsync();
+    setAgents(agents);
+  } catch (error) {
+    console.error('Error fetching agents:', error);
+    // toast.error('Error al cargar agentes');
+  }
+}, []);
+
   const openView = useCallback(
     (id: number) => {
       setModalMode('view')
@@ -113,6 +127,7 @@ export function useUsers() {
     [fetchOne]
   )
 
+  
   const closeModal = useCallback(() => {
     setModalOpen(false)
     dispatch(clearCurrentUser())
@@ -159,5 +174,7 @@ export function useUsers() {
     closeModal,
     handleSubmit,
     toggleUser,
+    agents,
+    getAgents,
   }
 }

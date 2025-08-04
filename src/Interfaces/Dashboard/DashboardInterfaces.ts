@@ -89,3 +89,12 @@ export interface ResponseAgentAverageResponseDto{
   name?: string;
   clienteData?: ResponseAgentAverageClienteDataResponseDto [];
 }
+
+export interface ConversationRatingByAgents{
+  agentId: string;
+  agentName: string;
+  totalConversations: number;
+  excelentRatings: number;
+  regularRatings: number;
+  negativeRatings: number;
+}

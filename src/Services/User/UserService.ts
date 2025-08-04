@@ -26,6 +26,8 @@ class UserService {
   }
 
 async createUserAsync(formData: FormData): Promise<User> {
+
+  console.log('Datos enviados a la API:', formData)
   const { data } = await api.post<ApiResponse<User>>('/Users', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

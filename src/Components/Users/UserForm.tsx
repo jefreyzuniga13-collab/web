@@ -35,28 +35,32 @@ export default function UserForm({
     companyId: companies[0]?.companyId || 0,
     phone: '',
     identifier: '',
+    imageUrl: '',
     isActive: true,
     roleIds: [] as number[],
     sendWelcomeEmail: false,
   })
+
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        fullName: initialData.fullName,
-        email: initialData.email,
-        password: '',
-        companyId: initialData.companyId,
-        phone: initialData.phone || '',
-        identifier: initialData.identifier || '',
-        isActive: initialData.isActive,
-        roleIds: initialData.roles.map(r => r.roleId),
-        sendWelcomeEmail: false,
-      })
-    }
-  }, [initialData])
+  if (initialData) {
+    setFormData({
+      fullName: initialData.fullName,
+      email: initialData.email,
+      password: '',
+      companyId: initialData.companyId,
+      phone: initialData.phone || '',
+      identifier: initialData.identifier || '',
+      isActive: initialData.isActive,
+      imageUrl: initialData.imageUrl || '',
+      roleIds: initialData.roles.map(r => r.roleId),
+      sendWelcomeEmail: false,
+    });
+  }
+}, [initialData]);
+
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -67,8 +71,8 @@ export default function UserForm({
     if (!isEditing && !formData.password) newErrors.password = 'La contraseña es obligatoria'
     else if (formData.password && formData.password.length < 6)
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
-    const regex = /^505[587]\d{7}$/;
-    if(!regex.test(formData.phone)) newErrors.phone = 'Formato invalido. (50578345656)'
+    // const regex = /^505[587]\d{7}$/;
+    // if(!regex.test(formData.phone)) newErrors.phone = 'Formato invalido. (50578345656)'
     if (formData.roleIds.length === 0) newErrors.roleIds = 'Debe seleccionar al menos un rol'
     if (selectedFile && selectedFile.size > 5 * 1024 * 1024)
       newErrors.imageFile = 'La imagen no puede superar los 5MB'
@@ -121,6 +125,7 @@ export default function UserForm({
 
   const roleOptions = roles.map(r => ({ value: r.roleId, label: r.roleName }))
 
+  console.log('Image url de Form Data:', formData.imageUrl)
   return (
     <form onSubmit={handleSubmitForm}>
       <div className="user-form__container">
@@ -240,7 +245,7 @@ export default function UserForm({
             // disabled={isViewing}
             maxSize={5 * 1024 * 1024}
             accept="image/*"
-            currentImage={initialData?.imageUrl ?? ''}
+            currentImage={formData.imageUrl || initialData?.imageUrl || ''}
           />
           {errors.imageFile && <span className="user-form__error">{errors.imageFile}</span>}
         </div>

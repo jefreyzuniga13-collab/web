@@ -84,7 +84,7 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       setMessagesSentReceived(messagesSentReceivedData);
       setActiveUsersPerDay(activeUsersPerDayData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar los datos del dashboard');
+      //setError(err instanceof Error ? err.message : 'Error al cargar los datos del dashboard');
       console.error('Dashboard data error:', err);
     } finally {
       setLoading(false);

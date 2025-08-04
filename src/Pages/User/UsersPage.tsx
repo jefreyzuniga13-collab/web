@@ -13,6 +13,7 @@ import '@/Styles/Users/UsersPage.css'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 
 export default function UsersPage() {
+  
   const {
     users,
     currentUser,
@@ -52,16 +53,16 @@ export default function UsersPage() {
         </span>
       )
     },
-     {
-      id: 'isOnline',
-      label: 'En Línea',
-      minWidth: 70,
-      render: row => (
-        <span className={row.lastOnline ? 'status status--active' : 'status status--inactive'}>
-          {row.isOnline ? 'Si' : 'No'}
-        </span>
-      )
-    },
+    //  {
+    //   id: 'isOnline',
+    //   label: 'En Línea',
+    //   minWidth: 70,
+    //   render: row => (
+    //     <span className={row.lastOnline ? 'status status--active' : 'status status--inactive'}>
+    //       {row.isOnline ? 'Si' : 'No'}
+    //     </span>
+    //   )
+    // },
      { id: 'createdAt', label: 'Creado', minWidth: 80, render: row => new Date(row.createdAt!).toLocaleDateString('es-NI') },
     {
       id: 'actions',

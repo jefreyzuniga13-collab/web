@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchNotifications, fetchUnreadCount } from '@/Context/Slices/notificationsSlice'
+import { fetchNotifications } from '@/Context/Slices/notificationsSlice'
 import type { RootState, AppDispatch } from '@/Context'
 
 export function useNotifications(page = 1, pageSize = 10) {
@@ -13,9 +13,9 @@ export function useNotifications(page = 1, pageSize = 10) {
     dispatch(fetchNotifications({ page, pageSize }))
   }, [dispatch, page, pageSize])
 
-  useEffect(() => {
-    dispatch(fetchUnreadCount())
-  }, [dispatch])
+  // useEffect(() => {
+  //   dispatch(fetchUnreadCount())
+  // }, [dispatch])
 
   return { list, meta, unreadCount, loadingList, loadingCount }
 }

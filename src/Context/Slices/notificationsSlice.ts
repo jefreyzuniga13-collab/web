@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { getNotifications, getUnreadCount } from '@/Services/Notification/NotificationService'
+import { getNotifications } from '@/Services/Notification/NotificationService'
 import type { NotificationsResponse, NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 interface NotificationsState {
@@ -27,13 +27,13 @@ export const fetchNotifications = createAsyncThunk(
   }
 )
 
-export const fetchUnreadCount = createAsyncThunk(
-  'notifications/fetchCount',
-  async () => {
-    const res = await getUnreadCount()
-    return res.data
-  }
-)
+// export const fetchUnreadCount = createAsyncThunk(
+//   'notifications/fetchCount',
+//   async () => {
+//     const res = await getUnreadCount()
+//     return res.data
+//   }
+// )
 
 const slice = createSlice({
   name: 'notifications',
@@ -64,16 +64,16 @@ const slice = createSlice({
         state.error = action.error.message
       })
       // contador
-      .addCase(fetchUnreadCount.pending, state => {
-        state.loadingCount = true
-      })
-      .addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<number>) => {
-        state.loadingCount = false
-        state.unreadCount = action.payload
-      })
-      .addCase(fetchUnreadCount.rejected, state => {
-        state.loadingCount = false
-      })
+      // .addCase(fetchUnreadCount.pending, state => {
+      //   state.loadingCount = true
+      // })
+      // .addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<number>) => {
+      //   state.loadingCount = false
+      //   state.unreadCount = action.payload
+      // })
+      // .addCase(fetchUnreadCount.rejected, state => {
+      //   state.loadingCount = false
+      // })
   }
 })
 

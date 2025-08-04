@@ -163,12 +163,6 @@ const applyDateFilter = () => {
   setPage(1)
 }
 
-//En no se atualiza appliedRange.validFrom, appliedRange.validTo en applyDateFilter en la seccion desetAppliedRange. 
-// por lo quie no se ejecuta el effecto
-useEffect(() => {
-  console.log("cambió appliedRange:", appliedRange.validFrom, appliedRange.validTo)
-}, [appliedRange.validFrom, appliedRange.validTo])
-
   const clearFilter = () => {
     localStorage.removeItem('convFrom')
     localStorage.removeItem('convTo')

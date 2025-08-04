@@ -104,7 +104,7 @@ export const InboxList: React.FC<Props> = ({
         const statusTextMap: Record<string, string> = {
           bot: 'Bot',
           waiting: 'Pendiente',
-          human: 'Humano',
+          human: 'Asignado',
           closed: 'Cerrado',
           incomplete: 'Incompleta'
         }

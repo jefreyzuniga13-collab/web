@@ -32,8 +32,6 @@ export default function useConversations({
       setError(null)
       try {
         const res = await ConversationService.getByStateWithOut(st, pg, ps)
-          
-        console.log("Valores obtrenidos son: ", JSON.stringify(res.items))
 
         setData(res.items)
         setTotalCount(res.meta.totalCount)

@@ -10,9 +10,9 @@ export const getNotifications = (page = 1, pageSize = 10) => {
   })
 }
 
-export const getUnreadCount = () => {
-  return api.get<number>(`/Notifications/unread-count`)
-}
+// export const getUnreadCount = () => {
+//   return api.get<number>(`/Notifications/unread-count`)
+// }
 
 class NotificationServ {
   async GetAllAsync(

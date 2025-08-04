@@ -7,7 +7,7 @@ import CustomBarChart from "@/Components/Chart/CustomBarChart";
 import Button from "@/Components/Common/Button";
 import DashboardFilterModal from "@/Components/Dashboard/DashboardFilter";
 import "@/Styles/Dashboard/Dashboard.css";
-import AgentResponseChart from "@/Hooks/Chart/AgentResponseChart";
+import AgentResponseChart from "@/Components/Chart/AgentResponseChart";
 import { ListComponent, type Column } from "@/Components/Chart/ListComponent";
 import { HiRefresh } from "react-icons/hi";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
     averageAssignmentTime,
     adminAvgAssignmentTime,
     waitingClient,
-    responseAgentAverage,
+    // responseAgentAverage,
     conversationClient,
     page,
     setPage,
@@ -43,7 +43,18 @@ const DashboardPage: React.FC = () => {
     setWaitingPage,
     setWaitingPageSize,
     filters,
-    loadingWaiting
+    loadingWaiting,
+    ratingConversationData,
+   RatingConversation,
+   loadingRatingConversation,
+   ratingConversationPage,
+   ratingConversationPageSize,
+   ratingConversationPageTotalCount,
+   setRatingConversationPage,
+   setRatingConversationPageSize,
+   selectedAgentId,
+   setSelectedAgentId,
+   fetchRatingByAgent
   } = useConversationChart();
 
   const formatTime = (d: Date | string) => {
@@ -96,6 +107,26 @@ const DashboardPage: React.FC = () => {
 
     return parts.length > 0 ? parts.join(", ") : "Todos los registros";
   }, [filters]);
+
+  
+  const columnsRatingConversation = useMemo<Column<ConversationDto>[]>(() => [
+    { field: "assignedAgentName", headerName: "Agente Asignado" },
+    { field: "clientContactName", headerName: "Contacto" },
+    {field: "rating", headerName: "Calificación", render: c => c.rating ?? "-"},
+    {
+      field: "ratingReceivedAt",
+      headerName: "Calificación Recibida",
+      render: c =>
+        c.ratingReceivedAt
+          ? new Date(c.ratingReceivedAt).toLocaleString("es-NI")
+          : "-"
+    },
+    // {
+    //   field: "createdAt",
+    //   headerName: "Creado",
+    //   render: c => new Date(c.createdAt).toLocaleString("es-NI")
+    // }
+  ], []);
 
   const columnsWaitingClient = useMemo<Column<WaitingClientResponseDto>[]>(() => [
     { field: "name", headerName: "Agente" },
@@ -215,6 +246,7 @@ const DashboardPage: React.FC = () => {
     <div className="dashboard-container">
       <div className="dashboard">
         <header className="dashboard-header">
+          
           <div>
             <h1 className="dashboard-header-title">Dashboard</h1>
             <p className="dashboard-header-subtitle">
@@ -223,6 +255,7 @@ const DashboardPage: React.FC = () => {
              }
             </p>
           </div>
+
           <section className="dashboard-filter">
             <div className="dashboard-header-btn">
               <Button
@@ -328,12 +361,49 @@ const DashboardPage: React.FC = () => {
               )}
             </div>
 
+            {/* Chart de calificaciones de conversaciones y tabla pagina desde la mas reciente */}
+            <div className="dashboard-waiting__container">
+              <h4 className="dashboard-waiting__title">
+                Calificaciones de conversaciones por agentes
+              </h4>
+              <p className="dashboard-waiting__subtitle">
+                {`Porcentaje de conversaciones por calificación actual`}
+              </p>
+
+                <>
+                  <CustomPieChart data={ratingConversationData} enableNavigation={false} filterableByAgent={true}
+                  selectedAgentId={selectedAgentId} setSelectedAgentId={setSelectedAgentId} fetchRatingByAgent={fetchRatingByAgent}/>
+
+                  {loadingRatingConversation ? (
+                    <Spinner size={24} text="Cargando conversaciones calificadas..." />
+                  ) : (
+                    
+                    <ListComponent<ConversationDto>
+                      rows={RatingConversation}
+                      columns={columnsRatingConversation}
+                      filterField="assignedAgentName"
+                      filterLabel="Filtrar por agente"
+                      // threshold={threshold}/. Aqui se puede agregar un filtro de calificación
+                      //onThresholdChange={setThreshold}
+                      page={ratingConversationPage}
+                      pageSize={ratingConversationPageSize}
+                      totalCount={ratingConversationPageTotalCount}
+                      setPage={setRatingConversationPage}
+                      setPageSize={setRatingConversationPageSize}
+                      maxHeight={400}
+                      showAutoComplete= {false}
+                    />
+                  )}
+                </>
+            </div>
+
             <div>
               <h4 className="dashboard-waiting__title">Promedio respuestas agente por clientes.</h4>
               <p className="dashboard-waiting__subtitle">
                 {`Promedio de respuesta a mensajes del clientes por agente. Seleccione un agente en el filtro.`}
               </p>
-              {responseAgentAverage ? (
+
+              {/* {responseAgentAverage ? (
                 <AgentResponseChart
                   data={responseAgentAverage.clienteData!}
                   agentName={responseAgentAverage.name!}
@@ -344,8 +414,14 @@ const DashboardPage: React.FC = () => {
                 <p className="empty-dashboard">
                   Agente sin mensajes de respuesta el dia de hoy.
                 </p>
-              )}
+              )} */}
+
+               <AgentResponseChart
+                  title="Tiempo de respuesta por agente"
+                  subtitle=""
+                />
             </div>
+
           </section>
         )}
       </div>

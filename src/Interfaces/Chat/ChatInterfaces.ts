@@ -53,6 +53,9 @@ export interface ConversationDto {
   unreadForAgent?:      number
   unreadForAssigner?:   number
   tone?: string;
+  rating: number | null;
+  ratingSubmittedAt: string | null;
+  ratingReceivedAt: string | null;
 }
 
 export interface UpdateConversationRequest {
