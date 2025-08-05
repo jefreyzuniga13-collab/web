@@ -2,7 +2,8 @@ import React, { useEffect } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
-
+//import { AiTwotoneAudio } from "react-icons/ai";
+import { AiOutlineAudioMuted } from "react-icons/ai";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -41,6 +42,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
+    isRecording,
+    audioBlob,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    clearRecording,
+    handleSendAudio,
+
   } = useChatWindow()
 
   useEffect(() => {
@@ -204,7 +213,44 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             </button>
           </div>
         )}
+
+        {!isRecording && !audioBlob && (
+            <button
+              onClick={startRecording}
+              disabled={!conversationId || sending}
+              className="chat-window__composer-audio-btn"
+              aria-label="Iniciar grabación"
+            >
+                <AiOutlineAudioMuted size={24} className='chat-window__composer-audio-icon'/>
+            </button>
+          )}
+
+          {isRecording && (
+            <div className="chat-window__recorder-status">
+              <div className="chat-window__waveform">
+                <div className="bar" /><div className="bar" /><div className="bar" />
+              </div>
+              <span className="chat-window__timer">{recordingTime}s</span>
+              <button
+                onClick={stopRecording}
+                className="chat-window__composer-audio-btn stop"
+                aria-label="Detener grabación"
+              >
+                ⏹️
+              </button>
+            </div>
+          )}
+
+            {audioBlob && !isRecording && (
+              <div className="chat-window__recorder-preview">
+                <audio controls src={URL.createObjectURL(audioBlob)} />
+                <button onClick={handleSendAudio} className="chat-window__composer-audio-btn send">✅</button>
+                <button onClick={clearRecording} className="chat-window__composer-audio-btn cancel">❌</button>
+              </div>
+            )}
+        
         <div className="chat-window__composer-input-container">
+
           <textarea
             className="chat-window__composer-input"
             placeholder="Escribe un mensaje…"

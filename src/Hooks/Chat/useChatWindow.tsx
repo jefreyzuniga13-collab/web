@@ -3,6 +3,8 @@ import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
 import { Check, CheckCheck } from "lucide-react"
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
+import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
+
 
 export const useChatWindow = () => {
   const [conversationId, setConversationId] = useState<number>(0)
@@ -17,6 +19,30 @@ export const useChatWindow = () => {
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const {
+    isRecording,
+    audioBlob,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    clearRecording
+  } = useAudioRecorder();
+
+  const handleSendAudio = async () => {
+    if (!conversationId || sending || !audioBlob) return;
+    setSending(true);
+    try {
+      const file = new File([audioBlob], 'grabacion.mp3', { type: 'audio/mpeg' });
+
+      await sendMedia(conversationId, file);
+      clearRecording();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -169,5 +195,12 @@ export const useChatWindow = () => {
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
+    isRecording,
+    audioBlob,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    clearRecording,
+    handleSendAudio,
   }
 }
