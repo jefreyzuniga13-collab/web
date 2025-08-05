@@ -33,9 +33,9 @@ export const useChatWindow = () => {
     if (!conversationId || sending || !audioBlob) return;
     setSending(true);
     try {
-      const file = new File([audioBlob], 'grabacion.mp3', { type: 'audio/mpeg' });
+      const file = new File([audioBlob], 'grabacion.ogg', { type: 'audio/ogg' });
 
-      await sendMedia(conversationId, file);
+      await sendMedia(conversationId, file, "");
       clearRecording();
     } catch (err) {
       console.error(err);
@@ -47,6 +47,7 @@ export const useChatWindow = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -82,6 +83,7 @@ export const useChatWindow = () => {
       if (file) {
         await sendMedia(conversationId, file, text.trim() || undefined)
         setFile(null)
+
         setText('')
         if (fileInputRef.current) fileInputRef.current.value = ''
       } else if (text.trim()) {

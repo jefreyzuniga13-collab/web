@@ -635,8 +635,23 @@
   color: var(--grayColor);
   transition: color .6s ease-in-out;
 }
+.chat-window__composer-audio-btn,
+.stop{
+  color: var(--color-primary);
+  transition: all .4s ease-in-out;
+}
+.chat-window__composer-audio-btn:hover,
+.stop :hover{
+  opacity: 0.8;
+}
+.chat-window__composer-audio-btn_cancel{
+  color: var(--color-error);
+    transition: all .4s ease-in-out;
+}
 
-
+.chat-window__composer-audio-btn_cancel:hover{
+    opacity: 0.8;
+}
 @keyframes pulse {
   0% { opacity: 0.7; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.05); }

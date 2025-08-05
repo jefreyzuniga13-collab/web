@@ -4,6 +4,9 @@ import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
 //import { AiTwotoneAudio } from "react-icons/ai";
 import { AiOutlineAudioMuted } from "react-icons/ai";
+import { MdScheduleSend } from "react-icons/md";
+import { MdOutlineCancel } from "react-icons/md";
+import { TbPlayerPause } from "react-icons/tb";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -59,6 +62,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       setConversationId(0)
       setUserId(0)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
   if (!conversationId) {
@@ -120,6 +124,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                           </div>
                         </div>
                       )}
+                      
                       {m.attachments[0].mimeType?.startsWith('video/') && (
                         <div className="chat-window__media-video">
                           <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
@@ -201,6 +206,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           onChange={handleFileChange}
           disabled={!conversationId || sending}
         />
+
         {file && (
           <div className="chat-window__composer-file-preview">
             <span className="chat-window__composer-file-name">{file.name}</span>
@@ -236,7 +242,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
                 className="chat-window__composer-audio-btn stop"
                 aria-label="Detener grabación"
               >
-                ⏹️
+                <TbPlayerPause size={24}/>
               </button>
             </div>
           )}
@@ -244,8 +250,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             {audioBlob && !isRecording && (
               <div className="chat-window__recorder-preview">
                 <audio controls src={URL.createObjectURL(audioBlob)} />
-                <button onClick={handleSendAudio} className="chat-window__composer-audio-btn send">✅</button>
-                <button onClick={clearRecording} className="chat-window__composer-audio-btn cancel">❌</button>
+                <button onClick={handleSendAudio} className="chat-window__composer-audio-btn send"><MdScheduleSend size={24} className='chat-window__composer-audio-btn__icon'/></button>
+                <button onClick={clearRecording} className="chat-window__composer-audio-btn
+                chat-window__composer-audio-btn_cancel cancel"><MdOutlineCancel scale={26} className='chat-window__composer-audio-btn__icon'/></button>
               </div>
             )}
         

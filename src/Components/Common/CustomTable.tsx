@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Paper,
   Table,
@@ -8,10 +7,11 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  TextField,
 } from '@mui/material'
+import { useState, useMemo } from 'react'
 import type { Props } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Common/CustomTable.css'
-// import { useState } from 'react'
 
 export default function CustomTable<T>({
   columns,
@@ -23,19 +23,36 @@ export default function CustomTable<T>({
   onPageChange,
   onRowsPerPageChange,
 }: Props<T>) {
+  const [filter, setFilter] = useState('')
 
-  // const {search, setSearch} = useState<string | null>();
+  const visibleRows = useMemo(() => {
+    if (!filter.trim()) return rows
 
-  // const handleSearch = (e)=>{
-  //   setSearch(e.target.value);
-  // }
-
-  // const FilteredRows = rows.filter((row: any) =>{
-  //     row.name.toLowerCase().includes(search.toLowerCase()) || 
-  // })
+    return rows.filter(row =>
+      columns.some(col => {
+        const value = col.render
+          ? String(col.render(row))
+          : String(row[col.id as keyof T] ?? '')
+        return value.toLowerCase().includes(filter.toLowerCase())
+      })
+    )
+  }, [filter, rows, columns])
 
   return (
     <Paper className="table__container">
+
+      <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div>
+
       <TableContainer className="table__scroll-container">
         <Table stickyHeader>
           <TableHead>
@@ -53,7 +70,7 @@ export default function CustomTable<T>({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row, rowIndex) => (
+            {visibleRows.map((row, rowIndex) => (
               <TableRow hover key={rowIndex}>
                 {columns.map(col => {
                   if (col.render) {

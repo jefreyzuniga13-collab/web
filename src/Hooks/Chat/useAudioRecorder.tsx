@@ -33,7 +33,7 @@ export function useAudioRecorder() {
       }
 
       mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunks.current, { type: 'audio/mpeg' });
+      const blob = new Blob(chunks.current, { type: 'audio/ogg;' });
       setAudioBlob(blob);
       setIsRecording(false);
       clearInterval(timerRef.current!);
