@@ -119,6 +119,7 @@
     transition: all var(--transition-normal) var(--transition-ease);
     opacity: 1;
     flex: 1;
+    text-align: left;
   }
 
   .navbar--collapsed .menu-item__text {
@@ -163,6 +164,7 @@
     justify-content: center;
     align-items: center;
     gap: var(--space-md);
+    min-width: 100%;
     flex-direction: column;
     margin-bottom: var(--space-md);
     transition: all var(--transition-normal) var(--transition-ease);
@@ -476,7 +478,7 @@
   }
 
   .navbar__profile{
-    width: 50px;
+   
   }
   .navbar__copyright{
     display: none;

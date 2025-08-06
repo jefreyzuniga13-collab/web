@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
 
-
 export const useChatWindow = () => {
   const [conversationId, setConversationId] = useState<number>(0)
   const [userId, setUserId] = useState<number>(0)
@@ -33,7 +32,10 @@ export const useChatWindow = () => {
     if (!conversationId || sending || !audioBlob) return;
     setSending(true);
     try {
-      const file = new File([audioBlob], 'grabacion.ogg', { type: 'audio/ogg' });
+
+      //En mabos formato el resultado es el mismo otro formato no funciona por reglamente de whatsapp cloud api
+      const file = new File([audioBlob], 'grabacion.mp3', { type: 'audio/mpeg' });
+      //const file = new File([audioBlob], 'grabacion.ogg', { type: 'audio/ogg' });
 
       await sendMedia(conversationId, file, "");
       clearRecording();

@@ -4,6 +4,7 @@ import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Ch
 import '@/Styles/Conversation/ConversationDetailModal.css'
 import type { StateTranslation } from '@/Interfaces/GlobalInterface'
 import { stateTranslations } from '@/Utils/Translation/stateTranslations'
+import { format } from 'date-fns'
 
 interface ConversationDetailModalProps {
   isOpen: boolean
@@ -11,7 +12,14 @@ interface ConversationDetailModalProps {
   onClose: () => void
 }
 
-const formatDate = (value?: string) => value ? new Date(value).toLocaleString('es-NI') : '-'
+    const formatDate = (iso?: string) => {
+        if (!iso) return ''
+        try {
+          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
+        } catch {
+          return ''
+        }
+  }
 
 export default function ConversationDetailModal({ isOpen, data, onClose }: ConversationDetailModalProps) {
   if (!isOpen || !data) return null

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import Button from "@/Components/Common/Button";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+// import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useConversations } from "@/Hooks/useConversations";
 
 type FilterOption = { label: string; value: string; content: string };
+
 interface FilterOrderModalProps {
   currentOrder: string[];
   options: FilterOption[];
@@ -20,7 +21,8 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
 }) => {
   const [order, setOrder] = useState<string[]>(currentOrder);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const { form, handleDate, applyDateFilter, clearFilter } = useConversations();
+  //const { form, handleDate, applyDateFilter, clearFilter } = useConversations();
+  const { applyDateFilter, clearFilter } = useConversations();
 
   const handleDragStart = (idx: number) => setDragIndex(idx);
   const handleDragOver  = (e: React.DragEvent) => e.preventDefault();
@@ -68,7 +70,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
           })}
         </ul>
 
-        <div className="ws-modal-dateFilter">
+        {/* <div className="ws-modal-dateFilter">
      
 
             <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -105,7 +107,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
               />
             </LocalizationProvider>
  
-        </div>
+        </div> */}
 
         <div className="order-modal-actions">
           <Button variant="secondary" onClick={onClose}>

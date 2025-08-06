@@ -7,7 +7,7 @@ import { markConversationRead } from '@/Services/ConversationService'
 
 interface Props {
   selectedId?: number
-  onSelect: (id: number) => void
+  onSelect: (id: number | null) => void
   filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
 }
 
@@ -72,9 +72,14 @@ export const InboxList: React.FC<Props> = ({
   }
 
   const handleSelect = async (id: number) => {
+  if (id === selectedId) {
+    onSelect(null)
+  } else {
     await markConversationRead(id)
     onSelect(id)
   }
+}
+
 
   if (error) {
     return (

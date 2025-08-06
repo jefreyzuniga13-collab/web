@@ -104,7 +104,7 @@ const SupportPage: React.FC = () => {
             <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${conversation?.status == "Closed" ? "btnDisabled" : ""}
               ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
-              disabled={!convId || conversation?.status == "Closed"}
+              disabled={!convId || conversation?.status == "Closed" || conversation?.status == "Incomplete"}
               onClick={handleAssignClick}
             >
               <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}

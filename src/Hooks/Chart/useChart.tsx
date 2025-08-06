@@ -53,19 +53,20 @@ export const useConversationChart = () => {
   const [waitingClient, setWaitingClient] = useState<WaitingClientResponseDto[]>([]);
   const [responseAgentAverage, setResponseAgentAverage] = useState<ResponseAgentAverageResponseDto | null>(null);
   const [conversationClient, setConversationClient] = useState<ConversationDto[]>([]);
-  // const [criticialClientTime, setCriticialClientTime] = useState<string>("");
+
   const [threshold, setThreshold] = useState<number>(() => getInitialThreshold(60));
+
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(5);
+  const [pageSize, setPageSize] = useState<number>(3);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [waitingPage, setWaitingPage] = useState<number>(1);
-  const [waitingPageSize, setWaitingPageSize] = useState<number>(5);
+  const [waitingPageSize, setWaitingPageSize] = useState<number>(3);
   const [totalCountWaiting, setTotalCountWaiting] = useState<number>(0);
 
   const [loadingRatingConversation, setLoadingRatingConversation] = useState<boolean>(false);
   const [ratingConversationPage, setRatingConversationPage] = useState<number>(1);
   const [filterRatingConversationByAgent, setFilterRatingConversationByAgent] = useState<number>();
-  const [ratingConversationPageSize, setRatingConversationPageSize] = useState<number>(5);
+  const [ratingConversationPageSize, setRatingConversationPageSize] = useState<number>(3);
   const [ratingConversationPageTotalCount, setRatingConversationPageTotalCount] = useState<number>(0);
 
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(

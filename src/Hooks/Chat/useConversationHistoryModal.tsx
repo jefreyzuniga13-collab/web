@@ -11,7 +11,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
-  useMemo,
+  // useMemo,
 } from "react";
 
 export function useConversationHistoryModal(
@@ -33,19 +33,15 @@ export function useConversationHistoryModal(
   const [showSummary, setShowSummary] = useState(false);
   const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
-  const [startDate, setStartDate] = useState<string>(() => {
-    return new Date().toISOString().slice(0, 10);
-  });
-  const [endDate, setEndDate] = useState<string>(() => {
-    return new Date().toISOString().slice(0, 10);
-  });
+  const [startDate, setStartDate] = useState<string>();
+  const [endDate, setEndDate] = useState<string>();
 
   const fetchHistory = useCallback(async () => {
     if (!conversationId) return;
 
     setLoading(true);
     try {
-      const response = await getConversationHistory(conversationId);
+      const response = await getConversationHistory(conversationId, startDate as unknown as Date, endDate as unknown as Date);
       const result = response.data?.data;
 
       if (Array.isArray(result)) {
@@ -56,6 +52,7 @@ export function useConversationHistoryModal(
         );
         setAllMessages(messages);
       }
+
     } catch (error) {
       console.error("Error fetching conversation history:", error);
     } finally {
@@ -78,10 +75,14 @@ export function useConversationHistoryModal(
     }
   }, [conversationId]);
 
-  // Cuando el modal se abra, traemos el historial. Si se cierra, reiniciamos todo.
+//Cuando se hace la peticion por medio del endDate, ambos estados startDate y endDate no se actualizan al enviar la peticion a la api
   useEffect(() => {
     if (isOpen) {
       fetchHistory();
+      
+      console.log("StartDate before fetch", startDate)
+      console.log("EndDate before fetch", endDate)
+
     } else {
       setConversations([]);
       setAllMessages([]);
@@ -94,24 +95,22 @@ export function useConversationHistoryModal(
       setStartDate(new Date().toISOString().slice(0, 10));
       setEndDate(new Date().toISOString().slice(0, 10));
     }
-  }, [isOpen, fetchHistory]);
+  }, [isOpen, endDate, fetchHistory]);
+  
 
-  // ------------------ FILTRADO POR RANGO DE FECHAS ------------------
-  const filteredMessages = useMemo(() => {
-    if (!allMessages.length) return [];
+  // const filteredMessages = useMemo(() => {
+  //   if (!allMessages.length) return [];
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+  //   const start = new Date(startDate);
+  //   const end = new Date(endDate);
+  //   end.setHours(23, 59, 59, 999);
 
-    return allMessages.filter((message) => {
-      const msgDate = new Date(message.sentAt);
-      return msgDate >= start && msgDate <= end;
-    });
-  }, [allMessages, startDate, endDate]);
-  // ------------------------------------------------------------------
+  //   return allMessages.filter((message) => {
+  //     const msgDate = new Date(message.sentAt);
+  //     return msgDate >= start && msgDate <= end;
+  //   });
+  // }, [allMessages, startDate, endDate]);
 
-  // --------------------- BÚSQUEDA DE TEXTO ---------------------
   const highlightText = (text: string, term: string) => {
     if (!term.trim()) return text;
     const regex = new RegExp(`(${term})`, "gi");
@@ -128,14 +127,14 @@ export function useConversationHistoryModal(
   };
 
   const searchMessages = useCallback(() => {
-    if (!filteredMessages.length || !searchTerm.trim()) {
+    if (!allMessages.length || !searchTerm.trim()) {
       setTotalMatches(0);
       setCurrentMatch(0);
       return;
     }
 
     const matches: number[] = [];
-    filteredMessages.forEach((message, index) => {
+    allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -151,17 +150,17 @@ export function useConversationHistoryModal(
         element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
-  }, [filteredMessages, searchTerm]);
+  }, [searchTerm]);
 
   useEffect(() => {
     searchMessages();
   }, [searchMessages]);
 
   const goToNextMatch = () => {
-    if (!filteredMessages.length || totalMatches === 0) return;
+    if (!allMessages.length || totalMatches === 0) return;
 
     const matches: number[] = [];
-    filteredMessages.forEach((message, index) => {
+      allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -176,10 +175,10 @@ export function useConversationHistoryModal(
   };
 
   const goToPreviousMatch = () => {
-    if (!filteredMessages.length || totalMatches === 0) return;
+    if (!allMessages.length || totalMatches === 0) return;
 
     const matches: number[] = [];
-    filteredMessages.forEach((message, index) => {
+    allMessages.forEach((message, index) => {
       if (message.content?.toLowerCase().includes(searchTerm.toLowerCase())) {
         matches.push(index);
       }
@@ -221,7 +220,7 @@ export function useConversationHistoryModal(
     currentMatch,
     totalMatches,
     searchTerm,
-    filteredMessages,
+    // filteredMessages,
     loading,
     conversations,
     allMessages,

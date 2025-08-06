@@ -119,6 +119,24 @@
   max-width: 50%;
   text-align: left;
   justify-self: start;
-    padding: 0;
+  padding: 0;
   margin: 0;
+}
+
+.MuiInputBase-input{
+  font-size: 12px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.MuiInputBase-inputSizeSmall{
+  height: 1rem !important;
+  display: flex Im !important;
+  justify-content: center !important;
+  align-items: center !important;
+  font-size: 12px !important;
+}
+
+.MuiOutlinedInput-notchedOutline{
+  font-size: 12px !important;
 }

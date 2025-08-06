@@ -52,10 +52,16 @@ export function updateTag(conversationId: number, payload: string[]) {
 /**
  * Trae todas las conversaciones + mensajes + attachments de un contacto
  */
-export function getHistoryByContact(contactId: number) {
+export function getHistoryByContact(contactId: number, startDate: Date, endDate: Date) {
   console.log("Contactos Id: ", contactId);
   return api.get<{ data: ConversationHistoryDto[] }>(
-    `/Conversations/${contactId}/history`
+    `/Conversations/${contactId}/history`,
+    {
+      params:{
+        startDate,
+        endDate
+      }
+    }
   );
 }
 

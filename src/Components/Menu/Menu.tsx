@@ -85,8 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           );
         })}
       </ul>
-
-      <div className="general-container">
+      
         {userLoading ? (
           <div className="navbar__profile">
             <div className="navbar__profile-loading">Cargando usuario...</div>
@@ -103,7 +102,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
         )}
         
         <p className="navbar__copyright">© 2025 PC Group S.A.</p>
-      </div>
+
     </nav>
   );
 };

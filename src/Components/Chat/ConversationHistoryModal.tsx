@@ -2,6 +2,7 @@ import React from "react";
 import { Search, ChevronDown, ChevronUp, X, Loader2 } from "lucide-react";
 import "@/Styles/Chat/ConversationHistoryModal.css";
 import { useConversationHistoryModal } from "@/Hooks/Chat/useConversationHistoryModal";
+import { format } from 'date-fns'
 
 interface ConversationHistoryModalProps {
   isOpen: boolean;
@@ -30,12 +31,22 @@ export const ConversationHistoryModal: React.FC<
     currentMatch,
     totalMatches,
     searchTerm,
-    filteredMessages,
+    // filteredMessages,
     loading,
     allMessages,
     messageRefs,
   } = useConversationHistoryModal(isOpen, conversationId);
   if (!isOpen) return null;
+
+    const formatTime = (iso?: string) => {
+        if (!iso) return ''
+        try {
+          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
+        } catch {
+          return ''
+        }
+  }
+
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -52,7 +63,7 @@ export const ConversationHistoryModal: React.FC<
 
         <div className="modal-content">
           <div className="history-controls">
-            {/* ======= Contenedor de búsqueda ======= */}
+
             <div className="search-container">
               <div className="search-input-wrapper">
                 <Search size={16} className="search-icon" />
@@ -98,7 +109,7 @@ export const ConversationHistoryModal: React.FC<
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 min="01/01/2024"
-                max="01/01/2030"
+                max="01/01/2040"
               />
               <input
                 type="date"
@@ -108,11 +119,11 @@ export const ConversationHistoryModal: React.FC<
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min="01/01/2024"
-                max="01/01/2030"
+                max="01/01/2040"
               />
             </div>
 
-            {/* ======= Botón de Resumen ======= */}
+  
             <button
               className="summary-btn"
               onClick={generateSummary}
@@ -148,9 +159,9 @@ export const ConversationHistoryModal: React.FC<
                 <Loader2 size={32} className="loading-spinner" />
                 <span>Cargando historial...</span>
               </div>
-            ) : filteredMessages.length > 0 ? (
+            ) : allMessages.length > 0 ? (
               <div className="messages-list">
-                {filteredMessages.map((message, index) => (
+                {allMessages.map((message, index) => (
                   <div
                     key={`${message.messageId}-${index}`}
                     ref={(el) => {
@@ -169,7 +180,7 @@ export const ConversationHistoryModal: React.FC<
                             : message.senderUserName || "Agente"}
                         </span>
                         <span className="message-time">
-                          {new Date(message.sentAt).toLocaleString()}
+                          {formatTime(message.sentAt)}
                         </span>
                       </div>
                     </div>

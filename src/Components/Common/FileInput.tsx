@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import '@/Styles/Common/FileInput.css'
 
@@ -26,8 +26,13 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     currentImage
   }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [preview, setPreview] = useState<string | null>(currentImage || null);
     const [dragActive, setDragActive] = useState(false);
+
+    const [preview, setPreview] = useState<string | null>(currentImage || null)
+
+    useEffect(() => {
+      setPreview(currentImage || null)
+    }, [currentImage])
 
     const handleFileChange = (file: File | null) => {
       if (!file) {

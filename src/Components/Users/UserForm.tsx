@@ -28,6 +28,7 @@ export default function UserForm({
 }: UserFormProps) {
   const { roles, loading: rolesLoading } = useRoles()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -125,7 +126,6 @@ export default function UserForm({
 
   const roleOptions = roles.map(r => ({ value: r.roleId, label: r.roleName }))
 
-  console.log('Image url de Form Data:', formData.imageUrl)
   return (
     <form onSubmit={handleSubmitForm}>
       <div className="user-form__container">
