@@ -71,6 +71,16 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
+   const formatDate = (iso?: string) => {
+        if (!iso) return ''
+        try {
+          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
+        } catch {
+          return ''
+        }
+  }
+
+
   const handleSelect = async (id: number) => {
   if (id === selectedId) {
     onSelect(null)
@@ -104,7 +114,7 @@ export const InboxList: React.FC<Props> = ({
     <ul className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
-        const lastTime = formatTime(c.updatedAt || c.createdAt)
+        const lastTime = formatDate(c.updatedAt || c.createdAt)
         const statusClass = c.status.toLowerCase()
         const statusTextMap: Record<string, string> = {
           bot: 'Bot',

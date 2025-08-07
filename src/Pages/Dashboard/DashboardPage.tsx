@@ -101,8 +101,8 @@ const DashboardPage: React.FC = () => {
     if (filters.adminUserId != null) {
       parts.push(`Admin: ${filters.adminUserName}`);
     }
-    if (filters.customerId != null) {
-      parts.push(`Cliente: ${filters.customerName}`);
+    if (filters.contactId != null) {
+      parts.push(`Cliente: ${filters.contactName}`);
     }
 
     return parts.length > 0 ? parts.join(", ") : "Todos los registros";

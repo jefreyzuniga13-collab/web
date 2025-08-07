@@ -57,8 +57,10 @@ export interface FilterForm {
   adminUserId: number | null;
   adminUserName:string | null;
   companiesId?: number | null;
-  customerId: number | null;
-  customerName:string | null;
+  contactId: number | null;
+  contactName: string| null;
+  clientId: number | null;
+  clientName:string | null;
   today?: boolean;
   yesterday?: boolean;
   tomorrow?: boolean;

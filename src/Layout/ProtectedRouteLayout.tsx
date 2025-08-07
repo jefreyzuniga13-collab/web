@@ -15,7 +15,6 @@ const ProtectedRouteLayout: React.FC<ProtectedRouteLayoutProps> = ({ roles }) =>
   }
 
   const userRoles = getRolesFromStoredToken()
-  console.log('Roles desde el token:', userRoles);
   const hasRole = userRoles.some(r => roles.includes(r))
 
   if (!hasRole) {

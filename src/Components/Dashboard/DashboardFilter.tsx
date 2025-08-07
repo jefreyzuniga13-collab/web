@@ -41,14 +41,10 @@ export default function DashboardFilterModal({
   const { users, getAgents, agents } = useUsers();
   const { data: contacts } = useContact();
 
-    useEffect(() => {
+  useEffect(() => {
     getAgents()
   }, [])
   
-
-  // const agents = users.filter((u) =>
-  //   u.roles.some((r) => r.roleName === "Support")
-  // );
   
   const admins = users.filter((u) =>
     u.roles.some((r) => r.roleName === "Admin")
@@ -104,12 +100,12 @@ export default function DashboardFilterModal({
             className="filter__select"
           />
 
-          <Select
+          {/* <Select
             id="customerId"
             name="customerId"
-            placeholder="Filtrar por cliente"
+            placeholder="Filtrar por contacto"
             options={[
-              { label: "Filtrar por cliente", value: "" },
+              { label: "Filtrar por contacto", value: "" },
               ...contacts.map((c) => ({
                 label: c.fullName!,
                 value: c.id,
@@ -117,6 +113,22 @@ export default function DashboardFilterModal({
             ]}
             value={form.customerId ?? ""}
             onChange={handleSelectChange("customerId", "customerName")}
+            className="filter__select"
+          /> */}
+
+           <Select
+            id="contactId"
+            name="contactId"
+            placeholder="Filtrar por contacto"
+            options={[
+              { label: "Filtrar por contacto", value: "" },
+              ...contacts.map((c) => ({
+                label: c.fullName!,
+                value: c.id,
+              })),
+            ]}
+            value={form.contactId ?? ""}
+            onChange={handleSelectChange("contactId", "contactName")}
             className="filter__select"
           />
         </section>

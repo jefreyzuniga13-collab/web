@@ -70,8 +70,8 @@ export default function UserForm({
     if (!formData.email.trim()) newErrors.email = 'El correo electrónico es obligatorio'
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Formato de correo inválido'
     if (!isEditing && !formData.password) newErrors.password = 'La contraseña es obligatoria'
-    else if (formData.password && formData.password.length < 6)
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+    else if (formData.password && formData.password.length < 8)
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres'
     // const regex = /^505[587]\d{7}$/;
     // if(!regex.test(formData.phone)) newErrors.phone = 'Formato invalido. (50578345656)'
     if (formData.roleIds.length === 0) newErrors.roleIds = 'Debe seleccionar al menos un rol'

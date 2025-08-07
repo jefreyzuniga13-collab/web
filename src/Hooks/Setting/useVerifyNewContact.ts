@@ -108,8 +108,6 @@ export function useVerifyNewContact(phoneNumber: string) {
 
   const handleSubmit = useCallback(async () => {
 
-    //Metodo handlSubmi
-    console.log("Before handleSumit")
     const newErrors: FormErrors = {}
     if (!form.fullName.trim()) newErrors.fullName = 'Nombre completo requerido'
     
@@ -132,7 +130,6 @@ export function useVerifyNewContact(phoneNumber: string) {
       setErrors(newErrors)
       return
     }
-    console.log("After handleSumit")
 
     setErrors({})
     setLoading(true)

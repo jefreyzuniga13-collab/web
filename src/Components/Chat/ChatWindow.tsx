@@ -17,10 +17,11 @@ const formatTime = (iso?: string) => {
   
 interface Props {
   conversationId?: number
+  conversationStatus?: string | null
   userId: number
 }
 
-export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
+export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversationStatus }) => {
   const {
     setConversationId,
     setUserId,
@@ -76,6 +77,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
       </div>
     )
   }
+
+  console.log("Conversation id: ", conversationId);
+  console.log("Conversation status: ", conversationStatus);
 
   return (
     <div className="chat-window">
@@ -204,7 +208,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
-          disabled={!conversationId || sending}
+          disabled={!conversationId || sending || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
         />
 
         {file && (
@@ -223,7 +227,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
         {!isRecording && !audioBlob && (
             <button
               onClick={startRecording}
-              disabled={!conversationId || sending}
+              disabled={!conversationId || sending  || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
               className="chat-window__composer-audio-btn"
               aria-label="Iniciar grabación"
             >
@@ -265,14 +269,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId }) => {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyPress}
             onPaste={handlePaste}
-            disabled={!conversationId || sending}
+            disabled={!conversationId || sending || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
             rows={1}
           />
         </div>
         <button
           className="chat-window__composer-send"
           onClick={handleSend}
-          disabled={!conversationId || sending || (!text.trim() && !file)}
+          disabled={!conversationId || sending || (!text.trim() && !file) || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
           aria-label="Enviar mensaje"
         >
           <Send size={18} />

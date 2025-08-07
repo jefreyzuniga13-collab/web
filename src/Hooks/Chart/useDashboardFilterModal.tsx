@@ -16,8 +16,10 @@ const initialForm: FilterForm = (() => {
     agentName:      null,
     adminUserId:    null,
     adminUserName:  null,
-    customerId:     null,
-    customerName:   null,
+    clientId:     null,
+    clientName:   null,
+    contactId: null,
+    contactName: null,
     today:          false,
     yesterday:      false,
     tomorrow:       false

@@ -44,7 +44,6 @@ class WorkShift {
 
   async createAsync(values: WorkShiftFormValues): Promise<WorkShiftInterface> {
     try {
-      console.log("Datos enviados desde el servicio: ", JSON.stringify(values))
       
       const payload = {
         ...values,

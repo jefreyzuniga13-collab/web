@@ -36,11 +36,12 @@ export function useConversationHistoryModal(
   const [startDate, setStartDate] = useState<string>();
   const [endDate, setEndDate] = useState<string>();
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = async () =>{
     if (!conversationId) return;
 
     setLoading(true);
     try {
+
       const response = await getConversationHistory(conversationId, startDate as unknown as Date, endDate as unknown as Date);
       const result = response.data?.data;
 
@@ -58,7 +59,8 @@ export function useConversationHistoryModal(
     } finally {
       setLoading(false);
     }
-  }, [conversationId]);
+  }
+
 
   const generateSummary = useCallback(async () => {
     if (!conversationId) return;
@@ -75,13 +77,9 @@ export function useConversationHistoryModal(
     }
   }, [conversationId]);
 
-//Cuando se hace la peticion por medio del endDate, ambos estados startDate y endDate no se actualizan al enviar la peticion a la api
   useEffect(() => {
     if (isOpen) {
       fetchHistory();
-      
-      console.log("StartDate before fetch", startDate)
-      console.log("EndDate before fetch", endDate)
 
     } else {
       setConversations([]);
@@ -95,7 +93,7 @@ export function useConversationHistoryModal(
       setStartDate(new Date().toISOString().slice(0, 10));
       setEndDate(new Date().toISOString().slice(0, 10));
     }
-  }, [isOpen, endDate, fetchHistory]);
+  }, [isOpen, startDate, endDate]);
   
 
   // const filteredMessages = useMemo(() => {

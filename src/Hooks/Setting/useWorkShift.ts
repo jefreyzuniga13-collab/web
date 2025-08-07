@@ -50,7 +50,6 @@ export const useWorkShift = () => {
   const create = useCallback(async (values: WorkShiftFormValues) => {
     setLoadingItem(true);
     setError(null);
-      console.log("Datos enviados desde hook metodo create: ", JSON.stringify(values))
     try {
       await WorkShiftService.createAsync(values);
       await fetchPage(1, pageSize);

@@ -30,8 +30,10 @@ const getInitialFilters = (): FilterForm => {
     adminUserId: null,
     adminUserName: null,
     companiesId: null,
-    customerId: null,
-    customerName: null,
+    contactId: null,
+    contactName: null,
+    clientId: null,
+    clientName: null,
     today: false,
     yesterday: false,
     tomorrow: false
@@ -92,7 +94,6 @@ export const useConversationChart = () => {
       const def = parseInt(res.value, 10);   
       if (localStorage.getItem("criticalThreshold") === null) {
         setThreshold(def);
-        console.log("Valor del def una ves aplicado el set", def)
       }
     })();
 

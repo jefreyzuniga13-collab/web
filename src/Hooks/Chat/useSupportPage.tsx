@@ -80,15 +80,14 @@ export function useSupportPage() {
     setFilter(selectedFilter);
   }, [selectedFilter]);
 
-  // Opciones ordenadas según filterOrder
   const sortedOptions = useMemo(() => {
     return filterOrder
       .map((val) => DEFAULT_OPTIONS.find((o) => o.value === val))
       .filter((o): o is FilterOption => !!o);
   }, [DEFAULT_OPTIONS, filterOrder]);
 
-  // Control de conversión
   useEffect(() => {
+
     if (!convId) {
       setConversation(null);
       return;

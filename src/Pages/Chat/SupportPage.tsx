@@ -32,6 +32,7 @@ const SupportPage: React.FC = () => {
     filter,
     userId,
   } = useSupportPage();
+
   return (
     <div className="support-layout">
       <aside className="sidebar">
@@ -77,7 +78,7 @@ const SupportPage: React.FC = () => {
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">Chat</h2>
+          <h2 className="main-title">Chat  {conversation?.contactNumber}</h2>
           <div className="btn-container">
             {convId && (
               <>
@@ -112,7 +113,7 @@ const SupportPage: React.FC = () => {
           </div>
         </header>
 
-        <ChatWindow conversationId={convId ?? undefined} userId={userId} />
+        <ChatWindow conversationId={convId ?? undefined} userId={userId} conversationStatus={conversation?.status}/>
       </main>
 
       {contactDetailToggle && (

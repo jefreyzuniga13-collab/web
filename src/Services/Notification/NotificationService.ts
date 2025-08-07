@@ -42,23 +42,12 @@ class NotificationServ {
   }
 
   async CreateAsync(request: NotificationRequestDto): Promise<NotificationResponseDto> {
-    console.log("create request sent", request);
     const { data } = await api.post<ApiResponse<NotificationResponseDto>>(
       `/Notifications`,
       request
     );
     return data.data;
   }
-
-  // async CreateAsync(request: NotificationRequestDto): 
-  // Promise<NotificationResponseDto>{
-  //   console.log("create request sended", request);
-  //  const {data} = await api.post<ApiResponse<NotificationResponseDto>>(
-  //     `/Notifications`,
-  //   {request}
-  //   )
-  //   return data.data;
-  // }
 
   async ToggleActiveAsync(id: number): Promise<NotificationResponseDto>{
     const {data} = await api.patch(`/Notifications/${id}`);
