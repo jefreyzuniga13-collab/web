@@ -2,7 +2,6 @@ import React from "react";
 import { Search, ChevronDown, ChevronUp, X, Loader2 } from "lucide-react";
 import "@/Styles/Chat/ConversationHistoryModal.css";
 import { useConversationHistoryModal } from "@/Hooks/Chat/useConversationHistoryModal";
-import { format } from 'date-fns'
 
 interface ConversationHistoryModalProps {
   isOpen: boolean;
@@ -37,16 +36,12 @@ export const ConversationHistoryModal: React.FC<
     messageRefs,
   } = useConversationHistoryModal(isOpen, conversationId);
   if (!isOpen) return null;
-
-    const formatTime = (iso?: string) => {
-        if (!iso) return ''
-        try {
-          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
-        } catch {
-          return ''
-        }
-  }
-
+    
+       const formatTime = (iso?: string) => {
+      if (!iso) return ''
+      const match = iso.match(/T(\d{2}:\d{2})/)
+      return match ? match[1] : ''
+    }
 
   return (
     <div className="modal-overlay" onClick={onClose}>

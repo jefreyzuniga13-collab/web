@@ -21,6 +21,12 @@ interface ConversationDetailModalProps {
         }
   }
 
+  const formatTime = (iso?: string) => {
+  if (!iso) return ''
+  const match = iso.match(/T(\d{2}:\d{2})/)
+  return match ? match[1] : ''
+}
+
 export default function ConversationDetailModal({ isOpen, data, onClose }: ConversationDetailModalProps) {
   if (!isOpen || !data) return null
 
@@ -37,10 +43,6 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
         <section className="conversation-modal__section conversation-modal__section--info">
           <h3 className="conversation-modal__section-title">Información General</h3>
           <div className="conversation-modal__grid">
-            {/* <div className="conversation-modal__cell">
-              <span className="conversation-modal__label">ID</span>
-              <span className="conversation-modal__value">{data.conversationId}</span>
-            </div> */}
             <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Numero</span>
               <span className="conversation-modal__value">{data.contactNumber}</span>
@@ -49,18 +51,10 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
               <span className="conversation-modal__label">Contacto</span>
               <span className="conversation-modal__value">{data.clientContactName || '-'}</span>
             </div>
-            {/* <div className="conversation-modal__cell">
-              <span className="conversation-modal__label">Prioridad</span>
-              <span className="conversation-modal__value">{data.priority}</span>
-            </div> */}
             <div className="conversation-modal__cell">
               <span className="conversation-modal__label">Estado</span>
               <span className="conversation-modal__value"> {stateTranslations[data.status as StateTranslation]}</span>
             </div>
-            {/* <div className="conversation-modal__cell">
-              <span className="conversation-modal__label">Archivada</span>
-              <span className="conversation-modal__value">{data.isArchived ? 'Sí' : 'No'}</span>
-            </div> */}
           </div>
         </section>
 
@@ -88,24 +82,6 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
           </div>
         </section>
 
-        {/* <section className="conversation-modal__section conversation-modal__section--metrics">
-          <h3 className="conversation-modal__section-title">Métricas y Mensajes</h3>
-          <div className="conversation-modal__grid">
-            {[
-              ['Mensajes totales', data.totalMessages],
-              ['Duración', data.duration],
-              ['Tiempo a 1ª respuesta', data.timeToFirstResponse],
-              ['Sin leer', data.unreadCount],
-              ['Etiquetas', data.tags.length ? data.tags.join(', ') : '-'],
-            ].map(([label, value]) => (
-              <div key={label} className="conversation-modal__cell">
-                <span className="conversation-modal__label">{label}</span>
-                <span className="conversation-modal__value">{value ?? '-'}</span>
-              </div>
-            ))}
-          </div>
-        </section> */}
-
         {data.messages && (
           <section className="conversation-modal__section conversation-modal__section--messages">
             <h3 className="conversation-modal__section-title">Mensajes</h3>
@@ -117,7 +93,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
                       {msg.isIncoming ? msg.senderContactName || 'Contacto' : msg.senderUserName || 'Agente'}
                     </span>
                     <span className="conversation-modal__message-time">
-                      {formatDate(msg.sentAt)}
+                      {formatTime(msg.sentAt)}
                     </span>
                   </div>
                   <div className="conversation-modal__message-content">

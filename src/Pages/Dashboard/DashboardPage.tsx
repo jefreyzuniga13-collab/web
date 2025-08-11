@@ -112,6 +112,12 @@ const DashboardPage: React.FC = () => {
   const columnsRatingConversation = useMemo<Column<ConversationDto>[]>(() => [
     { field: "assignedAgentName", headerName: "Agente Asignado" },
     { field: "clientContactName", headerName: "Contacto" },
+    {
+      field: "systemDefinedCompanyName",
+      headerName: "Cliente",
+      render: c =>  c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName :
+      "-"
+    },
     {field: "rating", headerName: "Calificación", render: c => c.rating ?? "-"},
     {
       field: "ratingReceivedAt",
@@ -120,20 +126,21 @@ const DashboardPage: React.FC = () => {
         c.ratingReceivedAt
           ? new Date(c.ratingReceivedAt).toLocaleString("es-NI")
           : "-"
-    },
-    // {
-    //   field: "createdAt",
-    //   headerName: "Creado",
-    //   render: c => new Date(c.createdAt).toLocaleString("es-NI")
-    // }
+    }
   ], []);
 
   const columnsWaitingClient = useMemo<Column<WaitingClientResponseDto>[]>(() => [
     { field: "name", headerName: "Agente" },
-    { field: "clientName", headerName: "Contacto" },
+    { field: "contactName", headerName: "Contacto" },
+        {
+      field: "systemDefinedCompanyName",
+      headerName: "Cliente",
+      render: c =>  c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName :
+      "-"
+    },
     {
       field: "clienteLastMessage",
-      headerName: "Cliente Ult. Mensaje",
+      headerName: "Contacto Ult. Mensaje",
       render: c =>
         c.clienteLastMessage
           ? new Date(c.clienteLastMessage).toLocaleString("es-NI")
@@ -155,6 +162,13 @@ const DashboardPage: React.FC = () => {
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
     { field: "clientContactName", headerName: "Contacto" },
+    //Si es null se muestra "-"
+    {
+      field: "systemDefinedCompanyName",
+      headerName: "Cliente",
+      render: c =>  c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName :
+      "-"
+    },
     { field: "contactNumber", headerName: "Teléfono" },
     {
       field: "createdAt",
@@ -163,7 +177,7 @@ const DashboardPage: React.FC = () => {
     },
     {
       field: "agentRequestAt",
-      headerName: "Solicitud agente del cliente al admin",
+      headerName: "Solicitud agente del contacto al admin",
       render: c =>
         c.agentRequestAt
           ? new Date(c.agentRequestAt).toLocaleString("es-NI")
@@ -179,7 +193,7 @@ const DashboardPage: React.FC = () => {
     },
     {
       field: "clientLastMessageAt",
-      headerName: "Últ. Mensaje Cliente",
+      headerName: "Últ. Mensaje contacto",
       render: c =>
         c.clientLastMessageAt
           ? new Date(c.clientLastMessageAt).toLocaleString("es-NI")
@@ -296,7 +310,7 @@ const DashboardPage: React.FC = () => {
             <CustomBarChart
               data={adminAvgAssignmentTime}
               title="Promedio de Asignación"
-              subtitle="Tiempo promedio de asignación agente por administradora desde solicitud del cliente."
+              subtitle="Tiempo promedio de asignación agente por administradora desde solicitud del contacto."
             />
 
             <CustomBarChart
@@ -336,18 +350,18 @@ const DashboardPage: React.FC = () => {
             </div>
 
             <div className="dashboard-waiting__container">
-              <h3 className="dashboard-waiting__title">Clientes críticos</h3>
+              <h3 className="dashboard-waiting__title">Contactos críticos</h3>
               <p className="dashboard-waiting__subtitle">
-                Clientes sin gestión y con ≥ {threshold} min en espera (Sin mensaje de respuesta)
+                Contactos sin gestión y con ≥ {threshold} min en espera (Sin mensaje de respuesta)
               </p>
               {loadingWaiting ? (
-                <Spinner size={24} text="Cargando clientes críticos..." />
+                <Spinner size={24} text="Cargando contactos críticos..." />
               ) : (
                 <ListComponent<WaitingClientResponseDto>
                   rows={waitingClient}
                   columns={columnsWaitingClient}
-                  filterField="clientName"
-                  filterLabel="Filtrar por cliente"
+                  filterField="contactName"
+                  filterLabel="Filtrar por contacto"
                   threshold={threshold}
                   onThresholdChange={setThreshold}
                   page={waitingPage}
@@ -398,7 +412,7 @@ const DashboardPage: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="dashboard-waiting__title">Promedio respuestas agente por clientes.</h4>
+              <h4 className="dashboard-waiting__title">Promedio respuestas agente por contacto mas frecuente.</h4>
               <p className="dashboard-waiting__subtitle">
                 {`Promedio de respuesta a mensajes del clientes por agente. Seleccione un agente en el filtro.`}
               </p>

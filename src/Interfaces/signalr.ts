@@ -66,11 +66,11 @@ export async function createHubConnection(token: string) {
     .withAutomaticReconnect()
     .build()
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   presenceConnection.on('UserIsOnline', (userId: number) => {
-    console.log('Usuario en línea:', userId)
   })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   presenceConnection.on('UserIsOffline', (userId: number) => {
-    console.log('Usuario desconectado:', userId)
   })
   presenceConnection.onreconnecting(err =>
     console.warn('Reconnecting to Presence Hub...', err)

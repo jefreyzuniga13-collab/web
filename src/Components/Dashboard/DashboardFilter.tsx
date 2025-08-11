@@ -14,6 +14,7 @@ import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { parseISO, parse } from "date-fns";
 import { format } from "date-fns-tz";
 import { useEffect } from "react";
+import { useInnova } from "@/Hooks/useInnova";
 
 interface Props {
   onClosed: () => void;
@@ -40,9 +41,11 @@ export default function DashboardFilterModal({
 
   const { users, getAgents, agents } = useUsers();
   const { data: contacts } = useContact();
+  const {data: clients, getAllAsync} = useInnova();
 
   useEffect(() => {
     getAgents()
+    getAllAsync()
   }, [])
   
   
@@ -100,21 +103,21 @@ export default function DashboardFilterModal({
             className="filter__select"
           />
 
-          {/* <Select
-            id="customerId"
-            name="customerId"
-            placeholder="Filtrar por contacto"
+          <Select
+            id="clientId"
+            name="clientId"
+            placeholder="Filtrar por cliente"
             options={[
-              { label: "Filtrar por contacto", value: "" },
-              ...contacts.map((c) => ({
-                label: c.fullName!,
-                value: c.id,
+              { label: "Filtrar por cliente", value: "" },
+              ...clients.map((c) => ({
+                label: c.clientName!,
+                value: c.clientId!,
               })),
             ]}
-            value={form.customerId ?? ""}
-            onChange={handleSelectChange("customerId", "customerName")}
+            value={form.clientId ?? ""}
+            onChange={handleSelectChange("clientId", "clientName")}
             className="filter__select"
-          /> */}
+          />
 
            <Select
             id="contactId"

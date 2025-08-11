@@ -134,7 +134,7 @@ const VerifyNewContactPage: React.FC = () => {
               />
             </div>
             <div className="verifyContact-grid-col">
-              <label htmlFor="codcli">Cliente Innova</label>
+              <label htmlFor="codcli">Cliente</label>
               <select
                 id="codcli"
                 name="codcli"

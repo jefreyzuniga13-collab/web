@@ -1,18 +1,23 @@
-import { useTranslation } from 'react-i18next'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import ReactDOM from 'react-dom'
 import { closeReLoginModal } from '@/Context/Slices/uiSlice'
 import { logout } from '@/Context/Slices/authSlice'
 import type { RootState, AppDispatch } from '@/Context/index'
+import Button from '@/Components/Common/Button'
 import '@/Styles/Common/ReLoginModal.css'
+import { useEffect } from 'react'
 
 export default function ReLoginModal() {
-  const { t } = useTranslation()
-
-  const open = useSelector((state: RootState) => state.ui.reloginModalOpen)
-
+  const open = useSelector((s: RootState) => s.ui.reloginModalOpen)
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!open) return
+    document.body.classList.add('modal-open')
+    return () => document.body.classList.remove('modal-open')
+  }, [open])
 
   if (!open) return null
 
@@ -22,15 +27,28 @@ export default function ReLoginModal() {
     navigate('/login', { replace: true })
   }
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal">
-        <h2>{t('reloginModal.title')}</h2>
-        <p>{t('reloginModal.message')}</p>
-        <button onClick={handleClose}>
-          {t('reloginModal.button')}
-        </button>
+  const modal = (
+    <div className="modal-backdrop" role="presentation">
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="relogin-title"
+        aria-describedby="relogin-desc"
+      >
+        <h2 id="relogin-title" className="modal__title">Sesión expirada</h2>
+        <p id="relogin-desc" className="modal__body">
+          Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar usando el sistema.
+        </p>
+
+        <div className="modal__actions">
+          <Button onClick={handleClose}>
+            Iniciar sesión
+          </Button>
+        </div>
       </div>
     </div>
   )
+
+  return ReactDOM.createPortal(modal, document.body)
 }

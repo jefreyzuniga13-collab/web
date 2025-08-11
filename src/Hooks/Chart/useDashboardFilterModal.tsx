@@ -35,30 +35,49 @@ const useDashboardFilterModal = () => {
     return { ...initialForm, ...parsed };
   });
 
-  // useEffect(() => {
-  //   localStorage.setItem("dashboardFilters", JSON.stringify(form));
-  // }, [form]);
 
   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setForm(f => ({ ...f, [name]: checked }));
   };
 
-  const handleSelectChange =
-    (name: keyof FilterForm, label: keyof FilterForm) =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const val = e.target.value;
+  // const handleSelectChange =
+  //   (name: keyof FilterForm, label: keyof FilterForm) =>
+  //   (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //     const val = e.target.value;
 
-      const selectedIndex = e.target.selectedIndex;
-      const selectedOption = e.target.options[selectedIndex]
-      // Si viene cadena vacía => null, si no => número
-      const parsed =
-        val === ""
-          ? null
-          : Number(val);
-      setForm(f => ({ ...f, [name]: parsed }));
-      setForm(f => ({ ...f, [label]: selectedOption.textContent}));
-    };
+  //     const selectedIndex = e.target.selectedIndex;
+  //     const selectedOption = e.target.options[selectedIndex]
+
+  //     // Si viene cadena vacía => null, si no => número
+  //     const parsed =
+  //       val === ""
+  //         ? null
+  //         : Number(val);
+
+  //     setForm(f => ({ ...f, [name]: parsed }));
+  //     setForm(f => ({ ...f, [label]: selectedOption.textContent}));
+  //   };
+
+  const handleSelectChange =
+  (name: keyof FilterForm, label: keyof FilterForm) =>
+  (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    const selectedIndex = e.target.selectedIndex;
+    const selectedOption = e.target.options[selectedIndex];
+
+    const isClientId = name === 'clientId';
+
+    const parsed = val === ""
+      ? null
+      : isClientId
+      ? val
+      : Number(val);
+
+    setForm(f => ({ ...f, [name]: parsed }));
+    setForm(f => ({ ...f, [label]: selectedOption.textContent }));
+  };
+
 
   const handleClear = () => {
     setForm(initialForm);

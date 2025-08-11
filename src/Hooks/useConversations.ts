@@ -58,6 +58,8 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
     itemsPerPage:10
   })
 
+  const toApiState = (f: Filter) => (f === 'all' ? undefined : f);
+
   const {
     onConversationCreated, offConversationCreated,
     onConversationUpdated, offConversationUpdated,
@@ -180,7 +182,8 @@ const applyDateFilter = () => {
       appliedRange.validFrom ?? undefined,
       appliedRange.validTo   ?? undefined,
       page,
-      pageSize
+      pageSize,
+      toApiState(filter)
     )
       .then(res => {
         const items = res.items.map(conv => ({
@@ -188,21 +191,29 @@ const applyDateFilter = () => {
           lastActivity: conv.lastActivity || conv.updatedAt || conv.createdAt,
           unreadCount:  conv.unreadCount  || 0
         }))
-        const filtered = items.filter(matchesFilter)
+
         setPagination({
           currentPage: res.meta.currentPage,
           totalPages:  res.meta.totalPages,
           totalItems:  res.meta.totalCount,
           itemsPerPage:res.meta.pageSize
         })
-        setConversations(prev =>
-          page === 1 ? filtered : [...prev, ...filtered]
-        )
-        filtered.forEach(c => joinConversation(c.conversationId))
+
+        setConversations(prev => {
+          const base   = page === 1 ? [] : prev;                // si es la primera página, resetea
+          const merged = [...base, ...items];                   // concatena
+          const unique = merged.filter(
+            (c, i, arr) => arr.findIndex(x => x.conversationId === c.conversationId) === i
+          );
+          return unique;
+        });
+
+        items.forEach(c => joinConversation(c.conversationId));
       })
       .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [appliedRange.validFrom, appliedRange.validTo, filter, page, pageSize, matchesFilter])
+      .finally(() => setLoading(false));
+
+  }, [appliedRange.validFrom, appliedRange.validTo, filter, page, pageSize])
 
   useEffect(() => {
     if (isAdmin) onConversationCreated(handleNewConvo)
@@ -217,7 +228,10 @@ const applyDateFilter = () => {
     }
   }, [isAdmin, onConversationCreated, offConversationCreated, onConversationUpdated, offConversationUpdated, onNewMessage, offNewMessage, onNewHumanRequest, offNewHumanRequest, handleNewConvo, handleUpdatedConvo, handleNewMessage, handleHumanRequest])
 
-  useEffect(() => { setPage(1) }, [filter])
+ useEffect(() => {
+    setConversations([]);
+    setPage(1);
+  }, [filter]);
 
   const onPageChange = useCallback((newPage: number) => { setPage(newPage) }, [])
   const onPageSizeChange = useCallback((newSize: number) => { setPageSize(newSize); setPage(1) }, [])

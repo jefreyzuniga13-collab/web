@@ -3,10 +3,10 @@ import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
 //import { AiTwotoneAudio } from "react-icons/ai";
-import { AiOutlineAudioMuted } from "react-icons/ai";
-import { MdScheduleSend } from "react-icons/md";
-import { MdOutlineCancel } from "react-icons/md";
-import { TbPlayerPause } from "react-icons/tb";
+// import { AiOutlineAudioMuted } from "react-icons/ai";
+// import { MdScheduleSend } from "react-icons/md";
+// import { MdOutlineCancel } from "react-icons/md";
+// import { TbPlayerPause } from "react-icons/tb";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -25,7 +25,8 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
   const {
     setConversationId,
     setUserId,
-    messages,
+    visibleMessages,
+    hasText,
     text,
     setText,
     file,
@@ -46,13 +47,13 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
-    isRecording,
-    audioBlob,
-    recordingTime,
-    startRecording,
-    stopRecording,
-    clearRecording,
-    handleSendAudio,
+    // isRecording,
+    // audioBlob,
+    // recordingTime,
+    // startRecording,
+    // stopRecording,
+    // clearRecording,
+    // handleSendAudio,
 
   } = useChatWindow()
 
@@ -78,20 +79,17 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     )
   }
 
-  console.log("Conversation id: ", conversationId);
-  console.log("Conversation status: ", conversationStatus);
-
   return (
     <div className="chat-window">
       <div className="chat-window__messages">
-        {messages.length > 0 && (
+        {visibleMessages.length > 0 && (
           <div className="chat-window__date-divider">
             <span className="chat-window__date-text">Hoy</span>
           </div>
         )}
-        {messages.map((m, i) => {
+        {visibleMessages.map((m, i) => {
           const isCurrentUser = m.senderUserId === userId
-          const prev = i > 0 ? messages[i - 1] : null
+          const prev = i > 0 ? visibleMessages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
 
           const sentAt = formatTime(m.sentAt);
@@ -180,10 +178,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                           </a>
                         </div>
                       )}
-                      {m.content && <div className="chat-window__message-caption">{m.content}</div>}
+                     {hasText(m) && (
+                            <div className="chat-window__message-caption">{m.content}</div>
+                          )}
                     </div>
                   ) : (
-                    <div className="chat-window__message-text">{m.content}</div>
+                    hasText(m) && (
+                      <div className="chat-window__message-text">{m.content}</div>
+                    )
                   )}
                 </div>
                 <div className="chat-window__message-info">
@@ -224,7 +226,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
           </div>
         )}
 
-        {!isRecording && !audioBlob && (
+        {/* {!isRecording && !audioBlob && (
             <button
               onClick={startRecording}
               disabled={!conversationId || sending  || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
@@ -258,7 +260,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                 <button onClick={clearRecording} className="chat-window__composer-audio-btn
                 chat-window__composer-audio-btn_cancel cancel"><MdOutlineCancel scale={26} className='chat-window__composer-audio-btn__icon'/></button>
               </div>
-            )}
+            )} */}
         
         <div className="chat-window__composer-input-container">
 

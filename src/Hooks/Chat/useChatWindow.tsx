@@ -1,7 +1,7 @@
 import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
 import { Check, CheckCheck } from "lucide-react"
-import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
 
@@ -15,6 +15,10 @@ export const useChatWindow = () => {
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
+  const hasMedia = (m: MessageDto) => (m.attachments?.length ?? 0) > 0;
+  const hasText = (m: MessageDto) =>
+    typeof m.content === "string" && m.content.trim().length > 0;
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -32,24 +36,32 @@ export const useChatWindow = () => {
     if (!conversationId || sending || !audioBlob) return;
     setSending(true);
     try {
-
-      //En mabos formato el resultado es el mismo otro formato no funciona por reglamente de whatsapp cloud api
-      const file = new File([audioBlob], 'grabacion.mp3', { type: 'audio/mpeg' });
-      //const file = new File([audioBlob], 'grabacion.ogg', { type: 'audio/ogg' });
-
-      await sendMedia(conversationId, file, "");
-      clearRecording();
+      const mime = audioBlob.type || 'audio/webm'
+      const ext =
+        mime.includes('ogg') ? 'ogg' :
+        mime.includes('webm') ? 'webm' :
+        mime.includes('mpeg') ? 'mp3' :
+        (mime.includes('mp4') || mime.includes('aac')) ? 'm4a' : 'bin'
+      const audioFile = new File([audioBlob], `grabacion.${ext}`, { type: mime })
+      await sendMedia(conversationId, audioFile, "")
+      clearRecording()
     } catch (err) {
-      console.error(err);
+      console.error(err)
     } finally {
-      setSending(false);
+      setSending(false)
     }
-  };
+  }
+
+  const visibleMessages = useMemo(
+    () => messages.filter(
+      (m) => hasMedia(m) || hasText(m) || m.messageType === "Interactive"
+    ),
+    [messages]
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
+  }, [visibleMessages])
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -85,7 +97,6 @@ export const useChatWindow = () => {
       if (file) {
         await sendMedia(conversationId, file, text.trim() || undefined)
         setFile(null)
-
         setText('')
         if (fileInputRef.current) fileInputRef.current.value = ''
       } else if (text.trim()) {
@@ -104,14 +115,11 @@ export const useChatWindow = () => {
     }
   }
 
-
   const handleDownload = async ( fileName: string) => {
     try {
       const response = DownloadMedia(fileName);
-
       const blob = new Blob([(await response).data])
       const url = window.URL.createObjectURL(blob)
-
       const link = document.createElement('a')
       link.href = url
       link.download = fileName || 'archivo'
@@ -207,5 +215,8 @@ export const useChatWindow = () => {
     stopRecording,
     clearRecording,
     handleSendAudio,
+    visibleMessages,
+    hasMedia,
+    hasText,
   }
 }

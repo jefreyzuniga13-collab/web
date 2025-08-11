@@ -59,8 +59,8 @@ export interface FilterForm {
   companiesId?: number | null;
   contactId: number | null;
   contactName: string| null;
-  clientId: number | null;
-  clientName:string | null;
+  clientId: string | null;
+  clientName: string | null;
   today?: boolean;
   yesterday?: boolean;
   tomorrow?: boolean;
@@ -73,7 +73,8 @@ export interface AdminAsigmentResponseTimeResponseDto{
 }
 export interface WaitingClientResponseDto{
   id?: number;
-  clientName?: string;
+  systemDefinedCompanyName?: string;
+  contactName?: string;
   name?: string;
   clienteLastMessage?: string;
   averageTime?: number | null;

@@ -10,7 +10,6 @@ export function useAudioRecorder() {
   const chunks = useRef<Blob[]>([])
 
   const startRecording = async () => {
-
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
       const hasMic = devices.some((d) => d.kind === 'audioinput')
@@ -21,26 +20,33 @@ export function useAudioRecorder() {
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      mediaRecorderRef.current = new MediaRecorder(stream)
+      let mime = ''
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mime = 'audio/ogg;codecs=opus'
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4'
+        else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus'
+      }
+
+      mediaRecorderRef.current = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream)
 
       chunks.current = []
       setRecordingTime(0)
+      setAudioBlob(null)
 
       mediaRecorderRef.current.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.current.push(e.data)
-        }
+        if (e.data.size > 0) chunks.current.push(e.data)
       }
 
       mediaRecorderRef.current.onstop = () => {
-        //Ambos formatos brindan el mismo resultado.
-      const blob = new Blob(chunks.current, { type: 'audio/mpeg' });
-      //const blob = new Blob(chunks.current, { type: 'audio/ogg' });
-      setAudioBlob(blob);
-      setIsRecording(false);
-      clearInterval(timerRef.current!);
-    };
-
+        const inferredType =
+          mediaRecorderRef.current?.mimeType ||
+          chunks.current[0]?.type ||
+          'audio/webm'
+        const blob = new Blob(chunks.current, { type: inferredType })
+        setAudioBlob(blob)
+        setIsRecording(false)
+        if (timerRef.current) clearInterval(timerRef.current)
+      }
 
       mediaRecorderRef.current.start()
       setIsRecording(true)
@@ -50,9 +56,7 @@ export function useAudioRecorder() {
       }, 1000)
     } catch (err) {
       console.error('Error al iniciar grabación:', err)
-      alert(
-        'No se pudo acceder al micrófono. Verifica que esté conectado y que hayas dado permiso en el navegador.'
-      )
+      alert('No se pudo acceder al micrófono. Verifica que esté conectado y que hayas dado permiso en el navegador.')
     }
   }
 

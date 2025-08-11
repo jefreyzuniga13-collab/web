@@ -19,7 +19,7 @@ export default function CustomTable<T>({
   count,
   page,
   rowsPerPage,
-  rowsPerPageOptions = [5, 10, 15, 20],
+  rowsPerPageOptions = [5, 10],
   onPageChange,
   onRowsPerPageChange,
 }: Props<T>) {

@@ -60,9 +60,11 @@
 }
 
 .login__image {
-  max-width: 50%;
+  max-width: 60%;
   height: auto;
-  margin-top: 1rem;
+  text-align: center;
+  margin: auto;
+  user-select: none;
 }
 
 .login__form-section {
@@ -126,7 +128,7 @@
 
 .login__options {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin: var(--space-lg) 0;
   flex-wrap: wrap;

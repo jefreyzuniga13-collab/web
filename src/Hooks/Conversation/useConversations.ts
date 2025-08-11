@@ -13,7 +13,7 @@ interface UseConversationsOptions {
 export default function useConversations({
   initialState = '',
   initialPage = 1,
-  initialPageSize = 10,
+  initialPageSize = 5,
 }: UseConversationsOptions = {}) {
   const [data, setData] = useState<ConversationDto[]>([])
   const [stateFilter, setStateFilter] = useState<string>(initialState)

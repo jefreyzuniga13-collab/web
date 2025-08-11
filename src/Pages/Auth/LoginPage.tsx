@@ -8,6 +8,8 @@ import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
+import logopcg from '@/assets/pcgroup.png'
+
 export default function LoginPresentation() {
   const { t } = useTranslation();
   const {
@@ -26,17 +28,18 @@ export default function LoginPresentation() {
     <div className={`login ${loading ? 'login--loading' : ''}`}>
       <div className="login__container">   
         <aside className="login__info-panel">
-          <h1 className="login__title">{t("login.title")}</h1>
-          <p className="login__description">{t("login.description")}</p>
-          <ul className="login__features">
+           <h1 className="login__title">PC Group SA, soluciones informaticas sin limites</h1>
+          {/* <p className="login__description">{t("login.description")}</p>
+         <ul className="login__features">
             <li className="login__features-item">{t("login.features.fastReplies")}</li>
             <li className="login__features-item">{t("login.features.centralInbox")}</li>
             <li className="login__features-item">{t("login.features.analytics")}</li>
             <li className="login__features-item">{t("login.features.customization")}</li>
-          </ul>
+          </ul> */}
           <img
             className="login__image"
-            src="https://i.ibb.co/mrNrN3tv/login-illustration.png"
+            // src="https://i.ibb.co/mrNrN3tv/login-illustration.png"
+            src={`${logopcg}`}
             alt={t("login.imageAlt")}
           />
         </aside>
@@ -86,7 +89,7 @@ export default function LoginPresentation() {
             />
 
             <div className="login__options">
-              <label className="login__remember">
+              {/* <label className="login__remember">
                 <input
                   type="checkbox"
                   name="remember"
@@ -94,7 +97,7 @@ export default function LoginPresentation() {
                   onChange={formik.handleChange}
                 />
                 {t("login.rememberMe")}
-              </label>
+              </label> */}
               <Link to="/forgot-password" replace className="login__forgot-link">
                 {t("login.forgotPassword")}
               </Link>

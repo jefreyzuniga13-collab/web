@@ -9,13 +9,13 @@ import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
 import { enqueuePopup } from "@/Context/Slices/popupSlice";
-import { SupportRequestedPopup } from "@/Components/Common/Hub/SupportRequestedPopup";
-import { ConversationAssignedPopup } from "@/Components/Common/Hub/ConversationAssignedPopup";
-import { AssignmentResponsePopup } from "@/Components/Common/Hub/AssignmentResponsePopup";
-import { AssignmentForcedPopup } from "@/Components/Common/Hub/AssignmentForcedPopup";
-import ContactValidatorHub from "@/Components/Common/Hub/ContactValidatorHub";
-import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
-import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
+// import { SupportRequestedPopup } from "@/Components/Common/Hub/SupportRequestedPopup";
+// import { ConversationAssignedPopup } from "@/Components/Common/Hub/ConversationAssignedPopup";
+// import { AssignmentResponsePopup } from "@/Components/Common/Hub/AssignmentResponsePopup";
+// import { AssignmentForcedPopup } from "@/Components/Common/Hub/AssignmentForcedPopup";
+// import ContactValidatorHub from "@/Components/Common/Hub/ContactValidatorHub";
+// import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
+// import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
 
 import "@/App.css";
 import "@/i18n";
@@ -30,7 +30,7 @@ export default function App() {
   const lastEvent = useNotificationsHub();
   const navigate = useNavigate();
 
-  useForceLogoutListener();
+  // useForceLogoutListener();
 
   useEffect(() => {
     if (lastEvent) {
@@ -68,13 +68,16 @@ export default function App() {
 
   return (
     <SignalRProvider token={accessToken}>
-      <GlobalSoundNotifier />
+
+      {/* <GlobalSoundNotifier />
       <SupportRequestedPopup />
       <ConversationAssignedPopup />
       <AssignmentResponsePopup />
       <AssignmentForcedPopup />
-      <ContactValidatorHub />
+      <ContactValidatorHub /> */}
+
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
+
       <ReLoginModal />
       <ToastContainer
         position="top-right"
