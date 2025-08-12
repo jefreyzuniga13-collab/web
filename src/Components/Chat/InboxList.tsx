@@ -18,6 +18,10 @@ const formatDuration = (ms: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
+//Cuando hay un update por signal, es decir se actualiza el estado, nuevo mensaje, etc:
+//1. Si se actualiza un item, se actualiza y los demas elementos se quitan y no se ven mas.
+//2. Si esta solo el elemento de la lista y hay cambio por signal, se quita este item y no se ve mas.
+
 export const InboxList: React.FC<Props> = ({
   selectedId,
   onSelect,
@@ -125,6 +129,7 @@ export const InboxList: React.FC<Props> = ({
         }
 
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
+        
         const unread =
           userId === c.assignedAgentId
             ? c.unreadForAgent ?? 0

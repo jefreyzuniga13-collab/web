@@ -90,8 +90,10 @@ export function useAssignModal () :  AssignModalHook{
       }
 
       dispatch(closeAssignModal())
-    } catch {
-      toast.error('Error al guardar los cambios.')
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   } catch (err: any) {
+      const mensaje = err.response?.data?.message || 'Ocurrió un error inesperado.';
+      toast.error(mensaje);
     }
   }
 

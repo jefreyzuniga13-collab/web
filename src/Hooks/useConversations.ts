@@ -93,50 +93,47 @@ export function useConversations(filter: Filter = 'all'): UseConversationsResult
 
   const handleHumanRequest = useCallback((payload: { conversationId: number }) => {
     setConversations(prev =>
-      prev
-        .map(c =>
+      sortByActivity(
+        prev.map(c =>
           c.conversationId === payload.conversationId
             ? { ...c, status: 'Human' as ConversationDto['status'] }
             : c
         )
-        .filter(matchesFilter)
-    )
-  }, [matchesFilter])
-
-  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
-    setConversations(prev => {
-      const exists = prev.some(c => c.conversationId === updated.conversationId)
-      const ok     = matchesFilter(updated)
-      const next   = exists
-        ? ok
-          ? prev.map(c => c.conversationId === updated.conversationId ? updated : c)
-          : prev.filter(c => c.conversationId !== updated.conversationId)
-        : ok
-        ? [updated, ...prev]
-        : prev
-      return sortByActivity(next)
-    })
-  }, [matchesFilter, sortByActivity])
-
-  const handleNewMessage = useCallback((payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
-    const msg = payload.message
-    setConversations(prev =>
-      sortByActivity(
-        prev
-          .map(c =>
-            c.conversationId === msg.conversationId
-              ? {
-                  ...c,
-                  totalMessages: (c.totalMessages || 0) + 1,
-                  lastActivity:  msg.sentAt,
-                  unreadCount:   (c.unreadCount  || 0) + 1
-                }
-              : c
-          )
-          .filter(matchesFilter)
       )
     )
-  }, [matchesFilter, sortByActivity])
+  }, [sortByActivity])
+const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+  const ok = matchesFilter(updated)
+  setConversations(prev => {
+    const exists = prev.some(c => c.conversationId === updated.conversationId)
+    const next = exists
+      ? (ok
+          ? prev.map(c => c.conversationId === updated.conversationId ? { ...prev.find(x => x.conversationId === updated.conversationId)!, ...updated } : c)
+          : prev.filter(c => c.conversationId !== updated.conversationId))
+      : (ok ? [updated, ...prev] : prev)
+    return sortByActivity(next)
+  })
+}, [matchesFilter, sortByActivity])
+
+
+  const handleNewMessage = useCallback((payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
+  const msg = payload.message
+  setConversations(prev =>
+    sortByActivity(
+      prev.map(c =>
+        c.conversationId === msg.conversationId
+          ? {
+              ...c,
+              totalMessages: (c.totalMessages || 0) + 1,
+              lastActivity:  msg.sentAt,
+              unreadCount:   (c.unreadCount  || 0) + 1
+            }
+          : c
+      )
+    )
+  )
+}, [sortByActivity])
+
 
   const handleNewConvo = useCallback((newConvo: ConversationDto) => {
     if (!matchesFilter(newConvo)) return
