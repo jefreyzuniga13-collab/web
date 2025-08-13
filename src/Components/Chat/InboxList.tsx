@@ -167,8 +167,11 @@ export const InboxList: React.FC<Props> = ({
             <div className="inbox-list__top">
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
+                   <span className="inbox-list__name">
+                    {c.clientName || ''}
+                  </span>
                   <span className="inbox-list__name">
-                    {c.clientContactName || 'Usuario'}
+                    {c.clientContactName || 'contacto'}
                   </span>
                   <span className="inbox-list__time">{lastTime}</span>
                 </div>

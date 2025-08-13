@@ -46,6 +46,7 @@ export type NameTranslation =
   | "PreviewAgentWarningMessageTime"
   | "AssignedAgentMesage"
   | "PendingRegistration"
+  | "AssignedConversacionMessage"
 
   export type TypeTranslation =
   | 'Prompts'

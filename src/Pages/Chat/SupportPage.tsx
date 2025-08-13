@@ -78,7 +78,7 @@ const SupportPage: React.FC = () => {
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">Chat  {conversation?.contactNumber}</h2>
+          <h2 className="main-title">Cliente {conversation?.clientName} | Telefono {conversation?.contactNumber}</h2>
           <div className="btn-container">
             {convId && (
               <>

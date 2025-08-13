@@ -19,6 +19,7 @@ export interface ConversationDto {
   clientContactId: number
   systemDefinedCompanyName?: string;
   clientContactName?: string
+  clientName?: string
   priority: string
   assignedAgentId?: number
   assignedAgentName?: string
