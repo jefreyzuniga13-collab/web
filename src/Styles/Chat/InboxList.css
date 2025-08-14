@@ -94,7 +94,8 @@
   align-items: center;
 }
 
-.inbox-list__name {
+.inbox-list__name,
+.inbox-list__client_name {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
   white-space: nowrap;
@@ -102,6 +103,11 @@
   text-overflow: ellipsis;
   color: var(--color-gray-800);
   margin-right: var(--space-sm);
+}
+
+.inbox-list__client_name{
+  font-size: var(--font-size-xs);
+  font-weight: var(--fo);
 }
 
 .inbox-list__time {

@@ -84,7 +84,7 @@ export async function createHubConnection(token: string) {
   // notifications handlers
   notificationsConnection.on(
     'SupportRequested',
-    (payload: { conversationId: number; requestedAt: string; clientContacName: string; clientName: string; }) => {
+    (payload: { conversationId: number; requestedAt: string; clientContactName: string; clientName: string; }) => {
       window.dispatchEvent(new CustomEvent('SupportRequested', { detail: payload }))
     }
   )

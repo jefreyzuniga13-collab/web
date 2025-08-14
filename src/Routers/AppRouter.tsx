@@ -25,6 +25,7 @@ const OpeningHourPage      = lazy(() => import('@/Pages/Setting/OpeningHourPage'
 const WorkShiftPage        = lazy(() => import('@/Pages/Setting/WorkShiftPage'))
 const ContactPage          = lazy(() => import('@/Pages/Contact/ContactPage'))
 const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
+const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 
 export function AppRouter() {
   return (
@@ -59,6 +60,7 @@ export function AppRouter() {
           <Route path="users"                   element={<UsersPage />} />
           <Route path="notifications"           element={<NotificationsPage />} />
           <Route path="system-params"           element={<SystemParameterPage />} />
+          <Route path="templates-categories"           element={<TemplateCategoryPage />} />
           <Route path="profile"                 element={<ProfilePage />} />
           <Route path="opening-hour"            element={<OpeningHourPage />} />
           <Route path="work-shift"              element={<WorkShiftPage />} />
