@@ -13,7 +13,8 @@
   animation: fadeIn var(--transition-normal) var(--transition-ease);
 }
 
-.sp-modal__container {
+.sp-modal__container,
+.sp-modal__container_expanded {
   background-color: var(--bg-primary);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
@@ -26,6 +27,14 @@
   overflow: hidden;
   animation: slideIn var(--transition-normal) var(--transition-ease);
   padding: var(--space-3xl);
+}
+
+.sp-modal__container_expanded{
+  width: 80vw;
+  max-width: 100vw;
+  height:90vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 @media (min-width: var(--breakpoint-tablet)) {

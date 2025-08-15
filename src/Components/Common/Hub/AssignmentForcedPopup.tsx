@@ -11,7 +11,7 @@ export const AssignmentForcedPopup: React.FC = () => {
 
   if (!current || current.type !== 'AssignmentForced') return null
 
-  const { assignmentComment, clientName, clientContacName  } = current.payload as { assignmentComment: string , clientName: string; clientContacName: string}
+  const { assignmentComment, clientName, clientContactName  } = current.payload as { assignmentComment: string , clientName: string; clientContactName: string}
 
   const handleClose = () => {
     dispatch(dequeuePopup())
@@ -27,7 +27,7 @@ export const AssignmentForcedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Asignación realizada. Cliente ${clientName}. Contacto ${clientContacName}`}
+      title={`Asignación realizada. Cliente ${clientName}. Contacto ${clientContactName}`}
       message={`La asignación fue realizada con éxito. El motivo ha sido: ${assignmentComment || 'No Especificado.'}`}
       actions={actions}
       isOpen={true}

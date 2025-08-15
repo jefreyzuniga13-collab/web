@@ -26,6 +26,7 @@ const WorkShiftPage        = lazy(() => import('@/Pages/Setting/WorkShiftPage'))
 const ContactPage          = lazy(() => import('@/Pages/Contact/ContactPage'))
 const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
+const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 
 export function AppRouter() {
   return (
@@ -66,6 +67,7 @@ export function AppRouter() {
           <Route path="work-shift"              element={<WorkShiftPage />} />
           <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
           <Route path="conversation/:state"     element={<ConversationsPage />} />
+          <Route path="templates-management"     element={<WaTemplatesPage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>
 

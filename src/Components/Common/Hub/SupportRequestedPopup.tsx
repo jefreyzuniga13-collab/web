@@ -12,7 +12,7 @@ export const SupportRequestedPopup: React.FC = () => {
 
   if (!current || current.type !== 'SupportRequested') return null
 
-  const { requestedAt, clientContacName, clientName } = current.payload
+  const { requestedAt, clientContactName, clientName } = current.payload
 
   const handleClose = () => {
     dispatch(dequeuePopup())
@@ -29,7 +29,7 @@ export const SupportRequestedPopup: React.FC = () => {
   return (
     <ModalPopup
       title={`Solicitud de soporte cliente ${clientName}`}
-      message={`El contacto ${clientContacName} solicitó soporte el ${new Date(requestedAt).toLocaleString()}.`}
+      message={`El contacto ${clientContactName} solicitó soporte el ${new Date(requestedAt).toLocaleString()}.`}
       actions={actions}
       isOpen={true}
       onClose={handleClose}

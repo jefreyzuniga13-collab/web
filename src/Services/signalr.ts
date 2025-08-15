@@ -98,21 +98,21 @@ export async function createHubConnection(token: string) {
 
   notificationsConnection.on(
     'AssignmentResponse',
-    (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string,  clientContacName: string; clientName: string; }) => {
+    (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string,  clientContactName: string; clientName: string; }) => {
       window.dispatchEvent(new CustomEvent('AssignmentResponse', { detail: payload }))
     }
   )
 
   notificationsConnection.on(
     'AssignmentForced',
-    (payload: { conversationId: number; comment: string, clientContacName: string; clientName: string; }) => {
+    (payload: { conversationId: number; comment: string, clientContactName: string; clientName: string; }) => {
       window.dispatchEvent(new CustomEvent('AssignmentForced', { detail: payload }))
     }
   )
 
   notificationsConnection.on(
     'AssignmentForcedAdmin',
-    (payload: { conversationId: number; targetAgentId: number; comment: string, clientContacName: string; clientName: string;  }) => {
+    (payload: { conversationId: number; targetAgentId: number; comment: string, clientContactName: string; clientName: string;  }) => {
       window.dispatchEvent(new CustomEvent('AssignmentForcedAdmin', { detail: payload }))
     }
   )
@@ -212,12 +212,12 @@ export function offNewNotification(handler: (dto: NotificationDto) => void) {
 
 // --- notifications methods ---
 export function onSupportRequested(
-  handler: (payload: { conversationId: number;  requestedAt: string; clientContacName: string; clientName: string; }) => void
+  handler: (payload: { conversationId: number;  requestedAt: string; clientContactName: string; clientName: string; }) => void
 ) {
   notificationsConnection?.on('SupportRequested', handler)
 }
 export function offSupportRequested(
-  handler: (payload: { conversationId: number; requestedAt: string; clientContacName: string; clientName: string;  }) => void
+  handler: (payload: { conversationId: number; requestedAt: string; clientContactName: string; clientName: string;  }) => void
 ) {
   notificationsConnection?.off('SupportRequested', handler)
 }
@@ -234,34 +234,34 @@ export function offConversationAssigned(
 }
 
 export function onAssignmentResponse(
-  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string; clientContacName: string; clientName: string;  }) => void
+  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string; clientContactName: string; clientName: string;  }) => void
 ) {
   notificationsConnection?.on('AssignmentResponse', handler)
 }
 export function offAssignmentResponse(
-  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string; clientContacName: string; clientName: string;  }) => void
+  handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string; clientContactName: string; clientName: string;  }) => void
 ) {
   notificationsConnection?.off('AssignmentResponse', handler)
 }
 
 export function onAssignmentForced(
-  handler: (payload: { conversationId: number; comment: string; clientContacName: string; clientName: string }) => void
+  handler: (payload: { conversationId: number; comment: string; clientContactName: string; clientName: string }) => void
 ) {
   notificationsConnection?.on('AssignmentForced', handler)
 }
 export function offAssignmentForced(
-  handler: (payload: { conversationId: number; comment: string; clientContacName: string; clientName: string;  }) => void
+  handler: (payload: { conversationId: number; comment: string; clientContactName: string; clientName: string;  }) => void
 ) {
   notificationsConnection?.off('AssignmentForced', handler)
 }
 
 export function onAssignmentForcedAdmin(
-  handler: (payload: { conversationId: number; targetAgentId: number; comment: string; clientContacName: string; clientName: string }) => void
+  handler: (payload: { conversationId: number; targetAgentId: number; comment: string; clientContactName: string; clientName: string }) => void
 ) {
   notificationsConnection?.on('AssignmentForcedAdmin', handler)
 }
 export function offAssignmentForcedAdmin(
-  handler: (payload: { conversationId: number; targetAgentId: number; comment: string ; clientContacName: string; clientName: string }) => void
+  handler: (payload: { conversationId: number; targetAgentId: number; comment: string ; clientContactName: string; clientName: string }) => void
 ) {
   notificationsConnection?.off('AssignmentForcedAdmin', handler)
 }
