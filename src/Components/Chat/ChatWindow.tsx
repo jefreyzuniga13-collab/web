@@ -2,11 +2,6 @@ import React, { useEffect } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
-//import { AiTwotoneAudio } from "react-icons/ai";
-// import { AiOutlineAudioMuted } from "react-icons/ai";
-// import { MdScheduleSend } from "react-icons/md";
-// import { MdOutlineCancel } from "react-icons/md";
-// import { TbPlayerPause } from "react-icons/tb";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -38,7 +33,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     handleFileChange,
     handlePaste,
     handleKeyPress,
-    // handleDownload,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
@@ -47,13 +41,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
-    // isRecording,
-    // audioBlob,
-    // recordingTime,
-    // startRecording,
-    // stopRecording,
-    // clearRecording,
-    // handleSendAudio,
 
   } = useChatWindow()
 
@@ -109,13 +96,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                         m.attachments[0].mimeType === 'image/webp') && (
                         <div className="chat-window__media-image">
                           <div className="chat-window__image-container">
-                            {/* <button
-                              className="chat-window__download-btn"
-                              onClick={() => handleDownload(m.attachments![0].mediaUrl!)}
-                              aria-label="Descargar imagen"
-                            >
-                              <Download size={16} />
-                            </button> */}
                             <img
                               src={m.attachments[0].mediaUrl}
                               alt={m.attachments[0].fileName || 'Imagen'}
@@ -134,6 +114,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                           </video>
                         </div>
                       )}
+                      
                       {m.attachments[0].mimeType?.startsWith('audio/') && (
                         <div className="chat-window__media-audio">
                           <div className="chat-window__audio-container">
@@ -225,42 +206,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             </button>
           </div>
         )}
-
-        {/* {!isRecording && !audioBlob && (
-            <button
-              onClick={startRecording}
-              disabled={!conversationId || sending  || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
-              className="chat-window__composer-audio-btn"
-              aria-label="Iniciar grabación"
-            >
-                <AiOutlineAudioMuted size={24} className='chat-window__composer-audio-icon'/>
-            </button>
-          )}
-
-          {isRecording && (
-            <div className="chat-window__recorder-status">
-              <div className="chat-window__waveform">
-                <div className="bar" /><div className="bar" /><div className="bar" />
-              </div>
-              <span className="chat-window__timer">{recordingTime}s</span>
-              <button
-                onClick={stopRecording}
-                className="chat-window__composer-audio-btn stop"
-                aria-label="Detener grabación"
-              >
-                <TbPlayerPause size={24}/>
-              </button>
-            </div>
-          )}
-
-            {audioBlob && !isRecording && (
-              <div className="chat-window__recorder-preview">
-                <audio controls src={URL.createObjectURL(audioBlob)} />
-                <button onClick={handleSendAudio} className="chat-window__composer-audio-btn send"><MdScheduleSend size={24} className='chat-window__composer-audio-btn__icon'/></button>
-                <button onClick={clearRecording} className="chat-window__composer-audio-btn
-                chat-window__composer-audio-btn_cancel cancel"><MdOutlineCancel scale={26} className='chat-window__composer-audio-btn__icon'/></button>
-              </div>
-            )} */}
         
         <div className="chat-window__composer-input-container">
 

@@ -11,7 +11,7 @@ export function useWaTemplate() {
   const [waTemplates, setWaTemplates] = useState<WaTemplateResponseDto[]>([])
   const [selectedWaTemplate, setSelectedWaTemplate] = useState<WaTemplateResponseDto | null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(5)
   const [totalCount, setTotalCount] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingItem, setLoadingItem] = useState(false)
@@ -75,7 +75,6 @@ export function useWaTemplate() {
     setModalMode('create')
     setModalOpen(true)
   }, [])
-
   const openView = useCallback((id: number) => {
     const cache = allItems.find(x => x.id === id) || null
     setSelectedWaTemplate(cache)

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'
 import IconButton from '@mui/material/IconButton'
@@ -8,6 +8,8 @@ import { useWaTemplate } from '@/Hooks/Wh/useWaTemplate'
 import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
+import SendIcon from '@mui/icons-material/Send';
+import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
 
 export default function WaTemplatesPage() {
   const {
@@ -24,9 +26,16 @@ export default function WaTemplatesPage() {
     openView,
     closeModal,
     handleSubmit,
-    syncNow,
-    loading,
   } = useWaTemplate()
+
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [templateToSend, setTemplateToSend] = useState<WaTemplateResponseDto | null>(null);
+
+  const openSend = (row: WaTemplateResponseDto) => {
+    setTemplateToSend(row);
+    setSendModalOpen(true);
+  };
+  const closeSend = () => { setSendModalOpen(false); setTemplateToSend(null); };
 
   const columns: Column<WaTemplateResponseDto>[] = useMemo(() => [
     { id: 'name', label: 'Nombre', minWidth: 80 },
@@ -93,9 +102,14 @@ export default function WaTemplatesPage() {
       minWidth: 100,
       align: 'center',
       render: row => (
-        <IconButton size="small" onClick={() => openView(row.id)}>
+        <>
+          <IconButton size="small" onClick={() => openView(row.id)}>
           <VisibilityIcon fontSize="small" />
         </IconButton>
+        <IconButton size="small" onClick={() => openSend(row)}>
+          <SendIcon fontSize="small" />
+        </IconButton>
+        </>
       ),
     },
   ], [openView])
@@ -108,9 +122,6 @@ export default function WaTemplatesPage() {
           <p className="sp-page__subtitle">Crea y sincroniza plantillas con Meta</p>
         </div>
         <div className="sp-page__btnContainer" style={{ gap: 8, display: 'flex' }}>
-          <Button variant="secondary" onClick={syncNow} disabled={loading}>
-            Sincronizar con Meta
-          </Button>
           <Button variant="primary" onClick={openCreate}>
             Nueva Plantilla
           </Button>
@@ -135,6 +146,14 @@ export default function WaTemplatesPage() {
         onClose={closeModal}
         onSubmit={handleSubmit}
       />
+
+      {sendModalOpen && templateToSend && (
+        <WaTemplateSendModal
+          isOpen={sendModalOpen}
+          template={templateToSend}
+          onClose={closeSend}
+        />
+    )}
     </div>
   )
 }

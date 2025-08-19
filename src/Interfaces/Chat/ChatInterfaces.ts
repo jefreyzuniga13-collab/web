@@ -87,7 +87,14 @@ export interface MessageDto {
   deliveredAt?: string;
   readAt?: string;
   attachments: AttachmentDto[];
+
+  waTemplateId?: number | null;
+  templateName?: string | null;
+  templateLanguage?: string | null;
+  templateBodyVars?: string[] | null;
 }
+
+
 
 export interface SentMessage {
   conversationId: number;

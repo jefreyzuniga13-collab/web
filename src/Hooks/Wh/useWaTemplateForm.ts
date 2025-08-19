@@ -7,6 +7,7 @@ import type {
 import api from '@/Utils/ApiConfig'
 import type { TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
 import {TemplateCategoryService} from '@/Services/chat/TemplateCategoryService'
+import type { UploadForWhatsAppResult } from '@/Services/MediaService '
 
 export type FormMode = 'create' | 'view'
 
@@ -318,20 +319,27 @@ export function useWaTemplateForm({
     return Object.keys(e).length === 0
   }, [form])
 
-  const uploadMedia = useCallback(async (): Promise<string[]> => {
-    if (!form.mediaFiles.length) return []
-    try {
-      setForm(prev => ({ ...prev, uploading: true }))
-      const fd = new FormData()
-      form.mediaFiles.forEach(f => fd.append('files', f))
-      const { data } = await api.post<string[]>('Media', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      return Array.isArray(data) ? data : []
-    } finally {
-      setForm(prev => ({ ...prev, uploading: false }))
-    }
-  }, [form.mediaFiles])
+const uploadMedia = useCallback(async (): Promise<string[]> => {
+  if (!form.mediaFiles.length) return []
+  try {
+    setForm(prev => ({ ...prev, uploading: true }))
+    const fd = new FormData()
+    form.mediaFiles.forEach(f => fd.append('files', f))
+
+    const { data } = await api.post<UploadForWhatsAppResult[]>(
+      '/Media/upload-for-wh',
+      fd,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+
+    // 👇 aquí usamos el handle porque es para plantillas
+    return Array.isArray(data)
+      ? data.map(x => x.waMediaId).filter(Boolean)
+      : []
+  } finally {
+    setForm(prev => ({ ...prev, uploading: false }))
+  }
+}, [form.mediaFiles])
 
 
   const buildComponents = useCallback((headerHandles: string[]) => {
