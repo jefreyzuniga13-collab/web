@@ -191,7 +191,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
-          disabled={!conversationId || sending || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
+          disabled={!conversationId || sending || conversationStatus == 'Closed'}
         />
 
         {file && (
@@ -216,14 +216,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyPress}
             onPaste={handlePaste}
-            disabled={!conversationId || sending || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
+            disabled={!conversationId || sending || conversationStatus == 'Closed'}
             rows={1}
           />
         </div>
         <button
           className="chat-window__composer-send"
           onClick={handleSend}
-          disabled={!conversationId || sending || (!text.trim() && !file) || conversationStatus == 'Closed' ||  conversationStatus == 'Incomplete'}
+          disabled={!conversationId || sending || (!text.trim() && !file) || conversationStatus == 'Closed'}
           aria-label="Enviar mensaje"
         >
           <Send size={18} />

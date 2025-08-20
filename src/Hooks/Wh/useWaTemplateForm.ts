@@ -122,7 +122,7 @@ export function useWaTemplateForm({
     categoryName: null,
     isActive: true,
     header: { enabled: true, format: 'TEXT', text: 'Título' },
-    body: { enabled: true, text: 'Hola {{1}}, este es un mensaje.' },
+    body: { enabled: true, text: 'Hola {{text}}, este es un mensaje.' },
     footer: { enabled: true, text: '' },
     buttons: { enabled: true, rows: [] },
     mediaFiles: [],
@@ -303,6 +303,9 @@ export function useWaTemplateForm({
     if (!form.externalName.trim()) e.externalName = 'No se pudo generar el nombre interno'
     if (!form.language.trim()) e.language = 'Idioma requerido'
     if (!form.categoryId) e.categoryId = 'Categoría requerida'
+    if (!form.categoryId) e.header = 'Encabezado de plantilla requerida'
+    if (!form.categoryId) e.body = 'Cuerpo de plantilla requerida'
+    if (!form.categoryId) e.footer = 'Pie de página requerida'
     // Header
     if (form.header.enabled) {
       if (form.header.format === 'TEXT') {
@@ -382,13 +385,17 @@ const uploadMedia = useCallback(async (): Promise<string[]> => {
       externalName: form.externalName,
       language: form.language,
       templateCategoryId: form.categoryId!,
-      templateCategoryName: form.categoryName,
-      templateStatus: 'Pending' as any,
+      templateCategoryName: form.categoryName,                             
+      templateStatus: 'Approved' as any,
       externalId: null,
       componentsJson: JSON.stringify(components),
       isActive: form.isActive,
     }
     onSubmit(payload)
+
+    //Limpiar al formulario cuando se envia plantilla.
+     setForm(initialState);
+
   }, [validate, uploadMedia, buildComponents, form, onSubmit])
 
   return {

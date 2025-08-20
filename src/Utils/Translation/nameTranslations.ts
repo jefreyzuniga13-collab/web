@@ -43,5 +43,7 @@ export const nameTranslations: Record<NameTranslation, string> = {
   PreviewAgentWarningMessageTime: "Tiempo de mensaje de aviso de cierre de conversación por inactividad con estado asignado.",
   AssignedAgentMesage: "Mensaje de asignación de agente",
   PendingRegistration: "Mensaje de registro de contacto pendiente",
-  AssignedConversacionMessage: "Mensaje de asignación de agente"
+  AssignedConversacionMessage: "Mensaje de asignación de agente",
+  ConversationInProgressMessage: "Mensaje de conversación en proceso de asignación",
+  EnableChatBotOption: "Chatbot habilitado",
 };

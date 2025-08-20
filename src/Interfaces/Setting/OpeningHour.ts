@@ -47,6 +47,8 @@ export type NameTranslation =
   | "AssignedAgentMesage"
   | "PendingRegistration"
   | "AssignedConversacionMessage"
+  | "ConversationInProgressMessage"
+  | "EnableChatBotOption"
 
   export type TypeTranslation =
   | 'Prompts'

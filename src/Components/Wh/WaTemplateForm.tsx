@@ -32,25 +32,25 @@ export default function WaTemplateForm({
     loadingCategories,
 
     setDisplayName,
-    setLanguage,
+    // setLanguage,
     setCategory,
-    setIsActive,
+    // setIsActive,
 
-    setHeaderEnabled,
-    setHeaderFormat,
+    // setHeaderEnabled,
+    // setHeaderFormat,
     setHeaderText,
     setHeaderMediaFiles,
 
-    setBodyEnabled,
+    // setBodyEnabled,
     setBodyText,
 
-    setFooterEnabled,
+    // setFooterEnabled,
     setFooterText,
 
-    setButtonsEnabled,
-    addButton,
-    updateButton,
-    removeButton,
+    // setButtonsEnabled,
+    // addButton,
+    // updateButton,
+    // removeButton,
 
     submit,
   } = useWaTemplateForm({ mode, data: data || null, onSubmit })
@@ -84,14 +84,14 @@ export default function WaTemplateForm({
               {errors.displayName && <div className="sp-modal__error">{errors.displayName}</div>}
             </div>
 
-            <div className="sp-modal__col">
+            {/* <div className="sp-modal__col">
               <Label className="sp-modal__label">Nombre interno (auto) *</Label>
               <Input value={form.externalName} disabled />
               {errors.externalName && <div className="sp-modal__error">{errors.externalName}</div>}
-            </div>
+            </div> */}
 
             {/* IDIOMA + CATEGORÍA */}
-            <div className="sp-modal__col">
+            {/* <div className="sp-modal__col">
               <Label className="sp-modal__label">Idioma *</Label>
               <Input
                 value={form.language}
@@ -99,7 +99,7 @@ export default function WaTemplateForm({
                 disabled={isView}
               />
               {errors.language && <div className="sp-modal__error">{errors.language}</div>}
-            </div>
+            </div> */}
 
             <div className="sp-modal__col">
               <Label className="sp-modal__label">Categoría *</Label>
@@ -114,7 +114,7 @@ export default function WaTemplateForm({
             </div>
 
             {/* ACTIVA */}
-            <div className="sp-modal__col">
+            {/* <div className="sp-modal__col">
               <Label className="sp-modal__label">Activa</Label>
               <input
                 type="checkbox"
@@ -122,12 +122,12 @@ export default function WaTemplateForm({
                 onChange={(e) => setIsActive(e.target.checked)}
                 disabled={isView}
               />
-            </div>
+            </div> */}
 
             {/* HEADER */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
-                <div className="sp-modal__section-header">
+                {/* <div className="sp-modal__section-header">
                   <h3>Encabezado (HEADER)</h3>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
@@ -138,15 +138,15 @@ export default function WaTemplateForm({
                     />
                     Habilitar
                   </label>
-                </div>
+                </div> */}
 
                 {form.header.enabled && (
                   <>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                      <Button type="button" variant={form.header.format === 'TEXT' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('TEXT')} disabled={isView}>TEXT</Button>
-                      <Button type="button" variant={form.header.format === 'IMAGE' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('IMAGE')} disabled={isView}>IMAGE</Button>
+                      {/* <Button type="button" variant={form.header.format === 'TEXT' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('TEXT')} disabled={isView}>TEXT</Button> */}
+                      {/* <Button type="button" variant={form.header.format === 'IMAGE' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('IMAGE')} disabled={isView}>IMAGE</Button>
                       <Button type="button" variant={form.header.format === 'VIDEO' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('VIDEO')} disabled={isView}>VIDEO</Button>
-                      <Button type="button" variant={form.header.format === 'DOCUMENT' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('DOCUMENT')} disabled={isView}>DOCUMENT</Button>
+                      <Button type="button" variant={form.header.format === 'DOCUMENT' ? 'primary' : 'secondary'} onClick={() => setHeaderFormat('DOCUMENT')} disabled={isView}>DOCUMENT</Button> */}
                     </div>
 
                     {/* TEXT */}
@@ -188,40 +188,12 @@ export default function WaTemplateForm({
             </div>
 
             {/* BODY */}
-            <div className="sp-modal__col sp-modal__col--full">
-              <div className="sp-modal__section">
-                <div className="sp-modal__section-header">
-                  <h3>Cuerpo (BODY)</h3>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.body.enabled}
-                      onChange={(e) => setBodyEnabled(e.target.checked)}
-                      disabled={isView}
-                    />
-                    Habilitar
-                  </label>
-                </div>
-
-                {form.body.enabled && (
-                  <div style={{ marginTop: 8 }}>
-                    <Label className="sp-modal__label">Texto</Label>
-                    <Textarea
-                      value={form.body.text}
-                      onChange={(e) => setBodyText(e.target.value)}
-                      rows={6}
-                      disabled={isView}
-                    />
-                    {errors.bodyText && <div className="sp-modal__error">{errors.bodyText}</div>}
-                  </div>
-                )}
-              </div>
-            </div>
+            
 
             {/* FOOTER */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
-                <div className="sp-modal__section-header">
+                {/* <div className="sp-modal__section-header">
                   <h3>Pie (FOOTER)</h3>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
@@ -232,7 +204,7 @@ export default function WaTemplateForm({
                     />
                     Habilitar
                   </label>
-                </div>
+                </div> */}
 
                 {form.footer.enabled && (
                   <div style={{ marginTop: 8 }}>
@@ -247,8 +219,38 @@ export default function WaTemplateForm({
               </div>
             </div>
 
-            {/* BUTTONS */}
             <div className="sp-modal__col sp-modal__col--full">
+              <div className="sp-modal__section">
+                {/* <div className="sp-modal__section-header">
+                  <h3>Cuerpo (BODY)</h3>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={form.body.enabled}
+                      onChange={(e) => setBodyEnabled(e.target.checked)}
+                      disabled={isView}
+                    />
+                    Habilitar
+                  </label>
+                </div> */}
+
+                {form.body.enabled && (
+                  <div style={{ marginTop: 8 }}>
+                    <Label className="sp-modal__label">Texto del  cuerpo</Label>
+                    <Textarea
+                      value={form.body.text}
+                      onChange={(e) => setBodyText(e.target.value)}
+                      rows={6}
+                      disabled={isView}
+                    />
+                    {errors.bodyText && <div className="sp-modal__error">{errors.bodyText}</div>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* BUTTONS */}
+            {/* <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
                 <div className="sp-modal__section-header">
                   <h3>Botones (BUTTONS)</h3>
@@ -277,7 +279,7 @@ export default function WaTemplateForm({
                           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                             <span className="sp-modal__badge">{b.type}</span>
 
-                            {/* Text */}
+                     
                             <div style={{ minWidth: 220 }}>
                               <Label className="sp-modal__label">Texto</Label>
                               <Input
@@ -287,7 +289,7 @@ export default function WaTemplateForm({
                               />
                             </div>
 
-                            {/* URL */}
+                      
                             {'url' in b && (
                               <div style={{ minWidth: 260 }}>
                                 <Label className="sp-modal__label">URL</Label>
@@ -299,7 +301,7 @@ export default function WaTemplateForm({
                               </div>
                             )}
 
-                            {/* Phone */}
+                          
                             {'phone_number' in b && (
                               <div style={{ minWidth: 200 }}>
                                 <Label className="sp-modal__label">Teléfono</Label>
@@ -326,7 +328,9 @@ export default function WaTemplateForm({
                   </>
                 )}
               </div>
-            </div>
+            </div> */}
+
+            
           </div>
 
           <footer className="sp-modal__footer">

@@ -23,7 +23,7 @@ export function useSystemParamForm({
     type: "",
     value: "",
     description: "",
-    isActive: false,
+    isActive: true,
   };
 
   const [form, setForm] = useState<SystemParamRequestDto>(initialForm);
