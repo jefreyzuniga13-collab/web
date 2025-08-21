@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import Input from '@/Components/Common/Input'
@@ -8,7 +9,8 @@ import MultiSelect from '@/Components/Common/MultiSelect'
 import { useRoles } from '@/Hooks/useRoles'
 import type { User } from '@/Interfaces/User/UserInterfaces'
 import '@/Styles/Users/UserForm.css'
-
+import { userService } from '@/Services/User/UserService'
+import { toast } from 'react-toastify'
 interface UserFormProps {
   initialData?: User
   companies: { companyId: number; name: string }[]
@@ -42,8 +44,11 @@ export default function UserForm({
     sendWelcomeEmail: false,
   })
 
+  
+
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
+    const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
   if (initialData) {
@@ -122,6 +127,42 @@ export default function UserForm({
     formData.roleIds.forEach(id => payload.append('roleIds', String(id)))
     if (selectedFile) payload.append('imageFile', selectedFile)
     onSubmit(payload)
+  }
+
+
+   const handleUploadOnlyImage = async () => {
+    if (!initialData?.userId) {
+      setErrors(prev => ({ ...prev, imageFile: 'No se encontró el ID del usuario.' }))
+      return
+    }
+    if (!selectedFile) {
+      setErrors(prev => ({ ...prev, imageFile: 'Seleccione una imagen antes de actualizar.' }))
+      return
+    }
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, imageFile: 'La imagen no puede superar los 5MB' }))
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      const res = await userService.uploadUserAvatar(initialData.userId, selectedFile)
+
+      console.log(initialData.userId, selectedFile);
+
+      const newUrl = res.imageUrl ?? res.user?.imageUrl ?? ''
+      setFormData(prev => ({ ...prev, imageUrl: newUrl }))
+
+      setErrors(prev => ({ ...prev, imageFile: '' }))
+      toast?.success?.('Imagen actualizada correctamente')
+     onCancel()
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'No se pudo actualizar la imagen'
+      setErrors(prev => ({ ...prev, imageFile: msg }))
+      toast?.error?.(msg)
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const roleOptions = roles.map(r => ({ value: r.roleId, label: r.roleName }))
@@ -248,6 +289,18 @@ export default function UserForm({
             currentImage={formData.imageUrl || initialData?.imageUrl || ''}
           />
           {errors.imageFile && <span className="user-form__error">{errors.imageFile}</span>}
+          
+          {!isViewing && isEditing && (
+          <div style={{ marginTop: 8 }}>
+            <Button
+              type="button"
+              onClick={handleUploadOnlyImage}
+              disabled={uploadingImage || !selectedFile}
+            >
+              {uploadingImage ? 'Actualizando imagen...' : 'Actualizar solo imagen'}
+            </Button>
+          </div>
+        )}
         </div>
         <div className="user-form__section">
           {/* <h3 className="user-form__section-title">Configuración</h3> */}

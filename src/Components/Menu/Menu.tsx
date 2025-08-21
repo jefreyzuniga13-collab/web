@@ -9,7 +9,6 @@ import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Menu/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/User/useUsers';
-import Tooltip from '@mui/material/Tooltip';
 
 interface NavbarProps {
   id: number;
@@ -71,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           const showBadge = m.url === 'notifications' && unreadCount > 0;
 
           return (
-            <Tooltip describeChild title={m.name}>
+
                  <MenuItem
                     key={m.menuId}
                     icon={<Icon size={20} />}
@@ -80,8 +79,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
                     selected={isSelected}
                     badge={showBadge ? unreadCount : undefined}
                     className = {collapsed ? 'collapsed-styles' : ''}
+                    collapsed={collapsed}
                   />
-            </Tooltip>
           );
         })}
       </ul>

@@ -40,6 +40,20 @@ async createUserAsync(formData: FormData): Promise<User> {
     await api.put(`/Users/${userId}`, request)
   }
 
+  async updateUserImage(userId: number, imageUrl?: string): Promise<void> {
+    await api.put(`/Users/${userId}/updateImage`, imageUrl)
+  }
+
+  async  uploadUserAvatar(userId: number, file: File) {
+  const fd = new FormData()
+  fd.append('imageFile', file)
+
+  const { data } = await api.patch(`users/${userId}/avatar`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
   async toggleUserAsync(userId: number): Promise<void> {
     await api.patch(`/Users/${userId}`)
   }

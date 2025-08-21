@@ -51,3 +51,16 @@
 .MuiFormLabel-root {
   font-size: var(--font-size-xm) !important;
 }
+
+.max-modal{
+  height: 100%;
+}
+
+.selected_contacts{
+  height: 200px;
+}
+
+.sp-modal__select-extra{
+  height: 200px  !important;
+  min-height: 100% !important;
+}

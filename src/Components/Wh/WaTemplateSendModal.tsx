@@ -152,8 +152,8 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   )
 
   return (
-    <div className="sp-modal__overlay">
-      <div className="sp-modal__container">
+    <div className="sp-modal__overlay max">
+      <div className="sp-modal__container max-modal">
         <header className="sp-modal__header">
           <h2 className="sp-modal__title">Enviar plantilla: {template.name}</h2>
           <button type="button" className="sp-modal__close" onClick={onClose}>×</button>
@@ -181,8 +181,9 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
             </div>
           </div>
 
+          {/*Usar componente mas amigable, son muchos data lo que hay y se llega aver muy comprimido las opciones  */}
           {source === 'contacts' && (
-            <div>
+            <div className='selected_contacts'>
               <Label>Selecciona contactos</Label>
               <Select
                 multiple
@@ -191,11 +192,12 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                   const opts = Array.from((e.target as HTMLSelectElement).selectedOptions)
                   setSelectedIds(opts.map(o => Number(o.value)))
                 }}
-                options={data.map((c: any) => ({
+               options={data.map((c: any) => ({
                   value: c.id,
-                  label: `${c.fullName ?? c.phone} (${c.phone})`
+                  label: `${c.companyName ?? ""} - ${c.fullName ?? ""} - ${c.phone ?? ""}`
                 }))}
-                className="sp-modal__select"
+
+                className="sp-modal__select-extra"
               />
             </div>
           )}
@@ -207,7 +209,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
             </div>
           )}
 
-          {schema.headerType === ('TEXT' as HeaderKind) && schema.headerTextVars === 0 && (
+          {/* {schema.headerType === ('TEXT' as HeaderKind) && schema.headerTextVars === 0 && (
             <div>
               <Label>HEADER TEXT (informativo):</Label>
               <Input
@@ -216,7 +218,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                 onChange={e => setHeaderTextValue(e.target.value)}
               />
             </div>
-          )}
+          )} */}
 
           {schema.bodyVars > 0 && (
             <div>
@@ -238,6 +240,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
               </div>
             </div>
           )}
+          
         </div>
 
         <footer className="sp-modal__footer">

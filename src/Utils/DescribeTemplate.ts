@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// utils/describeTemplate.ts
 export type HeaderKind = 'NONE' | 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
 export type ButtonKind = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'
 
