@@ -36,6 +36,7 @@ export default function SystemParamsPage() {
         id: "name",
         label: "Nombre",
         minWidth: 100,
+        type: "text"
       },
        {
         id: "description",
@@ -56,12 +57,12 @@ export default function SystemParamsPage() {
      {
         id: "createdByName",
         label: "Creado Por",
-        minWidth: 100,
+        minWidth: 120,
       },
       {
         id: "updatedByName",
         label: "Ult. Actualizado Por",
-        minWidth: 100,
+        minWidth: 120,
       },
     {
       id: 'actions',

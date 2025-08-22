@@ -1,71 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
 import Button from '@/Components/Common/Button'
 import { Label } from '@/Components/Common/Label'
 import Input from '@/Components/Common/Input'
-import Select from '@/Components/Common/Select'
 import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
-import useContact from '@/Hooks/Contact/useContact'
-import { WaTemplateService } from '@/Services/Wa/WaTemplateService'
-import * as XLSX from 'xlsx'
-
-type HeaderKind = 'NONE' | 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
-
-function parseComponents(raw: any): any[] {
-  try {
-    if (!raw) return []
-    if (typeof raw === 'string') return JSON.parse(raw)
-    return Array.isArray(raw) ? raw : []
-  } catch {
-    return []
-  }
-}
-
-function countVars(text: string | null | undefined): { varCount: number; indices: number[] } {
-  if (!text) return { varCount: 0, indices: [] }
-  const re = /\{\{(\d+)}}/g
-  const idxs: number[] = []
-  let m: RegExpExecArray | null
-  while ((m = re.exec(text)) !== null) idxs.push(Number(m[1]))
-  const max = idxs.length ? Math.max(...idxs) : 0
-  return { varCount: max, indices: Array.from(new Set(idxs)).sort((a, b) => a - b) }
-}
-
-function buildSchema(template: WaTemplateResponseDto) {
-  const comps = parseComponents(template.components)
-  let headerType: HeaderKind = 'NONE'
-  let headerTextVars = 0
-  let requiresMedia = false
-  let bodyVars = 0
-  const urlButtonsDynamic: Array<{ index: number; url: string; hasDynamic: boolean }> = []
-
-  comps.forEach((c: any) => {
-    if (c?.type === 'HEADER') {
-      const fmt = String(c.format || '').toUpperCase()
-      if (fmt === 'TEXT') {
-        headerType = 'TEXT'
-        headerTextVars = countVars(c.text).varCount
-      } else if (fmt === 'IMAGE' || fmt === 'VIDEO' || fmt === 'DOCUMENT') {
-        headerType = fmt as HeaderKind
-        requiresMedia = true
-      }
-    }
-    if (c?.type === 'BODY') bodyVars = countVars(c.text).varCount
-    if (c?.type === 'BUTTONS' && Array.isArray(c.buttons)) {
-      c.buttons.forEach((b: any, i: number) => {
-        if (b?.type === 'URL') {
-          const url = String(b.url || '')
-          const dyn = /\{\{\d+}}/.test(url)
-          urlButtonsDynamic.push({ index: i, url, hasDynamic: dyn })
-        }
-      })
-    }
-  })
-
-  return { headerType: headerType as HeaderKind, headerTextVars, requiresMedia, bodyVars, urlButtonsDynamic }
-}
+import { Paper, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, 
+  TableContainer, TableHead, TableRow, Checkbox, TablePagination, Box, Typography, Divider } from '@mui/material'
+import { useWaTemplateSendModal } from '@/Hooks/Wh/useWaTemplateSendModal'
 
 type Props = {
   isOpen: boolean
@@ -74,165 +17,287 @@ type Props = {
 }
 
 export default function WaTemplateSendModal({ isOpen, template, onClose }: Props) {
-  const { data } = useContact()
-  const [source, setSource] = useState<'contacts' | 'excel'>('contacts')
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
-  const [excelFile, setExcelFile] = useState<File | null>(null)
-  const schema = useMemo(() => buildSchema(template), [template])
-  const [headerTextValue, setHeaderTextValue] = useState('')
-  const [bodyParams, setBodyParams] = useState<string[]>([])
+  const {
+    schema,
+    source,
+    data,
+    bodyParams,
+    setBodyParams,
+    setSource,
+    setExcelFile,
+    selectedIds,
+    setSelectedIds,
+    handleSend,
+  } = useWaTemplateSendModal({ isOpen, template, onClose }) || {}
+
+  const [searchCompany, setSearchCompany] = useState('')
+  const [searchPhone, setSearchPhone] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [summaryPage, setSummaryPage] = useState(0)
+  const [rowsPerSummaryPage, setRowsPerSummaryPage] = useState(10)
+  const [excelPreview, setExcelPreview] = useState<Array<{ fullName: string; phone: string }>>([])
 
   useEffect(() => {
-    setBodyParams(Array.from({ length: Math.max(0, schema.bodyVars) }, () => ''))
-  }, [schema.bodyVars])
+    setSearchCompany('')
+    setSearchPhone('')
+    setSelectedIds && setSelectedIds([])
+    setExcelPreview([])
+    setPage(0)
+    setSummaryPage(0)
+  }, [source, setSelectedIds])
 
-  if (!isOpen) return null
+  const rows = useMemo(() => Array.isArray(data) ? data : [], [data])
 
-  const getPhonesFromContacts = (): Array<{ phone: string; fullName: string }> => {
-    const byId = new Map<number, { phone: string; fullName: string }>()
-    data.forEach((c: any) => byId.set(c.id, { phone: c.phone, fullName: c.fullName ?? c.phone }))
-    return selectedIds.map(id => byId.get(id)).filter(Boolean) as Array<{ phone: string; fullName: string }>
+  const filtered = useMemo(() => {
+    const sc = searchCompany.trim().toLowerCase()
+    const sp = searchPhone.trim().toLowerCase()
+    return rows.filter((r: any) => {
+      const c = String(r.companyName ?? '').toLowerCase()
+      const p = String(r.phone ?? '').toLowerCase()
+      return (!sc || c.includes(sc)) && (!sp || p.includes(sp))
+    })
+  }, [rows, searchCompany, searchPhone])
+
+  const paged = useMemo(() => {
+    const start = page * rowsPerPage
+    return filtered.slice(start, start + rowsPerPage)
+  }, [filtered, page, rowsPerPage])
+
+  const selectedRows = useMemo(() => {
+    const ids = new Set<number>((selectedIds ?? []) as number[])
+    return rows.filter((r: any) => ids.has(Number(r.id)))
+  }, [rows, selectedIds])
+
+  const summaryPaged = useMemo(() => {
+    const start = summaryPage * rowsPerSummaryPage
+    return selectedRows.slice(start, start + rowsPerSummaryPage)
+  }, [selectedRows, summaryPage, rowsPerSummaryPage])
+
+  const allOnPageSelected = useMemo(() => {
+    const ids = new Set<number>((selectedIds ?? []) as number[])
+    return paged.length > 0 && paged.every((r: any) => ids.has(Number(r.id)))
+  }, [paged, selectedIds])
+
+  const toggleRow = (id: number) => {
+    if (!setSelectedIds) return
+    const current = new Set<number>((selectedIds ?? []) as number[])
+    if (current.has(id)) current.delete(id)
+    else current.add(id)
+    setSelectedIds(Array.from(current))
   }
 
-  const getPhonesFromExcel = async (): Promise<Array<{ phone: string; fullName: string }>> => {
-    if (!excelFile) return []
-    const arrayBuf = await excelFile.arrayBuffer()
-    const wb = XLSX.read(arrayBuf, { type: 'array' })
+  const toggleAllOnPage = () => {
+    if (!setSelectedIds) return
+    const current = new Set<number>((selectedIds ?? []) as number[])
+    if (allOnPageSelected) {
+      paged.forEach((r: any) => current.delete(Number(r.id)))
+    } else {
+      paged.forEach((r: any) => current.add(Number(r.id)))
+    }
+    setSelectedIds(Array.from(current))
+  }
+
+  const onChangeFile = async (file: File | null) => {
+    setExcelFile && setExcelFile(file)
+    if (!file) {
+      setExcelPreview([])
+      return
+    }
+    const buf = await file.arrayBuffer()
+    const wb = XLSX.read(buf, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0]]
-    const rows = XLSX.utils.sheet_to_json<any>(ws, { defval: '', raw: false })
-    const out = rows
-      .map(r => {
+    const list = XLSX.utils.sheet_to_json<any>(ws, { defval: '', raw: false })
+      .map((r: any) => {
         const fullName = String(r.fullName ?? r.FullName ?? r.name ?? r.Name ?? '').trim()
         const rawPhone = String(r.phone ?? r.Phone ?? '').trim()
         const phone = rawPhone.replace(/[^\d+]/g, '')
-        return { phone, fullName: fullName || phone }
+        return { fullName: fullName || phone, phone }
       })
-      .filter(x => !!x.phone)
-    return out
+      .filter((x: any) => !!x.phone)
+    setExcelPreview(list)
   }
 
-  const validate = (rows: Array<{ phone: string; fullName: string }>) => {
-    if (!rows.length) return 'Selecciona al menos un destinatario.'
-    if (schema.requiresMedia) return 'Esta plantilla requiere media en el HEADER y no es soportada.'
-    if (schema.headerType === 'TEXT' && schema.headerTextVars > 0) return 'Esta plantilla tiene variables en el HEADER no soportadas.'
-    if (schema.bodyVars > 0) {
-      const missing = bodyParams.findIndex(x => !String(x || '').trim())
-      if (missing >= 0) return `Completa el valor para {{${missing + 1}}} del BODY.`
-    }
-    return ''
+  const onConfirmSend = () => {
+    setConfirmOpen(false)
+    handleSend && handleSend()
   }
 
-  const handleSend = async () => {
-    let rows: Array<{ phone: string; fullName: string }> = []
-    if (source === 'contacts') rows = getPhonesFromContacts()
-    else rows = await getPhonesFromExcel()
-    rows = rows.filter(r => !!r.phone).map(r => ({ phone: r.phone.trim(), fullName: (r.fullName ?? r.phone).trim() }))
-    const seen = new Set<string>()
-    rows = rows.filter(r => (seen.has(r.phone) ? false : (seen.add(r.phone), true)))
-    const msg = validate(rows)
-    if (msg) {
-      alert(msg)
-      return
-    }
-    const payload = {
-      templateName: template.name,
-      language: template.language ?? 'es',
-      recipients: rows.map(r => ({
-        phone: r.phone,
-        fullName: r.fullName,
-        variables: schema.bodyVars > 0 ? bodyParams.map(v => String(v)) : []
-      }))
-    }
-    await WaTemplateService.SendBatchNewConversationsAsync(payload)
-    onClose()
-  }
-
-  const RequirementChip = ({ children }: { children: any }) => (
-    <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: 8, background: '#eef2ff', color: '#334155', fontWeight: 600, marginRight: 8 }}>{children}</span>
-  )
+  if (!isOpen) return null
 
   return (
     <div className="sp-modal__overlay max">
       <div className="sp-modal__container max-modal">
         <header className="sp-modal__header">
-          <h2 className="sp-modal__title">Enviar plantilla: {template.name}</h2>
+          <h2 className="sp-modal__title">Enviar plantilla: <span className='wat-title__data'>{template?.name}</span></h2>
           <button type="button" className="sp-modal__close" onClick={onClose}>×</button>
         </header>
 
-        <div className="sp-modal__body" style={{ display: 'grid', gap: 12 }}>
-          <div>
-            <Label>Requisitos (según la plantilla)</Label>
-            <div style={{ marginTop: 6 }}>
-              {schema.headerType !== 'NONE' && (
-                <RequirementChip>
-                  HEADER: {schema.headerType}
-                  {schema.requiresMedia ? ' (requiere media — no soportado)' : (schema.headerTextVars ? ' (tiene {{1}} — no soportado)' : '')}
-                </RequirementChip>
-              )}
-              <RequirementChip>BODY: {schema.bodyVars} vars</RequirementChip>
-            </div>
-          </div>
-
-          <div>
+        <div className="sp-modal__body max-body" style={{ display: 'grid', gap: 12 }}>
+          <div className='wat-header-container'>
             <Label>Fuente de destinatarios</Label>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant={source === 'contacts' ? 'primary' : 'secondary'} onClick={() => setSource('contacts')}>Contactos</Button>
-              <Button variant={source === 'excel' ? 'primary' : 'secondary'} onClick={() => setSource('excel')}>Excel</Button>
+              <Button variant={source === 'contacts' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('contacts')}>Contactos</Button>
+              <Button variant={source === 'excel' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('excel')}>Excel</Button>
             </div>
           </div>
 
-          {/*Usar componente mas amigable, son muchos data lo que hay y se llega aver muy comprimido las opciones  */}
           {source === 'contacts' && (
-            <div className='selected_contacts'>
-              <Label>Selecciona contactos</Label>
-              <Select
-                multiple
-                value={selectedIds as any}
-                onChange={e => {
-                  const opts = Array.from((e.target as HTMLSelectElement).selectedOptions)
-                  setSelectedIds(opts.map(o => Number(o.value)))
-                }}
-               options={data.map((c: any) => ({
-                  value: c.id,
-                  label: `${c.companyName ?? ""} - ${c.fullName ?? ""} - ${c.phone ?? ""}`
-                }))}
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box sx={{ display: 'grid', gap: 1 }}>
+                <Label>Selecciona contactos</Label>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                  <Input placeholder="Buscar por cliente" value={searchCompany} onChange={e => setSearchCompany(e.target.value)} />
+                  <Input placeholder="Buscar por teléfono" value={searchPhone} onChange={e => setSearchPhone(e.target.value)} />
+                </Box>
 
-                className="sp-modal__select-extra"
-              />
-            </div>
+                <Paper sx={{ width: '100%' }}>
+                  <TableContainer sx={{ maxHeight: 360 }}>
+                    <Table stickyHeader size="small" aria-label="contacts-table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              indeterminate={!allOnPageSelected && (selectedIds?.length ?? 0) > 0}
+                              checked={allOnPageSelected}
+                              onChange={toggleAllOnPage}
+                            />
+                          </TableCell>
+                          <TableCell>Cliente</TableCell>
+                          <TableCell>Contacto</TableCell>
+                          <TableCell>Teléfono</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {paged.map((r: any) => {
+                          const id = Number(r.id)
+                          const checked = Boolean((selectedIds ?? []).includes(id as never))
+                          return (
+                            <TableRow hover key={id}>
+                              <TableCell padding="checkbox">
+                                <Checkbox checked={checked} onChange={() => toggleRow(id)} />
+                              </TableCell>
+                              <TableCell>{r.companyName ?? ''}</TableCell>
+                              <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
+                              <TableCell>{r.phone ?? ''}</TableCell>
+                            </TableRow>
+                          )
+                        })}
+                        {paged.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4}><Typography variant="body2">Sin resultados</Typography></TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={filtered.length}
+                    page={page}
+                    onPageChange={(_, p) => setPage(p)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0) }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  />
+                </Paper>
+              </Box>
+
+              <Box sx={{ display: 'grid', gap: 1 }}>
+                <Label>Resumen de selección</Label>
+                <Paper sx={{ width: '100%' }}>
+                  <TableContainer sx={{ maxHeight: 420 }}>
+                    <Table stickyHeader size="small" aria-label="summary-table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Cliente</TableCell>
+                          <TableCell>Contacto</TableCell>
+                          <TableCell>Teléfono</TableCell>
+                          <TableCell align="right">Quitar</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {summaryPaged.map((r: any) => (
+                          <TableRow key={r.id}>
+                            <TableCell>{r.companyName ?? ''}</TableCell>
+                            <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
+                            <TableCell>{r.phone ?? ''}</TableCell>
+                            <TableCell align="right">
+                              <Button variant="secondary" onClick={() => toggleRow(Number(r.id))}>Quitar</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {summaryPaged.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4}><Typography variant="body2">Sin seleccionados</Typography></TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={selectedRows.length}
+                    page={summaryPage}
+                    onPageChange={(_, p) => setSummaryPage(p)}
+                    rowsPerPage={rowsPerSummaryPage}
+                    onRowsPerPageChange={(e) => { setRowsPerSummaryPage(parseInt(e.target.value, 10)); setSummaryPage(0) }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  />
+                </Paper>
+                <Typography variant="body2">Seleccionados: {selectedIds?.length ?? 0}</Typography>
+              </Box>
+            </Box>
           )}
 
           {source === 'excel' && (
-            <div>
+            <Box sx={{ display: 'grid', gap: 1 }}>
               <Label>Sube Excel con columnas "fullName" y "phone" (o al menos "phone")</Label>
-              <Input type="file" accept=".xlsx" onChange={e => setExcelFile(e.target.files?.[0] || null)} />
-            </div>
+              <Input type="file" accept=".xlsx" onChange={e => onChangeFile(e.target.files?.[0] || null)} />
+              <Divider sx={{ my: 1 }} />
+              <Label>Resumen (solo lectura)</Label>
+              <Paper sx={{ width: '100%' }}>
+                <TableContainer sx={{ maxHeight: 420 }}>
+                  <Table stickyHeader size="small" aria-label="excel-summary">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Contacto</TableCell>
+                        <TableCell>Teléfono</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {excelPreview.slice(0, 200).map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.fullName}</TableCell>
+                          <TableCell>{r.phone}</TableCell>
+                        </TableRow>
+                      ))}
+                      {excelPreview.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={2}><Typography variant="body2">Sin datos</Typography></TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Box>
           )}
 
-          {/* {schema.headerType === ('TEXT' as HeaderKind) && schema.headerTextVars === 0 && (
+          {schema && schema.bodyVars > 0 && (
             <div>
-              <Label>HEADER TEXT (informativo):</Label>
-              <Input
-                placeholder="Texto del header (no se envía)"
-                value={headerTextValue}
-                onChange={e => setHeaderTextValue(e.target.value)}
-              />
-            </div>
-          )} */}
-
-          {schema.bodyVars > 0 && (
-            <div>
-              <Label>BODY — completa las variables</Label>
+              <Label>Cuerpo — completa las variables</Label>
               <div style={{ display: 'grid', gap: 8 }}>
                 {Array.from({ length: schema.bodyVars }, (_, i) => (
                   <div key={i} style={{ display: 'grid', gap: 4 }}>
-                    <span className="sp-modal__label">Valor para {`{{${i + 1}}}`}</span>
+                    <span className="sp-modal__label">{`Valor para {{${i + 1}}}`}</span>
                     <Input
-                      value={bodyParams[i] ?? ''}
+                      value={bodyParams?.[i] ?? ''}
                       onChange={e => {
-                        const next = [...bodyParams]
+                        const next = [...(bodyParams || [])]
                         next[i] = e.target.value
-                        setBodyParams(next)
+                        setBodyParams && setBodyParams(next)
                       }}
                     />
                   </div>
@@ -240,14 +305,69 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
               </div>
             </div>
           )}
-          
         </div>
 
         <footer className="sp-modal__footer">
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSend}>Enviar</Button>
+          <Button
+            variant="primary"
+            onClick={() => setConfirmOpen(true)}
+            disabled={
+              source === 'contacts'
+                ? !(selectedIds && selectedIds.length > 0)
+                : excelPreview.length === 0
+            }
+          >
+            Enviar
+          </Button>
         </footer>
       </div>
+
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Confirmar envío</DialogTitle>
+        <DialogContent dividers>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div><strong>Plantilla:</strong> {template?.name}</div>
+            <div><strong>Destino:</strong> {source === 'contacts' ? 'Contactos seleccionados' : 'Archivo Excel'}</div>
+            {source === 'contacts' && (
+              <div>
+                <strong>Total seleccionados:</strong> {selectedIds?.length || 0}
+                <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+                  {selectedRows.slice(0, 5).map((r: any) => (
+                    <li key={r.id}>{`${r.companyName ?? ''} — ${r.fullName ?? r.waName ?? ''} — ${r.phone ?? ''}`}</li>
+                  ))}
+                  {(selectedIds?.length || 0) > 5 && <li>...</li>}
+                </ul>
+              </div>
+            )}
+            {source === 'excel' && (
+              <div>
+                <strong>Total en Excel:</strong> {excelPreview.length}
+                <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+                  {excelPreview.slice(0, 5).map((r, i) => (
+                    <li key={i}>{`${r.fullName} — ${r.phone}`}</li>
+                  ))}
+                  {excelPreview.length > 5 && <li>...</li>}
+                </ul>
+              </div>
+            )}
+            {schema && schema.bodyVars > 0 && (
+              <div>
+                <strong>Cuerpo:</strong>
+                <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+                  {Array.from({ length: schema.bodyVars }, (_, i) => (
+                    <li key={i}>{`{{${i + 1}}} = ${bodyParams?.[i] ?? ''}`}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="secondary" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+          <Button variant="primary" onClick={onConfirmSend}>Confirmar y enviar</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

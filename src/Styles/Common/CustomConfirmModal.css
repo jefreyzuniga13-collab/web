@@ -1,0 +1,41 @@
+.ccm-container{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--bg-primary);
+    display: flex;
+    justify-content: left;
+    gap: var(--space-sm);
+    height: 60%;
+    width: 30%;
+}
+
+.ccm-header-container{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.ccm-title{
+    color: var(--color-primary);
+    font-size: var(--font-size-large);
+    font-weight: var(--font-weight-500);
+}
+
+.ccm-subtitle{
+    color: var(--font-color-secondary);
+    font-size: var(--font-size-base);
+}
+
+.ccm-buttons{
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xl);
+}
+
+.max-body{
+    max-width: 100px;
+    overflow: hidden;
+}

@@ -100,7 +100,6 @@
   }
 }
 
-
 .sp-modal__label {
   display: block;
   margin-bottom: var(--space-xs);
@@ -171,4 +170,33 @@
 .sp_helpText{
   font-size: var(--font-size-sm);
   color: var(--color-gray-400);
+}
+.max-body{
+  grid-auto-rows: min-content;
+}
+.max-modal{
+  min-height: 100%;
+  min-width: 100%;
+}
+
+.title-value{
+  color: var(--color-gray-600);
+}
+
+.label{
+  padding: 0;
+  margin: 0;
+}
+.wat-header-container{
+  margin-bottom: var(--space-lg);
+}
+
+.wat-title__data{
+  color: var(--text-secondary);
+}
+
+@media screen and (max-width: 970px) {
+  .max-body{
+    grid-template-columns: 1fr;
+  }
 }

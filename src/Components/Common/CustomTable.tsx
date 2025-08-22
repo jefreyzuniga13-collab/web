@@ -69,9 +69,9 @@ export default function CustomTable<T>({
               ))}
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody >
             {visibleRows.map((row, rowIndex) => (
-              <TableRow hover key={rowIndex}>
+              <TableRow hover key={rowIndex} >
                 {columns.map(col => {
                   if (col.render) {
                     return (

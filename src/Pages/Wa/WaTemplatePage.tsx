@@ -12,6 +12,7 @@ import SendIcon from '@mui/icons-material/Send';
 import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
 
 export default function WaTemplatesPage() {
+  
   const {
     waTemplates,
     selectedWaTemplate,
