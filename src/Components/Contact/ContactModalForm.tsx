@@ -31,7 +31,7 @@ const statusOptions = [
 ]
 
 export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit }: ContactModalProps) {
-  const { form, errors, isView, companies, handleChange, handleSelect, handleCheckbox, handleSubmit } =
+  const { form, errors, isView, clients, handleChange, handleSelect, handleCheckbox, handleSubmit } =
     useContactForm({ mode, data, onSubmit })
 
   if (!isOpen) return null
@@ -52,7 +52,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
         <form className="cm-modal__body" onSubmit={handleSubmit}>
           <div className="cm-modal__grid">
             <div className="cm-modal__col">
-              <Label htmlFor="waName">Nombre WhatsApp</Label>
+              <Label htmlFor="waName">Nombre WhatsApp *</Label>
               <Input
                 id="waName"
                 name="waName"
@@ -73,7 +73,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               />
             </div>
             <div className="cm-modal__col">
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">Teléfono *</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -133,7 +133,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               </div>
             )}
             <div className="cm-modal__col">
-              <Label htmlFor="fullName">Nombre Completo</Label>
+              <Label htmlFor="fullName">Nombre Completo *</Label>
               <Input
                 id="fullName"
                 name="fullName"
@@ -144,22 +144,22 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               {errors.fullName && <div className="cm-modal__error">{errors.fullName}</div>}
             </div>
             <div className="cm-modal__col">
-              <Label htmlFor="companyId">Empresa</Label>
+              <Label htmlFor="clientId">Cliente *</Label>
               <Select
-                id="companyId"
-                value={form.companyId ?? ''}
+                id="clientId"
+                value={form.clientId ?? ''}
                 onChange={e => {
-                  const id = Number(e.target.value)
-                  handleSelect('companyId', id)
-                  const selected = companies?.find(c => c.companyId === id)
-                  if (selected) handleSelect('companyName', selected.name)
+                  const id =  e.target.value
+                  handleSelect('clientId', id)
+                  const selected = clients?.find(c => c.clientId == id)
+                  if (selected) handleSelect('clientId', selected.clientId)
                 }}
                 disabled={isView}
-                options={companies?.map(c => ({ value: String(c.companyId), label: c.name })) || []}
+                options={clients?.map(c => ({ value: String(c.clientId), label: c.clientName ?? '' })) || []}
               />
-              {errors.companyId && <div className="cm-modal__error">{errors.companyId}</div>}
+              {errors.clientId && <div className="cm-modal__error">{errors.clientId}</div>}
             </div>
-            <div className="cm-modal__col">
+            {/* <div className="cm-modal__col">
               <Label htmlFor="companyName">Nombre Empresa</Label>
               <Input
                 id="companyName"
@@ -167,7 +167,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 value={form.companyName ?? ''}
                 disabled
               />
-            </div>
+            </div> */}
             <div className="cm-modal__col">
               <Label htmlFor="status">Estado</Label>
               <Select

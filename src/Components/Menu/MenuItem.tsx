@@ -25,7 +25,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     className={`menu-item ${className} ${selected ? 'menu-item--selected' : ''}`}
     onClick={onClick}
   >
-    <Tooltip title={collapsed ? text : ""} slotProps={{ tooltip: { sx: { fontSize: '12px' } } }} >
+    <Tooltip title={collapsed ? text : ""} slotProps={{ tooltip: { sx: { fontSize: '10px' } } }} >
         <div className={`menu-item__content ${text.includes("Cerrar") ? 'menu-item__content--logout' : ''}`}>
       <span className="menu-item__icon">
         {icon}

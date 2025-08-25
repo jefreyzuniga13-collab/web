@@ -26,7 +26,7 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideIn var(--transition-normal) var(--transition-ease);
-  padding: var(--space-3xl);
+  padding: 0 var(--space-3xl);
 }
 
 .sp-modal__container_expanded{
@@ -59,7 +59,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: '0 var(--space-md);
 }
 
 .sp-modal__title {
@@ -74,12 +74,13 @@
   font-size: var(--font-size-xl);
   line-height: 1;
   cursor: pointer;
-  color: var(--text-white);
+  color: var(--color-error);
   transition: color var(--transition-fast);
+  font-size: var(--font-size-4xl);
 }
 
 .sp-modal__close:hover {
-  color: var(--text-primary);
+  opacity: .8;
 }
 
 .sp-modal__body {
@@ -120,8 +121,16 @@
 .sp-modal__footer {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-sm);
+  gap: var(--space-2xl);
   margin-top: var(--space-2xl);
+}
+
+.wat_footer-container{
+  justify-content: end !important;
+}
+
+.btn{
+  margin: 0 !important;
 }
 
 .sp-modal__btn {
@@ -193,6 +202,12 @@
 
 .wat-title__data{
   color: var(--text-secondary);
+}
+
+.wat-content-container{
+    display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Ajusta "200px" al tamaño mínimo deseado */
+      gap: 10px;
 }
 
 @media screen and (max-width: 970px) {

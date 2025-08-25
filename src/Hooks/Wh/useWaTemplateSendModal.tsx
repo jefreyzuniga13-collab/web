@@ -14,7 +14,7 @@ type Props = {
 }
 
 export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
-  const { data } = useContact()
+  const {verifiedContact } = useContact()
   const [source, setSource] = useState<'contacts' | 'excel'>('contacts')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [excelFile, setExcelFile] = useState<File | null>(null)
@@ -102,7 +102,7 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
 
   const getPhonesFromContacts = (): Array<{ phone: string; fullName: string }> => {
     const byId = new Map<number, { phone: string; fullName: string }>()
-    data.forEach((c: any) => byId.set(c.id, { phone: c.phone, fullName: c.fullName ?? c.phone }))
+    verifiedContact.forEach((c: any) => byId.set(c.id, { phone: c.phone, fullName: c.fullName ?? c.phone }))
     return selectedIds.map(id => byId.get(id)).filter(Boolean) as Array<{ phone: string; fullName: string }>
   }
 
@@ -163,7 +163,7 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
     headerTextValue,
     source,
     schema,
-    data,
+    verifiedContact,
     selectedIds,
     bodyParams,
     setBodyParams,
@@ -174,5 +174,3 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
     handleSend,
   };
 };
-
-//Mas contexto, para que generes bien el WaTenmplateSendModal

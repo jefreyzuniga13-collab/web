@@ -27,6 +27,7 @@ export interface ContactLogInterface {
   fullName?: string | null;
   companyName?: string | null;
   companyId?: number | null;
+  clientId?: string | null;
   isProvidingData?: boolean;
   isVerified?: boolean;
   isActive?: boolean;
@@ -52,6 +53,7 @@ export interface ContactFormValues {
   fullName: string | null;
   companyName: string | null;
   companyId: number | null;
+  clientId? : string | null;
   status: ContactStatus;
   isVerified: boolean;
   isActive: boolean;

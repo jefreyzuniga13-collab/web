@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Contact/ContactInterface'
-import { useCompany } from '@/Hooks/Company/useCompany'
+import { useInnova } from '@/Hooks/useInnova'
 
 type Mode = 'create' | 'edit' | 'view'
 
@@ -18,12 +18,22 @@ interface FormErrors {
   idCard?: string
   passport?: string
   residenceCard?: string
-  companyId?: string
+  clientId?: string
 }
 
 export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
   const isView = mode === 'view'
-  const { companies } = useCompany()
+
+  const {
+    data: clients,
+    loading: clientsLoading,
+    error: clientsError,
+    getAllAsync,
+  } = useInnova()
+
+  useEffect(() => {
+    getAllAsync()
+  }, [])
 
   const [form, setForm] = useState<ContactFormValues>({
     waName: null,
@@ -37,8 +47,9 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     fullName: null,
     companyName: '',
     companyId: null,
-    status: 'New',
-    isVerified: false,
+    clientId: null,
+    status: 'Completed',
+    isVerified: true,
     isActive: true,
     verifiedAt: null,
     verifiedBy: null,
@@ -59,9 +70,10 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
         residenceCard: data.residenceCard ?? null,
         fullName: data.fullName ?? null,
         companyName: data.companyName ?? '',
-        companyId: data.companyId ?? null,
+        companyId: null,
+        clientId: data.clientId ?? null,
         status: data.status,
-        isVerified: data.isVerified ?? false,
+        isVerified: data.isVerified ?? true,
         isActive: data.isActive ?? true,
         verifiedAt: data.verifiedAt ?? null,
         verifiedBy: data.verifiedId ?? null,
@@ -79,8 +91,9 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
         fullName: null,
         companyName: '',
         companyId: null,
-        status: 'New',
-        isVerified: false,
+        clientId: null,
+        status: 'Completed',
+        isVerified: true,
         isActive: true,
         verifiedAt: null,
         verifiedBy: null,
@@ -91,12 +104,8 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
 
   const validate = useCallback(() => {
     const errs: FormErrors = {}
-    if (!form.waName?.trim()) {
-      errs.waName = 'Nombre WhatsApp es obligatorio'
-    }
-    if (!form.fullName?.trim()) {
-      errs.fullName = 'Nombre completo es obligatorio'
-    }
+    if (!form.waName?.trim()) errs.waName = 'Nombre WhatsApp es obligatorio'
+    if (!form.fullName?.trim()) errs.fullName = 'Nombre completo es obligatorio'
     if (!form.phone.trim()) {
       errs.phone = 'Número de teléfono obligatorio'
     } else if (!/^505\d{8}$/.test(form.phone)) {
@@ -123,9 +132,7 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
         errs.residenceCard = 'Formato de residencia inválido (1 o  2Letra + 7 dígitos o  12 dígitos)'
       }
     }
-    if (!form.companyId || form.companyId <= 0) {
-      errs.companyId = 'Debe seleccionar una empresa'
-    }
+    if (!form.clientId) errs.clientId = 'Debe seleccionar un cliente'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }, [form])
@@ -142,14 +149,15 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     (field: keyof ContactFormValues, value: any) => {
       setForm(f => {
         const next = { ...f, [field]: value }
-        if (field === 'companyId') {
-          const selected = companies?.find(c => c.companyId === value)
-          next.companyName = selected?.name ?? ''
+        if (field === 'clientId' && Array.isArray(clients) && clients.length) {
+          const v = String(value)
+          const selected = clients.find((c: any) => String(c.clientId) === v)
+          next.companyName = selected?.clientId ?? ''
         }
         return next
       })
     },
-    [companies]
+    [clients]
   )
 
   const handleCheckbox = useCallback(
@@ -173,7 +181,9 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     form,
     errors,
     isView,
-    companies,
+    clients,
+    clientsLoading,
+    clientsError,
     handleChange,
     handleSelect,
     handleCheckbox,

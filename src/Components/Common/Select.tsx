@@ -32,7 +32,7 @@ export default function Select({
         className={`select-field ${className} ${error ? 'select-field--error' : ''}`}
         multiple={multiple}
         aria-invalid={!!error}
-        
+        style={{maxHeight: "50px", overflowY: "auto"}}
         aria-describedby={error ? `${selectId}-error` : undefined}
         {...props}
       >

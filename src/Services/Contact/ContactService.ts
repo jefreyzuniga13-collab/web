@@ -4,6 +4,7 @@ import type {
   ClienteResponseDto,
   ContactLogInterface,
 } from "@/Interfaces/Contact/ContactInterface";
+
 import type { ApiResponse } from "@/Interfaces/User/UserInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 
@@ -15,6 +16,16 @@ class ContactService {
     const { data } = await api.get<
       ApiResponse<PagedResponse<ContactLogInterface>>
     >("/ContactLogs", { params: { PageNumber: page, PageSize: pageSize } });
+    return data.data;
+  }
+
+   async getAllVerifiedAsync(
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ContactLogInterface>> {
+    const { data } = await api.get<
+      ApiResponse<PagedResponse<ContactLogInterface>>
+    >("/ContactLogs/verified-contacts", { params: { PageNumber: page, PageSize: pageSize } });
     return data.data;
   }
 
@@ -59,15 +70,6 @@ class ContactService {
       throw error;
     }
   }
-
-  // async verifyContactAsync(id: number){
-  //     try{
-  //         const response = await api.put<ApiResponse<ContactLogInterface>>(`/Contactlogs/verifyContact/${id}`);
-  //         return response.data;
-  //     }catch(error){
-  //         console.error(error);
-  //     }
-  // }
 
   async searchClientesAsync(filtro: string) {
     const { data } = await api.get<ApiResponse<ClienteResponseDto[]>>(

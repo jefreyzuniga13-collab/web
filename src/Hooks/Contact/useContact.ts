@@ -7,9 +7,10 @@ import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 
 const useContact = () => {
   const [data, setData] = useState<ContactLogInterface[]>([])
+  const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingItem, setLoadingItem] = useState(false)
@@ -25,7 +26,11 @@ const useContact = () => {
       setError(null)
       try {
         const res: PagedResponse<ContactLogInterface> = await contactService.getAllAsync(p, s)
+        const verifiedRes: PagedResponse<ContactLogInterface> = await contactService.getAllVerifiedAsync(p, s)
+
         setData(res.items)
+        setVerifiedContact(verifiedRes.items);
+
         setTotalCount(res.meta.totalCount)
         setPage(res.meta.currentPage)
         setPageSize(res.meta.pageSize)
@@ -180,6 +185,7 @@ const useContact = () => {
 
   return {
     data,
+    verifiedContact,
     selectedData,
     loading: loadingList || loadingItem,
     error,
@@ -201,7 +207,7 @@ const useContact = () => {
     create,
     update,
     toggle,
-    verify
+    verify,
   }
 }
 

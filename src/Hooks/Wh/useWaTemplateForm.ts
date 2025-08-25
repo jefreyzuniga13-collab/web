@@ -122,7 +122,7 @@ export function useWaTemplateForm({
     categoryName: null,
     isActive: true,
     header: { enabled: true, format: 'TEXT', text: 'Título' },
-    body: { enabled: true, text: 'Hola {{text}}, este es un mensaje.' },
+    body: { enabled: true, text: 'Este es un mensaje.' },
     footer: { enabled: true, text: '' },
     buttons: { enabled: true, rows: [] },
     mediaFiles: [],

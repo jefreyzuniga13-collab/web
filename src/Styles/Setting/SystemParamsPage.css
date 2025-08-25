@@ -17,6 +17,12 @@
   flex-direction: column;
 }
 
+.wat_btn{
+  padding: 0 ;
+}
+.wat_btn:hover{
+  text-decoration: underline;
+}
 .sp-page__btnContainer {
   display: flex;
   justify-content: flex-end;
@@ -54,6 +60,12 @@
 
 .max-modal{
   height: 100%;
+  overflow-y: scroll;
+  padding-bottom: var(--space-2xl);
+}
+
+.btn--destructive{
+  border: none;
 }
 
 .selected_contacts{
@@ -63,4 +75,9 @@
 .sp-modal__select-extra{
   height: 200px  !important;
   min-height: 100% !important;
+}
+
+.wat-header-container{
+  display: flex;
+  justify-content: space-around;
 }

@@ -20,7 +20,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   const {
     schema,
     source,
-    data,
+    verifiedContact,
     bodyParams,
     setBodyParams,
     setSource,
@@ -30,7 +30,8 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     handleSend,
   } = useWaTemplateSendModal({ isOpen, template, onClose }) || {}
 
-  const [searchCompany, setSearchCompany] = useState('')
+  const [searchClient, setSearchClient] = useState('')
+  const [searchClientContact, setSearchClientContact] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [page, setPage] = useState(0)
@@ -40,7 +41,8 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   const [excelPreview, setExcelPreview] = useState<Array<{ fullName: string; phone: string }>>([])
 
   useEffect(() => {
-    setSearchCompany('')
+    setSearchClient('')
+    setSearchClientContact('')
     setSearchPhone('')
     setSelectedIds && setSelectedIds([])
     setExcelPreview([])
@@ -48,17 +50,30 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     setSummaryPage(0)
   }, [source, setSelectedIds])
 
-  const rows = useMemo(() => Array.isArray(data) ? data : [], [data])
+  const rows = useMemo(() => Array.isArray(verifiedContact) ? verifiedContact : [], [verifiedContact])
 
   const filtered = useMemo(() => {
-    const sc = searchCompany.trim().toLowerCase()
-    const sp = searchPhone.trim().toLowerCase()
-    return rows.filter((r: any) => {
-      const c = String(r.companyName ?? '').toLowerCase()
-      const p = String(r.phone ?? '').toLowerCase()
-      return (!sc || c.includes(sc)) && (!sp || p.includes(sp))
-    })
-  }, [rows, searchCompany, searchPhone])
+  const sc  = searchClient.trim().toLowerCase();
+  const sp  = searchPhone.trim().toLowerCase();
+  const scc = searchClientContact.trim().toLowerCase();
+
+  return rows.filter((r: any) => {
+    const c  = String(r.clienteNombre ?? '').toLowerCase();
+    const p  = String(r.phone ?? '').toLowerCase();
+    const cc = String(r.fullName ?? '').toLowerCase();
+
+    const phoneOk   = !sp  || p.includes(sp);
+    const clientOk  = !sc  || c.includes(sc);
+    const contactOk = !scc || cc.includes(scc);
+
+    // Si se proporcionó al menos uno (cliente o contacto), basta con que uno coincida (OR).
+    // Si no se proporcionó ninguno, no restringe.
+    const nameBlockOk = (sc || scc) ? (clientOk || contactOk) : true;
+
+    return phoneOk && nameBlockOk;
+  });
+}, [rows, searchClient, searchPhone, searchClientContact]);
+
 
   const paged = useMemo(() => {
     const start = page * rowsPerPage
@@ -131,29 +146,50 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
       <div className="sp-modal__container max-modal">
         <header className="sp-modal__header">
           <h2 className="sp-modal__title">Enviar plantilla: <span className='wat-title__data'>{template?.name}</span></h2>
-          <button type="button" className="sp-modal__close" onClick={onClose}>×</button>
+         
         </header>
 
-        <div className="sp-modal__body max-body" style={{ display: 'grid', gap: 12 }}>
-          <div className='wat-header-container'>
+        <div className='wat-content-container'>
+            <div className="sp-modal__body max-body" style={{ display: 'grid', gap: 12 }}>
+          <div className={source == "excel" ? 'wat-header-container' : ''}>
+            <div className='contact'>
             <Label>Fuente de destinatarios</Label>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button variant={source === 'contacts' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('contacts')}>Contactos</Button>
               <Button variant={source === 'excel' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('excel')}>Excel</Button>
             </div>
+            </div>
+
+            {source === 'excel' && (
+              <div>
+                <Label>Acciones</Label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+                            <Button
+                              variant="primary"
+                              onClick={() => setConfirmOpen(true)}
+                            >
+                              Enviar
+                            </Button>
+                          </div>
+              </div>
+              )}
           </div>
 
           {source === 'contacts' && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box>
               <Box sx={{ display: 'grid', gap: 1 }}>
                 <Label>Selecciona contactos</Label>
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                  <Input placeholder="Buscar por cliente" value={searchCompany} onChange={e => setSearchCompany(e.target.value)} />
+                  <Input placeholder="Buscar por cliente o contacto" value={searchClient} onChange={e => {
+                    setSearchClient(e.target.value)
+                    setSearchClientContact(e.target.value)
+                  }} />
                   <Input placeholder="Buscar por teléfono" value={searchPhone} onChange={e => setSearchPhone(e.target.value)} />
                 </Box>
 
                 <Paper sx={{ width: '100%' }}>
-                  <TableContainer sx={{ maxHeight: 360 }}>
+                  <TableContainer sx={{ maxHeight: 500 }}>
                     <Table stickyHeader size="small" aria-label="contacts-table">
                       <TableHead>
                         <TableRow>
@@ -178,7 +214,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                               <TableCell padding="checkbox">
                                 <Checkbox checked={checked} onChange={() => toggleRow(id)} />
                               </TableCell>
-                              <TableCell>{r.companyName ?? ''}</TableCell>
+                              <TableCell>{r.clienteNombre ?? ''}</TableCell>
                               <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
                               <TableCell>{r.phone ?? ''}</TableCell>
                             </TableRow>
@@ -202,51 +238,6 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                     rowsPerPageOptions={[5, 10, 25]}
                   />
                 </Paper>
-              </Box>
-
-              <Box sx={{ display: 'grid', gap: 1 }}>
-                <Label>Resumen de selección</Label>
-                <Paper sx={{ width: '100%' }}>
-                  <TableContainer sx={{ maxHeight: 420 }}>
-                    <Table stickyHeader size="small" aria-label="summary-table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Contacto</TableCell>
-                          <TableCell>Teléfono</TableCell>
-                          <TableCell align="right">Quitar</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {summaryPaged.map((r: any) => (
-                          <TableRow key={r.id}>
-                            <TableCell>{r.companyName ?? ''}</TableCell>
-                            <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
-                            <TableCell>{r.phone ?? ''}</TableCell>
-                            <TableCell align="right">
-                              <Button variant="secondary" onClick={() => toggleRow(Number(r.id))}>Quitar</Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {summaryPaged.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4}><Typography variant="body2">Sin seleccionados</Typography></TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <TablePagination
-                    component="div"
-                    count={selectedRows.length}
-                    page={summaryPage}
-                    onPageChange={(_, p) => setSummaryPage(p)}
-                    rowsPerPage={rowsPerSummaryPage}
-                    onRowsPerPageChange={(e) => { setRowsPerSummaryPage(parseInt(e.target.value, 10)); setSummaryPage(0) }}
-                    rowsPerPageOptions={[5, 10, 25]}
-                  />
-                </Paper>
-                <Typography variant="body2">Seleccionados: {selectedIds?.length ?? 0}</Typography>
               </Box>
             </Box>
           )}
@@ -307,20 +298,72 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
           )}
         </div>
 
-        <footer className="sp-modal__footer">
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            onClick={() => setConfirmOpen(true)}
-            disabled={
-              source === 'contacts'
-                ? !(selectedIds && selectedIds.length > 0)
-                : excelPreview.length === 0
-            }
-          >
-            Enviar
-          </Button>
-        </footer>
+         {source === 'contacts' && (
+
+
+              <div className='sp-modal__body max-body'>
+              <header style={{display: "flex", gap: 8, justifyContent: "flex-end"}}>
+                <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+                <Button
+                  variant="primary"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={
+                    source === 'contacts'
+                      ? !(selectedIds && selectedIds.length > 0)
+                      : excelPreview.length === 0
+                  }
+                >
+                  Enviar
+                </Button>
+              </header>
+                  <Box sx={{ display: 'grid', gap: 1 }}>
+                <Label>Resumen de selección</Label>
+                <Paper sx={{ width: '100%' }}>
+                  <TableContainer sx={{ maxHeight: 500 }}>
+                    <Table stickyHeader size="small" aria-label="summary-table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Cliente</TableCell>
+                          <TableCell>Contacto</TableCell>
+                          <TableCell>Teléfono</TableCell>
+                          <TableCell align="right">Quitar</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {summaryPaged.map((r: any) => (
+                          <TableRow key={r.id}>
+                            <TableCell>{r.clienteNombre ?? ''}</TableCell>
+                            <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
+                            <TableCell>{r.phone ?? ''}</TableCell>
+                            <TableCell align="right">
+                              <Button variant="destructive" onClick={() => toggleRow(Number(r.id))} className='wat_btn'>Quitar</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {summaryPaged.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4}><Typography variant="body2">Sin seleccionados</Typography></TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={selectedRows.length}
+                    page={summaryPage}
+                    onPageChange={(_, p) => setSummaryPage(p)}
+                    rowsPerPage={rowsPerSummaryPage}
+                    onRowsPerPageChange={(e) => { setRowsPerSummaryPage(parseInt(e.target.value, 10)); setSummaryPage(0) }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  />
+                </Paper>
+                <Typography variant="body2">Seleccionados: {selectedIds?.length ?? 0}</Typography>
+              </Box>
+              </div>
+              
+         )}
+        </div>
       </div>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
@@ -334,7 +377,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                 <strong>Total seleccionados:</strong> {selectedIds?.length || 0}
                 <ul style={{ marginTop: 6, paddingLeft: 18 }}>
                   {selectedRows.slice(0, 5).map((r: any) => (
-                    <li key={r.id}>{`${r.companyName ?? ''} — ${r.fullName ?? r.waName ?? ''} — ${r.phone ?? ''}`}</li>
+                    <li key={r.id}>{`${r.clienteNombre ?? ''} — ${r.fullName ?? r.waName ?? ''} — ${r.phone ?? ''}`}</li>
                   ))}
                   {(selectedIds?.length || 0) > 5 && <li>...</li>}
                 </ul>
