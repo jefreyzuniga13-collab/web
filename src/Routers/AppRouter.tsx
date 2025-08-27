@@ -5,8 +5,8 @@ import {RequireAuth} from '@/Layout/RequireAuth'
 import PublicRoute from '@/Layout/PublicRoute'
 import { ThreeDot } from 'react-loading-indicators'
 
-const Login                = lazy(() => import('@/Pages/Auth/LoginPage'))
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
+const Login                = lazy(() => import('@/Pages/Auth/LoginPage'))
 const VerifyEmail          = lazy(() => import('@/Pages/Auth/VerifyEmailPage'))
 const ForgotPassword       = lazy(() => import('@/Pages/Auth/ForgotPasswordPage'))
 const ResetPassword        = lazy(() => import('@/Pages/Auth/ResetPasswordPage'))
@@ -28,6 +28,7 @@ const ConversationsPage    = lazy(() => import('@/Pages/Conversation/Conversatio
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const WaTemplateBroadcastPage    = lazy(() => import('@/Pages/Wa/WaTemplateBroadcastPage'))
+const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
 
 export function AppRouter() {
   return (
@@ -69,6 +70,7 @@ export function AppRouter() {
           <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
           <Route path="conversation/:state"     element={<ConversationsPage />} />
           <Route path="plantilla-enviar"     element={<WaTemplateBroadcastPage />} />
+          <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />
           <Route path="templates-management"     element={<WaTemplatesPage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>

@@ -97,7 +97,7 @@ export default function NotificationsPage(){
             <div className="contact-page__content">
               <h1 className="contact-page__title">Gestión de Notificaciones</h1>
               <p className="contact-page__subtitle">
-                Catalogo de notificaciones gestiondas en el sitio
+                Catálogo de notificaciones gestiondas en el sitio
               </p>
             </div>
             <div className="contact-page__buttons">

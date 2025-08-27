@@ -1,6 +1,7 @@
 .select-wrapper {
     display: flex;
     flex-direction: column;
+    
   }
   .select-field {
     width: 100%;
