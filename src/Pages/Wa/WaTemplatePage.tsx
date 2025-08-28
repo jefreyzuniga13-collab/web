@@ -12,7 +12,7 @@ import SendIcon from '@mui/icons-material/Send';
 import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
 
 export default function WaTemplatesPage() {
-  
+
   const {
     waTemplates,
     selectedWaTemplate,
@@ -42,35 +42,34 @@ export default function WaTemplatesPage() {
     { id: 'name', label: 'Nombre', minWidth: 80 },
     { id: 'templateCategoryName', label: 'Categoría', minWidth: 80 },
     { id: 'language', label: 'Idioma', minWidth: 70 },
-    { 
-        id: 'status', 
-        label: 'Estado', 
-        minWidth: 80,
-        render: row => 
-        {
-            const bgColor = row.status === 'Pending' 
-            ? '#f39c12'
-            : row.status === 'Approved'
-                ? '#27ae60'
-                : '#e74c3c';
+    {
+      id: 'status',
+      label: 'Estado',
+      minWidth: 80,
+      render: row => {
+        const bgColor = row.status === 'Pending'
+          ? '#f39c12'
+          : row.status === 'Approved'
+            ? '#27ae60'
+            : '#e74c3c';
 
-                return (
-                <span
-                    style={{
-                    display: 'inline-block',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: bgColor,
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    minWidth: '70px'
-                    }}
-                >
-                    {row.status}
-                </span>
-                );
-        }
+        return (
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: bgColor,
+              color: '#fff',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              minWidth: '70px'
+            }}
+          >
+            {row.status}
+          </span>
+        );
+      }
     }
     ,
     { id: 'createdByName', label: 'Creado Por', minWidth: 100 },
@@ -105,11 +104,11 @@ export default function WaTemplatesPage() {
       render: row => (
         <>
           <IconButton size="small" onClick={() => openView(row.id)}>
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-        <IconButton size="small" onClick={() => openSend(row)}>
-          <SendIcon fontSize="small" />
-        </IconButton>
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => openSend(row)}>
+            <SendIcon fontSize="small" />
+          </IconButton>
         </>
       ),
     },
@@ -154,7 +153,7 @@ export default function WaTemplatesPage() {
           template={templateToSend}
           onClose={closeSend}
         />
-    )}
+      )}
     </div>
   )
 }

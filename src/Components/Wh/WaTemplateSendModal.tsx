@@ -28,7 +28,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     selectedIds,
     setSelectedIds,
     handleSend,
-  } = useWaTemplateSendModal({ isOpen, template, onClose }) || {}
+  } = useWaTemplateSendModal({ isOpen, template, onClose }) || {}//Recuperar logica desde el hook
 
   const [searchClient, setSearchClient] = useState('')
   const [searchClientContact, setSearchClientContact] = useState('')
@@ -40,6 +40,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   const [rowsPerSummaryPage, setRowsPerSummaryPage] = useState(10)
   const [excelPreview, setExcelPreview] = useState<Array<{ fullName: string; phone: string }>>([])
 
+  //Efecto de limpieza ala cambio de fuente
   useEffect(() => {
     setSearchClient('')
     setSearchClientContact('')
@@ -57,6 +58,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   const sp  = searchPhone.trim().toLowerCase();
   const scc = searchClientContact.trim().toLowerCase();
 
+  //Filtreo de contacto, cliente y numero. Tabla de selección de contactos cargados. 
   return rows.filter((r: any) => {
     const c  = String(r.clienteNombre ?? '').toLowerCase();
     const p  = String(r.phone ?? '').toLowerCase();
@@ -74,7 +76,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
   });
 }, [rows, searchClient, searchPhone, searchClientContact]);
 
-
+  //Manejo de paginación en tablas
   const paged = useMemo(() => {
     const start = page * rowsPerPage
     return filtered.slice(start, start + rowsPerPage)
@@ -95,6 +97,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     return paged.length > 0 && paged.every((r: any) => ids.has(Number(r.id)))
   }, [paged, selectedIds])
 
+  //Manejo de tablas selecciondas. Agregar al resumen de selección
   const toggleRow = (id: number) => {
     if (!setSelectedIds) return
     const current = new Set<number>((selectedIds ?? []) as number[])
@@ -103,6 +106,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     setSelectedIds(Array.from(current))
   }
 
+  //Manejador de la seleccion absoluta de las filas hacia el detalle de selección
   const toggleAllOnPage = () => {
     if (!setSelectedIds) return
     const current = new Set<number>((selectedIds ?? []) as number[])
@@ -114,6 +118,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
     setSelectedIds(Array.from(current))
   }
 
+  //Cuando se carga el excel se procede a actulaizar la tabla de resumen
   const onChangeFile = async (file: File | null) => {
     setExcelFile && setExcelFile(file)
     if (!file) {
@@ -121,10 +126,12 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
       return
     }
     const buf = await file.arrayBuffer()
-    const wb = XLSX.read(buf, { type: 'array' })
+    const wb = XLSX.read(buf, { type: 'array' }) //recuperar las filas como array
     const ws = wb.Sheets[wb.SheetNames[0]]
     const list = XLSX.utils.sheet_to_json<any>(ws, { defval: '', raw: false })
       .map((r: any) => {
+
+        //Recuperar las columnas por fila
         const fullName = String(r.fullName ?? r.FullName ?? r.name ?? r.Name ?? '').trim()
         const rawPhone = String(r.phone ?? r.Phone ?? '').trim()
         const phone = rawPhone.replace(/[^\d+]/g, '')
@@ -146,7 +153,6 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
       <div className="sp-modal__container max-modal">
         <header className="sp-modal__header">
           <h2 className="sp-modal__title">Enviar plantilla: <span className='wat-title__data'>{template?.name}</span></h2>
-         
         </header>
 
         <div className='wat-content-container'>
@@ -176,6 +182,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
               )}
           </div>
 
+          {/* Lista de contactos */}
           {source === 'contacts' && (
             <Box>
               <Box sx={{ display: 'grid', gap: 1 }}>
@@ -242,6 +249,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
             </Box>
           )}
 
+          {/* Construir tabla de resumen de excel */}
           {source === 'excel' && (
             <Box sx={{ display: 'grid', gap: 1 }}>
               <Label>Sube Excel con columnas "fullName" y "phone" (o al menos "phone")</Label>
@@ -276,6 +284,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
             </Box>
           )}
 
+          {/* Si se cuenta con variables se lista el resumen */}
           {schema && schema.bodyVars > 0 && (
             <div>
               <Label>Cuerpo — completa las variables</Label>
@@ -296,8 +305,10 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
               </div>
             </div>
           )}
+
         </div>
 
+        {/* tabla de resumen de contacto */}
          {source === 'contacts' && (
 
 
@@ -366,12 +377,15 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
         </div>
       </div>
 
+      {/*Modal de confirmación y resumen  */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Confirmar envío</DialogTitle>
         <DialogContent dividers>
           <div style={{ display: 'grid', gap: 12 }}>
             <div><strong>Plantilla:</strong> {template?.name}</div>
             <div><strong>Destino:</strong> {source === 'contacts' ? 'Contactos seleccionados' : 'Archivo Excel'}</div>
+
+            {/* si la fuente es contactos desde base de datos, se recuperar las propiedades seleccionadas y la cantidad. */}
             {source === 'contacts' && (
               <div>
                 <strong>Total seleccionados:</strong> {selectedIds?.length || 0}
@@ -383,6 +397,7 @@ export default function WaTemplateSendModal({ isOpen, template, onClose }: Props
                 </ul>
               </div>
             )}
+            {/* Si la fuente es excel se extra las propiedades y se recupera la cantidad de filas */}
             {source === 'excel' && (
               <div>
                 <strong>Total en Excel:</strong> {excelPreview.length}

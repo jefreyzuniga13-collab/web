@@ -19,10 +19,12 @@
   font-size: var(--font-size-lg) !important;
   background-color: var(--color-primary) !important;
   color: var(--text-white) !important;
+   padding: var(--space-sm) !important;
 }
 
 .table__cell--body {
   font-size: var(--font-size-sm) !important;
+  padding: var(--space-sm) !important;
 }
 
 .table__pagination,

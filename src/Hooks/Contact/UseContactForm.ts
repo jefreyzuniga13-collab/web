@@ -104,7 +104,7 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
 
   const validate = useCallback(() => {
     const errs: FormErrors = {}
-    if (!form.waName?.trim()) errs.waName = 'Nombre WhatsApp es obligatorio'
+   // if (!form.waName?.trim()) errs.waName = 'Nombre WhatsApp es obligatorio'
     if (!form.fullName?.trim()) errs.fullName = 'Nombre completo es obligatorio'
     if (!form.phone.trim()) {
       errs.phone = 'Número de teléfono obligatorio'

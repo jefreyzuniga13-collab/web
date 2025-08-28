@@ -6,7 +6,6 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
-// import SystemParamForm from '@/Components/Setting/SystemParamForm'
 import ProductCatalogFormModal from '@/Components/Wh/ProductCatalogFormModal'
 import { useProductCatalog } from '@/Hooks/Wh/useProductCatalog'
 import type { ProductCatalogResponse } from '@/Interfaces/Wh/ProductCatalogInterfaces'
@@ -107,12 +106,12 @@ export default function SystemParamsPage() {
     <div className="sp-page__container">
       <div className="sp-page__header">
         <div className="sp-page__header-content">
-          <h1 className="sp-page__title">Catalogo de productos</h1>
+          <h1 className="sp-page__title">Catálogo de productos</h1>
           <p className="sp-page__subtitle">Administra tus ctalogos de productos de WhatsApp</p>
         </div>
         <div className="sp-page__btnContainer">
           <Button variant="primary" onClick={openCreate}>
-            Nuevo Catalogo
+            Nuevo Catálogo
           </Button>
         </div>
       </div>
@@ -136,7 +135,7 @@ export default function SystemParamsPage() {
         data={selectedProductCatalog}
         onClose={closeModal}
         onSubmit={handleSubmit}
-      /> *
+      />
     </div>
   )
 }

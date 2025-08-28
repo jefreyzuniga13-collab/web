@@ -51,7 +51,35 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
         </header>
         <form className="cm-modal__body" onSubmit={handleSubmit}>
           <div className="cm-modal__grid">
+
             <div className="cm-modal__col">
+              <Label htmlFor="clientId">Cliente *</Label>
+              <Select
+                id="clientId"
+                value={form.clientId ?? ''}
+                onChange={e => {
+                  const id =  e.target.value
+                  handleSelect('clientId', id)
+                  const selected = clients?.find(c => c.clientId == id)
+                  if (selected) handleSelect('clientId', selected.clientId)
+                }}
+                disabled={isView}
+                options={clients?.map(c => ({ value: String(c.clientId), label: c.clientName ?? '' })) || []}
+              />
+              {errors.clientId && <div className="cm-modal__error">{errors.clientId}</div>}
+            </div>
+            <div className="cm-modal__col">
+              <Label htmlFor="fullName">Nombre Contacto Completo *</Label>
+              <Input
+                id="fullName"
+                name="fullName"
+                value={form.fullName || ''}
+                onChange={handleChange}
+                disabled={isView}
+              />
+              {errors.fullName && <div className="cm-modal__error">{errors.fullName}</div>}
+            </div>
+            {/* <div className="cm-modal__col">
               <Label htmlFor="waName">Nombre WhatsApp *</Label>
               <Input
                 id="waName"
@@ -61,8 +89,8 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 disabled={isView}
               />
               {errors.waName && <div className="cm-modal__error">{errors.waName}</div>}
-            </div>
-            <div className="cm-modal__col">
+            </div> */}
+            {/* <div className="cm-modal__col">
               <Label htmlFor="waId">ID WhatsApp</Label>
               <Input
                 id="waId"
@@ -71,7 +99,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 onChange={handleChange}
                 disabled={isView}
               />
-            </div>
+            </div> */}
             <div className="cm-modal__col">
               <Label htmlFor="phone">Teléfono *</Label>
               <Input
@@ -132,33 +160,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 {errors.residenceCard && <div className="cm-modal__error">{errors.residenceCard}</div>}
               </div>
             )}
-            <div className="cm-modal__col">
-              <Label htmlFor="fullName">Nombre Completo *</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                value={form.fullName || ''}
-                onChange={handleChange}
-                disabled={isView}
-              />
-              {errors.fullName && <div className="cm-modal__error">{errors.fullName}</div>}
-            </div>
-            <div className="cm-modal__col">
-              <Label htmlFor="clientId">Cliente *</Label>
-              <Select
-                id="clientId"
-                value={form.clientId ?? ''}
-                onChange={e => {
-                  const id =  e.target.value
-                  handleSelect('clientId', id)
-                  const selected = clients?.find(c => c.clientId == id)
-                  if (selected) handleSelect('clientId', selected.clientId)
-                }}
-                disabled={isView}
-                options={clients?.map(c => ({ value: String(c.clientId), label: c.clientName ?? '' })) || []}
-              />
-              {errors.clientId && <div className="cm-modal__error">{errors.clientId}</div>}
-            </div>
+
             {/* <div className="cm-modal__col">
               <Label htmlFor="companyName">Nombre Empresa</Label>
               <Input

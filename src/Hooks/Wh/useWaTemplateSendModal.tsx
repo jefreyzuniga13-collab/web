@@ -13,17 +13,19 @@ type Props = {
   onClose: () => void
 }
 
+
 export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
-  const {verifiedContact } = useContact()
-  const [source, setSource] = useState<'contacts' | 'excel'>('contacts')
+  const {verifiedContact } = useContact() //Recuperar contactos verificados
+  const [source, setSource] = useState<'contacts' | 'excel'>('contacts')//Fuente de datos
   const [selectedIds, setSelectedIds] = useState<number[]>([])
-  const [excelFile, setExcelFile] = useState<File | null>(null)
+  const [excelFile, setExcelFile] = useState<File | null>(null) //Archivo de excel subido
   
   const schema = useMemo(() => buildSchema(template), [template])
 
   const [headerTextValue, setHeaderTextValue] = useState('')
   const [bodyParams, setBodyParams] = useState<string[]>([])
   
+  //Parse a json dle schema  de plantilla creada
   function parseComponents(raw: any): any[] {
     try {
       if (!raw) return [];
@@ -38,6 +40,7 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
     varCount: number;
     indices: number[];
   } {
+    //agregar variables al body
     if (!text) return { varCount: 0, indices: [] };
     const re = /\{\{(\d+)}}/g;
     const idxs: number[] = [];
@@ -50,6 +53,7 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
     };
   }
 
+  //Construir esquema de plantilla, header, body, footer.
   function buildSchema(template: WaTemplateResponseDto) {
     const comps = parseComponents(template.components);
     let headerType: HeaderKind = "NONE";
@@ -100,18 +104,22 @@ export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
 
   if (!isOpen) return null
 
+  //Recuperar propiedades del dto de contacto, recibido desde la api
   const getPhonesFromContacts = (): Array<{ phone: string; fullName: string }> => {
     const byId = new Map<number, { phone: string; fullName: string }>()
     verifiedContact.forEach((c: any) => byId.set(c.id, { phone: c.phone, fullName: c.fullName ?? c.phone }))
     return selectedIds.map(id => byId.get(id)).filter(Boolean) as Array<{ phone: string; fullName: string }>
   }
 
+  
   const getPhonesFromExcel = async (): Promise<Array<{ phone: string; fullName: string }>> => {
     if (!excelFile) return []
     const arrayBuf = await excelFile.arrayBuffer()
     const wb = XLSX.read(arrayBuf, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0]]
     const rows = XLSX.utils.sheet_to_json<any>(ws, { defval: '', raw: false })
+
+    //Recuperar fullname y phone del excel.
     const out = rows
       .map(r => {
         const fullName = String(r.fullName ?? r.FullName ?? r.name ?? r.Name ?? '').trim()
