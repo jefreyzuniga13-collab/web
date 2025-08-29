@@ -13,6 +13,7 @@
 
 .table__scroll-container {
   flex-grow: 1;
+  max-height: 90% !important;
 }
 
 .table__cell--header {
@@ -24,11 +25,12 @@
 
 .table__cell--body {
   font-size: var(--font-size-sm) !important;
-  padding: var(--space-sm) !important;
+   padding: 3px var(--space-sm) !important;
 }
 
 .table__pagination,
 .table__pagination p {
+  min-height: 10% !important;
   font-size: var(--font-size-sm) !important;
 }
 

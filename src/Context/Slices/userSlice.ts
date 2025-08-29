@@ -25,7 +25,7 @@ const initialState: UserState = {
   error: null,
   pagination: {
     currentPage: 1,
-    pageSize: 5,
+    pageSize: 20,
     totalCount: 0,
     totalPages: 0
   },

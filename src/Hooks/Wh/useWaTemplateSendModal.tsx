@@ -13,7 +13,6 @@ type Props = {
   onClose: () => void
 }
 
-
 export function useWaTemplateSendModal({ isOpen, template, onClose }: Props){
   const {verifiedContact } = useContact() //Recuperar contactos verificados
   const [source, setSource] = useState<'contacts' | 'excel'>('contacts')//Fuente de datos

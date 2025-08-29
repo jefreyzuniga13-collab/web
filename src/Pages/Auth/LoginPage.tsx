@@ -9,7 +9,10 @@ import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
 import logopcg from '@/assets/pcgroup.png'
-
+import { FaFacebook } from "react-icons/fa";
+import { FaLinkedin } from "react-icons/fa6";
+import { FaInstagramSquare } from "react-icons/fa";
+import { FaTiktok } from "react-icons/fa";
 export default function LoginPresentation() {
   const { t } = useTranslation();
   const {
@@ -42,6 +45,17 @@ export default function LoginPresentation() {
             src={`${logopcg}`}
             alt={t("login.imageAlt")}
           />
+          
+          <ul className="social_media_container">
+            <li className="social_media_list"><a href="https://www.facebook.com/61567499630347"
+            target="_blank" className="social_media_link"><FaFacebook fontSize={12} className="social_media_icons"/></a></li>
+            <li className="social_media_list"><a href="https://www.instagram.com/pcgroupsa/"
+            target="_blank" className="social_media_link"><FaInstagramSquare fontSize={12} className="social_media_icons"/></a></li>
+            <li className="social_media_list"><a href="https://www.tiktok.com/@pcgroupsa"
+            target="_blank" className="social_media_link"><FaTiktok fontSize={12} className="social_media_icons"/></a></li>
+            <li className="social_media_list"><a href="https://ni.linkedin.com/company/pc-group-s-a"
+            target="_blank" className="social_media_link"><FaLinkedin fontSize={12} className="social_media_icons"/></a></li>
+          </ul>
         </aside>
 
         <section className={`login__form-section ${formError ? 'login__form-section--error' : ''}`}>

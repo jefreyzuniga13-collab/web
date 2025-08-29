@@ -10,7 +10,7 @@ export const useWorkShift = () => {
   const [workShifts, setWorkShifts] = useState<WorkShiftInterface[]>([]);
   const [selectedWorkShift, setSelectedWorkShift] = useState<WorkShiftInterface | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(30);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingItem, setLoadingItem] = useState(false);

@@ -8,7 +8,8 @@ import { markConversationRead } from '@/Services/ConversationService'
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
-  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
+  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete',
+  searchConversation? : string;
 }
 
 const formatDuration = (ms: number): string => {
@@ -25,7 +26,8 @@ const formatDuration = (ms: number): string => {
 export const InboxList: React.FC<Props> = ({
   selectedId,
   onSelect,
-  filter = 'all'
+  filter = 'all',
+  searchConversation = ''
 }) => {
   
   const loaderRef = useRef<HTMLLIElement>(null)
@@ -37,7 +39,7 @@ export const InboxList: React.FC<Props> = ({
     page,
     pagination,
     onPageChange
-  } = useConversations(filter)
+  } = useConversations(filter, searchConversation)
 
   const [now, setNow] = useState(Date.now())
   const { userId } = JSON.parse(localStorage.getItem('auth') || '{}') as {
@@ -168,7 +170,7 @@ export const InboxList: React.FC<Props> = ({
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
                    <span className="inbox-list__client_name">
-                    {c.clientName || ''}
+                    {c.systemDefinedCompanyName || ''}
                   </span>
                   <span className="inbox-list__name">
                     {c.clientContactName || 'contacto'}

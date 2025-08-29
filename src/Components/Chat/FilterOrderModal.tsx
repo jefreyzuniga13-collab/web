@@ -22,7 +22,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   const [order, setOrder] = useState<string[]>(currentOrder);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   //const { form, handleDate, applyDateFilter, clearFilter } = useConversations();
-  const { applyDateFilter, clearFilter } = useConversations();
+  const { applyDateFilter, clearFilter } = useConversations("all", '');
 
   const handleDragStart = (idx: number) => setDragIndex(idx);
   const handleDragOver  = (e: React.DragEvent) => e.preventDefault();

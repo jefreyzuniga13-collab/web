@@ -14,7 +14,7 @@ interface ModalPopupProps {
   actions: ModalAction[];
   isOpen: boolean;
   onClose: () => void;
-  clientName?: string;
+  systemDefinedCompanyName?: string;
   timestamp?: string;
   icon?: React.ReactNode;
 }
@@ -24,7 +24,7 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
   message,
   actions,
   isOpen,
-  clientName,
+  systemDefinedCompanyName,
   timestamp,
   icon = '💬'
 }) => {
@@ -101,10 +101,10 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
 
           {/* Content */}
           <div className="modal-popup__content">
-            {clientName && (
+            {systemDefinedCompanyName && (
               <div className="modal-popup__client-info">
                 <span className="modal-popup__user-icon">👤</span>
-                <span className="modal-popup__client-name">{clientName}</span>
+                <span className="modal-popup__client-name">{systemDefinedCompanyName}</span>
               </div>
             )}
             <div className="modal-popup__message">

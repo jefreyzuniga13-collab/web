@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
@@ -10,8 +10,11 @@ import { RiChatHistoryFill } from "react-icons/ri";
 import { FaUserAlt, FaClipboard } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
+import Input from "@/Components/Common/Input";
 
 const SupportPage: React.FC = () => {
+
+  const [searchConversation, setSearchConversation] = useState<string>('')
   const {
     conversation,
     setOrderModalVisible,
@@ -66,6 +69,12 @@ const SupportPage: React.FC = () => {
               </>
             ))}
           </div>
+
+          <div className="inbox-title-container__filter">
+              {/* <h3 className="inbox-title">Filtrar</h3> */}
+             <Input className="inbox-title-container__filter__input" value={searchConversation} onChange={e=> setSearchConversation(e.target.value)}
+             placeholder="Filtrar Conversaciones"/>
+          </div>
         </div>
 
         <InboxList
@@ -73,12 +82,14 @@ const SupportPage: React.FC = () => {
           onSelect={setConvId}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           filter={filter as any}
+          searchConversation={searchConversation}
         />
       </aside>
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">Cliente {conversation?.clientName} | Telefono {conversation?.contactNumber}</h2>
+          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName) ? ("Cliente") : (convId != null && conversation?.clientContactName ? "Contacto" : "")} {conversation?.systemDefinedCompanyName != null ? conversation?.systemDefinedCompanyName : conversation?.clientContactName != null 
+          ? conversation?.clientContactName : convId != null ? "Desconocido" : ""} {convId != null && (" | Télefono")} {conversation?.contactNumber}</h2>
           <div className="btn-container">
             {convId && (
               <>
@@ -105,7 +116,7 @@ const SupportPage: React.FC = () => {
             <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${conversation?.status == "Closed" ? "btnDisabled" : ""}
               ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
-              disabled={!convId || conversation?.status == "Closed" || conversation?.status == "Incomplete"}
+              // disabled={!convId || conversation?.status == "Closed" || conversation?.status == "Incomplete"}
               onClick={handleAssignClick}
             >
               <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}

@@ -179,6 +179,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             </div>
           )
         })}
+        
         <div ref={bottomRef} />
       </div>
       <div className="chat-window__composer">

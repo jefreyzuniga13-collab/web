@@ -313,6 +313,7 @@ class ConversationServ {
 async getConversationsByRole(
   from?: Date,
   to?: Date,
+  searchConversation?: string,
   page: number = 1,
   pageSize: number = 10,
   state?: string 
@@ -321,6 +322,7 @@ async getConversationsByRole(
   const params: Record<string, any> = { pageNumber: page, pageSize };
   if (from) params.from = from.toISOString();
   if (to)   params.to   = to.toISOString();
+  if(searchConversation != '') params.searchConversation = searchConversation;
   if (state && state !== 'all') params.state = toPascal(state);
 
   const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(

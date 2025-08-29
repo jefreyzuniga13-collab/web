@@ -4,11 +4,11 @@ import { notificationsConnection } from '@/Services/signalr'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces';
 import { notificationSound } from '@/Utils/sound';
 
-type SupportRequestedPayload = { conversationId: number; requestedAt: string; clientContactName: string; clientName: string;  }
+type SupportRequestedPayload = { conversationId: number; requestedAt: string; clientContactName: string; systemDefinedCompanyName: string;  }
 type AssignmentResponsePayload = { conversationId: number; AssignedAgentName?: string, accepted: boolean; comment?: string; justification?: string; 
-  clientContactName?: string; clientName?: string;}
-type AssignmentForcedPayload = { conversationId: number; assignmentComment: string; clientContactName: string; clientName: string; }
-type AssignmentForcedAdminPayload = { conversationId: number; targetAgentId: number; comment: string; clientContactName: string; clientName: string; }
+  clientContactName?: string; systemDefinedCompanyName?: string;}
+type AssignmentForcedPayload = { conversationId: number; assignmentComment: string; clientContactName: string; systemDefinedCompanyName: string; }
+type AssignmentForcedAdminPayload = { conversationId: number; targetAgentId: number; comment: string; clientContactName: string; systemDefinedCompanyName: string; }
 
 export type NotificationEvent =
   | { type: 'SupportRequested'; payload: SupportRequestedPayload }

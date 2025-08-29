@@ -10,7 +10,7 @@ const useContact = () => {
   const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(30)
   const [totalCount, setTotalCount] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingItem, setLoadingItem] = useState(false)

@@ -19,7 +19,7 @@ export const ConversationAssignedPopup: React.FC = () => {
   const convo = current.payload as {
     conversationId: number
     clientContactName: string,
-    clientName: string,
+    systemDefinedCompanyName: string,
     contactNumber?: string
     assignedAt?: string
   }
@@ -48,7 +48,7 @@ export const ConversationAssignedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Conversación asignada. Cliente ${convo.clientName}`}
+      title={`Conversación asignada. Cliente ${convo.systemDefinedCompanyName}`}
       message={
         <>
           <p>Se te ha asignado la conversación de <strong>{convo.clientContactName}</strong>.</p>
@@ -70,7 +70,7 @@ export const ConversationAssignedPopup: React.FC = () => {
       actions={actions}
       isOpen={true}
       onClose={handleClose}
-      clientName={convo.clientContactName}
+      systemDefinedCompanyName={convo.clientContactName}
       timestamp={convo.assignedAt}
       icon="👥"
     />

@@ -7,6 +7,27 @@
   height: 100vh;
   font-size: var(--font-size-base);
   padding: 2rem 0;
+  /* background-image: url("https://www.welcometonicaragua.net/wp-content/uploads/2016/04/volcano-mombacho-nicaragua.jpg"); */
+  /* background-image: url('https://www.piensageotermia.com/wp-content/uploads/2021/01/Mombacho_volcano_Nicaragua-1024x576.jpg'); */
+
+  background-image: url('https://www.intur.gob.ni/wp-content/uploads/2019/05/Granada-mombacho-National-Geographic-Nicaragua.jpg');
+  background-repeat: no-repeat;
+  background-size: cover; /* Cubre todo el espacio */
+  background-position: center; 
+}
+
+.derechos{
+    color: var(--text-white);
+}
+.login::before{
+   content: "";
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    background-color: rgba(0, 0, 0, 0.3); 
+    z-index: 1;
 }
 
 .login__container {
@@ -15,16 +36,18 @@
   height: 90%;
   border-radius: var(--radius-xl);
   overflow: hidden;
+  z-index: 2;
 }
 
 .login__info-panel {
   flex: 1;
   max-width: 45rem;
   padding: var(--space-lg);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  /* background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); */
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   border-radius: var(--radius-xl);
   border-top-right-radius: 0;
@@ -65,6 +88,7 @@
   text-align: center;
   margin: auto;
   user-select: none;
+  margin: 0;
 }
 
 .login__form-section {
@@ -94,6 +118,7 @@
   text-decoration: none;
   transition: color var(--transition-normal) var(--transition-ease);
   font-weight: var(--font-weight-medium);
+   color: var(--text-white);
 }
 
 .login__help-link:hover {
@@ -105,6 +130,7 @@
   margin-bottom: var(--space-lg);
   color: var(--text-secondary);
   font-weight: var(--font-weight-medium);
+   color: var(--text-white);
 }
 
 .login__error {
@@ -121,7 +147,7 @@
   display: block;
   margin: var(--space-sm) 0 var(--space-xs);
   font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
+  color: var(--text-white);
   text-align: left;
   font-size: var(--font-size-base);
 }
@@ -150,6 +176,7 @@
   text-decoration: none;
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-normal) var(--transition-ease);
+  color: var(--text-white);
 }
 
 .login__forgot-link:hover {
@@ -189,10 +216,34 @@
 }
 
 .login__footer {
-  color: var(--text-muted);
+  color: var(--text-white);
   font-size: var(--font-size-sm);
   text-align: center;
   padding: var(--space-lg);
+}
+
+.social_media_container{
+  display: flex;
+  gap: var(--space-xl);
+  justify-content: center;
+  align-items: center;
+   text-decoration: none !important;
+   flex-wrap: wrap;
+}
+
+.social_media_list{
+  text-decoration: none !important;
+  list-style: none;
+}
+.social_media_link{
+  text-decoration: none;
+  list-style: none;
+}
+
+.social_media_icons{
+  font-size: var(--font-size-xl);
+  color: var(--text-white);
+  border-radius: 50%;
 }
 
 /* MÓVIL LANDSCAPE (orientación horizontal) */

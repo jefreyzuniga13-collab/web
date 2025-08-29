@@ -11,7 +11,7 @@ export function useWaTemplate() {
   const [waTemplates, setWaTemplates] = useState<WaTemplateResponseDto[]>([])
   const [selectedWaTemplate, setSelectedWaTemplate] = useState<WaTemplateResponseDto | null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(20)
   const [totalCount, setTotalCount] = useState(0)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingItem, setLoadingItem] = useState(false)

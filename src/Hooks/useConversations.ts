@@ -39,7 +39,7 @@ const initialRange = (): FormInterface => {
     : { validFrom: null, validTo: null }
 }
 
-export function useConversations(filter: Filter = 'all'): UseConversationsResult {
+export function useConversations(filter: Filter = 'all', searchConversation: string): UseConversationsResult {
   const authRaw           = localStorage.getItem('auth') || '{}'
   const { accessToken }   = JSON.parse(authRaw) as { accessToken: string }
   const { role }          = jwtDecode<JwtPayload>(accessToken)
@@ -178,6 +178,7 @@ const applyDateFilter = () => {
     ConversationService.getConversationsByRole(
       appliedRange.validFrom ?? undefined,
       appliedRange.validTo   ?? undefined,
+      searchConversation,
       page,
       pageSize,
       toApiState(filter)
@@ -210,7 +211,7 @@ const applyDateFilter = () => {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
 
-  }, [appliedRange.validFrom, appliedRange.validTo, filter, page, pageSize])
+  }, [appliedRange.validFrom, appliedRange.validTo, filter, page, pageSize, searchConversation])
 
   useEffect(() => {
     if (isAdmin) onConversationCreated(handleNewConvo)
@@ -228,7 +229,7 @@ const applyDateFilter = () => {
  useEffect(() => {
     setConversations([]);
     setPage(1);
-  }, [filter]);
+  }, [filter, searchConversation]);
 
   const onPageChange = useCallback((newPage: number) => { setPage(newPage) }, [])
   const onPageSizeChange = useCallback((newSize: number) => { setPageSize(newSize); setPage(1) }, [])

@@ -33,13 +33,13 @@ export const AssignmentResponsePopup: React.FC = () => {
 
   if (!current || current.type !== 'AssignmentResponse') return null
 
-  const { conversationId, assignedAgentName, accepted, justification, clientContactName, clientName } = current.payload as {
+  const { conversationId, assignedAgentName, accepted, justification, clientContactName, systemDefinedCompanyName } = current.payload as {
     conversationId: number
     assignedAgentName: string;
     accepted: boolean
     justification: string,
     clientContactName?: string,
-    clientName?: string 
+    systemDefinedCompanyName?: string 
   }
 
 
@@ -77,7 +77,7 @@ export const AssignmentResponsePopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Respuesta de asignación. Cliente ${clientName}. Contacto ${clientContactName}`}
+      title={`Respuesta de asignación. Cliente ${systemDefinedCompanyName}. Contacto ${clientContactName}`}
       isOpen={true}
       onClose={handleClose}
       message={

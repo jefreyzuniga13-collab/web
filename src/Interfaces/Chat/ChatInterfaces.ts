@@ -58,6 +58,7 @@ export interface ConversationDto {
   rating: number | null;
   ratingSubmittedAt: string | null;
   ratingReceivedAt: string | null;
+  SystemDefinedCompanyName?: string;
 }
 
 export interface UpdateConversationRequest {

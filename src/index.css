@@ -85,7 +85,7 @@ body {
   --color-blue-primary: #356ace;
   --color-blue-light: #e0e7ff;
   --color-green-primary: #10b981;
-  --color-green-light: #d1fae5;
+    --color-green-light: #b4ffd8;
   
   --shadow-xs: 0 0.1rem 0.2rem 0 rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 0.1rem 0.2rem 0 rgba(0, 0, 0, 0.05);

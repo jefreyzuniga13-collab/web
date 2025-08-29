@@ -158,7 +158,7 @@ export default function OpeningHourPage() {
         count={totalCount}
         page={page - 1}                     // Hook devuelve page 1-based
         rowsPerPage={pageSize}
-        rowsPerPageOptions={[5, 10, 20, 50]}
+        rowsPerPageOptions={[20, 30, 50]}
         onPageChange={(_, newPage) => setPage(newPage + 1)}
         onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
       />
