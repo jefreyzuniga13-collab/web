@@ -11,7 +11,9 @@ import { useTemplateCategory } from '@/Hooks/Chat/useTemplateCategory'
 import type { TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
-
+import { TextField } from '@mui/material'
+import {templateCategoryTranslations} from '@/Utils/Translation/categoryTemplateTranslation'
+import type { TemplateCategoryTranslation } from '@/Interfaces/GlobalInterface'
 export default function SystemParamsPage() {
   const {
     templateCategories,
@@ -29,15 +31,21 @@ export default function SystemParamsPage() {
     closeModal,
     handleSubmit,
     toggleStatus,
+    setGlobalFilter,
+    globalFilter
   } = useTemplateCategory()
+  
 
   const columns: Column<TemplateCategoryResponseDto>[] = useMemo(() => [
-     {
-        id: "name",
-        label: "Nombre",
-        minWidth: 100,
-        type: "text"
-      },
+      {
+            id: 'name', label: 'Nombre', minWidth: 100,
+            render: row => (
+
+               <span>
+                 {templateCategoryTranslations[row.name as TemplateCategoryTranslation]}
+               </span>
+            )
+          },
        {
         id: "description",
         label: "Descriptión",
@@ -101,6 +109,18 @@ export default function SystemParamsPage() {
           </Button>
         </div>
       </div>
+
+       <div className='table-contaner__search-filter__container'>
+              <TextField
+                label="Filtrar"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className='table-contaner__search-filter'
+              />
+            </div> 
 
 
       <CustomTable<TemplateCategoryResponseDto>

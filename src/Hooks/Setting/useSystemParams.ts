@@ -17,6 +17,7 @@ export function useSystemParams() {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   // Fetch paginated list
   const fetchPage = useCallback(
@@ -24,7 +25,9 @@ export function useSystemParams() {
       setLoadingList(true)
       setError(null)
       try {
-        const resp = await SystemParamService.getAllAsync(p, s)
+        //Aqui el globalFilter lleno basillo
+        console.log("El estado global es antes de la peticion", globalFilter);
+        const resp = await SystemParamService.getAllAsync(globalFilter, p, s)
         setSystemParams(resp.items)
         setTotalCount(resp.meta.totalCount)
         setPage(resp.meta.currentPage)
@@ -35,7 +38,7 @@ export function useSystemParams() {
         setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [globalFilter, page, pageSize]
   )
 
   // Fetch single item
@@ -59,7 +62,7 @@ export function useSystemParams() {
       setError(null)
       try {
         await SystemParamService.createAsync(values)
-        await fetchPage(1, pageSize)
+        await fetchPage(page, pageSize)
       } catch (err: any) {
         setError(err)
       } finally {
@@ -151,8 +154,10 @@ export function useSystemParams() {
 
   // Initial load & reload
   useEffect(() => {
+    //Aqui el filtro muestra la informacion que se esta asignado en vivo con el setGlobalFilter
+    console.log("El estado global a llamar a fetchPage", globalFilter);
     fetchPage()
-  }, [fetchPage])
+  }, [fetchPage, globalFilter])
 
   return {
     systemParams,
@@ -172,5 +177,7 @@ export function useSystemParams() {
     closeModal,
     handleSubmit,
     toggleSystemParam: toggleStatus,
+    globalFilter,
+    setGlobalFilter
   }
 }

@@ -33,12 +33,13 @@ export function useUsers() {
   const [isModalOpen, setModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [agents, setAgents] = useState<AgentDto[]>([])
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const fetchPage = useCallback(
     (page = 1, size = pageSize) => {
-      dispatch(fetchUsers({ page, pageSize: size, search }))
+      dispatch(fetchUsers({globalFilter, page, pageSize: size, search }))
     },
-    [dispatch, pageSize, search]
+    [dispatch, pageSize, search, globalFilter]
   )
 
   const fetchOne = useCallback(
@@ -148,7 +149,7 @@ export function useUsers() {
     dispatch(fetchRoles())
     dispatch(fetchCompanies())
     fetchPage()
-  }, [dispatch, fetchPage])
+  }, [dispatch, fetchPage, globalFilter])
 
   return {
     users,
@@ -176,5 +177,7 @@ export function useUsers() {
     toggleUser,
     agents,
     getAgents,
+    globalFilter,
+    setGlobalFilter
   }
 }

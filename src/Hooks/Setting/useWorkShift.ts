@@ -17,12 +17,13 @@ export const useWorkShift = () => {
   const [error, setError] = useState<Error | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'update' | 'view'>('create');
   const [isModalOpen, setIsModalOpen] = useState(false);
+    const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const fetchPage = useCallback(async (p = page, s = pageSize) => {
     setLoadingList(true);
     setError(null);
     try {
-      const resp = await WorkShiftService.getAllAsync(p, s);
+      const resp = await WorkShiftService.getAllAsync(globalFilter, p, s);
       setWorkShifts(resp.items);
       setTotalCount(resp.meta.totalCount);
       setPage(resp.meta.currentPage);
@@ -32,7 +33,7 @@ export const useWorkShift = () => {
     } finally {
       setLoadingList(false);
     }
-  }, [page, pageSize]);
+  }, [globalFilter, page, pageSize]);
 
   const fetchById = useCallback(async (id: number) => {
     setLoadingItem(true);
@@ -127,7 +128,7 @@ export const useWorkShift = () => {
 
   useEffect(() => {
     fetchPage();
-  }, [fetchPage]);
+  }, [fetchPage, globalFilter]);
 
   return {
     workShifts,
@@ -147,5 +148,7 @@ export const useWorkShift = () => {
     closeModal,
     handleSubmit,
     toggleStatus,
+    globalFilter,
+    setGlobalFilter,
   };
 };

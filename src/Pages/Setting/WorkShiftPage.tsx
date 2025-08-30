@@ -13,6 +13,7 @@ import "@/Styles/Setting/OpeningHourPage.css"
 import "@/Styles/Setting/WorkShiftPage.css"
 import WorkShiftModal from "@/Components/Setting/WorkShiftModal"
 import { format, parseISO } from "date-fns"
+import { TextField } from "@mui/material"
 // import Spinner from "@/Components/Common/Spinner"
 
 export default function WorkShiftPage() {
@@ -33,7 +34,9 @@ export default function WorkShiftPage() {
     handleSubmit,
     isModalOpen,
     modalMode,
-    selectedWorkShift
+    selectedWorkShift,
+    globalFilter,
+    setGlobalFilter
   } = useWorkShift()
 
   const columns = useMemo<Column<WorkShiftInterface>[]>(() => [
@@ -120,6 +123,17 @@ export default function WorkShiftPage() {
         </div>
       </div>
 
+     <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div> 
       {/* {loading && <div className="ws-page__loading"><Spinner/></div>} */}
       {error && <p className="ws-page__error">Error: {error.message}</p>}
 

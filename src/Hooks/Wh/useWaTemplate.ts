@@ -18,6 +18,7 @@ export function useWaTemplate() {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const paginate = useCallback((items: WaTemplateResponseDto[], p: number, s: number) => {
     const start = (p - 1) * s
@@ -31,7 +32,8 @@ export function useWaTemplate() {
       setLoadingList(true)
       setError(null)
       try {
-        const list = await WaTemplateService.GetAllAsync(sync)
+        console.log("Filtros globales", globalFilter)
+        const list = await WaTemplateService.GetAllAsync(sync, globalFilter)
         setAllItems(list)
         paginate(list, 1, pageSize)
         setPage(1)
@@ -41,7 +43,7 @@ export function useWaTemplate() {
         setLoadingList(false)
       }
     },
-    [paginate, pageSize]
+    [globalFilter, paginate, pageSize]
   )
 
   const refreshPageWindow = useCallback(
@@ -58,7 +60,6 @@ export function useWaTemplate() {
       setLoadingItem(true)
       setError(null)
       try {
-        console.log("Haciendo petición a la api. Los valores son: ", values)
         await WaTemplateService.CreateWaTemplate(values)
         await fetchAll(true)
       } catch (err: any) {
@@ -105,11 +106,11 @@ export function useWaTemplate() {
 
   const syncNow = useCallback(async () => {
     await fetchAll(true)
-  }, [fetchAll])
+  }, [fetchAll, globalFilter])
 
   useEffect(() => {
     fetchAll(false)
-  }, [fetchAll])
+  }, [fetchAll, globalFilter])
 
   return {
     waTemplates,
@@ -128,5 +129,7 @@ export function useWaTemplate() {
     closeModal,
     handleSubmit,
     syncNow,
+    globalFilter,
+    setGlobalFilter
   }
 }

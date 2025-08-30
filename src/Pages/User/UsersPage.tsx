@@ -11,6 +11,7 @@ import UserForm from '@/Components/Users/UserForm'
 import { useUsers } from '@/Hooks/User/useUsers'
 import '@/Styles/Users/UsersPage.css'
 import type { Column } from '@/Interfaces/Common/CustomTable'
+import { TextField } from '@mui/material'
 
 export default function UsersPage() {
   
@@ -33,6 +34,8 @@ export default function UsersPage() {
     closeModal,
     handleSubmit,
     toggleUser,
+    globalFilter,
+    setGlobalFilter,
   } = useUsers()
 
   const columns: Column<any>[] = [
@@ -94,6 +97,18 @@ export default function UsersPage() {
           </Button>
         </div>
       </div>
+
+       <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div> 
 
       {error && <p className="users-page__error">Error: {error}</p>}
 

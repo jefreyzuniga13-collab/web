@@ -13,6 +13,7 @@ import type { OpeningHourInterface } from '@/Interfaces/Setting/OpeningHour'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/OpeningHourPage.css'
 import { format, parseISO } from 'date-fns';
+import { TextField } from '@mui/material'
 
 export default function OpeningHourPage() {
   const {
@@ -32,6 +33,8 @@ export default function OpeningHourPage() {
     closeModal,
     handleSubmit,
     toggleOpeningHourStatus,
+    globalFilter,
+    setGlobalFilter
   } = useOpeningHour();
 
   const columns: Column<OpeningHourInterface>[] = useMemo(
@@ -148,6 +151,17 @@ export default function OpeningHourPage() {
         </div>
       </div>
 
+  <div className='table-contaner__search-filter__container'>
+          <TextField
+            label="Filtrar"
+            variant="outlined"
+            size="small"
+            fullWidth
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className='table-contaner__search-filter'
+          />
+        </div> 
       {/* {loading &&  <div className="loader-container">
         <ThreeDot color="#3142cc" size="medium" /></div>} */}
       {error   && <p className="oh-page__error">Error: {error.message}</p>}

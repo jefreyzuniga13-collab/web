@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react'
 import type { Props } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Common/CustomTable.css'
 
+
 type Order = 'asc' | 'desc'
 
 export default function CustomTable<T>({
@@ -21,7 +22,7 @@ export default function CustomTable<T>({
   onPageChange,
   onRowsPerPageChange,
 }: Props<T>) {
-  const [globalFilter, setGlobalFilter] = useState('')
+
   const [orderBy, setOrderBy] = useState<string | null>(null)
   const [order, setOrder] = useState<Order>('asc')
   const [colFilters, setColFilters] = useState<Record<string, string>>({})
@@ -36,6 +37,7 @@ export default function CustomTable<T>({
     setMenuAnchor(e.currentTarget)
     setMenuColId(colId)
   }
+
   const closeMenu = () => {
     setMenuAnchor(null)
     setMenuColId(null)
@@ -63,10 +65,10 @@ export default function CustomTable<T>({
 
   const filteredAndSortedRows = useMemo(() => {
     let result = rows.filter(row => {
-      if (!globalFilter.trim()) return true
+      // if (!globalFilter.trim()) return true
       return columns.some(col => {
         const value = col.render ? String(col.render(row)) : String((row as any)[col.id] ?? '')
-        return value.toLowerCase().includes(globalFilter.toLowerCase())
+        return value.toLowerCase();
       })
     })
 
@@ -80,21 +82,10 @@ export default function CustomTable<T>({
     )
 
     return orderBy ? [...result].sort(comparator) : result
-  }, [rows, columns, globalFilter, colFilters, orderBy, order])
+  }, [rows, columns, colFilters, orderBy, order])
 
   return (
     <Paper className="table__container">
-      <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
-      </div>
 
       <TableContainer className="table__scroll-container">
         <Table stickyHeader>
@@ -171,6 +162,7 @@ export default function CustomTable<T>({
         onRowsPerPageChange={onRowsPerPageChange}
       />
 
+
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
@@ -189,10 +181,10 @@ export default function CustomTable<T>({
         }}
       >
         <MenuItem onClick={() => { setOrderBy(menuColId); setOrder('asc'); closeMenu() }}>
-          Sort by ASC
+          Ordenar ASC
         </MenuItem>
         <MenuItem onClick={() => { setOrderBy(menuColId); setOrder('desc'); closeMenu() }}>
-          Sort by DESC
+          Ordenar DESC
         </MenuItem>
 
         <Divider />
@@ -222,16 +214,16 @@ export default function CustomTable<T>({
             closeMenu()
           }}
         >
-          Hide column
+          Ocultar Columna
         </MenuItem>
 
         <MenuItem onClick={() => { setOpenManage(true); closeMenu() }}>
-          Manage columns
+          MNostrar Columna
         </MenuItem>
       </Menu>
 
       <Dialog open={openManage} onClose={() => setOpenManage(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Manage columns</DialogTitle>
+        <DialogTitle>Administrar Columnas</DialogTitle>
         <DialogContent dividers>
           <FormGroup>
             {columns.map(c => {
@@ -252,7 +244,7 @@ export default function CustomTable<T>({
           </FormGroup>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenManage(false)}>Close</Button>
+          <Button onClick={() => setOpenManage(false)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Paper>

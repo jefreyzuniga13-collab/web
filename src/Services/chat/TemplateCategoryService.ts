@@ -25,13 +25,17 @@ function transformPayload(input: TemplateCategoryRequestDto): TemplateCategoryRe
 
 class TemplateCategoryServ{
   async getAllAsync(
+    filter: string,
       page: number,
       pageSize: number
     ): Promise<PagedResponse<TemplateCategoryResponseDto>> {
       try {
         const { data } = await api.get<ApiResponse<PagedResponse<TemplateCategoryResponseDto>>>(
           '/TemplateCategory',
-          { params: { PageNumber: page, PageSize: pageSize } }
+          { params: { 
+            globalFilter: filter,
+            PageNumber: page, 
+            PageSize: pageSize } }
         )
         return data.data
       } catch (error) {

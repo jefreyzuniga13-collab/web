@@ -9,13 +9,8 @@ import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
 import { enqueuePopup } from "@/Context/Slices/popupSlice";
-// import { SupportRequestedPopup } from "@/Components/Common/Hub/SupportRequestedPopup";
-// import { ConversationAssignedPopup } from "@/Components/Common/Hub/ConversationAssignedPopup";
-// import { AssignmentResponsePopup } from "@/Components/Common/Hub/AssignmentResponsePopup";
-// import { AssignmentForcedPopup } from "@/Components/Common/Hub/AssignmentForcedPopup";
-// import ContactValidatorHub from "@/Components/Common/Hub/ContactValidatorHub";
-// import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
-// import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
+import {ThemeProvider } from '@mui/material/styles';
+import {theme} from '@/Utils/materialTheme'
 
 import "@/App.css";
 import "@/i18n";
@@ -68,13 +63,7 @@ export default function App() {
 
   return (
     <SignalRProvider token={accessToken}>
-
-      {/* <GlobalSoundNotifier />
-      <SupportRequestedPopup />
-      <ConversationAssignedPopup />
-      <AssignmentResponsePopup />
-      <AssignmentForcedPopup />
-      <ContactValidatorHub /> */}
+      <ThemeProvider theme={theme}>
 
       {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
 
@@ -90,6 +79,7 @@ export default function App() {
         theme="colored"
       />
       <AppRouter />
+      </ThemeProvider>
     </SignalRProvider>
   );
 }

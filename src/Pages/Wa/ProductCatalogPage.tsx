@@ -11,6 +11,7 @@ import { useProductCatalog } from '@/Hooks/Wh/useProductCatalog'
 import type { ProductCatalogResponse } from '@/Interfaces/Wh/ProductCatalogInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
+import { TextField } from '@mui/material'
 
 
 export default function SystemParamsPage() {
@@ -30,6 +31,8 @@ export default function SystemParamsPage() {
     closeModal,
     handleSubmit,
     toggleSystemParam,
+    globalFilter,
+    setGlobalFilter
   } = useProductCatalog()
 
   const columns: Column<ProductCatalogResponse>[] = useMemo(() => [
@@ -115,6 +118,18 @@ export default function SystemParamsPage() {
           </Button>
         </div>
       </div>
+
+       <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div> 
 
       {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
 

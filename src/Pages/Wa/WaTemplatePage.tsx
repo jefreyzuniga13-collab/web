@@ -10,6 +10,9 @@ import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
 import SendIcon from '@mui/icons-material/Send';
 import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
+import { TextField } from '@mui/material'
+import type { TemplateCategoryTranslation } from '@/Interfaces/GlobalInterface'
+import { templateCategoryTranslations } from '@/Utils/Translation/categoryTemplateTranslation'
 
 export default function WaTemplatesPage() {
 
@@ -27,6 +30,8 @@ export default function WaTemplatesPage() {
     openView,
     closeModal,
     handleSubmit,
+    globalFilter,
+    setGlobalFilter
   } = useWaTemplate()
 
   const [sendModalOpen, setSendModalOpen] = useState(false);
@@ -40,8 +45,15 @@ export default function WaTemplatesPage() {
 
   const columns: Column<WaTemplateResponseDto>[] = useMemo(() => [
     { id: 'name', label: 'Nombre', minWidth: 80 },
-    { id: 'templateCategoryName', label: 'Categoría', minWidth: 80 },
-    { id: 'language', label: 'Idioma', minWidth: 70 },
+    {
+      id: 'templateCategoryName', label: 'Categoría', minWidth: 100,
+      render: row => (
+        <span>
+          {templateCategoryTranslations[row.templateCategoryName as TemplateCategoryTranslation]}
+        </span>
+      )
+    },
+    // { id: 'language', label: 'Idioma', minWidth: 70 },
     {
       id: 'status',
       label: 'Estado',
@@ -73,7 +85,7 @@ export default function WaTemplatesPage() {
     }
     ,
     { id: 'createdByName', label: 'Creado Por', minWidth: 100 },
-    { id: 'updatedByName', label: 'Últ. Actualizado Por', minWidth: 100 },
+    // { id: 'updatedByName', label: 'Últ. Actualizado Por', minWidth: 100 },
     {
       id: 'createdAt',
       label: 'Creado',
@@ -126,6 +138,18 @@ export default function WaTemplatesPage() {
             Nueva Plantilla
           </Button>
         </div>
+      </div>
+
+      <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
       </div>
 
       <CustomTable<WaTemplateResponseDto>

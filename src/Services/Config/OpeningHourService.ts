@@ -32,13 +32,17 @@ function transformPayload(input: OpeningHourFormValues): any {
 
 class OpeningHour {
  async getAll(
+  filter: string ,
     page: number,
     pageSize: number
   ): Promise<PagedResponse<OpeningHourInterface>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<OpeningHourInterface>>>(
         '/OpeningHour',
-        { params: { PageNumber: page, PageSize: pageSize } }
+        { params: { 
+          globalFilter: filter,
+          PageNumber: page, 
+          PageSize: pageSize } }
       )
       return data.data
     } catch (error) {

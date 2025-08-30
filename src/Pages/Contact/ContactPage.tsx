@@ -13,6 +13,7 @@ import Button from "@/Components/Common/Button";
 import CustomTable from "@/Components/Common/CustomTable";
 import '@/Styles/Contact/ContactPage.css';
 import ContactModalForm from "@/Components/Contact/ContactModalForm";
+import { TextField } from "@mui/material";
 
 export default function ContactPage() {
   const {
@@ -32,7 +33,9 @@ export default function ContactPage() {
     isModalOpen,
     selectedData,
     closeModal,
-    handleSubmit
+    handleSubmit,
+    globalFilter,
+    setGlobalFilter
   } = useContact();
 
   const columns: Column<ContactLogInterface>[] = useMemo(() => [
@@ -139,7 +142,19 @@ export default function ContactPage() {
         </div>
       </div>
 
+      <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div> 
       {error && <p className="contact-page__error">Error: {error.message}</p>}
+
 
       <CustomTable<ContactLogInterface>
         columns={columns}

@@ -21,7 +21,7 @@
     justify-content: space-between;
     padding: var(--space-lg);
     border-bottom: 0.1rem solid var(--border-secondary);
-    min-height: 7rem;
+    min-height: 6rem;
   }
 
   .navbar__logo {

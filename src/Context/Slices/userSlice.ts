@@ -35,9 +35,9 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async ({ page, pageSize, search }: { page: number, pageSize: number, search?: string }, { rejectWithValue }) => {
+  async ({globalFilter, page, pageSize, search }: { globalFilter: string, page: number, pageSize: number, search?: string }, { rejectWithValue }) => {
     try {
-      return await userService.getUsersAsync(page, pageSize, search);
+      return await userService.getUsersAsync(globalFilter, page, pageSize, search);
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }

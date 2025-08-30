@@ -10,12 +10,16 @@ import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 
 class ContactService {
   async getAllAsync(
+    filter: string,
     page: number,
     pageSize: number
   ): Promise<PagedResponse<ContactLogInterface>> {
     const { data } = await api.get<
       ApiResponse<PagedResponse<ContactLogInterface>>
-    >("/ContactLogs", { params: { PageNumber: page, PageSize: pageSize } });
+    >("/ContactLogs", { params: { 
+      globalFilter: filter,
+      PageNumber: page,
+       PageSize: pageSize } });
     return data.data;
   }
 

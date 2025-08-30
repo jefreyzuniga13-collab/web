@@ -24,13 +24,19 @@ function transformPayload(input: SystemParamRequestDto): SystemParamRequestDto {
 
 class SystemParam{
   async getAllAsync(
+      filter: string,
       page: number,
       pageSize: number
     ): Promise<PagedResponse<SystemParamResponseDto>> {
       try {
         const { data } = await api.get<ApiResponse<PagedResponse<SystemParamResponseDto>>>(
           '/SystemParam',
-          { params: { PageNumber: page, PageSize: pageSize } }
+          { params: 
+            { 
+              globalFilter: filter,
+              PageNumber: page, 
+              PageSize: pageSize } 
+          }
         )
         return data.data
       } catch (error) {

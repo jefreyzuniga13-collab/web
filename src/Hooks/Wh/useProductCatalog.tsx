@@ -17,6 +17,7 @@ export function useProductCatalog() {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   // Fetch paginated list
   const fetchPage = useCallback(
@@ -24,7 +25,7 @@ export function useProductCatalog() {
       setLoadingList(true)
       setError(null)
       try {
-        const resp = await ProductCatalogService.getAllAsync(p, s)
+        const resp = await ProductCatalogService.getAllAsync(globalFilter, p, s)
         setProductCatalog(resp.items)
         setTotalCount(resp.meta.totalCount)
         setPage(resp.meta.currentPage)
@@ -35,7 +36,7 @@ export function useProductCatalog() {
         setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [globalFilter, page, pageSize]
   )
 
   // Fetch single item
@@ -153,7 +154,7 @@ export function useProductCatalog() {
   // Initial load & reload
   useEffect(() => {
     fetchPage()
-  }, [fetchPage])
+  }, [fetchPage, globalFilter])
 
   return {
     productCatalog,
@@ -173,5 +174,7 @@ export function useProductCatalog() {
     closeModal,
     handleSubmit,
     toggleSystemParam: toggleStatus,
+    globalFilter,
+    setGlobalFilter
   }
 }

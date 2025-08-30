@@ -17,6 +17,7 @@ const useContact = () => {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const navigate = useNavigate()
 
@@ -25,7 +26,7 @@ const useContact = () => {
       setLoadingList(true)
       setError(null)
       try {
-        const res: PagedResponse<ContactLogInterface> = await contactService.getAllAsync(p, s)
+        const res: PagedResponse<ContactLogInterface> = await contactService.getAllAsync(globalFilter, p, s)
         const verifiedRes: PagedResponse<ContactLogInterface> = await contactService.getAllVerifiedAsync(p, s)
 
         setData(res.items)
@@ -40,7 +41,7 @@ const useContact = () => {
         setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [globalFilter, page, pageSize]
   )
 
   const fetchById = useCallback(
@@ -171,7 +172,7 @@ const useContact = () => {
 
   useEffect(() => {
     fetchPage()
-  }, [fetchPage, page, pageSize])
+  }, [fetchPage, globalFilter, page, pageSize])
 
   const handleSubmit = useCallback(
     (values: ContactFormValues) => {
@@ -208,6 +209,8 @@ const useContact = () => {
     update,
     toggle,
     verify,
+    globalFilter,
+    setGlobalFilter
   }
 }
 

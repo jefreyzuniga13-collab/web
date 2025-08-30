@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
+import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import type {
   WaTemplateRequestDto,
   WaTemplateResponseDto,
@@ -21,11 +22,17 @@ class WaTemplateServ {
     return data.data;
   }
 
-  async GetAllAsync(sync: boolean = false): Promise<WaTemplateResponseDto[]> {
+  async GetAllAsync(
+  sync: boolean = false,
+  filter: string
+  ): Promise<WaTemplateResponseDto[]> {
     const { data } = await api.get<ApiResponse<WaTemplateResponseDto[]>>(
       "WaTemplates",
       {
-        params: { sync },
+        params: {
+          globalFilter: filter, 
+          sync 
+        },
       }
     );
 
@@ -41,6 +48,21 @@ class WaTemplateServ {
     );
     return data;
   }
+
+      async getAllAsync(
+        filter: string,
+        page: number,
+        pageSize: number
+      ): Promise<PagedResponse<WaTemplateResponseDto>> {
+          const { data } = await api.get<ApiResponse<PagedResponse<WaTemplateResponseDto>>>(
+            '/ProductCatalog/GetAllByPagination',
+            { params: { 
+              globalFilter: filter,
+              PageNumber: page, 
+              PageSize: pageSize } }
+          )
+          return data.data
+      }
 }
 
 export const WaTemplateService = new WaTemplateServ();

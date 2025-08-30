@@ -9,14 +9,20 @@ import type {
 } from '@/Interfaces/User/UserInterfaces'
 
 class UserService {
-  async getUsersAsync(page = 1, pageSize = 10, searchQuery = ''): Promise<PaginatedUsers> {
+  async getUsersAsync(
+    filter: string,
+    page = 1, pageSize = 10, searchQuery = ''): Promise<PaginatedUsers> {
     let url = `/Users?PageNumber=${page}&PageSize=${pageSize}`
 
     if (searchQuery) {
       url += `&Search=${encodeURIComponent(searchQuery)}`
     }
 
-    const { data } = await api.get<ApiResponse<PaginatedUsers>>(url)
+    const { data } = await api.get<ApiResponse<PaginatedUsers>>(url,{
+      params:{
+        globalFilter: filter
+      }
+    })
     return data.data
   }
 

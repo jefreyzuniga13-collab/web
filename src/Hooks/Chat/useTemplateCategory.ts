@@ -17,14 +17,15 @@ export function useTemplateCategory() {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
-
+  const [globalFilter, setGlobalFilter] = useState<string>('')
+  
   // Fetch paginated list
   const fetchPage = useCallback(
     async (p = page, s = pageSize) => {
       setLoadingList(true)
       setError(null)
       try {
-        const resp = await TemplateCategoryService.getAllAsync(p, s)
+        const resp = await TemplateCategoryService.getAllAsync(globalFilter, p, s)
         setTemplateCategories(resp.items)
         setTotalCount(resp.meta.totalCount)
         setPage(resp.meta.currentPage)
@@ -35,7 +36,7 @@ export function useTemplateCategory() {
         setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [globalFilter, page, pageSize]
   )
 
   // Fetch single item
@@ -152,7 +153,7 @@ export function useTemplateCategory() {
   // Initial load & reload
   useEffect(() => {
     fetchPage()
-  }, [fetchPage])
+  }, [fetchPage, globalFilter])
 
   return {
     templateCategories,
@@ -172,5 +173,7 @@ export function useTemplateCategory() {
     closeModal,
     handleSubmit,
     toggleStatus,
+    globalFilter,
+    setGlobalFilter,
   }
 }

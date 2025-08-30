@@ -21,11 +21,17 @@ function toDateOnlyString(date: Date | string | undefined | null): string | unde
 }
 
 class WorkShift {
-  async getAllAsync(page = 1, size = 20): Promise<PagedResponse<WorkShiftInterface>> {
+  async getAllAsync(
+    filter: string,
+    page = 1, 
+    size = 20): Promise<PagedResponse<WorkShiftInterface>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<WorkShiftInterface>>>(
         '/WorkShift',
-        { params: { PageNumber: page, PageSize: size } }
+        { params: { 
+          globalFilter: filter,
+          PageNumber: page, 
+          PageSize: size } }
       );
       return data.data;
     } catch (error) {

@@ -46,3 +46,10 @@ export interface DataTableProps<T> {
   | 'Closed'
   | 'Waiting'
   | 'Bot'
+
+
+    export type TemplateCategoryTranslation =
+  | 'Utility'
+  | 'Marketing'
+  | 'Authentication'
+  | "Service"

@@ -35,13 +35,17 @@ class ProductCatalogServ {
 //   }
 
     async getAllAsync(
+      filter: string,
       page: number,
       pageSize: number
     ): Promise<PagedResponse<ProductCatalogResponse>> {
       try {
         const { data } = await api.get<ApiResponse<PagedResponse<ProductCatalogResponse>>>(
           '/ProductCatalog/GetAllByPagination',
-          { params: { PageNumber: page, PageSize: pageSize } }
+          { params: { 
+            globalFilter: filter,
+            PageNumber: page, 
+            PageSize: pageSize } }
         )
         return data.data
       } catch (error) {

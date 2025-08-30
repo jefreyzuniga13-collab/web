@@ -17,13 +17,14 @@ export const useOpeningHour = () => {
   const [error, setError] = useState<Error|null>(null)
   const [modalMode, setModalMode] = useState<'create'|'edit'|'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   // Fetch a page of data
   const fetchPage = useCallback(async (p = page, s = pageSize) => {
     setLoadingList(true)
     setError(null)
     try {
-      const resp = await OpeningHourService.getAll(p, s)
+      const resp = await OpeningHourService.getAll(globalFilter, p, s)
       setOpeningHours(resp.items)
       setTotalCount(resp.meta.totalCount)
       setPage(resp.meta.currentPage)
@@ -33,7 +34,7 @@ export const useOpeningHour = () => {
     } finally {
       setLoadingList(false)
     }
-  }, [page, pageSize])
+  }, [globalFilter, page, pageSize])
 
   // Fetch one item by id (for edit/view)
   const fetchById = useCallback(async (id: number) => {
@@ -140,7 +141,7 @@ export const useOpeningHour = () => {
   // Initial load & reload on page/pageSize change
   useEffect(() => {
     fetchPage()
-  }, [fetchPage])
+  }, [fetchPage, globalFilter])
 
   return {
     openingHours,
@@ -160,5 +161,7 @@ export const useOpeningHour = () => {
     closeModal,
     handleSubmit,
     toggleOpeningHourStatus: toggleStatus,
+    globalFilter,
+    setGlobalFilter
   }
 }

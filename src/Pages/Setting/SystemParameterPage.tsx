@@ -13,6 +13,7 @@ import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Setting/SystemParamsPage.css'
 import type { NameTranslation, TypeTranslation } from '@/Interfaces/Setting/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
+import { TextField } from '@mui/material'
 
 const typeTranslations: Record<TypeTranslation, string> = {
   Prompts: "Mensaje",
@@ -38,6 +39,8 @@ export default function SystemParamsPage() {
     closeModal,
     handleSubmit,
     toggleSystemParam,
+    globalFilter,
+    setGlobalFilter
   } = useSystemParams()
 
   const columns: Column<SystemParamResponseDto>[] = useMemo(() => [
@@ -110,6 +113,17 @@ export default function SystemParamsPage() {
 
       {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
 
+      <div className='table-contaner__search-filter__container'>
+        <TextField
+          label="Filtrar"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className='table-contaner__search-filter'
+        />
+      </div> 
       <CustomTable<SystemParamResponseDto>
         columns={columns}
         rows={systemParams}
