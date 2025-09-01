@@ -99,7 +99,7 @@ export function useWaTemplateForm({
       let page = 1
       const acc: TemplateCategoryResponseDto[] = []
       while (true) {
-        const resp = await TemplateCategoryService.getAllAsync(page, pageSize)
+        const resp = await TemplateCategoryService.getAllAsync('', page, pageSize)
         acc.push(...resp.items)
         if (resp.items.length < pageSize) break
         page += 1

@@ -4,7 +4,6 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
-// import LanguageSwitcher from "@/Components/Common/LanguageSwitcher";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
@@ -59,14 +58,6 @@ export default function LoginPresentation() {
         </aside>
 
         <section className={`login__form-section ${formError ? 'login__form-section--error' : ''}`}>
-          <div className="login__form-header">
-            <Link to="/forgot-password" className="login__help-link">
-              {t("login.needHelp")}
-            </Link>
-            {/* <LanguageSwitcher /> */}
-          </div>
-
-          <p className="login__subtitle">{t("login.subtitle")}</p>
           {formError && <div className="login__error">{formError}</div>}
 
           <form onSubmit={formik.handleSubmit} noValidate>
@@ -117,7 +108,7 @@ export default function LoginPresentation() {
               </Link>
             </div>
 
-               <Button
+            <Button
               type="submit"
               variant="primary"
               disabled={!canSubmit || loading}
@@ -127,17 +118,11 @@ export default function LoginPresentation() {
                {loading ? `${t("login.submit")}…` : t("login.submit")}
            </p>
             </Button>
-
-            {/* <p className="login__signup-text">
-              {t("login.noAccount")}{" "}
-              <Link to="/signup" replace className="login__signup-link">
-                {t("login.signUp")}
-              </Link>
-            </p> */}
           </form>
         </section>
       </div>
       <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
+      <p className="login__footer"><span className="derechos">Versión 1.1.0</span></p>
     
       {showModal && (
         <ActivationSesionModal

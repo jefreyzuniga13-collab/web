@@ -27,7 +27,6 @@ const ContactPage          = lazy(() => import('@/Pages/Contact/ContactPage'))
 const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
-const WaTemplateBroadcastPage    = lazy(() => import('@/Pages/Wa/WaTemplateBroadcastPage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
 
 export function AppRouter() {
@@ -69,7 +68,6 @@ export function AppRouter() {
           <Route path="work-shift"              element={<WorkShiftPage />} />
           <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
           <Route path="conversation/:state"     element={<ConversationsPage />} />
-          <Route path="plantilla-enviar"     element={<WaTemplateBroadcastPage />} />
           <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />
           <Route path="templates-management"     element={<WaTemplatesPage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />

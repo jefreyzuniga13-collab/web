@@ -25,7 +25,7 @@ function transformPayload(input: TemplateCategoryRequestDto): TemplateCategoryRe
 
 class TemplateCategoryServ{
   async getAllAsync(
-    filter: string,
+      filter: string = '',
       page: number,
       pageSize: number
     ): Promise<PagedResponse<TemplateCategoryResponseDto>> {

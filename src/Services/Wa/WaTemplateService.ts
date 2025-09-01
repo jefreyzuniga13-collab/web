@@ -24,7 +24,7 @@ class WaTemplateServ {
 
   async GetAllAsync(
   sync: boolean = false,
-  filter: string
+  filter: string = '',
   ): Promise<WaTemplateResponseDto[]> {
     const { data } = await api.get<ApiResponse<WaTemplateResponseDto[]>>(
       "WaTemplates",

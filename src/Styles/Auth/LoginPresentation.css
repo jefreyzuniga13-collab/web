@@ -41,7 +41,7 @@
 
 .login__info-panel {
   flex: 1;
-  max-width: 45rem;
+  max-width: 60rem;
   padding: var(--space-lg);
   /* background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); */
   display: flex;
@@ -219,7 +219,8 @@
   color: var(--text-white);
   font-size: var(--font-size-sm);
   text-align: center;
-  padding: var(--space-lg);
+  padding: var(--space-sx);
+  margin: 0;
 }
 
 .social_media_container{

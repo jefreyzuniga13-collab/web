@@ -11,7 +11,7 @@ import { notificationSound } from '@/Utils/sound'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
-  'https://crmpcg.com/api/v1'
+  'VITE_API_URL=https://localhost:7108/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 let chatConnection: signalR.HubConnection | null = null
