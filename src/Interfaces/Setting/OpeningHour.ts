@@ -49,6 +49,13 @@ export type NameTranslation =
   | "AssignedConversacionMessage"
   | "ConversationInProgressMessage"
   | "EnableChatBotOption"
+  | "HelpDeskMessage"
+  | "SupportManagementMessage"
+  | "ProductQuoteMessage"
+  | "AdministrativeChannelMessage"
+  | "OpeningHourMessage"
+  | "SeleccionSoporteMessage"
+  ;
 
   export type TypeTranslation =
   | 'Prompts'

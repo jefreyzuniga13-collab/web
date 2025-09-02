@@ -59,9 +59,14 @@ export const useChatWindow = () => {
     [messages]
   );
 
+  // useEffect(() => {
+  //   bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // }, [visibleMessages])
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [visibleMessages])
+
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]

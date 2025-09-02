@@ -7,10 +7,7 @@
   height: 100vh;
   font-size: var(--font-size-base);
   padding: 2rem 0;
-  /* background-image: url("https://www.welcometonicaragua.net/wp-content/uploads/2016/04/volcano-mombacho-nicaragua.jpg"); */
-  /* background-image: url('https://www.piensageotermia.com/wp-content/uploads/2021/01/Mombacho_volcano_Nicaragua-1024x576.jpg'); */
-
-  background-image: url('https://www.intur.gob.ni/wp-content/uploads/2019/05/Granada-mombacho-National-Geographic-Nicaragua.jpg');
+  background-image: url("../../assets/fondo_contenedor.jpg");
   background-repeat: no-repeat;
   background-size: cover; /* Cubre todo el espacio */
   background-position: center; 

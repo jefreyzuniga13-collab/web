@@ -169,13 +169,12 @@ export const InboxList: React.FC<Props> = ({
             <div className="inbox-list__top">
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
-                   <span className="inbox-list__client_name">
-                    {c.systemDefinedCompanyName || ''}
+                   <span className="inbox-list__name">
+                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName: c.clientContactName != null ? c.clientContactName: 'Contacto'}
+                    {/* <span className="">
+                      {c.clientContactName || 'contacto'}
+                    </span> */}
                   </span>
-                  <span className="inbox-list__name">
-                    {c.clientContactName || 'contacto'}
-                  </span>
-                  <span className="inbox-list__time">{lastTime}</span>
                 </div>
                 {c.assignedAgentName && (
                   <div className="inbox-list__agent">
@@ -185,11 +184,14 @@ export const InboxList: React.FC<Props> = ({
                 <span className="inbox-list__preview">{previewText}</span>
               </div>
               <div className="inbox-list__bottom">
+                <div className='inbox-list__bottom_text'>
+                  <span className="inbox-list__time">{lastTime}</span>
                 <span
                   className={`inbox-list__status inbox-list__status--${statusClass}`}
                 >
                   {statusText}
                 </span>
+                </div>
                 {hasUnread && (
                   <span className="inbox-list__unread-badge">{unread}</span>
                 )}

@@ -88,8 +88,9 @@ const SupportPage: React.FC = () => {
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName) ? ("Cliente") : (convId != null && conversation?.clientContactName ? "Contacto" : "")} {conversation?.systemDefinedCompanyName != null ? conversation?.systemDefinedCompanyName : conversation?.clientContactName != null 
-          ? conversation?.clientContactName : convId != null ? "Desconocido" : ""} {convId != null && (" | Télefono")} {conversation?.contactNumber}</h2>
+          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName != null ? ("Cliente | " + conversation?.systemDefinedCompanyName) : "")} {(convId != null && conversation?.clientContactName != null ? ("Contacto" + conversation?.clientContactName) + " | " : "Sin contacto")}
+          {convId != null && ("Télefono")} {conversation?.contactNumber}</h2>
+          
           <div className="btn-container">
             {convId && (
               <>

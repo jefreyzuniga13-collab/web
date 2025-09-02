@@ -180,7 +180,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
           )
         })}
         
-        <div ref={bottomRef} />
+      <div ref={bottomRef} className='butttonRef' />
       </div>
       <div className="chat-window__composer">
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">

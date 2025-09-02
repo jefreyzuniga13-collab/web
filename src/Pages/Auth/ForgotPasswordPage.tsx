@@ -4,6 +4,7 @@ import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
 import {Link} from 'react-router-dom'
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
+import logopcg from '@/assets/pcgroup.png'
 
 export default function ForgotPasswordPresentation() {
   const { t } = useTranslation();
@@ -19,16 +20,16 @@ export default function ForgotPasswordPresentation() {
           <p className="forgot-password__description">
             {t("forgotPassword.description")}
           </p>
-          <ul className="forgot-password__steps">
+          {/* <ul className="forgot-password__steps">
             {Array.from({ length: 5 }, (_, i) => (
               <li key={i} className="forgot-password__steps-item">
                 {t(`forgotPassword.steps.${i + 1}`)}
               </li>
             ))}
-          </ul>
+          </ul> */}
           <img
             className="forgot-password__image"
-            src="https://i.ibb.co/qLpn7cCK/forgot-password-email.png"
+            src={`${logopcg}`}
             alt={t("forgotPassword.imageAlt")}
           />
         </aside>
@@ -77,8 +78,14 @@ export default function ForgotPasswordPresentation() {
               </Link>
             </p>
           </form>
+          
         </section>
+
+        
       </div>
+
+       <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
+        <p className="login__footer"><span className="derechos">Versión 1.1.0</span></p>
     </div>
   );
 }

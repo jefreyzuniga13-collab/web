@@ -78,9 +78,9 @@ const VerifyNewContactPage: React.FC = () => {
                   value={form.idCard}
                   onChange={handleChangeText}
                 />
-                {errors.idCard && (
+                {/* {errors.idCard && (
                   <div className="verifyContact-error">{errors.idCard}</div>
-                )}
+                )} */}
               </div>
             )}
             {form.idType === 'Passport' && (
@@ -92,9 +92,9 @@ const VerifyNewContactPage: React.FC = () => {
                   value={form.passport}
                   onChange={handleChangeText}
                 />
-                {errors.passport && (
+                {/* {errors.passport && (
                   <div className="verifyContact-error">{errors.passport}</div>
-                )}
+                )} */}
               </div>
             )}
             {form.idType === 'ResidenceCard' && (
@@ -106,11 +106,11 @@ const VerifyNewContactPage: React.FC = () => {
                   value={form.residenceCard}
                   onChange={handleChangeText}
                 />
-                {errors.residenceCard && (
+                {/* {errors.residenceCard && (
                   <div className="verifyContact-error">
                     {errors.residenceCard}
                   </div>
-                )}
+                )} */}
               </div>
             )}
 

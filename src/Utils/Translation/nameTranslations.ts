@@ -46,4 +46,10 @@ export const nameTranslations: Record<NameTranslation, string> = {
   AssignedConversacionMessage: "Mensaje de asignación de agente",
   ConversationInProgressMessage: "Mensaje de conversación en proceso de asignación",
   EnableChatBotOption: "Chatbot habilitado",
+  HelpDeskMessage: "Mensaje de ayuda (HelpDesk)",
+  SupportManagementMessage:" Mensaje contactar jefe de soporte",
+  ProductQuoteMessage: "Mensaje cotización de productos",
+  AdministrativeChannelMessage: "Mensaje canal administrativo",
+  OpeningHourMessage:" Mensaje horario de atención",
+  SeleccionSoporteMessage: "Mensaje ayuda equipo de soporte",
 };

@@ -145,31 +145,26 @@ const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
     )
   }, [matchesFilter, sortByActivity])
 
-  const handleDate = useCallback((field: keyof FormInterface, d: Date | null) =>
-    setForm(f => ({ ...f, [field]: d })), [])
+  const handleDate = useCallback(
+    (field: keyof FormInterface, d: Date | null) =>
+    setForm(f => ({ ...f, [field]: d })
+  ), [])
 
-const applyDateFilter = () => {
-  if (!form.validFrom && !form.validTo) return
+  const applyDateFilter = useCallback(() => {
+    if (!form.validFrom && !form.validTo) return
 
-  if (form.validFrom) localStorage.setItem('convFrom', form.validFrom.toISOString())
-  if (form.validTo)   localStorage.setItem('convTo', form.validTo.toISOString())
-
-  setAppliedRange({
+    setAppliedRange({
     validFrom: form.validFrom ? new Date(form.validFrom) : null,
     validTo:   form.validTo   ? new Date(form.validTo)   : null,
   })
-
   setPage(1)
-}
+  }, [form])
 
-  const clearFilter = () => {
-    localStorage.removeItem('convFrom')
-    localStorage.removeItem('convTo')
+  const clearFilter = useCallback(() => {
     setForm({ validFrom: null, validTo: null })
-
     setAppliedRange({ validFrom: null, validTo: null })
     setPage(1)
-  }
+  }, [])
 
   useEffect(() => {
     setLoading(true)

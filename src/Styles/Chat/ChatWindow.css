@@ -4,7 +4,7 @@
   flex-direction: column;
   min-height: 90%;
   max-height: 90%;
-  background-image: url('/src/assets/bgchat.png');
+  background-image: url('/src/assets/bgchat2.png');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -106,7 +106,7 @@
 .chat-window__message-sender {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-gray-600);
+  color: var(--color-gray8700);
   margin-bottom: var(--space-xs);
   padding-left: var(--space-md);
   align-self: self-start;

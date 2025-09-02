@@ -1,7 +1,7 @@
 
 .support-layout {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: .7fr 2fr;
   max-height: 100vh;
   position: relative;
   overflow: hidden;
@@ -18,7 +18,7 @@
 }
 
 .main-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-gray-800);
   margin: 0;
@@ -217,7 +217,7 @@
 }
 
 .inbox-status__label{
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--font-size-xs) !important;
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--space-2xl);
   color: var(--color-primary);

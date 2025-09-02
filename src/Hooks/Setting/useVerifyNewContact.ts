@@ -112,18 +112,18 @@ export function useVerifyNewContact(phoneNumber: string) {
     if (!form.fullName.trim()) newErrors.fullName = 'Nombre completo requerido'
     
     //Ejemplos formatos validos 0010022112360Q o 123-456789-0123A
-   if (
-  form.idType === 'NationalCard' &&
-  !/^(\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)
-    ) {
-      newErrors.idCard = 'Formato de cédula inválido';
-    }
+  //  if (
+  // form.idType === 'NationalCard' &&
+  //   !/^(\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)
+  //   ) {
+  //     newErrors.idCard = 'Formato de cédula inválido';
+  //   }
 
     
-    if (form.idType === 'Passport' && !/^[A-Z]{1,2}\d{7}$/.test(form.passport))
-      newErrors.passport = 'Formato de pasaporte inválido'
-    if (form.idType === 'ResidenceCard' && !/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard))
-      newErrors.residenceCard = 'Formato de residencia inválido'
+    // if (form.idType === 'Passport' && !/^[A-Z]{1,2}\d{7}$/.test(form.passport))
+    //   newErrors.passport = 'Formato de pasaporte inválido'
+    // if (form.idType === 'ResidenceCard' && !/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard))
+    //   newErrors.residenceCard = 'Formato de residencia inválido'
     if (!form.codcli) newErrors.codcli = 'Seleccione un cliente'
     // if (form.codigo <= 0) newErrors.codigo = 'Ingrese código válido'
     if (Object.keys(newErrors).length) {
