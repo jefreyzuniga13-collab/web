@@ -55,6 +55,19 @@ export function useSystemParams() {
     }
   }, [])
 
+    const fetchByName = useCallback(async (name: string) => {
+    setLoadingItem(true)
+    setError(null)
+    try {
+      const item = await SystemParamService.getByNameAsync(name)
+      setSelectedParam(item)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoadingItem(false)
+    }
+  }, [])
+
   // Create
   const create = useCallback(
     async (values: SystemParamRequestDto) => {
@@ -178,6 +191,7 @@ export function useSystemParams() {
     handleSubmit,
     toggleSystemParam: toggleStatus,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    fetchByName
   }
 }

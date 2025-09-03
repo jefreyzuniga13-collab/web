@@ -170,10 +170,10 @@ export const InboxList: React.FC<Props> = ({
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
                    <span className="inbox-list__name">
-                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName: c.clientContactName != null ? c.clientContactName: 'Contacto'}
-                    {/* <span className="">
-                      {c.clientContactName || 'contacto'}
-                    </span> */}
+                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName: ''}
+                    <span className="">
+                      {c.clientContactId != null ? " (" + c.clientContactName + ")" : ''}
+                    </span>
                   </span>
                 </div>
                 {c.assignedAgentName && (

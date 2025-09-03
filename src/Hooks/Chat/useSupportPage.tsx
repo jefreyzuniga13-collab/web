@@ -7,6 +7,7 @@ import {
 } from "@/Services/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/assignModalSlice";
+import { useSystemParams } from "@/Hooks/Setting/useSystemParams";
 interface AuthStorage {
   accessToken: string;
   refreshToken: string;
@@ -38,6 +39,7 @@ export function useSupportPage() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
+  const { selectedParam, fetchByName } = useSystemParams();
 
   const authRaw = localStorage.getItem("auth") || "{}";
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage;
@@ -95,7 +97,10 @@ export function useSupportPage() {
     getConversation(convId)
       .then((res) => setConversation(res.data.data))
       .catch(console.error);
+
+      fetchByName('OpcionesRapidas')
   }, [convId]);
+  
 
   const handleAfterAssign = () => {
     if (!convId) return;
@@ -119,6 +124,12 @@ export function useSupportPage() {
     setSelectedFilter(val);
     localStorage.setItem("selectedFilter", val);
   };
+
+  //Funcion separar los primeros 3 numeros 505 del resto del numero.
+  function extraerNumero(cadena: string): string {
+
+    return cadena.slice(0, 3) + "-" + cadena.slice(3);
+  }
 
   // Guardar orden en localStorage
   const saveOrder = (newOrder: string[]) => {
@@ -145,5 +156,7 @@ export function useSupportPage() {
     setConvId,
     filter,
     userId,
+    extraerNumero,
+    selectedParam
   };
 }

@@ -1,7 +1,7 @@
 import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
 import { Check, CheckCheck } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
 
@@ -11,6 +11,9 @@ export const useChatWindow = () => {
   const messages = useMessages(conversationId)
 
   const [text, setText] = useState('')
+
+  const [selectedOption, setSelectedOption] = useState('')
+
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
@@ -59,10 +62,6 @@ export const useChatWindow = () => {
     [messages]
   );
 
-  // useEffect(() => {
-  //   bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  // }, [visibleMessages])
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [visibleMessages])
@@ -95,7 +94,7 @@ export const useChatWindow = () => {
     }
   }
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!conversationId || sending) return
     setSending(true)
     try {
@@ -104,7 +103,18 @@ export const useChatWindow = () => {
         setFile(null)
         setText('')
         if (fileInputRef.current) fileInputRef.current.value = ''
-      } else if (text.trim()) {
+      }
+      else if(selectedOption != null){
+        console.log("opcion" + selectedOption)
+        await sendText({
+          conversationId,
+          senderId: userId,
+          content:selectedOption.trim(),
+          messageType: 'Text'
+        })
+        setSelectedOption('')
+      }
+       else if (text.trim()) {
         await sendText({
           conversationId,
           senderId: userId,
@@ -118,7 +128,8 @@ export const useChatWindow = () => {
     } finally {
       setSending(false)
     }
-  }
+  
+  }, [conversationId, file, selectedOption, sending, text, userId])
 
   const handleDownload = async ( fileName: string) => {
     try {
@@ -187,6 +198,8 @@ export const useChatWindow = () => {
     setismaximize(false)
   }
 
+  
+
   return {
     setConversationId,
     setUserId,
@@ -223,5 +236,7 @@ export const useChatWindow = () => {
     visibleMessages,
     hasMedia,
     hasText,
+    setSelectedOption,
+    selectedOption
   }
 }

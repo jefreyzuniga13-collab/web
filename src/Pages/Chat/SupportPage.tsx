@@ -34,6 +34,8 @@ const SupportPage: React.FC = () => {
     setConvId,
     filter,
     userId,
+    extraerNumero,
+    selectedParam
   } = useSupportPage();
 
   return (
@@ -88,8 +90,8 @@ const SupportPage: React.FC = () => {
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName != null ? ("Cliente | " + conversation?.systemDefinedCompanyName) : "")} {(convId != null && conversation?.clientContactName != null ? ("Contacto" + conversation?.clientContactName) + " | " : "Sin contacto")}
-          {convId != null && ("Télefono")} {conversation?.contactNumber}</h2>
+          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName != null ? ("Cliente: " + conversation?.systemDefinedCompanyName) : "")} {(convId != null && conversation?.clientContactName != null ? ("| Contacto: " + conversation?.clientContactName) + " | " : " ")}
+          {convId != null && ("Télefono: ")} {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}</h2>
           
           <div className="btn-container">
             {convId && (
@@ -125,7 +127,7 @@ const SupportPage: React.FC = () => {
           </div>
         </header>
 
-        <ChatWindow conversationId={convId ?? undefined} userId={userId} conversationStatus={conversation?.status}/>
+        <ChatWindow conversationId={convId ?? undefined} userId={userId} conversationStatus={conversation?.status} selectedParam={selectedParam}/>
       </main>
 
       {contactDetailToggle && (

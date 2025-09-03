@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useTranslation } from "react-i18next";
@@ -73,6 +73,11 @@ export default function useLoginForm() {
     setShowModal(false);
     setPendingLogin(null);
   };
+
+  useEffect(() => {
+    localStorage.removeItem('dashboardFilters');
+  }, [])
+  
 
   return {
     formik,

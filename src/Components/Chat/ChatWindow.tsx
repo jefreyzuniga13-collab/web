@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
+import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
+import { GrChatOption } from "react-icons/gr";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -9,14 +12,15 @@ const formatTime = (iso?: string) => {
   return match ? match[1] : ''
 }
 
-  
 interface Props {
   conversationId?: number
   conversationStatus?: string | null
   userId: number
+  selectedParam: SystemParamResponseDto | null;
 }
 
-export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversationStatus }) => {
+export const ChatWindow: React.FC<Props> = ({ conversationId, userId, 
+  conversationStatus, selectedParam }) => {
   const {
     setConversationId,
     setUserId,
@@ -41,8 +45,13 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
-
+    setSelectedOption
   } = useChatWindow()
+
+  const [quickOpen, setQuickOpen] = useState(false)
+  const [activeQuick, setActiveQuick] = useState<string | null>(null)
+  const quickRef = useRef<HTMLDivElement | null>(null)
+
 
   useEffect(() => {
     setConversationId(Number(conversationId))
@@ -51,8 +60,48 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
       setConversationId(0)
       setUserId(0)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (!quickRef.current) return
+      if (!quickRef.current.contains(e.target as Node)) setQuickOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  const quickOptions: string[] = useMemo(() => {
+    if (Array.isArray(selectedParam)) return selectedParam.filter(v => typeof v === 'string')
+    if (typeof selectedParam === 'string') {
+      try {
+        const parsed = JSON.parse(selectedParam)
+        if (Array.isArray(parsed)) return parsed.filter(v => typeof v === 'string')
+      } catch {
+        //return selectedParam.split('|').map(s => s.trim()).filter(Boolean)
+      }
+    }
+
+    if (typeof (selectedParam as any)?.value === 'string') {
+      try {
+        const parsed = JSON.parse((selectedParam as any).value)
+        if (Array.isArray(parsed)) return parsed.filter(v => typeof v === 'string')
+      } catch {
+        return String((selectedParam as any).value).split('|').map((s: string) => s.trim()).filter(Boolean)
+      }
+    }
+    if (Array.isArray((selectedParam as any)?.value)) {
+      return (selectedParam as any).value.filter((v: any) => typeof v === 'string')
+    }
+    return []
+  }, [selectedParam])
+
+  const selectQuick = (opt: string) => {
+        setSelectedOption(opt)
+    setActiveQuick(opt)
+    setQuickOpen(false)
+    handleSend()
+  }
 
   if (!conversationId) {
     return (
@@ -78,9 +127,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
           const isCurrentUser = m.senderUserId === userId
           const prev = i > 0 ? visibleMessages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
-
-          const sentAt = formatTime(m.sentAt);
-
+          const sentAt = formatTime(m.sentAt)
           return (
             <div key={m.messageId} className={getMessagePosition(m)}>
               {showSender && !isCurrentUser && (
@@ -106,7 +153,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                           </div>
                         </div>
                       )}
-                      
                       {m.attachments[0].mimeType?.startsWith('video/') && (
                         <div className="chat-window__media-video">
                           <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
@@ -114,7 +160,6 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                           </video>
                         </div>
                       )}
-                      
                       {m.attachments[0].mimeType?.startsWith('audio/') && (
                         <div className="chat-window__media-audio">
                           <div className="chat-window__audio-container">
@@ -159,33 +204,88 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                           </a>
                         </div>
                       )}
-                     {hasText(m) && (
-                            <div className="chat-window__message-caption">{m.content}</div>
-                          )}
+                      {hasText(m) && <div className="chat-window__message-caption">{m.content}</div>}
                     </div>
                   ) : (
-                    hasText(m) && (
-                      <div className="chat-window__message-text">{m.content}</div>
-                    )
+                    hasText(m) && <div className="chat-window__message-text">{m.content}</div>
                   )}
                 </div>
                 <div className="chat-window__message-info">
-                  <span className="chat-window__message-time">
-                    {sentAt}
-                  </span>
+                  <span className="chat-window__message-time">{sentAt}</span>
                   {getStatusIcon(m, isCurrentUser)}
                 </div>
               </div>
             </div>
           )
         })}
-        
-      <div ref={bottomRef} className='butttonRef' />
+        <div ref={bottomRef} className="butttonRef" />
       </div>
+
       <div className="chat-window__composer">
+        
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
+
+        
+        <div
+          ref={quickRef}
+          className="chat-window__quick"
+          style={{ position: 'relative', marginRight: '8px' }}
+        >
+          <button
+            type="button"
+            className="chat-window__quick-toggle"
+            onClick={() => setQuickOpen(o => !o)}
+            disabled={!conversationId || sending || quickOptions.length === 0}
+            //disabled={!conversationId || sending || conversationStatus == 'Closed' || quickOptions.length === 0}
+            aria-label="Opciones rápidas"
+          >
+            <GrChatOption fontSize={18} />
+          </button>
+
+          {quickOpen && (
+            <div
+              className="chat-window__quick-dropdown"
+              style={{
+                position: 'absolute',
+                left: 0,
+                bottom: '44px',
+                background: '#fff',
+                borderRadius: 12,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                padding: 8,
+                width: 240,
+                maxHeight: 300,
+                overflowY: 'auto',
+                zIndex: 10
+              }}
+            >
+              {quickOptions.map((opt, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectQuick(opt)}
+                  className="chat-window__quick-item"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: activeQuick === opt ? '#e6f4ff' : 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 14
+                  }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <input
           id="file-upload"
           ref={fileInputRef}
@@ -207,9 +307,8 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             </button>
           </div>
         )}
-        
-        <div className="chat-window__composer-input-container">
 
+        <div className="chat-window__composer-input-container">
           <textarea
             className="chat-window__composer-input"
             placeholder="Escribe un mensaje…"
@@ -221,6 +320,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             rows={1}
           />
         </div>
+
         <button
           className="chat-window__composer-send"
           onClick={handleSend}
@@ -230,6 +330,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
           <Send size={18} />
         </button>
       </div>
+
       {ismaximize && previewImageUrl && (
         <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
           <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />

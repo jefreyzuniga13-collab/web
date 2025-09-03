@@ -22,12 +22,108 @@
   gap: var(--space-md);
 }
 
+
 .chat-window__date-divider {
   display: flex;
   align-items: center;
   margin: var(--space-lg) 0;
   text-align: center;
 }
+
+.chat-window__quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-window__quick-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  border-radius: var(--radius-full);
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+}
+
+.chat-window__quick-toggle:hover {
+
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.chat-window__quick-toggle:active {
+  transform: scale(.97);
+}
+
+.chat-window__quick-toggle:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.chat-window__quick-dropdown {
+  position: absolute;
+  right: 0;
+  bottom: 44px;
+  width: 260px;
+  max-height: 320px;
+  background: #2563eb;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.18);
+  overflow-y: auto;
+  padding: 8px;
+  animation: cw-quick-in .12s ease-out;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes cw-quick-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-window__quick-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-window__quick-dropdown::-webkit-scrollbar-thumb {
+  background: var(--bg-primary);
+  border-radius: 8px;
+}
+
+.chat-window__quick-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background .12s ease, transform .04s ease;
+}
+
+.chat-window__quick-item:hover {
+  background: var(--color-blue-light);
+}
+
+.chat-window__quick-item:active {
+  transform: scale(.995);
+}
+
+@media (max-width: 480px) {
+  .chat-window__quick-dropdown {
+    right: 0;
+    left: auto;
+    width: min(90vw, 320px);
+  }
+}
+
 
 .chat-window__date-divider::before,
 .chat-window__date-divider::after {
