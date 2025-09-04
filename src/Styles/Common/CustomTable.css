@@ -12,13 +12,22 @@
   box-shadow: var(--shadow-md);
 }
 
-.table__scroll-container {
-  flex-grow: 1;
+.MuiTable-root{
+  width: 100% !important;
+  border-collapse: collapse !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: scroll !important;
 }
-
+.table__scroll-container{
+  box-sizing: border-box;
+}
 .MuiTableBody-root,
 .MuiTableRow-root{
   min-height: 90% !important;
+  height: 90% !important;
+  max-height: 90% !important;
+  overflow-y: auto !important;
 }
 
 .table__cell--header {

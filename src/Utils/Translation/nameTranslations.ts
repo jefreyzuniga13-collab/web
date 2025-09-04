@@ -52,4 +52,14 @@ export const nameTranslations: Record<NameTranslation, string> = {
   AdministrativeChannelMessage: "Mensaje canal administrativo",
   OpeningHourMessage:" Mensaje horario de atención",
   SeleccionSoporteMessage: "Mensaje ayuda equipo de soporte",
+  HorariodeAtencionDisponible: "HorariodeAtencionDisponible",
+  OpcionesRapidas: "OpcionesRapidas",
+  SaludoActivo: "SaludoActivo",
+  EncabezadoSalud: "EncabezadoSaludo",
+  CuerpoSaludo: "CuerpoSaludo",
+  PieSaludo: "PieSaludo",
+  OpcionesSaludo: "OpcionesSaludo",
+  TextoBotonSaludo: "TextoBotonSaludo",
+  TituloSeccionSaludo: "TituloSeccionSaludo",
+  EncabezadoSaludo: "EncabezadoSaludo"
 };

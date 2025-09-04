@@ -1,23 +1,21 @@
-import React from 'react'
+import React, { forwardRef } from 'react'
 import '@/Styles/Common/Input.css'
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string
   rightIcon?: React.ReactNode
   onIconClick?: () => void
 }
 
-export default function Input({
-  error,
-  rightIcon,
-  onIconClick,
-  className = '',
-  ...props
-}: InputProps) {
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { error, rightIcon, onIconClick, className = '', ...props },
+  ref
+) {
   return (
     <div className="input-wrapper">
       <div className="input-field-wrapper">
         <input
+          ref={ref}
           className={`input-field ${error ? 'input-field--error' : ''} ${className}`}
           {...props}
         />
@@ -30,4 +28,6 @@ export default function Input({
       {error && <span className="input-error-message">{error}</span>}
     </div>
   )
-}
+})
+
+export default Input

@@ -1,10 +1,15 @@
 import { useState } from "react";
 import Button from "@/Components/Common/Button";
-// import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { useConversations } from "@/Hooks/useConversations";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+
+// +++ NUEVO: tipos para recibir el estado del hook compartido por props +++
+interface FormInterface {
+  validFrom: Date | null
+  validTo:   Date | null
+}
+type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
+// +++ FIN NUEVO
 
 type FilterOption = { label: string; value: string; content: string };
 
@@ -13,6 +18,11 @@ interface FilterOrderModalProps {
   options: FilterOption[];
   onSave: (newOrder: string[]) => void;
   onClose: () => void;
+
+  form: FormInterface;
+  handleDate: HandleDate;
+  applyDateFilter: () => void;
+  clearFilter: () => void;
 }
 
 const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
@@ -20,11 +30,13 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   options,
   onSave,
   onClose,
+  form,
+  handleDate,
+  applyDateFilter,
+  clearFilter,
 }) => {
   const [order, setOrder] = useState<string[]>(currentOrder);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  //const { form, handleDate, applyDateFilter, clearFilter } = useConversations();
-  const { form, handleDate, applyDateFilter, clearFilter } = useConversations("all", '');
 
   const handleDragStart = (idx: number) => setDragIndex(idx);
   const handleDragOver  = (e: React.DragEvent) => e.preventDefault();
@@ -38,14 +50,15 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   };
 
   const handleSave = () => {
-    
     onSave(order);
-    applyDateFilter(); 
+
+    // +++ NUEVO: aplica el filtro de fechas en la MISMA instancia del hook que usa la lista +++
+    applyDateFilter();
     onClose();
   };
 
   const handleClearFilter = () => {
-    clearFilter(); 
+    clearFilter();
     onClose();
   };
 
@@ -73,54 +86,35 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         </ul>
 
         <div className="ws-modal-dateFilter">
-     
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Válido desde"
+              value={form.validFrom}
+              onChange={d => handleDate("validFrom", d)}
+              format="dd/MM/yyyy"
+              slotProps={{
+                textField: { className: "date-picker-field", fullWidth: true, size: "medium" },
+              }}
+            />
+          </LocalizationProvider>
 
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Válido desde"
-                value={form.validFrom}
-                onChange={d => d && handleDate("validFrom", d)}
-                format="dd/MM/yyyy"
-                slotProps={{
-                  textField: {
-                    className: "date-picker-field",
-                    fullWidth: true,
-                    size: "medium"
-                  },
-                }}
-              />
-            </LocalizationProvider>
-       
-
-
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Válido hasta"
-                value={form.validTo}
-                onChange={d => d && handleDate("validTo", d)}
-                format="dd/MM/yyyy"
-                slotProps={{
-                  textField: {
-                    className: "date-picker-field",
-                    fullWidth: true,
-                     size: "medium"
-                  },
-                }}
-              />
-            </LocalizationProvider>
- 
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Válido hasta"
+              value={form.validTo}
+              onChange={d => handleDate("validTo", d)}
+              format="dd/MM/yyyy"
+              slotProps={{
+                textField: { className: "date-picker-field", fullWidth: true, size: "medium" },
+              }}
+            />
+          </LocalizationProvider>
         </div>
 
         <div className="order-modal-actions">
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="destructive" onClick={handleClearFilter}>
-            Limpiar Filtros
-          </Button>
-          <Button variant="primary" onClick={handleSave}>
-            Aplicar Filtros
-          </Button>
+          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button variant="destructive" onClick={handleClearFilter}>Limpiar Filtros</Button>
+          <Button variant="primary" onClick={handleSave}>Aplicar Filtros</Button>
         </div>
       </div>
     </div>

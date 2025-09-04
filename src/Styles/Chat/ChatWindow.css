@@ -66,17 +66,21 @@
 }
 
 .chat-window__quick-dropdown {
-  position: absolute;
+  position: fixed;
   right: 0;
   bottom: 44px;
   width: 260px;
-  max-height: 320px;
-  background: #2563eb;
+  background: var(--color-primary-light);
   border-radius: 12px;
   box-shadow: 0 16px 40px rgba(0,0,0,.18);
   overflow-y: auto;
   padding: 8px;
+
+   max-height: clamp(220px, 50vh, 420px);
+  overflow-y: auto;
+
   animation: cw-quick-in .12s ease-out;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -103,6 +107,7 @@
   border-radius: 10px;
   font-size: 14px;
   line-height: 1.35;
+  white-space: normal;
   color: #0f172a;
   cursor: pointer;
   transition: background .12s ease, transform .04s ease;

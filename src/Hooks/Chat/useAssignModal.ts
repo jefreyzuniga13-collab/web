@@ -92,7 +92,7 @@ export function useAssignModal () :  AssignModalHook{
       dispatch(closeAssignModal())
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
    } catch (err: any) {
-      const mensaje = err.response?.data?.message || 'Ocurrió un error inesperado.';
+      const mensaje = err.response?.data?.message || 'Por favor, intenta de nuevo.';
       toast.error(mensaje);
     }
   }

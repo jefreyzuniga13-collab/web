@@ -12,7 +12,8 @@ export const useChatWindow = () => {
 
   const [text, setText] = useState('')
 
-  const [selectedOption, setSelectedOption] = useState('')
+  const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)
+  const selectedOptionRef = useRef<string | null>(null)
 
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
@@ -72,6 +73,11 @@ export const useChatWindow = () => {
     if (f) setFile(f)
   }
 
+  const setSelectedOption = (opt: string | null) => {
+  selectedOptionRef.current = opt
+  _setSelectedOption(opt)
+}
+
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (file) return
     const clipboardItems = Array.from(e.clipboardData.items)
@@ -95,41 +101,50 @@ export const useChatWindow = () => {
   }
 
   const handleSend = useCallback(async () => {
-    if (!conversationId || sending) return
-    setSending(true)
-    try {
-      if (file) {
-        await sendMedia(conversationId, file, text.trim() || undefined)
-        setFile(null)
-        setText('')
-        if (fileInputRef.current) fileInputRef.current.value = ''
-      }
-      else if(selectedOption != null){
-        console.log("opcion" + selectedOption)
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content:selectedOption.trim(),
-          messageType: 'Text'
-        })
-        setSelectedOption('')
-      }
-       else if (text.trim()) {
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content: text.trim(),
-          messageType: 'Text'
-        })
-        setText('')
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setSending(false)
+  if (!conversationId || sending) return
+  setSending(true)
+  try {
+    const msg = text.trim()
+    const quick = (selectedOptionRef.current ?? '').trim()
+
+    if (!file && !msg && !quick) return
+
+    if (file) {
+      await sendMedia(conversationId, file, msg || undefined)
+      setFile(null)
+      setText('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
     }
-  
-  }, [conversationId, file, selectedOption, sending, text, userId])
+
+    if (quick) {
+      await sendText({
+        conversationId,
+        senderId: userId,
+        content: quick,
+        messageType: 'Text'
+      })
+      setSelectedOption(null) // limpia state + ref
+      return
+    }
+
+    if (msg) {
+      await sendText({
+        conversationId,
+        senderId: userId,
+        content: msg,
+        messageType: 'Text'
+      })
+      setText('')
+    }
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setSending(false)
+  }
+  // OJO: ya no dependemos de selectedOptionState
+}, [conversationId, file, sending, text, userId])
+
 
   const handleDownload = async ( fileName: string) => {
     try {
@@ -237,6 +252,6 @@ export const useChatWindow = () => {
     hasMedia,
     hasText,
     setSelectedOption,
-    selectedOption
+    selectedOption: selectedOptionState
   }
 }

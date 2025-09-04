@@ -1,15 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { useConversations } from '@/Hooks/useConversations'
 import { MessageSquareOff } from 'lucide-react'
 import '@/Styles/Chat/InboxList.css'
 import { format } from 'date-fns'
 import { markConversationRead } from '@/Services/ConversationService'
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
+import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
 
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
-  filter?: 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete',
-  searchConversation? : string;
+
+   conversations: ConversationDto[]
+  loading: boolean
+  error?: string
+  page: number
+  pagination: PaginationInfo
+  onPageChange: (page: number) => void
 }
 
 const formatDuration = (ms: number): string => {
@@ -19,27 +25,18 @@ const formatDuration = (ms: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
 
-//Cuando hay un update por signal, es decir se actualiza el estado, nuevo mensaje, etc:
-//1. Si se actualiza un item, se actualiza y los demas elementos se quitan y no se ven mas.
-//2. Si esta solo el elemento de la lista y hay cambio por signal, se quita este item y no se ve mas.
-
 export const InboxList: React.FC<Props> = ({
   selectedId,
   onSelect,
-  filter = 'all',
-  searchConversation = ''
+  conversations,
+  loading,
+  error,
+  page,
+  pagination,
+  onPageChange
 }) => {
   
   const loaderRef = useRef<HTMLLIElement>(null)
-
-  const {
-    conversations,
-    loading,
-    error,
-    page,
-    pagination,
-    onPageChange
-  } = useConversations(filter, searchConversation)
 
   const [now, setNow] = useState(Date.now())
   const { userId } = JSON.parse(localStorage.getItem('auth') || '{}') as {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type ChangeEvent } from "react";
 import type {
   SystemParamRequestDto,
   SystemParamResponseDto,
@@ -28,6 +28,7 @@ export function useSystemParamForm({
 
   const [form, setForm] = useState<SystemParamRequestDto>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if ((mode === "edit" || isView) && data) {
@@ -127,5 +128,6 @@ export function useSystemParamForm({
     handleSelect,
     handleSubmit: handleSubmitForm,
     handleCheckbox,
+    inputRef
   };
 }

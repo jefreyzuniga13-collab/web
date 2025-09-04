@@ -11,6 +11,7 @@ import { FaUserAlt, FaClipboard } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
+import { useConversations } from "@/Hooks/useConversations";
 
 const SupportPage: React.FC = () => {
 
@@ -38,6 +39,9 @@ const SupportPage: React.FC = () => {
     selectedParam
   } = useSupportPage();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const convHook = useConversations(filter as any, searchConversation);
+  
   return (
     <div className="support-layout">
       <aside className="sidebar">
@@ -83,8 +87,15 @@ const SupportPage: React.FC = () => {
           selectedId={convId ?? undefined}
           onSelect={setConvId}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          filter={filter as any}
-          searchConversation={searchConversation}
+          // filter={filter as any}
+          // searchConversation={searchConversation}
+
+          conversations={convHook.conversations}
+          loading={convHook.loading}
+          error={convHook.error}
+          page={convHook.page}
+          pagination={convHook.pagination}
+          onPageChange={convHook.onPageChange}
         />
       </aside>
 
@@ -157,6 +168,10 @@ const SupportPage: React.FC = () => {
             setOrderModalVisible(false);
           }}
           onClose={() => setOrderModalVisible(false)}
+          form={convHook.form}
+          handleDate={convHook.handleDate}
+          applyDateFilter={convHook.applyDateFilter}
+          clearFilter={convHook.clearFilter}
         />
       )}
     </div>

@@ -55,6 +55,16 @@ export type NameTranslation =
   | "AdministrativeChannelMessage"
   | "OpeningHourMessage"
   | "SeleccionSoporteMessage"
+  | "HorariodeAtencionDisponible"
+  | "OpcionesRapidas"
+  | "SaludoActivo"
+  | "EncabezadoSalud"
+  | "CuerpoSaludo"
+  | "PieSaludo"
+  | "OpcionesSaludo"
+  | "TextoBotonSaludo"
+  | "TituloSeccionSaludo"
+  | "EncabezadoSaludo"
   ;
 
   export type TypeTranslation =

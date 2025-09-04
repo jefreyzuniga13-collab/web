@@ -4,7 +4,6 @@ import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
 import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
-import { GrChatOption } from "react-icons/gr";
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -19,8 +18,7 @@ interface Props {
   selectedParam: SystemParamResponseDto | null;
 }
 
-export const ChatWindow: React.FC<Props> = ({ conversationId, userId, 
-  conversationStatus, selectedParam }) => {
+export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversationStatus, selectedParam }) => {
   const {
     setConversationId,
     setUserId,
@@ -48,10 +46,14 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
     setSelectedOption
   } = useChatWindow()
 
-  const [quickOpen, setQuickOpen] = useState(false)
-  const [activeQuick, setActiveQuick] = useState<string | null>(null)
-  const quickRef = useRef<HTMLDivElement | null>(null)
-
+  const LONG_PRESS_MS = 400
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
+  const [quickMenuPos, setQuickMenuPos] = useState<{x:number, y:number}>({x:0, y:0})
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [quickMenuMsgId, setQuickMenuMsgId] = useState<number | null>(null)
+  const longPressTimerRef = useRef<number | null>(null)
+  const popoverRef = useRef<HTMLDivElement | null>(null)
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     setConversationId(Number(conversationId))
@@ -64,12 +66,15 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
-      if (!quickRef.current) return
-      if (!quickRef.current.contains(e.target as Node)) setQuickOpen(false)
+      if (!popoverRef.current) return
+      if (!popoverRef.current.contains(e.target as Node)) {
+        setQuickMenuOpen(false)
+        setQuickMenuMsgId(null)
+      }
     }
-    document.addEventListener('mousedown', onClickOutside)
+    if (quickMenuOpen) document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [])
+  }, [quickMenuOpen])
 
   const quickOptions: string[] = useMemo(() => {
     if (Array.isArray(selectedParam)) return selectedParam.filter(v => typeof v === 'string')
@@ -78,10 +83,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
         const parsed = JSON.parse(selectedParam)
         if (Array.isArray(parsed)) return parsed.filter(v => typeof v === 'string')
       } catch {
-        //return selectedParam.split('|').map(s => s.trim()).filter(Boolean)
+        // intentionally ignored
       }
     }
-
     if (typeof (selectedParam as any)?.value === 'string') {
       try {
         const parsed = JSON.parse((selectedParam as any).value)
@@ -96,11 +100,35 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
     return []
   }, [selectedParam])
 
-  const selectQuick = (opt: string) => {
-        setSelectedOption(opt)
-    setActiveQuick(opt)
-    setQuickOpen(false)
-    handleSend()
+  const sendQuick = (opt: string) => {
+    setQuickMenuOpen(false)
+    setSelectedOption(opt)
+    setTimeout(() => {
+      handleSend()
+    }, 0)
+  }
+
+  const startLongPress = (e: React.PointerEvent, msgId: number) => {
+    const rect = (e.target as HTMLElement).getBoundingClientRect()
+    const x = e.clientX ?? (rect.left + rect.width / 2)
+    const y = e.clientY ?? rect.top
+    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = window.setTimeout(() => {
+      setQuickMenuPos({ x, y })
+      setQuickMenuMsgId(msgId)
+      setQuickMenuOpen(true)
+    }, LONG_PRESS_MS)
+  }
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  const focusTextarea = () => {
+    textAreaRef.current?.focus()
   }
 
   if (!conversationId) {
@@ -117,7 +145,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
 
   return (
     <div className="chat-window">
-      <div className="chat-window__messages">
+      <div className="chat-window__messages" onDoubleClick={focusTextarea}>
         {visibleMessages.length > 0 && (
           <div className="chat-window__date-divider">
             <span className="chat-window__date-text">Hoy</span>
@@ -125,6 +153,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
         )}
         {visibleMessages.map((m, i) => {
           const isCurrentUser = m.senderUserId === userId
+          const isIncomingFromContact = !isCurrentUser
           const prev = i > 0 ? visibleMessages[i - 1] : null
           const showSender = !prev || prev.senderUserId !== m.senderUserId
           const sentAt = formatTime(m.sentAt)
@@ -135,7 +164,17 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
                   {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
                 </div>
               )}
-              <div className={getMessageClassName(m)}>
+              <div
+                className={getMessageClassName(m)}
+                {...(isIncomingFromContact ? {
+                  onPointerDown: (e: React.PointerEvent) => startLongPress(e, m.messageId),
+                  onPointerUp: cancelLongPress,
+                  onPointerLeave: cancelLongPress,
+                  onPointerCancel: cancelLongPress,
+                } : {
+                  onDoubleClick: focusTextarea
+                })}
+              >
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
                     <div className="chat-window__media">
@@ -222,69 +261,9 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
       </div>
 
       <div className="chat-window__composer">
-        
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
-
-        
-        <div
-          ref={quickRef}
-          className="chat-window__quick"
-          style={{ position: 'relative', marginRight: '8px' }}
-        >
-          <button
-            type="button"
-            className="chat-window__quick-toggle"
-            onClick={() => setQuickOpen(o => !o)}
-            disabled={!conversationId || sending || quickOptions.length === 0}
-            //disabled={!conversationId || sending || conversationStatus == 'Closed' || quickOptions.length === 0}
-            aria-label="Opciones rápidas"
-          >
-            <GrChatOption fontSize={18} />
-          </button>
-
-          {quickOpen && (
-            <div
-              className="chat-window__quick-dropdown"
-              style={{
-                position: 'absolute',
-                left: 0,
-                bottom: '44px',
-                background: '#fff',
-                borderRadius: 12,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                padding: 8,
-                width: 240,
-                maxHeight: 300,
-                overflowY: 'auto',
-                zIndex: 10
-              }}
-            >
-              {quickOptions.map((opt, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => selectQuick(opt)}
-                  className="chat-window__quick-item"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    border: 'none',
-                    background: activeQuick === opt ? '#e6f4ff' : 'transparent',
-                    cursor: 'pointer',
-                    fontSize: 14
-                  }}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
 
         <input
           id="file-upload"
@@ -310,10 +289,11 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
 
         <div className="chat-window__composer-input-container">
           <textarea
+            ref={textAreaRef}
             className="chat-window__composer-input"
             placeholder="Escribe un mensaje…"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => { setSelectedOption(null); setText(e.target.value) }}
             onKeyDown={handleKeyPress}
             onPaste={handlePaste}
             disabled={!conversationId || sending || conversationStatus == 'Closed'}
@@ -334,6 +314,47 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId,
       {ismaximize && previewImageUrl && (
         <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
           <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
+        </div>
+      )}
+
+      {quickMenuOpen && quickOptions.length > 0 && (
+        <div
+          ref={popoverRef}
+          style={{
+            position: 'fixed',
+            top: quickMenuPos.y,
+            left: quickMenuPos.x,
+            transform: 'translate(-50%, -100%)',
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            padding: 8,
+            width: 260,
+            maxHeight: 320,
+            overflowY: 'auto',
+            zIndex: 9999
+          }}
+        >
+          {quickOptions.map((opt, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => sendQuick(opt)}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px 12px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                fontSize: 14
+              }}
+            >
+              {opt}
+            </button>
+          ))}
         </div>
       )}
     </div>
