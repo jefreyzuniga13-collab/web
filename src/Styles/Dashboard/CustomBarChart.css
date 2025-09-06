@@ -42,9 +42,15 @@ strong {
   border-color: var(--border-color);
   transition: border-color 0.3s ease;
 }
+
 .custom__barChart-select:hover {
   border-color: var(--border-hover-color);
 }
+
+.MuiBarElement-root{
+  color: var(--color-primary) !important;
+}
+
 .custom__barChart-select:focus {
   outline: none;
   border-color: var(--border-focus-color);

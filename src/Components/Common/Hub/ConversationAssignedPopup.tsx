@@ -48,10 +48,10 @@ export const ConversationAssignedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Conversación asignada. Cliente ${convo.systemDefinedCompanyName}`}
+      title={`Conversación asignada. ${convo.systemDefinedCompanyName != null ? "Cliente " + convo.systemDefinedCompanyName : ''}`}
       message={
         <>
-          <p>Se te ha asignado la conversación de <strong>{convo.clientContactName}</strong>.</p>
+          <p>Se te ha asignado la conversación de <strong>{convo.clientContactName != null ? convo.clientContactName : ''}</strong>.</p>
           {convo.contactNumber && <p>Contacto: {convo.contactNumber}</p>}
           <div>
             <textarea

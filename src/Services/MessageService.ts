@@ -14,7 +14,9 @@ export function sendText(message: SentMessage) {
       conversationId: message.conversationId,
       senderId: message.senderId,
       content: message.content,
-      messageType: 'Text'
+      messageType: 'Text',
+      externalId: message.externalId,
+      repliedParentMessageId: message.repliedParentMessageId
     }
   );
 }
@@ -22,11 +24,17 @@ export function sendText(message: SentMessage) {
 export function sendMedia(
   conversationId: number,
   file: File,
-  caption?: string
+  caption?: string,
+  externalId?: string | null,
+  repliedParentMessageId?: number | null
 ) {
   const form = new FormData()
   form.append('file', file)
   if (caption) form.append('caption', caption)
+  if (externalId) form.append('externalId', externalId)
+
+    //el endpoint espera un int de c#
+  if (repliedParentMessageId) form.append('repliedParentMessageId', repliedParentMessageId.toString())//Pasar como number
 
   return api.post<{ data: MessageDto }>(
     `/WhatsappWebhook/${conversationId}/send/media`,

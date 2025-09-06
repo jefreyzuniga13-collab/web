@@ -115,6 +115,7 @@ function CustomBarChart({
       {items.length > 0 ? (
         <BarChart
           height={300}
+          style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 8, fontSize: 14 }}
           layout={isHorizontal ? 'horizontal' : 'vertical'}
           series={series as any}
           {...axisProps}

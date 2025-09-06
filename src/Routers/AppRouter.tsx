@@ -33,7 +33,7 @@ export function AppRouter() {
   return (
     <Suspense fallback={
       <div className="loader-container">
-        <ThreeDot color="#3142cc" size="medium" />
+        <ThreeDot color="#0070B4" size="medium" />
       </div>
     }>
       <Routes>

@@ -77,7 +77,7 @@ export const AssignmentResponsePopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Respuesta de asignación. Cliente ${systemDefinedCompanyName}. Contacto ${clientContactName}`}
+      title={`Respuesta de asignación. ${systemDefinedCompanyName != null ? "Cliente " + systemDefinedCompanyName : ''}. Contacto ${clientContactName}`}
       isOpen={true}
       onClose={handleClose}
       message={

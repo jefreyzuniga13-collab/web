@@ -28,7 +28,7 @@ export const SupportRequestedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Solicitud de soporte cliente ${systemDefinedCompanyName}`}
+      title={`Solicitud de soporte ${systemDefinedCompanyName != null ? "cliente " + systemDefinedCompanyName : ""}`}
       message={`El contacto ${clientContactName} solicitó soporte el ${new Date(requestedAt).toLocaleString()}.`}
       actions={actions}
       isOpen={true}

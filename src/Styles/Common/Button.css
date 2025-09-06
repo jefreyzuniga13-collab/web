@@ -10,11 +10,11 @@
   }
 
   .btn--primary {
-    background: var(--color-blue-primary);
+    background: var(--color-primary);
     color: var(--text-white);
   }
   .btn--primary:hover:not(:disabled) {
-    opacity: var(--color-primary-hover-opacity);
+    opacity: var(--input-focus-border);
   }
   .btn--secondary {
     background: var(--bg-secondary);

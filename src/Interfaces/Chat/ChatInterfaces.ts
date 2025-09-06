@@ -88,13 +88,15 @@ export interface MessageDto {
   deliveredAt?: string;
   readAt?: string;
   attachments: AttachmentDto[];
-
   waTemplateId?: number | null;
   templateName?: string | null;
   templateLanguage?: string | null;
   templateBodyVars?: string[] | null;
-}
 
+  //relacion recursiva para respuestas
+  replyToMessageId?: number;
+  replyToMessage?: MessageDto | null;
+}
 
 
 export interface SentMessage {
@@ -104,6 +106,8 @@ export interface SentMessage {
   messageType: MessageType;
   caption?: string;
   file?: File;
+  externalId?: string | null;
+  repliedParentMessageId: number | null
 }
 
 export interface SentMedia {

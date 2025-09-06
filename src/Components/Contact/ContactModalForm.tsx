@@ -131,7 +131,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                   onChange={handleChange}
                   disabled={isView}
                 />
-                {errors.idCard && <div className="cm-modal__error">{errors.idCard}</div>}
+                {/* {errors.idCard && <div className="cm-modal__error">{errors.idCard}</div>} */}
               </div>
             )}
             {form.idType === 'Passport' && (
@@ -144,7 +144,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                   onChange={handleChange}
                   disabled={isView}
                 />
-                {errors.passport && <div className="cm-modal__error">{errors.passport}</div>}
+                {/* {errors.passport && <div className="cm-modal__error">{errors.passport}</div>} */}
               </div>
             )}
             {form.idType === 'ResidenceCard' && (
@@ -157,7 +157,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                   onChange={handleChange}
                   disabled={isView}
                 />
-                {errors.residenceCard && <div className="cm-modal__error">{errors.residenceCard}</div>}
+                {/* {errors.residenceCard && <div className="cm-modal__error">{errors.residenceCard}</div>} */}
               </div>
             )}
 

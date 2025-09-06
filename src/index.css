@@ -35,8 +35,8 @@ body {
 }
 
 :root {
-  --color-primary: #356ace;
-  --color-primary-dark: #2251a8;
+  --color-primary: #0070B4;
+  --color-primary-dark: #0070B4;
   --color-primary-light: #4f7bd1;
   --color-primary-hover-opacity: 0.9;
   
@@ -67,7 +67,7 @@ body {
   --error: #dc2626;
   
   --input-bg: #ffffff;
-  --input-focus-border: #2251a8;
+  --input-focus-border: #015d96;
   --grayColor: #374151;
   --greenColor: #37c255;
   

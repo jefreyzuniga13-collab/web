@@ -27,7 +27,7 @@ export const AssignmentForcedPopup: React.FC = () => {
 
   return (
     <ModalPopup
-      title={`Asignación realizada. Cliente ${systemDefinedCompanyName}. Contacto ${clientContactName}`}
+      title={`Asignación realizada. ${systemDefinedCompanyName != null ? "Cliente " + systemDefinedCompanyName : ""}. Contacto ${clientContactName}`}
       message={`La asignación fue realizada con éxito. El motivo ha sido: ${assignmentComment || 'No Especificado.'}`}
       actions={actions}
       isOpen={true}

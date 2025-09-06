@@ -111,27 +111,27 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     } else if (!/^505\d{8}$/.test(form.phone)) {
       errs.phone = 'Formato inválido (505 + 8 dígitos)'
     }
-    if (form.idType === 'NationalCard') {
-      if (!form.idCard?.trim()) {
-        errs.idCard = 'Cédula es obligatoria'
-      } else if (!/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)) {
-        errs.idCard = 'Formato de cédula inválido (XXX-XXXXXX-XXXXL o XXXXXXXXXXXXXL)'
-      }
-    }
-    if (form.idType === 'Passport') {
-      if (!form.passport?.trim()) {
-        errs.passport = 'Pasaporte es obligatorio'
-      } else if (!/^[A-Z]{1,2}\d{7}$/.test(form.passport)) {
-        errs.passport = 'Formato de pasaporte inválido (Letra + 7 dígitos)'
-      }
-    }
-    if (form.idType === 'ResidenceCard') {
-      if (!form.residenceCard?.trim()) {
-        errs.residenceCard = 'Residencia es obligatoria'
-      } else if (!/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard)) {
-        errs.residenceCard = 'Formato de residencia inválido (1 o  2Letra + 7 dígitos o  12 dígitos)'
-      }
-    }
+    // if (form.idType === 'NationalCard') {
+    //   if (!form.idCard?.trim()) {
+    //     errs.idCard = 'Cédula es obligatoria'
+    //   } else if (!/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)) {
+    //     errs.idCard = 'Formato de cédula inválido (XXX-XXXXXX-XXXXL o XXXXXXXXXXXXXL)'
+    //   }
+    // }
+    // if (form.idType === 'Passport') {
+    //   if (!form.passport?.trim()) {
+    //     errs.passport = 'Pasaporte es obligatorio'
+    //   } else if (!/^[A-Z]{1,2}\d{7}$/.test(form.passport)) {
+    //     errs.passport = 'Formato de pasaporte inválido (Letra + 7 dígitos)'
+    //   }
+    // }
+    // if (form.idType === 'ResidenceCard') {
+    //   if (!form.residenceCard?.trim()) {
+    //     errs.residenceCard = 'Residencia es obligatoria'
+    //   } else if (!/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard)) {
+    //     errs.residenceCard = 'Formato de residencia inválido (1 o  2Letra + 7 dígitos o  12 dígitos)'
+    //   }
+    // }
     if (!form.clientId) errs.clientId = 'Debe seleccionar un cliente'
     setErrors(errs)
     return Object.keys(errs).length === 0

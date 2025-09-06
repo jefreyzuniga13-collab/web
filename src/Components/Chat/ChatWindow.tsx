@@ -4,6 +4,8 @@ import { Send, Paperclip, Download, MessageSquareMore } from 'lucide-react'
 import '@/styles/Chat/ChatWindow.css'
 import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
 import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
+import type { MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { sendText } from '@/Services/MessageService'
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -15,7 +17,7 @@ interface Props {
   conversationId?: number
   conversationStatus?: string | null
   userId: number
-  selectedParam: SystemParamResponseDto | null;
+  selectedParam: SystemParamResponseDto | null
 }
 
 export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversationStatus, selectedParam }) => {
@@ -43,14 +45,16 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
-    setSelectedOption
+    setSelectedOption,
+    beginReply,
+    cancelReply,
+    replyTo
   } = useChatWindow()
 
   const LONG_PRESS_MS = 400
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
-  const [quickMenuPos, setQuickMenuPos] = useState<{x:number, y:number}>({x:0, y:0})
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [quickMenuMsgId, setQuickMenuMsgId] = useState<number | null>(null)
+  const [quickMenuPos, setQuickMenuPos] = useState<{ x: number, y: number }>({ x: 0, y: 0 })
+  const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null)
   const longPressTimerRef = useRef<number | null>(null)
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -69,7 +73,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
       if (!popoverRef.current) return
       if (!popoverRef.current.contains(e.target as Node)) {
         setQuickMenuOpen(false)
-        setQuickMenuMsgId(null)
+        setQuickMenuMsg(null)
       }
     }
     if (quickMenuOpen) document.addEventListener('mousedown', onClickOutside)
@@ -77,19 +81,17 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
   }, [quickMenuOpen])
 
   const quickOptions: string[] = useMemo(() => {
-    if (Array.isArray(selectedParam)) return selectedParam.filter(v => typeof v === 'string')
+    if (Array.isArray(selectedParam)) return (selectedParam as any).filter((v: any) => typeof v === 'string')
     if (typeof selectedParam === 'string') {
       try {
         const parsed = JSON.parse(selectedParam)
-        if (Array.isArray(parsed)) return parsed.filter(v => typeof v === 'string')
-      } catch {
-        // intentionally ignored
-      }
+        if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === 'string')
+      } catch { /* noop */ }
     }
     if (typeof (selectedParam as any)?.value === 'string') {
       try {
         const parsed = JSON.parse((selectedParam as any).value)
-        if (Array.isArray(parsed)) return parsed.filter(v => typeof v === 'string')
+        if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === 'string')
       } catch {
         return String((selectedParam as any).value).split('|').map((s: string) => s.trim()).filter(Boolean)
       }
@@ -100,22 +102,43 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     return []
   }, [selectedParam])
 
-  const sendQuick = (opt: string) => {
-    setQuickMenuOpen(false)
-    setSelectedOption(opt)
-    setTimeout(() => {
-      handleSend()
-    }, 0)
+const sendQuickNow = async (msg: MessageDto, opt: string) => {
+  try {
+    await sendText({
+      conversationId: Number(conversationId),
+      senderId: Number(userId),
+      content: opt,
+      messageType: 'Text',
+      externalId: (msg as any)?.externalId ?? null,
+      repliedParentMessageId: msg.messageId
+    });
+  } finally {
+    setSelectedOption(null);
+    cancelReply();
+    setQuickMenuOpen(false);
   }
+};
 
-  const startLongPress = (e: React.PointerEvent, msgId: number) => {
+const sendQuick = (opt: string) => {
+  if (quickMenuMsg) {
+    void sendQuickNow(quickMenuMsg, opt); // envía ya
+  } else {
+    setSelectedOption(opt);
+    handleSend();
+  }
+};
+
+
+
+
+  const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect()
     const x = e.clientX ?? (rect.left + rect.width / 2)
     const y = e.clientY ?? rect.top
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
     longPressTimerRef.current = window.setTimeout(() => {
       setQuickMenuPos({ x, y })
-      setQuickMenuMsgId(msgId)
+      setQuickMenuMsg(msg)
       setQuickMenuOpen(true)
     }, LONG_PRESS_MS)
   }
@@ -151,6 +174,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             <span className="chat-window__date-text">Hoy</span>
           </div>
         )}
+
         {visibleMessages.map((m, i) => {
           const isCurrentUser = m.senderUserId === userId
           const isIncomingFromContact = !isCurrentUser
@@ -167,7 +191,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
               <div
                 className={getMessageClassName(m)}
                 {...(isIncomingFromContact ? {
-                  onPointerDown: (e: React.PointerEvent) => startLongPress(e, m.messageId),
+                  onPointerDown: (e: React.PointerEvent) => startLongPress(e, m),
                   onPointerUp: cancelLongPress,
                   onPointerLeave: cancelLongPress,
                   onPointerCancel: cancelLongPress,
@@ -175,6 +199,31 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
                   onDoubleClick: focusTextarea
                 })}
               >
+            {/* Mostrar el contenido si el mensaje si tierne una relación recursiba con otro mensaje como reply
+             */}
+                {m.replyToMessage && (
+                        <div className="chat-window__reply-preview">
+                          <div className="chat-window__reply-author">
+                            {m.replyToMessage.senderContactId
+                              ? (m.replyToMessage.senderContactName || 'Cliente')
+                              : (m.replyToMessage.senderUserName || 'Sistema')}
+                          </div>
+                          <div className="chat-window__reply-content">
+                            {m.replyToMessage.attachments?.length
+                              ? (m.replyToMessage.attachments[0].fileName
+                                  || (m.replyToMessage.attachments[0].mimeType?.startsWith('image/') ? '[Imagen]'
+                                  : m.replyToMessage.attachments[0].mimeType?.startsWith('video/') ? '[Video]'
+                                  : m.replyToMessage.attachments[0].mimeType?.startsWith('audio/') ? '[Audio]'
+                                  : '[Adjunto]'))
+                              : (m.replyToMessage.content
+                                  ? (m.replyToMessage.content.length > 80
+                                      ? m.replyToMessage.content.slice(0, 80) + '…'
+                                      : m.replyToMessage.content)
+                                  : 'Mensaje sin contenido')}
+                          </div>
+                        </div>
+                      )}
+
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
                     <div className="chat-window__media">
@@ -261,6 +310,28 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
       </div>
 
       <div className="chat-window__composer">
+        {replyTo && (
+          <div
+            className="chat-window__reply-pill"
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              background: '#f3f4f6',
+              borderLeft: '4px solid #10b981',
+              padding: '8px 10px',
+              borderRadius: 8,
+              margin: '0 12px 8px'
+            }}
+          >
+            <div style={{ fontSize: 12, opacity: .8 }}>Respondiendo a {replyTo.author}</div>
+            <div style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {replyTo.preview}
+            </div>
+            <button onClick={cancelReply} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
+
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
@@ -317,7 +388,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
         </div>
       )}
 
-      {quickMenuOpen && quickOptions.length > 0 && (
+      {quickMenuOpen && (
         <div
           ref={popoverRef}
           style={{
@@ -330,33 +401,66 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             padding: 8,
             width: 260,
-            maxHeight: 320,
-            overflowY: 'auto',
             zIndex: 9999
           }}
         >
-          {quickOptions.map((opt, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => sendQuick(opt)}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                padding: '10px 12px',
-                borderRadius: 10,
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                fontSize: 14
-              }}
-            >
-              {opt}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => {
+              if (quickMenuMsg) beginReply(quickMenuMsg)
+              setQuickMenuOpen(false)
+              textAreaRef.current?.focus()
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              padding: '10px 12px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: 14
+            }}
+          >
+            ↩️ Responder
+          </button>
+
+          {quickOptions.length > 0 && (
+            <>
+              <div style={{ height: 1, background: '#eee', margin: '6px 0' }} />
+              <div style={{ fontSize: 12, opacity: .7, padding: '4px 8px' }}>Respuestas rápidas</div>
+              <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                {quickOptions.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => sendQuick(opt)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: 14
+                    }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
   )
 }
+//Al enviar un reply se deve de mandar el id del mensaje del mensaje al clual le hace reply en la api lo espera el campo RepliedParentMessageId para cuando es texto, o media, o repuesta rapida.
+//Cuando es respuesta rapida, no se esta enviando bien el externalId, queda null. Con texto y padre si se inlcuye y el reply lleg abien a usuario de whatsappp.
+
+//Que devo de hacer.
+//Ademas que cuando tiene relacion con otro mensaje por reply me gusatria que se vienra arroaba del mensajew el contenido del mensaje que esta hacineod reply, como una previsualizacion del mensaje al cual se esta respondiendo.

@@ -16,7 +16,7 @@ import FormControl from "@mui/material/FormControl";
 import { useUsers } from "@/Hooks/User/useUsers";
 
 const COLORS = [
-  "#356ace",
+  "#0070B4",
   "#10b981",
   "#f59e0b",
   "#dc2626",

@@ -4,6 +4,14 @@ import { Check, CheckCheck } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
+import { toast } from "react-toastify"
+
+type ReplyTarget = {
+  messageId: number
+  externalId: string
+  author: string
+  preview: string
+}
 
 export const useChatWindow = () => {
   const [conversationId, setConversationId] = useState<number>(0)
@@ -11,7 +19,6 @@ export const useChatWindow = () => {
   const messages = useMessages(conversationId)
 
   const [text, setText] = useState('')
-
   const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)
   const selectedOptionRef = useRef<string | null>(null)
 
@@ -67,16 +74,72 @@ export const useChatWindow = () => {
     bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [visibleMessages])
 
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (f) setFile(f)
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    let maxSize = 16 * 1024 * 1024 // default: 16MB
+    let errorMsg = "El archivo supera el límite permitido."
+
+    if (file.type.startsWith("application/")) {
+      maxSize = 100 * 1024 * 1024
+      errorMsg = "Los documentos no pueden superar 100MB."
+    } else if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+      maxSize = 16 * 1024 * 1024
+      errorMsg = "Las imágenes y videos no pueden superar 16MB."
+    } else if (file.type === "image/webp") {
+      // Stickers (WhatsApp usa .webp)
+      // Está en estático o animado según tamaño esperado
+      if (file.size > 100 * 1024 && file.size <= 500 * 1024) {
+        maxSize = 500 * 1024
+        errorMsg = "Los stickers animados no pueden superar 500KB."
+      } else {
+        maxSize = 100 * 1024
+        errorMsg = "Los stickers estáticos no pueden superar 100KB."
+      }
+    }
+
+    if (file.size > maxSize) {
+      toast.warn(errorMsg)
+      e.target.value = ""
+      return
+    }
+
+    setFile(file)
   }
+
 
   const setSelectedOption = (opt: string | null) => {
   selectedOptionRef.current = opt
   _setSelectedOption(opt)
 }
+
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
+
+  // Comienza reply desde un mensaje (requiere que el mensaje traiga externalId de WhatsApp)
+  const beginReply = (m: MessageDto) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extId = (m as any).externalId || null
+
+    if (!extId) return // sin wamid no hay reply real
+
+    const author = m.senderContactName || m.senderUserName || 'Mensaje'
+
+    const preview =
+      (typeof m.content === 'string' && m.content.trim()) ||
+      m.attachments?.[0]?.fileName ||
+      (m.attachments?.[0]?.mimeType?.startsWith('image/') ? '[Imagen]' :
+      m.attachments?.[0]?.mimeType?.startsWith('video/') ? '[Video]' :
+      m.attachments?.[0]?.mimeType?.startsWith('audio/') ? '[Audio]' :
+      m.messageType === 'Document' ? '[Documento]' :
+      '[Adjunto]')
+
+    setReplyTo({ messageId: m.messageId, externalId: extId, author, preview })
+    // Opcional: enfocar textarea desde componente
+  }
+
+  const cancelReply = () => setReplyTo(null)
+
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (file) return
@@ -100,20 +163,30 @@ export const useChatWindow = () => {
     }
   }
 
-  const handleSend = useCallback(async () => {
+    const handleSend = useCallback(async () => {
   if (!conversationId || sending) return
   setSending(true)
   try {
     const msg = text.trim()
     const quick = (selectedOptionRef.current ?? '').trim()
-
     if (!file && !msg && !quick) return
 
+    const replyExternalId = replyTo?.externalId || null
+    const repliedParentMessageId = replyTo?.messageId ?? null
+
     if (file) {
-      await sendMedia(conversationId, file, msg || undefined)
+      await sendMedia(
+        conversationId,
+        file,
+        msg || undefined,
+        replyExternalId,              // <-- sigue enviando el wamid
+        repliedParentMessageId        // <-- NUEVO: id interno del padre
+      )
       setFile(null)
       setText('')
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      fileInputRef.current && (fileInputRef.current.value = '')
+      setReplyTo(null)
       return
     }
 
@@ -122,9 +195,12 @@ export const useChatWindow = () => {
         conversationId,
         senderId: userId,
         content: quick,
-        messageType: 'Text'
+        messageType: 'Text',
+        externalId: replyExternalId,           // <-- wamid
+        repliedParentMessageId                 // <-- NUEVO
       })
-      setSelectedOption(null) // limpia state + ref
+      setSelectedOption(null)
+      setReplyTo(null)
       return
     }
 
@@ -133,17 +209,20 @@ export const useChatWindow = () => {
         conversationId,
         senderId: userId,
         content: msg,
-        messageType: 'Text'
+        messageType: 'Text',
+        externalId: replyExternalId,           // <-- wamid
+        repliedParentMessageId                 // <-- NUEVO
       })
       setText('')
+      setReplyTo(null)
     }
   } catch (err) {
     console.error(err)
   } finally {
     setSending(false)
   }
-  // OJO: ya no dependemos de selectedOptionState
-}, [conversationId, file, sending, text, userId])
+}, [conversationId, file, sending, text, userId, replyTo])
+
 
 
   const handleDownload = async ( fileName: string) => {
@@ -252,6 +331,13 @@ export const useChatWindow = () => {
     hasMedia,
     hasText,
     setSelectedOption,
-    selectedOption: selectedOptionState
+    selectedOption: selectedOptionState,
+     
+
+    //reply mensajes
+      beginReply,
+      cancelReply,
+      replyTo,
+
   }
 }
