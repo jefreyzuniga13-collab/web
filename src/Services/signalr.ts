@@ -151,14 +151,34 @@ export function leaveConversation(conversationId: number) {
     chatConnection.invoke('LeaveConversation', conversationId.toString())
   }
 }
+//Mostrar notificacion, cuando no esta en el sitio web. Para alertar para nueva notificacion.
+const mostrarNotificacion = (title: string, body: string =  '') => {
+  if ('Notification' in window && 
+    Notification.permission === 'granted') {
+
+    console.log("Notificacion por api de navegador" + title + " " + body);
+
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.showNotification(title, {
+        body: body,
+        icon: '../assets/pcgroup.png'
+      });
+    });
+
+  }
+};
 
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
+
   chatConnection?.on('ReceiveMessage', (message, attachments) =>
     handler({ message, attachments })
   );
+
+  mostrarNotificacion("Nuevo mensaje");
 }
+
 export function offNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
@@ -179,9 +199,11 @@ export function offConversationCreated(handler: (convo: ConversationDto) => void
 export function onConversationUpdated(handler: (c: ConversationDto) => void) {
   chatConnection?.on('ConversationUpdated', handler)
 }
+
 export function offConversationUpdated(handler: (c: ConversationDto) => void) {
   chatConnection?.off('ConversationUpdated', handler)
 }
+
 export function onNewHumanRequest(
   handler: (payload: { conversationId: number; fromPhone: string }) => void
 ) {
@@ -227,6 +249,7 @@ export function onConversationAssigned(
 ) {
   notificationsConnection?.on('ConversationAssigned', handler)
 }
+
 export function offConversationAssigned(
   handler: (dto: ConversationDto) => void
 ) {
@@ -260,6 +283,7 @@ export function onAssignmentForcedAdmin(
 ) {
   notificationsConnection?.on('AssignmentForcedAdmin', handler)
 }
+
 export function offAssignmentForcedAdmin(
   handler: (payload: { conversationId: number; targetAgentId: number; comment: string ; clientContactName: string; clientName: string }) => void
 ) {

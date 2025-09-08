@@ -6,6 +6,8 @@ import { useChatWindow } from '@/Hooks/Chat/useChatWindow'
 import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
 import type { MessageDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { sendText } from '@/Services/MessageService'
+import { format, isToday, isYesterday, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale/es'
 
 const formatTime = (iso?: string) => {
   if (!iso) return ''
@@ -166,23 +168,51 @@ const sendQuick = (opt: string) => {
     )
   }
 
+  function getConversationStringDate(sentAt: string) {
+  const fecha = parseISO(sentAt)
+
+  if (isToday(fecha)) {
+      return "Hoy"
+      } else if (isYesterday(fecha)) {
+        return "Ayer"
+      } else {
+        // Ejemplo: "5 de septiembre de 2025"
+        return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es })
+      }
+    }
+
   return (
     <div className="chat-window">
       <div className="chat-window__messages" onDoubleClick={focusTextarea}>
-        {visibleMessages.length > 0 && (
-          <div className="chat-window__date-divider">
-            <span className="chat-window__date-text">Hoy</span>
-          </div>
-        )}
 
         {visibleMessages.map((m, i) => {
-          const isCurrentUser = m.senderUserId === userId
-          const isIncomingFromContact = !isCurrentUser
-          const prev = i > 0 ? visibleMessages[i - 1] : null
-          const showSender = !prev || prev.senderUserId !== m.senderUserId
-          const sentAt = formatTime(m.sentAt)
+          // const isCurrentUser = m.senderUserId === userId
+          // const prev = i > 0 ? visibleMessages[i - 1] : null
+           const sentAt = formatTime(m.sentAt)
+            const isCurrentUser = m.senderUserId === userId
+            const prev = i > 0 ? visibleMessages[i - 1] : null
+            const showSender = !prev || prev.senderUserId !== m.senderUserId
+            // Etiqueta relativa del mensaje actual y la previa
+            const label      = getConversationStringDate(m.sentAt)
+            const prevLabel  = prev ? getConversationStringDate(prev.sentAt) : null
+
+            // Solo mostrar el divisor cuando la etiqueta cambia
+            const showDivider = !prev || label !== prevLabel
+            const isIncomingFromContact = !isCurrentUser
+            
+            // const sentAt = formatTime(m.sentAt)
+
           return (
+              <>
+                                          {showDivider && (
+                  <div className="chat-window__date-divider">
+                    <span className="chat-window__date-text" style={{ color: '#000000ff' }}>
+                        {label}
+                      </span>
+                    </div>
+                  )}
             <div key={m.messageId} className={getMessagePosition(m)}>
+
               {showSender && !isCurrentUser && (
                 <div className="chat-window__message-sender">
                   {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
@@ -304,6 +334,7 @@ const sendQuick = (opt: string) => {
                 </div>
               </div>
             </div>
+            </>
           )
         })}
         <div ref={bottomRef} className="butttonRef" />
@@ -367,7 +398,7 @@ const sendQuick = (opt: string) => {
             onChange={(e) => { setSelectedOption(null); setText(e.target.value) }}
             onKeyDown={handleKeyPress}
             onPaste={handlePaste}
-            disabled={!conversationId || sending || conversationStatus == 'Closed'}
+            //disabled={!conversationId || sending || conversationStatus == 'Closed'}
             rows={1}
           />
         </div>
@@ -459,8 +490,3 @@ const sendQuick = (opt: string) => {
     </div>
   )
 }
-//Al enviar un reply se deve de mandar el id del mensaje del mensaje al clual le hace reply en la api lo espera el campo RepliedParentMessageId para cuando es texto, o media, o repuesta rapida.
-//Cuando es respuesta rapida, no se esta enviando bien el externalId, queda null. Con texto y padre si se inlcuye y el reply lleg abien a usuario de whatsappp.
-
-//Que devo de hacer.
-//Ademas que cuando tiene relacion con otro mensaje por reply me gusatria que se vienra arroaba del mensajew el contenido del mensaje que esta hacineod reply, como una previsualizacion del mensaje al cual se esta respondiendo.

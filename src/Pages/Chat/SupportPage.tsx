@@ -138,7 +138,8 @@ const SupportPage: React.FC = () => {
           </div>
         </header>
 
-        <ChatWindow conversationId={convId ?? undefined} userId={userId} conversationStatus={conversation?.status} selectedParam={selectedParam}/>
+        <ChatWindow conversationId={convId ?? undefined} 
+        userId={userId} conversationStatus={conversation?.status} selectedParam={selectedParam}/>
       </main>
 
       {contactDetailToggle && (

@@ -3,8 +3,8 @@ import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
-import OfflineBanner from "@/Components/Common/OfflineBanner";
-import { useOnline } from "@/Hooks/useOnline";
+// import OfflineBanner from "@/Components/Common/OfflineBanner";
+// import { useOnline } from "@/Hooks/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
@@ -18,14 +18,40 @@ import "react-toastify/dist/ReactToastify.css";
 import type { AuthData } from "@/Interfaces/Auth/AuthInterface";
 
 export default function App() {
-  const online = useOnline();
+  // const online = useOnline();
   const authRaw = localStorage.getItem("auth") ?? "{}";
   const { accessToken } = JSON.parse(authRaw) as AuthData;
   const dispatch = useDispatch();
   const lastEvent = useNotificationsHub();
   const navigate = useNavigate();
 
-  // useForceLogoutListener();
+      // useEffect(() => {
+      //   if ('Notification' in window) {
+      //     Notification.requestPermission().then((permission) => {
+
+      //       if (permission === 'granted') {
+      //         console.log('Permiso de notificación concedido.');
+      //         // Opcional: Registrar el service worker si el permiso se concede
+      //         if ('serviceWorker' in navigator) {
+      //           navigator.serviceWorker.register('/src/Utils/notificationSW.js')
+      //             // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //             .then(registration => {
+      //               console.log('Service worker registrado:');
+      //             })
+      //             .catch(error => {
+      //               console.error('Error al registrar el service worker:', error);
+      //             });
+      //         }
+      //       } else if (permission === 'denied') {
+      //         console.log('Permiso de notificación denegado.');
+      //       } else {
+      //         console.log('Permiso de notificación: no permitido o pendiente.');
+      //       }
+      //     });
+      //   } else {
+      //     console.log('Tu navegador no soporta notificaciones.');
+      //   }
+      // }, []);
 
   useEffect(() => {
     if (lastEvent) {
@@ -65,7 +91,7 @@ export default function App() {
     <SignalRProvider token={accessToken}>
       <ThemeProvider theme={theme}>
 
-      {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
+      {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
 
       <ReLoginModal />
       <ToastContainer
@@ -78,6 +104,7 @@ export default function App() {
         draggable
         theme="colored"
       />
+
       <AppRouter />
       </ThemeProvider>
     </SignalRProvider>

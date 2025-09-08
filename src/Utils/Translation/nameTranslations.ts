@@ -61,5 +61,6 @@ export const nameTranslations: Record<NameTranslation, string> = {
   OpcionesSaludo: "OpcionesSaludo",
   TextoBotonSaludo: "TextoBotonSaludo",
   TituloSeccionSaludo: "TituloSeccionSaludo",
-  EncabezadoSaludo: "EncabezadoSaludo"
+  EncabezadoSaludo: "EncabezadoSaludo",
+  TiempoDisponibleAbrirConversación: "TiempoDisponibleAbrirConversación"
 };

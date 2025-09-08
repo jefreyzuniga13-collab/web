@@ -65,6 +65,7 @@ export type NameTranslation =
   | "TextoBotonSaludo"
   | "TituloSeccionSaludo"
   | "EncabezadoSaludo"
+  | "TiempoDisponibleAbrirConversación"
   ;
 
   export type TypeTranslation =

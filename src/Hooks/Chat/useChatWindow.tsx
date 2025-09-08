@@ -64,9 +64,10 @@ export const useChatWindow = () => {
   }
 
   const visibleMessages = useMemo(
-    () => messages.filter(
-      (m) => hasMedia(m) || hasText(m) || m.messageType === "Interactive"
-    ),
+    () => messages.filter((m) => 
+       hasMedia(m) 
+      || hasText(m) 
+      || m.messageType === "Interactive"),
     [messages]
   );
 
@@ -108,7 +109,6 @@ export const useChatWindow = () => {
     setFile(file)
   }
 
-
   const setSelectedOption = (opt: string | null) => {
   selectedOptionRef.current = opt
   _setSelectedOption(opt)
@@ -140,7 +140,6 @@ export const useChatWindow = () => {
 
   const cancelReply = () => setReplyTo(null)
 
-
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (file) return
     const clipboardItems = Array.from(e.clipboardData.items)
@@ -163,7 +162,7 @@ export const useChatWindow = () => {
     }
   }
 
-    const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async () => {
   if (!conversationId || sending) return
   setSending(true)
   try {
@@ -332,8 +331,7 @@ export const useChatWindow = () => {
     hasText,
     setSelectedOption,
     selectedOption: selectedOptionState,
-     
-
+    
     //reply mensajes
       beginReply,
       cancelReply,
