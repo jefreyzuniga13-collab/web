@@ -210,8 +210,8 @@ export function useWaTemplateForm({
     categoryId: null,
     categoryName: null,
     isActive: true,
-    header: { enabled: true, text: 'Título', segments: [{ kind: 'text', text: 'Título' }] },
-    body:   { enabled: true, text: 'Este es un mensaje.', segments: [{ kind: 'text', text: 'Este es un mensaje.' }] },
+    header: { enabled: true, text: '', segments: [{ kind: 'text', text: 'Título' }] },
+    body:   { enabled: true, text: '', segments: [{ kind: 'text', text: 'Este es un mensaje.' }] },
     footer: { enabled: true, text: '' },
   }), [])
 
@@ -380,17 +380,22 @@ export function useWaTemplateForm({
     if (!form.categoryId) e.categoryId = 'Categoría requerida'
     if (form.header.enabled && !form.header.text.trim()) e.headerText = 'Texto de encabezado requerido'
     if (form.body.enabled && !form.body.text.trim()) e.bodyText = 'Texto del cuerpo requerido'
+    
+    if (form.header.text.length  > 60) e.headerText = 'Longitud maxima del encabezado es 60'
+    if (form.footer.text.length  > 60) e.footerText = 'Longitud maxima del pie de pagina es 60'
+
     setErrors(e)
     return Object.keys(e).length === 0
   }, [form])
 
   // ====== BUILD COMPONENTS (WhatsApp Cloud: incluye example.{header_text|body_text}) ======
-  const buildComponents = useCallback(() => {
-    const comps: any[] = []
+const buildComponents = useCallback(() => {
+  const comps: any[] = []
 
     if (form.header.enabled) {
       const { text, examples } = segmentsToTemplateText(form.header.segments)
       const headerComp: any = { type: 'HEADER', format: 'TEXT', text }
+      // Para HEADER: arreglo de strings (no anidado)
       if (examples.length) headerComp.example = { header_text: examples }
       comps.push(headerComp)
     }
@@ -398,7 +403,9 @@ export function useWaTemplateForm({
     if (form.body.enabled) {
       const { text, examples } = segmentsToTemplateText(form.body.segments)
       const bodyComp: any = { type: 'BODY', text }
-      if (examples.length) bodyComp.example = { body_text: examples }
+      // ⚠️ Para BODY: arreglo de arreglos [[...]]
+      // cada subarreglo representa un set completo de variables {{1}}, {{2}}, ...
+      if (examples.length) bodyComp.example = { body_text: [examples] }
       comps.push(bodyComp)
     }
 
@@ -408,6 +415,7 @@ export function useWaTemplateForm({
 
     return comps
   }, [form.header, form.body, form.footer])
+
 
 
       // ====== FOOTER ======

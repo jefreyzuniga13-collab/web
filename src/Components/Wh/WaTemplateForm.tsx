@@ -59,8 +59,8 @@ export default function WaTemplateForm({
   const [headerCaret, setHeaderCaret] = useState<number>(0)
   const [bodyCaret, setBodyCaret] = useState<number>(0)
 
-  const [headerExample, setHeaderExample] = useState<string>('Factura #000123')
-  const [bodyExample, setBodyExample] = useState<string>('Jefrey Zúñiga')
+  const [headerExample, setHeaderExample] = useState<string>('Factura #0011223')
+  const [bodyExample, setBodyExample] = useState<string>('Jose Miguel Carcache')
 
   if (!isOpen) return null
 
@@ -192,7 +192,7 @@ export default function WaTemplateForm({
                             value={headerExample}
                             onChange={(e) => setHeaderExample(e.target.value)}
                             disabled={isView}
-                            placeholder="Ej: Factura #000123"
+                            placeholder="Ej: #0001234"
                           />
                         </div>
                         <Button
@@ -256,23 +256,7 @@ export default function WaTemplateForm({
               </div>
             </div>
 
-            {/* FOOTER */}
-            <div className="sp-modal__col sp-modal__col--full">
-              <div className="sp-modal__section">
-                {form.footer.enabled && (
-                  <div style={{ marginTop: 8 }}>
-                    <Label className="sp-modal__label">Texto del pie</Label>
-                    <Input
-                      value={form.footer.text}
-                      onChange={(e) => setFooterText(e.target.value)}
-                      disabled={isView}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* BODY */}
+                            {/* BODY */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
                 {form.body.enabled && (
@@ -285,7 +269,7 @@ export default function WaTemplateForm({
                           value={bodyExample}
                           onChange={(e) => setBodyExample(e.target.value)}
                           disabled={isView}
-                          placeholder="Ej: Jefrey Zúñiga"
+                          placeholder="Ej: Juan David Carcache Suarez"
                         />
                       </div>
                       <Button
@@ -345,6 +329,25 @@ export default function WaTemplateForm({
                   </>
                 )}
               </div>
+            </div>
+            
+            {/* FOOTER */}
+            <div className="sp-modal__col sp-modal__col--full">
+              <div className="sp-modal__section">
+                {form.footer.enabled && (
+                  <div style={{ marginTop: 8 }}>
+                    <Label className="sp-modal__label">Texto del pie</Label>
+                    <Input
+                      value={form.footer.text}
+                      onChange={(e) => setFooterText(e.target.value)}
+                      disabled={isView}
+                    />
+                  </div>
+                )}
+              </div>
+              {!form.header.text?.trim() && errors.headerText && (
+                <div className="sp-modal__error">{errors.footerText}</div>
+              )}
             </div>
           </div>
 

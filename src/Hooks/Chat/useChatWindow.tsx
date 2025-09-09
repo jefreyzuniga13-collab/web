@@ -13,6 +13,8 @@ type ReplyTarget = {
   preview: string
 }
 
+//Usar la conversación mas reciente, para el conversacionId, estados, ultimos mensajes, etc.
+//Por fecha de creación.
 export const useChatWindow = () => {
   const [conversationId, setConversationId] = useState<number>(0)
   const [userId, setUserId] = useState<number>(0)

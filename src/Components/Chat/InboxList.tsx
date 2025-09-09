@@ -9,8 +9,7 @@ import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
-
-   conversations: ConversationDto[]
+  conversations: ConversationDto[]
   loading: boolean
   error?: string
   page: number
@@ -74,14 +73,14 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
-   const formatDate = (iso?: string) => {
-        if (!iso) return ''
-        try {
-          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
-        } catch {
-          return ''
-        }
-  }
+  //  const formatDate = (iso?: string) => {
+  //       if (!iso) return ''
+  //       try {
+  //         return format(new Date(iso), 'yyyy-MM-dd HH:mm')
+  //       } catch {
+  //         return ''
+  //       }
+  // }
 
 
   const handleSelect = async (id: number) => {
@@ -117,7 +116,7 @@ export const InboxList: React.FC<Props> = ({
     <ul className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
-        const lastTime = formatDate(c.updatedAt || c.createdAt)
+        // const lastTime = formatDate(c.updatedAt || c.createdAt)
         const statusClass = c.status.toLowerCase()
         const statusTextMap: Record<string, string> = {
           bot: 'Bot',
@@ -182,7 +181,7 @@ export const InboxList: React.FC<Props> = ({
               </div>
               <div className="inbox-list__bottom">
                 <div className='inbox-list__bottom_text'>
-                  <span className="inbox-list__time">{lastTime}</span>
+                  {/* <span className="inbox-list__time">{lastTime}</span> */}
                 <span
                   className={`inbox-list__status inbox-list__status--${statusClass}`}
                 >

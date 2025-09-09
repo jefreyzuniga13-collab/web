@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import useContact from '@/Hooks/Contact/useContact'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type HeaderKind = "NONE" | "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT";
+type HeaderKind = "NONE" | "TEXT";
 
 type Props = {
   isOpen: boolean
