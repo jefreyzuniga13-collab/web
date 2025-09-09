@@ -231,28 +231,29 @@ const sendQuick = (opt: string) => {
               >
             {/* Mostrar el contenido si el mensaje si tierne una relación recursiba con otro mensaje como reply
              */}
-                {m.replyToMessage && (
-                        <div className="chat-window__reply-preview">
-                          <div className="chat-window__reply-author">
-                            {m.replyToMessage.senderContactId
-                              ? (m.replyToMessage.senderContactName || 'Cliente')
-                              : (m.replyToMessage.senderUserName || 'Sistema')}
-                          </div>
-                          <div className="chat-window__reply-content">
-                            {m.replyToMessage.attachments?.length
-                              ? (m.replyToMessage.attachments[0].fileName
-                                  || (m.replyToMessage.attachments[0].mimeType?.startsWith('image/') ? '[Imagen]'
-                                  : m.replyToMessage.attachments[0].mimeType?.startsWith('video/') ? '[Video]'
-                                  : m.replyToMessage.attachments[0].mimeType?.startsWith('audio/') ? '[Audio]'
-                                  : '[Adjunto]'))
-                              : (m.replyToMessage.content
-                                  ? (m.replyToMessage.content.length > 80
-                                      ? m.replyToMessage.content.slice(0, 80) + '…'
-                                      : m.replyToMessage.content)
-                                  : 'Mensaje sin contenido')}
-                          </div>
+                {m.repliedMessage && (
+                      <div className="chat-window__reply-preview">
+                        <div className="chat-window__reply-author">
+                          {m.repliedMessage.senderContactId
+                            ? (m.repliedMessage.senderContactName || 'Cliente')
+                            : (m.repliedMessage.senderUserName || 'Sistema')}
                         </div>
-                      )}
+                        <div className="chat-window__reply-content">
+                          {m.repliedMessage.attachments?.length
+                            ? (m.repliedMessage.attachments[0].fileName
+                                || (m.repliedMessage.attachments[0].mimeType?.startsWith('image/') ? '[Imagen]'
+                                : m.repliedMessage.attachments[0].mimeType?.startsWith('video/') ? '[Video]'
+                                : m.repliedMessage.attachments[0].mimeType?.startsWith('audio/') ? '[Audio]'
+                                : '[Adjunto]'))
+                            : (m.repliedMessage.content
+                                ? (m.repliedMessage.content.length > 80
+                                    ? m.repliedMessage.content.slice(0, 80) + '…'
+                                    : m.repliedMessage.content)
+                                : '')}
+                        </div>
+                      </div>
+                    )}
+
 
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (

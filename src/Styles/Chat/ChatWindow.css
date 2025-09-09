@@ -20,7 +20,67 @@
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+
 }
+
+/* Caja del reply dentro de la burbuja */
+.chat-window__reply-preview{
+  margin: 6px 10px 4px;         /* respira dentro de la burbuja */
+  padding: 6px 8px;
+  border-left: 4px solid #25d366;
+  border-radius: 8px;
+  background: rgba(0,0,0,.06);  /* sutil contraste sobre el fondo de la burbuja */
+}
+
+/* Variante para burbuja saliente (outgoing) — más oscuro para contraste */
+.chat-window__message--outgoing .chat-window__reply-preview{
+  background: rgba(255,255,255,.15);
+  border-left-color: #9be0b0;
+}
+
+.chat-window__reply-author{
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.2;
+  /* tono verde autor como WhatsApp */
+  color: #128c7e;
+}
+
+.chat-window__message--outgoing .chat-window__reply-author{
+  color: #d2f8d2;               /* autor claro sobre burbuja verde */
+}
+
+.chat-window__reply-content{
+  max-width: 42ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .95;
+}
+
+/* opcional: cuando el reply no tiene texto, que no “salte” */
+.chat-window__reply-content:empty::after{
+  content: 'Mensaje sin contenido';
+  opacity: .8;
+}
+
+/* asegúrate de que el cuerpo quede debajo del reply */
+.chat-window__message-content{
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* el footer (hora + checks) pegado abajo a la derecha */
+.chat-window__message-info{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-lg) var(--space-sm);
+  font-size: 1.1rem;
+  align-self: flex-end;
+  margin-top: 2px; /* separa un poco del texto */
+}
+
 
 .chat-window__messages::before {
       content: '';
@@ -246,6 +306,7 @@
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast) var(--transition-ease);
   display: flex;
+  flex-direction: column;
 }
 
 .chat-window__message:hover {

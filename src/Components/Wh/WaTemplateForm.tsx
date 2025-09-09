@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useRef, useState } from 'react'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import { Label } from '@/Components/Common/Label'
@@ -17,9 +18,6 @@ interface Props {
   onSubmit: (values: WaTemplateRequestDto) => void
 }
 
-//Para cumplir con la provacion de plantilla con variables de meta es necesario es que se manden ejemplo, como se indica por ellos mismo actualmente no se hace y la rechazan.
-//Asi que sea mas amigable, que le usuario ocn un boton pueda agregar variable en el body y poner un texto de ejemplo, y que cuando le de agregar en el boton de insert en el body.
-//Actualizado, compelto y sin comnetarios
 export default function WaTemplateForm({
   mode,
   isOpen,
@@ -37,17 +35,109 @@ export default function WaTemplateForm({
     setDisplayName,
     setCategory,
 
+    // Header (solo texto + variables)
     setHeaderText,
-    setHeaderMediaFiles,
+    insertHeaderVar,
+    removeHeaderVar,
+    getHeaderParts,
 
+    // Body (solo texto + variables)
     setBodyText,
+    insertBodyVar,
+    removeBodyVar,
+    getBodyParts,
 
+    // Footer
     setFooterText,
 
     submit,
   } = useWaTemplateForm({ mode, data: data || null, onSubmit })
 
+  const headerInputRef = useRef<HTMLInputElement | null>(null)
+  const bodyTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const [headerCaret, setHeaderCaret] = useState<number>(0)
+  const [bodyCaret, setBodyCaret] = useState<number>(0)
+
+  const [headerExample, setHeaderExample] = useState<string>('Factura #000123')
+  const [bodyExample, setBodyExample] = useState<string>('Jefrey Zúñiga')
+
   if (!isOpen) return null
+
+  const handleHeaderSelect = () => {
+    const el = headerInputRef.current
+    if (!el) return
+    setHeaderCaret(el.selectionStart ?? 0)
+  }
+  const handleBodySelect = () => {
+    const el = bodyTextareaRef.current
+    if (!el) return
+    setBodyCaret(el.selectionStart ?? 0)
+  }
+
+  const handleAddHeaderVar = () => {
+    if (isView) return
+    insertHeaderVar(headerExample || 'VAR', headerCaret)
+    const el = headerInputRef.current
+    if (el) {
+      const newPos = (headerCaret ?? 0) + (headerExample?.length || 0)
+      requestAnimationFrame(() => {
+        el.focus()
+        el.setSelectionRange(newPos, newPos)
+        setHeaderCaret(newPos)
+      })
+    }
+  }
+
+  const handleAddBodyVar = () => {
+    if (isView) return
+    insertBodyVar(bodyExample || 'VAR', bodyCaret)
+    const el = bodyTextareaRef.current
+    if (el) {
+      const newPos = (bodyCaret ?? 0) + (bodyExample?.length || 0)
+      requestAnimationFrame(() => {
+        el.focus()
+        el.setSelectionRange(newPos, newPos)
+        setBodyCaret(newPos)
+      })
+    }
+  }
+
+  const headerParts = getHeaderParts()
+  const bodyParts = getBodyParts()
+
+  // Estilos simples para variables en verde y chips
+  const varStyle: React.CSSProperties = { color: '#1f8b24', fontWeight: 600 }
+  const previewBox: React.CSSProperties = {
+    marginTop: 6,
+    padding: '8px 10px',
+    background: '#f7f9fb',
+    border: '1px dashed #d7e0ea',
+    borderRadius: 6,
+    fontSize: 14,
+    whiteSpace: 'pre-wrap',
+    lineHeight: 1.35,
+  }
+  const chip: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '2px 8px',
+    background: '#eaf7ec',
+    border: '1px solid #b9e2bf',
+    borderRadius: 14,
+    fontSize: 12,
+    marginRight: 8,
+    marginBottom: 6,
+    color: '#176a1d',
+  }
+  const chipBtn: React.CSSProperties = {
+    border: 'none',
+    background: 'transparent',
+    color: '#0f5c16',
+    cursor: 'pointer',
+    fontWeight: 700,
+  }
 
   return (
     <div className="sp-modal__overlay">
@@ -91,60 +181,84 @@ export default function WaTemplateForm({
             {/* HEADER */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
-
-
                 {form.header.enabled && (
                   <>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        
+                      {/* Controles de variables para HEADER */}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ minWidth: 260 }}>
+                          <Label className="sp-modal__label">Texto de ejemplo (variable)</Label>
+                          <Input
+                            value={headerExample}
+                            onChange={(e) => setHeaderExample(e.target.value)}
+                            disabled={isView}
+                            placeholder="Ej: Factura #000123"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleAddHeaderVar}
+                          disabled={isView}
+                        >
+                          Agregar variable al encabezado
+                        </Button>
+                      </div>
                     </div>
 
-                    {/* TEXT */}
-                    {form.header.format === 'TEXT' && (
-                      <div style={{ marginTop: 8 }}>
-                        <Label className="sp-modal__label">Texto del encabezado *</Label>
-                        <Input
-                          value={'text' in form.header ? form.header.text : ''}
-                          onChange={(e) => setHeaderText(e.target.value)}
-                          disabled={isView}
-                        />
-                        {'text' in form.header && !form.header.text?.trim() && errors.headerText && (
-                          <div className="sp-modal__error">{errors.headerText}</div>
-                        )}
-                      </div>
-                    )}
+                    <div style={{ marginTop: 8 }}>
+                      <Label className="sp-modal__label">Texto del encabezado *</Label>
+                      <Input
+                        ref={headerInputRef}
+                        value={form.header.text}
+                        onChange={(e) => setHeaderText(e.target.value)}
+                        onClick={handleHeaderSelect}
+                        onKeyUp={handleHeaderSelect}
+                        onSelect={handleHeaderSelect}
+                        disabled={isView}
+                      />
+                      {!form.header.text?.trim() && errors.headerText && (
+                        <div className="sp-modal__error">{errors.headerText}</div>
+                      )}
 
-                    {/* MEDIA */}
-                    {form.header.format !== 'TEXT' && (
-                      <div style={{ marginTop: 8 }}>
-                        <Label className="sp-modal__label">Adjuntar archivos (se usarán como example.header_handle)</Label>
-                        <input
-                          type="file"
-                          multiple
-                          onChange={(e) => setHeaderMediaFiles(Array.from(e.target.files || []))}
-                          disabled={isView}
-                        />
-                        {/* Si quieres mostrar nombres seleccionados */}
-                        {form.mediaFiles.length > 0 && (
-                          <div className="sp-modal__hint" style={{ marginTop: 4 }}>
-                            {form.mediaFiles.length} archivo(s) seleccionado(s)
-                          </div>
+                      {/* Vista previa con variables en verde */}
+                      <div style={previewBox}>
+                        {headerParts.map((p, idx) =>
+                          p.isVar ? (
+                            <span key={idx} style={varStyle}>{p.text}</span>
+                          ) : (
+                            <span key={idx}>{p.text}</span>
+                          )
                         )}
                       </div>
-                    )}
+
+                      {/* Chips de variables actuales (para quitar) */}
+                      <div style={{ marginTop: 6 }}>
+                        {headerParts.filter(p => p.isVar).map((p, idx) => (
+                          <span key={`${p.id}-${idx}`} style={chip}>
+                            {p.text}
+                            {!isView && (
+                              <button
+                                type="button"
+                                style={chipBtn}
+                                title="Quitar variable"
+                                onClick={() => p.id && removeHeaderVar(p.id)}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
             </div>
 
-
-            
-
             {/* FOOTER */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
-
-
                 {form.footer.enabled && (
                   <div style={{ marginTop: 8 }}>
                     <Label className="sp-modal__label">Texto del pie</Label>
@@ -158,20 +272,77 @@ export default function WaTemplateForm({
               </div>
             </div>
 
+            {/* BODY */}
             <div className="sp-modal__col sp-modal__col--full">
               <div className="sp-modal__section">
-
                 {form.body.enabled && (
-                  <div style={{ marginTop: 8 }}>
-                    <Label className="sp-modal__label">Texto del  cuerpo *</Label>
-                    <Textarea
-                      value={form.body.text}
-                      onChange={(e) => setBodyText(e.target.value)}
-                      rows={6}
-                      disabled={isView}
-                    />
-                    {errors.bodyText && <div className="sp-modal__error">{errors.bodyText}</div>}
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+                      {/* Controles de variables para BODY */}
+                      <div style={{ minWidth: 260 }}>
+                        <Label className="sp-modal__label">Texto de ejemplo (variable)</Label>
+                        <Input
+                          value={bodyExample}
+                          onChange={(e) => setBodyExample(e.target.value)}
+                          disabled={isView}
+                          placeholder="Ej: Jefrey Zúñiga"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleAddBodyVar}
+                        disabled={isView}
+                      >
+                        Agregar variable al cuerpo
+                      </Button>
+                    </div>
+
+                    <div style={{ marginTop: 8 }}>
+                      <Label className="sp-modal__label">Texto del cuerpo *</Label>
+                      <Textarea
+                        ref={bodyTextareaRef}
+                        value={form.body.text}
+                        onChange={(e) => setBodyText(e.target.value)}
+                        onClick={handleBodySelect}
+                        onKeyUp={handleBodySelect}
+                        onSelect={handleBodySelect}
+                        rows={6}
+                        disabled={isView}
+                      />
+                      {errors.bodyText && <div className="sp-modal__error">{errors.bodyText}</div>}
+
+                      {/* Vista previa con variables en verde */}
+                      <div style={previewBox}>
+                        {bodyParts.map((p, idx) =>
+                          p.isVar ? (
+                            <span key={idx} style={varStyle}>{p.text}</span>
+                          ) : (
+                            <span key={idx}>{p.text}</span>
+                          )
+                        )}
+                      </div>
+
+                      {/* Chips para quitar variables */}
+                      <div style={{ marginTop: 6 }}>
+                        {bodyParts.filter(p => p.isVar).map((p, idx) => (
+                          <span key={`${p.id}-${idx}`} style={chip}>
+                            {p.text}
+                            {!isView && (
+                              <button
+                                type="button"
+                                style={chipBtn}
+                                title="Quitar variable"
+                                onClick={() => p.id && removeBodyVar(p.id)}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

@@ -94,8 +94,8 @@ export interface MessageDto {
   templateBodyVars?: string[] | null;
 
   //relacion recursiva para respuestas
-  replyToMessageId?: number;
-  replyToMessage?: MessageDto | null;
+  repliedMessageId?: number;
+  repliedMessage?: MessageDto | null;
 }
 
 

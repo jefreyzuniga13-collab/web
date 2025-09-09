@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   WaTemplateRequestDto,
   WaTemplateResponseDto,
 } from '@/Interfaces/Wh/TemplateInterface'
-import api from '@/Utils/ApiConfig'
 import type { TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
-import {TemplateCategoryService} from '@/Services/chat/TemplateCategoryService'
-import type { UploadForWhatsAppResult } from '@/Services/MediaService '
+import { TemplateCategoryService } from '@/Services/chat/TemplateCategoryService'
 
 export type FormMode = 'create' | 'view'
 
@@ -17,27 +15,25 @@ export interface UseWaTemplateFormParams {
   onSubmit: (values: WaTemplateRequestDto) => void
 }
 
-type HeaderFormat = 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
-
-type ButtonKind = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'
+/** Segmento de texto enriquecido: texto normal o variable con ejemplo */
+type RichSegment =
+  | { kind: 'text'; text: string }
+  | { kind: 'var'; id: number; example: string }
 
 interface HeaderStateText {
   enabled: boolean
-  format: 'TEXT'
+  /** Vista previa para el input (con ejemplos) */
   text: string
+  /** Segmentos para identificar variables y convertir a {{n}} al enviar */
+  segments: RichSegment[]
 }
-
-interface HeaderStateMedia {
-  enabled: boolean
-  format: Exclude<HeaderFormat, 'TEXT'> // IMAGE | VIDEO | DOCUMENT
-  exampleHandles: string[]             // nombres/ids retornados por POST /Media
-}
-
-type HeaderState = HeaderStateText | HeaderStateMedia
 
 interface BodyState {
   enabled: boolean
-  text: string  // soporta {{1}}, {{2}}, ...
+  /** Vista previa para el textarea (con ejemplos) */
+  text: string
+  /** Segmentos para identificar variables y convertir a {{n}} al enviar */
+  segments: RichSegment[]
 }
 
 interface FooterState {
@@ -45,41 +41,133 @@ interface FooterState {
   text: string
 }
 
-type ButtonsRow =
-  | { type: 'QUICK_REPLY'; text: string }
-  | { type: 'URL'; text: string; url: string }           // puede llevar {{1}}
-  | { type: 'PHONE_NUMBER'; text: string; phone_number: string }
-
-interface ButtonsState {
-  enabled: boolean
-  rows: ButtonsRow[]
-}
-
 interface LocalFormState {
-  displayName: string  
+  displayName: string
   externalName: string
   language: string
   categoryId: number | null
   categoryName: string | null
   isActive: boolean
-  header: HeaderState
-  body: BodyState
-  footer: FooterState
-  buttons: ButtonsState
-  mediaFiles: File[]
-  uploading: boolean
+  header: HeaderStateText          // SOLO TEXT
+  body: BodyState                  // SOLO TEXT
+  footer: FooterState              // SOLO TEXT
 }
 
 function toSnakeCase(input: string): string {
   const trimmed = input.trim()
   if (!trimmed) return ''
   return trimmed
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '_')
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/^_+|_+$/g, '')
     .replace(/__+/g, '_')
+}
+
+/** Concatena segmentos a string de vista previa */
+function segmentsToPreview(segments: RichSegment[]): string {
+  return segments.map(s => s.kind === 'text' ? s.text : s.example).join('')
+}
+
+/** Convierte segmentos a texto con placeholders {{n}} y devuelve también los ejemplos */
+function segmentsToTemplateText(segments: RichSegment[]): { text: string; examples: string[] } {
+  let counter = 0
+  const examples: string[] = []
+  const text = segments.map(s => {
+    if (s.kind === 'text') return s.text
+    counter += 1
+    examples.push(s.example)
+    return `{{${counter}}}`
+  }).join('')
+  return { text, examples }
+}
+
+/** Inserta una variable en un vector de segmentos, en una posición de caret global */
+function insertVarAt(
+  segments: RichSegment[],
+  caretIndex: number,
+  newVar: { id: number; example: string }
+): RichSegment[] {
+  let accLen = 0
+  const out: RichSegment[] = []
+  let inserted = false
+
+  for (const seg of segments) {
+    const segText = seg.kind === 'text' ? seg.text : seg.example
+    const start = accLen
+    const end = accLen + segText.length
+
+    if (!inserted && caretIndex >= start && caretIndex <= end) {
+      const offset = caretIndex - start
+      if (seg.kind === 'text') {
+        const left = seg.text.slice(0, offset)
+        const right = seg.text.slice(offset)
+        if (left) out.push({ kind: 'text', text: left })
+        out.push({ kind: 'var', id: newVar.id, example: newVar.example })
+        if (right) out.push({ kind: 'text', text: right })
+      } else {
+        // Si el caret cae dentro de una variable, lo insertamos antes
+        out.push({ kind: 'var', id: newVar.id, example: newVar.example })
+        out.push(seg)
+      }
+      inserted = true
+    } else {
+      out.push(seg)
+    }
+    accLen = end
+  }
+
+  if (!inserted) {
+    // caret estaba al final
+    out.push({ kind: 'var', id: newVar.id, example: newVar.example })
+  }
+  return out
+}
+
+/** Quita una variable por id */
+function removeVarById(segments: RichSegment[], varId: number): RichSegment[] {
+  const out: RichSegment[] = []
+  for (const seg of segments) {
+    if (seg.kind === 'var' && seg.id === varId) continue
+    out.push(seg)
+  }
+  // fusiona textos contiguos
+  const merged: RichSegment[] = []
+  for (const seg of out) {
+    const last = merged[merged.length - 1]
+    if (last && last.kind === 'text' && seg.kind === 'text') {
+      last.text += seg.text
+    } else {
+      merged.push(seg)
+    }
+  }
+  return merged
+}
+
+/** Reconstruye segments preservando variables ya existentes (si editan fuera de los ejemplos) */
+function rebuildSegmentsPreservingVars(
+  oldSegments: RichSegment[],
+  newPreview: string
+): RichSegment[] {
+  const vars = oldSegments.filter(s => s.kind === 'var') as Array<{ kind:'var'; id:number; example:string }>
+  let pos = 0
+  const out: RichSegment[] = []
+
+  for (const v of vars) {
+    const idx = newPreview.indexOf(v.example, pos)
+    if (idx === -1) {
+      // editaron dentro del ejemplo → fallback simple
+      return [{ kind: 'text', text: newPreview }]
+    }
+    const before = newPreview.slice(pos, idx)
+    if (before) out.push({ kind: 'text', text: before })
+    out.push({ kind: 'var', id: v.id, example: v.example })
+    pos = idx + v.example.length
+  }
+  const tail = newPreview.slice(pos)
+  if (tail) out.push({ kind: 'text', text: tail })
+  return out
 }
 
 export function useWaTemplateForm({
@@ -91,6 +179,9 @@ export function useWaTemplateForm({
 
   const [categories, setCategories] = useState<Array<{ label: string; value: number }>>([])
   const [loadingCategories, setLoadingCategories] = useState(false)
+
+  // Contador de IDs de variables (estable por ciclo de vida del hook)
+  const nextVarIdRef = useRef(1)
 
   const fetchAllCategories = useCallback(async () => {
     setLoadingCategories(true)
@@ -105,9 +196,7 @@ export function useWaTemplateForm({
         page += 1
       }
       setCategories(
-        acc
-          .filter(x => x.isActive)
-          .map(x => ({ label: x.name, value: x.id }))
+        acc.filter(x => x.isActive).map(x => ({ label: x.name, value: x.id }))
       )
     } finally {
       setLoadingCategories(false)
@@ -121,28 +210,22 @@ export function useWaTemplateForm({
     categoryId: null,
     categoryName: null,
     isActive: true,
-    header: { enabled: true, format: 'TEXT', text: 'Título' },
-    body: { enabled: true, text: 'Este es un mensaje.' },
+    header: { enabled: true, text: 'Título', segments: [{ kind: 'text', text: 'Título' }] },
+    body:   { enabled: true, text: 'Este es un mensaje.', segments: [{ kind: 'text', text: 'Este es un mensaje.' }] },
     footer: { enabled: true, text: '' },
-    buttons: { enabled: true, rows: [] },
-    mediaFiles: [],
-    uploading: false,
   }), [])
 
   const [form, setForm] = useState<LocalFormState>(initialState)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    fetchAllCategories()
-  }, [fetchAllCategories])
+  useEffect(() => { fetchAllCategories() }, [fetchAllCategories])
 
   useEffect(() => {
     if (isView && data) {
       // Intentar inferir componentes desde data.components (si viene)
-      let header: HeaderState = { enabled: false, format: 'TEXT', text: '' }
-      let body: BodyState = { enabled: false, text: '' }
-      let footer: FooterState = { enabled: false, text: '' }
-      let buttons: ButtonsState = { enabled: false, rows: [] }
+      let header: HeaderStateText = { enabled: false, text: '', segments: [{ kind: 'text', text: '' }] }
+      let body: BodyState        = { enabled: false, text: '', segments: [{ kind: 'text', text: '' }] }
+      let footer: FooterState    = { enabled: false, text: '' }
 
       try {
         const comps = (typeof data.components === 'string'
@@ -153,29 +236,19 @@ export function useWaTemplateForm({
           comps.forEach(c => {
             if (!c?.type) return
             if (c.type === 'HEADER') {
-              if (c.format === 'TEXT') {
-                header = { enabled: true, format: 'TEXT', text: c.text ?? '' }
-              } else {
-                //Imagen, video, etc
-                const handles: string[] = c.example?.header_handle ?? []
-                header = { enabled: true, format: c.format, exampleHandles: handles }
-              }
+              const txt = c.text ?? ''
+              header = { enabled: true, text: txt, segments: [{ kind: 'text', text: txt }] }
             }
             if (c.type === 'BODY') {
-              body = { enabled: true, text: c.text ?? '' }
+              const txt = c.text ?? ''
+              body = { enabled: true, text: txt, segments: [{ kind: 'text', text: txt }] }
             }
             if (c.type === 'FOOTER') {
               footer = { enabled: true, text: c.text ?? '' }
             }
-            if (c.type === 'BUTTONS') {
-              const rows: ButtonsRow[] = Array.isArray(c.buttons) ? c.buttons : []
-              buttons = { enabled: true, rows }
-            }
           })
         }
-      } catch {
-        // si no se puede parsear, mantenemos defaults
-      }
+      } catch { /* ignore */ }
 
       setForm({
         displayName: data.name ?? '',
@@ -184,12 +257,7 @@ export function useWaTemplateForm({
         categoryId: data.templateCategoryId ?? null,
         categoryName: data.templateCategoryName ?? null,
         isActive: !!data.isActive,
-        header,
-        body,
-        footer,
-        buttons,
-        mediaFiles: [],
-        uploading: false,
+        header, body, footer,
       })
       setErrors({})
     }
@@ -204,7 +272,7 @@ export function useWaTemplateForm({
     setForm(prev => ({
       ...prev,
       displayName: val,
-      externalName: toSnakeCase(val), // autogenera snake_case
+      externalName: toSnakeCase(val),
     }))
     if (errors.displayName) setErrors(e => ({ ...e, displayName: '' }))
   }, [errors.displayName])
@@ -225,178 +293,152 @@ export function useWaTemplateForm({
     setForm(prev => ({ ...prev, isActive: checked }))
   }, [])
 
-
+  // ====== HEADER (solo TEXT) ======
   const setHeaderEnabled = useCallback((v: boolean) => {
-    setForm(prev => ({ ...prev, header: { ...prev.header, enabled: v } as HeaderState }))
+    setForm(prev => ({ ...prev, header: { ...prev.header, enabled: v } }))
   }, [])
 
-  const setHeaderFormat = useCallback((fmt: HeaderFormat) => {
-    if (fmt === 'TEXT') {
-      setForm(prev => ({ ...prev, header: { enabled: true, format: 'TEXT', text: 'Título' } }))
-    } else {
-      setForm(prev => ({ ...prev, header: { enabled: true, format: fmt, exampleHandles: [] } as HeaderStateMedia }))
-    }
-  }, [])
-
+  /** Actualiza header preservando variables existentes */
   const setHeaderText = useCallback((txt: string) => {
     setForm(prev => {
-      if (prev.header.format !== 'TEXT') return prev
-      return { ...prev, header: { ...prev.header, text: txt } as HeaderStateText }
+      const h = prev.header
+      const newSegments = rebuildSegmentsPreservingVars(h.segments, txt)
+      return { ...prev, header: { ...h, text: txt, segments: newSegments } }
     })
   }, [])
- 
-  const setHeaderMediaFiles = useCallback((files: File[]) => {
-    setForm(prev => ({ ...prev, mediaFiles: files }))
-  }, [])
 
+  // ====== BODY (solo TEXT) ======
   const setBodyEnabled = useCallback((v: boolean) => {
     setForm(prev => ({ ...prev, body: { ...prev.body, enabled: v } }))
   }, [])
 
+  /** Actualiza body preservando variables existentes */
   const setBodyText = useCallback((txt: string) => {
-    setForm(prev => ({ ...prev, body: { ...prev.body, text: txt } }))
-  }, [])
-
-  const setFooterEnabled = useCallback((v: boolean) => {
-    setForm(prev => ({ ...prev, footer: { ...prev.footer, enabled: v } }))
-  }, [])
-
-  const setFooterText = useCallback((txt: string) => {
-    setForm(prev => ({ ...prev, footer: { ...prev.footer, text: txt } }))
-  }, [])
-
-
-  const setButtonsEnabled = useCallback((v: boolean) => {
-    setForm(prev => ({ ...prev, buttons: { ...prev.buttons, enabled: v } }))
-  }, [])
-
-  const addButton = useCallback((kind: ButtonKind) => {
     setForm(prev => {
-      const rows = [...prev.buttons.rows]
-      if (kind === 'QUICK_REPLY') rows.push({ type: 'QUICK_REPLY', text: 'Responder' })
-      if (kind === 'URL') rows.push({ type: 'URL', text: 'Abrir', url: 'https://mi.link/{{1}}' })
-      if (kind === 'PHONE_NUMBER') rows.push({ type: 'PHONE_NUMBER', text: 'Llamar', phone_number: '505XXXXXXXX' })
-      return { ...prev, buttons: { ...prev.buttons, rows } }
+      const newSegments = rebuildSegmentsPreservingVars(prev.body.segments, txt)
+      return { ...prev, body: { ...prev.body, text: txt, segments: newSegments } }
     })
   }, [])
 
-  const updateButton = useCallback((index: number, field: string, value: string) => {
+  // ====== VARIABLES (HEADER/BODY) ======
+  const insertHeaderVar = useCallback((example: string, caretIndex?: number) => {
     setForm(prev => {
-      const rows = [...prev.buttons.rows] as any[]
-      rows[index] = { ...rows[index], [field]: value }
-      return { ...prev, buttons: { ...prev.buttons, rows } }
+      const { segments, text } = prev.header
+      const caret = typeof caretIndex === 'number' ? caretIndex : text.length
+      const newId = nextVarIdRef.current++
+      const newSegments = insertVarAt(segments, caret, { id: newId, example })
+      const newPreview = segmentsToPreview(newSegments)
+      return { ...prev, header: { ...prev.header, segments: newSegments, text: newPreview } }
     })
   }, [])
 
-  const removeButton = useCallback((index: number) => {
+  const insertBodyVar = useCallback((example: string, caretIndex?: number) => {
     setForm(prev => {
-      const rows = [...prev.buttons.rows]
-      rows.splice(index, 1)
-      return { ...prev, buttons: { ...prev.buttons, rows } }
+      const { segments, text } = prev.body
+      const caret = typeof caretIndex === 'number' ? caretIndex : text.length
+      const newId = nextVarIdRef.current++
+      const newSegments = insertVarAt(segments, caret, { id: newId, example })
+      const newPreview = segmentsToPreview(newSegments)
+      return { ...prev, body: { ...prev.body, segments: newSegments, text: newPreview } }
     })
   }, [])
 
+  const removeHeaderVar = useCallback((varId: number) => {
+    setForm(prev => {
+      const newSegments = removeVarById(prev.header.segments, varId)
+      const newPreview = segmentsToPreview(newSegments)
+      return { ...prev, header: { ...prev.header, segments: newSegments, text: newPreview } }
+    })
+  }, [])
 
+  const removeBodyVar = useCallback((varId: number) => {
+    setForm(prev => {
+      const newSegments = removeVarById(prev.body.segments, varId)
+      const newPreview = segmentsToPreview(newSegments)
+      return { ...prev, body: { ...prev.body, segments: newSegments, text: newPreview } }
+    })
+  }, [])
+
+  const getHeaderParts = useCallback((): Array<{ text: string; isVar: boolean; id?: number }> => {
+    return form.header.segments.map(s =>
+      s.kind === 'text' ? { text: s.text, isVar: false } : { text: s.example, isVar: true, id: s.id }
+    )
+  }, [form.header])
+
+  const getBodyParts = useCallback((): Array<{ text: string; isVar: boolean; id?: number }> => {
+    return form.body.segments.map(s =>
+      s.kind === 'text' ? { text: s.text, isVar: false } : { text: s.example, isVar: true, id: s.id }
+    )
+  }, [form.body])
+
+  // ====== VALIDACIÓN ======
   const validate = useCallback(() => {
     const e: Record<string, string> = {}
     if (!form.displayName.trim()) e.displayName = 'El nombre es requerido'
     if (!form.externalName.trim()) e.externalName = 'No se pudo generar el nombre interno'
     if (!form.language.trim()) e.language = 'Idioma requerido'
     if (!form.categoryId) e.categoryId = 'Categoría requerida'
-    if (!form.categoryId) e.header = 'Encabezado de plantilla requerida'
-    if (!form.categoryId) e.body = 'Cuerpo de plantilla requerida'
-    if (!form.categoryId) e.footer = 'Pie de página requerida'
-    // Header
-    if (form.header.enabled) {
-      if (form.header.format === 'TEXT') {
-        if (!(form.header as HeaderStateText).text?.trim()) e.headerText = 'Texto de encabezado requerido'
-      } else {
-        // Media: si se suben archivos, luego pondremos handles
-        // opcionalmente puedes exigir al menos 1 archivo:
-        // if (form.mediaFiles.length === 0) e.headerMedia = 'Debes adjuntar al menos un archivo'
-      }
-    }
-    // Body
+    if (form.header.enabled && !form.header.text.trim()) e.headerText = 'Texto de encabezado requerido'
     if (form.body.enabled && !form.body.text.trim()) e.bodyText = 'Texto del cuerpo requerido'
     setErrors(e)
     return Object.keys(e).length === 0
   }, [form])
 
-const uploadMedia = useCallback(async (): Promise<string[]> => {
-  if (!form.mediaFiles.length) return []
-  try {
-    setForm(prev => ({ ...prev, uploading: true }))
-    const fd = new FormData()
-    form.mediaFiles.forEach(f => fd.append('files', f))
-
-    const { data } = await api.post<UploadForWhatsAppResult[]>(
-      '/Media/upload-for-wh',
-      fd,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
-    )
-
-    // 👇 aquí usamos el handle porque es para plantillas
-    return Array.isArray(data)
-      ? data.map(x => x.waMediaId).filter(Boolean)
-      : []
-  } finally {
-    setForm(prev => ({ ...prev, uploading: false }))
-  }
-}, [form.mediaFiles])
-
-
-  const buildComponents = useCallback((headerHandles: string[]) => {
+  // ====== BUILD COMPONENTS (WhatsApp Cloud: incluye example.{header_text|body_text}) ======
+  const buildComponents = useCallback(() => {
     const comps: any[] = []
 
     if (form.header.enabled) {
-      if (form.header.format === 'TEXT') {
-        comps.push({ type: 'HEADER', format: 'TEXT', text: (form.header as HeaderStateText).text })
-      } else {
-        comps.push({
-          type: 'HEADER',
-          format: (form.header as HeaderStateMedia).format,
-          example: { header_handle: headerHandles },
-        })
-      }
+      const { text, examples } = segmentsToTemplateText(form.header.segments)
+      const headerComp: any = { type: 'HEADER', format: 'TEXT', text }
+      if (examples.length) headerComp.example = { header_text: examples }
+      comps.push(headerComp)
     }
 
     if (form.body.enabled) {
-      comps.push({ type: 'BODY', text: form.body.text })
+      const { text, examples } = segmentsToTemplateText(form.body.segments)
+      const bodyComp: any = { type: 'BODY', text }
+      if (examples.length) bodyComp.example = { body_text: examples }
+      comps.push(bodyComp)
     }
 
     if (form.footer.enabled && form.footer.text.trim()) {
       comps.push({ type: 'FOOTER', text: form.footer.text })
     }
 
-    if (form.buttons.enabled && form.buttons.rows.length) {
-      comps.push({ type: 'BUTTONS', buttons: form.buttons.rows })
-    }
-
     return comps
-  }, [form.header, form.body, form.footer, form.buttons])
+  }, [form.header, form.body, form.footer])
 
 
+      // ====== FOOTER ======
+    const setFooterEnabled = useCallback((v: boolean) => {
+      setForm(prev => ({ ...prev, footer: { ...prev.footer, enabled: v } }))
+    }, [])
+
+    const setFooterText = useCallback((txt: string) => {
+      setForm(prev => ({ ...prev, footer: { ...prev.footer, text: txt } }))
+    }, [])
+
+
+
+  // ====== SUBMIT ======
   const submit = useCallback(async () => {
     if (!validate()) return
-    const handles = await uploadMedia()
-    const components = buildComponents(handles)
+    const components = buildComponents()
     const payload: WaTemplateRequestDto = {
       id: 0,
       externalName: form.externalName,
       language: form.language,
       templateCategoryId: form.categoryId!,
-      templateCategoryName: form.categoryName,                             
+      templateCategoryName: form.categoryName,
       templateStatus: 'Approved' as any,
       externalId: null,
       componentsJson: JSON.stringify(components),
       isActive: form.isActive,
     }
     onSubmit(payload)
-
-    //Limpiar al formulario cuando se envia plantilla.
-     setForm(initialState);
-
-  }, [validate, uploadMedia, buildComponents, form, onSubmit])
+    setForm(initialState) // Limpiar al enviar
+  }, [validate, buildComponents, form, onSubmit, initialState])
 
   return {
     // estado y errores
@@ -412,25 +454,23 @@ const uploadMedia = useCallback(async (): Promise<string[]> => {
     setCategory,
     setIsActive,
 
-    // header
+    // header (texto + variables)
     setHeaderEnabled,
-    setHeaderFormat,
     setHeaderText,
-    setHeaderMediaFiles,
+    insertHeaderVar,
+    removeHeaderVar,
+    getHeaderParts,
 
-    // body
+    // body (texto + variables)
     setBodyEnabled,
     setBodyText,
+    insertBodyVar,
+    removeBodyVar,
+    getBodyParts,
 
     // footer
     setFooterEnabled,
     setFooterText,
-
-    // buttons
-    setButtonsEnabled,
-    addButton,
-    updateButton,
-    removeButton,
 
     // envío
     submit,
