@@ -24,34 +24,21 @@ export default function App() {
   const dispatch = useDispatch();
   const lastEvent = useNotificationsHub();
   const navigate = useNavigate();
-
-      // useEffect(() => {
-      //   if ('Notification' in window) {
-      //     Notification.requestPermission().then((permission) => {
-
-      //       if (permission === 'granted') {
-      //         console.log('Permiso de notificación concedido.');
-      //         // Opcional: Registrar el service worker si el permiso se concede
-      //         if ('serviceWorker' in navigator) {
-      //           navigator.serviceWorker.register('/src/Utils/notificationSW.js')
-      //             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //             .then(registration => {
-      //               console.log('Service worker registrado:');
-      //             })
-      //             .catch(error => {
-      //               console.error('Error al registrar el service worker:', error);
-      //             });
-      //         }
-      //       } else if (permission === 'denied') {
-      //         console.log('Permiso de notificación denegado.');
-      //       } else {
-      //         console.log('Permiso de notificación: no permitido o pendiente.');
-      //       }
-      //     });
-      //   } else {
-      //     console.log('Tu navegador no soporta notificaciones.');
-      //   }
-      // }, []);
+  
+    useEffect(() => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/src/Utils/sw.js').catch(console.error);
+      }
+    }, []);
+  
+    // Pedir permiso de notificaciones (una sola vez idealmente)
+    useEffect(() => {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        // Muestra tu propio modal antes, si quieres, y luego:
+        Notification.requestPermission().catch(() => {});
+      }
+    }, []);
 
   useEffect(() => {
     if (lastEvent) {
@@ -83,6 +70,93 @@ export default function App() {
     };
   }, [accessToken, navigate]);
 
+function shouldShowDesktopNotification() {
+  return document.visibilityState === 'hidden' || !document.hasFocus();
+}
+// listener único para cualquier notificación “de escritorio”
+useEffect(() => {
+  const onDesktopNotify = (e: Event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const evt = (e as CustomEvent).detail as any;
+    if (shouldShowDesktopNotification()) {
+      showDesktopNotification(evt).catch(() => {});
+    }
+  };
+
+  window.addEventListener('DesktopNotify', onDesktopNotify);
+    return () => window.removeEventListener('DesktopNotify', onDesktopNotify);
+  }, []);
+
+  // Mapea tu evento a un título, cuerpo e URL (ajústalo a tu modelo)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  function mapNotificationPayload(evt: any) {
+    // EJEMPLO: ajusta campos reales de tu evento
+    const title = evt.title ?? 'Nuevo mensaje';
+    const body  = evt.body ?? 'Tienes una nueva notificación';
+    const url   = evt.url ?? `http://localhost:5173/chat`; // o la ruta que corresponda
+
+    return { title, body, url };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function showDesktopNotification(evt: any) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+      console.log("El evento recibido es antes de llamar a mapNotificationPayload: ", evt);
+  const { title, body, url } = mapNotificationPayload(evt);
+  const reg = await navigator.serviceWorker.getRegistration();
+
+    if (reg?.showNotification) {
+      await reg.showNotification(title, {
+        body,
+        icon: 'https://www.pcgroupsa.com/assets/images/logopcg.png',
+        badge: 'https://www.pcgroupsa.com/assets/images/logopcg.png',
+        tag: `conv-${evt?.conversationId ?? 'general'}`,
+        requireInteraction: true,
+        data: { url },
+      });
+    } else {
+      new Notification(title, { body }); // fallback
+    }
+  }
+
+  // Escucha mensajes del SW (cuando el usuario hace clic en la notificación)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'NAVIGATE' && e.data?.url) {
+        navigate(e.data.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, [navigate]);
+
+  // Donde ya procesas lastEvent:
+  useEffect(() => {
+    if (!lastEvent) return;
+
+    // 1) Tu popup interno (toast/Redux)
+    dispatch(enqueuePopup(lastEvent));
+
+    // 2) Notificación de escritorio si está en otra pestaña/ventana/minimizado
+    if (shouldShowDesktopNotification()) {
+      showDesktopNotification(lastEvent).catch(() => {});
+    }
+  }, [lastEvent, dispatch]);
+
+  // Sonido (coloca un mp3 corto en /public/sounds/)
+  useEffect(() => {
+    if (!lastEvent) return;
+    try {
+      const audio = new Audio('/src/assets/audio/bellnotification.mp3');
+      // iOS requiere interacción previa del usuario para permitir audio
+      audio.play().catch(() => {});
+    // eslint-disable-next-line no-empty
+    } catch {}
+  }, [lastEvent]);
+  
   if (!accessToken) {
     return <AppRouter />;
   }

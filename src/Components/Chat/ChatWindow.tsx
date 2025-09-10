@@ -57,10 +57,10 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [quickMenuPos, setQuickMenuPos] = useState<{ x: number, y: number }>({ x: 0, y: 0 })
   const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null)
+  
   const longPressTimerRef = useRef<number | null>(null)
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
-
   useEffect(() => {
     setConversationId(Number(conversationId))
     setUserId(Number(userId))
@@ -129,9 +129,6 @@ const sendQuick = (opt: string) => {
     handleSend();
   }
 };
-
-
-
 
   const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect()
@@ -204,14 +201,19 @@ const sendQuick = (opt: string) => {
 
           return (
               <>
-                                          {showDivider && (
+              {showDivider && (
                   <div className="chat-window__date-divider">
                     <span className="chat-window__date-text" style={{ color: '#000000ff' }}>
                         {label}
                       </span>
                     </div>
                   )}
-            <div key={m.messageId} className={getMessagePosition(m)}>
+
+            <div className='chat-window__message-group__container' onDoubleClick={()=>{
+               beginReply(m)
+               focusTextarea()
+            }}>
+              <div key={m.messageId} className={getMessagePosition(m)}>
 
               {showSender && !isCurrentUser && (
                 <div className="chat-window__message-sender">
@@ -253,7 +255,6 @@ const sendQuick = (opt: string) => {
                         </div>
                       </div>
                     )}
-
 
                 <div className="chat-window__message-content">
                   {m.attachments?.length ? (
@@ -335,6 +336,8 @@ const sendQuick = (opt: string) => {
                 </div>
               </div>
             </div>
+            </div>
+
             </>
           )
         })}
@@ -342,27 +345,6 @@ const sendQuick = (opt: string) => {
       </div>
 
       <div className="chat-window__composer">
-        {replyTo && (
-          <div
-            className="chat-window__reply-pill"
-            style={{
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-              background: '#f3f4f6',
-              borderLeft: '4px solid #10b981',
-              padding: '8px 10px',
-              borderRadius: 8,
-              margin: '0 12px 8px'
-            }}
-          >
-            <div style={{ fontSize: 12, opacity: .8 }}>Respondiendo a {replyTo.author}</div>
-            <div style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {replyTo.preview}
-            </div>
-            <button onClick={cancelReply} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>✕</button>
-          </div>
-        )}
 
         <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
@@ -391,6 +373,27 @@ const sendQuick = (opt: string) => {
         )}
 
         <div className="chat-window__composer-input-container">
+                  {replyTo && (
+          <div
+            className="chat-window__reply-pill"
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              background: '#f3f4f6',
+              borderLeft: '4px solid #10b981',
+              padding: '8px 10px',
+              borderRadius: 8,
+              margin: '0 12px 8px'
+            }}
+          >
+            <div style={{ fontSize: 12, opacity: .8 }}>Respondiendo a {replyTo.author}</div>
+            <div style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: "left" }}>
+              {replyTo.preview}
+            </div>
+            <button onClick={cancelReply} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
           <textarea
             ref={textAreaRef}
             className="chat-window__composer-input"

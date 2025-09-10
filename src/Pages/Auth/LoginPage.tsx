@@ -12,6 +12,7 @@ import { FaFacebook } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa6";
 import { FaInstagramSquare } from "react-icons/fa";
 import { FaTiktok } from "react-icons/fa";
+
 export default function LoginPresentation() {
   const { t } = useTranslation();
   const {
@@ -25,6 +26,15 @@ export default function LoginPresentation() {
     confirmLogin,
     cancelLogin
   } = useLoginForm();
+
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEnterKey = (event: any) => {
+    if (event.key === 'Enter') {
+      confirmLogin();
+      // Add your action logic here
+    }
+  };
 
   return (
     <div className={`login ${loading ? 'login--loading' : ''}`}>
@@ -113,6 +123,7 @@ export default function LoginPresentation() {
               variant="primary"
               disabled={!canSubmit || loading}
               className="login__submit-button"
+              onKeyDown={handleEnterKey}
             >
            <p className="login__submit-text">
                {loading ? `${t("login.submit")}…` : t("login.submit")}

@@ -11,7 +11,7 @@ import { notificationSound } from '@/Utils/sound'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
-  'VITE_API_URL=https://crmpcg.com/api/v1'
+  'VITE_API_URL=https://localhost:7108/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 let chatConnection: signalR.HubConnection | null = null
@@ -122,7 +122,6 @@ export async function createHubConnection(token: string) {
     (payload: {contactLog: ContactLog}) => {
       window.dispatchEvent(new CustomEvent('newContactValidation', { detail: payload }))
     }
-    
   )
 
   try {
@@ -151,32 +150,24 @@ export function leaveConversation(conversationId: number) {
     chatConnection.invoke('LeaveConversation', conversationId.toString())
   }
 }
-//Mostrar notificacion, cuando no esta en el sitio web. Para alertar para nueva notificacion.
-const mostrarNotificacion = (title: string, body: string =  '') => {
-  if ('Notification' in window && 
-    Notification.permission === 'granted') {
-
-    console.log("Notificacion por api de navegador" + title + " " + body);
-
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.showNotification(title, {
-        body: body,
-        icon: '../assets/pcgroup.png'
-      });
-    });
-
-  }
-};
 
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
 
-  chatConnection?.on('ReceiveMessage', (message, attachments) =>
-    handler({ message, attachments })
-  );
+  chatConnection?.on('ReceiveMessage', (message, attachments) => {
 
-  mostrarNotificacion("Nuevo mensaje");
+    handler({ message, attachments });
+
+    // Lanzar un evento global para que App decida si mostrar notificación
+    const title = `Mensaje de ${message.senderContactName ?? 'Contacto'}`;
+    const body  = message.content ?? '(Mensaje con adjunto)';
+    const url   = `http://localhost:5173/chat`;
+    
+    window.dispatchEvent(new CustomEvent('DesktopNotify', {
+      detail: { title, body, url, conversationId: message.conversationId }
+    }));
+  });
 }
 
 export function offNewMessage(
@@ -237,7 +228,9 @@ export function onSupportRequested(
   handler: (payload: { conversationId: number;  requestedAt: string; clientContactName: string; clientName: string; }) => void
 ) {
   notificationsConnection?.on('SupportRequested', handler)
+  
 }
+
 export function offSupportRequested(
   handler: (payload: { conversationId: number; requestedAt: string; clientContactName: string; clientName: string;  }) => void
 ) {
@@ -295,6 +288,7 @@ export function onNewContactValidation(
 ) {
   notificationsConnection?.on('newContactValidation', handler)
   notificationSound.play();
+  
 }
 
 export function offNewContactValidation(
@@ -317,3 +311,6 @@ export function onPlayNewMessageSound(
 export function offPlayNewMessageSound() {
   notificationsConnection?.off('PlayNewMessageSound');
 }
+
+
+  //Mostrar la notificacion, cuando recibi un nuevo mensaje, si no estoy en el sitio, es decir si esta abiero y todo pero estoy revisando otra coas
