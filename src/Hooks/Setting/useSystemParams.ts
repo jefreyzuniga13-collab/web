@@ -26,7 +26,6 @@ export function useSystemParams() {
       setError(null)
       try {
         //Aqui el globalFilter lleno basillo
-        console.log("El estado global es antes de la peticion", globalFilter);
         const resp = await SystemParamService.getAllAsync(globalFilter, p, s)
         setSystemParams(resp.items)
         setTotalCount(resp.meta.totalCount)
@@ -168,7 +167,6 @@ export function useSystemParams() {
   // Initial load & reload
   useEffect(() => {
     //Aqui el filtro muestra la informacion que se esta asignado en vivo con el setGlobalFilter
-    console.log("El estado global a llamar a fetchPage", globalFilter);
     fetchPage()
   }, [fetchPage, globalFilter])
 

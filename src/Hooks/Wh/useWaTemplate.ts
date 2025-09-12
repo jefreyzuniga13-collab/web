@@ -32,7 +32,6 @@ export function useWaTemplate() {
       setLoadingList(true)
       setError(null)
       try {
-        console.log("Filtros globales", globalFilter)
         const list = await WaTemplateService.GetAllAsync(sync, globalFilter)
         setAllItems(list)
         paginate(list, 1, pageSize)

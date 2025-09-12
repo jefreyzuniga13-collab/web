@@ -77,6 +77,7 @@ export interface MessageDto {
   senderUserName?: string;
   senderContactId?: number;
   senderContactName?: string;
+  senderClientName?: string;
   isIncoming: boolean;
   content?: string;
   externalId: string;

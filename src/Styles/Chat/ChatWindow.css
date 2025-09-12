@@ -81,7 +81,7 @@
   margin-top: 2px; /* separa un poco del texto */
 }
 
-
+/* 
 .chat-window__messages::before {
       content: '';
       position: absolute;
@@ -91,7 +91,7 @@
       height: 100%;
       background-color: rgba(128, 127, 127, 0.1); 
       z-index: 1;
-    }
+    } */
 
 .chat-window__date-divider {
   display: flex;

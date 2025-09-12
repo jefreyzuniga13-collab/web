@@ -11,7 +11,7 @@ import { notificationSound } from '@/Utils/sound'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
-  'VITE_API_URL=https://localhost:7108/api/v1'
+  'VITE_API_URL=https://crmpcg.com/api/v1'
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, '')
 
 let chatConnection: signalR.HubConnection | null = null
@@ -68,9 +68,11 @@ export async function createHubConnection(token: string) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   presenceConnection.on('UserIsOnline', (userId: number) => {
   })
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   presenceConnection.on('UserIsOffline', (userId: number) => {
   })
+
   presenceConnection.onreconnecting(err =>
     console.warn('Reconnecting to Presence Hub...', err)
   )
@@ -154,21 +156,60 @@ export function leaveConversation(conversationId: number) {
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
+  if (!chatConnection) return;
 
-  chatConnection?.on('ReceiveMessage', (message, attachments) => {
+  const cb = (message: MessageDto, attachments?: AttachmentDto[]) => {
+    try {
+      // Entrega attachments siempre como array
+      handler({ message, attachments: attachments ?? [] });
 
-    handler({ message, attachments });
+      // Normaliza fecha
+      const sentAtDate = new Date(message?.sentAt as any);
 
-    // Lanzar un evento global para que App decida si mostrar notificación
-    const title = `Mensaje de ${message.senderContactName ?? 'Contacto'}`;
-    const body  = message.content ?? '(Mensaje con adjunto)';
-    const url   = `http://localhost:5173/chat`;
-    
-    window.dispatchEvent(new CustomEvent('DesktopNotify', {
-      detail: { title, body, url, conversationId: message.conversationId }
-    }));
-  });
+      const sentAtOk = !isNaN(sentAtDate.getTime());
+      const sentAtText = sentAtOk
+        ? sentAtDate.toLocaleString('es-NI', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+      console.log(
+        'Datos a mostrar en consola:',
+        `${message?.senderClientName ?? ''} ${message?.senderUserName ?? ''} ${sentAtText}`
+      );
+
+      const title = `${
+        message?.senderClientName ?? ''
+      } ${message?.senderContactName ?? message?.senderUserName ?? ''} recibido: ${sentAtText}`;
+
+      const body =
+        (message?.content && message.content.trim()) || '(Mensaje con adjunto)';
+
+      const url = `https://staging.dsujq9sb48iiw.amplifyapp.com/chat/`;
+
+      // Emitir evento para notificación
+      window.dispatchEvent(
+        new CustomEvent('DesktopNotify', {
+          detail: {
+            title,
+            body,
+            url,
+            conversationId: message?.conversationId,
+          },
+          
+        })
+      );
+    } catch (err) {
+      console.error('Error en onNewMessage:', err);
+    }
+  };
+
+  chatConnection.on('ReceiveMessage', cb);
 }
+
 
 export function offNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void

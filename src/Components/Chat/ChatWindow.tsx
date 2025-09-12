@@ -57,7 +57,7 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [quickMenuPos, setQuickMenuPos] = useState<{ x: number, y: number }>({ x: 0, y: 0 })
   const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null)
-  
+
   const longPressTimerRef = useRef<number | null>(null)
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -104,31 +104,31 @@ export const ChatWindow: React.FC<Props> = ({ conversationId, userId, conversati
     return []
   }, [selectedParam])
 
-const sendQuickNow = async (msg: MessageDto, opt: string) => {
-  try {
-    await sendText({
-      conversationId: Number(conversationId),
-      senderId: Number(userId),
-      content: opt,
-      messageType: 'Text',
-      externalId: (msg as any)?.externalId ?? null,
-      repliedParentMessageId: msg.messageId
-    });
-  } finally {
-    setSelectedOption(null);
-    cancelReply();
-    setQuickMenuOpen(false);
-  }
-};
+  const sendQuickNow = async (msg: MessageDto, opt: string) => {
+    try {
+      await sendText({
+        conversationId: Number(conversationId),
+        senderId: Number(userId),
+        content: opt,
+        messageType: 'Text',
+        externalId: (msg as any)?.externalId ?? null,
+        repliedParentMessageId: msg.messageId
+      });
+    } finally {
+      setSelectedOption(null);
+      cancelReply();
+      setQuickMenuOpen(false);
+    }
+  };
 
-const sendQuick = (opt: string) => {
-  if (quickMenuMsg) {
-    void sendQuickNow(quickMenuMsg, opt); // envía ya
-  } else {
-    setSelectedOption(opt);
-    handleSend();
-  }
-};
+  const sendQuick = (opt: string) => {
+    if (quickMenuMsg) {
+      void sendQuickNow(quickMenuMsg, opt); // envía ya
+    } else {
+      setSelectedOption(opt);
+      handleSend();
+    }
+  };
 
   const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect()
@@ -166,17 +166,17 @@ const sendQuick = (opt: string) => {
   }
 
   function getConversationStringDate(sentAt: string) {
-  const fecha = parseISO(sentAt)
+    const fecha = parseISO(sentAt)
 
-  if (isToday(fecha)) {
+    if (isToday(fecha)) {
       return "Hoy"
-      } else if (isYesterday(fecha)) {
-        return "Ayer"
-      } else {
-        // Ejemplo: "5 de septiembre de 2025"
-        return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es })
-      }
+    } else if (isYesterday(fecha)) {
+      return "Ayer"
+    } else {
+      // Ejemplo: "5 de septiembre de 2025"
+      return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es })
     }
+  }
 
   return (
     <div className="chat-window">
@@ -185,55 +185,55 @@ const sendQuick = (opt: string) => {
         {visibleMessages.map((m, i) => {
           // const isCurrentUser = m.senderUserId === userId
           // const prev = i > 0 ? visibleMessages[i - 1] : null
-           const sentAt = formatTime(m.sentAt)
-            const isCurrentUser = m.senderUserId === userId
-            const prev = i > 0 ? visibleMessages[i - 1] : null
-            const showSender = !prev || prev.senderUserId !== m.senderUserId
-            // Etiqueta relativa del mensaje actual y la previa
-            const label      = getConversationStringDate(m.sentAt)
-            const prevLabel  = prev ? getConversationStringDate(prev.sentAt) : null
+          const sentAt = formatTime(m.sentAt)
+          const isCurrentUser = m.senderUserId === userId
+          const prev = i > 0 ? visibleMessages[i - 1] : null
+          const showSender = !prev || prev.senderUserId !== m.senderUserId
+          // Etiqueta relativa del mensaje actual y la previa
+          const label = getConversationStringDate(m.sentAt)
+          const prevLabel = prev ? getConversationStringDate(prev.sentAt) : null
 
-            // Solo mostrar el divisor cuando la etiqueta cambia
-            const showDivider = !prev || label !== prevLabel
-            const isIncomingFromContact = !isCurrentUser
-            
-            // const sentAt = formatTime(m.sentAt)
+          // Solo mostrar el divisor cuando la etiqueta cambia
+          const showDivider = !prev || label !== prevLabel
+          const isIncomingFromContact = !isCurrentUser
+
+          // const sentAt = formatTime(m.sentAt)
 
           return (
-              <>
+            <>
               {showDivider && (
-                  <div className="chat-window__date-divider">
-                    <span className="chat-window__date-text" style={{ color: '#000000ff' }}>
-                        {label}
-                      </span>
-                    </div>
-                  )}
-
-            <div className='chat-window__message-group__container' onDoubleClick={()=>{
-               beginReply(m)
-               focusTextarea()
-            }}>
-              <div key={m.messageId} className={getMessagePosition(m)}>
-
-              {showSender && !isCurrentUser && (
-                <div className="chat-window__message-sender">
-                  {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
+                <div className="chat-window__date-divider">
+                  <span className="chat-window__date-text" style={{ color: '#000000ff' }}>
+                    {label}
+                  </span>
                 </div>
               )}
-              <div
-                className={getMessageClassName(m)}
-                {...(isIncomingFromContact ? {
-                  onPointerDown: (e: React.PointerEvent) => startLongPress(e, m),
-                  onPointerUp: cancelLongPress,
-                  onPointerLeave: cancelLongPress,
-                  onPointerCancel: cancelLongPress,
-                } : {
-                  onDoubleClick: focusTextarea
-                })}
-              >
-            {/* Mostrar el contenido si el mensaje si tierne una relación recursiba con otro mensaje como reply
+
+              <div className='chat-window__message-group__container' onDoubleClick={() => {
+                beginReply(m)
+                focusTextarea()
+              }}>
+                <div key={m.messageId} className={getMessagePosition(m)}>
+
+                  {showSender && !isCurrentUser && (
+                    <div className="chat-window__message-sender">
+                      {m.senderContactId ? m.senderContactName || 'Cliente' : m.senderUserName || 'Sistema'}
+                    </div>
+                  )}
+                  <div
+                    className={getMessageClassName(m)}
+                    {...(isIncomingFromContact ? {
+                      onPointerDown: (e: React.PointerEvent) => startLongPress(e, m),
+                      onPointerUp: cancelLongPress,
+                      onPointerLeave: cancelLongPress,
+                      onPointerCancel: cancelLongPress,
+                    } : {
+                      onDoubleClick: focusTextarea
+                    })}
+                  >
+                    {/* Mostrar el contenido si el mensaje si tierne una relación recursiba con otro mensaje como reply
              */}
-                {m.repliedMessage && (
+                    {m.repliedMessage && (
                       <div className="chat-window__reply-preview">
                         <div className="chat-window__reply-author">
                           {m.repliedMessage.senderContactId
@@ -243,100 +243,100 @@ const sendQuick = (opt: string) => {
                         <div className="chat-window__reply-content">
                           {m.repliedMessage.attachments?.length
                             ? (m.repliedMessage.attachments[0].fileName
-                                || (m.repliedMessage.attachments[0].mimeType?.startsWith('image/') ? '[Imagen]'
+                              || (m.repliedMessage.attachments[0].mimeType?.startsWith('image/') ? '[Imagen]'
                                 : m.repliedMessage.attachments[0].mimeType?.startsWith('video/') ? '[Video]'
-                                : m.repliedMessage.attachments[0].mimeType?.startsWith('audio/') ? '[Audio]'
-                                : '[Adjunto]'))
+                                  : m.repliedMessage.attachments[0].mimeType?.startsWith('audio/') ? '[Audio]'
+                                    : '[Adjunto]'))
                             : (m.repliedMessage.content
-                                ? (m.repliedMessage.content.length > 80
-                                    ? m.repliedMessage.content.slice(0, 80) + '…'
-                                    : m.repliedMessage.content)
-                                : '')}
+                              ? (m.repliedMessage.content.length > 80
+                                ? m.repliedMessage.content.slice(0, 80) + '…'
+                                : m.repliedMessage.content)
+                              : '')}
                         </div>
                       </div>
                     )}
 
-                <div className="chat-window__message-content">
-                  {m.attachments?.length ? (
-                    <div className="chat-window__media">
-                      {(m.attachments[0].mimeType?.startsWith('image/') ||
-                        m.attachments[0].mimeType === 'image/webp') && (
-                        <div className="chat-window__media-image">
-                          <div className="chat-window__image-container">
-                            <img
-                              src={m.attachments[0].mediaUrl}
-                              alt={m.attachments[0].fileName || 'Imagen'}
-                              className="chat-window__image"
-                              loading="lazy"
-                              onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
-                            />
-                          </div>
-                        </div>
-                      )}
-                      {m.attachments[0].mimeType?.startsWith('video/') && (
-                        <div className="chat-window__media-video">
-                          <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
-                            Tu navegador no soporta el elemento video.
-                          </video>
-                        </div>
-                      )}
-                      {m.attachments[0].mimeType?.startsWith('audio/') && (
-                        <div className="chat-window__media-audio">
-                          <div className="chat-window__audio-container">
-                            <div className="chat-window__audio-icon">🎵</div>
-                            <div className="chat-window__audio-info">
-                              <div className="chat-window__audio-name">
-                                {m.attachments[0].fileName || 'Audio'}
+                    <div className="chat-window__message-content">
+                      {m.attachments?.length ? (
+                        <div className="chat-window__media">
+                          {(m.attachments[0].mimeType?.startsWith('image/') ||
+                            m.attachments[0].mimeType === 'image/webp') && (
+                              <div className="chat-window__media-image">
+                                <div className="chat-window__image-container">
+                                  <img
+                                    src={m.attachments[0].mediaUrl}
+                                    alt={m.attachments[0].fileName || 'Imagen'}
+                                    className="chat-window__image"
+                                    loading="lazy"
+                                    onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
+                                  />
+                                </div>
                               </div>
-                              <audio
-                                controls
-                                className="chat-window__audio-player"
-                                src={m.attachments[0].mediaUrl}
+                            )}
+                          {m.attachments[0].mimeType?.startsWith('video/') && (
+                            <div className="chat-window__media-video">
+                              <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
+                                Tu navegador no soporta el elemento video.
+                              </video>
+                            </div>
+                          )}
+                          {m.attachments[0].mimeType?.startsWith('audio/') && (
+                            <div className="chat-window__media-audio">
+                              <div className="chat-window__audio-container">
+                                <div className="chat-window__audio-icon">🎵</div>
+                                <div className="chat-window__audio-info">
+                                  <div className="chat-window__audio-name">
+                                    {m.attachments[0].fileName || 'Audio'}
+                                  </div>
+                                  <audio
+                                    controls
+                                    className="chat-window__audio-player"
+                                    src={m.attachments[0].mediaUrl}
+                                  >
+                                    Tu navegador no soporta el elemento audio.
+                                  </audio>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {m.messageType === 'Document' && (
+                            <div className="chat-window__media-document">
+                              <a
+                                href={m.attachments[0].mediaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="chat-window__document-link"
                               >
-                                Tu navegador no soporta el elemento audio.
-                              </audio>
+                                <div className="chat-window__document-icon">
+                                  {getFileIcon(m.attachments[0].mimeType || '')}
+                                </div>
+                                <div className="chat-window__document-info">
+                                  <div className="chat-window__document-name">
+                                    {m.attachments[0].fileName || 'Documento'}
+                                  </div>
+                                  <div className="chat-window__document-size">
+                                    {m.attachments[0].mimeType || 'Archivo'}
+                                  </div>
+                                </div>
+                                <div className="chat-window__document-download">
+                                  <Download size={16} />
+                                </div>
+                              </a>
                             </div>
-                          </div>
+                          )}
+                          {hasText(m) && <div className="chat-window__message-caption">{m.content}</div>}
                         </div>
+                      ) : (
+                        hasText(m) && <div className="chat-window__message-text">{m.content}</div>
                       )}
-                      {m.messageType === 'Document' && (
-                        <div className="chat-window__media-document">
-                          <a
-                            href={m.attachments[0].mediaUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chat-window__document-link"
-                          >
-                            <div className="chat-window__document-icon">
-                              {getFileIcon(m.attachments[0].mimeType || '')}
-                            </div>
-                            <div className="chat-window__document-info">
-                              <div className="chat-window__document-name">
-                                {m.attachments[0].fileName || 'Documento'}
-                              </div>
-                              <div className="chat-window__document-size">
-                                {m.attachments[0].mimeType || 'Archivo'}
-                              </div>
-                            </div>
-                            <div className="chat-window__document-download">
-                              <Download size={16} />
-                            </div>
-                          </a>
-                        </div>
-                      )}
-                      {hasText(m) && <div className="chat-window__message-caption">{m.content}</div>}
                     </div>
-                  ) : (
-                    hasText(m) && <div className="chat-window__message-text">{m.content}</div>
-                  )}
-                </div>
-                <div className="chat-window__message-info">
-                  <span className="chat-window__message-time">{sentAt}</span>
-                  {getStatusIcon(m, isCurrentUser)}
+                    <div className="chat-window__message-info">
+                      <span className="chat-window__message-time">{sentAt}</span>
+                      {getStatusIcon(m, isCurrentUser)}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            </div>
 
             </>
           )
@@ -373,27 +373,27 @@ const sendQuick = (opt: string) => {
         )}
 
         <div className="chat-window__composer-input-container">
-                  {replyTo && (
-          <div
-            className="chat-window__reply-pill"
-            style={{
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-              background: '#f3f4f6',
-              borderLeft: '4px solid #10b981',
-              padding: '8px 10px',
-              borderRadius: 8,
-              margin: '0 12px 8px'
-            }}
-          >
-            <div style={{ fontSize: 12, opacity: .8 }}>Respondiendo a {replyTo.author}</div>
-            <div style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: "left" }}>
-              {replyTo.preview}
+          {replyTo && (
+            <div
+              className="chat-window__reply-pill"
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                background: '#f3f4f6',
+                borderLeft: '4px solid #10b981',
+                padding: '8px 10px',
+                borderRadius: 8,
+                margin: '0 12px 8px'
+              }}
+            >
+              <div style={{ fontSize: 12, opacity: .8 }}>Respondiendo a {replyTo.author}</div>
+              <div style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: "left" }}>
+                {replyTo.preview}
+              </div>
+              <button onClick={cancelReply} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>✕</button>
             </div>
-            <button onClick={cancelReply} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>✕</button>
-          </div>
-        )}
+          )}
           <textarea
             ref={textAreaRef}
             className="chat-window__composer-input"
@@ -493,4 +493,5 @@ const sendQuick = (opt: string) => {
       )}
     </div>
   )
+
 }

@@ -51,11 +51,11 @@ export default function OpeningHourModal({
   //   return false;
   // };
 
-   function PastDatesDisabledDatePicker(date: Date) {
-      const today = new Date('es-NI');
+  //  function PastDatesDisabledDatePicker(date: Date) {
+  //     const today = new Date('es-NI');
 
-      return date <= today;
-  };
+  //     return date <= today;
+  // };
   
   if (!isOpen) return null
 
@@ -111,7 +111,7 @@ export default function OpeningHourModal({
               </>
             )}
 
-            {form.recurrence === 'Weekly' && (
+            {(form.recurrence === 'Weekly' || form.recurrence === 'OneTimeHoliday') && (
               <>
                 <div className="oh-modal__col oh-modal__col--full">
                   <div className="oh-modal__field--checkbox-group">
@@ -192,7 +192,7 @@ export default function OpeningHourModal({
                   {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
                 </div>
                 
-                <div className="oh-modal__col oh-modal__col--full">
+                {/* <div className="oh-modal__col oh-modal__col--full">
                   <p className="oh-modal__inline-label">¿Es feriado variable dd/MM/yyyy?</p>
                   <div className="oh-modal__input-container">
                     
@@ -227,7 +227,7 @@ export default function OpeningHourModal({
 
                   </div>
                   {errors.range && <div className="oh-modal__error">{errors.range}</div>}
-                </div>
+                </div> */}
               </>
             )}
 

@@ -148,8 +148,6 @@ export default function UserForm({
       setUploadingImage(true)
       const res = await userService.uploadUserAvatar(initialData.userId, selectedFile)
 
-      console.log(initialData.userId, selectedFile);
-
       const newUrl = res.imageUrl ?? res.user?.imageUrl ?? ''
       setFormData(prev => ({ ...prev, imageUrl: newUrl }))
 

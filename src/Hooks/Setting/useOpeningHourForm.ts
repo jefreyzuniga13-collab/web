@@ -238,11 +238,11 @@ export function useOpeningHourForm({
       //     ? form.specificDate
       //     : null,
       startTime:
-        form.recurrence === 'Weekly' && form.startTime
+         form.startTime
           ? format(form.startTime, 'HH:mm')
           : null,
       endTime:
-        form.recurrence === 'Weekly' && form.endTime
+        form.endTime
           ? format(form.endTime, 'HH:mm')
           : null,
       effectiveFrom:

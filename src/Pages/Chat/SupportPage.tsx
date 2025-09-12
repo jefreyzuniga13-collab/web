@@ -57,6 +57,7 @@ const SupportPage: React.FC = () => {
             </button>
           </div>
 
+        {/* Puede habr agente asignado o no. Se deve de selecciona a uno al hazar */}
           <div className="inbox-status__container">
             {sortedOptions.map((opt) => (
               <>
@@ -101,7 +102,7 @@ const SupportPage: React.FC = () => {
 
       <main className="main-content">
         <header className="main-header">
-          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName != null ? ("Cliente: " + conversation?.systemDefinedCompanyName) : "")} {(convId != null && conversation?.clientContactName != null ? ("| Contacto: " + conversation?.clientContactName) + " | " : " ")}
+          <h2 className="main-title">{(convId != null && conversation?.systemDefinedCompanyName != null ? (conversation?.systemDefinedCompanyName + " | ") : "")} {(convId != null && conversation?.clientContactName != null ? ("Contacto: " + conversation?.clientContactName) + " | " : " ")}
           {convId != null && ("Télefono: ")} {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}</h2>
           
           <div className="btn-container">

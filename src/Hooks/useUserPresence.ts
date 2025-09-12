@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react'
 import { userService } from '@/Services/User/UserService'
 import { presenceConnection } from '@/Services/signalr'
+import { HubConnectionState } from '@microsoft/signalr'
 //import type { PresenceDto } from '@/Interfaces/User/UserInterfaces'
 
 export function useUserPresence(userId: number) {
   const [isOnline, setIsOnline] = useState(false)
   const [lastOnline, setLastOnline] = useState<Date | null>(null)
 
-  // 1) Fetch inicial vía REST
+  // Fetch inicial vía REST
   useEffect(() => {
     if (!userId) return
 
@@ -20,7 +21,7 @@ export function useUserPresence(userId: number) {
       .catch(console.error)
   }, [userId])
 
-  // 2) Suscripción a eventos SignalR
+  // Suscripción a eventos SignalR
   useEffect(() => {
     if (!userId) return
 
@@ -44,4 +45,14 @@ export function useUserPresence(userId: number) {
   }, [userId])
 
   return { isOnline, lastOnline }
+}
+
+export async function markOffline(userId: number) {
+  if (!presenceConnection) return;
+
+  if (presenceConnection.state !== HubConnectionState.Connected) {
+    // eslint-disable-next-line no-empty
+    try { await presenceConnection.start(); } catch {}
+  }
+  await presenceConnection.invoke('UserDisconnected', userId); // método del Hub
 }

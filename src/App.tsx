@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -9,43 +10,49 @@ import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
 import { enqueuePopup } from "@/Context/Slices/popupSlice";
-import {ThemeProvider } from '@mui/material/styles';
-import {theme} from '@/Utils/materialTheme'
+import { ThemeProvider } from "@mui/material/styles";
+import { theme } from "@/Utils/materialTheme";
 
 import "@/App.css";
 import "@/i18n";
 import "react-toastify/dist/ReactToastify.css";
 import type { AuthData } from "@/Interfaces/Auth/AuthInterface";
 
+function isExternalUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function sanitizeExternalUrl(url: string): string {
+  // Si ya viene con http(s)://, la devolvemos igual; si no, le anteponemos https://
+  if (isExternalUrl(url)) return url;
+  return `https://${String(url).replace(/^\/+/, "")}`;
+}
+
 export default function App() {
   // const online = useOnline();
+
   const authRaw = localStorage.getItem("auth") ?? "{}";
   const { accessToken } = JSON.parse(authRaw) as AuthData;
   const dispatch = useDispatch();
   const lastEvent = useNotificationsHub();
   const navigate = useNavigate();
-  
-    useEffect(() => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/src/Utils/sw.js').catch(console.error);
-      }
-    }, []);
-  
-    // Pedir permiso de notificaciones (una sola vez idealmente)
-    useEffect(() => {
-      if (!('Notification' in window)) return;
-      if (Notification.permission === 'default') {
-        // Muestra tu propio modal antes, si quieres, y luego:
-        Notification.requestPermission().catch(() => {});
-      }
-    }, []);
 
+  // Registro del SW (una sola vez)
   useEffect(() => {
-    if (lastEvent) {
-      dispatch(enqueuePopup(lastEvent));
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(console.error);
     }
-  }, [lastEvent, dispatch]);
+  }, []);
 
+  // Pedir permiso de notificaciones (una sola vez idealmente)
+  useEffect(() => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Vigilar token (logout si desaparece)
   useEffect(() => {
     if (!accessToken) return;
 
@@ -62,7 +69,7 @@ export default function App() {
     };
 
     window.addEventListener("storage", handleStorage);
-    const interval = setInterval(checkToken, 1000);
+    const interval = setInterval(checkToken, 3000);
 
     return () => {
       window.removeEventListener("storage", handleStorage);
@@ -70,93 +77,98 @@ export default function App() {
     };
   }, [accessToken, navigate]);
 
-function shouldShowDesktopNotification() {
-  return document.visibilityState === 'hidden' || !document.hasFocus();
-}
-// listener único para cualquier notificación “de escritorio”
-useEffect(() => {
-  const onDesktopNotify = (e: Event) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const evt = (e as CustomEvent).detail as any;
-    if (shouldShowDesktopNotification()) {
-      showDesktopNotification(evt).catch(() => {});
-    }
-  };
+  function shouldShowDesktopNotification() {
+    return document.visibilityState === "hidden" || !document.hasFocus();
+  }
 
-  window.addEventListener('DesktopNotify', onDesktopNotify);
-    return () => window.removeEventListener('DesktopNotify', onDesktopNotify);
+  // Escucha y muestra notificaciones emitidas internamente
+  useEffect(() => {
+    const onDesktopNotify = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const evt = (e as CustomEvent).detail as any;
+      if (shouldShowDesktopNotification()) {
+        showDesktopNotification(evt).catch(() => {});
+      }
+    };
+
+    window.addEventListener("DesktopNotify", onDesktopNotify);
+    return () => window.removeEventListener("DesktopNotify", onDesktopNotify);
   }, []);
 
-  // Mapea tu evento a un título, cuerpo e URL (ajústalo a tu modelo)
+  // Mapeo del payload hacia título/cuerpo/url (default: URL EXTERNA correcta)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   function mapNotificationPayload(evt: any) {
-    // EJEMPLO: ajusta campos reales de tu evento
-    const title = evt.title ?? 'Nuevo mensaje';
-    const body  = evt.body ?? 'Tienes una nueva notificación';
-    const url   = evt.url ?? `http://localhost:5173/chat`; // o la ruta que corresponda
+    const title = evt?.title ?? "Nuevo mensaje";
+    const body =
+      evt?.body ??
+      (evt?.content && String(evt.content).trim()) ??
+      "Tienes una nueva notificación";
+
+    // Prioriza url del evento; si no, fallback EXTERNO (sanitizado)
+    const rawUrl =
+      evt?.url ??
+      "https://staging.dsujq9sb48iiw.amplifyapp.com/chat/"; // tu staging
+    const url = sanitizeExternalUrl(String(rawUrl));
 
     return { title, body, url };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function showDesktopNotification(evt: any) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
+  async function showDesktopNotification(evt: any) {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
 
-      console.log("El evento recibido es antes de llamar a mapNotificationPayload: ", evt);
-  const { title, body, url } = mapNotificationPayload(evt);
-  const reg = await navigator.serviceWorker.getRegistration();
+    const { title, body, url } = mapNotificationPayload(evt);
+    const reg = await navigator.serviceWorker.getRegistration();
 
-    if (reg?.showNotification) {
-      await reg.showNotification(title, {
-        body,
-        icon: 'https://www.pcgroupsa.com/assets/images/logopcg.png',
-        badge: 'https://www.pcgroupsa.com/assets/images/logopcg.png',
-        tag: `conv-${evt?.conversationId ?? 'general'}`,
-        requireInteraction: true,
-        data: { url },
-      });
-    } else {
-      new Notification(title, { body }); // fallback
-    }
+    await reg?.showNotification(title, {
+      body,
+      icon: "/logopcg.png",
+      badge: "/logopcg.png",
+      requireInteraction: true,
+      data: { url }, // la usaremos en el click del SW
+    });
   }
 
-  // Escucha mensajes del SW (cuando el usuario hace clic en la notificación)
+  // Mensajes desde el SW (fallback si el SW decide postMessage en vez de abrir él mismo)
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!("serviceWorker" in navigator)) return;
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'NAVIGATE' && e.data?.url) {
-        navigate(e.data.url);
+      if (e.data?.type === "NAVIGATE" && e.data?.url) {
+        const url = String(e.data.url);
+        if (isExternalUrl(url)) {
+          // >>> FIX PRINCIPAL: abrir externas con window.open
+          window.open(sanitizeExternalUrl(url), "_blank", "noopener,noreferrer");
+        } else {
+          navigate(url);
+        }
       }
     };
-    navigator.serviceWorker.addEventListener('message', handler);
-    return () => navigator.serviceWorker.removeEventListener('message', handler);
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
   }, [navigate]);
 
-  // Donde ya procesas lastEvent:
+  // Procesar eventos del hub
   useEffect(() => {
     if (!lastEvent) return;
 
-    // 1) Tu popup interno (toast/Redux)
     dispatch(enqueuePopup(lastEvent));
 
-    // 2) Notificación de escritorio si está en otra pestaña/ventana/minimizado
     if (shouldShowDesktopNotification()) {
       showDesktopNotification(lastEvent).catch(() => {});
     }
   }, [lastEvent, dispatch]);
 
-  // Sonido (coloca un mp3 corto en /public/sounds/)
+  // Sonido
   useEffect(() => {
     if (!lastEvent) return;
     try {
-      const audio = new Audio('/src/assets/audio/bellnotification.mp3');
-      // iOS requiere interacción previa del usuario para permitir audio
+      const audio = new Audio("/notification.mp3");
       audio.play().catch(() => {});
     // eslint-disable-next-line no-empty
     } catch {}
   }, [lastEvent]);
-  
+
   if (!accessToken) {
     return <AppRouter />;
   }
@@ -164,22 +176,21 @@ async function showDesktopNotification(evt: any) {
   return (
     <SignalRProvider token={accessToken}>
       <ThemeProvider theme={theme}>
+        {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
 
-      {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
+        <ReLoginModal />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="colored"
+        />
 
-      <ReLoginModal />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="colored"
-      />
-
-      <AppRouter />
+        <AppRouter />
       </ThemeProvider>
     </SignalRProvider>
   );

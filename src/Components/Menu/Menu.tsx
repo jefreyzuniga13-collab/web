@@ -9,6 +9,10 @@ import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Menu/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/User/useUsers';
+import { presenceConnection } from '@/Services/signalr';
+import { markOffline } from '@/Hooks/useUserPresence';
+import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
+
 
 interface NavbarProps {
   id: number;
@@ -23,6 +27,9 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const dispatch = useDispatch();
   const { currentUser, loading: userLoading, fetchOne } = useUsers();
 
+    const authRaw = localStorage.getItem('auth') || '{}';
+    const { userId } = JSON.parse(authRaw) as AuthData;
+
   useEffect(() => {
     if (!currentUser) {
       fetchOne(id);
@@ -31,15 +38,17 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
 
   const selectedUrl = location.pathname.replace(/^\//, '');
 
-  const onClick = (url: string, text: string) => {
+ const onClick = async (url: string, text: string) => {
     if (text.toLowerCase().includes('cerrar')) {
+      try { await markOffline(Number(userId)); } catch (e) { console.warn(e); }
+      // eslint-disable-next-line no-empty
+      try { await presenceConnection?.stop(); } catch {}
       dispatch(logout());
       navigate('/login', { replace: true });
     } else {
       navigate(`/${url}`);
     }
   };
-
   if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
   return (
