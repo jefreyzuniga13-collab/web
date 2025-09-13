@@ -1,10 +1,12 @@
 import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
 import { Check, CheckCheck } from "lucide-react"
+import {CustomMessageServices} from '@/Services/Config/CustomMessageServices'
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
 import { toast } from "react-toastify"
+import type { CustomMessage } from "@/Interfaces/Setting/CustomMessage"
 
 type ReplyTarget = {
   messageId: number
@@ -13,8 +15,6 @@ type ReplyTarget = {
   preview: string
 }
 
-//Usar la conversación mas reciente, para el conversacionId, estados, ultimos mensajes, etc.
-//Por fecha de creación.
 export const useChatWindow = () => {
   const [conversationId, setConversationId] = useState<number>(0)
   const [userId, setUserId] = useState<number>(0)
@@ -28,6 +28,9 @@ export const useChatWindow = () => {
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
+  const [customMessages, setCustomMessages] = useState<CustomMessage[] | null>(null)
+  const [loadingCustomMessage, setLoadingCustomMessage] = useState<boolean>(false)
 
   const hasMedia = (m: MessageDto) => (m.attachments?.length ?? 0) > 0;
   const hasText = (m: MessageDto) =>
@@ -163,7 +166,6 @@ export const useChatWindow = () => {
       handleSend()
     }
   }
-
   const handleSend = useCallback(async () => {
   if (!conversationId || sending) return
   setSending(true)
@@ -180,8 +182,8 @@ export const useChatWindow = () => {
         conversationId,
         file,
         msg || undefined,
-        replyExternalId,              // <-- sigue enviando el wamid
-        repliedParentMessageId        // <-- NUEVO: id interno del padre
+        replyExternalId,
+        repliedParentMessageId        //id interno del padre
       )
       setFile(null)
       setText('')
@@ -197,8 +199,8 @@ export const useChatWindow = () => {
         senderId: userId,
         content: quick,
         messageType: 'Text',
-        externalId: replyExternalId,           // <-- wamid
-        repliedParentMessageId                 // <-- NUEVO
+        externalId: replyExternalId,
+        repliedParentMessageId 
       })
       setSelectedOption(null)
       setReplyTo(null)
@@ -211,8 +213,8 @@ export const useChatWindow = () => {
         senderId: userId,
         content: msg,
         messageType: 'Text',
-        externalId: replyExternalId,           // <-- wamid
-        repliedParentMessageId                 // <-- NUEVO
+        externalId: replyExternalId,
+        repliedParentMessageId
       })
       setText('')
       setReplyTo(null)
@@ -223,8 +225,6 @@ export const useChatWindow = () => {
     setSending(false)
   }
 }, [conversationId, file, sending, text, userId, replyTo])
-
-
 
   const handleDownload = async ( fileName: string) => {
     try {
@@ -293,7 +293,25 @@ export const useChatWindow = () => {
     setismaximize(false)
   }
 
+  //Recuperar los mensaje por agente
+  const getCustomoMessageByAgent = useCallback(
+    async ()  => {
+       try{
+        setLoadingCustomMessage(true)
+          const resp = await CustomMessageServices.getCustomoMessageByAgent();
+          setCustomMessages(resp)
+
+      // eslint-disable-next-line no-empty
+      }catch{
+        
+      }finally{
+        setLoadingCustomMessage(false);
+      }
+    },
+    [],
+  )
   
+
 
   return {
     setConversationId,
@@ -333,6 +351,9 @@ export const useChatWindow = () => {
     hasText,
     setSelectedOption,
     selectedOption: selectedOptionState,
+    getCustomoMessageByAgent, //Motrar opciones de mensajes personalizados
+    customMessages,
+    loadingCustomMessage,
     
     //reply mensajes
       beginReply,
