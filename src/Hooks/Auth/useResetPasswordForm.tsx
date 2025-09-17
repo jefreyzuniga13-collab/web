@@ -39,7 +39,7 @@ export default function useResetPasswordForm() {
   const formik = useFormik<ResetPasswordRequest>({
     initialValues: { token, newPassword: '', confirmNewPassword: '' },
     validationSchema,
-    validateOnChange: false,
+    validateOnChange: true,
     onSubmit: async (values, { setStatus }) => {
       setStatus(undefined)
       try {

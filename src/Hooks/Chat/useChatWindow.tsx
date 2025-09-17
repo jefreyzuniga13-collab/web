@@ -1,12 +1,15 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
 import { Check, CheckCheck } from "lucide-react"
-import {CustomMessageServices} from '@/Services/Config/CustomMessageServices'
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import useMessages from "@/Hooks/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder";
 import { toast } from "react-toastify"
-import type { CustomMessage } from "@/Interfaces/Setting/CustomMessage"
+import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { es } from "date-fns/locale/es";
+import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface"
 
 type ReplyTarget = {
   messageId: number
@@ -15,7 +18,7 @@ type ReplyTarget = {
   preview: string
 }
 
-export const useChatWindow = () => {
+export const useChatWindow = (selectedParam: SystemParamResponseDto | null, conversationStatus?: string | null) => {
   const [conversationId, setConversationId] = useState<number>(0)
   const [userId, setUserId] = useState<number>(0)
   const messages = useMessages(conversationId)
@@ -29,15 +32,27 @@ export const useChatWindow = () => {
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
 
-  const [customMessages, setCustomMessages] = useState<CustomMessage[] | null>(null)
-  const [loadingCustomMessage, setLoadingCustomMessage] = useState<boolean>(false)
-
   const hasMedia = (m: MessageDto) => (m.attachments?.length ?? 0) > 0;
   const hasText = (m: MessageDto) =>
     typeof m.content === "string" && m.content.trim().length > 0;
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const LONG_PRESS_MS = 400;
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
+  const [quickMenuPos, setQuickMenuPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null);
+
+  const longPressTimerRef = useRef<number | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
 
   const {
     isRecording,
@@ -55,9 +70,9 @@ export const useChatWindow = () => {
       const mime = audioBlob.type || 'audio/webm'
       const ext =
         mime.includes('ogg') ? 'ogg' :
-        mime.includes('webm') ? 'webm' :
-        mime.includes('mpeg') ? 'mp3' :
-        (mime.includes('mp4') || mime.includes('aac')) ? 'm4a' : 'bin'
+          mime.includes('webm') ? 'webm' :
+            mime.includes('mpeg') ? 'mp3' :
+              (mime.includes('mp4') || mime.includes('aac')) ? 'm4a' : 'bin'
       const audioFile = new File([audioBlob], `grabacion.${ext}`, { type: mime })
       await sendMedia(conversationId, audioFile, "")
       clearRecording()
@@ -69,9 +84,9 @@ export const useChatWindow = () => {
   }
 
   const visibleMessages = useMemo(
-    () => messages.filter((m) => 
-       hasMedia(m) 
-      || hasText(m) 
+    () => messages.filter((m) =>
+      hasMedia(m)
+      || hasText(m)
       || m.messageType === "Interactive"),
     [messages]
   );
@@ -115,9 +130,9 @@ export const useChatWindow = () => {
   }
 
   const setSelectedOption = (opt: string | null) => {
-  selectedOptionRef.current = opt
-  _setSelectedOption(opt)
-}
+    selectedOptionRef.current = opt
+    _setSelectedOption(opt)
+  }
 
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
 
@@ -134,10 +149,10 @@ export const useChatWindow = () => {
       (typeof m.content === 'string' && m.content.trim()) ||
       m.attachments?.[0]?.fileName ||
       (m.attachments?.[0]?.mimeType?.startsWith('image/') ? '[Imagen]' :
-      m.attachments?.[0]?.mimeType?.startsWith('video/') ? '[Video]' :
-      m.attachments?.[0]?.mimeType?.startsWith('audio/') ? '[Audio]' :
-      m.messageType === 'Document' ? '[Documento]' :
-      '[Adjunto]')
+        m.attachments?.[0]?.mimeType?.startsWith('video/') ? '[Video]' :
+          m.attachments?.[0]?.mimeType?.startsWith('audio/') ? '[Audio]' :
+            m.messageType === 'Document' ? '[Documento]' :
+              '[Adjunto]')
 
     setReplyTo({ messageId: m.messageId, externalId: extId, author, preview })
     // Opcional: enfocar textarea desde componente
@@ -167,66 +182,66 @@ export const useChatWindow = () => {
     }
   }
   const handleSend = useCallback(async () => {
-  if (!conversationId || sending) return
-  setSending(true)
-  try {
-    const msg = text.trim()
-    const quick = (selectedOptionRef.current ?? '').trim()
-    if (!file && !msg && !quick) return
+    if (!conversationId || sending) return
+    setSending(true)
+    try {
+      const msg = text.trim()
+      const quick = (selectedOptionRef.current ?? '').trim()
+      if (!file && !msg && !quick) return
 
-    const replyExternalId = replyTo?.externalId || null
-    const repliedParentMessageId = replyTo?.messageId ?? null
+      const replyExternalId = replyTo?.externalId || null
+      const repliedParentMessageId = replyTo?.messageId ?? null
 
-    if (file) {
-      await sendMedia(
-        conversationId,
-        file,
-        msg || undefined,
-        replyExternalId,
-        repliedParentMessageId        //id interno del padre
-      )
-      setFile(null)
-      setText('')
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      fileInputRef.current && (fileInputRef.current.value = '')
-      setReplyTo(null)
-      return
+      if (file) {
+        await sendMedia(
+          conversationId,
+          file,
+          msg || undefined,
+          replyExternalId,
+          repliedParentMessageId        //id interno del padre
+        )
+        setFile(null)
+        setText('')
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        fileInputRef.current && (fileInputRef.current.value = '')
+        setReplyTo(null)
+        return
+      }
+
+      if (quick) {
+        await sendText({
+          conversationId,
+          senderId: userId,
+          content: quick,
+          messageType: 'Text',
+          externalId: replyExternalId,
+          repliedParentMessageId
+        })
+        setSelectedOption(null)
+        setReplyTo(null)
+        return
+      }
+
+      if (msg) {
+        await sendText({
+          conversationId,
+          senderId: userId,
+          content: msg,
+          messageType: 'Text',
+          externalId: replyExternalId,
+          repliedParentMessageId
+        })
+        setText('')
+        setReplyTo(null)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSending(false)
     }
+  }, [conversationId, file, sending, text, userId, replyTo])
 
-    if (quick) {
-      await sendText({
-        conversationId,
-        senderId: userId,
-        content: quick,
-        messageType: 'Text',
-        externalId: replyExternalId,
-        repliedParentMessageId 
-      })
-      setSelectedOption(null)
-      setReplyTo(null)
-      return
-    }
-
-    if (msg) {
-      await sendText({
-        conversationId,
-        senderId: userId,
-        content: msg,
-        messageType: 'Text',
-        externalId: replyExternalId,
-        repliedParentMessageId
-      })
-      setText('')
-      setReplyTo(null)
-    }
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setSending(false)
-  }
-}, [conversationId, file, sending, text, userId, replyTo])
-
-  const handleDownload = async ( fileName: string) => {
+  const handleDownload = async (fileName: string) => {
     try {
       const response = DownloadMedia(fileName);
       const blob = new Blob([(await response).data])
@@ -293,39 +308,220 @@ export const useChatWindow = () => {
     setismaximize(false)
   }
 
-  //Recuperar los mensaje por agente
-  const getCustomoMessageByAgent = useCallback(
-    async ()  => {
-       try{
-        setLoadingCustomMessage(true)
-          const resp = await CustomMessageServices.getCustomoMessageByAgent();
-          setCustomMessages(resp)
 
-      // eslint-disable-next-line no-empty
-      }catch{
-        
-      }finally{
-        setLoadingCustomMessage(false);
+  function getConversationStringDate(sentAt: string) {
+    const fecha = parseISO(sentAt);
+    if (isToday(fecha)) {
+      return "Hoy";
+    } else if (isYesterday(fecha)) {
+      return "Ayer";
+    } else {
+      return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
+    }
+  }
+
+  const registerMessageRef = (id: number) => (el: HTMLDivElement | null) => {
+    if (el) messageRefs.current.set(id, el);
+    else messageRefs.current.delete(id);
+  };
+
+  const scrollToMessage = (id?: number) => {
+    if (!id) return;
+    const el = messageRefs.current.get(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedId(id);
+    window.setTimeout(() => setHighlightedId(null), 1600);
+  };
+
+  useEffect(() => {
+    setConversationId(Number(conversationId));
+    setUserId(Number(userId));
+    return () => {
+      setConversationId(0);
+      setUserId(0);
+    };
+  }, [conversationId, setConversationId, setUserId, userId]);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (!popoverRef.current) return;
+      if (!popoverRef.current.contains(e.target as Node)) {
+        setQuickMenuOpen(false);
+        setQuickMenuMsg(null);
       }
-    },
-    [],
-  )
-  
+    };
+    if (quickMenuOpen) document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [quickMenuOpen]);
+
+  const quickOptions: string[] = useMemo(() => {
+    if (Array.isArray(selectedParam))
+      return (selectedParam as any).filter((v: any) => typeof v === "string");
+    if (typeof selectedParam === "string") {
+      try {
+        const parsed = JSON.parse(selectedParam);
+        if (Array.isArray(parsed))
+          return parsed.filter((v: any) => typeof v === "string");
+        // eslint-disable-next-line no-empty
+      } catch { }
+    }
+    if (typeof (selectedParam as any)?.value === "string") {
+      try {
+        const parsed = JSON.parse((selectedParam as any).value);
+        if (Array.isArray(parsed))
+          return parsed.filter((v: any) => typeof v === "string");
+      } catch {
+        return String((selectedParam as any).value)
+          .split("|")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+      }
+    }
+    if (Array.isArray((selectedParam as any)?.value)) {
+      return (selectedParam as any).value.filter(
+        (v: any) => typeof v === "string"
+      );
+    }
+    return [];
+  }, [selectedParam]);
+
+  const sendQuickNow = async (msg: MessageDto, opt: string) => {
+    try {
+      await sendText({
+        conversationId: Number(conversationId),
+        senderId: Number(userId),
+        content: opt,
+        messageType: "Text",
+        externalId: (msg as any)?.externalId ?? null,
+        repliedParentMessageId: msg.messageId,
+      });
+    } finally {
+      setSelectedOption(null);
+      cancelReply();
+      setQuickMenuOpen(false);
+    }
+  };
+
+  const sendQuick = (opt: string) => {
+    if (quickMenuMsg) {
+      void sendQuickNow(quickMenuMsg, opt);
+    } else {
+      setSelectedOption(opt);
+      handleSend();
+    }
+  };
+
+  const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const x = (e as any).clientX ?? rect.left + rect.width / 2;
+    const y = (e as any).clientY ?? rect.top;
+    if (longPressTimerRef.current)
+      window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      setQuickMenuPos({ x, y });
+      setQuickMenuMsg(msg);
+      setQuickMenuOpen(true);
+    }, LONG_PRESS_MS);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const focusTextarea = () => {
+    textAreaRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (replyTo) {
+          e.preventDefault();
+          cancelReply();
+        } else if (file) {
+          e.preventDefault();
+          setFile(null);
+        }
+      }
+    };
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => window.removeEventListener("keydown", onGlobalKeyDown);
+  }, [replyTo, file, cancelReply, setFile]);
+
+  const onComposerKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (
+    e
+  ) => {
+    if (e.key === "Escape") {
+      if (replyTo) {
+        e.preventDefault();
+        cancelReply();
+        return;
+      }
+      if (file) {
+        e.preventDefault();
+        setFile(null);
+        return;
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+      return;
+    }
+    handleKeyPress(e);
+  };
+
+  useEffect(() => {
+    const onGlobalEnter = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      const isTyping =
+        el?.tagName === "TEXTAREA" ||
+        el?.tagName === "INPUT" ||
+        el?.getAttribute("contenteditable") === "true";
+
+      if (
+        e.key === "Enter" &&
+        !e.shiftKey &&
+        file &&
+        !sending &&
+        conversationId &&
+        conversationStatus !== "Closed"
+      ) {
+        if (!isTyping) {
+          e.preventDefault();
+          handleSend();
+        }
+      }
+    };
+    window.addEventListener("keydown", onGlobalEnter);
+    return () => window.removeEventListener("keydown", onGlobalEnter);
+  }, [file, sending, conversationId, conversationStatus, handleSend]);
 
 
   return {
-    setConversationId,
-    setUserId,
-    messages,
-    text,
-    setText,
-    file,
-    setFile,
-    sending,
-    setSending,
-    handleSend,
     bottomRef,
     fileInputRef,
+    ismaximize,
+    previewImageUrl,
+    isRecording,
+    audioBlob,
+    recordingTime,
+    messages,
+    text,
+    file,
+    sending,
+    selectedOption: selectedOptionState,
+    visibleMessages,
+    setText,
+    setConversationId,
+    setUserId,
+    setFile,
+    setSending,
+    handleSend,
     handleFileChange,
     handlePaste,
     handleKeyPress,
@@ -334,31 +530,35 @@ export const useChatWindow = () => {
     getMessageClassName,
     getMessagePosition,
     getFileIcon,
-    ismaximize,
     setismaximize,
-    previewImageUrl,
     openImagePreview,
     closeImagePreview,
-    isRecording,
-    audioBlob,
-    recordingTime,
     startRecording,
     stopRecording,
     clearRecording,
     handleSendAudio,
-    visibleMessages,
     hasMedia,
     hasText,
     setSelectedOption,
-    selectedOption: selectedOptionState,
-    getCustomoMessageByAgent, //Motrar opciones de mensajes personalizados
-    customMessages,
-    loadingCustomMessage,
     
-    //reply mensajes
-      beginReply,
-      cancelReply,
-      replyTo,
-
+    replyTo,
+    quickOptions,
+    highlightedId,
+    quickMenuPos,
+    textAreaRef,
+    quickMenuMsg,
+    popoverRef,
+    quickMenuOpen,
+    getConversationStringDate,
+    onComposerKeyDown,
+    sendQuick,
+    focusTextarea,
+    cancelLongPress,
+    startLongPress,
+    scrollToMessage,
+    registerMessageRef,
+    setQuickMenuOpen,
+    beginReply,
+    cancelReply,
   }
 }

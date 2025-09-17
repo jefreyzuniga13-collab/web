@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import { Send, Paperclip, Download, MessageSquareMore } from "lucide-react";
 import "@/styles/Chat/ChatWindow.css";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
+// import { useCustomMesssage } from "@/Hooks/Chat/useCustomMesssage";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
-import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces";
-import { sendText } from "@/Services/MessageService";
-import { format, isToday, isYesterday, parseISO } from "date-fns";
-import { es } from "date-fns/locale/es";
-import SmsIcon from "@mui/icons-material/Sms";
+// import SmsIcon from "@mui/icons-material/Sms";
+
 const formatTime = (iso?: string) => {
   if (!iso) return "";
   const match = iso.match(/T(\d{2}:\d{2})/);
@@ -28,231 +26,49 @@ export const ChatWindow: React.FC<Props> = ({
   conversationStatus,
   selectedParam,
 }) => {
+
   const {
-    setConversationId,
-    setUserId,
     visibleMessages,
-    hasText,
     text,
-    setText,
     file,
-    setFile,
     sending,
-    handleSend,
     bottomRef,
     fileInputRef,
+    ismaximize,
+    previewImageUrl,
+    hasText,
+    setText,
+    setFile,
+    handleSend,
     handleFileChange,
     handlePaste,
-    handleKeyPress,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
     getFileIcon,
-    ismaximize,
-    previewImageUrl,
     openImagePreview,
     closeImagePreview,
     setSelectedOption,
     beginReply,
     cancelReply,
     replyTo,
-    getCustomoMessageByAgent,//obtener los custom messages cuando usuario hace click. 
-   // customMessages //Mensajes recuperados desde la api
-  } = useChatWindow();
-
-  const LONG_PRESS_MS = 400;
-  const [quickMenuOpen, setQuickMenuOpen] = useState(false);
-  const [quickMenuPos, setQuickMenuPos] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-  const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null);
-
-  const longPressTimerRef = useRef<number | null>(null);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const [highlightedId, setHighlightedId] = useState<number | null>(null);
-
-  const registerMessageRef = (id: number) => (el: HTMLDivElement | null) => {
-    if (el) messageRefs.current.set(id, el);
-    else messageRefs.current.delete(id);
-  };
-
-  const scrollToMessage = (id?: number) => {
-    if (!id) return;
-    const el = messageRefs.current.get(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    setHighlightedId(id);
-    window.setTimeout(() => setHighlightedId(null), 1600);
-  };
-
-  useEffect(() => {
-    setConversationId(Number(conversationId));
-    setUserId(Number(userId));
-    return () => {
-      setConversationId(0);
-      setUserId(0);
-    };
-  }, [conversationId, setConversationId, setUserId, userId]);
-
-  useEffect(() => {
-    const onClickOutside = (e: MouseEvent) => {
-      if (!popoverRef.current) return;
-      if (!popoverRef.current.contains(e.target as Node)) {
-        setQuickMenuOpen(false);
-        setQuickMenuMsg(null);
-      }
-    };
-    if (quickMenuOpen) document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [quickMenuOpen]);
-
-  const quickOptions: string[] = useMemo(() => {
-    if (Array.isArray(selectedParam))
-      return (selectedParam as any).filter((v: any) => typeof v === "string");
-    if (typeof selectedParam === "string") {
-      try {
-        const parsed = JSON.parse(selectedParam);
-        if (Array.isArray(parsed))
-          return parsed.filter((v: any) => typeof v === "string");
-      } catch {}
-    }
-    if (typeof (selectedParam as any)?.value === "string") {
-      try {
-        const parsed = JSON.parse((selectedParam as any).value);
-        if (Array.isArray(parsed))
-          return parsed.filter((v: any) => typeof v === "string");
-      } catch {
-        return String((selectedParam as any).value)
-          .split("|")
-          .map((s: string) => s.trim())
-          .filter(Boolean);
-      }
-    }
-    if (Array.isArray((selectedParam as any)?.value)) {
-      return (selectedParam as any).value.filter(
-        (v: any) => typeof v === "string"
-      );
-    }
-    return [];
-  }, [selectedParam]);
-
-  const sendQuickNow = async (msg: MessageDto, opt: string) => {
-    try {
-      await sendText({
-        conversationId: Number(conversationId),
-        senderId: Number(userId),
-        content: opt,
-        messageType: "Text",
-        externalId: (msg as any)?.externalId ?? null,
-        repliedParentMessageId: msg.messageId,
-      });
-    } finally {
-      setSelectedOption(null);
-      cancelReply();
-      setQuickMenuOpen(false);
-    }
-  };
-
-  const sendQuick = (opt: string) => {
-    if (quickMenuMsg) {
-      void sendQuickNow(quickMenuMsg, opt);
-    } else {
-      setSelectedOption(opt);
-      handleSend();
-    }
-  };
-
-  const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const x = (e as any).clientX ?? rect.left + rect.width / 2;
-    const y = (e as any).clientY ?? rect.top;
-    if (longPressTimerRef.current)
-      window.clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = window.setTimeout(() => {
-      setQuickMenuPos({ x, y });
-      setQuickMenuMsg(msg);
-      setQuickMenuOpen(true);
-    }, LONG_PRESS_MS);
-  };
-
-  const cancelLongPress = () => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  };
-
-  const focusTextarea = () => {
-    textAreaRef.current?.focus();
-  };
-
-  useEffect(() => {
-    const onGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (replyTo) {
-          e.preventDefault();
-          cancelReply();
-        } else if (file) {
-          e.preventDefault();
-          setFile(null);
-        }
-      }
-    };
-    window.addEventListener("keydown", onGlobalKeyDown);
-    return () => window.removeEventListener("keydown", onGlobalKeyDown);
-  }, [replyTo, file, cancelReply, setFile]);
-
-  const onComposerKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (
-    e
-  ) => {
-    if (e.key === "Escape") {
-      if (replyTo) {
-        e.preventDefault();
-        cancelReply();
-        return;
-      }
-      if (file) {
-        e.preventDefault();
-        setFile(null);
-        return;
-      }
-    }
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-      return;
-    }
-    handleKeyPress(e);
-  };
-  useEffect(() => {
-    const onGlobalEnter = (e: KeyboardEvent) => {
-      const el = document.activeElement as HTMLElement | null;
-      const isTyping =
-        el?.tagName === "TEXTAREA" ||
-        el?.tagName === "INPUT" ||
-        el?.getAttribute("contenteditable") === "true";
-
-      if (
-        e.key === "Enter" &&
-        !e.shiftKey &&
-        file &&
-        !sending &&
-        conversationId &&
-        conversationStatus !== "Closed"
-      ) {
-        if (!isTyping) {
-          e.preventDefault();
-          handleSend();
-        }
-      }
-    };
-    window.addEventListener("keydown", onGlobalEnter);
-    return () => window.removeEventListener("keydown", onGlobalEnter);
-  }, [file, sending, conversationId, conversationStatus, handleSend]);
+    highlightedId,
+    quickOptions,
+    quickMenuMsg,
+    quickMenuPos,
+    popoverRef,
+    quickMenuOpen,
+    textAreaRef,
+    getConversationStringDate,
+    onComposerKeyDown,
+    sendQuick,
+    focusTextarea,
+    cancelLongPress,
+    startLongPress,
+    scrollToMessage,
+    registerMessageRef,
+    setQuickMenuOpen,
+  } = useChatWindow(selectedParam, conversationStatus);
 
   if (!conversationId) {
     return (
@@ -270,16 +86,6 @@ export const ChatWindow: React.FC<Props> = ({
     );
   }
 
-  function getConversationStringDate(sentAt: string) {
-    const fecha = parseISO(sentAt);
-    if (isToday(fecha)) {
-      return "Hoy";
-    } else if (isYesterday(fecha)) {
-      return "Ayer";
-    } else {
-      return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
-    }
-  }
 
   return (
     <div className="chat-window">
@@ -322,9 +128,9 @@ export const ChatWindow: React.FC<Props> = ({
                   style={
                     highlightedId === m.messageId
                       ? {
-                          boxShadow: "0 0 0 3px rgba(16,185,129,.6)",
-                          borderRadius: 12,
-                        }
+                        boxShadow: "0 0 0 3px rgba(16,185,129,.6)",
+                        borderRadius: 12,
+                      }
                       : undefined
                   }
                 >
@@ -340,15 +146,15 @@ export const ChatWindow: React.FC<Props> = ({
                     className={getMessageClassName(m)}
                     {...(isIncomingFromContact
                       ? {
-                          onPointerDown: (e: React.PointerEvent) =>
-                            startLongPress(e, m),
-                          onPointerUp: cancelLongPress,
-                          onPointerLeave: cancelLongPress,
-                          onPointerCancel: cancelLongPress,
-                        }
+                        onPointerDown: (e: React.PointerEvent) =>
+                          startLongPress(e, m),
+                        onPointerUp: cancelLongPress,
+                        onPointerLeave: cancelLongPress,
+                        onPointerCancel: cancelLongPress,
+                      }
                       : {
-                          onDoubleClick: focusTextarea,
-                        })}
+                        onDoubleClick: focusTextarea,
+                      })}
                   >
                     {m.repliedMessage && (
                       <div
@@ -484,22 +290,22 @@ export const ChatWindow: React.FC<Props> = ({
                         <div className="chat-window__media">
                           {(m.attachments[0].mimeType?.startsWith("image/") ||
                             m.attachments[0].mimeType === "image/webp") && (
-                            <div className="chat-window__media-image">
-                              <div className="chat-window__image-container">
-                                <img
-                                  src={m.attachments[0].mediaUrl}
-                                  alt={m.attachments[0].fileName || "Imagen"}
-                                  className="chat-window__image"
-                                  loading="lazy"
-                                  onClick={() =>
-                                    openImagePreview(
-                                      m.attachments![0].mediaUrl!
-                                    )
-                                  }
-                                />
+                              <div className="chat-window__media-image">
+                                <div className="chat-window__image-container">
+                                  <img
+                                    src={m.attachments[0].mediaUrl}
+                                    alt={m.attachments[0].fileName || "Imagen"}
+                                    className="chat-window__image"
+                                    loading="lazy"
+                                    onClick={() =>
+                                      openImagePreview(
+                                        m.attachments![0].mediaUrl!
+                                      )
+                                    }
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                           {m.attachments[0].mimeType?.startsWith("video/") && (
                             <div className="chat-window__media-video">
                               <video
@@ -588,10 +394,6 @@ export const ChatWindow: React.FC<Props> = ({
 
       <div className="chat-window__composer">
 
-        {/* <div className="custom-message__container">
-          <SmsIcon className="custom-message__icon" />
-        </div> */}
-
         <div ref={bottomRef} className="butttonRef" />
 
         <label
@@ -676,24 +478,24 @@ export const ChatWindow: React.FC<Props> = ({
           )}
 
           <div className="chat-window__composer-input-container__divisor">
-            
-            <div className="custom_messages__container" onClick={getCustomoMessageByAgent}>
-             <SmsIcon className="custom_messages__icon"/>
-            </div>
+
+            {/* <div className="custom_messages__container" onClick={getCustomoMessageByAgent}>
+              <SmsIcon className="custom_messages__icon" />
+            </div> */}
 
             <textarea
-            ref={textAreaRef}
-            className="chat-window__composer-input"
-            placeholder="Escribe un mensaje…"
-            value={text}
-            onChange={(e) => {
-              setSelectedOption(null);
-              setText(e.target.value);
-            }}
-            onKeyDown={onComposerKeyDown}
-            onPaste={handlePaste}
-            rows={1}
-          />
+              ref={textAreaRef}
+              className="chat-window__composer-input"
+              placeholder="Escribe un mensaje…"
+              value={text}
+              onChange={(e) => {
+                setSelectedOption(null);
+                setText(e.target.value);
+              }}
+              onKeyDown={onComposerKeyDown}
+              onPaste={handlePaste}
+              rows={1}
+            />
           </div>
         </div>
 

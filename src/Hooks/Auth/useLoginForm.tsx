@@ -39,9 +39,9 @@ export default function useLoginForm() {
     initialValues: { email: "", password: "", remember: false },
     validationSchema,
     validateOnBlur: true,
-    validateOnChange: false,
+    validateOnChange: true,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
-      setStatus(undefined);
+      setStatus(null);
       try {
         if (accessToken) {
           setPendingLogin({ email: values.email, password: values.password });

@@ -4,6 +4,7 @@ import Input from '@/Components/Common/Input'
 import Button from '@/Components/Common/Button'
 import '@/Styles/Auth/ResetPasswordPresentation.css'
 import useResetPasswordForm from '@/Hooks/Auth/useResetPasswordForm'
+import logopcg from '@/assets/pcgroup.png'
 
 export default function ResetPasswordPresentation() {
   const { t } = useTranslation()
@@ -22,25 +23,17 @@ export default function ResetPasswordPresentation() {
     <div className="resetPassword-page">
       <div className="resetPassword-content">
         <aside className="resetPassword-info">
-          <h1 className="resetPassword-title">{t('resetPassword.title')}</h1>
-          <p className="resetPassword-description">
-            {t('resetPassword.description')}
-          </p>
-          <ul className="resetPassword-steps">
-            <li>{t('resetPassword.steps.1')}</li>
-            <li>{t('resetPassword.steps.2')}</li>
-            <li>{t('resetPassword.steps.3')}</li>
-          </ul>
+          <h1 className="resetPassword-title">Restablecer contraseña</h1>
           <img
-            className="resetPassword-image"
-            src="https://i.ibb.co/6R1Ym6LD/reset-password.png"
-            alt={t('resetPassword.title')}
+            className="login__image"
+            src={`${logopcg}`}
+            alt={t("login.imageAlt")}
           />
         </aside>
 
         <section className="resetPassword-form-section">
           <p className="resetPassword-subtitle">
-            {t('resetPassword.subtitle')}
+            Ingresar nueva credencial. Minimo de 8 caracteres
           </p>
           {formError && (
             <div className="resetPassword-error">{formError}</div>
@@ -48,7 +41,7 @@ export default function ResetPasswordPresentation() {
 
           <form onSubmit={formik.handleSubmit} noValidate>
             <label htmlFor="newPassword" className="resetPassword-label">
-              {t('resetPassword.newPasswordLabel')}
+              Nueva contraseña
             </label>
             <Input
               id="newPassword"
@@ -60,13 +53,14 @@ export default function ResetPasswordPresentation() {
               onBlur={formik.handleBlur}
               rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
               onIconClick={toggleShowPassword}
+              autoFocus
               error={
                 formik.touched.newPassword ? formik.errors.newPassword : undefined
               }
             />
 
             <label htmlFor="confirmNewPassword" className="resetPassword-label">
-              {t('resetPassword.confirmNewPasswordLabel')}
+              Confirmar contraseña
             </label>
             <Input
               id="confirmNewPassword"

@@ -9,12 +9,15 @@ export default function useResetPasswordForm() {
   const { t } = useTranslation();
   const { forgotPasswordAsync, loading } = useAuth();
 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; 
+
   const validationSchema = useMemo(
     () =>
       Yup.object<ForgotPasswordRequest>({
         email: Yup.string()
           .trim()
           .email(t("forgotPassword.invalidEmail"))
+          .matches(emailRegex, 'Ingresa un correo electrónico válido')
           .required(
             t("forgotPassword.requiredEmail", {
               field: t("forgotPassword.emailLabel"),
@@ -28,9 +31,9 @@ export default function useResetPasswordForm() {
     initialValues: { email: "" },
     validationSchema,
     validateOnBlur: true,
-    validateOnChange: false,
+    validateOnChange: true,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
-      setStatus(undefined);
+      setStatus(null);
       try {
         await forgotPasswordAsync({ email: values.email });
       } catch (err: unknown) {

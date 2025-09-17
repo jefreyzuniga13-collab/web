@@ -176,10 +176,6 @@ export function onNewMessage(
             minute: '2-digit',
           })
         : '';
-      console.log(
-        'Datos a mostrar en consola:',
-        `${message?.senderClientName ?? ''} ${message?.senderUserName ?? ''} ${sentAtText}`
-      );
 
       const title = `${
         message?.senderClientName ?? ''

@@ -28,11 +28,11 @@ export default function LoginPresentation() {
   } = useLoginForm();
 
 
+  //Inicar sesión cuando se hace click en el enter
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEnterKey = (event: any) => {
     if (event.key === 'Enter') {
       confirmLogin();
-      // Add your action logic here
     }
   };
 
@@ -41,16 +41,8 @@ export default function LoginPresentation() {
       <div className="login__container">   
         <aside className="login__info-panel">
            <h1 className="login__title">PC Group SA, soluciones informaticas sin limites</h1>
-          {/* <p className="login__description">{t("login.description")}</p>
-         <ul className="login__features">
-            <li className="login__features-item">{t("login.features.fastReplies")}</li>
-            <li className="login__features-item">{t("login.features.centralInbox")}</li>
-            <li className="login__features-item">{t("login.features.analytics")}</li>
-            <li className="login__features-item">{t("login.features.customization")}</li>
-          </ul> */}
           <img
             className="login__image"
-            // src="https://i.ibb.co/mrNrN3tv/login-illustration.png"
             src={`${logopcg}`}
             alt={t("login.imageAlt")}
           />
@@ -82,6 +74,8 @@ export default function LoginPresentation() {
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              autoFocus
+              onKeyDown={handleEnterKey}
               error={formik.touched.email ? formik.errors.email : undefined}
             />
 
@@ -101,18 +95,10 @@ export default function LoginPresentation() {
               }
               rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
               onIconClick={toggleShowPassword}
+              onKeyDown={handleEnterKey}
             />
 
             <div className="login__options">
-              {/* <label className="login__remember">
-                <input
-                  type="checkbox"
-                  name="remember"
-                  checked={formik.values.remember}
-                  onChange={formik.handleChange}
-                />
-                {t("login.rememberMe")}
-              </label> */}
               <Link to="/forgot-password" replace className="login__forgot-link">
                 {t("login.forgotPassword")}
               </Link>

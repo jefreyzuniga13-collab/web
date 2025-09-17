@@ -20,13 +20,6 @@ export default function ForgotPasswordPresentation() {
           <p className="forgot-password__description">
             {t("forgotPassword.description")}
           </p>
-          {/* <ul className="forgot-password__steps">
-            {Array.from({ length: 5 }, (_, i) => (
-              <li key={i} className="forgot-password__steps-item">
-                {t(`forgotPassword.steps.${i + 1}`)}
-              </li>
-            ))}
-          </ul> */}
           <img
             className="forgot-password__image"
             src={`${logopcg}`}
@@ -57,6 +50,7 @@ export default function ForgotPasswordPresentation() {
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              autoFocus
               error={
                 formik.touched.email ? formik.errors.email : undefined
               }
