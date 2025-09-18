@@ -73,15 +73,6 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
-  //  const formatDate = (iso?: string) => {
-  //       if (!iso) return ''
-  //       try {
-  //         return format(new Date(iso), 'yyyy-MM-dd HH:mm')
-  //       } catch {
-  //         return ''
-  //       }
-  // }
-
 
   const handleSelect = async (id: number) => {
   if (id === selectedId) {

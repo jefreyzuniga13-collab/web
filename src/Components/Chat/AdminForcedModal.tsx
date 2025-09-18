@@ -1,4 +1,3 @@
-// src/components/AdminForcedModal.tsx
 import React from 'react'
 import { IoCheckmarkDoneCircle } from 'react-icons/io5'
 

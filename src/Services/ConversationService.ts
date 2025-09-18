@@ -96,11 +96,13 @@ export function respondAssignment(
 export function forceAssign(
   conversationId: number,
   forced: boolean,
-  assignmentComment: string
+  assignmentComment: string,
+  assignedAgentName?: string
 ) {
   return api.post(`/Conversations/${conversationId}/force`, {
     forced,
     assignmentComment,
+    assignedAgentName,
   });
 }
 

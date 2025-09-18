@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode'
 import { useSignalR } from '@/Context/SignalRContext'
 import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
-import { joinConversation } from '@/Services/signalr'
+import { joinConversation, leaveConversation } from '@/Services/signalr'
 import { ConversationService } from '@/Services/ConversationService'
 
 export type Filter = 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
@@ -41,7 +41,7 @@ const initialRange = (): FormInterface => {
 
 export function useConversations(filter: Filter = 'all', searchConversation: string): UseConversationsResult {
   const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken } = JSON.parse(authRaw) as { accessToken: string }
+  const { accessToken, userId } = JSON.parse(authRaw) as { accessToken: string,userId: number }
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
   const [form, setForm] = useState<FormInterface>(initialRange())
@@ -57,6 +57,7 @@ export function useConversations(filter: Filter = 'all', searchConversation: str
     totalItems:  0,
     itemsPerPage:10
   })
+
 
   const toApiState = (f: Filter) => (f === 'all' ? undefined : f)
 
@@ -111,13 +112,33 @@ export function useConversations(filter: Filter = 'all', searchConversation: str
     )
   }, [sortByActivity])
 
-  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
-    setConversations(prev => {
-      const base = prev.filter(p => p.clientContactId !== updated.clientContactId)
+
+const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+  setConversations(prev => {
+    if (!isAdmin) {
+      if (updated.assignedAgentId !== userId) {
+        // Cambia de agente asignado -> quitarla, salir del grupo y avisar
+        const removed = prev.filter(p => p.conversationId !== updated.conversationId)
+        leaveConversation(updated.conversationId)
+        window.dispatchEvent(new CustomEvent('ConversationLost', {
+          detail: { conversationId: updated.conversationId }
+        }))
+        return removed
+      }
+      // Si es propia la asignación.
+      joinConversation(updated.conversationId)
+      const base   = prev.filter(p => p.conversationId !== updated.conversationId && p.clientContactId !== updated.clientContactId)
       const merged = matchesFilter(updated) ? [updated, ...base] : base
       return dedupeByClientKeepNewest(merged)
-    })
-  }, [matchesFilter])
+    }
+
+    // Admin
+    const baseAdmin   = prev.filter(p => p.conversationId !== updated.conversationId && p.clientContactId !== updated.clientContactId)
+    const mergedAdmin = matchesFilter(updated) ? [updated, ...baseAdmin] : baseAdmin
+    return dedupeByClientKeepNewest(mergedAdmin)
+  })
+}, [isAdmin, userId, matchesFilter])
+
 
   const handleNewMessage = useCallback((payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
     const msg = payload.message

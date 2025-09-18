@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Send, Paperclip, Download, MessageSquareMore } from "lucide-react";
 import "@/styles/Chat/ChatWindow.css";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
-// import { useCustomMesssage } from "@/Hooks/Chat/useCustomMesssage";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
-// import SmsIcon from "@mui/icons-material/Sms";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { es } from "date-fns/locale/es";
+import SmsIcon from "@mui/icons-material/Sms";
+import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
+import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
+
+import "@/Styles/Chat/custom-messages-flyout.css"
 
 const formatTime = (iso?: string) => {
   if (!iso) return "";
@@ -18,6 +23,7 @@ interface Props {
   conversationStatus?: string | null;
   userId: number;
   selectedParam: SystemParamResponseDto | null;
+  highlightTerm?: string 
 }
 
 export const ChatWindow: React.FC<Props> = ({
@@ -25,70 +31,133 @@ export const ChatWindow: React.FC<Props> = ({
   userId,
   conversationStatus,
   selectedParam,
+  highlightTerm,
 }) => {
+   const smsBtnRef = useRef<HTMLDivElement | null>(null);
+  const [flyoutOpen, setFlyoutOpen] = useState(false);
 
   const {
+    customMessages,
+    create,
+    update,
+    toggleSystemParam,
+    loading,
+    error
+  } = useCustomMessage();
+
+  const {
+    setConversationId,
+    setUserId,
     visibleMessages,
+    hasText,
     text,
+    setText,
     file,
+    setFile,
     sending,
+    handleSend,
     bottomRef,
     fileInputRef,
-    ismaximize,
-    previewImageUrl,
-    hasText,
-    setText,
-    setFile,
-    handleSend,
     handleFileChange,
     handlePaste,
+    // handleKeyPress,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
     getFileIcon,
+    ismaximize,
+    previewImageUrl,
     openImagePreview,
     closeImagePreview,
     setSelectedOption,
     beginReply,
     cancelReply,
     replyTo,
-    highlightedId,
     quickOptions,
-    quickMenuMsg,
-    quickMenuPos,
-    popoverRef,
-    quickMenuOpen,
-    textAreaRef,
-    getConversationStringDate,
-    onComposerKeyDown,
     sendQuick,
-    focusTextarea,
-    cancelLongPress,
     startLongPress,
-    scrollToMessage,
+    cancelLongPress,
+    focusTextarea,
+    onComposerKeyDown,
+    popoverRef,
+    textAreaRef,
     registerMessageRef,
-    setQuickMenuOpen,
-  } = useChatWindow(selectedParam, conversationStatus);
+    scrollToMessage,
+    highlightedId,
+    visibleState,
+    searchTerm,
+    setSearchTerm,
+    matchIds,
+    matchIndex,
+    gotoMatch,
+    highlightText
+  } = useChatWindow({
+    conversationId,
+    userId,
+    conversationStatus,
+    selectedParam,
+    highlightTerm
+  });
 
-  if (!conversationId) {
+  useEffect(() => {
+    setConversationId(Number(conversationId));
+    setUserId(Number(userId));
+    return () => {
+      setConversationId(0);
+      setUserId(0);
+    };
+  }, [conversationId, setConversationId, setUserId, userId]);
+
+  const showEmpty = !conversationId;
+
+  const getConversationStringDate = (sentAt: string) => {
+    const fecha = parseISO(sentAt);
+    if (isToday(fecha)) return "Hoy";
+    if (isYesterday(fecha)) return "Ayer";
+    return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
+  };
+
+  const handleInsertToComposer = (txt: string) => {
+    const glue = text.trim().length ? (text.endsWith(" ") ? "" : " ") : "";
+    setText(text + glue + txt);
+    textAreaRef.current?.focus();
+  };
+
+  const handleSendNow = async (txt: string) => {
+    setSelectedOption(txt);
+    await handleSend();
+  };
+
+  if (showEmpty) {
     return (
       <div className="chat-window__empty">
         <div className="chat-window__empty-icon">
           <MessageSquareMore size={64} />
         </div>
-        <h3 className="chat-window__empty-title">
-          Ninguna conversación seleccionada
-        </h3>
-        <p className="chat-window__empty-text">
-          Selecciona una conversación para chatear.
-        </p>
+        <h3 className="chat-window__empty-title">Ninguna conversación seleccionada</h3>
+        <p className="chat-window__empty-text">Selecciona una conversación para chatear.</p>
       </div>
     );
   }
 
-
   return (
     <div className="chat-window">
+        {searchTerm && (
+        <div className="chat-window__searchbar">
+          <input
+            className="chat-window__searchbar-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar en la conversación…"
+          />
+          <div className="chat-window__searchbar-meta">
+            <span>{matchIds.length ? `${matchIndex + 1}/${matchIds.length}` : "0/0"}</span>
+            <button onClick={() => gotoMatch(-1)} disabled={!matchIds.length}>◀</button>
+            <button onClick={() => gotoMatch(1)} disabled={!matchIds.length}>▶</button>
+            <button onClick={() => setSearchTerm("")}>✕</button>
+          </div>
+        </div>
+      )}
       <div className="chat-window__messages" onDoubleClick={focusTextarea}>
         {visibleMessages.map((m, i) => {
           const sentAt = formatTime(m.sentAt);
@@ -96,9 +165,7 @@ export const ChatWindow: React.FC<Props> = ({
           const prev = i > 0 ? visibleMessages[i - 1] : null;
           const showSender = !prev || prev.senderUserId !== m.senderUserId;
           const label = getConversationStringDate(m.sentAt);
-          const prevLabel = prev
-            ? getConversationStringDate(prev.sentAt)
-            : null;
+          const prevLabel = prev ? getConversationStringDate(prev.sentAt) : null;
           const showDivider = !prev || label !== prevLabel;
           const isIncomingFromContact = !isCurrentUser;
 
@@ -106,10 +173,7 @@ export const ChatWindow: React.FC<Props> = ({
             <React.Fragment key={m.messageId}>
               {showDivider && (
                 <div className="chat-window__date-divider">
-                  <span
-                    className="chat-window__date-text"
-                    style={{ color: "#000000ff" }}
-                  >
+                  <span className="chat-window__date-text chat-window__date-text--dark">
                     {label}
                   </span>
                 </div>
@@ -124,14 +188,10 @@ export const ChatWindow: React.FC<Props> = ({
               >
                 <div
                   ref={registerMessageRef(m.messageId)}
-                  className={getMessagePosition(m)}
-                  style={
+                  className={
                     highlightedId === m.messageId
-                      ? {
-                        boxShadow: "0 0 0 3px rgba(16,185,129,.6)",
-                        borderRadius: 12,
-                      }
-                      : undefined
+                      ? `${getMessagePosition(m)} chat-window__message--highlighted`
+                      : getMessagePosition(m)
                   }
                 >
                   {showSender && !isCurrentUser && (
@@ -146,74 +206,45 @@ export const ChatWindow: React.FC<Props> = ({
                     className={getMessageClassName(m)}
                     {...(isIncomingFromContact
                       ? {
-                        onPointerDown: (e: React.PointerEvent) =>
-                          startLongPress(e, m),
-                        onPointerUp: cancelLongPress,
-                        onPointerLeave: cancelLongPress,
-                        onPointerCancel: cancelLongPress,
-                      }
-                      : {
-                        onDoubleClick: focusTextarea,
-                      })}
+                          onPointerDown: (e: React.PointerEvent) => startLongPress(e, m),
+                          onPointerUp: cancelLongPress,
+                          onPointerLeave: cancelLongPress,
+                          onPointerCancel: cancelLongPress,
+                        }
+                      : { onDoubleClick: focusTextarea })}
                   >
                     {m.repliedMessage && (
                       <div
                         className="chat-window__reply-preview"
-                        onClick={() =>
-                          scrollToMessage(m.repliedMessage?.messageId)
-                        }
+                        onClick={() => scrollToMessage(m.repliedMessage?.messageId)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) =>
                           (e.key === "Enter" || e.key === " ") &&
                           scrollToMessage(m.repliedMessage?.messageId)
                         }
-                        style={{ cursor: "pointer" }}
                       >
                         <div className="chat-window__reply-author">
                           {m.repliedMessage.senderContactId
                             ? m.repliedMessage.senderContactName || "Cliente"
                             : m.repliedMessage.senderUserName || "Sistema"}
                         </div>
-                        <div
-                          className="chat-window__reply-content"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
+
+                        <div className="chat-window__reply-content chat-window__reply-row">
                           {m.repliedMessage.attachments?.length ? (
                             (() => {
                               const att = m.repliedMessage.attachments[0];
                               const mime = att?.mimeType || "";
-                              if (
-                                mime.startsWith("image/") ||
-                                mime === "image/webp"
-                              ) {
+                              if (mime.startsWith("image/") || mime === "image/webp") {
                                 return (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 8,
-                                    }}
-                                  >
+                                  <div className="chat-window__reply-thumb">
                                     <img
                                       src={att.mediaUrl}
                                       alt={att.fileName || "Imagen"}
-                                      style={{
-                                        width: 44,
-                                        height: 44,
-                                        objectFit: "cover",
-                                        borderRadius: 6,
-                                        border: "1px solid #e5e7eb",
-                                      }}
+                                      className="chat-window__reply-thumb-img"
                                       loading="lazy"
                                     />
-                                    <span
-                                      style={{ fontSize: 12, color: "#374151" }}
-                                    >
+                                    <span className="chat-window__reply-thumb-label">
                                       {att.fileName || "Imagen"}
                                     </span>
                                   </div>
@@ -221,17 +252,9 @@ export const ChatWindow: React.FC<Props> = ({
                               }
                               if (mime.startsWith("video/")) {
                                 return (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 8,
-                                    }}
-                                  >
+                                  <div className="chat-window__reply-thumb">
                                     <span>🎬</span>
-                                    <span
-                                      style={{ fontSize: 12, color: "#374151" }}
-                                    >
+                                    <span className="chat-window__reply-thumb-label">
                                       {att.fileName || "Video"}
                                     </span>
                                   </div>
@@ -239,41 +262,25 @@ export const ChatWindow: React.FC<Props> = ({
                               }
                               if (mime.startsWith("audio/")) {
                                 return (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 8,
-                                    }}
-                                  >
+                                  <div className="chat-window__reply-thumb">
                                     <span>🎵</span>
-                                    <span
-                                      style={{ fontSize: 12, color: "#374151" }}
-                                    >
+                                    <span className="chat-window__reply-thumb-label">
                                       {att.fileName || "Audio"}
                                     </span>
                                   </div>
                                 );
                               }
                               return (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 8,
-                                  }}
-                                >
+                                <div className="chat-window__reply-thumb">
                                   <span>📄</span>
-                                  <span
-                                    style={{ fontSize: 12, color: "#374151" }}
-                                  >
+                                  <span className="chat-window__reply-thumb-label">
                                     {att.fileName || att.mimeType || "Adjunto"}
                                   </span>
                                 </div>
                               );
                             })()
                           ) : (
-                            <span style={{ fontSize: 12, color: "#374151" }}>
+                            <span className="chat-window__reply-thumb-label">
                               {m.repliedMessage.content
                                 ? m.repliedMessage.content.length > 80
                                   ? m.repliedMessage.content.slice(0, 80) + "…"
@@ -290,22 +297,19 @@ export const ChatWindow: React.FC<Props> = ({
                         <div className="chat-window__media">
                           {(m.attachments[0].mimeType?.startsWith("image/") ||
                             m.attachments[0].mimeType === "image/webp") && (
-                              <div className="chat-window__media-image">
-                                <div className="chat-window__image-container">
-                                  <img
-                                    src={m.attachments[0].mediaUrl}
-                                    alt={m.attachments[0].fileName || "Imagen"}
-                                    className="chat-window__image"
-                                    loading="lazy"
-                                    onClick={() =>
-                                      openImagePreview(
-                                        m.attachments![0].mediaUrl!
-                                      )
-                                    }
-                                  />
-                                </div>
+                            <div className="chat-window__media-image">
+                              <div className="chat-window__image-container">
+                                <img
+                                  src={m.attachments[0].mediaUrl}
+                                  alt={m.attachments[0].fileName || "Imagen"}
+                                  className="chat-window__image"
+                                  loading="lazy"
+                                  onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
+                                />
                               </div>
-                            )}
+                            </div>
+                          )}
+
                           {m.attachments[0].mimeType?.startsWith("video/") && (
                             <div className="chat-window__media-video">
                               <video
@@ -317,12 +321,11 @@ export const ChatWindow: React.FC<Props> = ({
                               </video>
                             </div>
                           )}
+
                           {m.attachments[0].mimeType?.startsWith("audio/") && (
                             <div className="chat-window__media-audio">
                               <div className="chat-window__audio-container">
-                                <div className="chat-window__audio-icon">
-                                  🎵
-                                </div>
+                                <div className="chat-window__audio-icon">🎵</div>
                                 <div className="chat-window__audio-info">
                                   <div className="chat-window__audio-name">
                                     {m.attachments[0].fileName || "Audio"}
@@ -338,6 +341,7 @@ export const ChatWindow: React.FC<Props> = ({
                               </div>
                             </div>
                           )}
+
                           {m.messageType === "Document" && (
                             <div className="chat-window__media-document">
                               <a
@@ -363,25 +367,23 @@ export const ChatWindow: React.FC<Props> = ({
                               </a>
                             </div>
                           )}
+
                           {hasText(m) && (
-                            <div className="chat-window__message-caption">
-                              {m.content}
+                           <div className="chat-window__message-caption">
+                              {highlightText(String(m.content ?? ""), searchTerm)}
                             </div>
                           )}
                         </div>
-                      ) : (
-                        hasText(m) && (
-                          <div className="chat-window__message-text">
-                            {m.content}
-                          </div>
-                        )
-                      )}
+                      ) : hasText(m) && (
+                        <div className="chat-window__message-text">
+                          {highlightText(String(m.content ?? ""), searchTerm)}
+                        </div>
+                      )
+                      }
                     </div>
 
                     <div className="chat-window__message-info">
-                      <span className="chat-window__message-time">
-                        {sentAt}
-                      </span>
+                      <span className="chat-window__message-time">{sentAt}</span>
                       {getStatusIcon(m, isCurrentUser)}
                     </div>
                   </div>
@@ -390,11 +392,11 @@ export const ChatWindow: React.FC<Props> = ({
             </React.Fragment>
           );
         })}
+        
+        <div ref={bottomRef} className="butttonRef" />
       </div>
 
       <div className="chat-window__composer">
-
-        <div ref={bottomRef} className="butttonRef" />
 
         <label
           htmlFor="file-upload"
@@ -410,9 +412,7 @@ export const ChatWindow: React.FC<Props> = ({
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
-          disabled={
-            !conversationId || sending || conversationStatus == "Closed"
-          }
+          disabled={!conversationId || sending || conversationStatus == "Closed"}
         />
 
         {file && (
@@ -430,58 +430,31 @@ export const ChatWindow: React.FC<Props> = ({
 
         <div className="chat-window__composer-input-container">
           {replyTo && (
-            <div
-              className="chat-window__reply-pill"
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                background: "#f3f4f6",
-                borderLeft: "4px solid #10b981",
-                padding: "8px 10px",
-                borderRadius: 8,
-                margin: "0 12px 8px",
-              }}
-            >
-              <div style={{ fontSize: 12, opacity: 0.8 }}>
+            <div className="chat-window__reply-pill">
+              <div className="chat-window__reply-pill-text">
                 Respondiendo a {replyTo.author}
               </div>
               <button
                 type="button"
                 onClick={() => scrollToMessage((replyTo as any)?.messageId)}
-                style={{
-                  flex: 1,
-                  fontSize: 13,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  textAlign: "left",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
+                className="chat-window__reply-pill-jump"
                 title="Ir al mensaje citado"
               >
                 {replyTo.preview}
               </button>
-              <button
-                onClick={cancelReply}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-              >
-                ✕
-              </button>
+              <button onClick={cancelReply} className="chat-window__reply-pill-close">✕</button>
             </div>
           )}
 
           <div className="chat-window__composer-input-container__divisor">
-
-            {/* <div className="custom_messages__container" onClick={getCustomoMessageByAgent}>
-              <SmsIcon className="custom_messages__icon" />
-            </div> */}
+            <div
+            className="custom_messages__container"
+            ref={smsBtnRef}
+            onClick={() => setFlyoutOpen(true)}
+            title="Mensajes personalizados"
+          >
+            <SmsIcon className="custom_messages__icon" />
+          </div>
 
             <textarea
               ref={textAreaRef}
@@ -497,6 +470,26 @@ export const ChatWindow: React.FC<Props> = ({
               rows={1}
             />
           </div>
+
+          {flyoutOpen && (
+              <div className="cmf-layer">
+                <div className="cmf-backdrop" onClick={() => setFlyoutOpen(false)} />
+                <CustomMessagesFlyout
+                  anchorRect={null}         // <- si no lo necesitas, null
+                  open={flyoutOpen}
+                  onClose={() => setFlyoutOpen(false)}
+                  items={customMessages}
+                  loading={loading}
+                  error={error}
+                  onCreate={create}
+                  onUpdate={update}
+                  onToggle={toggleSystemParam}
+                  onInsertToComposer={handleInsertToComposer}
+                  onSendNow={handleSendNow}
+                />
+              </div>
+            )}
+
         </div>
 
         <button
@@ -514,81 +507,40 @@ export const ChatWindow: React.FC<Props> = ({
         </button>
       </div>
 
-
       {ismaximize && previewImageUrl && (
-        <div
-          className="chat-window__image-preview-overlay"
-          onClick={closeImagePreview}
-        >
-          <img
-            src={previewImageUrl}
-            alt="Vista previa"
-            className="chat-window__image-preview-full"
-          />
+        <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
+          <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
         </div>
       )}
 
-      {quickMenuOpen && (
+      {visibleState.quickMenuOpen && (
         <div
           ref={popoverRef}
-          style={{
-            position: "fixed",
-            top: quickMenuPos.y,
-            left: quickMenuPos.x,
-            transform: "translate(-50%, -100%)",
-            background: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-            padding: 8,
-            width: 260,
-            zIndex: 9999,
-          }}
+          className="chat-window__quick-popover"
+          style={{ top: visibleState.quickMenuPos.y, left: visibleState.quickMenuPos.x }}
         >
           <button
             type="button"
             onClick={() => {
-              if (quickMenuMsg) beginReply(quickMenuMsg);
-              setQuickMenuOpen(false);
-              textAreaRef.current?.focus();
+              if (visibleState.quickMenuMsg) beginReply(visibleState.quickMenuMsg);
+              (textAreaRef as React.MutableRefObject<HTMLTextAreaElement | null>)?.current?.focus();
             }}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              fontSize: 14,
-            }}
+            className="chat-window__quick-popover-btn"
           >
             ↩️ Responder
           </button>
 
           {quickOptions.length > 0 && (
             <>
-              <div style={{ height: 1, background: "#eee", margin: "6px 0" }} />
-              <div style={{ fontSize: 12, opacity: 0.7, padding: "4px 8px" }}>
-                Respuestas rápidas
-              </div>
-              <div style={{ maxHeight: 260, overflowY: "auto" }}>
+              <div className="chat-window__quick-popover-divider" />
+              <div className="chat-window__quick-popover-title">Respuestas rápidas</div>
+              <div className="chat-window__quick-popover-list">
                 {quickOptions.map((opt, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => sendQuick(opt)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      fontSize: 14,
-                    }}
+                    className="chat-window__quick-popover-btn"
                   >
                     {opt}
                   </button>

@@ -6,7 +6,7 @@ import type {
 } from '@/Interfaces/Setting/CustomMessageInterface'
 import { CustomMessageServices } from '@/Services/Config/CustomMessageServices'
 
-export function useSystemParams() {
+export function useCustomMessage() {
   const [customMessages, setCustomMessages] = useState<CustomMessageResponseDto[]>([])
   const [selectedCustomMessage, setSelectedCustomMessage] = useState<CustomMessageResponseDto | null>(null)
   const [loadingList, setLoadingList] = useState(false)
@@ -156,5 +156,7 @@ export function useSystemParams() {
     closeModal,
     handleSubmit,
     toggleSystemParam: toggleStatus,
+    create,
+    update,
   }
 }

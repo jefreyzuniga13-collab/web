@@ -50,7 +50,7 @@ export const AssignmentResponsePopup: React.FC = () => {
   const handleSubmit = async (isAccepted: boolean) => {
     try {
       if (!accepted) {
-        await forceAssign(conversationId, isAccepted, assignmentComment)
+        await forceAssign(conversationId, isAccepted, assignmentComment, assignedAgentName)
         if (!isAccepted && conversation) {
           dispatch(openAssignModal(conversation))
         }
