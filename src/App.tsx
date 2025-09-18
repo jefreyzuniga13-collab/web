@@ -22,6 +22,7 @@ function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
+//Notificacion se muestra 3 veces, y el service worker incia como stop y no start
 function sanitizeExternalUrl(url: string): string {
   // Si ya viene con http(s)://, la devolvemos igual; si no, le anteponemos https://
   if (isExternalUrl(url)) return url;
@@ -84,6 +85,7 @@ export default function App() {
   // Escucha y muestra notificaciones emitidas internamente
   useEffect(() => {
     const onDesktopNotify = (e: Event) => {
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const evt = (e as CustomEvent).detail as any;
       if (shouldShowDesktopNotification()) {
@@ -98,7 +100,8 @@ export default function App() {
   // Mapeo del payload hacia título/cuerpo/url (default: URL EXTERNA correcta)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   function mapNotificationPayload(evt: any) {
-    const title = evt?.title ?? "Nuevo mensaje";
+
+    const title = evt?.title ?? "Nueva notificación";
     const body =
       evt?.body ??
       (evt?.content && String(evt.content).trim()) ??
@@ -108,6 +111,7 @@ export default function App() {
     const rawUrl =
       evt?.url ??
       "https://staging.dsujq9sb48iiw.amplifyapp.com/chat/"; // tu staging
+    
     const url = sanitizeExternalUrl(String(rawUrl));
 
     return { title, body, url };
@@ -119,15 +123,19 @@ export default function App() {
     if (Notification.permission !== "granted") return;
 
     const { title, body, url } = mapNotificationPayload(evt);
+
     const reg = await navigator.serviceWorker.getRegistration();
 
-    await reg?.showNotification(title, {
-      body,
-      icon: "/logopcg.png",
-      badge: "/logopcg.png",
-      requireInteraction: true,
-      data: { url }, // la usaremos en el click del SW
-    });
+        await reg?.showNotification(title, {
+          body,
+          icon: "/logopcg.png",
+          badge: "/logopcg.png",
+          requireInteraction: true,
+          tag: "latest-message",
+          renotify: true,
+          data: { url },
+        } as NotificationOptions & { renotify: boolean });
+
   }
 
   // Mensajes desde el SW (fallback si el SW decide postMessage en vez de abrir él mismo)

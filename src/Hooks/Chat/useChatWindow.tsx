@@ -454,14 +454,15 @@ const gotoMatch = (dir: 1 | -1) => {
   setHighlightedId(matchIds[next]);
 };
 
-const highlightText = (text: string, term: string) => {
-  const t = term.trim();
-  if (!t) return text;
-  const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
-  return text.split(re).map((part, i) =>
-    re.test(part) ? <mark key={i} className="chat-window__hl">{part}</mark> : <React.Fragment key={i}>{part}</React.Fragment>
-  );
-};
+  const highlightText = (text: string, term: string) => {
+    const t = term.trim();
+    if (!t) return text;
+    const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
+    return text.split(re).map((part, i) =>
+      re.test(part) ? <mark key={i} className="chat-window__hl">{part}</mark> : <React.Fragment key={i}>{part}</React.Fragment>
+    );
+  };
+
   return {
     setConversationId,
     setUserId,

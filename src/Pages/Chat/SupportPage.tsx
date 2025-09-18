@@ -12,7 +12,7 @@ import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
 import { useConversations } from "@/Hooks/useConversations";
-import { leaveConversation } from "@/Services/signalr";
+// import { leaveConversation } from "@/Services/signalr";
 
 const SupportPage: React.FC = () => {
 
@@ -43,27 +43,27 @@ const SupportPage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
   
-   // a) si desaparece del listado (por cualquier razón), deselecciona
+   // si desaparece del listado (por cualquier razón), deselecciona
   useEffect(() => {
     if (convId && !convHook.conversations.some(c => c.conversationId === convId)) {
-      leaveConversation(convId) // opcional, ya lo haces en el hook
       setConvId(null)
     }
   }, [convId, convHook.conversations, setConvId])
 
+
   // escucha el evento explícito
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onLost = (e: any) => {
-      const lostId = e.detail?.conversationId
-      if (lostId && convId === lostId) {
-        leaveConversation(lostId) // opcional
-        setConvId(null)
-      }
-    }
-    window.addEventListener('ConversationLost', onLost)
-    return () => window.removeEventListener('ConversationLost', onLost)
-  }, [convId, setConvId])
+  // useEffect(() => {
+  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //   const onLost = (e: any) => {
+  //     const lostId = e.detail?.conversationId
+  //     if (lostId && convId === lostId) {
+  //       leaveConversation(lostId) // opcional
+  //       setConvId(null)
+  //     }
+  //   }
+  //   window.addEventListener('ConversationLost', onLost)
+  //   return () => window.removeEventListener('ConversationLost', onLost)
+  // }, [convId, setConvId])
 
   return (
     <div className="support-layout">
@@ -80,7 +80,7 @@ const SupportPage: React.FC = () => {
             </button>
           </div>
 
-        {/* Puede habr agente asignado o no. Se deve de selecciona a uno al hazar */}
+        {/* Puede haber agente asignado o no. Se deve de selecciona a uno al hazar */}
           <div className="inbox-status__container">
             {sortedOptions.map((opt) => (
               <>

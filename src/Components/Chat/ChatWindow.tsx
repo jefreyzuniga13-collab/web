@@ -461,6 +461,7 @@ export const ChatWindow: React.FC<Props> = ({
               className="chat-window__composer-input"
               placeholder="Escribe un mensaje…"
               value={text}
+              autoFocus
               onChange={(e) => {
                 setSelectedOption(null);
                 setText(e.target.value);

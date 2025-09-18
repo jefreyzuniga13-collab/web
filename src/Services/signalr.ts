@@ -8,6 +8,7 @@ import type {
 } from '@/Interfaces/Chat/ChatInterfaces'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
+import { format } from 'date-fns'
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
@@ -153,49 +154,58 @@ export function leaveConversation(conversationId: number) {
   }
 }
 
+    const formatDate = (iso?: string) => {
+        if (!iso) return ''
+        try {
+          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
+        } catch {
+          return ''
+        }
+  }
+  
+const receiveHandlers = new Map<
+  (p: { message: MessageDto; attachments: AttachmentDto[] }) => void,
+  (message: MessageDto, attachments?: AttachmentDto[]) => void
+>();
+
+//Enviar notificación cuando se recibe mensaje, fuera  de la venta del sitio
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
-) {
-  if (!chatConnection) return;
+) 
+{
 
-  const cb = (message: MessageDto, attachments?: AttachmentDto[]) => {
+  if (!chatConnection) return () => {};
+
+  // si ya estaba registrado, no lo dupliques
+  if (receiveHandlers.has(handler)) {
+    return () => {
+      const cb = receiveHandlers.get(handler)!;
+      chatConnection!.off('ReceiveMessage', cb);
+      receiveHandlers.delete(handler);
+    };
+  }
+
+  const cb = (message: MessageDto, attachments?: AttachmentDto[]) => 
+    {
     try {
-      // Entrega attachments siempre como array
       handler({ message, attachments: attachments ?? [] });
 
-      // Normaliza fecha
+      // --- NOTIFICACIÓN DESKTOP (tu lógica actual) ---
       const sentAtDate = new Date(message?.sentAt as any);
-
       const sentAtOk = !isNaN(sentAtDate.getTime());
       const sentAtText = sentAtOk
-        ? sentAtDate.toLocaleString('es-NI', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+        ? formatDate(sentAtDate.toString())
         : '';
 
-      const title = `${
-        message?.senderClientName ?? ''
-      } ${message?.senderContactName ?? message?.senderUserName ?? ''} recibido: ${sentAtText}`;
-
-      const body =
-        (message?.content && message.content.trim()) || '(Mensaje con adjunto)';
-
+      const title = `${message?.senderClientName ?? ''} ${
+        message?.senderContactName ?? message?.senderUserName ?? ''
+      } recibido: ${sentAtText}`;
+      const body = (message?.content && message.content.trim()) || '(Mensaje con adjunto)';
       const url = `https://staging.dsujq9sb48iiw.amplifyapp.com/chat/`;
 
-      // Emitir evento para notificación
       window.dispatchEvent(
         new CustomEvent('DesktopNotify', {
-          detail: {
-            title,
-            body,
-            url,
-            conversationId: message?.conversationId,
-          },
-          
+          detail: { title, body, url, conversationId: message?.conversationId },
         })
       );
     } catch (err) {
@@ -203,14 +213,27 @@ export function onNewMessage(
     }
   };
 
+  receiveHandlers.set(handler, cb);
   chatConnection.on('ReceiveMessage', cb);
-}
 
+  // devolver función para desuscribirse
+  return () => {
+    const stored = receiveHandlers.get(handler);
+    if (stored) {
+      chatConnection!.off('ReceiveMessage', stored);
+      receiveHandlers.delete(handler);
+    }
+  };
+}
 
 export function offNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
-  chatConnection?.off('ReceiveMessage', handler);
+  const stored = receiveHandlers.get(handler);
+  if (stored && chatConnection) {
+    chatConnection.off('ReceiveMessage', stored);
+    receiveHandlers.delete(handler);
+  }
 }
 
 export function offNewContact(){
@@ -274,17 +297,105 @@ export function offSupportRequested(
   notificationsConnection?.off('SupportRequested', handler)
 }
 
+// --------
+
+//Agregar las notificación, cuando se envia una solicitud de asignación
+// Mapa: tu handler original -> callback realmente suscrito al hub
+const receiveAssignmentHandlers = new Map<
+  (dto: ConversationDto) => void,
+  (dto: ConversationDto) => void
+>();
+
 export function onConversationAssigned(
   handler: (dto: ConversationDto) => void
 ) {
-  notificationsConnection?.on('ConversationAssigned', handler)
+  // 0) Verifica conexión
+  if (!notificationsConnection) {
+    console.warn('[onConversationAssigned] notificationsConnection es null. ¿Llamaste createHubConnection()?');
+    // devolvemos un no-op para evitar crashear
+    return () => {};
+  }
+
+  // 1) Evita duplicados
+  if (receiveAssignmentHandlers.has(handler)) {
+    return () => {
+      const cb = receiveAssignmentHandlers.get(handler)!;
+      notificationsConnection!.off('ConversationAssigned', cb);
+      receiveAssignmentHandlers.delete(handler);
+      console.log('[onConversationAssigned] Unsubscribing (dup).');
+    };
+  }
+
+  // 2) Callback real
+  const cb = (dto: ConversationDto) => {
+    try {
+      console.log('[onConversationAssigned] Evento recibido:', dto);
+      handler(dto);
+
+      // --- NOTIFICACIÓN DESKTOP ---
+      const title = `Nueva asignación de ${dto?.clientName ?? ''}`;
+      const body = `Le han asignado una nueva conversación del contacto: ${dto?.clientContactName ?? ''}`;
+      const url = `https://staging.dsujq9sb48iiw.amplifyapp.com/chat/`;
+
+      console.log('[onConversationAssigned] Enviando DesktopNotify:', { title, body, url, conversationId: dto?.conversationId });
+
+      window.dispatchEvent(
+        new CustomEvent('DesktopNotify', {
+          detail: { title, body, url, conversationId: dto?.conversationId },
+        })
+      );
+
+      console.log('[onConversationAssigned] DesktopNotify enviado.');
+    } catch (err) {
+      console.error('[onConversationAssigned] Error en callback:', err);
+    }
+  };
+
+  receiveAssignmentHandlers.set(handler, cb);
+
+  // 3) Suscripción resiliente a estados
+  const subscribe = () => {
+    notificationsConnection!.off('ConversationAssigned', cb); // por si acaso
+    notificationsConnection!.on('ConversationAssigned', cb);
+    console.log('[onConversationAssigned] Suscrito a "ConversationAssigned". Estado:', notificationsConnection!.state);
+  };
+
+  // Puedes registrar .on antes de start(), pero aquí lo hacemos explícito y loggeado
+  if (notificationsConnection.state === signalR.HubConnectionState.Connected) {
+    subscribe();
+  } else {
+    console.warn('[onConversationAssigned] Conexión no conectada aún. Estado:', notificationsConnection.state);
+    // Nos suscribimos igual y además re-suscribimos en reconexiones
+    subscribe();
+
+    notificationsConnection.onreconnected(() => {
+      console.log('[onConversationAssigned] Reconnected. Re-suscribing "ConversationAssigned".');
+      subscribe();
+    });
+  }
+
+  // 4) devolver unsubscribe
+  return () => {
+    const stored = receiveAssignmentHandlers.get(handler);
+    if (stored) {
+      notificationsConnection!.off('ConversationAssigned', stored);
+      receiveAssignmentHandlers.delete(handler);
+      console.log('[onConversationAssigned] Unsubscribing.');
+    }
+  };
 }
 
 export function offConversationAssigned(
   handler: (dto: ConversationDto) => void
 ) {
-  notificationsConnection?.off('ConversationAssigned', handler)
+  const stored = receiveAssignmentHandlers.get(handler);
+  if (stored && notificationsConnection) {
+    notificationsConnection.off('ConversationAssigned', stored);
+    receiveAssignmentHandlers.delete(handler);
+  }
 }
+
+// --------
 
 export function onAssignmentResponse(
   handler: (payload: { conversationId: number; assignedAgentName: string, accepted: boolean; comment?: string; clientContactName: string; clientName: string;  }) => void
@@ -348,6 +459,3 @@ export function onPlayNewMessageSound(
 export function offPlayNewMessageSound() {
   notificationsConnection?.off('PlayNewMessageSound');
 }
-
-
-  //Mostrar la notificacion, cuando recibi un nuevo mensaje, si no estoy en el sitio, es decir si esta abiero y todo pero estoy revisando otra coas
