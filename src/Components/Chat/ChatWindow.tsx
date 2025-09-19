@@ -9,8 +9,8 @@ import { es } from "date-fns/locale/es";
 import SmsIcon from "@mui/icons-material/Sms";
 import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
-
 import "@/Styles/Chat/custom-messages-flyout.css"
+import { FaArrowDown } from "react-icons/fa";
 
 const formatTime = (iso?: string) => {
   if (!iso) return "";
@@ -35,6 +35,8 @@ export const ChatWindow: React.FC<Props> = ({
 }) => {
    const smsBtnRef = useRef<HTMLDivElement | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(true);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     customMessages,
@@ -110,6 +112,24 @@ export const ChatWindow: React.FC<Props> = ({
 
   const showEmpty = !conversationId;
 
+    useEffect(() => {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+
+      const handleScroll = () => {
+        const isNearBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+        setShowScrollButton(!isNearBottom);
+      };
+
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const scrollToBottom = () => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
   const getConversationStringDate = (sentAt: string) => {
     const fecha = parseISO(sentAt);
     if (isToday(fecha)) return "Hoy";
@@ -127,6 +147,7 @@ export const ChatWindow: React.FC<Props> = ({
     setSelectedOption(txt);
     await handleSend();
   };
+
 
   if (showEmpty) {
     return (
@@ -158,7 +179,8 @@ export const ChatWindow: React.FC<Props> = ({
           </div>
         </div>
       )}
-      <div className="chat-window__messages" onDoubleClick={focusTextarea}>
+      
+      <div className="chat-window__messages" onDoubleClick={focusTextarea}  ref={messagesContainerRef}>
         {visibleMessages.map((m, i) => {
           const sentAt = formatTime(m.sentAt);
           const isCurrentUser = m.senderUserId === userId;
@@ -388,14 +410,25 @@ export const ChatWindow: React.FC<Props> = ({
                     </div>
                   </div>
                 </div>
+
               </div>
+
             </React.Fragment>
           );
         })}
         
         <div ref={bottomRef} className="butttonRef" />
       </div>
-
+      
+          {showScrollButton && (
+          <button
+            className="chat-window__scroll-button"
+            onClick={scrollToBottom}
+            title="Bajar al último mensaje"
+          >
+            <FaArrowDown className="chat-window__scroll-buttonIcon" />
+          </button>
+        )}
       <div className="chat-window__composer">
 
         <label

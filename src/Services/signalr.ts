@@ -322,14 +322,13 @@ export function onConversationAssigned(
       const cb = receiveAssignmentHandlers.get(handler)!;
       notificationsConnection!.off('ConversationAssigned', cb);
       receiveAssignmentHandlers.delete(handler);
-      console.log('[onConversationAssigned] Unsubscribing (dup).');
+
     };
   }
 
   // 2) Callback real
   const cb = (dto: ConversationDto) => {
     try {
-      console.log('[onConversationAssigned] Evento recibido:', dto);
       handler(dto);
 
       // --- NOTIFICACIÓN DESKTOP ---
@@ -337,15 +336,12 @@ export function onConversationAssigned(
       const body = `Le han asignado una nueva conversación del contacto: ${dto?.clientContactName ?? ''}`;
       const url = `https://staging.dsujq9sb48iiw.amplifyapp.com/chat/`;
 
-      console.log('[onConversationAssigned] Enviando DesktopNotify:', { title, body, url, conversationId: dto?.conversationId });
-
       window.dispatchEvent(
         new CustomEvent('DesktopNotify', {
           detail: { title, body, url, conversationId: dto?.conversationId },
         })
       );
 
-      console.log('[onConversationAssigned] DesktopNotify enviado.');
     } catch (err) {
       console.error('[onConversationAssigned] Error en callback:', err);
     }
@@ -357,7 +353,6 @@ export function onConversationAssigned(
   const subscribe = () => {
     notificationsConnection!.off('ConversationAssigned', cb); // por si acaso
     notificationsConnection!.on('ConversationAssigned', cb);
-    console.log('[onConversationAssigned] Suscrito a "ConversationAssigned". Estado:', notificationsConnection!.state);
   };
 
   // Puedes registrar .on antes de start(), pero aquí lo hacemos explícito y loggeado
@@ -369,18 +364,16 @@ export function onConversationAssigned(
     subscribe();
 
     notificationsConnection.onreconnected(() => {
-      console.log('[onConversationAssigned] Reconnected. Re-suscribing "ConversationAssigned".');
       subscribe();
     });
   }
 
-  // 4) devolver unsubscribe
+  // devolver unsubscribe
   return () => {
     const stored = receiveAssignmentHandlers.get(handler);
     if (stored) {
       notificationsConnection!.off('ConversationAssigned', stored);
       receiveAssignmentHandlers.delete(handler);
-      console.log('[onConversationAssigned] Unsubscribing.');
     }
   };
 }

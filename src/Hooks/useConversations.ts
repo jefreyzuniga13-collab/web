@@ -51,13 +51,13 @@ export function useConversations(filter: Filter = 'all', searchConversation: str
   const [error, setError] = useState<string>()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages:  0,
     totalItems:  0,
     itemsPerPage:10
   })
-
 
   const toApiState = (f: Filter) => (f === 'all' ? undefined : f)
 
@@ -115,8 +115,11 @@ export function useConversations(filter: Filter = 'all', searchConversation: str
 
 const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
   setConversations(prev => {
+
     if (!isAdmin) {
+
       if (updated.assignedAgentId !== userId) {
+
         // Cambia de agente asignado -> quitarla, salir del grupo y avisar
         const removed = prev.filter(p => p.conversationId !== updated.conversationId)
         leaveConversation(updated.conversationId)
@@ -125,6 +128,7 @@ const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
         }))
         return removed
       }
+
       // Si es propia la asignación.
       joinConversation(updated.conversationId)
       const base   = prev.filter(p => p.conversationId !== updated.conversationId && p.clientContactId !== updated.clientContactId)

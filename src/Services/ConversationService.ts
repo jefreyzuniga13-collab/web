@@ -99,8 +99,6 @@ export function forceAssign(
   assignmentComment: string,
   assignedAgentName?: string
 ) {
-
-  console.log("Forzar asingnacion", assignedAgentName);
   
   return api.post(`/Conversations/${conversationId}/force`, {
     forced,

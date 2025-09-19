@@ -45,25 +45,11 @@ const SupportPage: React.FC = () => {
   
    // si desaparece del listado (por cualquier razón), deselecciona
   useEffect(() => {
-    if (convId && !convHook.conversations.some(c => c.conversationId === convId)) {
+    if (!convHook.loading && convId && !convHook.conversations.some(c => c.conversationId === convId)) {
       setConvId(null)
     }
-  }, [convId, convHook.conversations, setConvId])
+  }, [convId, convHook.conversations, convHook.loading, setConvId])
 
-
-  // escucha el evento explícito
-  // useEffect(() => {
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   const onLost = (e: any) => {
-  //     const lostId = e.detail?.conversationId
-  //     if (lostId && convId === lostId) {
-  //       leaveConversation(lostId) // opcional
-  //       setConvId(null)
-  //     }
-  //   }
-  //   window.addEventListener('ConversationLost', onLost)
-  //   return () => window.removeEventListener('ConversationLost', onLost)
-  // }, [convId, setConvId])
 
   return (
     <div className="support-layout">
@@ -80,29 +66,27 @@ const SupportPage: React.FC = () => {
             </button>
           </div>
 
-        {/* Puede haber agente asignado o no. Se deve de selecciona a uno al hazar */}
-          <div className="inbox-status__container">
-            {sortedOptions.map((opt) => (
-              <>
-                <input
-                  id={opt.value}
-                  type="radio"
-                  name="filters"
-                  value={opt.value}
-                  checked={filter === opt.value}
-                  onChange={handleOptionChange}
-                  className="inbox-status__input"
-                />
-                <label htmlFor={opt.value} className="inbox-status__label">
+            <div className="inbox-status__container">
+              {sortedOptions.map(opt => (
+                <label key={opt.value} className="inbox-status__label">
+                  <input
+                    id={opt.value}
+                    type="radio"
+                    name="filters"
+                    value={opt.value}
+                    checked={filter === opt.value}
+                    onChange={handleOptionChange}
+                    className="inbox-status__input"
+                  />
                   {opt.content}
                 </label>
-              </>
-            ))}
+              ))}
           </div>
 
           <div className="inbox-title-container__filter">
               {/* <h3 className="inbox-title">Filtrar</h3> */}
-             <Input className="inbox-title-container__filter__input" value={searchConversation} onChange={e=> setSearchConversation(e.target.value)}
+             <Input className="inbox-title-container__filter__input" value={searchConversation} 
+             onChange={e=> setSearchConversation(e.target.value)}
              placeholder="Filtrar Conversaciones"/>
           </div>
         </div>

@@ -175,8 +175,8 @@ export function useOpeningHourForm({
       if (form.daysOfWeek.length <= 0) newErrors.days = 'Seleccione al menos un día.'
       if (!form.startTime || !form.endTime)
         newErrors.time = 'Debe especificar hora de inicio y fin.'
-      // else if (form.startTime >= form.endTime)
-      //   newErrors.time = 'Hora de inicio debe ser menor que hora de fin.'
+      else if (form.startTime >= form.endTime)
+        newErrors.time = 'Hora de inicio debe ser menor que hora de fin.'
     }
 
     // if (form.recurrence === 'AnnualHoliday') {
