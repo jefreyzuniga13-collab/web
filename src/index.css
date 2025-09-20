@@ -36,6 +36,8 @@ body {
 
 :root {
   --color-primary: #0070B4;
+  --color-secondary: #F99D1C;
+  --color-secondary-light: #f6aa28;
   --color-primary-dark: #0070B4;
   --color-primary-light: #4f7bd1;
   --color-primary-hover-opacity: 0.9;

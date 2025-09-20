@@ -230,11 +230,9 @@
   color: var(--text-white);
 }
 
-.inbox-status__input:checked{
+.inbox-status__label:has(> .inbox-status__input:checked){
   background-color: var(--color-primary);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-bold);
-
+  color: var(--text-white);
 }
 
 .inbox-status__input{

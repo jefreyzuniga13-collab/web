@@ -35,8 +35,9 @@ export const ChatWindow: React.FC<Props> = ({
 }) => {
    const smsBtnRef = useRef<HTMLDivElement | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(true);
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+const [showScrollButton, setShowScrollButton] = useState(false);
+const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+const composerRef = useRef<HTMLDivElement|null>(null);
 
   const {
     customMessages,
@@ -110,25 +111,59 @@ export const ChatWindow: React.FC<Props> = ({
     };
   }, [conversationId, setConversationId, setUserId, userId]);
 
-  const showEmpty = !conversationId;
 
-    useEffect(() => {
-      const container = messagesContainerRef.current;
-      if (!container) return;
+const isAtBottom = (el: HTMLElement) =>
+  el.scrollTop >= el.scrollHeight - el.clientHeight - 12;
 
-      const handleScroll = () => {
-        const isNearBottom =
-          container.scrollHeight - container.scrollTop - container.clientHeight < 200;
-        setShowScrollButton(!isNearBottom);
-      };
 
-      container.addEventListener("scroll", handleScroll);
-      return () => container.removeEventListener("scroll", handleScroll);
-    }, []);
+useEffect(() => {
+  const root = messagesContainerRef.current;
+  const composer = composerRef.current;
+  if (!root || !composer) return;
 
-    const scrollToBottom = () => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+  const setVar = () =>
+    root.style.setProperty("--composer-h", `${composer.offsetHeight}px`);
+
+  setVar();
+
+  const ro = new ResizeObserver(setVar);
+  ro.observe(composer);
+  window.addEventListener("resize", setVar);
+
+  return () => {
+    ro.disconnect();
+    window.removeEventListener("resize", setVar);
+  };
+}, []);
+
+
+useEffect(() => {
+  const root = messagesContainerRef.current;
+  if (!root) return;
+
+  const onScroll = () => setShowScrollButton(!isAtBottom(root));
+  root.addEventListener("scroll", onScroll, { passive: true });
+
+  // chequeo inicial ya con layout listo
+  requestAnimationFrame(onScroll);
+  return () => root.removeEventListener("scroll", onScroll);
+}, []);
+
+useEffect(() => {
+  const root = messagesContainerRef.current;
+  if (!root) return;
+  requestAnimationFrame(() => {
+    root.scrollTop = root.scrollHeight;
+    setShowScrollButton(false);
+  });
+}, [conversationId, visibleMessages.length]);
+
+const scrollToBottom = () => {
+  const root = messagesContainerRef.current;
+  if (!root) return;
+  root.scrollTo({ top: root.scrollHeight, behavior: "smooth" });
+  setShowScrollButton(false);
+};
 
   const getConversationStringDate = (sentAt: string) => {
     const fecha = parseISO(sentAt);
@@ -148,6 +183,7 @@ export const ChatWindow: React.FC<Props> = ({
     await handleSend();
   };
 
+  const showEmpty = !conversationId;
 
   if (showEmpty) {
     return (
@@ -417,19 +453,21 @@ export const ChatWindow: React.FC<Props> = ({
           );
         })}
         
-        <div ref={bottomRef} className="butttonRef" />
+        <div ref={bottomRef} className="butttonRef" style={{ height: 1 }}/>
+
+            {showScrollButton && (
+      <button
+        className="chat-window__scroll-button"
+        onClick={scrollToBottom}
+        title="Bajar al último mensaje"
+      >
+        <FaArrowDown className="chat-window__scroll-buttonIcon" />
+      </button>
+    )}
       </div>
       
-          {showScrollButton && (
-          <button
-            className="chat-window__scroll-button"
-            onClick={scrollToBottom}
-            title="Bajar al último mensaje"
-          >
-            <FaArrowDown className="chat-window__scroll-buttonIcon" />
-          </button>
-        )}
-      <div className="chat-window__composer">
+
+      <div className="chat-window__composer" ref={composerRef}>
 
         <label
           htmlFor="file-upload"

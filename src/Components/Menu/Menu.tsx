@@ -5,7 +5,7 @@ import MenuItem from '@/Components/Menu/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/Context/Slices/authSlice';
-import { useNotifications } from '@/Hooks/useNotifications';
+// import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Menu/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/User/useUsers';
@@ -20,7 +20,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, error } = useMenus();
-  const { unreadCount } = useNotifications();
+  // const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const Icon = (Icons as any)[m.icon] ?? Icons.Menu;
           const isSelected = selectedUrl === m.url;
-          const showBadge = m.url === 'notifications' && unreadCount > 0;
+          //const showBadge = m.url === 'notifications' && unreadCount > 0;
 
           return (
 
@@ -86,7 +86,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
                     text={m.name}
                     onClick={() => onClick(m.url, m.name)}
                     selected={isSelected}
-                    badge={showBadge ? unreadCount : undefined}
+                    //badge={showBadge ? unreadCount : undefined}
                     className = {collapsed ? 'collapsed-styles' : ''}
                     collapsed={collapsed}
                   />

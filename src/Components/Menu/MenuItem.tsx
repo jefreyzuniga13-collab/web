@@ -7,7 +7,7 @@ export interface MenuItemProps {
   text: string;
   onClick?: () => void;
   selected?: boolean;
-  badge?: number;
+  // badge?: number;
   className: string;
   collapsed: boolean;
 }
@@ -17,7 +17,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   text,
   onClick,
   selected,
-  badge,
+ // badge,
   className,
   collapsed
 }) => (
@@ -33,9 +33,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
       <span className="menu-item__text">
         {text}
       </span>
-      {badge != null && (
+      {/* {badge != null && (
         <span className="menu-item__badge">{badge}</span>
-      )}
+      )} */}
     </div>
     </Tooltip>
   </li>
