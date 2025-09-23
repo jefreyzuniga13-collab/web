@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import { Send, Paperclip, Download, MessageSquareMore } from "lucide-react";
-import "@/styles/Chat/ChatWindow.css";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
@@ -11,6 +10,7 @@ import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
 import "@/Styles/Chat/custom-messages-flyout.css"
 import { FaArrowDown } from "react-icons/fa";
+import "@/styles/Chat/ChatWindow.css";
 
 const formatTime = (iso?: string) => {
   if (!iso) return "";
@@ -217,6 +217,10 @@ const scrollToBottom = () => {
       )}
       
       <div className="chat-window__messages" onDoubleClick={focusTextarea}  ref={messagesContainerRef}>
+        
+        {/* Fecha deve de quedar fija en la parte de arriba*/}
+        {/* Y esta misma se ambia en dependenias de cuanto es el mensaje. Como whatsappp */}
+        {/*  */}
         {visibleMessages.map((m, i) => {
           const sentAt = formatTime(m.sentAt);
           const isCurrentUser = m.senderUserId === userId;

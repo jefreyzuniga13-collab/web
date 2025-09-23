@@ -132,7 +132,8 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     //     errs.residenceCard = 'Formato de residencia inválido (1 o  2Letra + 7 dígitos o  12 dígitos)'
     //   }
     // }
-    if (!form.clientId) errs.clientId = 'Debe seleccionar un cliente'
+    // if (!form.clientId) errs.clientId = 'Debe seleccionar un cliente'
+    
     setErrors(errs)
     return Object.keys(errs).length === 0
   }, [form])

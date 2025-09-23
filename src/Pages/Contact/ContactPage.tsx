@@ -46,6 +46,16 @@ export default function ContactPage() {
       render: row => row.fullName ?? row.waName
     },
     {
+      id: 'clienteCodigo',
+      label: 'Fuente',
+      minWidth: 100,
+      render: row=>{
+        if(row.clienteCodigo == null) return "No espesificado"
+        if(row.clienteCodigo as number < 50000) return "INNOVA"
+        if(row.clienteCodigo as number >= 50000) return "PC GROUP"
+      }
+    },
+    {
       id: 'companyName',
       label: 'Nombre Empresa',
       minWidth: 80,

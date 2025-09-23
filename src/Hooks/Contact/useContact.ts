@@ -5,7 +5,7 @@ import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Contac
 import { contactService } from '@/Services/Contact/ContactService'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 
-const useContact = () => {
+const useContact = (contactId?: number) => {
   const [data, setData] = useState<ContactLogInterface[]>([])
   const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
@@ -21,6 +21,12 @@ const useContact = () => {
 
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (typeof contactId === 'number') {
+      fetchById(contactId);
+    }
+  }, [contactId])
+  
   const fetchPage = useCallback(
     async (p = page, s = pageSize) => {
       setLoadingList(true)

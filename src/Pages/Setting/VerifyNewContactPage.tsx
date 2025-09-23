@@ -1,28 +1,32 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import { useParams } from 'react-router-dom'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import DatePickerField from '@/Components/Common/DatePickerField'
 import { useVerifyNewContact } from '@/Hooks/Setting/useVerifyNewContact'
-import type { ClienteResponseDto } from '@/Interfaces/Contact/ContactInterface'
 import '@/Styles/Setting/VerifyNewContact.css'
+import CustomAutocomplete from '@/Components/Common/CustomAutocomplete'
 
 const VerifyNewContactPage: React.FC = () => {
   const { phoneNumber } = useParams<{ phoneNumber: string }>()
   const {
     contact,
-    clientes,
+    // clientes,
     detalle,
     form,
     errors,
     loading,
-    filter,
-    handleFilterChange,
+    // filter,
+    // handleFilterChange,
     handleChangeText,
     handleSelectCliente,
     // handleChangeCodigo,
     handleSubmit,
-    handleBack
+    handleBack,
+    clients,
+    // clientsLoading,
+    // clientsError,
   } = useVerifyNewContact(phoneNumber!)
 
   return (
@@ -124,35 +128,52 @@ const VerifyNewContactPage: React.FC = () => {
               />
             </div>
 
-            <div className="verifyContact-grid-col">
-              <label htmlFor="filter">Buscar Cliente <span className='filter-span'>(Nombre o Razon social)</span></label>
-              <Input
-                id="filter"
-                name="filter"
-                value={filter}
-                onChange={handleFilterChange}
-              />
-            </div>
-            <div className="verifyContact-grid-col">
-              <label htmlFor="codcli">Cliente</label>
-              <select
-                id="codcli"
-                name="codcli"
-                className="verifyContact__select"
-                value={form.codcli}
-                onChange={handleSelectCliente}
-              >
-                <option value="">-- Elige un cliente --</option>
-                {clientes.map((c: ClienteResponseDto) => (
-                  <option key={c.codCliente} value={c.codCliente}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
-              {errors.codcli && (
-                <div className="verifyContact-error">{errors.codcli}</div>
-              )}
-            </div>
+          {/* <div className="verifyContact-grid-col">
+            <label htmlFor="filter">
+              Buscar Cliente <span className="filter-span">(Nombre o Razón social)</span>
+            </label>
+            <Input
+              id="filter"
+              name="filter"
+              value={filter}
+              onChange={handleFilterChange}
+            />
+          </div> */}
+
+<div className="verifyContact-grid-col">
+  <label htmlFor="codcli">Cliente</label>
+
+  <CustomAutocomplete
+    label="Cliente"
+    placeholder="-- Elige un cliente --"
+    options={
+      (clients ?? []).map((c) => ({
+        label: c.clientName ?? '',
+        value: String(c.clientId),
+      }))
+    }
+    
+    value={
+      (() => {
+        const sel = (clients ?? []).find(
+          (c) => String(c.clientId) === String(form.codcli || '')
+        )
+        return sel
+          ? { label: sel.clientName ?? '', value: String(sel.clientId) }
+          : null
+      })()
+    }
+    onChange={(opt) =>
+      handleSelectCliente({
+        target: { value: opt?.value ?? '' },
+      } as any)
+    }
+    error={Boolean(errors.codcli)}
+    helperText={errors.codcli}
+  />
+</div>
+
+            
             <div className="verifyContact-grid-col">
               <label htmlFor="waName">WhatsApp</label>
               <Input id="waName" name="waName" value={contact?.waName || ''} disabled />

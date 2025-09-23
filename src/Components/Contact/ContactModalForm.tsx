@@ -5,6 +5,7 @@ import Button from '@/Components/Common/Button'
 import { useContactForm } from '@/Hooks/Contact/UseContactForm'
 import '@/Styles/Contact/ContactModal.css'
 import type { ContactFormValues, ContactLogInterface } from '@/Interfaces/Contact/ContactInterface'
+// import CustomAutocomplete  from '@/Components/Common/CustomAutocomplete'
 
 interface ContactModalProps {
   mode: 'create' | 'edit' | 'view'
@@ -31,7 +32,14 @@ const statusOptions = [
 ]
 
 export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit }: ContactModalProps) {
-  const { form, errors, isView, clients, handleChange, handleSelect, handleCheckbox, handleSubmit } =
+  const { form, 
+    errors, 
+    isView, 
+    // clients, 
+    handleChange, 
+    handleSelect, 
+    handleCheckbox, 
+    handleSubmit } =
     useContactForm({ mode, data, onSubmit })
 
   if (!isOpen) return null
@@ -52,22 +60,32 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
         <form className="cm-modal__body" onSubmit={handleSubmit}>
           <div className="cm-modal__grid">
 
-            <div className="cm-modal__col">
+            {/* <div className="cm-modal__col">
               <Label htmlFor="clientId">Cliente *</Label>
-              <Select
-                id="clientId"
-                value={form.clientId ?? ''}
-                onChange={e => {
-                  const id =  e.target.value
-                  handleSelect('clientId', id)
-                  const selected = clients?.find(c => c.clientId == id)
-                  if (selected) handleSelect('clientId', selected.clientId)
+
+              <CustomAutocomplete
+                label="Cliente"
+                placeholder="Escribe para buscar…"
+
+                value={
+                  (() => {
+                    const sel = clients?.find(c => String(c.clientId) === String(form.clientId))
+                    return sel ? { label: sel.clientName ?? '', value: String(sel.clientId) } : null
+                  })()
+                }
+                options={clients?.map(c => ({
+                  label: c.clientName ?? '',
+                  value: String(c.clientId),
+                })) || []}
+                onChange={(opt) => {
+                  handleSelect('clientId', opt?.value ?? '')
                 }}
                 disabled={isView}
-                options={clients?.map(c => ({ value: String(c.clientId), label: c.clientName ?? '' })) || []}
+                error={Boolean(errors.clientId)}
+                helperText={errors.clientId}
               />
-              {errors.clientId && <div className="cm-modal__error">{errors.clientId}</div>}
-            </div>
+            </div> */}
+
             <div className="cm-modal__col">
               <Label htmlFor="fullName">Nombre Contacto Completo *</Label>
               <Input
@@ -79,6 +97,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               />
               {errors.fullName && <div className="cm-modal__error">{errors.fullName}</div>}
             </div>
+
             {/* <div className="cm-modal__col">
               <Label htmlFor="waName">Nombre WhatsApp *</Label>
               <Input
@@ -111,6 +130,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               />
               {errors.phone && <div className="cm-modal__error">{errors.phone}</div>}
             </div>
+
             <div className="cm-modal__col">
               <Label htmlFor="idType">Tipo ID</Label>
               <Select

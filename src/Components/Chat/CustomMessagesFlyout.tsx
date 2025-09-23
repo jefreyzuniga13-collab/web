@@ -114,8 +114,8 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
 
   return (
     <>
-      {/* Backdrop local (click fuera = cerrar) */}
-      <div className="cmf-backdrop" onClick={onClose} />
+
+      {/* <div className="cmf-backdrop" onClick={onClose} /> */}
 
       <div
         className="cmf-flyout"

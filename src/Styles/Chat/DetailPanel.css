@@ -1,0 +1,88 @@
+/* El contenedor principal del chat */
+.chat-window {
+  position: relative;
+  --details-w: 0px; /* ancho del panel cerrado */
+}
+
+/* Cuando el panel está abierto, reserva espacio para que no tape */
+.chat-window.details-open {
+  --details-w: 360px; /* ancho del panel abierto */
+}
+
+/* Botón para abrir/cerrar panel */
+.chat-window__toggle-details {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  border: none;
+  background: var(--btn-bg, #fff);
+  border-radius: 8px;
+  padding: 6px 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  cursor: pointer;
+}
+
+/* El listado de mensajes y el composer dejan espacio al panel cuando esté abierto */
+.chat-window__messages {
+  padding-right: calc(var(--space-lg) + var(--details-w));
+}
+
+.chat-window__composer {
+  padding-right: calc(12px + var(--details-w));
+}
+
+/* Panel deslizante */
+.chat-window__details {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 0;                       /* cerrado */
+  overflow: hidden;
+  background: #fff;
+  box-shadow: none;
+  border-left: 1px solid #e7e7e7;
+  transition: width .25s ease, box-shadow .25s ease;
+  z-index: 5;
+}
+
+.chat-window__details.is-open {
+  width: var(--details-w);        /* abierto */
+  box-shadow: -2px 0 10px rgba(0,0,0,.08);
+}
+
+/* Estilos rápidos del header del panel */
+.detail-panel__header {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.detailPanel-option {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #444;
+  transition: background .2s;
+}
+
+.detailPanel-option:hover { background: #f3f3f3; }
+.detailPanel-option.is-active { background: #eaf2ff; color: #2563eb; }
+
+.detailPanel-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.detailPanel-content {
+  padding: 12px 16px;
+  overflow: auto;
+}

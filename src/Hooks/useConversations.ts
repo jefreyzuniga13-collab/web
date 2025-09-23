@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { useSignalR } from '@/Context/SignalRContext'

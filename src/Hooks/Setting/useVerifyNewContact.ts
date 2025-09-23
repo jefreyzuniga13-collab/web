@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { contactService } from '@/Services/Contact/ContactService'
+import {useInnova} from '@/Hooks/useInnova'
 import type {
   ContactLogInterface,
   ClienteResponseDto,
@@ -34,6 +35,18 @@ export function useVerifyNewContact(phoneNumber: string) {
     codcli: '',
     companyName: ''
   })
+
+    const {
+      data: clients,
+      loading: clientsLoading,
+      error: clientsError,
+      getAllAsync,
+    } = useInnova()
+  
+    useEffect(() => {
+      getAllAsync()
+    }, [])
+
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [loading, setLoading] = useState(false)
@@ -88,7 +101,7 @@ export function useVerifyNewContact(phoneNumber: string) {
         const det = await contactService.getClienteDetailsAsync(codcli)
         setDetalle(det)
       } catch {
-        toast.error('Error al obtener detalles de cliente')
+        // toast.error('Error al obtener detalles de cliente')
       }
     },
     []
@@ -170,6 +183,9 @@ export function useVerifyNewContact(phoneNumber: string) {
     handleSelectCliente,
     handleChangeCodigo,
     handleSubmit,
-    handleBack
+    handleBack,
+    clients,
+    clientsLoading,
+    clientsError,
   }
 }

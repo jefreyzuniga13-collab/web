@@ -12,6 +12,7 @@
   import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
   import Input from "@/Components/Common/Input";
   import { useConversations } from "@/Hooks/useConversations";
+import DetailPanel from "@/Components/Chat/DetailPanel";
   const SupportPage: React.FC = () => {
 
     const [searchConversation, setSearchConversation] = useState<string>('')
@@ -26,6 +27,8 @@
       showHistoryModal,
       setContactDetailToggle,
       contactDetailToggle,
+      // detailToggle,
+      setDetailToggle,
       convId,
       isAdmin,
       handleAssignClick,
@@ -92,10 +95,6 @@
           <InboxList
             selectedId={convId ?? undefined}
             onSelect={setConvId}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            // filter={filter as any}
-            // searchConversation={searchConversation}
-
             conversations={convHook.conversations}
             loading={convHook.loading}
             error={convHook.error}
@@ -126,7 +125,7 @@
                     className={`contact-detail-button ${
                       convId ? "active" : "disabled"
                     }`}
-                    onClick={() => setContactDetailToggle((t) => !t)}
+                    onClick={() => setDetailToggle((t) => !t)}
                     disabled={!convId}
                   >
                     <FaClipboard size={16} /> Detalles
@@ -162,6 +161,21 @@
             </aside>
           </div>
         )}
+
+
+          <div className="modal-overlay">
+            <aside className="info-sidebar">
+              <DetailPanel
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                contactId={conversation?.clientContactId} onInsertToComposer={function (txt: string): void {
+                  throw new Error("Function not implemented.");
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                } } onSendNow={function (txt: string): void | Promise<void> {
+                  throw new Error("Function not implemented.");
+                } }              />
+            </aside>
+          </div>
+
 
         <ConversationHistoryModal
           isOpen={showHistoryModal}

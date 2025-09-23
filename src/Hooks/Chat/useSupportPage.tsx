@@ -38,6 +38,7 @@ export function useSupportPage() {
   );
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
+  const [detailToggle, setDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const { selectedParam, fetchByName } = useSystemParams();
 
@@ -148,6 +149,8 @@ export function useSupportPage() {
     showHistoryModal,
     setContactDetailToggle,
     contactDetailToggle,
+    detailToggle,
+    setDetailToggle,
     convId,
     isAdmin,
     handleAssignClick,
