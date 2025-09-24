@@ -61,7 +61,23 @@ export default function ContactPage() {
       minWidth: 80,
       render: row => row.companyName ?? '-'
     },
-    { id: 'phone', label: 'Teléfono', minWidth: 70 },
+    {
+      id: 'phone',
+      label: 'Teléfono',
+      minWidth: 70,
+      render: row => {
+        const phone = row.phone?.toString().replace(/\D/g, ''); // quitar caracteres no numéricos
+        if (!phone) return '-';
+
+        // Si ya comienza con 505
+        if (phone.startsWith('505')) {
+          return `505-${phone.slice(3)}`;
+        }
+
+        // Si no tiene 505, solo agregarlo
+        return `505-${phone}`;
+      }
+    },
     {
       id: 'isActive',
       label: 'Estado',

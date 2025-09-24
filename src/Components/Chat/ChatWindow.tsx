@@ -1,9 +1,10 @@
+/* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import { Send, Paperclip, Download, MessageSquareMore } from "lucide-react";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
-import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";
 import SmsIcon from "@mui/icons-material/Sms";
 import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
@@ -36,8 +37,11 @@ export const ChatWindow: React.FC<Props> = ({
    const smsBtnRef = useRef<HTMLDivElement | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
 const [showScrollButton, setShowScrollButton] = useState(false);
-const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-const composerRef = useRef<HTMLDivElement|null>(null);
+  const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [stickyDate, setStickyDate] = useState<string | null>(null);
+
+  const messagesContainerRef = useRef<HTMLDivElement|null>(null);
+  const composerRef = useRef<HTMLDivElement|null>(null);
 
   const {
     customMessages,
@@ -76,18 +80,18 @@ const composerRef = useRef<HTMLDivElement|null>(null);
     beginReply,
     cancelReply,
     replyTo,
-    quickOptions,
-    sendQuick,
+    // quickOptions,
+    // sendQuick,
     startLongPress,
     cancelLongPress,
     focusTextarea,
     onComposerKeyDown,
-    popoverRef,
+    // popoverRef,
     textAreaRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
-    visibleState,
+    // visibleState,
     searchTerm,
     setSearchTerm,
     matchIds,
@@ -103,17 +107,83 @@ const composerRef = useRef<HTMLDivElement|null>(null);
   });
 
   useEffect(() => {
-    setConversationId(Number(conversationId));
-    setUserId(Number(userId));
-    return () => {
-      setConversationId(0);
-      setUserId(0);
-    };
-  }, [conversationId, setConversationId, setUserId, userId]);
+      setConversationId(Number(conversationId));
+      setUserId(Number(userId));
+      return () => {
+        setConversationId(0);
+        setUserId(0);
+      };
+    }, [conversationId, setConversationId, setUserId, userId]);
 
+    const computeStickyDate = React.useCallback(() => {
+    const root = messagesContainerRef.current;
+    if (!root) return;
+    const y = root.scrollTop + 8; // un pequeño margen
+
+    // toma el último día cuyo separador ya pasó por arriba
+    const entries = Object.entries(dateRefs.current)
+      .filter(([, el]) => el)
+      .sort((a, b) => (a[1]!.offsetTop - b[1]!.offsetTop));
+
+    let current: string | null = null;
+    for (const [label, el] of entries) {
+      if (el!.offsetTop <= y) current = label;
+      else break;
+    }
+    // si aún no pasó ninguno, muestra el primero
+    if (!current && entries.length) current = entries[0][0];
+
+    setStickyDate(current);
+  }, []);
+
+useEffect(() => {
+  const root = messagesContainerRef.current;
+  if (!root) return;
+  const onScroll = () => computeStickyDate();
+  root.addEventListener("scroll", onScroll, { passive: true });
+
+  requestAnimationFrame(computeStickyDate);
+  return () => root.removeEventListener("scroll", onScroll);
+}, [computeStickyDate]);
+
+// cuando cambie el listado, recalcúlalo
+useEffect(() => {
+  // limpia refs obsoletos
+  dateRefs.current = {};
+  requestAnimationFrame(computeStickyDate);
+}, [visibleMessages.length, computeStickyDate]);
 
 const isAtBottom = (el: HTMLElement) =>
   el.scrollTop >= el.scrollHeight - el.clientHeight - 12;
+
+const handleSendNow = React.useCallback(async (txt: string) => {
+  setSelectedOption(txt);
+  await handleSend();
+}, [setSelectedOption, handleSend]);
+
+
+useEffect(() => {
+  const sendQuick = async (txt: string) => {
+    if (typeof txt === 'string' && txt.trim()) {
+      await handleSendNow(txt);
+    }
+  };
+
+  (window as any).__CHAT_SEND_QUICK__ = sendQuick;
+
+  const onEvt = (e: Event) => {
+    const ce = e as CustomEvent<{ text?: string }>;
+    const txt = ce?.detail?.text;
+    if (typeof txt === 'string') void sendQuick(txt);
+  };
+
+  window.addEventListener('chat:sendQuick', onEvt as EventListener);
+
+  return () => {
+    try { delete (window as any).__CHAT_SEND_QUICK__; } catch {}
+    window.removeEventListener('chat:sendQuick', onEvt as EventListener);
+  };
+}, [handleSendNow]);
 
 
 useEffect(() => {
@@ -161,14 +231,25 @@ useEffect(() => {
 const scrollToBottom = () => {
   const root = messagesContainerRef.current;
   if (!root) return;
-  root.scrollTo({ top: root.scrollHeight, behavior: "smooth" });
+  root.scrollTo({ top: root.scrollHeight, behavior: "instant" });
   setShowScrollButton(false);
 };
 
-  const getConversationStringDate = (sentAt: string) => {
+  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+const getConversationStringDate = (sentAt: string) => {
     const fecha = parseISO(sentAt);
+
     if (isToday(fecha)) return "Hoy";
     if (isYesterday(fecha)) return "Ayer";
+
+    const diff = differenceInCalendarDays(new Date(), fecha); // 0 = hoy, 1 = ayer, etc.
+
+    // En los últimos 7 días (excluyendo hoy/ayer ya cubiertos): mostrar día de la semana
+    if (diff >= 2 && diff < 7) {
+      return cap(format(fecha, "EEEE", { locale: es })); // Lunes, Martes, …
+    }
+
     return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
   };
 
@@ -178,10 +259,10 @@ const scrollToBottom = () => {
     textAreaRef.current?.focus();
   };
 
-  const handleSendNow = async (txt: string) => {
-    setSelectedOption(txt);
-    await handleSend();
-  };
+  // const handleSendNow = async (txt: string) => {
+  //   setSelectedOption(txt);
+  //   await handleSend();
+  // };
 
   const showEmpty = !conversationId;
 
@@ -218,6 +299,13 @@ const scrollToBottom = () => {
       
       <div className="chat-window__messages" onDoubleClick={focusTextarea}  ref={messagesContainerRef}>
         
+         {stickyDate && (
+        <div className="chat-window__sticky-date">
+          <span className="chat-window__date-text chat-window__date-text--dark">
+            {stickyDate}
+          </span>
+        </div>
+      )}
         {/* Fecha deve de quedar fija en la parte de arriba*/}
         {/* Y esta misma se ambia en dependenias de cuanto es el mensaje. Como whatsappp */}
         {/*  */}
@@ -233,13 +321,23 @@ const scrollToBottom = () => {
 
           return (
             <React.Fragment key={m.messageId}>
-              {showDivider && (
+              {/* {showDivider && (
                 <div className="chat-window__date-divider">
                   <span className="chat-window__date-text chat-window__date-text--dark">
                     {label}
                   </span>
                 </div>
-              )}
+              )} */}
+               {showDivider && (
+              <div
+                className="chat-window__date-divider"
+                ref={(el) => { if (el) dateRefs.current[label] = el; }}
+              >
+                <span className="chat-window__date-text chat-window__date-text--dark">
+                  {label}
+                </span>
+              </div>
+            )}
 
               <div
                 className="chat-window_message-group_container"
@@ -459,15 +557,15 @@ const scrollToBottom = () => {
         
         <div ref={bottomRef} className="butttonRef" style={{ height: 1 }}/>
 
-            {showScrollButton && (
-      <button
-        className="chat-window__scroll-button"
-        onClick={scrollToBottom}
-        title="Bajar al último mensaje"
-      >
-        <FaArrowDown className="chat-window__scroll-buttonIcon" />
-      </button>
-    )}
+              {showScrollButton && (
+              <button
+                className="chat-window__scroll-button"
+                onClick={scrollToBottom}
+                title="Bajar al último mensaje"
+              >
+                <FaArrowDown className="chat-window__scroll-buttonIcon" />
+              </button>
+            )}
       </div>
       
 
@@ -589,7 +687,7 @@ const scrollToBottom = () => {
         </div>
       )}
 
-      {visibleState.quickMenuOpen && (
+      {/* {visibleState.quickMenuOpen && (
         <div
           ref={popoverRef}
           className="chat-window__quick-popover"
@@ -625,7 +723,7 @@ const scrollToBottom = () => {
             </>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

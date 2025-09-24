@@ -8,7 +8,7 @@ import type {
 } from '@/Interfaces/Chat/ChatInterfaces'
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
-import { format } from 'date-fns'
+import {formatDateTimeNI } from "@/Utils/niDate";
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
@@ -153,15 +153,6 @@ export function leaveConversation(conversationId: number) {
     chatConnection.invoke('LeaveConversation', conversationId.toString())
   }
 }
-
-    const formatDate = (iso?: string) => {
-        if (!iso) return ''
-        try {
-          return format(new Date(iso), 'yyyy-MM-dd HH:mm')
-        } catch {
-          return ''
-        }
-  }
   
 const receiveHandlers = new Map<
   (p: { message: MessageDto; attachments: AttachmentDto[] }) => void,
@@ -191,11 +182,10 @@ export function onNewMessage(
       handler({ message, attachments: attachments ?? [] });
 
       // --- NOTIFICACIÓN DESKTOP (tu lógica actual) ---
-      const sentAtDate = new Date(message?.sentAt as any);
-      const sentAtOk = !isNaN(sentAtDate.getTime());
-      const sentAtText = sentAtOk
-        ? formatDate(sentAtDate.toString())
-        : '';
+      // const sentAtDate = new Date(message?.sentAt as any);
+      // const sentAtOk = !isNaN(sentAtDate.getTime());
+      const sentAtText = message?.sentAt ? formatDateTimeNI(message.sentAt) : "";
+
 
       const title = `${message?.senderClientName ?? ''} ${
         message?.senderContactName ?? message?.senderUserName ?? ''

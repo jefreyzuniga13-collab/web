@@ -17,10 +17,10 @@ interface AuthStorage {
 interface JwtPayload {
   role: string;
 }
-// Tipo de cada opción de filtro
 type FilterOption = { label: string; value: string; content: string };
 
 const FILTER_ORDER_STORAGE_KEY = "filterOrder";
+const DETAIL_PANEL_KEY = "detailPanelOpen";
 
 export function useSupportPage() {
   const dispatch = useDispatch();
@@ -38,7 +38,6 @@ export function useSupportPage() {
   );
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
-  const [detailToggle, setDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const { selectedParam, fetchByName } = useSystemParams();
 
@@ -47,6 +46,18 @@ export function useSupportPage() {
   const { role } = jwtDecode<JwtPayload>(accessToken);
   const isAdmin = role.toLowerCase() === "admin";
   let DEFAULT_OPTIONS: FilterOption[];
+
+  const [detailToggle, setDetailToggle] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(DETAIL_PANEL_KEY) === 'true';
+    } catch { return false; }
+  });
+
+  // persiste cambios del toggle
+  useEffect(() => {
+    // eslint-disable-next-line no-empty
+    try { localStorage.setItem(DETAIL_PANEL_KEY, String(detailToggle)); } catch {}
+  }, [detailToggle]);
 
   if (isAdmin) {
     DEFAULT_OPTIONS = [
@@ -150,7 +161,7 @@ export function useSupportPage() {
     setContactDetailToggle,
     contactDetailToggle,
     detailToggle,
-    setDetailToggle,
+    setDetailToggle, 
     convId,
     isAdmin,
     handleAssignClick,

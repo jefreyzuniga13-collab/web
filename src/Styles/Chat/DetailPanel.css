@@ -1,88 +1,261 @@
-/* El contenedor principal del chat */
+/* ====== CONTENEDOR CHAT / RESERVA DE PANEL ====== */
 .chat-window {
   position: relative;
-  --details-w: 0px; /* ancho del panel cerrado */
+  --details-w: 0px;
 }
-
-/* Cuando el panel está abierto, reserva espacio para que no tape */
 .chat-window.details-open {
-  --details-w: 360px; /* ancho del panel abierto */
+  --details-w: clamp(280px, 32vw, 420px);
 }
-
-/* Botón para abrir/cerrar panel */
-.chat-window__toggle-details {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 6;
-  border: none;
-  background: var(--btn-bg, #fff);
-  border-radius: 8px;
-  padding: 6px 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.12);
-  cursor: pointer;
-}
-
-/* El listado de mensajes y el composer dejan espacio al panel cuando esté abierto */
 .chat-window__messages {
   padding-right: calc(var(--space-lg) + var(--details-w));
+  transition: padding-right .25s ease;
 }
-
 .chat-window__composer {
   padding-right: calc(12px + var(--details-w));
+  transition: padding-right .25s ease;
 }
 
-/* Panel deslizante */
+/* Panel deslizante (si se monta dentro del chat-window) */
 .chat-window__details {
   position: absolute;
   top: 0;
   right: 0;
   height: 100%;
-  width: 0;                       /* cerrado */
+  width: 0;
   overflow: hidden;
   background: #fff;
-  box-shadow: none;
-  border-left: 1px solid #e7e7e7;
+  border-left: 1px solid var(--border-secondary);
   transition: width .25s ease, box-shadow .25s ease;
   z-index: 5;
+  box-shadow: none;
 }
-
 .chat-window__details.is-open {
-  width: var(--details-w);        /* abierto */
+  width: var(--details-w);
   box-shadow: -2px 0 10px rgba(0,0,0,.08);
 }
 
-/* Estilos rápidos del header del panel */
-.detail-panel__header {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
-
-.detailPanel-option {
-  display: inline-flex;
-  width: 36px;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #444;
-  transition: background .2s;
-}
-
-.detailPanel-option:hover { background: #f3f3f3; }
-.detailPanel-option.is-active { background: #eaf2ff; color: #2563eb; }
-
+/* ====== DETAIL PANEL ====== */
 .detailPanel-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  background: var(--bg-primary);
 }
 
-.detailPanel-content {
+/* Header de iconos arriba */
+.detail-panel__header {
+  display: flex;
+  gap: 12px;
   padding: 12px 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+
+.detailPanel-option {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: transform .15s ease, background .15s ease;
+}
+.detailPanel-optionBtn {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.detailPanel-optionBtn__icon{
+    color: var(--color-gray-600);
+}
+
+.detailPanel-optionBtn { color: var(--color-primary); }
+
+
+.detailPanel-option.is-active .detailPanel-optionBtn__icon,
+.detailPanel-option.is-active .detailPanel-optionBtn__icon * {
+  fill: #fff;
+  stroke: #fff;
+}
+
+.detailPanel-option:hover { transform: translateY(-1px); }
+.detailPanel-option.is-active {
+  background: var(--color-primary);
+  color: var(--text-white) !important;
+}
+
+/* Contenido (debajo del header) */
+.detailPanel-content {
+  padding: 12px;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.detailPanel-content h5 {
+  margin: 0 0 16px;
+  text-align: left;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+}
+@media (min-width: 700px) {
+  .detailPanel-content h5 { font-size: var(--font-size-base); }
+}
+@media (min-width: 1300px) {
+  .detailPanel-content h5 { font-size: var(--font-size-lg); }
+}
+
+/* ====== GRID RESPONSIVO PARA TARJETAS ====== */
+.detailPanel-contactGroup-__container { /* contacto */
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.detailPanel-content > header + div { /* cliente */
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* 1 col móvil, 2 col tablet/laptop <=1299, 3 col >=1300 */
+@media (min-width: 700px) {
+  .detailPanel-contactGroup-__container,
+  .detailPanel-content > header + div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1300px) {
+  .detailPanel-contactGroup-__container,
+  .detailPanel-content > header + div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tarjeta */
+.detailPanel-contactGroup,
+.detailPanel-clientGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--font-size-xs);
+  border: 1px solid var(--border-secondary);
+  border-radius: 14px;
+  background: var(--bg-tertiary);
+  min-width: 0;
+}
+
+/* Título / Valor (tipografía responsiva) */
+.detailPanel-contactGroup__title,
+.detailPanel-clientGroup__title {
+  margin: 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-xs);
+}
+.detailsPanel-contactGroup__value,
+.detailPanel-clientGroup__cliente {
+  color: var(--text-primary);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+}
+@media (min-width: 700px) {
+  .detailPanel-contactGroup__title,
+  .detailPanel-clientGroup__title { font-size: var(--font-size-sm); }
+  .detailsPanel-contactGroup__value,
+  .detailPanel-clientGroup__cliente { font-size: var(--font-size-sm); }
+}
+@media (min-width: 1300px) {
+  .detailPanel-contactGroup__title,
+  .detailPanel-clientGroup__title { font-size: var(--font-size-base); }
+  .detailsPanel-contactGroup__value,
+  .detailPanel-clientGroup__cliente { font-size: var(--font-size-base); }
+}
+
+
+.detailPanel-quick__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.detailPanel-quick__search {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  background: var(--input-bg, #fff);
+}
+.detailPanel-quick__list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+@media (min-width: 700px) {
+  .detailPanel-quick__list { grid-template-columns: 1fr 1fr; }
+}
+.detailPanel-quick__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+}
+.detailPanel-quick__text {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.detailPanel-quick__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn {
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+.btn--primary {
+  background: var(--color-blue-primary, #356ace);
+  color: #fff;
+  border-color: transparent;
+}
+.btn--ghost { background: #fff; }
+
+@media (max-width: 768px) {
+  .chat-window__messages,
+  .chat-window__composer { padding-right: var(--space-lg); }
+  .chat-window__details {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100vh;
+    width: 0;
+    border-left: none;
+    box-shadow: none;
+  }
+  .chat-window__details.is-open {
+    width: min(92vw, 420px);
+    box-shadow: -2px 0 12px rgba(0,0,0,.15);
+  }
 }
