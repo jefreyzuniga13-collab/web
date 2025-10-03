@@ -58,23 +58,30 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     if (typeof contactId === 'number' && contactId > 0 && lastContactIdRef.current !== contactId) {
       lastContactIdRef.current = contactId
       fetchContactById(contactId).catch(() => {})
+      fetchContactById(contactId).catch(() => {})
     }
   }, [contactId, fetchContactById])
 
   const clientCode = useMemo(() => {
+
     const c: any = selectedData
+        console.log("Datos seleccionados", selectedData)
     return c?.codcli ?? c?.codCliente ?? c?.clientCode ?? c?.clientId ?? null
+
   }, [selectedData])
 
   const lastClientCodeRef = useRef<string | null>(null)
   useEffect(() => {
-    if (clientCode == null || clientCode === '') return
-    const codeStr = String(clientCode)
+
+    if (selectedData?.clienteCodigo == null) return
+
+    const codeStr = String(selectedData?.clienteCodigo)
     if (lastClientCodeRef.current !== codeStr) {
       lastClientCodeRef.current = codeStr
+
       fetchClientByCode(codeStr).catch(() => {})
     }
-  }, [clientCode, fetchClientByCode, setClient])
+  }, [clientCode, fetchClientByCode, selectedData?.clienteCodigo, setClient])
 
   const quickOptions = useMemo(() => {
     const arr = parseQuickOptions(selectedParam)

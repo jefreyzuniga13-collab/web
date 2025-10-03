@@ -36,7 +36,6 @@ export function RequireAuth({ children }: RequireAuthProps) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-
   return <>
    {/* Mover pop-up a rutas privadas*/}
       <GlobalSoundNotifier />

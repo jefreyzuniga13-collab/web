@@ -22,7 +22,6 @@ function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
-//Notificacion se muestra 3 veces, y el service worker incia como stop y no start
 function sanitizeExternalUrl(url: string): string {
   // Si ya viene con http(s)://, la devolvemos igual; si no, le anteponemos https://
   if (isExternalUrl(url)) return url;
@@ -64,7 +63,7 @@ export default function App() {
       }
     };
 
-    const checkToken = () => {
+     const checkToken = () => {
       const token = JSON.parse(localStorage.getItem("auth") || "{}").accessToken;
       if (!token) navigate("/login", { replace: true });
     };
@@ -80,7 +79,7 @@ export default function App() {
 
   function shouldShowDesktopNotification() {
     return document.visibilityState === "hidden" || !document.hasFocus();
-  }
+  } 
 
   // Escucha y muestra notificaciones emitidas internamente
   useEffect(() => {
@@ -117,6 +116,7 @@ export default function App() {
     return { title, body, url };
   }
 
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function showDesktopNotification(evt: any) {
     if (!("Notification" in window)) return;
@@ -135,8 +135,8 @@ export default function App() {
           renotify: true,
           data: { url },
         } as NotificationOptions & { renotify: boolean });
-
   }
+
 
   // Mensajes desde el SW (fallback si el SW decide postMessage en vez de abrir él mismo)
   useEffect(() => {
@@ -156,7 +156,6 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener("message", handler);
   }, [navigate]);
 
-  // Procesar eventos del hub
   useEffect(() => {
     if (!lastEvent) return;
 

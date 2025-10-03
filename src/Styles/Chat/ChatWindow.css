@@ -26,9 +26,8 @@
   background-size: cover;
 }
 
-/* Caja del reply dentro de la burbuja */
 .chat-window__reply-preview {
-  margin: 6px 10px 4px; /* respira dentro de la burbuja */
+  margin: 6px 10px 4px; 
   padding: 6px 8px;
   border-left: 4px solid var(--color-secondary);
   border-radius: 8px;
@@ -37,10 +36,8 @@
     0,
     0,
     0.06
-  ); /* sutil contraste sobre el fondo de la burbuja */
+  );
 }
-
-/* Variante para burbuja saliente (outgoing) — más oscuro para contraste */
 .chat-window__message--outgoing .chat-window__reply-preview {
   background: rgba(255, 255, 255, 0.15);
   border-left-color: var(--color-secondary-light);

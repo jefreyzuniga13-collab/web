@@ -5,7 +5,6 @@ interface PopupState {
   /** Cola de eventos pendientes de mostrar */
   queue: NotificationEvent[]
 }
-
 const initialState: PopupState = {
   queue: []
 }

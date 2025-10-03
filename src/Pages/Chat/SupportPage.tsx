@@ -49,6 +49,26 @@ const SupportPage: React.FC = () => {
     if (!convId || conversation?.status === "Closed") setDetailToggle(false);
   }, [convId, conversation?.status, setDetailToggle]);
 
+
+    //Captura de evento de esc, para cerrar la conversación.
+  const handleScapePress = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      setDetailToggle(false);
+      setContactDetailToggle(false);
+      setConvId(null);
+      setSearchConversation("");
+      convHook.clearFilter();
+    }
+  }
+
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleScapePress);
+    return () => {
+      window.removeEventListener("keydown", handleScapePress);
+    };
+  }, []);
+
   return (
     <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
       <aside className="sidebar">

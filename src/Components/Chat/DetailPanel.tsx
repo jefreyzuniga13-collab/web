@@ -164,53 +164,53 @@ const DetailPanel: React.FC<Props> = ({
             <header><h5>Detalles del contacto</h5></header>
             <div className="detailPanel-contactGroup-__container">
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Nombre</p>
+                <p className="detailPanel-contactGroup__title">Nombre: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {displayOrDash(selectedData?.fullName)}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Teléfono</p>
+                <p className="detailPanel-contactGroup__title">Teléfono: </p>
                 <span className="detailsPanel-contactGroup__value">{contactPhone}</span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">WhatsApp</p>
+                <p className="detailPanel-contactGroup__title">WhatsApp: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {displayOrDash(selectedData?.waName)}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Verificado</p>
+                <p className="detailPanel-contactGroup__title">Verificado: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {selectedData?.isVerified ? 'Verificado' : 'No Verificado'}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Activo</p>
+                <p className="detailPanel-contactGroup__title">Activo: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {selectedData?.isActive ? 'Activo' : 'No Activo'}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Verificado por</p>
+                <p className="detailPanel-contactGroup__title">Verificado por: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {displayOrDash(selectedData?.verifiedBy?.fullName)}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Creado</p>
+                <p className="detailPanel-contactGroup__title">Creado: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {formatDate(selectedData?.createdAt)}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">Actualizado</p>
+                <p className="detailPanel-contactGroup__title">Actualizado: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {formatDate(selectedData?.updatedAt)}
                 </span>
               </div>
               <div className="detailPanel-contactGroup">
-                <p className="detailPanel-contactGroup__title">verifiedAt</p>
+                <p className="detailPanel-contactGroup__title">verifiedAt: </p>
                 <span className="detailsPanel-contactGroup__value">
                   {formatDate(selectedData?.verifiedAt)}
                 </span>

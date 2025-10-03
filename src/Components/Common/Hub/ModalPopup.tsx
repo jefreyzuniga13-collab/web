@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import "@/Styles/Hub/ModalPopup.css"
 
@@ -19,11 +18,14 @@ interface ModalPopupProps {
   icon?: React.ReactNode;
 }
 
+const HIDE_MS = 250; // debe coincidir con la transición CSS
+
 export const ModalPopup: React.FC<ModalPopupProps> = ({
   title,
   message,
   actions,
   isOpen,
+  onClose,
   systemDefinedCompanyName,
   timestamp,
   icon = '💬'
@@ -31,49 +33,58 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
 
+  // Abre expandido de inmediato cuando isOpen=true; cierra con pequeña transición cuando isOpen=false
   useEffect(() => {
+    let t: number | undefined;
+
     if (isOpen) {
       setShouldShow(true);
-      const timer = setTimeout(() => setIsExpanded(true), 300);
-      return () => clearTimeout(timer);
+      setIsExpanded(true);
     } else {
       setIsExpanded(false);
-      const timer = setTimeout(() => setShouldShow(false), 300);
-      return () => clearTimeout(timer);
+      t = window.setTimeout(() => setShouldShow(false), HIDE_MS);
     }
+
+    return () => {
+      if (t) window.clearTimeout(t);
+    };
   }, [isOpen]);
 
   if (!shouldShow) return null;
 
   const handleToggle = () => {
-    setIsExpanded(!isExpanded);
+    // Permite colapsar/expandir manualmente sin afectar la cola
+    setIsExpanded(prev => !prev);
   };
 
   const handleActionClick = (action: ModalAction) => {
+    // Ejecuta la acción; el cierre/avance de cola lo decide el padre (onClose lo llama el padre cuando corresponda)
     action.onClick();
+  };
+
+  const handleCloseAll = () => {
+    // Cierre explícito (✕ o backdrop): delega al padre para hacer dequeue y mostrar la siguiente abierta
     setIsExpanded(false);
+    window.setTimeout(() => onClose(), 0);
   };
 
   return (
     <>
-      {/* Compact bubble when collapsed */}
+      {/* Burbuja compacta cuando está colapsado (solo útil si el usuario decide colapsar manualmente) */}
       {!isExpanded && (
-        <div 
+        <div
           className={`modal-popup__bubble ${isOpen ? 'modal-popup__bubble--visible' : ''}`}
           onClick={handleToggle}
         >
           <div className="modal-popup__bubble-content">
             <span className="modal-popup__icon">{icon}</span>
-            {/* <div className="modal-popup__pulse-indicator" /> */}
           </div>
         </div>
       )}
 
-      {/* Expanded notification */}
+      {/* Notificación expandida */}
       {isExpanded && (
-        <div 
-          className={`modal-popup__expanded ${isExpanded ? 'modal-popup__expanded--visible' : ''}`}
-        >
+        <div className={`modal-popup__expanded ${isExpanded ? 'modal-popup__expanded--visible' : ''}`}>
           {/* Header */}
           <div className="modal-popup__header">
             <div className="modal-popup__header-content">
@@ -91,7 +102,7 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
               </div>
             </div>
             <button
-              onClick={handleToggle}
+              onClick={handleCloseAll}
               className="modal-popup__close-btn"
               aria-label="Cerrar"
             >
@@ -107,9 +118,7 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
                 <span className="modal-popup__client-name">{systemDefinedCompanyName}</span>
               </div>
             )}
-            <div className="modal-popup__message">
-              {message}
-            </div>
+            <div className="modal-popup__message">{message}</div>
           </div>
 
           {/* Actions */}
@@ -127,13 +136,8 @@ export const ModalPopup: React.FC<ModalPopupProps> = ({
         </div>
       )}
 
-      {/* Backdrop for mobile */}
-      {isExpanded && (
-        <div 
-          className="modal-popup__backdrop"
-          onClick={() => setIsExpanded(false)}
-        />
-      )}
+      {/* Backdrop (clic = cerrar y avanzar cola) */}
+      {isExpanded && <div className="modal-popup__backdrop" onClick={handleCloseAll} />}
     </>
   );
 };

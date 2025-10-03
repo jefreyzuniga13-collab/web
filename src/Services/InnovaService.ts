@@ -12,6 +12,7 @@ class InnovaServ{
     }
 
     async getInnovaClientByIdAsync(codCliente: string): Promise<InnovaClient>{
+
         const {data} = await api.get<ApiResponse<InnovaClient>>
         (`innova/clientes/${codCliente}`);
 

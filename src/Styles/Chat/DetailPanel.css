@@ -1,4 +1,4 @@
-/* ====== CONTENEDOR CHAT / RESERVA DE PANEL ====== */
+
 .chat-window {
   position: relative;
   --details-w: 0px;
@@ -114,20 +114,17 @@
   .detailPanel-content h5 { font-size: var(--font-size-lg); }
 }
 
-/* ====== GRID RESPONSIVO PARA TARJETAS ====== */
-.detailPanel-contactGroup-__container { /* contacto */
+.detailPanel-contactGroup-__container { 
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
 }
-.detailPanel-content > header + div { /* cliente */
+.detailPanel-content > header + div{
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
 }
 
-/* 1 col móvil, 2 col tablet/laptop <=1299, 3 col >=1300 */
-@media (min-width: 700px) {
+
+/* @media (min-width: 700px) {
   .detailPanel-contactGroup-__container,
   .detailPanel-content > header + div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -138,37 +135,38 @@
   .detailPanel-content > header + div {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
+} */
 
-/* Tarjeta */
 .detailPanel-contactGroup,
 .detailPanel-clientGroup {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
-  padding: var(--font-size-xs);
-  border: 1px solid var(--border-secondary);
   border-radius: 14px;
-  background: var(--bg-tertiary);
   min-width: 0;
 }
 
-/* Título / Valor (tipografía responsiva) */
 .detailPanel-contactGroup__title,
 .detailPanel-clientGroup__title {
-  margin: 0;
-  color: var(--color-gray-600);
+  flex: 1;
+  color: var();
+  color: var(--color-gray-700);
   font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-align: left;
+  margin: 6px;
 }
 .detailsPanel-contactGroup__value,
 .detailPanel-clientGroup__cliente {
-  color: var(--text-primary);
+  color: var(--color-gray-700);
+  flex: 1;
   line-height: 1.35;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font-weight: var(--font-weight-medium);
   font-size: var(--font-size-xs);
+  text-align: left;
 }
+
 @media (min-width: 700px) {
   .detailPanel-contactGroup__title,
   .detailPanel-clientGroup__title { font-size: var(--font-size-sm); }

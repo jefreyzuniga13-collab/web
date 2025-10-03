@@ -38,6 +38,7 @@ export function useInnova (){
         setLoading(true);
         setError(null)
         try{
+            
             const result = await InnovaService.getInnovaClientByIdAsync(codClient);
             setClient(result);
 

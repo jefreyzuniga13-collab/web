@@ -12,7 +12,7 @@ import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
 import "@/Styles/Chat/custom-messages-flyout.css"
 import { FaArrowDown } from "react-icons/fa";
 import "@/styles/Chat/ChatWindow.css";
-import { ImageMagnifier } from "@/components/commons/ImageMagnifier";
+// import { ImageMagnifier } from "@/Components/Common";
 
 
 const formatTime = (iso?: string) => {
@@ -461,14 +461,14 @@ const getConversationStringDate = (sentAt: string) => {
                             m.attachments[0].mimeType === "image/webp") && (
                             <div className="chat-window__media-image">
                               <div className="chat-window__image-container">
-                                {/* <img
+                                <img
                                   src={m.attachments[0].mediaUrl}
                                   alt={m.attachments[0].fileName || "Imagen"}
                                   className="chat-window__image"
                                   loading="lazy"
                                   onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
-                                /> */}
-                                <div
+                                />
+                                {/* <div
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
@@ -489,7 +489,7 @@ const getConversationStringDate = (sentAt: string) => {
                                   minZoom={1}
                                   maxZoom={6}
                                 />
-                              </div>
+                              </div> */}
                               </div>
                             </div>
                           )}
