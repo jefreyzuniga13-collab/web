@@ -209,6 +209,34 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
     }
   }
 
+  
+    function renderMessageContent(content: string, searchTerm: string) {
+      // detecta URLs
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+      // divide el texto en partes (texto + URLs)
+      const parts = content.split(urlRegex);
+
+      return parts.map((part, i) => {
+        if (urlRegex.test(part)) {
+          return (
+            <a
+              key={i}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#1a73e8', textDecoration: 'underline' }}
+            >
+              {part}
+            </a>
+          );
+        }
+
+        // si usas highlightText para resaltar búsqueda:
+        return <React.Fragment key={i}>{highlightText(part, searchTerm)}</React.Fragment>;
+      });
+    }
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -526,6 +554,7 @@ const gotoMatch = (dir: 1 | -1) => {
     matchIds,
     matchIndex,
     gotoMatch,
-    highlightText
+    highlightText,
+    renderMessageContent
   }
 }

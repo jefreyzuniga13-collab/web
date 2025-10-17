@@ -65,7 +65,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const clientCode = useMemo(() => {
 
     const c: any = selectedData
-        console.log("Datos seleccionados", selectedData)
     return c?.codcli ?? c?.codCliente ?? c?.clientCode ?? c?.clientId ?? null
 
   }, [selectedData])

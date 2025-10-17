@@ -28,6 +28,8 @@ const ConversationsPage    = lazy(() => import('@/Pages/Conversation/Conversatio
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
+const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
+
 
 export function AppRouter() {
   return (
@@ -70,6 +72,7 @@ export function AppRouter() {
           <Route path="conversation/:state"     element={<ConversationsPage />} />
           <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />
           <Route path="templates-management"     element={<WaTemplatesPage />} />
+          <Route path="services"     element={<ServicePage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>
 

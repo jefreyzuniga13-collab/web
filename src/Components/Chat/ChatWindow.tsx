@@ -99,7 +99,7 @@ const [showScrollButton, setShowScrollButton] = useState(false);
     matchIds,
     matchIndex,
     gotoMatch,
-    highlightText
+    renderMessageContent
   } = useChatWindow({
     conversationId,
     userId,
@@ -553,14 +553,14 @@ const getConversationStringDate = (sentAt: string) => {
                           )}
 
                           {hasText(m) && (
-                           <div className="chat-window__message-caption">
-                              {highlightText(String(m.content ?? ""), searchTerm)}
+                            <div className="chat-window__message-caption">
+                              {renderMessageContent(String(m.content ?? ""), searchTerm)}
                             </div>
                           )}
                         </div>
                       ) : hasText(m) && (
-                        <div className="chat-window__message-text">
-                          {highlightText(String(m.content ?? ""), searchTerm)}
+                         <div className="chat-window__message-text">
+                          {renderMessageContent(String(m.content ?? ""), searchTerm)}
                         </div>
                       )
                       }

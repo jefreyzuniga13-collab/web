@@ -30,7 +30,7 @@ body {
   background: var(--bg-secondary);
   color: var(--text-default);
   line-height: 1.5;
-  font-size: 1.6rem; /* 16px equivalente */
+  font-size: 1.6rem;
   overflow: hidden;
 }
 
