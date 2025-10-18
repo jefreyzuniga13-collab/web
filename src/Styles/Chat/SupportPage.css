@@ -2,7 +2,7 @@
   --edge-w: clamp(260px, 24vw, 360px);
   --details-w: 0px;
   display: grid;
-  grid-template-columns: var(--edge-w) minmax(520px, 1fr) var(--details-w);
+  grid-template-columns: var(--edge-w) minmax(520px, 1fr) 400px;
   height: 100vh;
   max-height: 100vh;
   position: relative;
@@ -115,6 +115,8 @@
   position: sticky;
   top: 0;
   pointer-events: none;
+  z-index: 100000;
+  min-width: 100%;
 }
 .support-layout.details-open .detail-aside {
   width: var(--details-w);
@@ -126,8 +128,8 @@
 .detail-aside__handle {
   position: fixed;
   top: 50%;
-  right: 0;
   transform: translateY(-50%);
+  margin-right: 40px;
   width: 26px;
   height: 92px;
   border: 0;

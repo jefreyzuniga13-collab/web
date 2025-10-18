@@ -102,7 +102,7 @@ export function useContactDetail(conversationId: number) {
       }
     };
 
-    // Handle SignalR events if available
+    // Controla SignalR. Si estan disponibles
     if (signalR.onConversationUpdated) {
       signalR.onConversationUpdated(handler);
     }

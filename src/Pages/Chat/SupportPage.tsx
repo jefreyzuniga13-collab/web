@@ -168,7 +168,7 @@ const SupportPage: React.FC = () => {
         )}
       </aside>
 
-      <button
+      {/* <button
         type="button"
         className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
         onClick={() => setDetailToggle((t) => !t)}
@@ -177,7 +177,7 @@ const SupportPage: React.FC = () => {
         title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
       >
         {detailToggle ? "›" : "‹"}
-      </button>
+      </button> */}
 
       {contactDetailToggle && (
         <div className="modal-overlay">
