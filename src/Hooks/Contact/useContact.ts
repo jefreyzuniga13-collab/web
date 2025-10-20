@@ -244,4 +244,4 @@ const useContact = (contactId?: number) => {
   }
 }
 
-export default useContact
+export default useContact;

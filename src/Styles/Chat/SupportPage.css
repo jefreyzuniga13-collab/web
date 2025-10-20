@@ -103,7 +103,7 @@
   max-width: 100%;
 }
 
-/* Drawer derecho */
+/* Drawer derecho
 .detail-aside {
   width: 0;
   overflow: hidden;
@@ -117,7 +117,7 @@
   pointer-events: none;
   z-index: 100000;
   min-width: 100%;
-}
+} */
 .support-layout.details-open .detail-aside {
   width: var(--details-w);
   pointer-events: auto;
@@ -265,7 +265,7 @@
 
 /* ≥1600px */
 @media (min-width: 1600px) {
-  .support-layout { --edge-w: clamp(280px, 22vw, 400px); }
+  .support-layout { --edge-w: clamp(280px, 22vw, 450px); }
 }
 
 /* 1280–1599px */

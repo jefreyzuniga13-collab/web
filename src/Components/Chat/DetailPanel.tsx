@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react'
+import React, { useState } from 'react'
 import { LuContact } from 'react-icons/lu'
 import { FaRegBuilding } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
@@ -15,6 +15,7 @@ type Props = {
   selectedParam?: unknown
   onSendNow?: (txt: string) => void | Promise<void>
 }
+
 const CATS_CRED_DEVICE = ['SQL', 'RDP', 'ANYDESK', 'VPN', 'OTRO'] as const
 const CATS_CRED_SYSTEM = ['APLICACION'] as const
 
@@ -24,18 +25,14 @@ const DetailPanel: React.FC<Props> = ({
   selectedParam,
   onSendNow,
 }) => {
-
   const {
     optionMenu,
     setOptionMenu,
     selectedData,
-    // client,
-    // clienteCodigo,
     loading,
     error,
     qQuick,
     setQQuick,
-    // quickOptions,
     filteredQuick,
     clientPhoneFmt,
     showMore,
@@ -44,14 +41,8 @@ const DetailPanel: React.FC<Props> = ({
     setMoreTab,
     editBuffer,
     setEditBuffer,
-    // hostingCreds,
-    // setHostingCreds,
-    // devs,
-    // setDevs,
     systems,
-    // setSystems,
     contacts,
-    // setContacts,
     credSearch,
     setCredSearch,
     devSearch,
@@ -64,8 +55,6 @@ const DetailPanel: React.FC<Props> = ({
     filteredDevs,
     filteredSystems,
     filteredContacts,
-    expandedDev,
-    toggleExpandedDev,
     addHostingOpen,
     setAddHostingOpen,
     newHosting,
@@ -105,7 +94,6 @@ const DetailPanel: React.FC<Props> = ({
     clientEditOpen,
     setClientEditOpen,
     clientLocal,
-    // setClientLocal,
     workModel,
     setWorkModel,
     priority,
@@ -118,15 +106,11 @@ const DetailPanel: React.FC<Props> = ({
     setIsSupportActive,
     isFranchise,
     setIsFranchise,
-    supportLimitTime,
-    setSupportLimitTime,
-    recurrency,
-    setRecurrency,
+    // supportLimitTime,
+    // setSupportLimitTime,
     observation,
     setObservation,
     saveClientEdits,
-    // refreshContact,
-    // refreshClient,
     handleSendQuick,
     formatNiPhone,
     displayOrDash,
@@ -173,6 +157,29 @@ const DetailPanel: React.FC<Props> = ({
 
   const clientName = (clientLocal as any)?.nombre ?? (clientLocal as any)?.name
 
+  const [openHost, setOpenHost] = useState<Set<string | number>>(new Set())
+  const [openDev, setOpenDev] = useState<Set<string | number>>(new Set())
+  const [openSys, setOpenSys] = useState<Set<string | number>>(new Set())
+
+  const toggleHost = (id: any) => {
+    const s = new Set(openHost)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    s.has(id) ? s.delete(id) : s.add(id)
+    setOpenHost(s)
+  }
+  const toggleDev = (id: any) => {
+    const s = new Set(openDev)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    s.has(id) ? s.delete(id) : s.add(id)
+    setOpenDev(s)
+  }
+  const toggleSys = (id: any) => {
+    const s = new Set(openSys)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    s.has(id) ? s.delete(id) : s.add(id)
+    setOpenSys(s)
+  }
+
   if (loading)
     return (
       <div className="loader-container">
@@ -194,6 +201,7 @@ const DetailPanel: React.FC<Props> = ({
             <FaRegBuilding size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
         <li className={`detailPanel-option ${optionMenu === 3 ? 'is-active' : ''}`}>
           <button type="button" className="detailPanel-optionBtn" onClick={() => setOptionMenu(3)}>
             <IoChatboxEllipsesOutline size={18} className="detailPanel-optionBtn__icon" />
@@ -207,19 +215,21 @@ const DetailPanel: React.FC<Props> = ({
       </ul>
 
       <section className="detailPanel-content">
-        {optionMenu === 1 && (
+       {optionMenu === 1 && (
           <>
             <header><h5>Detalles del contacto</h5></header>
-            <div className="detailPanel-contactGroup-__container">
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Nombre</p><span className="detailsPanel-contactGroup__value">{displayOrDash(selectedData?.fullName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Teléfono</p><span className="detailsPanel-contactGroup__value">{formatNiPhone(selectedData?.phone)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">WhatsApp</p><span className="detailsPanel-contactGroup__value">{displayOrDash(selectedData?.waName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Verificado</p><span className="detailsPanel-contactGroup__value">{selectedData?.isVerified ? 'Verificado' : 'No Verificado'}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Activo</p><span className="detailsPanel-contactGroup__value">{selectedData?.isActive ? 'Activo' : 'No Activo'}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Verificado por</p><span className="detailsPanel-contactGroup__value">{displayOrDash(selectedData?.verifiedBy?.fullName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Creado</p><span className="detailsPanel-contactGroup__value">{formatDate(selectedData?.createdAt)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">Actualizado</p><span className="detailsPanel-contactGroup__value">{formatDate(selectedData?.updatedAt)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-contactGroup__title">verifiedAt</p><span className="detailsPanel-contactGroup__value">{formatDate(selectedData?.verifiedAt)}</span></div>
+             <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Nombre</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.fullName)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Teléfono</p><span className="detailPanel-clientGroup__cliente">{formatNiPhone(selectedData?.phone)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">WhatsApp</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.waName)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado</p><span className="detailPanel-clientGroup__cliente">{selectedData?.isVerified ? 'Verificado' : 'No Verificado'}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Activo</p><span className="detailPanel-clientGroup__cliente">{selectedData?.isActive ? 'Activo' : 'No Activo'}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado por</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.verifiedBy?.fullName)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Creado</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.createdAt)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Actualizado</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.updatedAt)}</span></div>
+              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">verifiedAt</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.verifiedAt)}</span></div>
+              </div>
             </div>
           </>
         )}
@@ -352,7 +362,7 @@ const DetailPanel: React.FC<Props> = ({
       {showMore && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => { setShowMore(false); setEditBuffer(null) }} />
-          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+          <div className="dp-modal__content" style={{ width: 560, maxWidth: '96vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button className={`btn-tab ${moreTab === 'cred' ? 'is-active' : ''}`} onClick={() => setMoreTab('cred')}>Credenciales</button>
@@ -364,13 +374,12 @@ const DetailPanel: React.FC<Props> = ({
             </div>
 
             <div style={{ padding: 12, overflow: 'auto', display: 'grid', gap: 12 }}>
-              
               {moreTab === 'cred' && (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'center' }}>
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', backgroundColor: "#fff" }}>
                       <input className="input" placeholder="Buscar credenciales de hosting…" value={credSearch} onChange={(e) => setCredSearch(e.target.value)} style={{ paddingLeft: 34 }} />
-                      <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
+                      <Search size={16} style={{ position: 'absolute', left: 10, top: 20, opacity: .6 }} />
                     </div>
                     <button className="btn" onClick={() => setAddHostingOpen((s) => !s)}><Plus size={14} /> Nueva credencial</button>
                   </div>
@@ -394,33 +403,40 @@ const DetailPanel: React.FC<Props> = ({
                     </div>
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                    {filteredHosting.map((it, idx) => (
-                      <div
-                        className="dp-card"
-                        key={`cred-${it.id ?? idx}`}
-                        style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <strong><Trunc>{it?.catCredencialNames ?? it?.type ?? '---'}</Trunc></strong>
-                          <span className={`badge ${it?.isActive !== false ? 'badge--ok' : 'badge--off'}`}>{it?.isActive !== false ? 'Activo' : 'Inactivo'}</span>
+                    {filteredHosting.map((it, idx) => {
+                      const key = it.id ?? idx
+                      const open = openHost.has(key)
+                      return (
+                        <div key={`cred-${key}`} className="dp-collapse">
+                          <button className="dp-collapse__header" onClick={() => toggleHost(key)}>
+                            <strong className="dp-collapse__title"><Trunc>{it?.catCredencialNames ?? it?.type ?? '---'}</Trunc></strong>
+                            <div className="dp-collapse__meta">
+                              <span className={`badge ${it?.isActive !== false ? 'badge--ok' : 'badge--off'}`}>{it?.isActive !== false ? 'Activo' : 'Inactivo'}</span>
+                              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </div>
+                          </button>
+                          {open && (
+                            <div className="dp-collapse__body">
+                              <div style={{ display: 'grid', gap: 8 }}>
+                                <Row label="Usuario" value={it?.user} />
+                                <Row label="Contraseña" value={it?.password ? '••••••••' : '---'} />
+                                <Row label="Instancia" value={it?.instance} />
+                                <Row label="Puerto" value={it?.port} />
+                              </div>
+                              <div>
+                                <p className="detailPanel-clientGroup__title">Observación</p>
+                                <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 40, background: '#FAFAFA' }}>
+                                  <Trunc>{it?.observation}</Trunc>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn btn--ghost" onClick={() => { setEditBuffer({ ...it, _t: 'cred' }); setShowMore(true); setMoreTab('cred') }}>Editar</button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div style={{ display: 'grid', gap: 8, flexDirection:'row' }}>
-                          <Row label="Usuario" value={it?.user} />
-                          <Row label="Contraseña" value={it?.password ? '••••••••' : '---'} />
-                          <Row label="Instancia" value={it?.instance} />
-                          <Row label="Puerto" value={it?.port} />
-                        </div>
-                        <div>
-                          <p className="detailPanel-clientGroup__title">Observación</p>
-                          <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 40, background: '#FAFAFA' }}>
-                            <Trunc>{it?.observation}</Trunc>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <button className="btn btn--ghost" onClick={() => { setEditBuffer({ ...it, _t: 'cred' }); setShowMore(true); setMoreTab('cred') }}>Editar</button>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </>
               )}
@@ -436,35 +452,28 @@ const DetailPanel: React.FC<Props> = ({
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12 }}>
                     {filteredDevs.map((it) => {
-                      const open = expandedDev === it.id
+                      const open = openDev.has(it.id)
                       return (
-                        <div
-                          key={it.id}
-                          className="dp-card"
-                          style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 10, display: 'grid', gap: 8 }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong><Trunc>{it?.name}</Trunc></strong>
-                            <button className="btn btn--ghost" onClick={() => toggleExpandedDev(it.id)}>
-                              {open ? (<><span>Credenciales</span><ChevronUp size={16} /></>) : (<><span>Credenciales</span><ChevronDown size={16} /></>)}
-                            </button>
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
-                            <Row label="IP" value={it?.ip} />
-                            <Row label="SO" value={it?.operatingSystem} />
-                            <Row label="Versión SO" value={it?.versionSO} />
-                            <Row label="Estado" value={it?.isActive ? 'Activo' : 'Inactivo'} />
-                          </div>
-                          <div>
-                            <p className="detailPanel-clientGroup__title">Descripción</p>
-                            <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 40, background: '#FAFAFA' }}>
-                              <Trunc>{it?.description}</Trunc>
+                        <div key={it.id} className="dp-collapse">
+                          <button className="dp-collapse__header" onClick={() => toggleDev(it.id)}>
+                            <div className="dp-collapse__title"><Trunc>{it?.name}</Trunc></div>
+                            <div className="dp-collapse__subtitle">
+                              <span>{it?.ip}</span>
+                              <span>{it?.operatingSystem}</span>
+                              <span>{it?.versionSO}</span>
+                              <span>{it?.isActive ? 'Activo' : 'Inactivo'}</span>
                             </div>
-                          </div>
-
+                            <div className="dp-collapse__meta">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</div>
+                          </button>
                           {open && (
-                            <div style={{ display: 'grid', gap: 10 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="dp-collapse__body">
+                              <div>
+                                <p className="detailPanel-clientGroup__title">Descripción</p>
+                                <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 40, background: '#FAFAFA' }}>
+                                  <Trunc>{it?.description}</Trunc>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                                 <h6 style={{ margin: 0 }}>Credenciales de equipo</h6>
                                 <button className="btn" onClick={() => { setAddDevOpenId(it.id); setNewDevCred({ type: CATS_CRED_DEVICE[0], user: '', password: '', instance: '', port: '', observation: '' }) }}>
                                   <Plus size={14} /> Nueva
@@ -508,12 +517,11 @@ const DetailPanel: React.FC<Props> = ({
                                 ))}
                                 {(it.credentials ?? []).length === 0 ? <div style={{ opacity: .7, fontSize: 12 }}>Sin credenciales de equipo</div> : null}
                               </div>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn btn--ghost" onClick={() => { setEditBuffer({ ...it, _t: 'dev' }); setShowMore(true); setMoreTab('dev') }}>Editar</button>
+                              </div>
                             </div>
                           )}
-
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button className="btn btn--ghost" onClick={() => { setEditBuffer({ ...it, _t: 'dev' }); setShowMore(true); setMoreTab('dev') }}>Editar</button>
-                          </div>
                         </div>
                       )
                     })}
@@ -531,67 +539,66 @@ const DetailPanel: React.FC<Props> = ({
                     <button className="btn" onClick={() => { setPickSysOpen(true) }}><Plus size={14} /> Agregar sistemas</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12 }}>
-                    {filteredSystems.map((it) => (
-                      <div
-                        key={it.id}
-                        className="dp-card"
-                        style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 10, display: 'grid', gap: 8 }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                            <strong><Trunc>{it?.name}</Trunc></strong>
-                            <span style={{ opacity: .7 }}>{it?.version}</span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gap: 10 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h6 style={{ margin: 0 }}>Credenciales de sistema</h6>
-                            <button className="btn" onClick={() => { setAddSysOpenId(it.id); setNewSysCred({ type: CATS_CRED_SYSTEM[0], user: '', password: '', instance: '', port: '', observation: '' }) }}>
-                              <Plus size={14} /> Nueva
-                            </button>
-                          </div>
-                          {addSysOpenId === it.id && (
-                            <div style={{ display: 'grid', gap: 8, border: '1px dashed #e5e7eb', borderRadius: 12, padding: 10 }}>
-                              <div style={{ display: 'grid', flexDirection: 'row', gap: 8 }}>
-                                <select className="input" value={newSysCred.type} onChange={(e) => setNewSysCred((p: any) => ({ ...p, type: e.target.value }))}>
-                                  {CATS_CRED_SYSTEM.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                                <input className="input" placeholder="Usuario" value={newSysCred.user} onChange={(e) => setNewSysCred((p: any) => ({ ...p, user: e.target.value }))} />
-                                <input className="input" placeholder="Contraseña" value={newSysCred.password} onChange={(e) => setNewSysCred((p: any) => ({ ...p, password: e.target.value }))} />
-                                <input className="input" placeholder="Puerto" value={newSysCred.port} onChange={(e) => setNewSysCred((p: any) => ({ ...p, port: e.target.value }))} />
-                                <input className="input" placeholder="Instancia/Host" value={newSysCred.instance} onChange={(e) => setNewSysCred((p: any) => ({ ...p, instance: e.target.value }))} />
+                    {filteredSystems.map((it) => {
+                      const open = openSys.has(it.id)
+                      return (
+                        <div key={it.id} className="dp-collapse">
+                          <button className="dp-collapse__header" onClick={() => toggleSys(it.id)}>
+                            <div className="dp-collapse__title"><Trunc>{it?.name}</Trunc></div>
+                            <div className="dp-collapse__subtitle"><span>{it?.version}</span></div>
+                            <div className="dp-collapse__meta">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</div>
+                          </button>
+                          {open && (
+                            <div className="dp-collapse__body">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h6 style={{ margin: 0 }}>Credenciales de sistema</h6>
+                                <button className="btn" onClick={() => { setAddSysOpenId(it.id); setNewSysCred({ type: CATS_CRED_SYSTEM[0], user: '', password: '', instance: '', port: '', observation: '' }) }}>
+                                  <Plus size={14} /> Nueva
+                                </button>
                               </div>
-                              <textarea className="input" placeholder="Observación" value={newSysCred.observation} onChange={(e) => setNewSysCred((p: any) => ({ ...p, observation: e.target.value }))} />
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                                <button className="btn btn--ghost" onClick={() => setAddSysOpenId(null)}>Cancelar</button>
-                                <button className="btn btn--primary" onClick={() => addSystemCredential(it.id)}>Agregar</button>
+                              {addSysOpenId === it.id && (
+                                <div style={{ display: 'grid', gap: 8, border: '1px dashed #e5e7eb', borderRadius: 12, padding: 10, marginTop: 8 }}>
+                                  <div style={{ display: 'grid', gap: 8 }}>
+                                    <select className="input" value={newSysCred.type} onChange={(e) => setNewSysCred((p: any) => ({ ...p, type: e.target.value }))}>
+                                      {CATS_CRED_SYSTEM.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <input className="input" placeholder="Usuario" value={newSysCred.user} onChange={(e) => setNewSysCred((p: any) => ({ ...p, user: e.target.value }))} />
+                                    <input className="input" placeholder="Contraseña" value={newSysCred.password} onChange={(e) => setNewSysCred((p: any) => ({ ...p, password: e.target.value }))} />
+                                    <input className="input" placeholder="Puerto" value={newSysCred.port} onChange={(e) => setNewSysCred((p: any) => ({ ...p, port: e.target.value }))} />
+                                    <input className="input" placeholder="Instancia/Host" value={newSysCred.instance} onChange={(e) => setNewSysCred((p: any) => ({ ...p, instance: e.target.value }))} />
+                                  </div>
+                                  <textarea className="input" placeholder="Observación" value={newSysCred.observation} onChange={(e) => setNewSysCred((p: any) => ({ ...p, observation: e.target.value }))} />
+                                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                    <button className="btn btn--ghost" onClick={() => setAddSysOpenId(null)}>Cancelar</button>
+                                    <button className="btn btn--primary" onClick={() => addSystemCredential(it.id)}>Agregar</button>
+                                  </div>
+                                </div>
+                              )}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginTop: 8 }}>
+                                {(it.credentials ?? []).map((c: any) => (
+                                  <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
+                                    <strong><Trunc>{c.type}</Trunc></strong>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                      <Row label="Usuario" value={c.user} />
+                                      <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
+                                      <Row label="Instancia" value={c.instance} />
+                                      <Row label="Puerto" value={c.port} />
+                                    </div>
+                                    <div>
+                                      <p className="detailPanel-clientGroup__title">Observación</p>
+                                      <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 36, background: '#FAFAFA' }}>
+                                        <Trunc>{c.observation}</Trunc>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                                {(it.credentials ?? []).length === 0 ? <div style={{ opacity: .7, fontSize: 12 }}>Sin credenciales de sistema</div> : null}
                               </div>
                             </div>
                           )}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-                            {(it.credentials ?? []).map((c: any) => (
-                              <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
-                                <strong><Trunc>{c.type}</Trunc></strong>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                  <Row label="Usuario" value={c.user} />
-                                  <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
-                                  <Row label="Instancia" value={c.instance} />
-                                  <Row label="Puerto" value={c.port} />
-                                </div>
-                                <div>
-                                  <p className="detailPanel-clientGroup__title">Observación</p>
-                                  <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 36, background: '#FAFAFA' }}>
-                                    <Trunc>{c.observation}</Trunc>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                            {(it.credentials ?? []).length === 0 ? <div style={{ opacity: .7, fontSize: 12 }}>Sin credenciales de sistema</div> : null}
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </>
               )}
@@ -608,8 +615,9 @@ const DetailPanel: React.FC<Props> = ({
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
                     {filteredContacts.map((it) => (
                       <div key={it.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '8px 0', borderBottom: '1px dashed #eee' }}>
-                        <Trunc>{it.fullName ?? it.name}</Trunc>
-                        <Trunc>{formatNiPhone(it.phone)}</Trunc>
+                         Nombre: <Trunc> {it.fullName ?? it.name}</Trunc>
+                         Cargo: <Trunc> ---- </Trunc>
+                        Telefono: <Trunc>{formatNiPhone(it.phone)}</Trunc>
                       </div>
                     ))}
                   </div>
@@ -660,14 +668,14 @@ const DetailPanel: React.FC<Props> = ({
       {clientEditOpen && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => setClientEditOpen(false)} />
-          <div className="dp-modal__content" style={{ width: 420, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 16, top: 16, bottom: 16, display: 'flex', flexDirection: 'column' }}>
+          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h6 style={{ margin: 0 }}>Editar cliente</h6>
               <button className="btn btn--ghost" onClick={() => setClientEditOpen(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
               <div className="grid2">
-                <input className="input" placeholder="Modelo de trabajo" value={workModel} onChange={(e) => setWorkModel(e.target.value)} />
+                <textarea className="input" placeholder="Modelo de trabajo" value={workModel} onChange={(e) => setWorkModel(e.target.value)} rows={10}/>
                 <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option value="">Prioridad</option>
                   <option value="Alta">Alta</option>
@@ -685,8 +693,7 @@ const DetailPanel: React.FC<Props> = ({
                   <option value="LOCAL">LOCAL</option>
                   <option value="NUBE">NUBE</option>
                 </select>
-                <input className="input" type="number" placeholder="Límite soporte (h)" value={String(supportLimitTime ?? '')} onChange={(e) => setSupportLimitTime(e.target.value)} />
-                <input className="input" placeholder="Recurrencia" value={recurrency} onChange={(e) => setRecurrency(e.target.value)} />
+                {/* <input className="input" type="number" placeholder="Límite soporte (h)" value={String(supportLimitTime ?? '')} onChange={(e) => setSupportLimitTime(e.target.value)} /> */}
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={isSupportActive} onChange={(e) => setIsSupportActive(e.target.checked)} />
@@ -706,18 +713,14 @@ const DetailPanel: React.FC<Props> = ({
         </div>
       )}
 
-       {addDeviceOpen && (
-       <>
-         <div className="dp-modal">
-          <div className="dp-modal__backdrop" onClick={() => setAddDeviceOpen(false)} />                    
-          <div className="dp-modal__content" style={{ width: 500, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', 
-          position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
-
+      {addDeviceOpen && (
+        <div className="dp-modal">
+          <div className="dp-modal__backdrop" onClick={() => setAddDeviceOpen(false)} />
+          <div className="dp-modal__content" style={{ width: 500, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h6 style={{ margin: 0 }}>Nuevo equipo</h6>
               <button className="btn btn--ghost" onClick={() => setAddDeviceOpen(false)}><X size={16} /></button>
-        </div>
-
+            </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <input className="input" placeholder="Nombre" value={newDevice.name} onChange={(e) => setNewDevice((p: any) => ({ ...p, name: e.target.value }))} />
@@ -734,13 +737,11 @@ const DetailPanel: React.FC<Props> = ({
                 <button className="btn btn--ghost" onClick={() => setAddDeviceOpen(false)}>Cancelar</button>
                 <button className="btn btn--primary" onClick={createDevice}>Crear</button>
               </div>
-            
             </div>
           </div>
         </div>
-       </>
       )}
-     
+
       {pickSysOpen && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => setPickSysOpen(false)} />
@@ -803,7 +804,7 @@ const DetailPanel: React.FC<Props> = ({
       {pickCtcOpen && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => setPickCtcOpen(false)} />
-          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 16, top: 16, bottom: 16, display: 'flex', flexDirection: 'column' }}>
+          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h6 style={{ margin: 0 }}>Seleccionar contactos</h6>
               <button className="btn btn--ghost" onClick={() => setPickCtcOpen(false)}><X size={16} /></button>
@@ -857,7 +858,6 @@ const DetailPanel: React.FC<Props> = ({
           </div>
         </div>
       )}
-      
     </div>
   )
 }
