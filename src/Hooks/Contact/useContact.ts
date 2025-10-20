@@ -7,6 +7,7 @@ import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 
 const useContact = (contactId?: number) => {
   const [data, setData] = useState<ContactLogInterface[]>([])
+  const [contactByClient, setContactByClient] = useState<ContactLogInterface[]>([])
   const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
   const [page, setPage] = useState(1)
@@ -48,6 +49,27 @@ const useContact = (contactId?: number) => {
       }
     },
     [globalFilter, page, pageSize]
+  )
+
+   const getByClient = useCallback(
+    async (clientId: number, p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+        const res: PagedResponse<ContactLogInterface> = await contactService.getContactByClientAsync(clientId, p, s)
+
+        setContactByClient(res.items)
+
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [page, pageSize]
   )
 
   const fetchById = useCallback(
@@ -197,12 +219,14 @@ const useContact = (contactId?: number) => {
     loading: loadingList || loadingItem,
     error,
     page,
+    contactByClient,
     pageSize,
     totalCount,
-    setPage: (p: number) => fetchPage(p, pageSize),
-    setPageSize: (s: number) => fetchPage(1, s),
     isModalOpen,
     modalMode,
+    globalFilter,
+    setPage: (p: number) => fetchPage(p, pageSize),
+    setPageSize: (s: number) => fetchPage(1, s),
     openCreate,
     openEdit,
     openView,
@@ -211,11 +235,11 @@ const useContact = (contactId?: number) => {
     fetchPage,
     fetchById,
     fetchByPhone,
+    getByClient,
     create,
     update,
     toggle,
     verify,
-    globalFilter,
     setGlobalFilter
   }
 }

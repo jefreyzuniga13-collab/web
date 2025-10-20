@@ -280,7 +280,6 @@ class ConversationServ {
     return data.data;
   }
 
-  //2. 
   async getConversationRatingByAgents(
     agentId?: number
   ): Promise<ConversationRatingByAgents[]> {

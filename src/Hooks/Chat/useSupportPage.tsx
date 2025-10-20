@@ -49,7 +49,8 @@ export function useSupportPage() {
 
   const [detailToggle, setDetailToggle] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(DETAIL_PANEL_KEY) === 'true';
+      return true;
+      // return localStorage.getItem(DETAIL_PANEL_KEY) === 'true';
     } catch { return false; }
   });
 

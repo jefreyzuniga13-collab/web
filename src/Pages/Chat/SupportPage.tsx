@@ -155,7 +155,8 @@ const SupportPage: React.FC = () => {
       </main>
 
       <aside className="detail-aside">
-        {detailToggle && convId && (
+        {/* {detailToggle && convId && ( */}
+        {convId && (
           <DetailPanel
             key={convId}
             contactId={conversation?.clientContactId}
