@@ -51,26 +51,29 @@ const useContact = (contactId?: number) => {
     [globalFilter, page, pageSize]
   )
 
-   const getByClient = useCallback(
-    async (clientId: number, p = page, s = pageSize) => {
-      setLoadingList(true)
-      setError(null)
-      try {
-        const res: PagedResponse<ContactLogInterface> = await contactService.getContactByClientAsync(clientId, p, s)
+const getByClient = useCallback(
+  async (clientId: string, p = page, s = pageSize) => {
+    setLoadingList(true)
+    setError(null)
+    try {
+      const res = await contactService.getContactByClientAsync(clientId, p, s)
 
-        setContactByClient(res.items)
+      setContactByClient(res.items)
+      setTotalCount(res.meta.totalCount)
+      setPage(res.meta.currentPage)
+      setPageSize(res.meta.pageSize)
 
-        setTotalCount(res.meta.totalCount)
-        setPage(res.meta.currentPage)
-        setPageSize(res.meta.pageSize)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingList(false)
-      }
-    },
-    [page, pageSize]
-  )
+      return res 
+    } catch (err: any) {
+      setError(err)
+      return null
+    } finally {
+      setLoadingList(false)
+    }
+  },
+  [page, pageSize]
+)
+
 
   const fetchById = useCallback(
     async (id: number) => {
@@ -171,6 +174,7 @@ const useContact = (contactId?: number) => {
         setLoadingItem(false)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -240,7 +244,8 @@ const useContact = (contactId?: number) => {
     update,
     toggle,
     verify,
-    setGlobalFilter
+    setGlobalFilter,
+    
   }
 }
 

@@ -34,9 +34,9 @@ class ContactService {
   }
 
   async getContactByClientAsync(
+    clientId: string,
     page: number,
-    pageSize: number,
-    clientId: number
+    pageSize: number
   ): Promise<PagedResponse<ContactLogInterface>> {
     const { data } = await api.get<
       ApiResponse<PagedResponse<ContactLogInterface>>

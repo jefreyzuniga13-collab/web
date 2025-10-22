@@ -20,6 +20,10 @@ export async function getConversationToneAsync(id: number) {
   const data = await api.get<ApiResponse<number>>(`/Conversations/${id}/tone`);
   return data.data.data;
 }
+export async function SetHaltedConversation(id: number) {
+  const data = await api.patch<ApiResponse<number>>(`/Conversations/SetHaltedConversation/${id}`);
+  return data.data.data;
+}
 
 export function getPendingConversations() {
   return api.get<{ data: ConversationDto[] }>("/Conversations/pending");

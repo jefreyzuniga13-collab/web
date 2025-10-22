@@ -66,6 +66,7 @@ export type NameTranslation =
   | "TituloSeccionSaludo"
   | "EncabezadoSaludo"
   | "TiempoDisponibleAbrirConversación"
+  | "TiempoListarConversaciones"
   ;
 
   export type TypeTranslation =

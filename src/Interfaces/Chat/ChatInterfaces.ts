@@ -59,6 +59,7 @@ export interface ConversationDto {
   ratingSubmittedAt: string | null;
   ratingReceivedAt: string | null;
   SystemDefinedCompanyName?: string;
+  isHalted?: boolean;
 }
 
 export interface UpdateConversationRequest {
@@ -175,6 +176,8 @@ export interface MenuDto {
   menuId: number;
   name: string;
   description: string;
+  nenuId: number;
+  menu: MenuDto;
   url: string;
   index: string;
   icon: string;

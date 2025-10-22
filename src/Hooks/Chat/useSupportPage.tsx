@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import {
   getConversation,
   closeConversation,
+  SetHaltedConversation
 } from "@/Services/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/assignModalSlice";
@@ -131,6 +132,18 @@ export function useSupportPage() {
     }
   };
 
+  
+ const handleSetHaltedConversation = useCallback(
+    async()=>{
+      if (!convId || !conversation) return;
+      
+      if(isAdmin){
+         await SetHaltedConversation(convId!);
+
+       }
+    },[]
+  )
+
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setFilter(val);
@@ -172,6 +185,7 @@ export function useSupportPage() {
     filter,
     userId,
     extraerNumero,
-    selectedParam
+    selectedParam,
+    handleSetHaltedConversation
   };
 }

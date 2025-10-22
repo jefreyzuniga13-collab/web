@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useMemo, useState } from 'react'
-import ClientService from '@/Services/Crm/ClientService'
+import { ClientsService } from '@/Services/Crm/ClientService'
 import type {
   ClientRequestDTO,
   ClientUpdateRequestDTO,
@@ -8,7 +7,6 @@ import type {
   DeviceRequestDTO,
   CredentialRequestDTO,
   SystemRequestDTO,
-  ContactRequestDTO,
 } from '@/Interfaces/Crm/ClientInterface'
 
 export function useClient() {
@@ -16,7 +14,7 @@ export function useClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const run = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
+  const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
     setLoading(true)
     setError(null)
     try {
@@ -33,7 +31,7 @@ export function useClient() {
 
   const getAllAsync = useCallback(
     (filter: string, page: number, pageSize: number) =>
-      run(() => ClientService.getAllAsync(filter, page, pageSize)),
+      run(() => ClientsService.getAllAsync(filter, page, pageSize)),
     [run]
   )
 
@@ -41,8 +39,8 @@ export function useClient() {
     async (idOrCode: number | string) => {
       const data =
         typeof idOrCode === 'number'
-          ? await run(() => ClientService.getByIdAsync(idOrCode))
-          : await run(() => ClientService.getByCodeAsync(String(idOrCode)))
+          ? await run(() => ClientsService.getByIdAsync(idOrCode))
+          : await run(() => ClientsService.getByCodeAsync(String(idOrCode)))
       setClient(data)
       return data
     },
@@ -51,7 +49,7 @@ export function useClient() {
 
   const createAsync = useCallback(
     async (payload: ClientRequestDTO) => {
-      const data = await run(() => ClientService.createAsync(payload))
+      const data = await run(() => ClientsService.createAsync(payload))
       setClient(data)
       return data
     },
@@ -60,7 +58,7 @@ export function useClient() {
 
   const updateAsync = useCallback(
     async (id: number, payload: ClientUpdateRequestDTO) => {
-      const data = await run(() => ClientService.updateAsync(id, payload))
+      const data = await run(() => ClientsService.updateAsync(id, payload))
       setClient(data)
       return data
     },
@@ -69,7 +67,7 @@ export function useClient() {
 
   const toggleStatusAsync = useCallback(
     async (id: number) => {
-      const data = await run(() => ClientService.toggleStatusAsync(id))
+      const data = await run(() => ClientsService.toggleStatusAsync(id))
       setClient(data)
       return data
     },
@@ -77,72 +75,60 @@ export function useClient() {
   )
 
   const addDeviceAsync = useCallback(
-    async (id: number, device: DeviceRequestDTO) => {
-      const data = await run(() => ClientService.addDeviceAsync(id, device))
-      setClient(data)
+    async (clientId: number, device: DeviceRequestDTO) => {
+      const data = await run(() => ClientsService.addDeviceAsync(clientId, device))
       return data
     },
     [run]
   )
 
   const addSystemAsync = useCallback(
-    async (id: number, system: SystemRequestDTO) => {
-      const data = await run(() => ClientService.addSystemAsync(id, system))
-      setClient(data)
+    async (clientId: number, system: SystemRequestDTO) => {
+      const data = await run(() => ClientsService.addSystemAsync(clientId, system))
       return data
     },
     [run]
   )
 
-  const addCredentialAsync = useCallback(
-    async (id: number, cred: CredentialRequestDTO) => {
-      const data = await run(() => ClientService.addCredentialAsync(id, cred))
-      setClient(data)
+  const addSystemByIdAsync = useCallback(
+    async (clientId: number, systemId: number) => {
+      const data = await run(() => ClientsService.addSystemByIdAsync(clientId, systemId))
       return data
     },
     [run]
   )
 
-  const addContactAsync = useCallback(
-    async (id: number, contact: ContactRequestDTO) => {
-      const data = await run(() => ClientService.addContactAsync(id, contact))
-      setClient(data)
+  const addCredentialHostingAsync = useCallback(
+    async (clientId: number, credential: CredentialRequestDTO) => {
+      const data = await run(() => ClientsService.addCredentialHostingAsync(clientId, credential))
       return data
     },
     [run]
   )
 
-  const removeDeviceAsync = useCallback(
-    async (id: number, deviceId: number) => {
-      const data = await run(() => ClientService.removeDeviceAsync(id, deviceId))
-      setClient(data)
+  const addCredentialForDeviceAsync = useCallback(
+    async (clientId: number, deviceId: number, credential: CredentialRequestDTO) => {
+      const data = await run(() =>
+        ClientsService.addCredentialForDeviceAsync(clientId, deviceId, credential)
+      )
       return data
     },
     [run]
   )
 
-  const removeSystemAsync = useCallback(
-    async (id: number, systemId: number) => {
-      const data = await run(() => ClientService.removeSystemAsync(id, systemId))
-      setClient(data)
+  const addCredentialForSystemAsync = useCallback(
+    async (clientId: number, clientSystemId: number, credential: CredentialRequestDTO) => {
+      const data = await run(() =>
+        ClientsService.addCredentialForSystemAsync(clientId, clientSystemId, credential)
+      )
       return data
     },
     [run]
   )
 
-  const removeCredentialAsync = useCallback(
-    async (id: number, credentialId: number) => {
-      const data = await run(() => ClientService.removeCredentialAsync(id, credentialId))
-      setClient(data)
-      return data
-    },
-    [run]
-  )
-
-  const removeContactAsync = useCallback(
-    async (id: number, contactId: number) => {
-      const data = await run(() => ClientService.removeContactAsync(id, contactId))
-      setClient(data)
+  const linkExistingContactsAsync = useCallback(
+    async (clientId: number, contactIds: number[]) => {
+      const data = await run(() => ClientsService.linkExistingContactsAsync(clientId, contactIds))
       return data
     },
     [run]
@@ -161,12 +147,11 @@ export function useClient() {
       toggleStatusAsync,
       addDeviceAsync,
       addSystemAsync,
-      addCredentialAsync,
-      addContactAsync,
-      removeDeviceAsync,
-      removeSystemAsync,
-      removeCredentialAsync,
-      removeContactAsync,
+      addSystemByIdAsync,
+      addCredentialHostingAsync,
+      addCredentialForDeviceAsync,
+      addCredentialForSystemAsync,
+      linkExistingContactsAsync,
     }),
     [
       client,
@@ -179,14 +164,14 @@ export function useClient() {
       toggleStatusAsync,
       addDeviceAsync,
       addSystemAsync,
-      addCredentialAsync,
-      addContactAsync,
-      removeDeviceAsync,
-      removeSystemAsync,
-      removeCredentialAsync,
-      removeContactAsync,
+      addSystemByIdAsync,
+      addCredentialHostingAsync,
+      addCredentialForDeviceAsync,
+      addCredentialForSystemAsync,
+      linkExistingContactsAsync,
     ]
   )
+
   return value
 }
 

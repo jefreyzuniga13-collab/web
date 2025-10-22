@@ -7,7 +7,9 @@ import { Book, Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp } from 
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
 import { useContactDetail } from '@/Hooks/Chat/useContactDetail'
+import { useCatCredential } from '@/Hooks/Crm/useCatCredential'
 import '@/Styles/Chat/DetailPanel.css'
+import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 
 type Props = {
   contactId?: number
@@ -15,9 +17,6 @@ type Props = {
   selectedParam?: unknown
   onSendNow?: (txt: string) => void | Promise<void>
 }
-
-const CATS_CRED_DEVICE = ['SQL', 'RDP', 'ANYDESK', 'VPN', 'OTRO'] as const
-const CATS_CRED_SYSTEM = ['APLICACION'] as const
 
 const DetailPanel: React.FC<Props> = ({
   contactId,
@@ -41,8 +40,6 @@ const DetailPanel: React.FC<Props> = ({
     setMoreTab,
     editBuffer,
     setEditBuffer,
-    systems,
-    contacts,
     credSearch,
     setCredSearch,
     devSearch,
@@ -77,20 +74,14 @@ const DetailPanel: React.FC<Props> = ({
     createDevice,
     pickSysOpen,
     setPickSysOpen,
-    pickSysSearch,
-    setPickSysSearch,
-    pickSysSelected,
-    togglePickSys,
-    pickSysFiltered,
-    addPickedSystems,
+    newSystem,
+    setNewSystem,
+    addPickedSystem,
     pickCtcOpen,
     setPickCtcOpen,
-    pickCtcSearch,
-    setPickCtcSearch,
-    pickCtcSelected,
-    togglePickCtc,
-    pickCtcFiltered,
-    addPickedContacts,
+    newContact,
+    setNewContact,
+    addPickedContact,
     clientEditOpen,
     setClientEditOpen,
     clientLocal,
@@ -106,8 +97,6 @@ const DetailPanel: React.FC<Props> = ({
     setIsSupportActive,
     isFranchise,
     setIsFranchise,
-    // supportLimitTime,
-    // setSupportLimitTime,
     observation,
     setObservation,
     saveClientEdits,
@@ -115,7 +104,21 @@ const DetailPanel: React.FC<Props> = ({
     formatNiPhone,
     displayOrDash,
     formatDate,
+    sysCatalog,
+    sysPage,
+    sysPageSize,
+    sysTotal,
+    fetchSysPage,
+    setSysPage,
+    setSysPageSize,
+    sysGlobalFilter,
+    setSysGlobalFilter,
+    openSystemPicker,
+    contactPickerItems,
+    openContactPicker,
   } = useDetailPanel(contactId, selectedParam)
+
+  const { catCredential } = useCatCredential()
 
   const {
     conv,
@@ -161,6 +164,7 @@ const DetailPanel: React.FC<Props> = ({
   const [openDev, setOpenDev] = useState<Set<string | number>>(new Set())
   const [openSys, setOpenSys] = useState<Set<string | number>>(new Set())
 
+  
   const toggleHost = (id: any) => {
     const s = new Set(openHost)
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -179,6 +183,9 @@ const DetailPanel: React.FC<Props> = ({
     s.has(id) ? s.delete(id) : s.add(id)
     setOpenSys(s)
   }
+
+  const [sysPickerLocalFilter, setSysPickerLocalFilter] = useState(sysGlobalFilter || '')
+  const [ctcPickerFilter, setCtcPickerFilter] = useState('')
 
   if (loading)
     return (
@@ -201,7 +208,6 @@ const DetailPanel: React.FC<Props> = ({
             <FaRegBuilding size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
-
         <li className={`detailPanel-option ${optionMenu === 3 ? 'is-active' : ''}`}>
           <button type="button" className="detailPanel-optionBtn" onClick={() => setOptionMenu(3)}>
             <IoChatboxEllipsesOutline size={18} className="detailPanel-optionBtn__icon" />
@@ -215,20 +221,20 @@ const DetailPanel: React.FC<Props> = ({
       </ul>
 
       <section className="detailPanel-content">
-       {optionMenu === 1 && (
+        {optionMenu === 1 && (
           <>
             <header><h5>Detalles del contacto</h5></header>
-             <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
+            <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Nombre</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.fullName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Teléfono</p><span className="detailPanel-clientGroup__cliente">{formatNiPhone(selectedData?.phone)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">WhatsApp</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.waName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado</p><span className="detailPanel-clientGroup__cliente">{selectedData?.isVerified ? 'Verificado' : 'No Verificado'}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Activo</p><span className="detailPanel-clientGroup__cliente">{selectedData?.isActive ? 'Activo' : 'No Activo'}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado por</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.verifiedBy?.fullName)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Creado</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.createdAt)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Actualizado</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.updatedAt)}</span></div>
-              <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">verifiedAt</p><span className="detailPanel-clientGroup__cliente">{formatDate(selectedData?.verifiedAt)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Nombre</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.fullName)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Teléfono</p><span className="detailPanel-clientGroup__cliente">{formatNiPhone(selectedData?.phone)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">WhatsApp</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.waName)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado</p><span className="detailPanel-clientGroup__cliente">{(selectedData as any)?.isVerified ? 'Verificado' : 'No Verificado'}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Activo</p><span className="detailPanel-clientGroup__cliente">{(selectedData as any)?.isActive ? 'Activo' : 'No Activo'}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado por</p><span className="detailPanel-clientGroup__cliente">{displayOrDash((selectedData as any)?.verifiedBy?.fullName)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Creado</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.createdAt)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Actualizado</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.updatedAt)}</span></div>
+                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">verifiedAt</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.verifiedAt)}</span></div>
               </div>
             </div>
           </>
@@ -255,8 +261,6 @@ const DetailPanel: React.FC<Props> = ({
                 <Row label="Entorno" value={(clientLocal as any)?.enviromentType} />
                 <Row label="Soporte activo" value={(clientLocal as any)?.isSupportActive ? 'Sí' : 'No'} />
                 <Row label="Franquicia" value={(clientLocal as any)?.isFranchise ? 'Sí' : 'No'} />
-                <Row label="Límite soporte (h)" value={(clientLocal as any)?.supportLimitTime} />
-                <Row label="Recurrencia" value={(clientLocal as any)?.recurrency} />
                 <Row label="Último contacto" value={formatDate((clientLocal as any)?.lastContactDate)} />
                 <Row label="Último caso cerrado" value={formatDate((clientLocal as any)?.lastClosedCase)} />
               </div>
@@ -385,17 +389,28 @@ const DetailPanel: React.FC<Props> = ({
                   </div>
                   {addHostingOpen && (
                     <div style={{ display: 'grid', gap: 8, border: '1px dashed #e5e7eb', borderRadius: 12, padding: 10 }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 120px 1fr', gap: 8 }}>
-                        <input className="input" placeholder="Usuario" value={newHosting.user} onChange={(e) => setNewHosting((p: any) => ({ ...p, user: e.target.value }))} />
-                        <input className="input" placeholder="Contraseña" value={newHosting.password} onChange={(e) => setNewHosting((p: any) => ({ ...p, password: e.target.value }))} />
-                        <input className="input" placeholder="Instancia/Host" value={newHosting.instance} onChange={(e) => setNewHosting((p: any) => ({ ...p, instance: e.target.value }))} />
-                        <input className="input" placeholder="Puerto" value={newHosting.port} onChange={(e) => setNewHosting((p: any) => ({ ...p, port: e.target.value }))} />
-                        <input className="input" placeholder="Observación" value={newHosting.observation} onChange={(e) => setNewHosting((p: any) => ({ ...p, observation: e.target.value }))} />
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        <select
+                          className="input"
+                          value={(newHosting as any).catalogName || 'HOSTING'}
+                          onChange={(e) => setNewHosting((p: any) => ({ ...p, catalogName: e.target.value }))}
+                        >
+                          {[{ id: 0, name: 'HOSTING' }, ...catCredential].map((c) => (
+                            <option key={`cat-opt-${c.id ?? c.name}`} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 120px 1fr', gap: 8 }}>
+                          <input className="input" placeholder="Usuario" value={newHosting.user} onChange={(e) => setNewHosting((p: any) => ({ ...p, user: e.target.value }))} />
+                          <input className="input" placeholder="Contraseña" value={newHosting.password} onChange={(e) => setNewHosting((p: any) => ({ ...p, password: e.target.value }))} />
+                          <input className="input" placeholder="Instancia/Host" value={newHosting.instance} onChange={(e) => setNewHosting((p: any) => ({ ...p, instance: e.target.value }))} />
+                          <input className="input" placeholder="Puerto" value={newHosting.port} onChange={(e) => setNewHosting((p: any) => ({ ...p, port: e.target.value }))} />
+                          <input className="input" placeholder="Observación" value={newHosting.observation} onChange={(e) => setNewHosting((p: any) => ({ ...p, observation: e.target.value }))} />
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input type="checkbox" checked={!!newHosting.isActive} onChange={(e) => setNewHosting((p: any) => ({ ...p, isActive: e.target.checked }))} />
+                          Activo
+                        </label>
                       </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input type="checkbox" checked={!!newHosting.isActive} onChange={(e) => setNewHosting((p: any) => ({ ...p, isActive: e.target.checked }))} />
-                        Activo
-                      </label>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                         <button className="btn btn--ghost" onClick={() => setAddHostingOpen(false)}>Cancelar</button>
                         <button className="btn btn--primary" onClick={addHosting}>Agregar</button>
@@ -403,13 +418,13 @@ const DetailPanel: React.FC<Props> = ({
                     </div>
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                    {filteredHosting.map((it, idx) => {
+                    {filteredHosting.map((it: CredentialResponseDTO, idx: number) => {
                       const key = it.id ?? idx
                       const open = openHost.has(key)
                       return (
                         <div key={`cred-${key}`} className="dp-collapse">
                           <button className="dp-collapse__header" onClick={() => toggleHost(key)}>
-                            <strong className="dp-collapse__title"><Trunc>{it?.catCredencialNames ?? it?.type ?? '---'}</Trunc></strong>
+                            <strong className="dp-collapse__title"><Trunc>{it?.catCredencialNames ?? '---'}</Trunc></strong>
                             <div className="dp-collapse__meta">
                               <span className={`badge ${it?.isActive !== false ? 'badge--ok' : 'badge--off'}`}>{it?.isActive !== false ? 'Activo' : 'Inactivo'}</span>
                               {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -475,16 +490,23 @@ const DetailPanel: React.FC<Props> = ({
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                                 <h6 style={{ margin: 0 }}>Credenciales de equipo</h6>
-                                <button className="btn" onClick={() => { setAddDevOpenId(it.id); setNewDevCred({ type: CATS_CRED_DEVICE[0], user: '', password: '', instance: '', port: '', observation: '' }) }}>
+                                <button className="btn" onClick={() => { setAddDevOpenId(it.id); setNewDevCred({ catalogName: '', user: '', password: '', instance: '', port: '', observation: '' }) }}>
                                   <Plus size={14} /> Nueva
                                 </button>
                               </div>
                               {addDevOpenId === it.id && (
                                 <div style={{ display: 'grid', gap: 8, border: '1px dashed #e5e7eb', borderRadius: 12, padding: 10 }}>
-                                  <div style={{ display: 'flex', flexDirection:'row', gap: 8 }}>
-                                    <select className="input" value={newDevCred.type} onChange={(e) => setNewDevCred((p: any) => ({ ...p, type: e.target.value }))}>
-                                      {CATS_CRED_DEVICE.map(c => <option key={c} value={c}>{c}</option>)}
+                                  <div style={{ display: 'grid', gap: 8 }}>
+                                    <select
+                                      className="input"
+                                      value={(newDevCred as any).catalogName || ''}
+                                      onChange={(e) => setNewDevCred((p: any) => ({ ...p, catalogName: e.target.value }))}
+                                    >
+                                      <option value="">Seleccionar categoría</option>
+                                      {catCredential.map(c => <option key={`dev-cat-${c.id}`} value={c.name}>{c.name}</option>)}
                                     </select>
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection:'row', gap: 8 }}>
                                     <input className="input" placeholder="Usuario" value={newDevCred.user} onChange={(e) => setNewDevCred((p: any) => ({ ...p, user: e.target.value }))} />
                                     <input className="input" placeholder="Contraseña" value={newDevCred.password} onChange={(e) => setNewDevCred((p: any) => ({ ...p, password: e.target.value }))} />
                                     <input className="input" placeholder="Puerto" value={newDevCred.port} onChange={(e) => setNewDevCred((p: any) => ({ ...p, port: e.target.value }))} />
@@ -500,7 +522,7 @@ const DetailPanel: React.FC<Props> = ({
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                                 {(it.credentials ?? []).map((c: any) => (
                                   <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
-                                    <strong><Trunc>{c.type}</Trunc></strong>
+                                    <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                       <Row label="Usuario" value={c.user} />
                                       <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
@@ -536,7 +558,7 @@ const DetailPanel: React.FC<Props> = ({
                       <input className="input" placeholder="Buscar sistemas…" value={sysSearch} onChange={(e) => setSysSearch(e.target.value)} style={{ paddingLeft: 34 }} />
                       <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
                     </div>
-                    <button className="btn" onClick={() => { setPickSysOpen(true) }}><Plus size={14} /> Agregar sistemas</button>
+                    <button className="btn" onClick={openSystemPicker}><Plus size={14} /> Agregar sistema</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12 }}>
                     {filteredSystems.map((it) => {
@@ -552,16 +574,23 @@ const DetailPanel: React.FC<Props> = ({
                             <div className="dp-collapse__body">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h6 style={{ margin: 0 }}>Credenciales de sistema</h6>
-                                <button className="btn" onClick={() => { setAddSysOpenId(it.id); setNewSysCred({ type: CATS_CRED_SYSTEM[0], user: '', password: '', instance: '', port: '', observation: '' }) }}>
+                                <button className="btn" onClick={() => { setAddSysOpenId(it.id); setNewSysCred({ catalogName: '', user: '', password: '', instance: '', port: '', observation: '' }) }}>
                                   <Plus size={14} /> Nueva
                                 </button>
                               </div>
                               {addSysOpenId === it.id && (
                                 <div style={{ display: 'grid', gap: 8, border: '1px dashed #e5e7eb', borderRadius: 12, padding: 10, marginTop: 8 }}>
                                   <div style={{ display: 'grid', gap: 8 }}>
-                                    <select className="input" value={newSysCred.type} onChange={(e) => setNewSysCred((p: any) => ({ ...p, type: e.target.value }))}>
-                                      {CATS_CRED_SYSTEM.map(c => <option key={c} value={c}>{c}</option>)}
+                                    <select
+                                      className="input"
+                                      value={(newSysCred as any).catalogName || ''}
+                                      onChange={(e) => setNewSysCred((p: any) => ({ ...p, catalogName: e.target.value }))}
+                                    >
+                                      <option value="">Seleccionar categoría</option>
+                                      {catCredential.map(c => <option key={`sys-cat-${c.id}`} value={c.name}>{c.name}</option>)}
                                     </select>
+                                  </div>
+                                  <div style={{ display: 'grid', gap: 8 }}>
                                     <input className="input" placeholder="Usuario" value={newSysCred.user} onChange={(e) => setNewSysCred((p: any) => ({ ...p, user: e.target.value }))} />
                                     <input className="input" placeholder="Contraseña" value={newSysCred.password} onChange={(e) => setNewSysCred((p: any) => ({ ...p, password: e.target.value }))} />
                                     <input className="input" placeholder="Puerto" value={newSysCred.port} onChange={(e) => setNewSysCred((p: any) => ({ ...p, port: e.target.value }))} />
@@ -577,7 +606,7 @@ const DetailPanel: React.FC<Props> = ({
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginTop: 8 }}>
                                 {(it.credentials ?? []).map((c: any) => (
                                   <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
-                                    <strong><Trunc>{c.type}</Trunc></strong>
+                                    <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                       <Row label="Usuario" value={c.user} />
                                       <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
@@ -610,14 +639,14 @@ const DetailPanel: React.FC<Props> = ({
                       <input className="input" placeholder="Buscar contactos…" value={ctcSearch} onChange={(e) => setCtcSearch(e.target.value)} style={{ paddingLeft: 34 }} />
                       <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
                     </div>
-                    <button className="btn" onClick={() => { setPickCtcOpen(true) }}><Plus size={14} /> Agregar contactos</button>
+                    <button className="btn" onClick={openContactPicker}><Plus size={14} /> Agregar contacto</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
                     {filteredContacts.map((it) => (
-                      <div key={it.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '8px 0', borderBottom: '1px dashed #eee' }}>
-                         Nombre: <Trunc> {it.fullName ?? it.name}</Trunc>
-                         Cargo: <Trunc> ---- </Trunc>
-                        Telefono: <Trunc>{formatNiPhone(it.phone)}</Trunc>
+                      <div key={it.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '8px 0', borderBottom: '1px dashed #eee' }}>
+                        <Trunc>{it.fullName ?? it.name}</Trunc>
+                        <Trunc>Cargo</Trunc>
+                        <Trunc>{formatNiPhone(it.phone)}</Trunc>
                       </div>
                     ))}
                   </div>
@@ -630,7 +659,7 @@ const DetailPanel: React.FC<Props> = ({
                 <h6 style={{ margin: 0 }}>Edición rápida</h6>
                 {editBuffer?._t === 'cred' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <input className="input" placeholder="Categoría" value={editBuffer?.catCredencialNames ?? editBuffer?.type ?? ''} onChange={(e) => setEditBuffer((p: any) => ({ ...p, catCredencialNames: e.target.value, type: e.target.value }))} />
+                    <input className="input" placeholder="Categoría" value={editBuffer?.catCredencialNames ?? ''} onChange={(e) => setEditBuffer((p: any) => ({ ...p, catCredencialNames: e.target.value }))} />
                     <input className="input" placeholder="Usuario" value={editBuffer?.user ?? ''} onChange={(e) => setEditBuffer((p: any) => ({ ...p, user: e.target.value }))} />
                     <input className="input" placeholder="Contraseña" value={editBuffer?.password ?? ''} onChange={(e) => setEditBuffer((p: any) => ({ ...p, password: e.target.value }))} />
                     <input className="input" placeholder="Instancia" value={editBuffer?.instance ?? ''} onChange={(e) => setEditBuffer((p: any) => ({ ...p, instance: e.target.value }))} />
@@ -670,7 +699,7 @@ const DetailPanel: React.FC<Props> = ({
           <div className="dp-modal__backdrop" onClick={() => setClientEditOpen(false)} />
           <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h6 style={{ margin: 0 }}>Editar cliente</h6>
+              <h6 style={{ margin: 0, fontSize:12 }}>Editar cliente</h6>
               <button className="btn btn--ghost" onClick={() => setClientEditOpen(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
@@ -693,7 +722,6 @@ const DetailPanel: React.FC<Props> = ({
                   <option value="LOCAL">LOCAL</option>
                   <option value="NUBE">NUBE</option>
                 </select>
-                {/* <input className="input" type="number" placeholder="Límite soporte (h)" value={String(supportLimitTime ?? '')} onChange={(e) => setSupportLimitTime(e.target.value)} /> */}
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={isSupportActive} onChange={(e) => setIsSupportActive(e.target.checked)} />
@@ -745,56 +773,72 @@ const DetailPanel: React.FC<Props> = ({
       {pickSysOpen && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => setPickSysOpen(false)} />
-          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+          <div className="dp-modal__content" style={{ width: 620, maxWidth: '96vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h6 style={{ margin: 0 }}>Seleccionar sistemas</h6>
+              <h6 style={{ margin: 0 }}>Agregar sistema</h6>
               <button className="btn btn--ghost" onClick={() => setPickSysOpen(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
-              <div style={{ position: 'relative' }}>
-                <input className="input" placeholder="Buscar sistemas..." value={pickSysSearch} onChange={(e) => setPickSysSearch(e.target.value)} style={{ paddingLeft: 34 }} />
-                <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input className="input" placeholder="Buscar en catálogo de sistemas…" value={sysPickerLocalFilter} onChange={(e) => { setSysPickerLocalFilter(e.target.value); setSysGlobalFilter(e.target.value); fetchSysPage(1, sysPageSize) }} style={{ paddingLeft: 34 }} />
+                  <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
+                </div>
+                <select className="input" value={String(sysPageSize)} onChange={(e) => setSysPageSize(Number(e.target.value))}>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, overflow: 'auto' }}>
-                {pickSysFiltered.map((sys) => {
-                  const active = pickSysSelected.some((x) => x.id === sys.id) || systems.some(s => s.id === sys.id)
-                  return (
-                    <button
-                      key={sys.id}
-                      onClick={() => !systems.some(s => s.id === sys.id) && togglePickSys(sys)}
-                      className={`pick-card ${active ? 'pick-card--active' : ''}`}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 6,
-                        border: `1px solid ${active ? '#0070B4' : '#E5E7EB'}`,
-                        borderRadius: 10,
-                        padding: 10,
-                        textAlign: 'left',
-                        background: active ? '#F0F9FF' : '#fff',
-                        cursor: systems.some(s => s.id === sys.id) ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      <strong>{sys.name}</strong>
-                      <span style={{ opacity: 0.7 }}>{sys.version}</span>
-                      {systems.some(s => s.id === sys.id) ? <span style={{ fontSize: 12, opacity: .7 }}>Ya agregado</span> : null}
-                    </button>
-                  )
-                })}
-              </div>
-              <div style={{ borderTop: '1px solid #eee', paddingTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {pickSysSelected.map((it, i) => (
-                  <div key={`sys-pill-${i}`} className="chip" style={{ border: '1px solid #0070B4', background: '#F0F9FF' }}>
-                    <span className="chip-text">{it.name}</span>
-                    <button className="tag-remove" onClick={() => togglePickSys(it)}>
-                      <X size={12} />
-                    </button>
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ maxHeight: 380, overflow: 'auto' }}>
+                  <table className="dp-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 48 }}></th>
+                        <th>Nombre</th>
+                        <th>Versión</th>
+                        <th>Descripción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sysCatalog.map(s => (
+                        <tr key={s.id}>
+                          <td>
+                            <input
+                              type="radio"
+                              name="pickSys"
+                              checked={newSystem.outsourcedSystemsId === s.id}
+                              onChange={() => setNewSystem({ ...newSystem, outsourcedSystemsId: s.id })}
+                            />
+                          </td>
+                          <td>{s.name}</td>
+                          <td>{s.version ?? '---'}</td>
+                          <td><Trunc>{s.description}</Trunc></td>
+                        </tr>
+                      ))}
+                      {sysCatalog.length === 0 && (
+                        <tr><td colSpan={4} style={{ textAlign: 'center', padding: 16, opacity: .7 }}>Sin resultados</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8, borderTop: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: 12, opacity: .7 }}>Total: {sysTotal}</div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <button className="btn btn--ghost" onClick={() => setSysPage(Math.max(1, sysPage - 1))}>Prev</button>
+                    <span style={{ fontSize: 12 }}>Página {sysPage}</span>
+                    <button className="btn btn--ghost" onClick={() => setSysPage(sysPage + 1)}>Next</button>
                   </div>
-                ))}
+                </div>
               </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" checked={!!newSystem.isActive} onChange={(e) => setNewSystem({ ...newSystem, isActive: e.target.checked })} />
+                Activo
+              </label>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button className="btn btn--ghost" onClick={() => setPickSysOpen(false)}>Cancelar</button>
-                <button className="btn btn--primary" onClick={addPickedSystems}>Agregar</button>
+                <button className="btn btn--primary" onClick={addPickedSystem} disabled={!newSystem.outsourcedSystemsId}>Agregar</button>
               </div>
             </div>
           </div>
@@ -804,55 +848,59 @@ const DetailPanel: React.FC<Props> = ({
       {pickCtcOpen && (
         <div className="dp-modal">
           <div className="dp-modal__backdrop" onClick={() => setPickCtcOpen(false)} />
-          <div className="dp-modal__content" style={{ width: 500, maxWidth: '94vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+          <div className="dp-modal__content" style={{ width: 560, maxWidth: '96vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h6 style={{ margin: 0 }}>Seleccionar contactos</h6>
+              <h6 style={{ margin: 0 }}>Vincular contacto existente</h6>
               <button className="btn btn--ghost" onClick={() => setPickCtcOpen(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
               <div style={{ position: 'relative' }}>
-                <input className="input" placeholder="Buscar contactos..." value={pickCtcSearch} onChange={(e) => setPickCtcSearch(e.target.value)} style={{ paddingLeft: 34 }} />
-                <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }} />
+                <input className="input" placeholder="Buscar contacto por nombre o teléfono…" value={ctcPickerFilter} onChange={(e) => setCtcPickerFilter(e.target.value)} style={{ paddingLeft: 34 }} />
+                <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, overflow: 'auto' }}>
-                {pickCtcFiltered.map((ctc) => {
-                  const active = pickCtcSelected.some((x) => x.id === ctc.id) || contacts.some(c => c.id === ctc.id)
-                  return (
-                    <button
-                      key={ctc.id}
-                      onClick={() => !contacts.some(c => c.id === ctc.id) && togglePickCtc(ctc)}
-                      className={`pick-card ${active ? 'pick-card--active' : ''}`}
-                      style={{
-                        display: 'grid',
-                        gap: 6,
-                        border: `1px solid ${active ? '#0070B4' : '#E5E7EB'}`,
-                        borderRadius: 10,
-                        padding: 10,
-                        textAlign: 'left',
-                        background: active ? '#F0F9FF' : '#fff',
-                        cursor: contacts.some(c => c.id === ctc.id) ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      <strong>{ctc.fullName ?? ctc.fullName}</strong>
-                      <span style={{ opacity: 0.7 }}>{formatNiPhone(ctc.phone)}</span>
-                      {contacts.some(c => c.id === ctc.id) ? <span style={{ fontSize: 12, opacity: .7 }}>Ya agregado</span> : null}
-                    </button>
-                  )
-                })}
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, maxHeight: 420, overflow: 'auto' }}>
+                <table className="dp-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 48 }}></th>
+                      <th>Nombre</th>
+                      <th>Teléfono</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contactPickerItems
+                      .filter(c => {
+                        const q = ctcPickerFilter.trim().toLowerCase()
+                        if (!q) return true
+                        return (c.fullName || '').toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q)
+                      })
+                      .map(c => (
+                        <tr key={c.id}>
+                          <td>
+                            <input
+                              type="radio"
+                              name="pickContact"
+                              checked={newContact.contactId === c.id}
+                              onChange={() => setNewContact({ ...newContact, contactId: c.id })}
+                            />
+                          </td>
+                          <td>{c.fullName || '---'}</td>
+                          <td>{formatNiPhone(c.phone)}</td>
+                        </tr>
+                      ))}
+                    {contactPickerItems.length === 0 && (
+                      <tr><td colSpan={3} style={{ textAlign: 'center', padding: 16, opacity: .7 }}>Sin resultados</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <div style={{ borderTop: '1px solid #eee', paddingTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {pickCtcSelected.map((it, i) => (
-                  <div key={`ctc-pill-${i}`} className="chip" style={{ border: '1px solid #0070B4', background: '#F0F9FF' }}>
-                    <span className="chip-text">{it.fullName ?? it.name}</span>
-                    <button className="tag-remove" onClick={() => togglePickCtc(it)}>
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" checked={!!newContact.isActive} onChange={(e) => setNewContact({ ...newContact, isActive: e.target.checked })} />
+                Activo
+              </label>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button className="btn btn--ghost" onClick={() => setPickCtcOpen(false)}>Cancelar</button>
-                <button className="btn btn--primary" onClick={addPickedContacts}>Agregar</button>
+                <button className="btn btn--primary" onClick={addPickedContact} disabled={!newContact.contactId}>Agregar</button>
               </div>
             </div>
           </div>

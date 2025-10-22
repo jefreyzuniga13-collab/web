@@ -26,6 +26,58 @@
   color: var(--color-gray-800);
   margin: 0;
 }
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-primary);
+  /* border-radius: 34px; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.slider .icon {
+  color: var(--color-secondary);
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+/* Estado activo */
+/* .checkbox:checked + .slider {
+  background-color: #4CAF50;
+} */
+
+.checkbox:checked + .slider .icon {
+  transform: rotate(180deg);
+}
+
+/* Opcional: efecto de sombra */
+.slider:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* border-radius: 34px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3); */
+}
+
 
 .btn-container {
   display: flex;

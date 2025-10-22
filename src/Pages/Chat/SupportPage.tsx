@@ -3,7 +3,7 @@ import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import "@/Styles/Chat/SupportPage.css";
-import { FaFilter, FaUserAlt } from "react-icons/fa";
+import { FaFilter, FaPause, FaPlay, FaUserAlt } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
@@ -34,7 +34,9 @@ const SupportPage: React.FC = () => {
     userId,
     extraerNumero,
     selectedParam,
+    handleSetHaltedConversation
   } = useSupportPage();
+  
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
@@ -132,6 +134,39 @@ const SupportPage: React.FC = () => {
             {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}
           </h2>
 
+        {/*Pausar conversación. Solo admin */}
+
+        {/* Dos iconos, uno de progreso, y el otro de pausa. Importarlos desde react icons*/}
+       {/* {convId && isAdmin &&
+        <label className="switch">
+          <input type="checkbox" className="checkbox" onChange={handleSetHaltedConversation} />
+           <span className="slider"></span>
+        </label>
+       } */}
+
+          {convId && isAdmin && (
+            <label className="switch">
+              <input
+                type="checkbox"
+                className="checkbox"
+                onChange={handleSetHaltedConversation}
+                checked={conversation?.isHalted}
+              />
+              <span className="slider">
+                {conversation?.isHalted ? (
+                  <FaPause className="icon" />
+                ) : (
+                  <FaPlay className="icon" />
+                )}
+              </span>
+            </label>
+          )}
+  {/* <>
+       <label class="switch">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+  </> */}
           <div className="btn-container">
             <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${
