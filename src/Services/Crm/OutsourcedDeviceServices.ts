@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
-
 import type {
   OutsourcedDeviceResponseDTO,
   OutsourcedDeviceRequestDTO,
@@ -60,7 +59,7 @@ class OutsourcedDevicesServiceClass {
     try {
       const payload = transformPayload(payloadIn)
       const { data } = await api.post<ApiResponse<OutsourcedDeviceResponseDTO>>(
-        `/OutsourcedDevices/${clientId}`,
+        `/OutsourcedDevices/client/${clientId}`,
         payload
       )
       return data.data
@@ -88,7 +87,7 @@ class OutsourcedDevicesServiceClass {
   async toggleAsync(id: number): Promise<OutsourcedDeviceResponseDTO> {
     try {
       const { data } = await api.patch<ApiResponse<OutsourcedDeviceResponseDTO>>(
-        `/OutsourcedDevices/${id}/toggle`
+        `/OutsourcedDevices/${id}`
       )
       return data.data
     } catch (e) {

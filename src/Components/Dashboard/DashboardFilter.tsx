@@ -30,7 +30,7 @@ export default function DashboardFilterModal({
 }: Props) {
   const {
     form,
-    handleSelectChange,
+    handleAutoChange,
     setForm,
     handleClear,
     handleTimeChange,
@@ -69,92 +69,69 @@ export default function DashboardFilterModal({
             <IoMdClose size={14} />
           </Button>
         </div>
+
         <section className="input-container">
-          <CustomAutocomplete
-            label="Agente"
-            placeholder="Filtrar por agente"
-            options={[
-              { label: 'Filtrar por agente', value: '' },
-              ...agents.map((a) => ({
-                label: a.fullName,
-                value: String(a.userId),
-              })),
-            ]}
-            value={
-              (() => {
-                const sel = agents.find((a) => String(a.userId) === String(form.agentId))
-                return sel ? { label: sel.fullName, value: String(sel.userId) } : null
-              })()
-            }
-            onChange={(opt) => handleSelectChange('agentId', 'agentName')({
-              target: { value: opt?.value ?? '' },
-            } as any)}
-          />
+  {/* Agente */}
+  <CustomAutocomplete
+    label="Agente"
+    placeholder="Filtrar por agente"
+    options={[
+      { label: 'Filtrar por agente', value: '' },
+      ...agents.map(a => ({ label: a.fullName, value: String(a.userId) })),
+    ]}
+    value={(() => {
+      const sel = agents.find(a => String(a.userId) === String(form.agentId));
+      return sel ? { label: sel.fullName, value: String(sel.userId) } : null;
+    })()}
+    onChange={handleAutoChange('agentId', 'agentName')}
+  />
 
-          {/* Filtro por administrador */}
-          <CustomAutocomplete
-            label="Administrador"
-            placeholder="Filtrar por administrador"
-            options={[
-              { label: 'Filtrar por administrador', value: '' },
-              ...admins.map((a) => ({
-                label: a.fullName,
-                value: String(a.userId),
-              })),
-            ]}
-            value={
-              (() => {
-                const sel = admins.find((a) => String(a.userId) === String(form.adminUserId))
-                return sel ? { label: sel.fullName, value: String(sel.userId) } : null
-              })()
-            }
-            onChange={(opt) => handleSelectChange('adminUserId', 'adminUserName')({
-              target: { value: opt?.value ?? '' },
-            } as any)}
-          />
+  {/* Administrador */}
+  <CustomAutocomplete
+    label="Administrador"
+    placeholder="Filtrar por administrador"
+    options={[
+      { label: 'Filtrar por administrador', value: '' },
+      ...admins.map(a => ({ label: a.fullName, value: String(a.userId) })),
+    ]}
+    value={(() => {
+      const sel = admins.find(a => String(a.userId) === String(form.adminUserId));
+      return sel ? { label: sel.fullName, value: String(sel.userId) } : null;
+    })()}
+    onChange={handleAutoChange('adminUserId', 'adminUserName')}
+  />
 
-          <CustomAutocomplete
-            label="Cliente"
-            placeholder="Filtrar por cliente"
-            options={[
-              { label: 'Filtrar por cliente', value: '' },
-              ...clients.map((c) => ({
-                label: c.clientName!,
-                value: String(c.clientId!),
-              })),
-            ]}
-            value={
-              (() => {
-                const sel = clients.find((c) => String(c.clientId) === String(form.clientId))
-                return sel ? { label: sel.clientName!, value: String(sel.clientId!) } : null
-              })()
-            }
-            onChange={(opt) => handleSelectChange('clientId', 'clientName')({
-              target: { value: opt?.value ?? '' },
-            } as any)}
-          />
+  {/* Cliente (lo guardas como string) */}
+  <CustomAutocomplete
+    label="Cliente"
+    placeholder="Filtrar por cliente"
+    options={[
+      { label: 'Filtrar por cliente', value: '' },
+      ...clients.map(c => ({ label: c.clientName!, value: String(c.clientId!) })),
+    ]}
+    value={(() => {
+      const sel = clients.find(c => String(c.clientId) === String(form.clientId));
+      return sel ? { label: sel.clientName!, value: String(sel.clientId!) } : null;
+    })()}
+    onChange={handleAutoChange('clientId', 'clientName')}
+  />
 
-          <CustomAutocomplete
-            label="Contacto"
-            placeholder="Filtrar por contacto"
-            options={[
-              { label: 'Filtrar por contacto', value: '' },
-              ...contacts.map((c) => ({
-                label: c.fullName!,
-                value: String(c.id),
-              })),
-            ]}
-            value={
-              (() => {
-                const sel = contacts.find((c) => String(c.id) === String(form.contactId))
-                return sel ? { label: sel.fullName!, value: String(sel.id) } : null
-              })()
-            }
-            onChange={(opt) => handleSelectChange('contactId', 'contactName')({
-              target: { value: opt?.value ?? '' },
-            } as any)}
-          />
-        </section>
+  {/* Contacto (ajusta si quieres string o number) */}
+  <CustomAutocomplete
+    label="Contacto"
+    placeholder="Filtrar por contacto"
+    options={[
+      { label: 'Filtrar por contacto', value: '' },
+      ...contacts.map(c => ({ label: c.fullName!, value: String(c.id) })),
+    ]}
+    value={(() => {
+      const sel = contacts.find(c => String(c.id) === String(form.contactId));
+      return sel ? { label: sel.fullName!, value: String(sel.id) } : null;
+    })()}
+    onChange={handleAutoChange('contactId', 'contactName')}
+  />
+</section>
+
 
 
         <p className="filter-subtitle">Filtrar por Fecha</p>

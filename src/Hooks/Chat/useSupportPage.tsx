@@ -30,6 +30,8 @@ export function useSupportPage() {
     null
   );
 
+  const [isToggling, setIsToggling] = useState(false);
+
   const [filter, setFilter] = useState<string>(
     () => localStorage.getItem("selectedFilter") || "all"
   );
@@ -133,16 +135,17 @@ export function useSupportPage() {
   };
 
   
- const handleSetHaltedConversation = useCallback(
-    async()=>{
-      if (!convId || !conversation) return;
-      
-      if(isAdmin){
-         await SetHaltedConversation(convId!);
-
-       }
-    },[]
-  )
+  const handleSetHaltedConversation = useCallback(async () => {
+    if (!convId || !conversation || !isAdmin) return
+    try {
+      await SetHaltedConversation(convId)
+      setConversation(prev =>
+        prev ? { ...prev, isHalted: !prev.isHalted } : prev
+      )
+    } catch (e) {
+      console.error(e)
+    }
+  }, [convId, conversation, isAdmin])
 
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -186,6 +189,7 @@ export function useSupportPage() {
     userId,
     extraerNumero,
     selectedParam,
+    isToggling,
     handleSetHaltedConversation
   };
 }

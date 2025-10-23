@@ -196,10 +196,14 @@ export const useCredentials = (initialMode: Mode = 'client') => {
   )
 
   useEffect(() => {
-    if ((mode === 'client' && clientId != null) || (mode === 'device' && deviceId != null) || (mode === 'system' && clientSystemId != null)) {
+    if (
+      (mode === 'client' && clientId != null) ||
+      (mode === 'device' && deviceId != null) ||
+      (mode === 'system' && clientSystemId != null)
+    ) {
       fetchPage()
     }
-  }, [fetchPage, globalFilter, mode, clientId, deviceId, clientSystemId])
+  }, [fetchPage, mode, clientId, deviceId, clientSystemId])
 
   return {
     items,

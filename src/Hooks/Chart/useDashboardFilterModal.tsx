@@ -59,6 +59,28 @@ const useDashboardFilterModal = () => {
   //     setForm(f => ({ ...f, [label]: selectedOption.textContent}));
   //   };
 
+  // dentro de useDashboardFilterModal
+
+const handleAutoChange =
+  (name: keyof FilterForm, label: keyof FilterForm) =>
+  (opt: { label: string; value: string } | null) => {
+    const toNumber = (s: string | null) =>
+      s == null || s === '' ? null : Number(s);
+
+    const isClientId =
+      name === 'clientId' || name === 'contactId' ? true : false;
+
+    setForm((f) => ({
+      ...f,
+      [name]: opt
+        ? isClientId
+          ? (opt.value as any)
+          : (toNumber(opt.value) as any)
+        : null,
+      [label]: opt ? (opt.label as any) : null,
+    }));
+  };
+
   const handleSelectChange =
   (name: keyof FilterForm, label: keyof FilterForm) =>
   (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -106,7 +128,8 @@ const useDashboardFilterModal = () => {
     handleCheckbox,
     handleSelectChange,
     handleClear,
-    handleTimeChange
+    handleTimeChange,
+    handleAutoChange
   };
 };
 

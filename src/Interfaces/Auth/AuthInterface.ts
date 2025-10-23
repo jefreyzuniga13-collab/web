@@ -70,6 +70,7 @@ export interface RoleResponseDto {
   roleId: number;
   roleName: string;
   description: string;
+  isActive?: boolean;
 }
 
 

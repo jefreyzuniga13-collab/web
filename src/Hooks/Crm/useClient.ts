@@ -84,7 +84,9 @@ export function useClient() {
 
   const addSystemAsync = useCallback(
     async (clientId: number, system: SystemRequestDTO) => {
-      const data = await run(() => ClientsService.addSystemAsync(clientId, system))
+      const data = await run(() =>
+        ClientsService.addSystemByIdAsync(clientId, system.outsourcedSystemsId)
+      )
       return data
     },
     [run]
@@ -100,6 +102,9 @@ export function useClient() {
 
   const addCredentialHostingAsync = useCallback(
     async (clientId: number, credential: CredentialRequestDTO) => {
+
+      console.log("En el metodo addCredentialHostingAsync, con los datos. ClienteId", clientId)
+      console.log("Credencial", credential)
       const data = await run(() => ClientsService.addCredentialHostingAsync(clientId, credential))
       return data
     },

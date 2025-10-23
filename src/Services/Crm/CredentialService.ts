@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
-import type {
-  CredentialRequestDTO,
-} from '@/Interfaces/Crm/ClientInterface'
-
-import type {
-  CredentialResponseDTO,
-} from '@/Interfaces/Crm/ClientInterface'
+import type { CredentialRequestDTO, CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 import api from '@/Utils/ApiConfig'
 import type { AxiosError } from 'axios'

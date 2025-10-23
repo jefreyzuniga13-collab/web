@@ -34,6 +34,7 @@ const SupportPage: React.FC = () => {
     userId,
     extraerNumero,
     selectedParam,
+    isToggling,
     handleSetHaltedConversation
   } = useSupportPage();
   
@@ -145,22 +146,19 @@ const SupportPage: React.FC = () => {
        } */}
 
           {convId && isAdmin && (
-            <label className="switch">
-              <input
-                type="checkbox"
-                className="checkbox"
-                onChange={handleSetHaltedConversation}
-                checked={conversation?.isHalted}
-              />
-              <span className="slider">
-                {conversation?.isHalted ? (
-                  <FaPause className="icon" />
-                ) : (
-                  <FaPlay className="icon" />
-                )}
-              </span>
-            </label>
-          )}
+          <label className="switch">
+            <input
+              type="checkbox"
+              className="checkbox"
+              onChange={handleSetHaltedConversation}
+              checked={!!conversation?.isHalted}
+              disabled={isToggling}
+            />
+            <span className={`slider ${conversation?.isHalted ? 'halted' : 'active'}`}>
+              {conversation?.isHalted ? <FaPause className="icon" /> : <FaPlay className="icon" />}
+            </span>
+          </label>
+        )}
   {/* <>
        <label class="switch">
           <input type="checkbox">

@@ -7,10 +7,7 @@ import type {
   DeviceRequestDTO,
   CredentialRequestDTO,
   SystemRequestDTO,
-  CredentialResponseDTO
-} from '@/Interfaces/Crm/ClientInterface'
-
-import type {
+  CredentialResponseDTO,
   OutsourcedDeviceResponseDTO,
   OutsourcedSystemsResponseDTO,
   ContactLogLiteResponseDto,
@@ -82,45 +79,50 @@ class ClientsServiceClass {
     }
   }
 
-    async addCredentialHostingAsync(clientId: number, credential: CredentialRequestDTO): Promise<CredentialResponseDTO> {
+  async addCredentialHostingAsync(
+    clientId: number,
+    credential: CredentialRequestDTO
+  ): Promise<CredentialResponseDTO> {
     try {
-      const payload = {
-        clientId,
-        credential
-      }
-
-      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(`/Clients/${clientId}/credentials/hosting`, 
-        payload)
+      const payload = transformPayload(credential)
+      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(
+        `/Clients/${clientId}/credentials/hosting`,
+        payload
+      )
       return data.data
     } catch (e) {
       throw formatError(e)
     }
   }
 
-    async addCredentialForDeviceAsync(clientId: number, deviceId: number, credential: CredentialRequestDTO): Promise<CredentialResponseDTO> {
+  async addCredentialForDeviceAsync(
+    clientId: number,
+    deviceId: number,
+    credential: CredentialRequestDTO
+  ): Promise<CredentialResponseDTO> {
     try {
-      // const payload = {
-      //   credential
-      // }
-
-      console.log("Las credenciales enviadas son", credential)
-
-      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(`/Clients/${clientId}/devices/${deviceId}/credentials`, credential)
+      const payload = transformPayload(credential)
+      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(
+        `/Clients/${clientId}/devices/${deviceId}/credentials`,
+        payload
+      )
       return data.data
     } catch (e) {
       throw formatError(e)
     }
   }
 
-
-    async addCredentialForSystemAsync(clientId: number, clientSystemId: number, credential: CredentialRequestDTO): Promise<CredentialResponseDTO> {
+  async addCredentialForSystemAsync(
+    clientId: number,
+    clientSystemId: number,
+    credential: CredentialRequestDTO
+  ): Promise<CredentialResponseDTO> {
     try {
-      const payload ={
-        clientId,
-        clientSystemId,
-        credential
-      }
-      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(`Clients/${clientId}/systems/${clientSystemId}/credentials`, payload)
+      const payload = transformPayload(credential)
+      const { data } = await api.post<ApiResponse<CredentialResponseDTO>>(
+        `/Clients/${clientId}/systems/${clientSystemId}/credentials`,
+        payload
+      )
       return data.data
     } catch (e) {
       throw formatError(e)
@@ -139,14 +141,17 @@ class ClientsServiceClass {
 
   async toggleStatusAsync(id: number): Promise<ClientResponseDTO> {
     try {
-      const { data } = await api.patch<ApiResponse<ClientResponseDTO>>(`/Clients/${id}/toggle`)
+      const { data } = await api.patch<ApiResponse<ClientResponseDTO>>(`/Clients/${id}`)
       return data.data
     } catch (e) {
       throw formatError(e)
     }
   }
 
-  async addDeviceAsync(clientId: number, device: DeviceRequestDTO): Promise<OutsourcedDeviceResponseDTO> {
+  async addDeviceAsync(
+    clientId: number,
+    device: DeviceRequestDTO
+  ): Promise<OutsourcedDeviceResponseDTO> {
     try {
       const payload = transformPayload(device)
       const { data } = await api.post<ApiResponse<OutsourcedDeviceResponseDTO>>(
@@ -159,7 +164,10 @@ class ClientsServiceClass {
     }
   }
 
-  async addSystemByIdAsync(clientId: number, outsourcedSystemId: number): Promise<OutsourcedSystemsResponseDTO> {
+  async addSystemByIdAsync(
+    clientId: number,
+    outsourcedSystemId: number
+  ): Promise<OutsourcedSystemsResponseDTO> {
     try {
       const { data } = await api.post<ApiResponse<OutsourcedSystemsResponseDTO>>(
         `/Clients/${clientId}/systems/${outsourcedSystemId}`
@@ -170,7 +178,10 @@ class ClientsServiceClass {
     }
   }
 
-  async addSystemAsync(clientId: number, system: SystemRequestDTO): Promise<OutsourcedSystemsResponseDTO> {
+  async addSystemAsync(
+    clientId: number,
+    system: SystemRequestDTO
+  ): Promise<OutsourcedSystemsResponseDTO> {
     try {
       const payload = transformPayload(system)
       const { data } = await api.post<ApiResponse<OutsourcedSystemsResponseDTO>>(
@@ -184,27 +195,16 @@ class ClientsServiceClass {
   }
 
   async linkExistingContactsAsync(clientId: number, contactIds: number[]): Promise<number> {
-  try {
-    const { data } = await api.post<ApiResponse<number>>(
-      `/Clients/${clientId}/contacts/link`,
-      contactIds
-    )
-    return data.data
-  } catch (e) {
-    throw formatError(e)
+    try {
+      const { data } = await api.post<ApiResponse<number>>(
+        `/Clients/${clientId}/contacts/link`,
+        contactIds
+      )
+      return data.data
+    } catch (e) {
+      throw formatError(e)
+    }
   }
-}
-//   async linkExistingContactsAsync(clientId: number, contactIds: number[]): Promise<number> {
-//     try {
-//       const { data } = await api.post<ApiResponse<number>>(
-//         `/Clients/${clientId}/contacts/link`,
-//         { contactIds }
-//       )
-//       return data.data
-//     } catch (e) {
-//       throw formatError(e)
-//     }
-//   }
 }
 
 export const ClientsService = new ClientsServiceClass()
@@ -217,7 +217,7 @@ class PickersServiceClass {
   ): Promise<PagedResponse<OutsourcedSystemsResponseDTO>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<OutsourcedSystemsResponseDTO>>>(
-        '/Pickers/systems',
+        '/Clients/pickers/systems',
         { params: { globalFilter: filter, PageNumber: page, PageSize: pageSize } }
       )
       return data.data
@@ -234,7 +234,7 @@ class PickersServiceClass {
   ): Promise<PagedResponse<OutsourcedDeviceResponseDTO>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<OutsourcedDeviceResponseDTO>>>(
-        `/Pickers/clients/${clientId}/devices`,
+        `/Clients/${clientId}/pickers/devices`,
         { params: { globalFilter: filter, PageNumber: page, PageSize: pageSize } }
       )
       return data.data
@@ -250,7 +250,7 @@ class PickersServiceClass {
   ): Promise<PagedResponse<ContactLogLiteResponseDto>> {
     try {
       const { data } = await api.get<ApiResponse<PagedResponse<ContactLogLiteResponseDto>>>(
-        '/Pickers/contacts',
+        '/Clients/pickers/contacts',
         { params: { globalFilter: filter, PageNumber: page, PageSize: pageSize } }
       )
       return data.data
