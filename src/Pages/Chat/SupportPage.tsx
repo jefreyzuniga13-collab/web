@@ -145,20 +145,22 @@ const SupportPage: React.FC = () => {
         </label>
        } */}
 
+        {/* Toogle para pausar y reanudar conversación */}
           {convId && isAdmin && (
-          <label className="switch">
-            <input
-              type="checkbox"
-              className="checkbox"
-              onChange={handleSetHaltedConversation}
-              checked={!!conversation?.isHalted}
-              disabled={isToggling}
-            />
-            <span className={`slider ${conversation?.isHalted ? 'halted' : 'active'}`}>
-              {conversation?.isHalted ? <FaPause className="icon" /> : <FaPlay className="icon" />}
-            </span>
-          </label>
+            <label className="switch">
+              <input
+                type="checkbox"
+                className="checkbox"
+                onChange={handleSetHaltedConversation}
+                checked={!!conversation?.isHalted}
+                disabled={isToggling}
+              />
+              <span className={`slider ${conversation?.isHalted ? 'halted' : 'active'}`}>
+                {conversation?.isHalted ? <FaPlay className="icon" /> :  <FaPause className="icon" /> }
+              </span>
+            </label>
         )}
+
   {/* <>
        <label class="switch">
           <input type="checkbox">
@@ -187,31 +189,35 @@ const SupportPage: React.FC = () => {
         />
       </main>
 
-      <aside className="detail-aside">
-        {/* {detailToggle && convId && ( */}
-        {convId && (
-          <DetailPanel
-            key={convId}
-            contactId={conversation?.clientContactId}
-            selectedParam={selectedParam}
-            conversationId={convId ?? undefined}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
-          />
+      <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
+  <aside className="sidebar">…</aside>
+  <main className="main-content">…</main>
 
-        )}
-      </aside>
+          <aside className="detail-aside">
+              {detailToggle && convId && (
+                <DetailPanel
+                  key={convId}
+                  contactId={conversation?.clientContactId}
+                  selectedParam={selectedParam}
+                  conversationId={convId ?? undefined}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
+                />
+              )}
+            </aside>
 
-      {/* <button
-        type="button"
-        className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
-        onClick={() => setDetailToggle((t) => !t)}
-        disabled={!convId}
-        aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-        title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-      >
-        {detailToggle ? "›" : "‹"}
-      </button> */}
+            <button
+              type="button"
+              className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
+              onClick={() => setDetailToggle(t => !t)}
+              disabled={!convId}
+              aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+              title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+            >
+              {detailToggle ? "›" : "‹"}
+            </button>
+          </div>
+
 
       {contactDetailToggle && (
         <div className="modal-overlay">

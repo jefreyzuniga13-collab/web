@@ -16,5 +16,4 @@ export function useRoles(){
     }, [])
 
     return {roles, loading, error};
-    
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react'
 import { LuContact } from 'react-icons/lu'
-import { FaRegBuilding, FaWhatsapp } from 'react-icons/fa'
+import { FaCalendarAlt, FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaPhone, FaRegBuilding, FaSync, FaTag, FaUserAlt, FaUserCheck, FaWhatsapp } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
 import { Book, Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react'
 import { ThreeDot } from 'react-loading-indicators'
@@ -10,6 +10,7 @@ import { useContactDetail } from '@/Hooks/Chat/useContactDetail'
 import { useCatCredential } from '@/Hooks/Crm/useCatCredential'
 import '@/Styles/Chat/DetailPanel.css'
 import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
+import { FaRegClock } from 'react-icons/fa6'
 
 type Props = {
   contactId?: number
@@ -228,25 +229,115 @@ const DetailPanel: React.FC<Props> = ({
       </ul>
 
       <section className="detailPanel-content">
+        
         {optionMenu === 1 && (
           <>
-            <header className='detailPanel-content-header'><h5>Detalles del contacto</h5></header>
-            <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
+            <header className="detailPanel-content-header">
+              <h5>Detalles del contacto</h5>
+            </header>
+
+            <div
+              className="detailPanel-card"
+              style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}
+            >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Nombre</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.fullName)}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Teléfono</p><span className="detailPanel-clientGroup__cliente">{formatNiPhone(selectedData?.phone)}</span></div>
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Nombre</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaUserAlt style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash(selectedData?.fullName)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Teléfono</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaPhone style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatNiPhone(selectedData?.phone)}
+                  </span>
+                </div>
+
                 <div className="detailPanel-contactGroup">
                   <p className="detailPanel-clientGroup__title">WhatsApp</p>
                   <span className="detailPanel-clientGroup__cliente" title={displayOrDash(selectedData?.waName)}>
-                    <FaWhatsapp style={{ verticalAlign: 'middle', marginRight: 6 }} /> <Trunc>{selectedData?.waName}</Trunc>
+                    <FaWhatsapp style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    <Trunc>{selectedData?.waName}</Trunc>
                   </span>
                 </div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado</p><span className="detailPanel-clientGroup__cliente">{(selectedData as any)?.isVerified ? 'Verificado' : 'No Verificado'}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Activo</p><span className="detailPanel-clientGroup__cliente">{(selectedData as any)?.isActive ? 'Activo' : 'No Activo'}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Verificado por</p><span className="detailPanel-clientGroup__cliente">{displayOrDash((selectedData as any)?.verifiedBy?.fullName)}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Creado</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.createdAt)}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Actualizado</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.updatedAt)}</span></div>
-                <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">verifiedAt</p><span className="detailPanel-clientGroup__cliente">{formatDate((selectedData as any)?.verifiedAt)}</span></div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Verificado</p>
+                  <span
+                    className={`detailPanel-clientGroup__cliente ${
+                      (selectedData as any)?.isVerified ? 'status-true' : 'status-false'
+                    }`}
+                  >
+                    {(selectedData as any)?.isVerified ? (
+                      <>
+                        <Check size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#2bc04bff", color: "#fff" }} />
+                        Verificado
+                      </>
+                    ) : (
+                      <>
+                        <X size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#c02b2bff", color: "#fff" }} />
+                        No Verificado
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Activo</p>
+                  <span
+                    className={`detailPanel-clientGroup__cliente ${
+                      (selectedData as any)?.isActive ? 'status-true' : 'status-false'
+                    }`}
+                  >
+                    {(selectedData as any)?.isActive ? (
+                      <>
+                        <Check size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#2bc04bff", color: "#fff" }} />
+                        Activo
+                      </>
+                    ) : (
+                      <>
+                        <X size={14} style={{ verticalAlign: 'middle', backgroundColor: "#c02b2bff", color: "#fff", marginRight: 6 }} />
+                        No Activo
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Verificado por</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaUserCheck style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash((selectedData as any)?.verifiedBy?.fullName)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Creado</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatDate((selectedData as any)?.createdAt)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Actualizado</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatDate((selectedData as any)?.updatedAt)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">VerifiedAt</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaCalendarAlt style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatDate((selectedData as any)?.verifiedAt)}
+                  </span>
+                </div>
               </div>
             </div>
           </>
@@ -254,32 +345,181 @@ const DetailPanel: React.FC<Props> = ({
 
         {optionMenu === 2 && (
           <>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding:"0 12px" }}>
+            <header
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0 12px',
+              }}
+            >
               <h5>Detalles del cliente</h5>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn btn--secondary" onClick={() => setClientEditOpen(true)}><Edit size={14} /> Editar</button>
-                <button className="btn btn--primary" onClick={() => setShowMore(true)}>Ver más</button>
+                <button
+                  className="btn btn--secondary"
+                  onClick={() => setClientEditOpen(true)}
+                >
+                  <Edit size={14} /> Editar
+                </button>
+                <button
+                  className="btn btn--primary"
+                  onClick={() => setShowMore(true)}
+                >
+                  Ver más
+                </button>
               </div>
             </header>
 
-            <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
+            <div
+              className="detailPanel-card"
+              style={{
+                border: '1px solid #E5E7EB',
+                borderRadius: 12,
+                padding: 12,
+                marginTop: 8,
+              }}
+            >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                <Row label="Nombre" value={clientName} />
-                <Row label="Teléfono" value={clientPhoneFmt} />
-                <Row label="Dirección" value={(clientLocal as any)?.direccion ?? (clientLocal as any)?.address} />
-                <Row label="Modelo Trabajo" value={(clientLocal as any)?.workModel ?? (clientLocal as any)?.modeloTrabajo} />
-                <Row label="Prioridad" value={(clientLocal as any)?.priority} />
-                <Row label="Tipo soporte" value={(clientLocal as any)?.supportType} />
-                <Row label="Entorno" value={(clientLocal as any)?.enviromentType} />
-                <Row label="Recurrencia" value={(clientLocal as any)?.recurrency} />
-                <Row label="Soporte activo" value={(clientLocal as any)?.isSupportActive ? 'Sí' : 'No'} />
-                <Row label="Franquicia" value={(clientLocal as any)?.isFranchise ? 'Sí' : 'No'} />
-                <Row label="Último contacto" value={formatDate((clientLocal as any)?.lastContactDate)} />
-                <Row label="Último caso cerrado" value={formatDate((clientLocal as any)?.lastClosedCase)} />
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Nombre</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaRegBuilding style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash(clientName)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Teléfono</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaPhone style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {clientPhoneFmt || '—'}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Dirección</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaMapMarkerAlt style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash(
+                      (clientLocal as any)?.direccion ??
+                      (clientLocal as any)?.address
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Modelo Trabajo</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaLaptopHouse style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash(
+                      (clientLocal as any)?.workModel ??
+                      (clientLocal as any)?.modeloTrabajo
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Prioridad</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaTag style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash((clientLocal as any)?.priority)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Tipo soporte</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <IoChatboxEllipsesOutline style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash((clientLocal as any)?.supportType)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Entorno</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaCloud style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash((clientLocal as any)?.enviromentType)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Recurrencia</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaSync style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {displayOrDash((clientLocal as any)?.recurrency)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Soporte activo</p>
+                  <span
+                    className={`detailPanel-clientGroup__cliente ${
+                      (clientLocal as any)?.isSupportActive
+                        ? 'status-true'
+                        : 'status-false'
+                    }`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {(clientLocal as any)?.isSupportActive ? (
+                      <>
+                        <Check size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#2bc04bff", color: "#fff" }}  /> Sí
+                      </>
+                    ) : (
+                      <>
+                        <X size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#c02b2bff", color: "#fff" }}/> No
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Franquicia</p>
+                  <span
+                    className={`detailPanel-clientGroup__cliente ${
+                      (clientLocal as any)?.isFranchise ? 'status-true' : 'status-false'
+                    }`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {(clientLocal as any)?.isFranchise ? (
+                      <>
+                        <Check size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#2bc04bff", color: "#fff" }}  /> Sí
+                      </>
+                    ) : (
+                      <>
+                        <X size={14} style={{ verticalAlign: 'middle', marginRight: 6, backgroundColor: "#c02b2bff", color: "#fff" }}/> No
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Último contacto</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatDate((clientLocal as any)?.lastContactDate)}
+                  </span>
+                </div>
+
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Último caso cerrado</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {formatDate((clientLocal as any)?.lastClosedCase)}
+                  </span>
+                </div>
               </div>
+
               <div style={{ marginTop: 10 }}>
                 <p className="detailPanel-clientGroup__title">Observación</p>
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 8, minHeight: 40, background: '#FAFAFA' }}>
+                <div
+                  style={{
+                    border: '1px solid #E5E7EB',
+                    borderRadius: 8,
+                    padding: 8,
+                    minHeight: 40,
+                    background: '#FAFAFA',
+                  }}
+                >
                   <Trunc>{(clientLocal as any)?.observation}</Trunc>
                 </div>
               </div>
@@ -619,7 +859,7 @@ const DetailPanel: React.FC<Props> = ({
                                 {(it.credentials ?? []).map((c: any) => (
                                   <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
                                     <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <div style={{display:"flex", flexDirection:"column", gap: 8 , width:"100%"}}>
                                       <Row label="Usuario" value={c.user} />
                                       <Row label="Contraseña" value={c.password ? c.password  : '---'} />
                                       <Row label="Instancia" value={c.instance} />
@@ -721,7 +961,7 @@ const DetailPanel: React.FC<Props> = ({
                                 {(it.credentials ?? []).map((c: any) => (
                                   <div key={c.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}>
                                     <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <div style={{ display:"flex", flexDirection:"column", gap: 8 , width:"100%" }}>
                                       <Row label="Usuario" value={c.user} />
                                       <Row label="Contraseña" value={c.password ? c.password  : '---'} />
                                       <Row label="Instancia" value={c.instance} />
