@@ -77,11 +77,11 @@ const DetailPanel: React.FC<Props> = ({
     newSystem,
     setNewSystem,
     addPickedSystem,
-    pickCtcOpen,
-    setPickCtcOpen,
-    newContact,
-    setNewContact,
-    addPickedContact,
+    // pickCtcOpen,
+    // setPickCtcOpen,
+    // newContact,
+    // setNewContact,
+    // addPickedContact,
     clientEditOpen,
     setClientEditOpen,
     clientLocal,
@@ -114,7 +114,7 @@ const DetailPanel: React.FC<Props> = ({
     sysGlobalFilter,
     setSysGlobalFilter,
     openSystemPicker,
-    contactPickerItems,
+    // contactPickerItems,
     openContactPicker,
   } = useDetailPanel(contactId, selectedParam)
 
@@ -192,7 +192,7 @@ const DetailPanel: React.FC<Props> = ({
   }
 
   const [sysPickerLocalFilter, setSysPickerLocalFilter] = useState(sysGlobalFilter || '')
-  const [ctcPickerFilter, setCtcPickerFilter] = useState('')
+  // const [ctcPickerFilter, setCtcPickerFilter] = useState('')
 
   if (loading)
     return (
@@ -230,7 +230,7 @@ const DetailPanel: React.FC<Props> = ({
       <section className="detailPanel-content">
         {optionMenu === 1 && (
           <>
-            <header><h5>Detalles del contacto</h5></header>
+            <header className='detailPanel-content-header'><h5>Detalles del contacto</h5></header>
             <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                 <div className="detailPanel-contactGroup"><p className="detailPanel-clientGroup__title">Nombre</p><span className="detailPanel-clientGroup__cliente">{displayOrDash(selectedData?.fullName)}</span></div>
@@ -254,7 +254,7 @@ const DetailPanel: React.FC<Props> = ({
 
         {optionMenu === 2 && (
           <>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding:"0 12px" }}>
               <h5>Detalles del cliente</h5>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn--secondary" onClick={() => setClientEditOpen(true)}><Edit size={14} /> Editar</button>
@@ -271,6 +271,7 @@ const DetailPanel: React.FC<Props> = ({
                 <Row label="Prioridad" value={(clientLocal as any)?.priority} />
                 <Row label="Tipo soporte" value={(clientLocal as any)?.supportType} />
                 <Row label="Entorno" value={(clientLocal as any)?.enviromentType} />
+                <Row label="Recurrencia" value={(clientLocal as any)?.recurrency} />
                 <Row label="Soporte activo" value={(clientLocal as any)?.isSupportActive ? 'Sí' : 'No'} />
                 <Row label="Franquicia" value={(clientLocal as any)?.isFranchise ? 'Sí' : 'No'} />
                 <Row label="Último contacto" value={formatDate((clientLocal as any)?.lastContactDate)} />
@@ -438,7 +439,7 @@ const DetailPanel: React.FC<Props> = ({
                 <button className={`btn-tab ${moreTab === 'cred' ? 'is-active' : ''}`} onClick={() => setMoreTab('cred')}>Credenciales</button>
                 <button className={`btn-tab ${moreTab === 'dev' ? 'is-active' : ''}`} onClick={() => setMoreTab('dev')}>Equipos</button>
                 <button className={`btn-tab ${moreTab === 'sys' ? 'is-active' : ''}`} onClick={() => setMoreTab('sys')}>Sistemas</button>
-                <button className={`btn-tab ${moreTab === 'ctc' ? 'is-active' : ''}`} onClick={() => setMoreTab('ctc')}>Contactos</button>
+                {/* <button className={`btn-tab ${moreTab === 'ctc' ? 'is-active' : ''}`} onClick={() => setMoreTab('ctc')}>Contactos</button> */}
               </div>
               <button className="btn btn--ghost" onClick={() => { setShowMore(false); setEditBuffer(null) }} aria-label="Cerrar">
                 <X size={16} />
@@ -477,7 +478,7 @@ const DetailPanel: React.FC<Props> = ({
                         </select>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                           <input className="input" placeholder="Usuario" value={newHosting.user} onChange={(e) => setNewHosting((p: any) => ({ ...p, user: e.target.value }))} />
-                          <input className="input" placeholder="Contraseña" value={newHosting.password} onChange={(e) => setNewHosting((p: any) => ({ ...p, password: e.target.value }))} />
+                          <input className="input" placeholder="text" value={newHosting.password} onChange={(e) => setNewHosting((p: any) => ({ ...p, password: e.target.value }))} />
                           <input className="input" placeholder="Instancia/Host" value={newHosting.instance} onChange={(e) => setNewHosting((p: any) => ({ ...p, instance: e.target.value }))} />
                           <input className="input" placeholder="Puerto" value={newHosting.port} onChange={(e) => setNewHosting((p: any) => ({ ...p, port: e.target.value }))} />
                           <input className="input" placeholder="Observación" value={newHosting.observation} onChange={(e) => setNewHosting((p: any) => ({ ...p, observation: e.target.value }))} />
@@ -511,7 +512,7 @@ const DetailPanel: React.FC<Props> = ({
                             <div className="dp-collapse__body">
                               <div style={{ display: 'grid', gap: 8 }}>
                                 <Row label="Usuario" value={it?.user} />
-                                <Row label="Contraseña" value={it?.password ? '••••••••' : '---'} />
+                                <Row label="Contraseña" value={it?.password ? it?.password : '---'} />
                                 <Row label="Instancia" value={it?.instance} />
                                 <Row label="Puerto" value={it?.port} />
                               </div>
@@ -620,7 +621,7 @@ const DetailPanel: React.FC<Props> = ({
                                     <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                       <Row label="Usuario" value={c.user} />
-                                      <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
+                                      <Row label="Contraseña" value={c.password ? c.password  : '---'} />
                                       <Row label="Instancia" value={c.instance} />
                                       <Row label="Puerto" value={c.port} />
                                     </div>
@@ -722,7 +723,7 @@ const DetailPanel: React.FC<Props> = ({
                                     <strong><Trunc>{c.type ?? c.catCredencialNames}</Trunc></strong>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                       <Row label="Usuario" value={c.user} />
-                                      <Row label="Contraseña" value={c.password ? '••••••' : '---'} />
+                                      <Row label="Contraseña" value={c.password ? c.password  : '---'} />
                                       <Row label="Instancia" value={c.instance} />
                                       <Row label="Puerto" value={c.port} />
                                     </div>
@@ -979,7 +980,7 @@ const DetailPanel: React.FC<Props> = ({
         </div>
       )}
 
-      {pickCtcOpen && (
+      {/* {pickCtcOpen && (
         <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Vincular contacto existente">
           <div className="dp-modal__backdrop" onClick={() => setPickCtcOpen(false)} />
           <div className="dp-modal__content" style={{ width: 560, maxWidth: '96vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1047,7 +1048,7 @@ const DetailPanel: React.FC<Props> = ({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

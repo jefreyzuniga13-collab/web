@@ -279,16 +279,12 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   
   const addHosting = useCallback(async () => {
 
-    console.log("Le id del cliente es", client.id)
     if (!client?.id) return
-
-    console.log("El valor de newNosting.catalogName es", newHosting.Name)
     const catId = getCatIdByName(newHosting.catalogName || 'HOSTING')
 
-    console.log("El id de catcredenrial es", catId)
     if (!catId) return
     const dto: CredentialRequestDTO = {
-      catCredencialId: catId,
+      catCredentialId: catId,
       clientId: client.id,
       user: newHosting.user,
       password: newHosting.password,
@@ -378,7 +374,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       const catId = getCatIdByName(newDevCred.catalogName || '')
       if (!catId) return
       const dto: CredentialRequestDTO = {
-        catCredencialId: catId,
+        catCredentialId: catId,
         clientId: client.id,
         outsourcedDeviceId: deviceId,
         user: newDevCred.user,
@@ -436,9 +432,9 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       const catId = getCatIdByName(newSysCred.catalogName || '')
       if (!catId) return
       const dto: CredentialRequestDTO = {
-        catCredencialId: catId,
+        catCredentialId: catId,
         clientId: client.id,
-        clientOutsourcedSystemsId: clientOutsourcedSystemId,
+        clientOutsourcedSystemId: clientOutsourcedSystemId,
         user: newSysCred.user,
         password: newSysCred.password,
         instance: newSysCred.instance || null,
@@ -616,6 +612,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     await updateClientAsync(client.id, patch)
     if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
     setClientEditOpen(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     client?.id,
     workModel,

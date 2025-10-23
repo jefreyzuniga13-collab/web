@@ -127,7 +127,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   useEffect(() => {
     if (typeof contactId === 'number' && contactId > 0 && lastContactIdRef.current !== contactId) {
       lastContactIdRef.current = contactId
-      fetchContactById(contactId).catch(() => {})
+      fetchContactById(contactId).catch(() => { })
     }
   }, [contactId, fetchContactById])
 
@@ -147,7 +147,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
           if (c?.id) return fetchContactsByClient(c.id)
           return undefined
         })
-        .catch(() => {})
+        .catch(() => { })
     }
   }, [clienteCodigo, fetchClientByCodeOrId, fetchContactsByClient])
 
@@ -179,7 +179,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
 
   useEffect(() => {
     if (clientPickerOpen) {
-      loadClientPicker().catch(() => {})
+      loadClientPicker().catch(() => { })
     }
   }, [clientPickerOpen, loadClientPicker])
 
@@ -203,7 +203,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const clientPhoneFmt = formatNiPhone(clientPhone)
 
   const hostingCreds = useMemo(() => {
-    const creds = (client as any)?.credentials ?? []
+    const creds = (client as any)?.hostingCredentials ?? []
     return creds.filter((c: any) => String(c.catCredencialNames || '').toUpperCase() === 'HOSTING')
   }, [client])
 
@@ -273,10 +273,12 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     observation: '',
     isActive: true,
   })
+  
   const addHosting = useCallback(async () => {
     if (!client?.id) return
     const catId = getCatIdByName(newHosting.catalogName || 'HOSTING')
     if (!catId) return
+    
     const dto: CredentialRequestDTO = {
       catCredentialId: catId,
       clientId: client.id,
@@ -288,14 +290,20 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       isActive: newHosting.isActive,
     }
     const created = await addCredentialHostingAsync(client.id, dto)
+    
     setClient((prev: any) => {
       if (!prev) return prev
-      const nextCreds = Array.isArray(prev.credentials) ? [...prev.credentials] : []
-      if (created) nextCreds.unshift(created as CredentialResponseDTO)
-      return { ...prev, credentials: nextCreds }
+      // const nextCreds = Array.isArray(prev.credentials) ? [...prev.credentials] : []
+      // if (created) nextCreds.unshift(created as CredentialResponseDTO)
+      // return { ...prev, credentials: nextCreds }
+      const next = Array.isArray(prev.hostingCredentials) ? [...prev.hostingCredentials] : []
+      if (created) next.unshift(created as CredentialResponseDTO)
+      return { ...prev, hostingCredentials: next }
     })
+
     if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
-    setNewHosting({
+    
+      setNewHosting({
       catalogName: 'HOSTING',
       user: '',
       password: '',
@@ -304,6 +312,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       observation: '',
       isActive: true,
     })
+
     setAddHostingOpen(false)
   }, [client?.id, newHosting, addCredentialHostingAsync, fetchClientByCodeOrId, clienteCodigo, getCatIdByName, setClient])
 
@@ -409,8 +418,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
         isActive: true,
       }
 
-      console.log("Agregar credenciales", JSON.stringify(addSystemCredential));
-      
       const created = await addCredentialForSystemAsync(client.id, clientOutsourcedSystemId, dto)
 
       setClient((prev: any) => {
@@ -523,7 +530,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       isSupportActive,
       isFranchise,
       supportLimitTime: supportLimitTime === '' ? null : Number(supportLimitTime),
-      recurrency: recurrency === '' ? null : Number(recurrency),
+      // recurrency: recurrency === '' ? null : Number(recurrency),
       observation,
     }
     setClientLocal((prev: any) => ({ ...prev, ...patch }))

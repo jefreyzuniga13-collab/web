@@ -190,6 +190,7 @@ export function useSupportPage() {
     extraerNumero,
     selectedParam,
     isToggling,
+    setIsToggling,
     handleSetHaltedConversation
   };
 }

@@ -6,7 +6,6 @@ import type {
   CatCredencialResponseDto,
 } from "@/Interfaces/Crm/CatCredential";
 
-
 export const useCatCredential = () => {
   const [catCredential, setCatCredential] = useState<CatCredencialResponseDto[]>([]);
   const [selectedCatCredential, setSelectedCatCredential] = useState<CatCredencialResponseDto | null>(null);
