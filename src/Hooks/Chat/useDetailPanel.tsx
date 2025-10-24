@@ -16,7 +16,7 @@ import type {
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 import type { CatCredencialResponseDto } from '@/Interfaces/Crm/CatCredential'
 
-type OptionMenu = 1 | 2 | 3 | 4
+type OptionMenu = 1 | 2 | 3 | 4 | 5
 type MoreTab = 'cred' | 'dev' | 'sys' | 'ctc'
 
 const parseQuickOptions = (selectedParam: unknown): string[] => {
@@ -590,7 +590,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   useEffect(() => {
     if (selectedParam != null) setOptionMenu(setTabFromParam(selectedParam))
   }, [selectedParam, setTabFromParam])
-
   return {
     optionMenu,
     setOptionMenu,

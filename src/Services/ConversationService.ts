@@ -7,6 +7,7 @@ import type {
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
+import type { exportPDFArgs } from "@/Interfaces/Chat/ConversationInterface";
 
 
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
@@ -65,7 +66,7 @@ export function getHistoryByContact(contactId: number, startDate: Date, endDate:
   return api.get<{ data: ConversationHistoryDto[] }>(
     `/Conversations/${contactId}/history`,
     {
-      params:{
+      params: {
         startDate,
         endDate
       }
@@ -103,7 +104,7 @@ export function forceAssign(
   assignmentComment: string,
   assignedAgentName?: string
 ) {
-  
+
   return api.post(`/Conversations/${conversationId}/force`, {
     forced,
     assignmentComment,
@@ -263,8 +264,6 @@ class ConversationServ {
     return data.data;
   }
 
-  //New Methods for Rating Conversations
-  //1. 
   async getRatingConversation(
     page: number,
     pageSize: number,
@@ -277,7 +276,7 @@ class ConversationServ {
         params: {
           PageNumber: page,
           PageSize: pageSize,
-          agentId: agentId || null  // If agentId is not provided, it will be null
+          agentId: agentId || null
         }
       }
     );
@@ -292,7 +291,7 @@ class ConversationServ {
       "/Conversations/ratingByAgents",
       {
         params: {
-          agentId: agentId || null  // If agentId is not provided, it will be null
+          agentId: agentId || null
         }
       }
     );
@@ -316,25 +315,89 @@ class ConversationServ {
   //   )
   //   return data.data
   // }
-async getConversationsByRole(
-  from?: Date,
-  to?: Date,
-  searchConversation?: string,
-  page: number = 1,
-  pageSize: number = 10,
-  state?: string 
-): Promise<PagedResponse<ConversationDto>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const params: Record<string, any> = { pageNumber: page, pageSize };
-  if (from) params.from = from.toISOString();
-  if (to)   params.to   = to.toISOString();
-  if(searchConversation != '') params.searchConversation = searchConversation;
-  if (state && state !== 'all') params.state = toPascal(state);
 
-  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-    "/Conversations/getByRole", { params }
-  );
-  return data.data;
-}
+  async getConversationsByRole(
+    from?: Date,
+    to?: Date,
+    searchConversation?: string,
+    page: number = 1,
+    pageSize: number = 10,
+    state?: string
+  ): Promise<PagedResponse<ConversationDto>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const params: Record<string, any> = { pageNumber: page, pageSize };
+    if (from) params.from = from.toISOString();
+    if (to) params.to = to.toISOString();
+    if (searchConversation != '') params.searchConversation = searchConversation;
+    if (state && state !== 'all') params.state = toPascal(state);
+
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/getByRole", { params }
+    );
+    return data.data;
+  }
+
+  async getConversationsByContact(
+    from?: Date,
+    to?: Date,
+    contactId?: number,
+    q?: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ): Promise<PagedResponse<ConversationDto>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const params: Record<string, any> = { pageNumber: page, pageSize }
+    if (from) params.from = from.toISOString()
+    if (to) params.to = to.toISOString()
+    if (contactId && contactId > 0) params.contactId = contactId
+    if (q && q.trim() !== '') params.searchConversation = q.trim()
+
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      '/Conversations/getByContact',
+      { params }
+    )
+    return data.data
+  }
+
+  async exportChatPdfByContact(
+   {contactId, from, to, title, subtitle}: exportPDFArgs
+  ): Promise<void> {
+    const params: Record<string, string> = { title, subtitle };
+
+    if (from) params.from = from.toLocaleString();
+    if (to) params.to = to.toLocaleString();
+
+    const res = await api.get<ArrayBuffer>(
+      `/Conversations/export/pdf/chat/${encodeURIComponent(contactId)}`,
+      {
+        params,
+        responseType: "blob",
+        headers: { Accept: "application/pdf" },
+      }
+    );
+
+    const blob = new Blob([res.data], { type: "application/pdf" });
+
+    // Nombre de archivo dinámico
+    const cd =
+      (res.headers["content-disposition"] ||
+        res.headers["Content-Disposition"]) as string | undefined;
+
+    const suggested =
+      (cd && /filename\*?=(?:UTF-8'')?"?([^";]+)"?/.exec(cd)?.[1]) ||
+      `conversaciones_chat_${new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-")}.pdf`;
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = decodeURIComponent(suggested);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
 }
 export const ConversationService = new ConversationServ();

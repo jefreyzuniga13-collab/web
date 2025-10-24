@@ -6,6 +6,7 @@ import type {
   ConversationHistoryDto,
   MessageWithAttachmentsDto,
 } from "@/Interfaces/Chat/ChatInterfaces";
+
 import React, {
   useState,
   useEffect,
@@ -21,6 +22,7 @@ export function useConversationHistoryModal(
   const [conversations, setConversations] = useState<ConversationHistoryDto[]>(
     []
   );
+
   const [allMessages, setAllMessages] = useState<MessageWithAttachmentsDto[]>(
     []
   );
@@ -60,8 +62,7 @@ export function useConversationHistoryModal(
       setLoading(false);
     }
   }
-
-
+  
   const generateSummary = useCallback(async () => {
     if (!conversationId) return;
 

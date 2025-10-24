@@ -9,9 +9,11 @@ interface ConversationHistoryModalProps {
   conversationId: number;
 }
 
+// Modal de muestra del historial de una conversación.
 export const ConversationHistoryModal: React.FC<
   ConversationHistoryModalProps
 > = ({ isOpen, onClose, conversationId }) => {
+
   const {
     generateSummary,
     setEndDate,

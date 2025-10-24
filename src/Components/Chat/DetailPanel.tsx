@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { LuContact } from 'react-icons/lu'
 import { FaCalendarAlt, FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaPhone, FaRegBuilding, FaSync, FaTag, FaUserAlt, FaUserCheck, FaWhatsapp } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
-import { Book, Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp } from 'lucide-react'
+import { Book, Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp, FileDown, History } from 'lucide-react'
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
 import { useContactDetail } from '@/Hooks/Chat/useContactDetail'
@@ -11,6 +11,7 @@ import { useCatCredential } from '@/Hooks/Crm/useCatCredential'
 import '@/Styles/Chat/DetailPanel.css'
 import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import { FaRegClock } from 'react-icons/fa6'
+import useConversations from '@/Hooks/Conversation/useConversations'
 
 type Props = {
   contactId?: number
@@ -25,6 +26,7 @@ const DetailPanel: React.FC<Props> = ({
   selectedParam,
   onSendNow,
 }) => {
+
   const {
     optionMenu,
     setOptionMenu,
@@ -78,11 +80,6 @@ const DetailPanel: React.FC<Props> = ({
     newSystem,
     setNewSystem,
     addPickedSystem,
-    // pickCtcOpen,
-    // setPickCtcOpen,
-    // newContact,
-    // setNewContact,
-    // addPickedContact,
     clientEditOpen,
     setClientEditOpen,
     clientLocal,
@@ -115,25 +112,23 @@ const DetailPanel: React.FC<Props> = ({
     sysGlobalFilter,
     setSysGlobalFilter,
     openSystemPicker,
-    // contactPickerItems,
     openContactPicker,
   } = useDetailPanel(contactId, selectedParam)
 
   const { catCredential } = useCatCredential()
 
   const {
-    conv,
-    conversationTone,
-    tags,
-    isAddingTag,
-    newTag,
-    setIsAddingTag,
-    setNewTag,
-    handleAddTag,
-    handleRemoveTag,
-    handleKeyDown,
-  } = useContactDetail(Number(conversationId))
-
+    loading: LoadingPDF,
+    exportConversationHistoryToPDFAsync,
+    GetConversaionContact,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    totalCount,
+    data: conversations,
+  } = useConversations()
+  
   const Trunc = ({ children }: { children?: React.ReactNode }) => (
     <span
       title={children ? String(children) : '---'}
@@ -149,7 +144,6 @@ const DetailPanel: React.FC<Props> = ({
       {displayOrDash(children as any)}
     </span>
   )
-
   const Row = ({ label, value }: { label: string; value?: React.ReactNode }) => (
     <div className="detailPanel-clientGroup" style={{ alignItems: 'center' }}>
       <p className="detailPanel-clientGroup__title">{label}</p>
@@ -193,7 +187,45 @@ const DetailPanel: React.FC<Props> = ({
   }
 
   const [sysPickerLocalFilter, setSysPickerLocalFilter] = useState(sysGlobalFilter || '')
-  // const [ctcPickerFilter, setCtcPickerFilter] = useState('')
+
+  const {
+    conv,
+    conversationTone,
+    tags,
+    isAddingTag,
+    newTag,
+    setIsAddingTag,
+    setNewTag,
+    handleAddTag,
+    handleRemoveTag,
+    handleKeyDown,
+  } = useContactDetail(Number(conversationId))
+
+  const [convFrom, setConvFrom] = useState<string>('')
+  const [convTo, setConvTo] = useState<string>('')
+  const [convQuery, setConvQuery] = useState<string>('')
+
+  useEffect(() => {
+    if (optionMenu !== 4) return
+      GetConversaionContact({
+      contactId: contactId ?? 0,
+      from: convFrom || null,
+      to: convTo || null,
+      q: convQuery || null,
+      page,
+      pageSize,
+    })
+  }, [optionMenu, contactId, convFrom, convTo, convQuery, page, pageSize, GetConversaionContact])
+
+  const convRows = useMemo(() => (conversations || []).map((c: any) => ({
+    id: c.id,
+    createdAt: c.createdAt,
+    contactName: c.clientContactName || c.contactName,
+    agent: c.assignedAgentName || '—',
+    status: c.status || '—',
+  })), [conversations])
+
+  const [hoverId, setHoverId] = useState<number | null>(null)
 
   if (loading)
     return (
@@ -226,10 +258,15 @@ const DetailPanel: React.FC<Props> = ({
             <Book size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
+         <li className={`detailPanel-option ${optionMenu === 5 ? 'is-active' : ''}`}>
+          <button type="button" className="detailPanel-optionBtn" onClick={() => setOptionMenu(5)} aria-label="Conversación">
+            <Book size={18} className="detailPanel-optionBtn__icon" />
+          </button>
+        </li>
       </ul>
 
       <section className="detailPanel-content">
-        
         {optionMenu === 1 && (
           <>
             <header className="detailPanel-content-header">
@@ -568,106 +605,247 @@ const DetailPanel: React.FC<Props> = ({
         )}
 
         {optionMenu === 4 && (
-          <div className="detailPanel-conv">
-            <header><h5>Detalles de la conversación</h5></header>
-            {(() => {
-              const R = ({ label, value }: { label: string; value: React.ReactNode }) => (
-                <div className="detailPanel-contactGroup">
-                  <p className="detailPanel-contactGroup__title">{label}</p>
-                  <span className="detailsPanel-contactGroup__value">{value ?? '---'}</span>
+          <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
+            <header className="detailPanel-content-header" style={{ display: 'grid', gap: 8 }}>
+              <h5>Historial de conversaciones</h5>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <input
+                  type="date"
+                  className="input"
+                  value={convFrom}
+                  onChange={(e) => { setPage(1); setConvFrom(e.target.value) }}
+                  placeholder="dd/mm/aaaa"
+                />
+                <input
+                  type="date"
+                  className="input"
+                  value={convTo}
+                  onChange={(e) => { setPage(1); setConvTo(e.target.value) }}
+                  placeholder="dd/mm/aaaa"
+                />
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="input"
+                  placeholder="Buscar por texto…"
+                  value={convQuery}
+                  onChange={(e) => setConvQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setPage(1) }}
+                  style={{ paddingLeft: 32 }}
+                />
+                <Search size={16} style={{ position: 'absolute', left: 8, top: 10, opacity: .6 }} />
+              </div>
+              <button
+                className="btn btn--secondary"
+                onClick={() => { setConvFrom(''); setConvTo(''); setConvQuery(''); setPage(1) }}
+                style={{ justifySelf: 'center' }}
+              >
+                Limpiar
+              </button>
+            </header>
+
+            <div style={{ display: 'grid', gap: 10, marginTop: 10, maxHeight: 380, overflow: 'auto' }}>
+              {convRows.map(r => (
+                <div
+                  key={r.id}
+                  onMouseEnter={() => setHoverId(r.id)}
+                  onMouseLeave={() => setHoverId(null)}
+                  style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}
+                >
+                  <div className="detailPanel-contactGroup">
+                    <p className="detailPanel-contactGroup__title">Creado</p>
+                    <span className="detailPanel-clientGroup__cliente">{formatDate(r.createdAt)}</span>
+                  </div>
+                  <div className="detailPanel-contactGroup">
+                    <p className="detailPanel-contactGroup__title">Contacto</p>
+                    <span className="detailPanel-clientGroup__cliente"><Trunc>{r.contactName}</Trunc></span>
+                  </div>
+                  <div className="detailPanel-contactGroup">
+                    <p className="detailPanel-contactGroup__title">Agente</p>
+                    <span className="detailPanel-clientGroup__cliente"><Trunc>{r.agent}</Trunc></span>
+                  </div>
+                  <div className="detailPanel-contactGroup" style={{ alignItems: 'center' }}>
+                    <p className="detailPanel-contactGroup__title">Ticket</p>
+                    <span className="detailPanel-clientGroup__cliente">#{r.id}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'inline-flex', gap: 6, opacity: hoverId === r.id ? 1 : 0.4, transition: 'opacity .2s' }}>
+                      <button
+                        className="btn btn--ghost"
+                        onClick={() => (window as any).__OPEN_CONV_HISTORY__?.(r.id)}
+                        title="Ver historial"
+                      >
+                        <History size={16} />
+                      </button>
+                      <button
+                        className="btn btn--ghost"
+                        onClick={() => exportConversationHistoryToPDFAsync({
+                          contactId: contactId ?? conv!.clientContactId,
+                          from: convFrom || null,
+                          to: convTo || null,
+                          title: 'Reporte de Conversaciones',
+                          subtitle: 'Historia de conversaciones',
+                        })}
+                        disabled={!!LoadingPDF}
+                        title="Descargar PDF"
+                      >
+                        <FileDown size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              )
-              return (
-                <>
-                  <div className="detailPanel-contactGroup-__container">
-                    <R label="Empresa" value={conv?.systemDefinedCompanyName ?? '---'} />
-                    <R label="Contacto" value={conv?.clientContactName ?? '---'} />
-                    <R label="Número" value={conv?.contactNumber ?? '---'} />
-                    <R
-                      label="Canal"
-                      value={
-                        <span title="WhatsApp">
-                          <FaWhatsapp style={{ verticalAlign: 'middle' }} />
-                        </span>
-                      }
-                    />
-                    <R label="Estado Reciente" value={conv?.status ?? '---'} />
-                  </div>
-                  <div className="detailPanel-contactGroup-__container">
-                    <R label="Creado" value={formatDate(conv?.createdAt)} />
-                    <R label="Solicitud de agente" value={formatDate(conv?.agentRequestAt)} />
-                    <R label="Asignación a agente" value={formatDate(conv?.assignedAt)} />
-                    <R label="Primer mensaje del agente" value={formatDate(conv?.agentFirstMessageAt)} />
-                    <R label="Último mensaje del agente" value={formatDate(conv?.agentLastMessageAt)} />
-                    <R label="Último mensaje del cliente" value={formatDate(conv?.clientLastMessageAt)} />
-                    <R label="Última actualización" value={formatDate(conv?.updatedAt)} />
-                    <R label="Cierre" value={formatDate(conv?.closedAt)} />
-                  </div>
-                  <div className="detailPanel-contactGroup-__container">
-                    {conv?.assignedByUserName && <R label="Asignado por" value={conv.assignedByUserName} />}
-                    {conv?.assignedAgentName && <R label="Agente asignado" value={conv.assignedAgentName} />}
-                  </div>
-                  {conversationTone && (
-                    <div className="detailPanel-contactGroup-__container">
-                      <R
-                        label="Tono de conversación"
-                        value={<strong className={`conversation-toneText__${conversationTone.trim()}`}>{conversationTone}</strong>}
-                      />
-                    </div>
-                  )}
-                  <div className="detailPanel-tags" style={{ marginTop: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Tag size={16} />
-                      <h6 style={{ margin: 0 }}>Etiquetas</h6>
-                      {!isAddingTag && (
-                        <button className="section-action" onClick={() => setIsAddingTag(true)}>
-                          <Edit size={14} /> <span>Editar</span>
-                        </button>
-                      )}
-                    </div>
-                    {tags.length === 0 ? null : (
-                      <div className="tag-list" style={{ marginTop: 6 }}>
-                        {tags.map((t) => (
-                          <div key={t} className="tag">
-                            <span className="tag-text">{t}</span>
-                            {isAddingTag && (
-                              <button className="tag-remove" onClick={() => handleRemoveTag(t)} aria-label={`Quitar ${t}`}>
-                                <X size={12} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {isAddingTag && (
-                      <div className="tag-editor">
-                        <div className="tag-input-container">
-                          <input
-                            className="tag-input"
-                            value={newTag}
-                            onChange={(e) => setNewTag(e.target.value)}
-                            placeholder="Nueva etiqueta…"
-                            onKeyDown={handleKeyDown}
-                            maxLength={60}
-                            autoFocus
-                          />
-                          <div className="tag-input-actions">
-                            <button className="tag-action-btn tag-add-btn" onClick={handleAddTag} disabled={!newTag.trim()} aria-label="Agregar etiqueta">
-                              <Check size={16} />
-                            </button>
-                            <button className="tag-action-btn tag-cancel-btn" onClick={() => { setNewTag(''); setIsAddingTag(false) }} aria-label="Cancelar edición">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )
-            })()}
+              ))}
+
+              {convRows.length === 0 && (
+                <div style={{ border: '1px dashed #e5e7eb', borderRadius: 10, padding: 16, textAlign: 'center', opacity: .7 }}>
+                  Sin resultados
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10 }}>
+              <div style={{ fontSize: 12, opacity: .7 }}>Total: {totalCount}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select className="input" value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+                <button className="btn btn--ghost" onClick={() => setPage(Math.max(1, page - 1))}>Prev</button>
+                <span style={{ fontSize: 12 }}>Página {page}</span>
+                <button className="btn btn--ghost" onClick={() => setPage(page + 1)}>Next</button>
+              </div>
+            </div>
           </div>
         )}
+
+        {optionMenu === 5 && ( 
+            <div  className="detailPanel-card"
+              style={{
+                border: '1px solid #E5E7EB',
+                borderRadius: 12,
+                padding: 12,
+                marginTop: 8,
+              }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Empresa</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                  {conv?.systemDefinedCompanyName ?? '---'}
+                  </span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Contacto</p>
+                  <span className="detailPanel-clientGroup__cliente">{conv?.clientContactName ?? '---'}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Nombre</p>
+                  <span className="detailPanel-clientGroup__cliente">{conv?.contactNumber ?? '---'}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Canal</p>
+                  <span className="detailPanel-clientGroup__cliente"><FaWhatsapp style={{ verticalAlign: 'middle' }} /></span>
+              </div>
+            <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Estado Reciente</p>
+                  <span className="detailPanel-clientGroup__cliente">{conv?.status ?? '---'}</span>
+              </div>
+
+             <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Creado</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.createdAt)}</span>
+              </div>
+             <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">solicitud de agente</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.agentRequestAt)}</span>
+              </div>
+             <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Asignación de agente</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.assignedAt)}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Primer mensaje del agente</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.agentFirstMessageAt)}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Último mensaje del agente</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.agentLastMessageAt)}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Último mensaje del cliente</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.clientLastMessageAt)}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Última actualización</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.updatedAt)}</span>
+              </div>
+              <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-clientGroup__title">Cierre</p>
+                  <span className="detailPanel-clientGroup__cliente">{formatDate(conv?.closedAt)}</span>
+              </div>
+                 </div>
+
+              {conversationTone && (
+                <div className="detailPanel-contactGroup">
+                  <p className="detailPanel-contactGroup__title">Tono de conversación</p>
+                  <span className="detailPanel-clientGroup__cliente">
+                    <strong className={`conversation-toneText__${conversationTone.trim()}`}>{conversationTone}</strong>
+                  </span>
+                </div>
+              )}
+
+              <div className="detailPanel-tags" style={{ marginTop: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Tag size={16} />
+                  <h6 style={{ margin: 0 }}>Etiquetas</h6>
+                  {!isAddingTag && (
+                    <button className="section-action" onClick={() => setIsAddingTag(true)}>
+                      <Edit size={14} /> <span>Editar</span>
+                    </button>
+                  )}
+                </div>
+                {tags.length > 0 && (
+                  <div className="tag-list" style={{ marginTop: 6 }}>
+                    {tags.map((t) => (
+                      <div key={t} className="tag">
+                        <span className="tag-text">{t}</span>
+                        {isAddingTag && (
+                          <button className="tag-remove" onClick={() => handleRemoveTag(t)} aria-label={`Quitar ${t}`}>
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {isAddingTag && (
+                  <div className="tag-editor">
+                    <div className="tag-input-container">
+                      <input
+                        className="tag-input"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Nueva etiqueta…"
+                        onKeyDown={handleKeyDown}
+                        maxLength={60}
+                        autoFocus
+                      />
+                      <div className="tag-input-actions">
+                        <button className="tag-action-btn tag-add-btn" onClick={handleAddTag} disabled={!newTag.trim()} aria-label="Agregar etiqueta">
+                          <Check size={16} />
+                        </button>
+                        <button className="tag-action-btn tag-cancel-btn" onClick={() => { setNewTag(''); setIsAddingTag(false) }} aria-label="Cancelar edición">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+        )}
+
       </section>
 
       {showMore && (
@@ -679,7 +857,6 @@ const DetailPanel: React.FC<Props> = ({
                 <button className={`btn-tab ${moreTab === 'cred' ? 'is-active' : ''}`} onClick={() => setMoreTab('cred')}>Credenciales</button>
                 <button className={`btn-tab ${moreTab === 'dev' ? 'is-active' : ''}`} onClick={() => setMoreTab('dev')}>Equipos</button>
                 <button className={`btn-tab ${moreTab === 'sys' ? 'is-active' : ''}`} onClick={() => setMoreTab('sys')}>Sistemas</button>
-                {/* <button className={`btn-tab ${moreTab === 'ctc' ? 'is-active' : ''}`} onClick={() => setMoreTab('ctc')}>Contactos</button> */}
               </div>
               <button className="btn btn--ghost" onClick={() => { setShowMore(false); setEditBuffer(null) }} aria-label="Cerrar">
                 <X size={16} />
@@ -1219,76 +1396,6 @@ const DetailPanel: React.FC<Props> = ({
           </div>
         </div>
       )}
-
-      {/* {pickCtcOpen && (
-        <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Vincular contacto existente">
-          <div className="dp-modal__backdrop" onClick={() => setPickCtcOpen(false)} />
-          <div className="dp-modal__content" style={{ width: 560, maxWidth: '96vw', background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h6 style={{ margin: 0 }}>Vincular contacto existente</h6>
-              <button className="btn btn--ghost" onClick={() => setPickCtcOpen(false)} aria-label="Cerrar"><X size={16} /></button>
-            </div>
-            <div style={{ padding: 12, display: 'grid', gap: 10 }}>
-              <div style={{ position: 'relative' }}>
-                <input
-                  className="input"
-                  placeholder="Buscar contacto por nombre o teléfono…"
-                  value={ctcPickerFilter}
-                  onChange={(e) => setCtcPickerFilter(e.target.value)}
-                  style={{ paddingLeft: 34 }}
-                  aria-label="Buscar contacto"
-                />
-                <Search size={16} style={{ position: 'absolute', left: 10, top: 10, opacity: .6 }} />
-              </div>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, maxHeight: 420, overflow: 'auto' }}>
-                <table className="dp-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 48 }}></th>
-                      <th>Nombre</th>
-                      <th>Teléfono</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contactPickerItems
-                      .filter(c => {
-                        const q = ctcPickerFilter.trim().toLowerCase()
-                        if (!q) return true
-                        return (c.fullName || '').toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q)
-                      })
-                      .map(c => (
-                        <tr key={c.id}>
-                          <td>
-                            <input
-                              type="radio"
-                              name="pickContact"
-                              checked={newContact.contactId === c.id}
-                              onChange={() => setNewContact({ ...newContact, contactId: c.id })}
-                              aria-label={`Seleccionar ${c.fullName || 'contacto'}`}
-                            />
-                          </td>
-                          <td>{c.fullName || '---'}</td>
-                          <td>{formatNiPhone(c.phone)}</td>
-                        </tr>
-                      ))}
-                    {contactPickerItems.length === 0 && (
-                      <tr><td colSpan={3} style={{ textAlign: 'center', padding: 16, opacity: .7 }}>Sin resultados</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" checked={!!newContact.isActive} onChange={(e) => setNewContact({ ...newContact, isActive: e.target.checked })} />
-                Activo
-              </label>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <button className="btn btn--ghost" onClick={() => setPickCtcOpen(false)}>Cancelar</button>
-                <button className="btn btn--primary" onClick={addPickedContact} disabled={!newContact.contactId}>Agregar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
     </div>
   )
 }

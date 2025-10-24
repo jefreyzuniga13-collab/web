@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ConversationService } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { useNavigate } from 'react-router-dom'
+import type { exportPDFArgs, GetConvArgs } from '@/Interfaces/Chat/ConversationInterface'
 
 interface UseConversationsOptions {
   initialState?: string
@@ -24,7 +25,63 @@ export default function useConversations({
   const [error, setError] = useState<Error | null>(null)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [selectedConversation, setSelectedConversation] = useState<ConversationDto | null>(null)
-   const navigate = useNavigate();
+  const navigate = useNavigate();
+  //Exportartar PDF
+
+  const exportConversationHistoryToPDFAsync = useCallback(
+    async (params: exportPDFArgs) => {
+      setLoading(true)
+      {
+        try {
+          await ConversationService.exportChatPdfByContact(params);
+        } catch (err: any) {
+          setError(err)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }, []
+  )
+
+const GetConversaionContact = useCallback(
+  async ({
+    from,
+    to,
+    contactId = 0,
+    q = '',
+    page: pg = page,
+    pageSize: ps = pageSize,
+  }: GetConvArgs) => {
+    try {
+      setLoading(true)
+
+      const toDate = (v?: string | Date | null) =>
+        typeof v === 'string' && v
+          ? new Date(`${v}T00:00:00`)
+          : (v as Date | undefined)
+
+      const res = await ConversationService.getConversationsByContact(
+        toDate(from),
+        toDate(to),
+        contactId,
+        q || undefined,
+        pg,
+        ps
+      )
+
+      setData(res.items)
+      setPage(pg)
+      setPageSize(ps)
+      setTotalCount(res.meta.totalCount)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  },
+  [page, pageSize]
+)
+
 
   const fetchPage = useCallback(
     async (st = stateFilter, pg = page, ps = pageSize) => {
@@ -32,11 +89,11 @@ export default function useConversations({
       setError(null)
       try {
         const res = await ConversationService.getByStateWithOut(st, pg, ps)
-
-        setData(res.items)
         setTotalCount(res.meta.totalCount)
+        setData(res.items)
         setPage(pg)
         setPageSize(ps)
+
       } catch (err: any) {
         setError(err)
       } finally {
@@ -65,7 +122,7 @@ export default function useConversations({
     setSelectedConversation(null)
   }, [])
 
-  const navigationBack = async()=>{
+  const navigationBack = async () => {
     navigate(-1)
   }
   return {
@@ -84,6 +141,8 @@ export default function useConversations({
     refresh: () => fetchPage(),
     openView,
     closeModal,
-    navigationBack
+    navigationBack,
+    exportConversationHistoryToPDFAsync,
+    GetConversaionContact
   }
 }

@@ -29,6 +29,8 @@ const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategory
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
 const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
+const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
+
 
 
 export function AppRouter() {
@@ -48,6 +50,7 @@ export function AppRouter() {
           <Route path="reset-password"  element={<ResetPassword />} />
           <Route path="verify-account"  element={<Activation />} />
           <Route path="privacy-policy"  element={<PrivacyPolicy />} />
+          <Route path="privacy-policy"  element={<WorkOrderPage />} />
         </Route>
 
          <Route path="unauthorized"    element={<Unauthorized />} />
