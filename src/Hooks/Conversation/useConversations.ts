@@ -26,8 +26,8 @@ export default function useConversations({
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [selectedConversation, setSelectedConversation] = useState<ConversationDto | null>(null)
   const navigate = useNavigate();
+  
   //Exportartar PDF
-
   const exportConversationHistoryToPDFAsync = useCallback(
     async (params: exportPDFArgs) => {
       setLoading(true)
@@ -81,7 +81,6 @@ const GetConversaionContact = useCallback(
   },
   [page, pageSize]
 )
-
 
   const fetchPage = useCallback(
     async (st = stateFilter, pg = page, ps = pageSize) => {
