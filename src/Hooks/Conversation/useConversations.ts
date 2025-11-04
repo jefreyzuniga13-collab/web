@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from 'react'
-import { ConversationService } from '@/Services/ConversationService'
+import { ConversationService, exportChatPdfByContact } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { useNavigate } from 'react-router-dom'
 import type { exportPDFArgs, GetConvArgs } from '@/Interfaces/Chat/ConversationInterface'
-
 interface UseConversationsOptions {
   initialState?: string
   initialPage?: number
@@ -33,7 +32,7 @@ export default function useConversations({
       setLoading(true)
       {
         try {
-          await ConversationService.exportChatPdfByContact(params);
+          await exportChatPdfByContact(params);
         } catch (err: any) {
           setError(err)
         } finally {

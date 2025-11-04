@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react'
 import { LuContact } from 'react-icons/lu'
-import { FaCalendarAlt, FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaPhone, FaRegBuilding, FaSync, FaTag, FaUserAlt, FaUserCheck, FaWhatsapp } from 'react-icons/fa'
+import { FaCalendarAlt, FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaPhone, FaRegBuilding, FaSync, FaTag, FaUserAlt, FaUserCheck, FaWhatsapp, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
-import { Book, Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp, FileDown, History } from 'lucide-react'
+import { BiConversation } from "react-icons/bi";
+import {Check, Edit, Tag, X, Plus, Search, ChevronDown, ChevronUp, 
+  History, 
+  FileDown } from 'lucide-react'
+import {ConversationHistoryModal} from '@/Components/Chat/ConversationHistoryModal'
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
 import { useContactDetail } from '@/Hooks/Chat/useContactDetail'
@@ -12,7 +16,7 @@ import '@/Styles/Chat/DetailPanel.css'
 import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import { FaRegClock } from 'react-icons/fa6'
 import useConversations from '@/Hooks/Conversation/useConversations'
-
+import { AiOutlineWechatWork } from "react-icons/ai";
 type Props = {
   contactId?: number
   conversationId?: number
@@ -115,6 +119,10 @@ const DetailPanel: React.FC<Props> = ({
     openContactPicker,
   } = useDetailPanel(contactId, selectedParam)
 
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedConversation, setSelectedConversation] = useState<number>(0);
+
+    
   const { catCredential } = useCatCredential()
 
   const {
@@ -124,7 +132,7 @@ const DetailPanel: React.FC<Props> = ({
     page,
     pageSize,
     setPage,
-    setPageSize,
+    // setPageSize,
     totalCount,
     data: conversations,
   } = useConversations()
@@ -133,7 +141,7 @@ const DetailPanel: React.FC<Props> = ({
     <span
       title={children ? String(children) : '---'}
       style={{
-        maxWidth: 240,
+        maxWidth: '100%',
         display: 'inline-block',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -205,6 +213,12 @@ const DetailPanel: React.FC<Props> = ({
   const [convTo, setConvTo] = useState<string>('')
   const [convQuery, setConvQuery] = useState<string>('')
 
+  const [showConvFilters, setShowConvFilters] = useState(false)
+  const [convItems, setConvItems] = useState<any[]>([])
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null)
+  const hasMore = convItems.length < (totalCount ?? 0)
+
   useEffect(() => {
     if (optionMenu !== 4) return
       GetConversaionContact({
@@ -217,13 +231,43 @@ const DetailPanel: React.FC<Props> = ({
     })
   }, [optionMenu, contactId, convFrom, convTo, convQuery, page, pageSize, GetConversaionContact])
 
-  const convRows = useMemo(() => (conversations || []).map((c: any) => ({
-    id: c.id,
+  useEffect(() => {
+    if (!conversations) return
+    if (page === 1) {
+      setConvItems(conversations)
+    } else {
+      const incomingById = new Map(conversations.map((c: any) => [c.id, c]))
+      setConvItems(prev => {
+        const prevMap = new Map(prev.map((p: any) => [p.id, p]))
+        for (const [id, row] of incomingById) prevMap.set(id, row)
+        return Array.from(prevMap.values())
+      })
+    }
+    setIsLoadingMore(false)
+  }, [conversations, page])
+
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node) return
+    const io = new IntersectionObserver((entries) => {
+      const first = entries[0]
+      if (first.isIntersecting && hasMore && !isLoadingMore) {
+        setIsLoadingMore(true)
+        setPage(page + 1)
+      }
+    }, { root: null, rootMargin: '120px', threshold: 0 })
+    io.observe(node)
+    return () => io.disconnect()
+  }, [sentinelRef, hasMore, isLoadingMore, page, setPage])
+
+  const convRows = useMemo(() => (convItems || []).map((c: any) => ({
+    id: c.conversationId,
     createdAt: c.createdAt,
     contactName: c.clientContactName || c.contactName,
     agent: c.assignedAgentName || '—',
     status: c.status || '—',
-  })), [conversations])
+    contactId: c.clientContactId
+  })), [convItems])
 
   const [hoverId, setHoverId] = useState<number | null>(null)
 
@@ -255,13 +299,13 @@ const DetailPanel: React.FC<Props> = ({
         </li>
         <li className={`detailPanel-option ${optionMenu === 4 ? 'is-active' : ''}`}>
           <button type="button" className="detailPanel-optionBtn" onClick={() => setOptionMenu(4)} aria-label="Conversación">
-            <Book size={18} className="detailPanel-optionBtn__icon" />
+            <BiConversation size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
 
          <li className={`detailPanel-option ${optionMenu === 5 ? 'is-active' : ''}`}>
           <button type="button" className="detailPanel-optionBtn" onClick={() => setOptionMenu(5)} aria-label="Conversación">
-            <Book size={18} className="detailPanel-optionBtn__icon" />
+            <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
       </ul>
@@ -275,7 +319,7 @@ const DetailPanel: React.FC<Props> = ({
 
             <div
               className="detailPanel-card"
-              style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}
+              style={{padding: 12, marginTop: 8 }}
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                 <div className="detailPanel-contactGroup">
@@ -410,8 +454,6 @@ const DetailPanel: React.FC<Props> = ({
             <div
               className="detailPanel-card"
               style={{
-                border: '1px solid #E5E7EB',
-                borderRadius: 12,
                 padding: 12,
                 marginTop: 8,
               }}
@@ -565,7 +607,7 @@ const DetailPanel: React.FC<Props> = ({
         )}
 
         {optionMenu === 3 && (
-          <div className="detailPanel-quick">
+          <>
             <header className="detailPanel-quick__header">
               <h5>Mensajes rápidos</h5>
               <input
@@ -576,6 +618,8 @@ const DetailPanel: React.FC<Props> = ({
                 aria-label="Buscar mensajes rápidos"
               />
             </header>
+
+                      <div className="detailPanel-quick">
             <ul
               className="detailPanel-quick__list"
               style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 10 }}
@@ -602,119 +646,271 @@ const DetailPanel: React.FC<Props> = ({
               ))}
             </ul>
           </div>
+          </>
         )}
 
         {optionMenu === 4 && (
-          <div className="detailPanel-card" style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 12, marginTop: 8 }}>
-            <header className="detailPanel-content-header" style={{ display: 'grid', gap: 8 }}>
-              <h5>Historial de conversaciones</h5>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <input
-                  type="date"
-                  className="input"
-                  value={convFrom}
-                  onChange={(e) => { setPage(1); setConvFrom(e.target.value) }}
-                  placeholder="dd/mm/aaaa"
-                />
-                <input
-                  type="date"
-                  className="input"
-                  value={convTo}
-                  onChange={(e) => { setPage(1); setConvTo(e.target.value) }}
-                  placeholder="dd/mm/aaaa"
-                />
-              </div>
-              <div style={{ position: 'relative' }}>
-                <input
-                  className="input"
-                  placeholder="Buscar por texto…"
-                  value={convQuery}
-                  onChange={(e) => setConvQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') setPage(1) }}
-                  style={{ paddingLeft: 32 }}
-                />
-                <Search size={16} style={{ position: 'absolute', left: 8, top: 10, opacity: .6 }} />
-              </div>
-              <button
-                className="btn btn--secondary"
-                onClick={() => { setConvFrom(''); setConvTo(''); setConvQuery(''); setPage(1) }}
-                style={{ justifySelf: 'center' }}
-              >
-                Limpiar
-              </button>
-            </header>
+          <div
+            className="detailPanel-card"
+            style={{ 
+                paddingLeft:12,
+                paddingRight:12
+               }}
+          >
+            <header
+              className="detailPanel-content-header"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                position: 'relative'
+              }}
+            >
+              <h5 style={{ margin: 0 }}>Historial de conversaciones</h5>
 
-            <div style={{ display: 'grid', gap: 10, marginTop: 10, maxHeight: 380, overflow: 'auto' }}>
-              {convRows.map(r => (
-                <div
-                  key={r.id}
-                  onMouseEnter={() => setHoverId(r.id)}
-                  onMouseLeave={() => setHoverId(null)}
-                  style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'grid', gap: 6 }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {/* <span style={{ fontSize: 12, opacity: .7 }}>
+                  Total: {totalCount ?? 0}
+                </span> */}
+
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setShowConvFilters(s => !s)}
+                  title="Filtros"
+                  aria-expanded={showConvFilters}
+                  aria-controls="convFilterPanel"
                 >
-                  <div className="detailPanel-contactGroup">
-                    <p className="detailPanel-contactGroup__title">Creado</p>
-                    <span className="detailPanel-clientGroup__cliente">{formatDate(r.createdAt)}</span>
-                  </div>
-                  <div className="detailPanel-contactGroup">
-                    <p className="detailPanel-contactGroup__title">Contacto</p>
-                    <span className="detailPanel-clientGroup__cliente"><Trunc>{r.contactName}</Trunc></span>
-                  </div>
-                  <div className="detailPanel-contactGroup">
-                    <p className="detailPanel-contactGroup__title">Agente</p>
-                    <span className="detailPanel-clientGroup__cliente"><Trunc>{r.agent}</Trunc></span>
-                  </div>
-                  <div className="detailPanel-contactGroup" style={{ alignItems: 'center' }}>
-                    <p className="detailPanel-contactGroup__title">Ticket</p>
-                    <span className="detailPanel-clientGroup__cliente">#{r.id}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <div style={{ display: 'inline-flex', gap: 6, opacity: hoverId === r.id ? 1 : 0.4, transition: 'opacity .2s' }}>
-                      <button
-                        className="btn btn--ghost"
-                        onClick={() => (window as any).__OPEN_CONV_HISTORY__?.(r.id)}
-                        title="Ver historial"
-                      >
-                        <History size={16} />
-                      </button>
-                      <button
-                        className="btn btn--ghost"
-                        onClick={() => exportConversationHistoryToPDFAsync({
-                          contactId: contactId ?? conv!.clientContactId,
-                          from: convFrom || null,
-                          to: convTo || null,
-                          title: 'Reporte de Conversaciones',
-                          subtitle: 'Historia de conversaciones',
-                        })}
-                        disabled={!!LoadingPDF}
-                        title="Descargar PDF"
-                      >
-                        <FileDown size={16} />
-                      </button>
+                  <FaFilter size={14} /> <span style={{ marginLeft: 6 }}>Filtros</span>
+                </button>
+              </div>
+
+              {showConvFilters && (
+                <div
+                  id="convFilterPanel"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: 360,
+                    background: '#fff',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: 10,
+                    boxShadow: '0 10px 30px rgba(0,0,0,.12)',
+                    padding: 10,
+                    zIndex: 2,
+                    display: 'grid',
+                    gap: 8
+                  }}
+                >
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label className="detailPanel-clientGroup__title" style={{ display: 'block' }}>Desde</label>
+                      <input
+                        type="date"
+                        className="input"
+                        value={convFrom}
+                        onChange={(e) => { setConvFrom(e.target.value); setPage(1) }}
+                      />
+                    </div>
+                    <div>
+                      <label className="detailPanel-clientGroup__title" style={{ display: 'block' }}>Hasta</label>
+                      <input
+                        type="date"
+                        className="input"
+                        value={convTo}
+                        onChange={(e) => { setConvTo(e.target.value); setPage(1) }}
+                      />
                     </div>
                   </div>
+
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      className="input"
+                      placeholder="Buscar por texto…"
+                      value={convQuery}
+                      onChange={(e) => setConvQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); setShowConvFilters(false) } }}
+                      style={{ paddingLeft: 32 }}
+                    />
+                    <Search size={16} style={{ position: 'absolute', left: 8, top: 10, opacity: .6 }} />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    {/* <button
+                      className="btn btn--secondary"
+                      onClick={() => { setConvFrom(''); setConvTo(''); setConvQuery(''); setPage(1); setShowConvFilters(false) }}
+                    >
+                      Limpiar
+                    </button> */}
+                    {/* <button
+                      className="btn btn--primary"
+                      onClick={() => { setPage(1); setShowConvFilters(false) }}
+                      title="Aplicar filtros"
+                    >
+                      Aplicar
+                    </button> */}
+                  </div>
                 </div>
-              ))}
+              )}
+            </header>
+
+            <div
+              style={{
+                display: 'grid',
+                // gap: 10,
+                marginTop: 10,
+                maxHeight: 420,
+                overflow: 'auto',
+                paddingRight: 2
+              }}
+            >
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                  gap: 8,
+                  padding: '6px 10px',
+                  borderBottom: '1px solid #e5e7eb',
+                  fontSize: 12,
+                  opacity: .7
+                }}
+              >
+                <span>Creado</span>
+                <span>Contacto</span>
+                <span>Agente</span>
+                {/* <span>Estado</span> */}
+                <span>Ticket</span>
+              </div>
+                
+              {convRows.map(r => (
+                          <div
+                            key={r.id}
+                            onMouseEnter={() => setHoverId(r.id)}
+                            onMouseLeave={() => setHoverId(null)}
+                            // onClick={()=>{
+                            //   setSelectedConversation(r.id)
+                            //   setShowHistoryModal(true)
+                            // }}
+                            style={{
+                              position: 'relative',
+                              borderBottom: '1px solid #e5e7eb',
+                              padding: 10,
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                              alignItems: 'center',
+                              gap: 8
+                            }}
+                          >
+                            <div
+                              title={formatDate(r.createdAt)}
+                              style={{ overflow: 'hidden' }}
+                              className="detailPanel-clientGroup__cliente"
+                            >
+                              <Trunc>{formatDate(r.createdAt)}</Trunc>
+                            </div>
+                            <div
+                              title={r.contactName}
+                              style={{ overflow: 'hidden' }}
+                              className="detailPanel-clientGroup__cliente"
+                            >
+                              {r.contactName != null ? <Trunc>{r.contactName}</Trunc> : '------------------------'}
+                            </div>
+                            <div
+                              title={r.agent}
+                              style={{ overflow: 'hidden' }}
+                              className="detailPanel-clientGroup__cliente"
+                            >
+                              {r.agent != null ? <Trunc>{r.agent}</Trunc> : '------------------------'}
+                            </div>
+                            <div
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
+                            >
+                              <span
+                                title={`#${r.id}`}
+                                style={{ overflow: 'hidden', flex: 1, textAlign: 'center' }}
+                                className="detailPanel-clientGroup__cliente"
+                              >
+                                <Trunc>{r.id}</Trunc>
+                              </span>
+                            </div>
+
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                right:0,
+                                // bottom:0,
+                                // left: 0,
+                                display: hoverId === r.id ? 'inline-flex' : 'none',
+                                gap: 6,
+                                background: '#fff',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: 8,
+                                padding: '4px 6px',
+                                // boxShadow: '0 6px 16px rgba(0,0,0,.12)',
+                                zIndex: 3
+                              }}
+                            >
+                              <button
+                                className="btn btn--ghost"
+                                onClick={()=>{
+                                setSelectedConversation(r.id)
+                                setShowHistoryModal(true)
+                              }}
+                                title="Ver historial"
+                              >
+                                <History size={16} />
+                              </button>
+                              <button
+                                className="btn btn--ghost"
+                                onClick={() =>
+                                  exportConversationHistoryToPDFAsync({
+                                    contactId: r.contactId,
+                                    from: convFrom || null,
+                                    to: convTo || null,
+                                    title: 'Reporte de Conversaciones',
+                                    subtitle: 'Historia de conversaciones'
+                                  })
+                                }
+                                disabled={!!LoadingPDF}
+                                title="Descargar PDF"
+                              >
+                                <FileDown size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
 
               {convRows.length === 0 && (
-                <div style={{ border: '1px dashed #e5e7eb', borderRadius: 10, padding: 16, textAlign: 'center', opacity: .7 }}>
+                <div
+                  style={{
+                    border: '1px dashed #e5e7eb',
+                    borderRadius: 10,
+                    padding: 16,
+                    textAlign: 'center',
+                    opacity: .7
+                  }}
+                >
                   Sin resultados
                 </div>
               )}
+
+              <div ref={sentinelRef} />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10 }}>
-              <div style={{ fontSize: 12, opacity: .7 }}>Total: {totalCount}</div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <select className="input" value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                  <option value="50">50</option>
-                </select>
-                <button className="btn btn--ghost" onClick={() => setPage(Math.max(1, page - 1))}>Prev</button>
-                <span style={{ fontSize: 12 }}>Página {page}</span>
-                <button className="btn btn--ghost" onClick={() => setPage(page + 1)}>Next</button>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: 10
+              }}
+            >
+              <div style={{ fontSize: 12, opacity: .7 }}>
+                {isLoadingMore ? 'Cargando más…' : hasMore ? 'Desplázate para cargar más' : 'No hay más resultados'}
               </div>
+              {LoadingPDF ? <span style={{ fontSize: 12, opacity: .7 }}>Preparando PDF…</span> : null}
             </div>
           </div>
         )}
@@ -722,11 +918,13 @@ const DetailPanel: React.FC<Props> = ({
         {optionMenu === 5 && ( 
             <div  className="detailPanel-card"
               style={{
-                border: '1px solid #E5E7EB',
-                borderRadius: 12,
-                padding: 12,
-                marginTop: 8,
+                paddingLeft:12,
+                paddingRight:12
               }}>
+                <header className="detailPanel-quick__header">
+              <h5>Conversación Actual</h5>
+            </header>
+
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                 <div className="detailPanel-contactGroup">
@@ -1283,7 +1481,7 @@ const DetailPanel: React.FC<Props> = ({
         </div>
       )}
 
-      {addDeviceOpen && (
+           {addDeviceOpen && (
         <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Nuevo equipo">
           <div className="dp-modal__backdrop" onClick={() => setAddDeviceOpen(false)} />
           <div className="dp-modal__content" style={{ width: 500, background: '#fff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.15)', position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1396,6 +1594,12 @@ const DetailPanel: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      <ConversationHistoryModal
+              isOpen={showHistoryModal}
+              onClose={() => setShowHistoryModal(false)}
+              conversationId={selectedConversation}
+            />
     </div>
   )
 }

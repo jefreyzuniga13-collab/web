@@ -21,7 +21,7 @@ interface JwtPayload {
 type FilterOption = { label: string; value: string; content: string };
 
 const FILTER_ORDER_STORAGE_KEY = "filterOrder";
-const DETAIL_PANEL_KEY = "detailPanelOpen";
+// const DETAIL_PANEL_KEY = "detailPanelOpen";
 
 export function useSupportPage() {
   const dispatch = useDispatch();
@@ -50,18 +50,13 @@ export function useSupportPage() {
   const isAdmin = role.toLowerCase() === "admin";
   let DEFAULT_OPTIONS: FilterOption[];
 
-  const [detailToggle, setDetailToggle] = useState<boolean>(() => {
-    try {
-      return true;
-      // return localStorage.getItem(DETAIL_PANEL_KEY) === 'true';
-    } catch { return false; }
-  });
+  const [detailToggle, setDetailToggle] = useState<boolean>(true);
 
-  // persiste cambios del toggle
-  useEffect(() => {
-    // eslint-disable-next-line no-empty
-    try { localStorage.setItem(DETAIL_PANEL_KEY, String(detailToggle)); } catch {}
-  }, [detailToggle]);
+  // // persiste cambios del toggle
+  // useEffect(() => {
+  //   // eslint-disable-next-line no-empty
+  //   try { localStorage.setItem(DETAIL_PANEL_KEY, String(detailToggle)); } catch {}
+  // }, [detailToggle]);
 
   if (isAdmin) {
     DEFAULT_OPTIONS = [

@@ -9,8 +9,14 @@ import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeRespons
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import type { exportPDFArgs } from "@/Interfaces/Chat/ConversationInterface";
 
-
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
+
+
+function toISOStringSafe(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 
 export function getConversation(id: number) {
@@ -359,45 +365,51 @@ class ConversationServ {
     return data.data
   }
 
-  async exportChatPdfByContact(
-   {contactId, from, to, title, subtitle}: exportPDFArgs
-  ): Promise<void> {
-    const params: Record<string, string> = { title, subtitle };
-
-    if (from) params.from = from.toLocaleString();
-    if (to) params.to = to.toLocaleString();
-
-    const res = await api.get<ArrayBuffer>(
-      `/Conversations/export/pdf/chat/${encodeURIComponent(contactId)}`,
-      {
-        params,
-        responseType: "blob",
-        headers: { Accept: "application/pdf" },
-      }
-    );
-
-    const blob = new Blob([res.data], { type: "application/pdf" });
-
-    // Nombre de archivo dinámico
-    const cd =
-      (res.headers["content-disposition"] ||
-        res.headers["Content-Disposition"]) as string | undefined;
-
-    const suggested =
-      (cd && /filename\*?=(?:UTF-8'')?"?([^";]+)"?/.exec(cd)?.[1]) ||
-      `conversaciones_chat_${new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:T]/g, "-")}.pdf`;
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = decodeURIComponent(suggested);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  }
+ 
 }
+
+export  async function exportChatPdfByContact(  
+  { contactId, from, to, title, subtitle }: exportPDFArgs
+    ): Promise<void> {
+  const body = {
+    title,
+    subtitle,
+    from: toISOStringSafe(from),
+    to: toISOStringSafe(to)
+  };
+
+  const res = await api.post<ArrayBuffer>(
+    `/Conversations/export/pdf/chat/${encodeURIComponent(contactId)}`,
+    body,
+    {
+      responseType: 'arraybuffer',
+      headers: {
+        'Accept': 'application/pdf',
+        'Content-Type': 'application/json'
+      },
+      transformResponse: [(data) => data],
+      validateStatus: (s) => s >= 200 && s < 300
+    }
+  );
+
+  //convertir los byte en  archivo pdf
+  const blob = new Blob([res.data], { type: 'application/pdf' });
+
+  const cd = (res.headers['content-disposition'] ||
+              res.headers['Content-Disposition']) as string | undefined;
+
+  const suggested =
+    (cd && /filename\*?=(?:UTF-8'')?"?([^";]+)"?/.exec(cd)?.[1]) ||
+    `conversaciones_chat_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.pdf`;
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = decodeURIComponent(suggested);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export const ConversationService = new ConversationServ();

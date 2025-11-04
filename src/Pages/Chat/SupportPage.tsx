@@ -48,15 +48,15 @@ const SupportPage: React.FC = () => {
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-  useEffect(() => {
-    if (!convId || conversation?.status === "Closed") setDetailToggle(false);
-  }, [convId, conversation?.status, setDetailToggle]);
+  // useEffect(() => {
+  //   if (!convId || conversation?.status === "Closed") setDetailToggle(false);
+  // }, [convId, conversation?.status, setDetailToggle]);
 
 
     //Captura de evento de esc, para cerrar la conversación.
   const handleScapePress = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      setDetailToggle(false);
+      // setDetailToggle(false);
       setContactDetailToggle(false);
       setConvId(null);
       setSearchConversation("");
@@ -190,8 +190,8 @@ const SupportPage: React.FC = () => {
       </main>
 
       <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
-  <aside className="sidebar">…</aside>
-  <main className="main-content">…</main>
+      <aside className="sidebar">…</aside>
+      <main className="main-content">…</main>
 
           <aside className="detail-aside">
               {detailToggle && convId && (

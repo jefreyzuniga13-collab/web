@@ -17,6 +17,8 @@
 .detailPanel-card{
   overflow:auto;
   padding: 0;
+  max-width: 100%;
+  min-height: 200px !important;
 }
 .chat-window__details {
   position: absolute;

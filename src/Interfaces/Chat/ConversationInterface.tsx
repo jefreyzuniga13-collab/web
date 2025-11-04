@@ -9,8 +9,8 @@ export type GetConvArgs = {
 
 export type exportPDFArgs ={
     contactId: number;
-    from?: Date | string | null;
-    to?: Date | string | null;
+    from: Date | string | null;
+    to: Date | string | null;
     title: string;
     subtitle: string;
 }
