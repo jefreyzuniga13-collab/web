@@ -11,6 +11,7 @@ import type { User } from '@/Interfaces/User/UserInterfaces'
 import '@/Styles/Users/UserForm.css'
 import { userService } from '@/Services/User/UserService'
 import { toast } from 'react-toastify'
+
 interface UserFormProps {
   initialData?: User
   companies: { companyId: number; name: string }[]
@@ -44,7 +45,6 @@ export default function UserForm({
     sendWelcomeEmail: false,
   })
 
-  
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)

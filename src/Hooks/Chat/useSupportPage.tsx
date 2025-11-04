@@ -63,7 +63,7 @@ export function useSupportPage() {
       { label: "Todos", value: "all", content: "Todos" },
       { label: "Bot", value: "bot", content: "Bot" },
       { label: "Pendiente", value: "waiting", content: "Pendiente" },
-      { label: "Humano", value: "human", content: "Humano" },
+      { label: "Humano", value: "human", content: "Asignado" },
       { label: "Cerrado", value: "closed", content: "Cerrado" },
       { label: "Incompleto", value: "incomplete", content: "Incompleto" },
     ];

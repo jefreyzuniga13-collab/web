@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useUsers } from "@/Hooks/User/useUsers";
 import type { UpdateUserRequest } from "@/Interfaces/User/UserInterfaces";
+import { toast } from "react-toastify";
+import { userService } from "@/Services/User/UserService";
 
 export function useProfileCard() {
   const { currentUser, loading, fetchOne } = useUsers();
+
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false)
 
   const [formData, setFormData] = useState<UpdateUserRequest>({
     fullName: "",
@@ -55,15 +59,67 @@ export function useProfileCard() {
     }
   };
 
-  const handleSave = () => {
-    if (currentUser) {
-      // const updateData = { ...formData };
-      if (selectedFile) {
-        // manejar la subida de la imagen
+
+  //Subir imagen de usuario
+     const handleUploadOnlyImage = async () => {
+      if (!currentUser?.userId) {
+          toast.warning('No se encontró el ID del usuario.' )
+        return
       }
-      // handleUpdateUser(currentUser.userId, updateData);
+      if (!selectedFile) {
+        toast.warning('Seleccione una imagen antes de actualizar.' )
+        return
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        toast.warning( 'La imagen no puede superar los 5MB' );
+        return
+      }
+       try{
+         const res = await userService.uploadUserAvatar(currentUser.userId, selectedFile)
+  
+        const newUrl = res.imageUrl ?? res.user?.imageUrl ?? ''
+        setFormData(prev => ({ ...prev, imageUrl: newUrl }))
+        toast.success("Foto de perfil actualizada con éxito.")
+       // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       }catch
+       { 
+        toast.error("Foto de perfil no actualizada")
+       }finally{
+        setUploadingImage(false);
+       }
+    }
+
+  const handleSave = async () => {
+    if (!currentUser?.userId) {
+      toast.warning("No se encontró el ID del usuario.");
+      return;
+    }
+
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
+      toast.warning("La imagen no puede superar los 5MB");
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("fullName", String(formData.fullName ?? ""));
+    fd.append("email", String(formData.email ?? ""));
+    fd.append("phone", String(formData.phone ?? ""));
+    fd.append("identifier", String(formData.identifier ?? ""));
+    fd.append("isActive", String(Boolean(formData.isActive)));
+    fd.append("companyId", String(formData.companyId ?? 0));
+    (formData.roleIds ?? []).forEach((id) => fd.append("roleIds", String(id)));
+    if (selectedFile) fd.append("file", selectedFile);
+
+    try {
+
+      // handleUploadOnlyImage();
+      await userService.updateUserAsync(currentUser.userId, fd as unknown as UpdateUserRequest);
+      toast.success("Perfil actualizado correctamente");
       setIsEditing(false);
       setSelectedFile(null);
+      fetchOne(currentUser.userId);
+    } catch {
+      toast.error("No se pudo actualizar el perfil");
     }
   };
 
@@ -89,7 +145,7 @@ export function useProfileCard() {
   ) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: value as never,
     }));
   };
 
@@ -107,5 +163,7 @@ export function useProfileCard() {
     handleCancel,
     handleInputChange,
     handleFileSelect,
+    handleUploadOnlyImage,
+    uploadingImage
   };
 }

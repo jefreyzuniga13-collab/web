@@ -50,7 +50,7 @@ async createUserAsync(formData: FormData): Promise<User> {
     await api.put(`/Users/${userId}/updateImage`, imageUrl)
   }
 
-  async  uploadUserAvatar(userId: number, file: File) {
+  async uploadUserAvatar(userId: number, file: File) {
   const fd = new FormData()
   fd.append('imageFile', file)
 

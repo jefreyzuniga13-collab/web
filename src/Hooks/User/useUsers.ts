@@ -178,6 +178,8 @@ export function useUsers() {
     agents,
     getAgents,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    update,
+    create
   }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LuContact } from 'react-icons/lu'
 import { FaCalendarAlt, FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaPhone, FaRegBuilding, FaSync, FaTag, FaUserAlt, FaUserCheck, FaWhatsapp, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
@@ -17,6 +17,9 @@ import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import { FaRegClock } from 'react-icons/fa6'
 import useConversations from '@/Hooks/Conversation/useConversations'
 import { AiOutlineWechatWork } from "react-icons/ai";
+import { IoIosOptions } from "react-icons/io";
+import { SetHaltedConversation } from '@/Services/ConversationService';
+
 type Props = {
   contactId?: number
   conversationId?: number
@@ -122,8 +125,10 @@ const DetailPanel: React.FC<Props> = ({
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState<number>(0);
 
+    const [isToggling, setIsToggling] = useState(false);
     
-  const { catCredential } = useCatCredential()
+    const { catCredential } = useCatCredential()
+    
 
   const {
     loading: LoadingPDF,
@@ -214,6 +219,11 @@ const DetailPanel: React.FC<Props> = ({
   const [convQuery, setConvQuery] = useState<string>('')
 
   const [showConvFilters, setShowConvFilters] = useState(false)
+  //conv viene desde la api, se obtiene cuando se accede, y por eoso esta como valor inicial
+const [showConversarionOptions, setShowConversarionOptions] = useState(false);
+
+
+
   const [convItems, setConvItems] = useState<any[]>([])
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const sentinelRef = React.useRef<HTMLDivElement | null>(null)
@@ -259,6 +269,15 @@ const DetailPanel: React.FC<Props> = ({
     io.observe(node)
     return () => io.disconnect()
   }, [sentinelRef, hasMore, isLoadingMore, page, setPage])
+
+      const handleSetHaltedConversation = useCallback(async () => {
+    if (!conv) return
+    try {
+      await SetHaltedConversation(conv.conversationId)
+    } catch (e) {
+      console.error(e)
+    }
+  }, [conv])
 
   const convRows = useMemo(() => (convItems || []).map((c: any) => ({
     id: c.conversationId,
@@ -921,9 +940,81 @@ const DetailPanel: React.FC<Props> = ({
                 paddingLeft:12,
                 paddingRight:12
               }}>
-                <header className="detailPanel-quick__header">
+              {/* <header className="detailPanel-quick__header">
+                <h5>Conversación Actual</h5>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setShowConversarionOptions(s => !s)}
+                  title="Opciones"
+                  aria-expanded={showConversarionOptions}
+                  aria-controls="convConOptiops"
+                >
+                  <SlOptionsVertical size={14} /> <span style={{ marginLeft: 6 }}>Filtros</span>
+                </button>
+                </div>
+
+                 {showConvFilters && (
+                  <>
+                    
+                        Opcion. Por el momento solo 1.
+                        Replazar el togle por texto, cundo haga click se aplica en cambio, por ejemplo. Asi se remplza este toogle por lago mas elegante y comun en whatsapp
+
+                           {convId && (
+                                    <label className="switch">
+                                      <input
+                                        type="checkbox"
+                                        className="checkbox"
+                                        onChange={handleSetHaltedConversation}
+                                        checked={!!conversation?.isHalted}
+                                        disabled={isToggling}
+                                      />
+                                      <span className={`slider ${conversation?.isHalted ? 'halted' : 'active'}`}>
+                                        {conversation?.isHalted ? <FaPlay className="icon" /> :  <FaPause className="icon" /> }
+                                      </span>
+                                    </label>
+                                )}
+                   
+                  </>
+              )}
+            </header> */}
+
+            <header className="detailPanel-quick__header">
               <h5>Conversación Actual</h5>
-            </header>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => {
+                     setShowConversarionOptions(s => !s)
+                  }}
+                  title="Opciones"
+                  aria-expanded={showConversarionOptions}
+                  aria-controls="convOptions"
+                  type="button"
+                >
+                  <IoIosOptions  size={14} />
+                  <span style={{ marginLeft: 6 }}>Opciones</span>
+                </button>
+              </div>
+
+                  {/* EL conv?.No cambia dado que solo se hace la peticion, pero no serecarga como hago en este caso. */}
+                {showConversarionOptions && (
+                  <div id="convOptions" role="menu" aria-label="Opciones de conversación" className="conv-options">
+                    {conv?.conversationId && (
+                      <button
+                        className="menu-item"
+                        onClick={handleSetHaltedConversation}
+                        type="button"
+                      >
+                        {conv?.isHalted ? "Reanudar conversación" : "Pausar conversación"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </header>
+
 
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>

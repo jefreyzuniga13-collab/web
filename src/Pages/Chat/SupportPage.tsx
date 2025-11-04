@@ -3,7 +3,9 @@ import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import "@/Styles/Chat/SupportPage.css";
-import { FaFilter, FaPause, FaPlay, FaUserAlt } from "react-icons/fa";
+import { FaFilter, 
+  // FaPause, FaPlay,
+   FaUserAlt } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
@@ -34,8 +36,8 @@ const SupportPage: React.FC = () => {
     userId,
     extraerNumero,
     selectedParam,
-    isToggling,
-    handleSetHaltedConversation
+    // isToggling,
+    // handleSetHaltedConversation
   } = useSupportPage();
   
 
@@ -135,18 +137,8 @@ const SupportPage: React.FC = () => {
             {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}
           </h2>
 
-        {/*Pausar conversación. Solo admin */}
-
-        {/* Dos iconos, uno de progreso, y el otro de pausa. Importarlos desde react icons*/}
-       {/* {convId && isAdmin &&
-        <label className="switch">
-          <input type="checkbox" className="checkbox" onChange={handleSetHaltedConversation} />
-           <span className="slider"></span>
-        </label>
-       } */}
-
         {/* Toogle para pausar y reanudar conversación */}
-          {convId && isAdmin && (
+          {/* {convId && isAdmin && (
             <label className="switch">
               <input
                 type="checkbox"
@@ -159,14 +151,8 @@ const SupportPage: React.FC = () => {
                 {conversation?.isHalted ? <FaPlay className="icon" /> :  <FaPause className="icon" /> }
               </span>
             </label>
-        )}
+        )} */}
 
-  {/* <>
-       <label class="switch">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-  </> */}
           <div className="btn-container">
             <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${

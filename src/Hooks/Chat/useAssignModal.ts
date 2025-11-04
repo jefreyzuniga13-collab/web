@@ -59,11 +59,11 @@ export function useAssignModal () :  AssignModalHook{
   const handleStatusChange = (newStatus: ConversationStatus) => {
     if (newStatus === 'Human') {
       if (!selectedAgent) {
-        toast.warn('Debes seleccionar un agente antes de asignar Humano.')
+        toast.warn('Debes seleccionar un agente antes de asignar.')
         return
       }
       if (!selectedIsOnline) {
-        toast.warn('No puedes asignar Humano a un agente desconectado.')
+        toast.warn('No puedes asignar a un agente desconectado.')
         return
       }
     }

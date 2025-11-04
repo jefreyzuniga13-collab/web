@@ -17,7 +17,6 @@ export default function UsersPage() {
   
   const {
     users,
-    //De aqui el seleccionado, que deve eria mostrar la url
     currentUser,
     companies,
     error,

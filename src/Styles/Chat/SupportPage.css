@@ -60,22 +60,14 @@
   transition: transform 0.3s ease;
 }
 
-/* Estado activo */
-/* .checkbox:checked + .slider {
-  background-color: #4CAF50;
-} */
-
 .checkbox:checked + .slider .icon {
   transform: rotate(180deg);
 }
 
-/* Opcional: efecto de sombra */
 .slider:before {
   content: '';
   position: absolute;
   inset: 0;
-  /* border-radius: 34px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3); */
 }
 
 
