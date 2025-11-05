@@ -27,6 +27,8 @@ interface Props {
   userId: number;
   selectedParam: SystemParamResponseDto | null;
   highlightTerm?: string 
+  validFrom: Date | null
+  validTo: Date | null
 }
 
 export const ChatWindow: React.FC<Props> = ({
@@ -35,10 +37,13 @@ export const ChatWindow: React.FC<Props> = ({
   conversationStatus,
   selectedParam,
   highlightTerm,
+  validFrom,
+  validTo
 }) => {
-   const smsBtnRef = useRef<HTMLDivElement | null>(null);
+
+  const smsBtnRef = useRef<HTMLDivElement | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
-const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [stickyDate, setStickyDate] = useState<string | null>(null);
 
@@ -51,9 +56,9 @@ const [showScrollButton, setShowScrollButton] = useState(false);
     update,
     toggleSystemParam,
     loading,
-    error
+    error,
   } = useCustomMessage();
-
+  
   const {
     setConversationId,
     setUserId,
@@ -106,7 +111,10 @@ const [showScrollButton, setShowScrollButton] = useState(false);
     conversationStatus,
     selectedParam,
     highlightTerm
-  });
+  },
+  validFrom,
+  validTo
+);
 
   useEffect(() => {
       setConversationId(Number(conversationId));

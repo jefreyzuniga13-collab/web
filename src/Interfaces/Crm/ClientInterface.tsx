@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 export interface ClientRequestDTO {
+  id?: number
   codClient?: string | null
   workModel?: string | null
   priority?: string | null

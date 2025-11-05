@@ -15,20 +15,22 @@ type ReplyTarget = {
   preview: string
 }
 
+
 type UseChatWindowArgs = {
   conversationId?: number
   userId?: number
   conversationStatus?: string | null
   selectedParam?: unknown
-  highlightTerm?: string   
+  highlightTerm?: string
 }
 
-export const useChatWindow = (args: UseChatWindowArgs = {}) => {
+export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date | null, validTo?: Date | null) => {
   const LONG_PRESS_MS = 400
 
   const [conversationId, setConversationId] = useState<number>(Number(args.conversationId ?? 0))
   const [userId, setUserId] = useState<number>(Number(args.userId ?? 0))
-  const messages = useMessages(conversationId)
+  
+  const messages = useMessages(validFrom, validTo, conversationId)
 
   const [text, setText] = useState("")
   const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)

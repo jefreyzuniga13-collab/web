@@ -36,6 +36,7 @@ const SupportPage: React.FC = () => {
     userId,
     extraerNumero,
     selectedParam,
+    
     // isToggling,
     // handleSetHaltedConversation
   } = useSupportPage();
@@ -172,6 +173,8 @@ const SupportPage: React.FC = () => {
           conversationStatus={conversation?.status}
           selectedParam={selectedParam}
           highlightTerm={searchConversation}
+          validFrom={convHook.form.validFrom}
+          validTo={convHook.form.validTo}
         />
       </main>
 

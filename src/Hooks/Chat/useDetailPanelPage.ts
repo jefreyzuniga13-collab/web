@@ -192,6 +192,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   )
 
   const [qQuick, setQQuick] = useState('')
+  
   const filteredQuick = useMemo(() => {
     const n = qQuick.toLowerCase()
     return quickOptions.filter(s => s.toLowerCase().includes(n))

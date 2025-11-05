@@ -2,15 +2,14 @@ import { useState } from "react";
 import Button from "@/Components/Common/Button";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { toast } from "react-toastify";
 
-// +++ NUEVO: tipos para recibir el estado del hook compartido por props +++
 interface FormInterface {
   validFrom: Date | null
   validTo:   Date | null
 }
-type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
-// +++ FIN NUEVO
 
+type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
 type FilterOption = { label: string; value: string; content: string };
 
 interface FilterOrderModalProps {
@@ -52,7 +51,11 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   const handleSave = () => {
     onSave(order);
 
-    // +++ NUEVO: aplica el filtro de fechas en la MISMA instancia del hook que usa la lista +++
+    if(form.validTo != null && form.validFrom == null){
+      toast.warn("Para seleccionar una fecha final, seleccione una fecha de incio.");
+      return
+    }
+    
     applyDateFilter();
     onClose();
   };

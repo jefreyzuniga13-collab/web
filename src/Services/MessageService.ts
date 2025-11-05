@@ -1,9 +1,33 @@
 import api from '@/Utils/ApiConfig';
 import type { MessageDto, SentMessage } from '@/Interfaces/Chat/ChatInterfaces';
+import { toZonedTime, format } from "date-fns-tz";
 
-export function getMessages(conversationId: number) {
+export function getMessages(conversationId: number,
+  validFrom?: Date | null, validTo?: Date | null) {
+
+  let from;
+  if (validFrom != null) {
+    const zone = "America/Managua";
+    const fromNic = toZonedTime(validFrom, zone);
+    from = format(fromNic, "yyyy-MM-dd", { timeZone: zone });
+
+  }
+
+  let to;
+  if (validTo != null) {
+    const zone = "America/Managua";
+    const toNic = toZonedTime(validTo, zone);
+    to = format(toNic, "yyyy-MM-dd", { timeZone: zone });
+  }
+
   return api.get<{ data: MessageDto[] }>(
-    `/conversations/${conversationId}/messages`
+    `/conversations/${conversationId}/messages`,
+    {
+      params: {
+        from,
+        to
+      }
+    }
   );
 }
 
@@ -33,7 +57,6 @@ export function sendMedia(
   if (caption) form.append('caption', caption)
   if (externalId) form.append('externalId', externalId)
 
-    //el endpoint espera un int de c#
   if (repliedParentMessageId) form.append('repliedParentMessageId', repliedParentMessageId.toString())//Pasar como number
 
   return api.post<{ data: MessageDto }>(
@@ -50,9 +73,9 @@ export function sendMedia(
 
 export async function DownloadMedia(
   fileName: string
-){
+) {
   const response = await api.get(`Media/${fileName}`, {
-        responseType: 'blob',
-      })
-      return response;
+    responseType: 'blob',
+  })
+  return response;
 }

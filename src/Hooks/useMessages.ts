@@ -1,11 +1,11 @@
-// src/Hooks/useMessages.ts
 import { useState, useEffect, useCallback } from 'react'
 import { getMessages } from '@/Services/MessageService'
 import { useSignalR } from '@/Context/SignalRContext'
 import type { MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 // import { notificationSound } from '@/Utils/sound'
 
-const useMessages = (conversationId?: number) => {
+const useMessages = (validFrom?: Date | null, validTo?: Date | null, conversationId?: number) => {
+
   const [messages, setMessages] = useState<MessageDto[]>([])
   const {
     joinConversation,
@@ -38,14 +38,14 @@ const useMessages = (conversationId?: number) => {
 
       // 3) Si es media pero no vino con attachments -> recargamos todos los mensajes
       try {
-        const res = await getMessages(conversationId!)
+        const res = await getMessages(conversationId!, validFrom, validTo)
         setMessages(res.data.data)
       } catch {
         // en caso de fallo, igual añadimos el mensaje sin media
         setMessages(prev => [...prev, { ...message, attachments: [] }])
       }
     },
-    [conversationId]
+    [conversationId, validFrom, validTo]
   )
 
   // Cuando cambia el status (delivered/read)
@@ -77,7 +77,7 @@ const useMessages = (conversationId?: number) => {
     joinConversation(conversationId)
 
     // 2) carga inicial de mensajes
-    getMessages(conversationId)
+    getMessages(conversationId, validFrom, validTo)
       .then(res => {
         if (mounted) setMessages(res.data.data)
       })
@@ -89,17 +89,7 @@ const useMessages = (conversationId?: number) => {
       offNewMessage(receiveHandler)
       offMessageStatusChanged(statusHandler)
     }
-  }, [
-    conversationId,
-    receiveHandler,
-    statusHandler,
-    onNewMessage,
-    offNewMessage,
-    onMessageStatusChanged,
-    offMessageStatusChanged,
-    joinConversation,
-    leaveConversation
-  ])
+  }, [conversationId, receiveHandler, statusHandler, onNewMessage, offNewMessage, onMessageStatusChanged, offMessageStatusChanged, joinConversation, leaveConversation])
 
   return messages
 }

@@ -4,6 +4,7 @@ import MainLayout from '@/Layout/MainLayout'
 import {RequireAuth} from '@/Layout/RequireAuth'
 import PublicRoute from '@/Layout/PublicRoute'
 import { ThreeDot } from 'react-loading-indicators'
+import ClientPage from '@/Pages/Crm/ClientPage'
 
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
 const Login                = lazy(() => import('@/Pages/Auth/LoginPage'))
@@ -30,6 +31,7 @@ const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
 const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
 const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
+const ClientManagementPanel    = lazy(() => import('@/Pages/Crm/ClientManagementPanel'))
 
 
 
@@ -75,6 +77,8 @@ export function AppRouter() {
           <Route path="conversation/:state"     element={<ConversationsPage />} />
           <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />
           <Route path="templates-management"     element={<WaTemplatesPage />} />
+          <Route path="clients"     element={<ClientPage />} />
+          <Route path="clientManagementPanel/:id"     element={<ClientManagementPanel />} />
           <Route path="services"     element={<ServicePage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>
