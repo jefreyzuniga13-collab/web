@@ -5,7 +5,7 @@ import { FaRegBuilding, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
 import { BiConversation } from "react-icons/bi";
 import { X, Plus, Search, ChevronDown, ChevronUp, History, FileDown } from 'lucide-react'
-import { ConversationHistoryModal } from '@/Components/Chat/ConversationHistoryModal'
+import  ConversationHistoryModal  from '@/Components/Chat/ConversationHistoryModal'
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
 import { useCatCredential } from '@/Hooks/Crm/useCatCredential'
@@ -346,9 +346,6 @@ const DetailPanel: React.FC<Props> = ({
               <h5 style={{ margin: 0 }}>Historial de conversaciones</h5>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {/* <span style={{ fontSize: 12, opacity: .7 }}>
-                  Total: {totalCount ?? 0}
-                </span> */}
 
                 <button
                   className="btn btn--ghost"
@@ -997,7 +994,9 @@ const DetailPanel: React.FC<Props> = ({
             </div>
             <div style={{ padding: 12, display: 'grid', gap: 10 }}>
               <div className="grid2">
-                <textarea className="input" placeholder="Modelo de trabajo" value={workModel} onChange={(e) => setWorkModel(e.target.value)} rows={10} />
+                <textarea className="input" placeholder="Modelo de trabajo" value={workModel} 
+                onChange={(e) => setWorkModel(e.target.value)} 
+                rows={10} />
                 <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option value="">Prioridad</option>
                   <option value="Alta">Alta</option>
@@ -1148,11 +1147,16 @@ const DetailPanel: React.FC<Props> = ({
         </div>
       )}
 
-      <ConversationHistoryModal
+      {showHistoryModal && (
+        <ConversationHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         conversationId={selectedConversation}
+        clientId={selectedData?.clientId != null 
+          ? selectedData?.clientId : null}
+        conversationStart={conversations.length > 0 ? conversations[0].createdAt : null}
       />
+      )}
     </div>
   )
 }

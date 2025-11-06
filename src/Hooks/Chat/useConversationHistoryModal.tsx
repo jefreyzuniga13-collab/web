@@ -1,6 +1,5 @@
 import {
   getHistoryByContact as getConversationHistory,
-  summarizeAllByContact as generateConversationSummary,
 } from "@/Services/ConversationService";
 import type {
   ConversationHistoryDto,
@@ -12,13 +11,25 @@ import React, {
   useEffect,
   useCallback,
   useRef,
-  // useMemo,
 } from "react";
+import { toast } from "react-toastify";
+
+
+function toDateInputValue(dateString: string) {
+  const d = new Date(dateString);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  
+  return `${month}-${day}-${year}`;
+}
 
 export function useConversationHistoryModal(
   isOpen: boolean,
-  conversationId: number | null
+  conversationId: number | null,
+  conversationStart: string | null
 ) {
+
   const [conversations, setConversations] = useState<ConversationHistoryDto[]>(
     []
   );
@@ -26,17 +37,26 @@ export function useConversationHistoryModal(
   const [allMessages, setAllMessages] = useState<MessageWithAttachmentsDto[]>(
     []
   );
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentMatch, setCurrentMatch] = useState(0);
   const [totalMatches, setTotalMatches] = useState(0);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [loadingSummary, setLoadingSummary] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
   const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-
-  const [startDate, setStartDate] = useState<string>();
+ 
+  //Aun los input no se incializan al montar con ese valor!!!, recibo un string
+  const [startDate, setStartDate] = useState<string>(conversationStart ?? "");
   const [endDate, setEndDate] = useState<string>();
+
+  useEffect(() => {
+  if (conversationStart && startDate == null && endDate == null) {
+    toast.success("Formato devuelto");
+    const formatted = toDateInputValue(conversationStart);
+    setStartDate(formatted);
+    setEndDate(formatted);
+  }
+
+}, [conversationStart, endDate, startDate]);
 
   const fetchHistory = async () =>{
     if (!conversationId) return;
@@ -63,21 +83,6 @@ export function useConversationHistoryModal(
     }
   }
   
-  const generateSummary = useCallback(async () => {
-    if (!conversationId) return;
-
-    setLoadingSummary(true);
-    try {
-      const response = await generateConversationSummary(conversationId);
-      setSummary(response.data.data);
-      setShowSummary(true);
-    } catch (error) {
-      console.error("Error generating summary:", error);
-    } finally {
-      setLoadingSummary(false);
-    }
-  }, [conversationId]);
-
   useEffect(() => {
     if (isOpen) {
       fetchHistory();
@@ -88,27 +93,11 @@ export function useConversationHistoryModal(
       setSearchTerm("");
       setCurrentMatch(0);
       setTotalMatches(0);
-      setSummary(null);
-      setShowSummary(false);
-      // Reiniciar fechas opcional; si quieres que permanezcan, coméntalo:
       setStartDate(new Date().toISOString().slice(0, 10));
       setEndDate(new Date().toISOString().slice(0, 10));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startDate, endDate]);
-  
-
-  // const filteredMessages = useMemo(() => {
-  //   if (!allMessages.length) return [];
-
-  //   const start = new Date(startDate);
-  //   const end = new Date(endDate);
-  //   end.setHours(23, 59, 59, 999);
-
-  //   return allMessages.filter((message) => {
-  //     const msgDate = new Date(message.sentAt);
-  //     return msgDate >= start && msgDate <= end;
-  //   });
-  // }, [allMessages, startDate, endDate]);
 
   const highlightText = (text: string, term: string) => {
     if (!term.trim()) return text;
@@ -149,6 +138,7 @@ export function useConversationHistoryModal(
         element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   useEffect(() => {
@@ -202,7 +192,6 @@ export function useConversationHistoryModal(
   };
 
   return {
-    generateSummary,
     setEndDate,
     goToNextMatch,
     setStartDate,
@@ -210,16 +199,11 @@ export function useConversationHistoryModal(
     handleKeyDown,
     setSearchTerm,
     highlightText,
-    setShowSummary,
-    summary,
-    showSummary,
-    loadingSummary,
     endDate,
     startDate,
     currentMatch,
     totalMatches,
     searchTerm,
-    // filteredMessages,
     loading,
     conversations,
     allMessages,

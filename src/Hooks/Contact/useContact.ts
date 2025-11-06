@@ -51,6 +51,9 @@ const useContact = (contactId?: number) => {
     [globalFilter, page, pageSize]
   )
 
+
+  
+
 const getByClient = useCallback(
   async (clientId: string, p = page, s = pageSize) => {
     setLoadingList(true)

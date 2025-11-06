@@ -41,14 +41,20 @@ export default function ClientPage() {
     {
       id: "priority",
       label: "Prioridad",
-      minWidth: 150,
+      minWidth: 100,
       render: row => row.priority,
     },
     {
       id: "supportType",
       label: "Tipo soporte",
-      minWidth: 150,
+      minWidth: 100,
       render: row => row.supportType,
+    },
+  {
+      id: "enviromentType",
+      label: "Entorno",
+      minWidth: 100,
+      render: row => row.enviromentType,
     },
     {
       id: "isSupportActive",
@@ -82,7 +88,7 @@ export default function ClientPage() {
     <div className="ws-page__container">
       <div className="ws-page__header">
         <div className="ws-page__header-content">
-          <h1 className="ws-page__title">Gestión Asignación de Turnos</h1>
+          <h1 className="ws-page__title">Gestión de clientes</h1>
           <p className="ws-page__subtitle">
             Administración de clientes PCG - INNOVA
           </p>

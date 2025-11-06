@@ -1,6 +1,6 @@
 import React, { type ChangeEvent } from "react";
 import { Book, AlertCircle, Tag, Edit, X, Check, Info } from "lucide-react";
-import { ConversationHistoryModal } from "@/Components/Chat/ConversationHistoryModal";
+import ConversationHistoryModal from "@/Components/Chat/ConversationHistoryModal";
 import "@/Styles/Chat/ContactDetail.css";
 import { IoClose } from "react-icons/io5";
 import { useContactDetail } from "@/Hooks/Chat/useContactDetail";
@@ -383,6 +383,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         conversationId={conversationId}
+        clientId={null}
       />
     </>
   );

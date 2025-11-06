@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ClientResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import { Check, Edit, X } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
 import { FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaRegBuilding, FaRegClock, FaSync, FaTag } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
+import ShowInformationExpanded from './ShowInformationExpanded'
 
 interface Props {
     clientLocal: ClientResponseDTO | null
@@ -21,6 +22,10 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
     setClientEditOpen,
     setShowMore
 }) => {
+
+    const [isshowInformationExpanded, setIsshowInformationExpanded] = useState<boolean>(false)
+     const [content, setContent] = useState<string | null | undefined>("");
+      const [title, setTitle] = useState<string>("")
 
      const Trunc = ({ children }: { children?: React.ReactNode }) => (
         <span
@@ -100,7 +105,11 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         </span>
                     </div>
 
-                    <div className="detailPanel-contactGroup">
+                    <div className="detailPanel-contactGroup"  onClick={()=>{
+              setContent(clientLocal?.workModel)
+              setTitle("Nombre completo")
+              setIsshowInformationExpanded(true)
+              }}>
                         <p className="detailPanel-clientGroup__title">Modelo Trabajo</p>
                         <span className="detailPanel-clientGroup__cliente">
                             <FaLaptopHouse style={{ verticalAlign: 'middle', marginRight: 6 }} />
@@ -216,6 +225,13 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                 </div>
             </div>
 
+{isshowInformationExpanded && (
+          <ShowInformationExpanded 
+              title={title}
+              content={content}
+              setIsshowInformationExpanded={setIsshowInformationExpanded}
+            />
+        )}
 
         </>
     )
