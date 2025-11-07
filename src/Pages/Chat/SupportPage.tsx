@@ -9,11 +9,15 @@ import { FaFilter,
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
-import { useConversations } from "@/Hooks/useConversations";
 import DetailPanel from "@/Components/Chat/DetailPanel";
+import { Sticker } from 'lucide-react';
+// import useConv from "@/Hooks/Conversation/useConversations";
+import { useConversations } from "@/Hooks/useConversations";
+import TicketModal from "@/Components/Chat/TicketModal";
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
+  const [ticketModal, setTicketModal] = useState<boolean>(false)
 
   const {
     conversation,
@@ -44,6 +48,9 @@ const SupportPage: React.FC = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
+  // const {
+  //   handleCreateTicket
+  // } = useConv();
 
   useEffect(() => {
     if (!convHook.loading && convId && !convHook.conversations.some((c) => c.conversationId === convId)) {
@@ -155,6 +162,14 @@ const SupportPage: React.FC = () => {
         )} */}
 
           <div className="btn-container">
+
+          <button
+              className={`crearTicket-button`}
+              onClick={()=>setTicketModal(true)}
+            >
+              <Sticker size={16} /> Crear Ticket
+            </button>
+
             <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${
                 conversation?.status == "Closed" ? "btnDisabled" : ""
@@ -235,6 +250,10 @@ const SupportPage: React.FC = () => {
           clearFilter={convHook.clearFilter}
         />
       )}
+
+      {ticketModal &&
+      <TicketModal isOpen= {ticketModal} onClose={()=> {}} onSubmit={()=>{}} />
+      }
     </div>
   );
 };

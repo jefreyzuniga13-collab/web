@@ -10,6 +10,15 @@ interface UseConversationsOptions {
   initialPageSize?: number
 }
 
+interface GetByContactsArgs {
+  contactsId: number[];           // requerido
+  from?: Date | string | null;    // opcional
+  to?: Date | string | null;      // opcional
+  q?: string;                     // opcional -> searchContent
+  page?: number;                  // opcional (default: estado actual)
+  pageSize?: number;              // opcional (default: estado actual)
+}
+
 export default function useConversations({
   initialState = '',
   initialPage = 1,
@@ -41,6 +50,61 @@ export default function useConversations({
       }
     }, []
   )
+  
+const getConversationsByContacts = useCallback(
+  async ({
+    contactsId,
+    from,
+    to,
+    q = '',
+    page: pg = page,
+    pageSize: ps = pageSize,
+  }: GetByContactsArgs) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const uniq = Array.from(new Set((contactsId ?? []).filter(n => Number.isFinite(n) && n > 0)))
+      if (uniq.length === 0) {
+        setData([])
+        setTotalCount(0)
+        setPage(pg)
+        setPageSize(ps)
+        return
+      }
+
+      const toDate = (v?: string | Date | null) =>
+        typeof v === 'string' && v
+          ? new Date(`${v}T00:00:00`)
+          : (v as Date | undefined)
+
+      const res = await ConversationService.getByContacts(
+        uniq,
+        pg,
+        ps,
+        toDate(from),
+        toDate(to),
+        q?.trim() || undefined
+      )
+
+      setData(res.items)
+      setTotalCount(res.meta.totalCount)
+      setPage(pg)
+      setPageSize(ps)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  },
+  [page, pageSize]
+)
+
+const handleCreateTicket = useCallback(
+  async()=>{
+      
+  }, []
+)
 
 const GetConversaionContact = useCallback(
   async ({
@@ -141,6 +205,8 @@ const GetConversaionContact = useCallback(
     closeModal,
     navigationBack,
     exportConversationHistoryToPDFAsync,
-    GetConversaionContact
+    GetConversaionContact,
+    getConversationsByContacts,
+    handleCreateTicket
   }
 }

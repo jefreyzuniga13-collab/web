@@ -11,6 +11,7 @@ import type {
   OutsourcedDeviceResponseDTO,
   OutsourcedSystemsResponseDTO,
   ContactLogLiteResponseDto,
+  ClientProcResponse,
 } from '@/Interfaces/Crm/ClientInterface'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
 import api from '@/Utils/ApiConfig'
@@ -33,6 +34,30 @@ function transformPayload<T extends Record<string, any>>(input: T): T {
 }
 
 class ClientsServiceClass {
+
+  async getAllClientAsyn(filter: string, page: number, pageSize: number): Promise<PagedResponse<ClientProcResponse>>{
+    try{
+      const {data} = await api.get<ApiResponse<PagedResponse<ClientProcResponse>>>(
+        'Clients/GetAllClient',{
+        params: { globalFilter: filter, PageNumber: page, PageSize: pageSize } 
+        }
+      )
+
+      return data.data;
+    }catch(e){
+      throw formatError(e)
+    }
+  }
+
+   async getClientFromMultipleSource(id: number): Promise<ClientProcResponse> {
+    try {
+      const { data } = await api.get<ApiResponse<ClientProcResponse>>(`/Clients/getClientFromMultipleSource/${id}`)
+      return data.data
+    } catch (e) {
+      throw formatError(e)
+    }
+  }
+
   async getAllAsync(
     filter: string,
     page: number,

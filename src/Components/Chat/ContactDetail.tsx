@@ -384,6 +384,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = ({
         onClose={() => setShowHistoryModal(false)}
         conversationId={conversationId}
         clientId={null}
+        conversationStart={null}
       />
     </>
   );

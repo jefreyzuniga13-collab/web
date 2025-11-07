@@ -86,7 +86,7 @@
   }
 
   .menu-item--selected {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    background: var(--color-primary) !important;
     color: var(--text-white);
   }
 
@@ -473,13 +473,10 @@
   }
 
   @media (max-width: 1200px) {
-  .general-container{
+    .general-container{
     max-width: 100%;
   }
 
-  .navbar__profile{
-   
-  }
   .navbar__copyright{
     display: none;
   }

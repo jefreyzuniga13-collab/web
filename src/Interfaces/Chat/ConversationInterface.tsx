@@ -14,3 +14,10 @@ export type exportPDFArgs ={
     title: string;
     subtitle: string;
 }
+
+export interface TicketRequestDto{
+  title: string;
+  description: string;
+  // Quien lo crea y asigna se hace en la API.
+  
+}

@@ -199,7 +199,8 @@ export default function CustomTable<T>({
             sx={{
               '& .MuiInputBase-root': {
                 fontSize: { xs: '0.95rem', sm: '1rem' },
-                bgcolor: 'white'
+                bgcolor: 'white',
+                padding: 0,
               },
               '& .MuiFormLabel-root': { fontSize: { xs: '0.95rem', sm: '1rem' } }
             }}

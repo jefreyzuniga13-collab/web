@@ -151,3 +151,21 @@ export interface ContactLogLiteResponseDto {
   fullName?: string | null
   status?: string | null
 }
+
+export interface ClientProcResponse {
+  clientId: number;
+  codclient: string;
+  name: string;
+  registeredName: string;
+  email: string;
+  location: string;
+  phone: string;
+  priority: string;
+  enviromentType: string;
+  workModel: string;
+  isSupportActive: boolean;
+  contractExpirationDate: string | Date | null
+  createdAt: string | Date | null
+  updatedAt: string | Date | null
+  totalCount: number
+}

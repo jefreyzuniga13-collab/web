@@ -123,6 +123,42 @@ export function markConversationRead(conversationId: number) {
 }
 
 class ConversationServ {
+
+      private buildContactsQuery(contactsId: number[]) {
+        const qs = new URLSearchParams();
+        (contactsId ?? [])
+          .filter(id => Number.isFinite(id))
+          .forEach(id => qs.append("contactsId", String(id)));
+        return qs.toString();
+      }
+
+      async getByContacts(
+        contactsId: number[],
+        page: number = 1,
+        pageSize: number = 10,
+        from?: Date,
+        to?: Date,
+        searchContent?: string
+      ): Promise<PagedResponse<ConversationDto>> {
+        const contactsQs = this.buildContactsQuery(contactsId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const params: Record<string, any> = {
+          PageNumber: page,
+          PageSize: pageSize
+        };
+        if (from) params.from = from.toISOString();
+        if (to) params.to = to.toISOString();
+        if (searchContent && searchContent.trim() !== "") {
+          params.searchContent = searchContent.trim();
+        }
+
+        const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+          `/Conversations/getByContacts${contactsQs ? `?${contactsQs}` : ""}`,
+          { params }
+        );
+        return data.data;
+      }
+  
   private normalizeFilters(filters: FilterForm) {
     return Object.entries(filters).reduce((acc, [key, val]) => {
       acc[key] = val == null ? "" : val;

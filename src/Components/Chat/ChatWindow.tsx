@@ -1,3 +1,4 @@
+// Componente de ventana de chat, muestra los menajes, ordenados, multimedia, mensajes de reply.
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
@@ -12,8 +13,6 @@ import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
 import "@/Styles/Chat/custom-messages-flyout.css"
 import { FaArrowDown } from "react-icons/fa";
 import "@/styles/Chat/ChatWindow.css";
-// import { ImageMagnifier } from "@/Components/Common";
-
 
 const formatTime = (iso?: string) => {
   if (!iso) return "";
@@ -30,6 +29,7 @@ interface Props {
   validFrom: Date | null
   validTo: Date | null
 }
+
 
 export const ChatWindow: React.FC<Props> = ({
   conversationId,

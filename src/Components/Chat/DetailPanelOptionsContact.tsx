@@ -20,7 +20,8 @@ const DetailPanelOptionsContact: React.FC<Props> = ({
   const [isshowInformationExpanded, setIsshowInformationExpanded] = useState<boolean>(false)
   const [content, setContent] = useState<string | null | undefined>("");
   const [title, setTitle] = useState<string>("")
-    const Trunc = ({ children }: { children?: React.ReactNode }) => (
+    
+  const Trunc = ({ children }: { children?: React.ReactNode }) => (
       <span
         title={children ? String(children) : '---'}
         style={{

@@ -77,6 +77,7 @@ export default function SystemParamsPage() {
       id: 'actions',
       label: 'Acciones',
       minWidth: 130,
+      width: 150,
       align: 'center',
       render: row => (
         <>

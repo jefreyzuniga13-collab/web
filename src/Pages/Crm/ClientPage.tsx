@@ -6,8 +6,9 @@ import IconButton from "@mui/material/IconButton"
 import { EditIcon } from "lucide-react"
 import "@/Styles/Setting/OpeningHourPage.css"
 import "@/Styles/Setting/WorkShiftPage.css"
+import '@/Styles/Setting/SystemParamsPage.css'
 import { TextField } from "@mui/material"
-import type { ClientResponseDTO } from "@/Interfaces/Crm/ClientInterface"
+import type { ClientProcResponse } from "@/Interfaces/Crm/ClientInterface"
 import {useNavigate} from 'react-router-dom'
 
 export default function ClientPage() {
@@ -25,7 +26,7 @@ export default function ClientPage() {
 
   const navigate = useNavigate();
 
-  const columns = useMemo<Column<ClientResponseDTO>[]>(() => [
+  const columns = useMemo<Column<ClientProcResponse>[]>(() => [
     {
       id: "name",
       label: "Nombre",
@@ -33,23 +34,49 @@ export default function ClientPage() {
       render: row => row.name,
     },
     {
-      id: "workModel",
-      label: "Modelo de trabajo",
+      id: "registeredName",
+      label: "Nombre Social",
       minWidth: 150,
-      render: row => row.workModel,
+      render: row => row.registeredName,
     },
+    {
+      id: "email",
+      label: "Correo",
+      minWidth: 150,
+      render: row => row.email,
+    },
+    // {
+    //   id: "location",
+    //   label: "Ubicación",
+    //   minWidth: 150,
+    //   width: 100,
+    //   maxWidth: 100,
+    //   render: row => row.location,
+    // },
+    // {
+    //   id: "phone",
+    //   label: "Telefono",
+    //   minWidth: 150,
+    //   render: row => row.phone,
+    // },
+    // {
+    //   id: "workModel",
+    //   label: "Modelo de trabajo",
+    //   minWidth: 150,
+    //   render: row => row.workModel,
+    // },
     {
       id: "priority",
       label: "Prioridad",
       minWidth: 100,
       render: row => row.priority,
     },
-    {
-      id: "supportType",
-      label: "Tipo soporte",
-      minWidth: 100,
-      render: row => row.supportType,
-    },
+    // {
+    //   id: "supportType",
+    //   label: "Tipo soporte",
+    //   minWidth: 100,
+    //   render: row => row.supportType,
+    // },
   {
       id: "enviromentType",
       label: "Entorno",
@@ -62,7 +89,7 @@ export default function ClientPage() {
       minWidth: 90,
       render: row => (
         <span className={row.isSupportActive ? 'status status--active' : 'status status--inactive'}>
-           {row.isActive ? 'Activo' : 'Inactivo'}
+           {row.isSupportActive ? 'Activo' : 'Inactivo'}
         </span>
       )
     },
@@ -75,7 +102,7 @@ export default function ClientPage() {
         <>
           <IconButton size="small" onClick={
             () => 
-              navigate(`/clientManagementPanel/${row.id}`)
+              navigate(`/clientManagementPanel/${row.clientId}`)
             }>
             <EditIcon size={16} />
           </IconButton>
@@ -85,11 +112,11 @@ export default function ClientPage() {
   ], [navigate])
 
   return (
-    <div className="ws-page__container">
-      <div className="ws-page__header">
-        <div className="ws-page__header-content">
-          <h1 className="ws-page__title">Gestión de clientes</h1>
-          <p className="ws-page__subtitle">
+    <div className="sp-page__container">
+      <div className="sp-page__header">
+        <div className="sp-page__header-content">
+          <h1 className="sp-page__title">Gestión de clientes</h1>
+          <p className="sp-page__subtitle">
             Administración de clientes PCG - INNOVA
           </p>
         </div>
@@ -108,16 +135,16 @@ export default function ClientPage() {
       </div> 
       {error && <p className="ws-page__error">Error: {error.message}</p>}
 
-      <CustomTable<ClientResponseDTO>
-        columns={columns}
-        rows={clients}
-        count={totalCount}
-        page={page - 1}
-        rowsPerPage={pageSize}
-        rowsPerPageOptions={[20, 30, 50]}
-        onPageChange={(_, newPage) => setPage(newPage + 1)}
-        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 5))}
-      />
+       <CustomTable<ClientProcResponse>
+              columns={columns}
+              rows={clients}
+              count={totalCount}
+              page={page - 1}
+              rowsPerPage={pageSize}
+              rowsPerPageOptions={[20, 30, 50]}
+              onPageChange={(_, newPage) => setPage(newPage + 1)}
+              onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
+            />
     </div>
   )
 }

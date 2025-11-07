@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import {ClientsService} from '@/Services/Crm/ClientService'
-import type { ClientRequestDTO, ClientResponseDTO } from "@/Interfaces/Crm/ClientInterface";
+import type { ClientProcResponse, ClientRequestDTO } from "@/Interfaces/Crm/ClientInterface";
 
 
 export const useClasicClient = () => {
@@ -18,10 +18,10 @@ export const useClasicClient = () => {
             workModel: ''
     }
 
-  const [clients, setClients] = useState<ClientResponseDTO[]>([]);
+  const [clients, setClients] = useState<ClientProcResponse[]>([]);
   const [form, setForm] = useState<ClientRequestDTO>(initialValues);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(30);
+  const [pageSize, setPageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingItem, setLoadingItem] = useState(false);
@@ -32,7 +32,8 @@ export const useClasicClient = () => {
     setLoadingList(true);
     setError(null);
     try {
-      const resp = await ClientsService.getAllAsync(globalFilter, p, s);
+      const resp = await ClientsService.getAllClientAsyn(globalFilter, p, s);
+      
       setClients(resp.items);
       setTotalCount(resp.meta.totalCount);
       setPage(resp.meta.currentPage);
@@ -47,6 +48,7 @@ export const useClasicClient = () => {
   const fetchById = useCallback(async (id: number) => {
     setLoadingItem(true);
     setError(null);
+    
     try {
       const resp = await ClientsService.getByIdAsync(id);
       setForm(resp);
@@ -70,18 +72,18 @@ export const useClasicClient = () => {
     }
   }, [fetchPage, page, pageSize]);
 
-  const toggleStatus = useCallback(async (id: number) => {
-    setLoadingItem(true);
-    setError(null);
-    try {
-      const updated = await ClientsService.toggleStatusAsync(id);
-      setClients(cl => cl.map(c => c.id === updated.id ? updated : c));
-    } catch (err: any) {
-      setError(err);
-    } finally {
-      setLoadingItem(false);
-    }
-  }, []);
+  // const toggleStatus = useCallback(async (id: number) => {
+  //   setLoadingItem(true);
+  //   setError(null);
+  //   try {
+  //     const updated = await ClientsService.toggleStatusAsync(id);
+  //     setClients(cl => cl.map(c => c.id === updated.id ? updated : c));
+  //   } catch (err: any) {
+  //     setError(err);
+  //   } finally {
+  //     setLoadingItem(false);
+  //   }
+  // }, []);
 
     const handleChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = useCallback(
       (e) => {
@@ -130,7 +132,7 @@ export const useClasicClient = () => {
     setPage:      (p: number) => fetchPage(p, pageSize),
     setPageSize:  (s: number) => fetchPage(1, s),
     handleSubmit,
-    toggleStatus,
+    // toggleStatus,
     globalFilter,
     setGlobalFilter,
     fetchById,

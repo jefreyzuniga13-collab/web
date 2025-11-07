@@ -283,11 +283,10 @@
 }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
-.btn--primary {
-  background: var(--color-blue-primary, #356ace);
-  color: #fff;
-  border-color: transparent;
-}
+ .btn--primary {
+    background: var(--color-primary);
+    color: var(--text-white);
+  }
 .btn--secondary {
   background: var(--bg-tertiary, #f7f8fa);
   color: var(--color-gray-800, #1f2937);
