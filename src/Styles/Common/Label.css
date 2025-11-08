@@ -5,6 +5,7 @@
   line-height: 1;
   display: inline-block;
   margin-bottom: var(--space-lg);
+    text-align: left !important;
 }
 
 .label:has(+ input:disabled),

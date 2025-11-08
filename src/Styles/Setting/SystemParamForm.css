@@ -269,6 +269,7 @@
 .label{
   padding: 0;
   margin: 0;
+  text-align: left !important;
 }
 .wat-header-container{
   margin-bottom: var(--space-lg);

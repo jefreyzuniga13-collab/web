@@ -4,20 +4,23 @@ import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import "@/Styles/Chat/SupportPage.css";
 import { FaFilter, 
-  // FaPause, FaPlay,
    FaUserAlt } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
 import { Sticker } from 'lucide-react';
-// import useConv from "@/Hooks/Conversation/useConversations";
 import { useConversations } from "@/Hooks/useConversations";
 import TicketModal from "@/Components/Chat/TicketModal";
+import useContact from "@/Hooks/Contact/useContact";
+
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
-  const [ticketModal, setTicketModal] = useState<boolean>(false)
+  const [ticketOpen, setTicketOpen] = useState(false)
+
+  const { fetchById, selectedData: contact } = useContact()
+
 
   const {
     conversation,
@@ -39,29 +42,25 @@ const SupportPage: React.FC = () => {
     filter,
     userId,
     extraerNumero,
-    selectedParam,
-    
-    // isToggling,
-    // handleSetHaltedConversation
+    selectedParam
   } = useSupportPage();
+
+  useEffect(() => {
+  if (!ticketOpen) return
+  if (conversation?.clientContactId) {
+    fetchById(conversation.clientContactId)
+  }
+}, [ticketOpen, conversation?.clientContactId, fetchById])
   
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
-  // const {
-  //   handleCreateTicket
-  // } = useConv();
 
   useEffect(() => {
     if (!convHook.loading && convId && !convHook.conversations.some((c) => c.conversationId === convId)) {
       setConvId(null);
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
-
-  // useEffect(() => {
-  //   if (!convId || conversation?.status === "Closed") setDetailToggle(false);
-  // }, [convId, conversation?.status, setDetailToggle]);
-
 
     //Captura de evento de esc, para cerrar la conversación.
   const handleScapePress = (event: KeyboardEvent) => {
@@ -163,14 +162,17 @@ const SupportPage: React.FC = () => {
 
           <div className="btn-container">
 
-          <button
+            {convId && ( 
+              <button
               className={`crearTicket-button`}
-              onClick={()=>setTicketModal(true)}
+              onClick={()=>setTicketOpen(true)}
             >
               <Sticker size={16} /> Crear Ticket
             </button>
+            )}
 
-            <button
+            {convId && isAdmin && (
+              <button
               className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${
                 conversation?.status == "Closed" ? "btnDisabled" : ""
               } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
@@ -178,6 +180,7 @@ const SupportPage: React.FC = () => {
             >
               <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}
             </button>
+            )}
           </div>
         </header>
 
@@ -251,9 +254,17 @@ const SupportPage: React.FC = () => {
         />
       )}
 
-      {ticketModal &&
-      <TicketModal isOpen= {ticketModal} onClose={()=> {}} onSubmit={()=>{}} />
-      }
+     {ticketOpen && contact?.isVerified && conversation && (
+        <TicketModal
+          isOpen={ticketOpen}
+          onClose={() => setTicketOpen(false)}
+          conversationId={conversation.conversationId}
+          codCliente={contact.clienteCodigo ?? ''}
+          clientName={contact.clienteNombre ?? ''}
+          contactId={contact.id}
+        />
+      )}
+
     </div>
   );
 };

@@ -124,6 +124,35 @@ export function markConversationRead(conversationId: number) {
 
 class ConversationServ {
 
+    async createTicketForConversation(
+    conversationId: number,
+    payload: {
+      codCliente: string
+      contactId: number
+      titulo: string
+      descripcion: string
+      prioridad: string
+      archivos: File[]
+    }
+  ): Promise<ApiResponse<void>> {
+    const formData = new FormData()
+    formData.append('codCliente', payload.codCliente)
+    formData.append('contactId', String(payload.contactId))
+    formData.append('titulo', payload.titulo)
+    formData.append('descripcion', payload.descripcion)
+    formData.append('prioridad', payload.prioridad)
+    payload.archivos.forEach(f => formData.append('archivos', f, f.name))
+
+    const { data } = await api.post<ApiResponse<void>>(
+      `/Conversations/${conversationId}/tickets`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }
+    )
+    return data
+  }
+
       private buildContactsQuery(contactsId: number[]) {
         const qs = new URLSearchParams();
         (contactsId ?? [])

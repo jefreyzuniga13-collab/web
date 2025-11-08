@@ -16,6 +16,7 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
 }) => {
     const [showConversarionOptions, setShowConversarionOptions] = useState(false);
 
+
       const {
         conv,
         conversationTone,
@@ -27,12 +28,16 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
         handleAddTag,
         handleRemoveTag,
         handleKeyDown,
+        toggleHaltedLocal
       } = useContactDetail(Number(conversationId))
       
     const handleSetHaltedConversation = useCallback(async () => {
         if (!conv) return
         try {
           await SetHaltedConversation(conv.conversationId)
+
+          toggleHaltedLocal();
+          setShowConversarionOptions(false)
         } catch (e) {
           console.error(e)
         }
@@ -64,7 +69,6 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
                     </button>
                 </div>
 
-                {/* Pendiente: El actualizar la convesación o mediante un estado, para no hacer peticiones extra de actualización */}
                 {showConversarionOptions && (
                     <div id="convOptions" role="menu" aria-label="Opciones de conversación" className="conv-options">
                         {conv?.conversationId && (

@@ -29,7 +29,6 @@ export function useSupportPage() {
   const [conversation, setConversation] = useState<ConversationDto | null>(
     null
   );
-
   const [isToggling, setIsToggling] = useState(false);
 
   const [filter, setFilter] = useState<string>(
@@ -51,12 +50,6 @@ export function useSupportPage() {
   let DEFAULT_OPTIONS: FilterOption[];
 
   const [detailToggle, setDetailToggle] = useState<boolean>(true);
-
-  // // persiste cambios del toggle
-  // useEffect(() => {
-  //   // eslint-disable-next-line no-empty
-  //   try { localStorage.setItem(DETAIL_PANEL_KEY, String(detailToggle)); } catch {}
-  // }, [detailToggle]);
 
   if (isAdmin) {
     DEFAULT_OPTIONS = [
@@ -154,8 +147,6 @@ export function useSupportPage() {
 
     return cadena.slice(0, 3) + "-" + cadena.slice(3);
   }
-
-  // Guardar orden en localStorage
   const saveOrder = (newOrder: string[]) => {
     setFilterOrder(newOrder);
     localStorage.setItem(FILTER_ORDER_STORAGE_KEY, JSON.stringify(newOrder));

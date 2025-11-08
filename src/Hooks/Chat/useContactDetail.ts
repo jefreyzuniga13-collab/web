@@ -17,6 +17,7 @@ export function useContactDetail(conversationId: number) {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [conversationTone, setConversationTone] =
     useState<string>("No disponible");
+    
 
   const signalR = useSignalR();
 
@@ -37,6 +38,12 @@ export function useContactDetail(conversationId: number) {
     },
     []
   );
+
+  const toggleHaltedLocal = useCallback(() => {
+    setConv(prev =>
+      prev ? { ...prev, isHalted: !prev.isHalted } : prev
+    );
+  }, []);
 
   // Carga o recarga datos de la conversación
   const fetchDetail = useCallback(async (id: number) => {
@@ -145,5 +152,6 @@ export function useContactDetail(conversationId: number) {
     setShowHistoryModal,
     handleRemoveTag,
     fetchDetail,
+    toggleHaltedLocal
   };
 }

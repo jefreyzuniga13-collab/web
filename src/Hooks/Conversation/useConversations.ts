@@ -4,6 +4,7 @@ import { ConversationService, exportChatPdfByContact } from '@/Services/Conversa
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { useNavigate } from 'react-router-dom'
 import type { exportPDFArgs, GetConvArgs } from '@/Interfaces/Chat/ConversationInterface'
+import type { CrearTicketArgs } from '@/Interfaces/Crm/TicketInterface'
 interface UseConversationsOptions {
   initialState?: string
   initialPage?: number
@@ -99,13 +100,27 @@ const getConversationsByContacts = useCallback(
   },
   [page, pageSize]
 )
-
 const handleCreateTicket = useCallback(
-  async()=>{
-      
-  }, []
+  async ({ conversationId, codCliente, contactId, titulo, descripcion, prioridad, archivos }: CrearTicketArgs) => {
+    try {
+      setLoading(true)
+      setError(null)
+      await ConversationService.createTicketForConversation(conversationId, {
+        codCliente,
+        contactId,
+        titulo,
+        descripcion,
+        prioridad,
+        archivos
+      })
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  },
+  []
 )
-
 const GetConversaionContact = useCallback(
   async ({
     from,

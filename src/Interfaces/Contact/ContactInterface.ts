@@ -37,7 +37,7 @@ export interface ContactLogInterface {
   verifiedAt?: string | null;
   verifiedId?: number | null;
   verifiedBy?: User | null;
-  clienteCodigo?: number;
+  clienteCodigo?: string;
   clienteNombre?: string;
 }
 
