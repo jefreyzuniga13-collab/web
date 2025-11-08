@@ -5,6 +5,8 @@
   display: block;
   width: 100%;
   margin-bottom: 1rem;
+    padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Inputs */
@@ -47,3 +49,4 @@
 .MuiPickersSectionList-root{
     padding: var(--space-lg);
 }
+

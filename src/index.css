@@ -210,6 +210,13 @@ body {
   font-size: var(--font-size-lg);
 }
 
+
+.MuiPickersSectionList-root 
+.MuiPickersInputBase-sectionsContainer{
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 12px;
+}
 .MuiCalendarPicker-root,
 .MuiCalendarPicker-root .MuiTypography-root,
 .MuiCalendarPicker-root .MuiDayCalendar-day,

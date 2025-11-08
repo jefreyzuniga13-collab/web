@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState, useCallback } from 'react'
+// TicketModal.tsx
+import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import { Textarea } from '@/Components/Common/Textarea'
@@ -7,6 +8,9 @@ import Select from '@/Components/Common/Select'
 import '@/Styles/Chat/TicketModal.css'
 import useConversations from '@/Hooks/Conversation/useConversations'
 import type { Prioridad } from '@/Interfaces/Crm/TicketInterface'
+import { useUsers } from '@/Hooks/User/useUsers'
+import { jwtDecode } from 'jwt-decode'
+import DatePickerField from '@/Components/Common/DatePickerField'
 
 interface TicketModalProps {
   isOpen: boolean
@@ -15,6 +19,17 @@ interface TicketModalProps {
   clientName?: string
   contactId: number
   conversationId: number
+}
+
+interface JwtPayload {
+  role: string
+}
+
+interface AuthStorage {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  userId: number
 }
 
 export default function TicketModal({
@@ -28,13 +43,26 @@ export default function TicketModal({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Prioridad | ''>('')
+  const [responsibleId, setResponsibleId] = useState<number | null>(null)
+  const [dueDate, setDueDate] = useState<Date | null>(null)
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string }>({})
+  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string }>({})
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const authRaw = localStorage.getItem('auth') || '{}'
+  const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
+  const { role } = jwtDecode<JwtPayload>(accessToken)
+  const isAdmin = role.toLowerCase() === 'admin'
+
   const { handleCreateTicket } = useConversations()
+  const { fetchPage, users } = useUsers()
+
+  useEffect(() => {
+    if (!isOpen || !isAdmin) return
+    fetchPage()
+  }, [isOpen, isAdmin, fetchPage])
 
   const priorityOptions = useMemo(
     () => [
@@ -44,6 +72,28 @@ export default function TicketModal({
     ],
     []
   )
+
+
+  const responsibleOptions = useMemo(() => {
+  if (!users || !Array.isArray(users)) return []
+  return users
+    .filter(u => {
+      const roles = Array.isArray(u.roles)
+        ? u.roles.map(r =>
+           (r.roleName ?? '').toLowerCase()
+          )
+        : []
+
+      if (roles.includes('support')) return true
+      if (roles.includes('admin')) return u.userId === userId
+      return false
+    })
+    .map(u => ({
+      label: u.fullName ?? String(u.userId),
+      value: String(u.userId)
+    }))
+}, [users, userId])
+
 
   const addFiles = useCallback((incoming: File[]) => {
     setFiles(prev => {
@@ -84,10 +134,12 @@ export default function TicketModal({
     if (!title.trim()) e.title = 'Requerido'
     if (!description.trim()) e.description = 'Requerido'
     if (!priority) e.priority = 'Seleccione una prioridad'
+    if (!responsibleId) e.responsibleId = 'Requerido'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
+  const date = new Date();
   const submit = async (ev: React.FormEvent) => {
     ev.preventDefault()
     if (!validate()) return
@@ -100,12 +152,16 @@ export default function TicketModal({
         titulo: title.trim(),
         descripcion: description.trim(),
         prioridad: priority as Prioridad,
-        archivos: files
+        archivos: files,
+        responsibleId: responsibleId,
+        DueDate: dueDate ? dueDate : date,
       })
       setTitle('')
       setDescription('')
       setPriority('')
       setFiles([])
+      setResponsibleId(null)
+      setDueDate(null)
       onClose()
     } finally {
       setSubmitting(false)
@@ -118,17 +174,22 @@ export default function TicketModal({
     <div className="tm-overlay" onClick={onClose}>
       <div className="tm-container" onClick={e => e.stopPropagation()}>
         <header className="tm-header">
-          <h3 className="tm-title">Crear Ticket{clientName ? ` - ${clientName}` : ''}</h3>
-          <button className="tm-close" onClick={onClose} aria-label="Cerrar">×</button>
+          <h3 className="tm-title">
+            Crear Ticket
+            <span className="tm-title__client">{clientName ? ` - ${clientName}` : ''}</span>
+          </h3>
+          <button className="tm-close" onClick={onClose} aria-label="Cerrar">
+            ×
+          </button>
         </header>
 
         <form className="tm-body" onSubmit={submit}>
-          <div className="tm-grid2">
+          <div className="tm-grid2 tm-grid2--three">
             <div className="tm-field">
-              <Label htmlFor="tk-title">Título</Label>
+              <Label htmlFor="tk-title">Título *</Label>
               <Input
                 id="tk-title"
-                placeholder="Asunto del ticket"
+                placeholder="Título del ticket"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 error={errors.title}
@@ -136,7 +197,7 @@ export default function TicketModal({
             </div>
 
             <div className="tm-field">
-              <Label htmlFor="tk-priority">Prioridad</Label>
+              <Label htmlFor="tk-priority">Prioridad *</Label>
               <Select
                 id="tk-priority"
                 name="prioridad"
@@ -147,13 +208,38 @@ export default function TicketModal({
                 error={errors.priority}
               />
             </div>
+
+            {isAdmin && (
+              <div className="tm-field">
+                <Label htmlFor="tk-responsible">Responsable *</Label>
+                <Select
+                  id="tk-responsible"
+                  name="responsable"
+                  value={responsibleId != null ? String(responsibleId) : ''}
+                  onChange={e => setResponsibleId(e.target.value ? Number(e.target.value) : null)}
+                  options={responsibleOptions}
+                  placeholder="Seleccione responsable"
+                   error={errors.responsibleId}
+                />
+              </div>
+            )}
+
+            <div className="tm-field">
+            <Label htmlFor="tk-due">Fecha Entrega</Label>
+            <DatePickerField
+              label=""
+              value={dueDate}
+              onChange={setDueDate}
+              className="tm-due-date"
+            />
+          </div>
           </div>
 
           <div className="tm-field">
-            <Label htmlFor="tk-desc">Descripción</Label>
+            <Label htmlFor="tk-desc">Descripción n*</Label>
             <Textarea
               id="tk-desc"
-              placeholder="Describe el problema o solicitud"
+              placeholder="Descripción del ticket"
               rows={6}
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -173,7 +259,9 @@ export default function TicketModal({
               <div className="tm-attach-left">
                 <div className="tm-attach-text">
                   <strong>Arrastra y suelta</strong> tus archivos aquí o
-                  <button type="button" className="tm-link" onClick={handlePickFiles}>buscar</button>
+                  <button type="button" className="tm-link" onClick={handlePickFiles}>
+                    buscar
+                  </button>
                 </div>
               </div>
               <div className="tm-attach-actions">
@@ -194,10 +282,16 @@ export default function TicketModal({
                     <div className="tm-file-meta">
                       <span className="tm-file-name">{f.name}</span>
                       <span className="tm-file-size">
-                        {Intl.NumberFormat(undefined, { style: 'unit', unit: 'byte', unitDisplay: 'narrow' }).format(f.size)}
+                        {Intl.NumberFormat(undefined, {
+                          style: 'unit',
+                          unit: 'byte',
+                          unitDisplay: 'narrow'
+                        }).format(f.size)}
                       </span>
                     </div>
-                    <button type="button" className="tm-file-remove" onClick={() => removeFile(i)}>Eliminar</button>
+                    <button type="button" className="tm-file-remove" onClick={() => removeFile(i)}>
+                      Eliminar
+                    </button>
                   </li>
                 ))}
               </ul>

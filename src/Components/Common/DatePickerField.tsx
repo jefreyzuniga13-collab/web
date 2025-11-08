@@ -1,6 +1,6 @@
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import '@/Styles/Common/DateTimePicker.css';
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import "@/Styles/Common/DateTimePicker.css";
 
 interface DatePickerFieldProps {
   label: string;
@@ -15,7 +15,7 @@ export default function DatePickerField({
   value,
   onChange,
   disabled = false,
-  className = '',
+  className = "",
 }: DatePickerFieldProps) {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -24,11 +24,24 @@ export default function DatePickerField({
         value={value}
         disabled={disabled}
         onChange={(newValue: Date | null) => onChange(newValue)}
-        format='dd/MM/yyyy'
+        format="dd/MM/yyyy"
         slotProps={{
           textField: {
             className: `date-picker-field ${className}`,
             fullWidth: true,
+            sx: {
+              "& .MuiInputBase-root": {
+                height: 36,
+                fontSize: "0.85rem",
+                padding: "0 6px",
+              },
+              "& input": {
+                padding: "0 8px",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderRadius: "6px",
+              },
+            },
           },
         }}
       />

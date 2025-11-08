@@ -11,7 +11,7 @@
 }
 .tm-container{
   width:100%;
-  max-width:45%;
+  max-width:40%;
   max-height:90vh;
   background:var(--input-bg);
   border-radius:var(--radius-lg);
@@ -30,11 +30,17 @@
   background:var(--bg-primary);
   border-bottom:.1rem solid var(--border-default)
 }
-.tm-title{
+.tm-title,
+.tm-title__client{
   margin:0;
   font-size:var(--font-size-lg);
   font-weight:var(--font-weight-semibold);
   color:var(--text-default)
+}
+
+.tm-title__client{
+color: var(--color-primary);
+font-weight: bold;
 }
 .tm-close{
   width:3.2rem;
@@ -71,7 +77,8 @@
 }
 .tm-error{
   color:var(--color-destructive, #d14343);
-  font-size:var(--font-size-xs)
+  font-size:var(--font-size-xs);
+  text-align: left;
 }
 .tm-attach-card{
   display:flex;
@@ -185,15 +192,23 @@
 .tm-btn{
   min-width:10rem
 }
+
+.select-error-message,
+.input-error-message,
+.tm-error{
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
 @keyframes tmIn{
   from{opacity:0; transform:translateY(-1rem) scale(.98)}
   to{opacity:1; transform:translateY(0) scale(1)}
 }
 @media (max-width: 64rem){
-  .tm-container{max-width:56%}
+  .tm-container{max-width:50%}
 }
 @media (max-width: 48rem){
-  .tm-container{max-width:72%}
+  .tm-container{max-width:75%}
 }
 @media (max-width: 36rem){
   .tm-container{max-width:100%}

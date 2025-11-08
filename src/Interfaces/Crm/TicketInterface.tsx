@@ -8,4 +8,6 @@ export type CrearTicketArgs = {
   descripcion: string
   prioridad: Prioridad
   archivos: File[]
+  responsibleId: number | null
+  DueDate: Date
 }

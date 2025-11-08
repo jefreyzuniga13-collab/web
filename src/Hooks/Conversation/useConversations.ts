@@ -101,17 +101,21 @@ const getConversationsByContacts = useCallback(
   [page, pageSize]
 )
 const handleCreateTicket = useCallback(
-  async ({ conversationId, codCliente, contactId, titulo, descripcion, prioridad, archivos }: CrearTicketArgs) => {
+  async ({ conversationId, codCliente, 
+    contactId, titulo, descripcion, prioridad, archivos,
+    responsibleId, DueDate }: CrearTicketArgs) => {
     try {
       setLoading(true)
       setError(null)
       await ConversationService.createTicketForConversation(conversationId, {
+        dueDate: DueDate,
         codCliente,
         contactId,
         titulo,
         descripcion,
         prioridad,
-        archivos
+        archivos,
+        responsibleId,
       })
     } catch (err: any) {
       setError(err)
