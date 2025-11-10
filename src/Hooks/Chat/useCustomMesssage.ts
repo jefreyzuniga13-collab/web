@@ -6,7 +6,7 @@ import type {
 } from '@/Interfaces/Setting/CustomMessageInterface'
 import { CustomMessageServices } from '@/Services/Config/CustomMessageServices'
 
-export function useCustomMessage() {
+export function useCustomMessage(autoLoad = true) {
   const [customMessages, setCustomMessages] = useState<CustomMessageResponseDto[]>([])
   const [selectedCustomMessage, setSelectedCustomMessage] = useState<CustomMessageResponseDto | null>(null)
   const [loadingList, setLoadingList] = useState(false)
@@ -14,22 +14,21 @@ export function useCustomMessage() {
   const [error, setError] = useState<Error | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
   const [isModalOpen, setModalOpen] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
-  const fetchPage = useCallback(
-    async () => {
-      setLoadingList(true)
-      setError(null)
-      try {
-        const resp = await CustomMessageServices.getAllAsync()
-        setCustomMessages(resp)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingList(false)
-      }
-    },
-    []
-  )
+  const fetchPage = useCallback(async () => {
+    setLoadingList(true)
+    setError(null)
+    try {
+      const resp = await CustomMessageServices.getAllAsync()
+      setCustomMessages(resp)
+      setLoaded(true)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoadingList(false)
+    }
+  }, [])
 
   const fetchById = useCallback(async (id: number) => {
     setLoadingItem(true)
@@ -82,7 +81,6 @@ export function useCustomMessage() {
       setError(null)
       try {
         const toggled = await CustomMessageServices.toggleStatusAsync(id)
-        
         setCustomMessages(prev =>
           prev.map(item => (item.id === toggled.id ? toggled : item))
         )
@@ -95,7 +93,6 @@ export function useCustomMessage() {
     []
   )
 
-  // Modal controls
   const openCreate = useCallback(() => {
     setSelectedCustomMessage(null)
     setModalMode('create')
@@ -138,10 +135,11 @@ export function useCustomMessage() {
     [modalMode, selectedCustomMessage, create, update, closeModal]
   )
 
-  // Initial load & reload
   useEffect(() => {
-    fetchPage()
-  }, [fetchPage])
+    if (autoLoad) {
+      fetchPage()
+    }
+  }, [autoLoad, fetchPage])
 
   return {
     customMessages,
@@ -158,5 +156,7 @@ export function useCustomMessage() {
     toggleSystemParam: toggleStatus,
     create,
     update,
+    load: fetchPage,
+    loaded,
   }
 }

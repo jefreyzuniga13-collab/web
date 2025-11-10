@@ -1,5 +1,5 @@
-import { Autocomplete, TextField } from '@mui/material'
-import React from 'react'
+import { Autocomplete, TextField, CircularProgress } from '@mui/material'
+import React, { useCallback } from 'react'
 
 interface Option {
   label: string
@@ -15,6 +15,9 @@ interface Props {
   disabled?: boolean
   error?: boolean
   helperText?: string
+  hasMore?: boolean
+  loading?: boolean
+  onLoadMore?: () => void
 }
 
 const CustomAutocomplete: React.FC<Props> = ({
@@ -26,7 +29,23 @@ const CustomAutocomplete: React.FC<Props> = ({
   disabled = false,
   error = false,
   helperText,
+  hasMore = false,
+  loading = false,
+  onLoadMore,
 }) => {
+  // Detectar scroll al final del popup
+  const handleScroll = useCallback(
+    (event: React.SyntheticEvent) => {
+      if (!onLoadMore || !hasMore || loading) return
+      const listboxNode = event.currentTarget as HTMLElement
+      const nearBottom =
+        listboxNode.scrollTop + listboxNode.clientHeight >=
+        listboxNode.scrollHeight - 40
+      if (nearBottom) onLoadMore()
+    },
+    [onLoadMore, hasMore, loading]
+  )
+
   return (
     <Autocomplete
       disablePortal
@@ -36,6 +55,11 @@ const CustomAutocomplete: React.FC<Props> = ({
       getOptionLabel={(option) => option.label}
       isOptionEqualToValue={(option, val) => option.value === val?.value}
       disabled={disabled}
+      loading={loading}
+      ListboxProps={{
+        onScroll: handleScroll,
+        style: { maxHeight: 250, overflow: 'auto' },
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -44,6 +68,15 @@ const CustomAutocomplete: React.FC<Props> = ({
           error={error}
           helperText={helperText}
           size="small"
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
         />
       )}
       fullWidth
@@ -51,4 +84,4 @@ const CustomAutocomplete: React.FC<Props> = ({
   )
 }
 
-export default CustomAutocomplete;
+export default CustomAutocomplete

@@ -45,13 +45,10 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
       
     return (
         <div className="detailPanel-card"
-            style={{
-                paddingLeft: 12,
-                paddingRight: 12
-            }}>
+            >
 
             <header className="detailPanel-quick__header">
-                <h5>Conversación Actual</h5>
+                <h5 className="detailPanel-content-header__title">Conversación Actual</h5>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button
@@ -144,7 +141,7 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
 
             {conversationTone && (
                 <div className="detailPanel-contactGroup">
-                    <p className="detailPanel-contactGroup__title">Tono de conversación</p>
+                    <p className="detailPanel-contactGroup__title">Tono</p>
                     <span className="detailPanel-clientGroup__cliente">
                         <strong className={`conversation-toneText__${conversationTone.trim()}`}>{conversationTone}</strong>
                     </span>

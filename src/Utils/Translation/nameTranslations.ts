@@ -63,5 +63,15 @@ export const nameTranslations: Record<NameTranslation, string> = {
   TituloSeccionSaludo: "TituloSeccionSaludo",
   EncabezadoSaludo: "EncabezadoSaludo",
   TiempoDisponibleAbrirConversación: "TiempoDisponibleAbrirConversación",
-  TiempoListarConversaciones: "TiempoListarConversaciones"
+  TiempoListarConversaciones: "TiempoListarConversaciones",
+  GlobalInactivityCloseHours: "HorasCierreInactividadGlobal",
+
+   MaxMediaPerMessage: "Cantidad máxima de archivos por mensaje",
+  MaxImageMB: "Tamaño máximo de imágenes (MB)",
+  MaxVideoMB: "Tamaño máximo de videos (MB)",
+  MaxAudioMB: "Tamaño máximo de audios (MB)",
+  MaxStickerMB: "Tamaño máximo de stickers (MB)",
+  MaxDocumentMB: "Tamaño máximo de documentos (MB)",
+  MaximoMediaPorMensaje: "Mensaje cuando se supera el máximo de archivos por mensaje",
+  PesoMediaMbMaximoMensaje: "Mensaje cuando el archivo supera el tamaño máximo permitido",
 };

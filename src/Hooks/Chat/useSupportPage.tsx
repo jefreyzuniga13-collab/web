@@ -49,7 +49,7 @@ export function useSupportPage() {
   const isAdmin = role.toLowerCase() === "admin";
   let DEFAULT_OPTIONS: FilterOption[];
 
-  const [detailToggle, setDetailToggle] = useState<boolean>(true);
+  const [detailToggle, setDetailToggle] = useState<boolean>(false);
 
   if (isAdmin) {
     DEFAULT_OPTIONS = [

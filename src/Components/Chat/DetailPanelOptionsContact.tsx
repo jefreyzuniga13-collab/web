@@ -40,12 +40,11 @@ const DetailPanelOptionsContact: React.FC<Props> = ({
   return (
     <section>
        <header className="detailPanel-content-header">
-        <h5>Detalles del contacto</h5>
+        <h5 className='detailPanel-content-header__title'>Detalles del contacto</h5>
       </header>
 
       <div
         className="detailPanel-card"
-        style={{ padding: 12, marginTop: 8 }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
           <div className="detailPanel-contactGroup"

@@ -42,6 +42,13 @@ export function useUsers() {
     [dispatch, pageSize, search, globalFilter]
   )
 
+   const setPage = useCallback(
+    (p: number) => {
+      fetchPage(p, pageSize)
+    },
+    [fetchPage, pageSize]
+  )
+
   const fetchOne = useCallback(
     (id: number) => {
       dispatch(fetchUserById(id)).unwrap()
@@ -85,7 +92,6 @@ export function useUsers() {
         .unwrap()
         .then(() => {
           toast.success('Estado de usuario cambiado')
-          // after toggling, just reload current page
           fetchPage(currentPage)
         })
         .catch(() => toast.error('Error al cambiar estado de usuario'))
@@ -162,7 +168,7 @@ export function useUsers() {
     pageSize,
     totalCount,
     fetchOne,
-    setPage: (p: number) => fetchPage(p, pageSize),
+    setPage,
     setPageSize: (s: number) => fetchPage(1, s),
     search,
     setSearch,

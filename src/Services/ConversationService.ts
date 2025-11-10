@@ -8,7 +8,6 @@ import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import type { exportPDFArgs } from "@/Interfaces/Chat/ConversationInterface";
-import { format } from 'date-fns';
 
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
 
@@ -124,45 +123,6 @@ export function markConversationRead(conversationId: number) {
 }
 
 class ConversationServ {
-
-    async createTicketForConversation(
-    conversationId: number,
-    payload: {
-      dueDate: Date
-      codCliente: string
-      contactId: number
-      titulo: string
-      descripcion: string
-      prioridad: string
-      archivos: File[],
-      responsibleId: number | null
-    }
-  ): Promise<ApiResponse<void>> {
-    const formData = new FormData()
-    formData.append('ClientCode', payload.codCliente)
-    formData.append('ContactId', String(payload.contactId))
-    formData.append('ResponsibleId', String(payload.responsibleId))
-    formData.append('Title', payload.titulo)
-    formData.append(
-      'DueDate',
-      payload.dueDate ? format(payload.dueDate, 'yyyy-MM-dd') : ''
-    );
-
-    formData.append('Description', payload.descripcion)
-    formData.append('Priority', payload.prioridad)
-  
-    payload.archivos.forEach(f => formData.append('Attachments', f, f.name))
-
-    const { data } = await api.post<ApiResponse<void>>(
-      `/TicketDetail/${conversationId}/tickets`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }
-    )
-    return data
-  }
-
       private buildContactsQuery(contactsId: number[]) {
         const qs = new URLSearchParams();
         (contactsId ?? [])

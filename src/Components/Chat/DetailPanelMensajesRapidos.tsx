@@ -17,7 +17,7 @@ const DetailPanelMensajesRapidos: React.FC<Props> = ({
     return (
         <>
             <header className="detailPanel-quick__header">
-                <h5>Mensajes rápidos</h5>
+                <h5 className="detailPanel-content-header__title">Mensajes rápidos</h5>
                 <input
                     className="detailPanel-quick__search"
                     placeholder="Buscar…"

@@ -50,14 +50,16 @@ export const ChatWindow: React.FC<Props> = ({
   const messagesContainerRef = useRef<HTMLDivElement|null>(null);
   const composerRef = useRef<HTMLDivElement|null>(null);
 
-  const {
-    customMessages,
-    create,
-    update,
-    toggleSystemParam,
-    loading,
-    error,
-  } = useCustomMessage();
+const {
+  customMessages,
+  create,
+  update,
+  toggleSystemParam,
+  loading,
+  error,
+  load,
+  loaded,
+} = useCustomMessage(false)
   
   const {
     setConversationId,
@@ -115,6 +117,12 @@ export const ChatWindow: React.FC<Props> = ({
   validFrom,
   validTo
 );
+
+useEffect(() => {
+  if (flyoutOpen && !loaded) {
+    void load()
+  }
+}, [flyoutOpen, loaded, load])
 
   useEffect(() => {
       setConversationId(Number(conversationId));

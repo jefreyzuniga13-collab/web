@@ -67,6 +67,15 @@ export type NameTranslation =
   | "EncabezadoSaludo"
   | "TiempoDisponibleAbrirConversación"
   | "TiempoListarConversaciones"
+  | "GlobalInactivityCloseHours"
+   | 'MaxMediaPerMessage'
+  | 'MaxImageMB'
+  | 'MaxVideoMB'
+  | 'MaxAudioMB'
+  | 'MaxStickerMB'
+  | 'MaxDocumentMB'
+  | 'MaximoMediaPorMensaje'
+  | 'PesoMediaMbMaximoMensaje';
   ;
 
   export type TypeTranslation =

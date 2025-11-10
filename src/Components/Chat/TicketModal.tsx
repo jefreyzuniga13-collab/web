@@ -1,16 +1,19 @@
-// TicketModal.tsx
-import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react'
+import React, { useMemo, 
+  // useRef, 
+  useState, useCallback, useEffect } from 'react'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import { Textarea } from '@/Components/Common/Textarea'
 import { Label } from '@/Components/Common/Label'
 import Select from '@/Components/Common/Select'
 import '@/Styles/Chat/TicketModal.css'
-import useConversations from '@/Hooks/Conversation/useConversations'
-import type { Prioridad } from '@/Interfaces/Crm/TicketInterface'
+import { useTicketDetail } from '@/Hooks/Crm/useTicketDetail'
+import type { Prioridad } from '@/Interfaces/Crm/TicketInterfaces'
 import { useUsers } from '@/Hooks/User/useUsers'
 import { jwtDecode } from 'jwt-decode'
 import DatePickerField from '@/Components/Common/DatePickerField'
+import { toast } from 'react-toastify'
+import CustomAutocomplete from '@/Components/Common/CustomAutocomplete'
 
 interface TicketModalProps {
   isOpen: boolean
@@ -45,24 +48,51 @@ export default function TicketModal({
   const [priority, setPriority] = useState<Prioridad | ''>('')
   const [responsibleId, setResponsibleId] = useState<number | null>(null)
   const [dueDate, setDueDate] = useState<Date | null>(null)
-  const [files, setFiles] = useState<File[]>([])
-  const [submitting, setSubmitting] = useState(false)
-  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string }>({})
-  const [isDragging, setIsDragging] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // const [files, setFiles] = useState<File[]>([])
+
+  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string;dueDate?: string }>({})
+  // const [isDragging, setIsDragging] = useState(false)
+  // const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage
+  const { accessToken } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
   const isAdmin = role.toLowerCase() === 'admin'
 
-  const { handleCreateTicket } = useConversations()
-  const { fetchPage, users } = useUsers()
+  const { createTicket, error, loading } = useTicketDetail()
+  const { users, loading: usersLoading, page, pageSize, setPage, totalCount } = useUsers()
 
+  const [allUsers, setAllUsers] = useState<typeof users>([])
   useEffect(() => {
     if (!isOpen || !isAdmin) return
-    fetchPage()
-  }, [isOpen, isAdmin, fetchPage])
+
+    // Cada vez que abras el modal, reseteas y pides la primera página
+    setAllUsers([])
+    setPage(1)
+  }, [isOpen, isAdmin, setPage])
+
+  useEffect(() => {
+    setAllUsers(prev => {
+      const map = new Map(prev.map(u => [u.userId, u]))
+      for (const u of users) {
+        map.set(u.userId, u)
+      }
+      return Array.from(map.values())
+    })
+  }, [users])
+
+
+  const hasMoreResponsibles = useMemo(
+    () => page * pageSize < totalCount,
+    [page, pageSize, totalCount]
+  )
+
+
+  const handleLoadMoreResponsibles = useCallback(() => {
+    if (!hasMoreResponsibles || usersLoading) return
+    setPage(page + 1)
+  }, [hasMoreResponsibles, usersLoading, page, setPage])
+
 
   const priorityOptions = useMemo(
     () => [
@@ -73,99 +103,112 @@ export default function TicketModal({
     []
   )
 
+  // const responsibleOptions = useMemo(() => {
+  //   if (!users || !Array.isArray(users)) return []
+  //   return users
+  //     .filter(u => {
+  //       const roles = Array.isArray(u.roles)
+  //         ? u.roles.map(r =>
+  //           (r.roleName ?? '').toLowerCase()
+  //         )
+  //         : []
+
+  //       if (roles.includes('support')) return true
+  //       if (roles.includes('admin')) return u.userId === userId
+  //       return false
+  //     })
+  //     .map(u => ({
+  //       label: u.fullName ?? String(u.userId),
+  //       value: String(u.userId)
+  //     }))
+  // }, [users, userId])
+
 
   const responsibleOptions = useMemo(() => {
-  if (!users || !Array.isArray(users)) return []
-  return users
-    .filter(u => {
-      const roles = Array.isArray(u.roles)
-        ? u.roles.map(r =>
-           (r.roleName ?? '').toLowerCase()
-          )
-        : []
-
-      if (roles.includes('support')) return true
-      if (roles.includes('admin')) return u.userId === userId
-      return false
-    })
-    .map(u => ({
+    if (!allUsers || !Array.isArray(allUsers)) return []
+    return allUsers.map(u => ({
       label: u.fullName ?? String(u.userId),
-      value: String(u.userId)
+      value: String(u.userId),
     }))
-}, [users, userId])
+  }, [allUsers])
 
 
-  const addFiles = useCallback((incoming: File[]) => {
-    setFiles(prev => {
-      const map = new Map(prev.map(f => [f.name + f.size + f.lastModified, f]))
-      for (const f of incoming) map.set(f.name + f.size + f.lastModified, f)
-      return Array.from(map.values())
-    })
-  }, [])
+  // const addFiles = useCallback((incoming: File[]) => {
+  //   setFiles(prev => {
+  //     const map = new Map(prev.map(f => [f.name + f.size + f.lastModified, f]))
+  //     for (const f of incoming) map.set(f.name + f.size + f.lastModified, f)
+  //     return Array.from(map.values())
+  //   })
+  // }, [])
 
-  const handlePickFiles = () => fileInputRef.current?.click()
+  // const handlePickFiles = () => fileInputRef.current?.click()
 
-  const handleFiles = (list: FileList | null) => {
-    if (!list) return
-    addFiles(Array.from(list))
-  }
+  // const handleFiles = (list: FileList | null) => {
+  //   if (!list) return
+  //   addFiles(Array.from(list))
+  // }
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
+  // const onDragOver = (e: React.DragEvent) => {
+  //   e.preventDefault()
+  //   setIsDragging(true)
+  // }
 
-  const onDragLeave = () => {
-    setIsDragging(false)
-  }
+  // const onDragLeave = () => {
+  //   setIsDragging(false)
+  // }
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const list = e.dataTransfer.files
-    if (!list || list.length === 0) return
-    addFiles(Array.from(list))
-  }
+  // const onDrop = (e: React.DragEvent) => {
+  //   e.preventDefault()
+  //   setIsDragging(false)
+  //   const list = e.dataTransfer.files
+  //   if (!list || list.length === 0) return
+  //   addFiles(Array.from(list))
+  // }
 
-  const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
+  // const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
 
   const validate = () => {
     const e: typeof errors = {}
     if (!title.trim()) e.title = 'Requerido'
     if (!description.trim()) e.description = 'Requerido'
     if (!priority) e.priority = 'Seleccione una prioridad'
-    if (!responsibleId) e.responsibleId = 'Requerido'
+    if (isAdmin && !responsibleId) e.responsibleId = 'Requerido'
+     if (!dueDate) e.dueDate = 'Requerida'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
-  const date = new Date();
   const submit = async (ev: React.FormEvent) => {
     ev.preventDefault()
     if (!validate()) return
-    try {
-      setSubmitting(true)
-      await handleCreateTicket({
-        conversationId,
-        codCliente,
-        contactId,
-        titulo: title.trim(),
-        descripcion: description.trim(),
-        prioridad: priority as Prioridad,
-        archivos: files,
-        responsibleId: responsibleId,
-        DueDate: dueDate ? dueDate : date,
-      })
-      setTitle('')
-      setDescription('')
-      setPriority('')
-      setFiles([])
-      setResponsibleId(null)
-      setDueDate(null)
-      onClose()
-    } finally {
-      setSubmitting(false)
+
+    const resp = await createTicket({
+      conversationId,
+      codCliente,
+      contactId,
+      titulo: title.trim(),
+      descripcion: description.trim(),
+      prioridad: priority as Prioridad,
+      // archivos: files,
+      archivos: [],
+      responsibleId,
+      DueDate: dueDate!,
+    })
+
+    if (!resp || !resp.success) {
+      toast.error(resp?.message ?? 'Error al crear el ticket')
+      return
     }
+
+    toast.success(resp.message || 'Ticket creado correctamente')
+
+    setTitle('')
+    setDescription('')
+    setPriority('')
+    // setFiles([])
+    setResponsibleId(null)
+    setDueDate(null)
+    onClose()
   }
 
   if (!isOpen) return null
@@ -212,31 +255,45 @@ export default function TicketModal({
             {isAdmin && (
               <div className="tm-field">
                 <Label htmlFor="tk-responsible">Responsable *</Label>
-                <Select
-                  id="tk-responsible"
-                  name="responsable"
-                  value={responsibleId != null ? String(responsibleId) : ''}
-                  onChange={e => setResponsibleId(e.target.value ? Number(e.target.value) : null)}
-                  options={responsibleOptions}
+                <CustomAutocomplete
+                  label="Responsable"
                   placeholder="Seleccione responsable"
-                   error={errors.responsibleId}
+                  value={
+                    responsibleId != null
+                      ? responsibleOptions.find(
+                        o => Number(o.value) === Number(responsibleId)
+                      ) || null
+                      : null
+                  }
+                  onChange={(newOpt) =>
+                    setResponsibleId(newOpt ? Number(newOpt.value) : null)
+                  }
+                  options={responsibleOptions}
+                  error={!!errors.responsibleId}
+                  helperText={errors.responsibleId}
+                  hasMore={hasMoreResponsibles}
+                  loading={usersLoading}
+                  onLoadMore={handleLoadMoreResponsibles}
                 />
               </div>
             )}
 
+
+
             <div className="tm-field">
-            <Label htmlFor="tk-due">Fecha Entrega</Label>
-            <DatePickerField
-              label=""
-              value={dueDate}
-              onChange={setDueDate}
-              className="tm-due-date"
-            />
-          </div>
+              <Label htmlFor="tk-due">Fecha Entrega *</Label>
+              <DatePickerField
+                label=""
+                value={dueDate}
+                onChange={setDueDate}
+                className="tm-due-date"
+              />
+              {errors.dueDate && <span className="tm-error">{errors.dueDate}</span>}
+            </div>
           </div>
 
           <div className="tm-field">
-            <Label htmlFor="tk-desc">Descripción n*</Label>
+            <Label htmlFor="tk-desc">Descripción *</Label>
             <Textarea
               id="tk-desc"
               placeholder="Descripción del ticket"
@@ -248,7 +305,7 @@ export default function TicketModal({
             {errors.description && <span className="tm-error">{errors.description}</span>}
           </div>
 
-          <div className="tm-field">
+          {/* <div className="tm-field">
             <Label>Adjuntos</Label>
             <div
               className={`tm-attach-card ${isDragging ? 'is-dragging' : ''}`}
@@ -296,16 +353,21 @@ export default function TicketModal({
                 ))}
               </ul>
             )}
-          </div>
+          </div> */}
 
           <footer className="tm-footer">
-            <Button type="button" variant="secondary" className="tm-btn" onClick={onClose} disabled={submitting}>
+            <Button type="button" variant="secondary" className="tm-btn" onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" className="tm-btn" disabled={submitting}>
-              Crear Ticket
+            <Button type="submit" variant="primary" className="tm-btn" disabled={loading}>
+              {loading ? 'Creando...' : 'Crear Ticket'}
             </Button>
           </footer>
+          {error && (
+            <p className="tm-error" style={{ marginTop: '0.5rem' }}>
+              {error.message}
+            </p>
+          )}
         </form>
       </div>
     </div>

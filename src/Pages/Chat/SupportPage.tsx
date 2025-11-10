@@ -3,8 +3,7 @@ import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import "@/Styles/Chat/SupportPage.css";
-import { FaFilter, 
-   FaUserAlt } from "react-icons/fa";
+import {FaFilter, FaUserAlt} from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
@@ -20,7 +19,6 @@ const SupportPage: React.FC = () => {
   const [ticketOpen, setTicketOpen] = useState(false)
 
   const { fetchById, selectedData: contact } = useContact()
-
 
   const {
     conversation,
@@ -46,12 +44,10 @@ const SupportPage: React.FC = () => {
   } = useSupportPage();
 
   useEffect(() => {
-  if (!ticketOpen) return
-  if (conversation?.clientContactId) {
+    if (!conversation?.clientContactId) return
     fetchById(conversation.clientContactId)
-  }
-}, [ticketOpen, conversation?.clientContactId, fetchById])
-  
+  }, [conversation?.clientContactId, fetchById])
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
@@ -62,11 +58,13 @@ const SupportPage: React.FC = () => {
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-    //Captura de evento de esc, para cerrar la conversación.
+  //Captura de evento de esc, para cerrar la conversación.
   const handleScapePress = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       // setDetailToggle(false);
       setContactDetailToggle(false);
+      setTicketOpen(false);
+      setDetailToggle(false); 
       setConvId(null);
       setSearchConversation("");
       convHook.clearFilter();
@@ -80,6 +78,13 @@ const SupportPage: React.FC = () => {
       window.removeEventListener("keydown", handleScapePress);
     };
   }, []);
+
+    useEffect(() => {
+    if (!convId) {
+      setTicketOpen(false);
+    }
+  }, [convId]);
+
 
   return (
     <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
@@ -144,7 +149,7 @@ const SupportPage: React.FC = () => {
             {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}
           </h2>
 
-        {/* Toogle para pausar y reanudar conversación */}
+          {/* Toogle para pausar y reanudar conversación */}
           {/* {convId && isAdmin && (
             <label className="switch">
               <input
@@ -162,24 +167,23 @@ const SupportPage: React.FC = () => {
 
           <div className="btn-container">
 
-            {convId && ( 
+            {convId && contact?.clienteCodigo && (
               <button
-              className={`crearTicket-button`}
-              onClick={()=>setTicketOpen(true)}
-            >
-              <Sticker size={16} /> Crear Ticket
-            </button>
+                className={`crearTicket-button`}
+                onClick={() => setTicketOpen(true)}
+              >
+                <Sticker size={16} /> Crear Ticket
+              </button>
             )}
 
-            {convId && isAdmin && (
+            {convId && (
               <button
-              className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${
-                conversation?.status == "Closed" ? "btnDisabled" : ""
-              } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
-              onClick={handleAssignClick}
-            >
-              <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}
-            </button>
+                className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${conversation?.status == "Closed" ? "btnDisabled" : ""
+                  } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
+                onClick={handleAssignClick}
+              >
+                <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}
+              </button>
             )}
           </div>
         </header>
@@ -197,33 +201,33 @@ const SupportPage: React.FC = () => {
       </main>
 
       <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
-      <aside className="sidebar">…</aside>
-      <main className="main-content">…</main>
+        <aside className="sidebar">…</aside>
+        <main className="main-content">…</main>
 
-          <aside className="detail-aside">
-              {detailToggle && convId && (
-                <DetailPanel
-                  key={convId}
-                  contactId={conversation?.clientContactId}
-                  selectedParam={selectedParam}
-                  conversationId={convId ?? undefined}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
-                />
-              )}
-            </aside>
+        <aside className="detail-aside">
+          {detailToggle && convId && (
+            <DetailPanel
+              key={convId}
+              contactId={conversation?.clientContactId}
+              selectedParam={selectedParam}
+              conversationId={convId ?? undefined}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
+            />
+          )}
+        </aside>
 
-            <button
-              type="button"
-              className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
-              onClick={() => setDetailToggle(t => !t)}
-              disabled={!convId}
-              aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-              title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-            >
-              {detailToggle ? "›" : "‹"}
-            </button>
-          </div>
+        <button
+          type="button"
+          className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
+          onClick={() => setDetailToggle(t => !t)}
+          disabled={!convId}
+          aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+          title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+        >
+          {detailToggle ? "›" : "‹"}
+        </button>
+      </div>
 
 
       {contactDetailToggle && (
@@ -254,7 +258,7 @@ const SupportPage: React.FC = () => {
         />
       )}
 
-     {ticketOpen && contact?.isVerified && conversation && (
+      {ticketOpen  && convId && contact?.isVerified && conversation && contact?.clienteCodigo && (
         <TicketModal
           isOpen={ticketOpen}
           onClose={() => setTicketOpen(false)}

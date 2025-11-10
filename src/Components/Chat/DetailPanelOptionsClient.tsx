@@ -50,7 +50,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0 12px',
+                    paddingLeft:0,
                 }}
             >
                 <h5>Detalles del cliente</h5>
@@ -59,7 +59,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         className="btn btn--secondary"
                         onClick={() => setClientEditOpen(true)}
                     >
-                        <Edit size={14} /> Editar
+                        <Edit size={14} />
                     </button>
                     <button
                         className="btn btn--primary"
@@ -72,10 +72,6 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
 
             <div
                 className="detailPanel-card"
-                style={{
-                    padding: 12,
-                    marginTop: 8,
-                }}
             >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                     <div className="detailPanel-contactGroup">
