@@ -50,4 +50,5 @@
     text-align: left;
     padding: 10px;
     padding-top: 0;
+    overflow-y: scroll;
 }

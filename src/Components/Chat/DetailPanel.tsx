@@ -4,7 +4,7 @@ import { LuContact } from 'react-icons/lu'
 import { FaRegBuilding, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
 import { BiConversation } from 'react-icons/bi'
-import { X, Plus, Search, ChevronDown, ChevronUp, FileDown } from 'lucide-react'
+import { X, Plus, Search, FileDown } from 'lucide-react'
 import ConversationHistoryModal from '@/Components/Chat/ConversationHistoryModal'
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
@@ -43,35 +43,14 @@ const DetailPanel: React.FC<Props> = ({
     setShowMore,
     moreTab,
     setMoreTab,
-    editBuffer,
-    setEditBuffer,
     credSearch,
     setCredSearch,
     devSearch,
     setDevSearch,
     sysSearch,
     setSysSearch,
-    ctcSearch,
-    setCtcSearch,
-    filteredHosting,
     filteredDevs,
     filteredSystems,
-    filteredContacts,
-    addHostingOpen,
-    setAddHostingOpen,
-    newHosting,
-    setNewHosting,
-    addHosting,
-    addDevOpenId,
-    setAddDevOpenId,
-    newDevCred,
-    setNewDevCred,
-    addDeviceCredential,
-    addSysOpenId,
-    setAddSysOpenId,
-    newSysCred,
-    setNewSysCred,
-    addSystemCredential,
     addDeviceOpen,
     setAddDeviceOpen,
     newDevice,
@@ -98,7 +77,6 @@ const DetailPanel: React.FC<Props> = ({
     isFranchise,
     setIsFranchise,
     saveClientEdits,
-    handleSendQuick,
     formatNiPhone,
     displayOrDash,
     formatDate,
@@ -112,7 +90,26 @@ const DetailPanel: React.FC<Props> = ({
     sysGlobalFilter,
     setSysGlobalFilter,
     openSystemPicker,
-    openContactPicker,
+    credentials,
+    credModalOpen,
+    setCredModalOpen,
+    credMode,
+    credScope,
+    setCredScope,
+    deviceTargetId,
+    setDeviceTargetId,
+    systemTargetId,
+    setSystemTargetId,
+    credReq,
+    setCredReq,
+    credErrors,
+    openCredCreate,
+    openCredView,
+    openCredEdit,
+    saveCred,
+    devs,
+    systems,
+    handleSendQuick,
   } = useDetailPanel(contactId, selectedParam)
 
   const [showHistoryModal, setShowHistoryModal] = useState(false)
@@ -153,45 +150,12 @@ const DetailPanel: React.FC<Props> = ({
     </div>
   )
 
-  const [openHost, setOpenHost] = useState<Set<string | number>>(new Set())
-  const [openDev, setOpenDev] = useState<Set<string | number>>(new Set())
-  const [openSys, setOpenSys] = useState<Set<string | number>>(new Set())
-
-  const toggleHost = (id: string | number) => {
-    setOpenHost(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const toggleDev = (id: string | number) => {
-    setOpenDev(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const toggleSys = (id: string | number) => {
-    setOpenSys(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const [sysPickerLocalFilter, setSysPickerLocalFilter] = useState(sysGlobalFilter || '')
   const [convFrom, setConvFrom] = useState<string>('')
   const [convTo, setConvTo] = useState<string>('')
   const [convQuery, setConvQuery] = useState<string>('')
   const [showConvFilters, setShowConvFilters] = useState(false)
-
   const [convPage, setConvPage] = useState(1)
-  const convPageSize = 5
+  const convPageSize = 20
 
   useEffect(() => {
     setConvPage(1)
@@ -244,26 +208,29 @@ const DetailPanel: React.FC<Props> = ({
   useEffect(() => {
     setShowMore(false)
     setClientEditOpen(false)
-    setAddHostingOpen(false)
     setAddDeviceOpen(false)
     setPickSysOpen(false)
-    setEditBuffer(null)
     setCredSearch('')
     setDevSearch('')
     setSysSearch('')
-    setCtcSearch('')
     setQQuick('')
-    setOpenHost(new Set())
-    setOpenDev(new Set())
-    setOpenSys(new Set())
     setConvFrom('')
     setConvTo('')
     setConvQuery('')
     setConvPage(1)
-    setSysPickerLocalFilter('')
     setShowHistoryModal(false)
     setSelectedConversation(0)
-  }, [contactId, conversationId])
+  }, [
+    contactId,
+    conversationId,
+    setClientEditOpen,
+    setAddDeviceOpen,
+    setPickSysOpen,
+    setCredSearch,
+    setDevSearch,
+    setSysSearch,
+    setQQuick,
+  ])
 
   const convRows = useMemo(
     () =>
@@ -286,6 +253,24 @@ const DetailPanel: React.FC<Props> = ({
 
   const [hoverId, setHoverId] = useState<number | null>(null)
 
+  const filteredCreds = useMemo<CredentialResponseDTO[]>(() => {
+    const n = credSearch.trim().toLowerCase()
+    if (!n) return credentials
+    return credentials.filter(it =>
+      [
+        it.catCredencialNames,
+        it.user,
+        it.instance,
+        it.port,
+        it.observation,
+        (it as any).outsourcedDeviceName,
+        (it as any).clientOutsourcedSystemsName,
+      ]
+        .filter(Boolean)
+        .some(v => String(v).toLowerCase().includes(n))
+    )
+  }, [credentials, credSearch])
+
   if (loading)
     return (
       <div className="loader-container">
@@ -299,7 +284,6 @@ const DetailPanel: React.FC<Props> = ({
       className="detailPanel-container"
     >
       <ul className="detail-panel__header">
-        
         <li className={`detailPanel-option ${optionMenu === 1 ? 'is-active' : ''}`}>
           <button
             type="button"
@@ -320,7 +304,6 @@ const DetailPanel: React.FC<Props> = ({
             <LuContact size={20} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
-
         <li className={`detailPanel-option ${optionMenu === 3 ? 'is-active' : ''}`}>
           <button
             type="button"
@@ -341,7 +324,6 @@ const DetailPanel: React.FC<Props> = ({
             <BiConversation size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
-
         <li className={`detailPanel-option ${optionMenu === 5 ? 'is-active' : ''}`}>
           <button
             type="button"
@@ -350,7 +332,7 @@ const DetailPanel: React.FC<Props> = ({
               setOptionMenu(5)
               setConvPage(1)
             }}
-            aria-label="Conversación"
+            aria-label="Historial de conversaciones"
           >
             <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
           </button>
@@ -364,7 +346,6 @@ const DetailPanel: React.FC<Props> = ({
           paddingRight: 12,
         }}
       >
-
         {optionMenu === 1 && (
           <DetailPanelOptionsClient
             displayOrDash={displayOrDash}
@@ -388,7 +369,7 @@ const DetailPanel: React.FC<Props> = ({
         {optionMenu === 3 && (
           <DetailPanelMensajesRapidos
             filteredQuick={filteredQuick}
-            handleSendQuick={handleSendQuick}
+            handleSendQuick={txt => handleSendQuick(txt, onSendNow)}
             qQuick={qQuick}
             setQQuick={setQQuick}
             onSendNow={onSendNow}
@@ -410,7 +391,7 @@ const DetailPanel: React.FC<Props> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 8,
+                gap: 4,
                 position: 'relative',
               }}
             >
@@ -620,7 +601,7 @@ const DetailPanel: React.FC<Props> = ({
                   >
                     <button
                       className="btn btn--ghost"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation()
                         exportConversationHistoryToPDFAsync({
                           contactId: r.contactId,
@@ -701,12 +682,16 @@ const DetailPanel: React.FC<Props> = ({
       </section>
 
       {showMore && (
-        <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Más detalles del cliente">
+        <div
+          className="dp-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Más detalles del cliente"
+        >
           <div
             className="dp-modal__backdrop"
             onClick={() => {
               setShowMore(false)
-              setEditBuffer(null)
             }}
           />
           <div
@@ -758,7 +743,6 @@ const DetailPanel: React.FC<Props> = ({
                 className="btn btn--ghost"
                 onClick={() => {
                   setShowMore(false)
-                  setEditBuffer(null)
                 }}
                 aria-label="Cerrar"
               >
@@ -787,7 +771,7 @@ const DetailPanel: React.FC<Props> = ({
                     <div style={{ position: 'relative', backgroundColor: '#fff' }}>
                       <input
                         className="input"
-                        placeholder="Buscar credenciales de hosting…"
+                        placeholder="Buscar credenciales…"
                         value={credSearch}
                         onChange={e => setCredSearch(e.target.value)}
                         style={{ paddingLeft: 34 }}
@@ -795,125 +779,13 @@ const DetailPanel: React.FC<Props> = ({
                       />
                       <Search
                         size={16}
-                        style={{ position: 'absolute', left: 10, top: 20, opacity: 0.6 }}
+                        style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
                       />
                     </div>
-                    <button className="btn" onClick={() => setAddHostingOpen(s => !s)}>
+                    <button className="btn" onClick={openCredCreate} type="button">
                       <Plus size={14} /> Nueva credencial
                     </button>
                   </div>
-
-                  {addHostingOpen && (
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: 8,
-                        border: '1px dashed #e5e7eb',
-                        borderRadius: 12,
-                        padding: 10,
-                      }}
-                    >
-                      <div style={{ display: 'grid', gap: 8 }}>
-                        <select
-                          className="input"
-                          value={(newHosting as any).catalogName || 'HOSTING'}
-                          onChange={e =>
-                            setNewHosting((p: any) => ({ ...p, catalogName: e.target.value }))
-                          }
-                        >
-                          {[{ id: 0, name: 'HOSTING' }, ...catCredential].map(c => (
-                            <option key={`cat-opt-${c.id ?? c.name}`} value={c.name}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                        <div
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr',
-                            gap: 8,
-                          }}
-                        >
-                          <input
-                            className="input"
-                            placeholder="Usuario"
-                            value={newHosting.user}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({ ...p, user: e.target.value }))
-                            }
-                          />
-                          <input
-                            className="input"
-                            placeholder="text"
-                            value={newHosting.password}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({ ...p, password: e.target.value }))
-                            }
-                          />
-                          <input
-                            className="input"
-                            placeholder="Instancia/Host"
-                            value={newHosting.instance}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({ ...p, instance: e.target.value }))
-                            }
-                          />
-                          <input
-                            className="input"
-                            placeholder="Puerto"
-                            value={newHosting.port}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({ ...p, port: e.target.value }))
-                            }
-                          />
-                          <input
-                            className="input"
-                            placeholder="Observación"
-                            value={newHosting.observation}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({
-                                ...p,
-                                observation: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={!!newHosting.isActive}
-                            onChange={e =>
-                              setNewHosting((p: any) => ({
-                                ...p,
-                                isActive: e.target.checked,
-                              }))
-                            }
-                          />
-                          Activo
-                        </label>
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          gap: 8,
-                        }}
-                      >
-                        <button className="btn btn--ghost" onClick={() => setAddHostingOpen(false)}>
-                          Cancelar
-                        </button>
-                        <button className="btn btn--primary" onClick={addHosting}>
-                          Agregar
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   <div
                     style={{
@@ -922,77 +794,113 @@ const DetailPanel: React.FC<Props> = ({
                       gap: 10,
                     }}
                   >
-                    {filteredHosting.map((it: CredentialResponseDTO, idx: number) => {
-                      const key = it.id ?? idx
-                      const open = openHost.has(key)
+                    {filteredCreds.map(it => {
+                      const scopeText = (it as any).outsourcedDeviceName
+                        ? `Equipo: ${(it as any).outsourcedDeviceName}`
+                        : (it as any).clientOutsourcedSystemsName
+                        ? `Sistema: ${(it as any).clientOutsourcedSystemsName}`
+                        : 'Cliente'
                       return (
-                        <div key={`cred-${key}`} className="dp-collapse">
-                          <button
-                            className="dp-collapse__header"
-                            onClick={() => toggleHost(key)}
+                        <div
+                          key={it.id}
+                          className="dp-collapse"
+                          style={{
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 10,
+                            padding: 10,
+                            display: 'grid',
+                            gap: 8,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: 8,
+                            }}
                           >
-                            <strong className="dp-collapse__title">
-                              <Trunc>{it?.catCredencialNames ?? '---'}</Trunc>
-                            </strong>
-                            <div className="dp-collapse__meta">
-                              <span
-                                className={`badge ${
-                                  it?.isActive !== false ? 'badge--ok' : 'badge--off'
-                                }`}
-                              >
-                                {it?.isActive !== false ? 'Activo' : 'Inactivo'}
-                              </span>
-                              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                          </button>
-                          {open && (
-                            <div className="dp-collapse__body">
-                              <div style={{ display: 'grid', gap: 8 }}>
-                                <Row label="Usuario" value={it?.user} />
-                                <Row
-                                  label="Contraseña"
-                                  value={it?.password ? it?.password : '---'}
-                                />
-                                <Row label="Instancia" value={it?.instance} />
-                                <Row label="Puerto" value={it?.port} />
-                              </div>
-                              <div>
-                                <p className="detailPanel-clientGroup__title">Observación</p>
-                                <div
-                                  style={{
-                                    border: '1px solid #E5E7EB',
-                                    borderRadius: 8,
-                                    padding: 8,
-                                    minHeight: 40,
-                                    background: '#FAFAFA',
-                                  }}
-                                >
-                                  <Trunc>{it?.observation}</Trunc>
-                                </div>
-                              </div>
+                            <div>
+                              <strong className="dp-collapse__title">
+                                <Trunc>{it.catCredencialNames ?? '---'}</Trunc>
+                              </strong>
                               <div
-                                style={{
-                                  display: 'flex',
-                                  gap: 8,
-                                  justifyContent: 'flex-end',
-                                }}
+                                className="dp-collapse__subtitle"
+                                style={{ fontSize: 12, opacity: 0.8 }}
                               >
-                                <button
-                                  className="btn btn--ghost"
-                                  onClick={() => {
-                                    setEditBuffer({ ...it, _t: 'cred' })
-                                    setShowMore(true)
-                                    setMoreTab('cred')
-                                  }}
-                                >
-                                  Editar
-                                </button>
+                                <Trunc>{scopeText}</Trunc>
                               </div>
                             </div>
-                          )}
+                            <span
+                              className={
+                                it.isActive ? 'badge badge--ok' : 'badge badge--off'
+                              }
+                            >
+                              {it.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            <Row label="Usuario" value={it.user} />
+                            <Row
+                              label="Instancia"
+                              value={it.instance ? it.instance : '---'}
+                            />
+                            <Row label="Puerto" value={it.port ? it.port : '---'} />
+                          </div>
+                          <div>
+                            <p className="detailPanel-clientGroup__title">Observación</p>
+                            <div
+                              style={{
+                                border: '1px solid #E5E7EB',
+                                borderRadius: 8,
+                                padding: 8,
+                                minHeight: 40,
+                                background: '#FAFAFA',
+                              }}
+                            >
+                              <Trunc>{it.observation}</Trunc>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: 8,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <button
+                              className="btn btn--ghost"
+                              type="button"
+                              onClick={() => openCredView(it)}
+                            >
+                              Ver
+                            </button>
+                            <button
+                              className="btn btn--primary"
+                              type="button"
+                              onClick={() => openCredEdit(it)}
+                            >
+                              Editar
+                            </button>
+                          </div>
                         </div>
                       )
                     })}
+                    {filteredCreds.length === 0 && (
+                      <div
+                        style={{
+                          border: '1px dashed #e5e7eb',
+                          borderRadius: 10,
+                          padding: 16,
+                          textAlign: 'center',
+                          opacity: 0.7,
+                        }}
+                      >
+                        Sin credenciales
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1021,7 +929,11 @@ const DetailPanel: React.FC<Props> = ({
                         style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
                       />
                     </div>
-                    <button className="btn" onClick={() => setAddDeviceOpen(true)}>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={() => setAddDeviceOpen(true)}
+                    >
                       <Plus size={14} /> Nuevo equipo
                     </button>
                   </div>
@@ -1029,276 +941,88 @@ const DetailPanel: React.FC<Props> = ({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))',
+                      gridTemplateColumns: '1fr',
                       gap: 12,
                     }}
                   >
-                    {filteredDevs.map(it => {
-                      const open = openDev.has(it.id)
-                      return (
-                        <div key={it.id} className="dp-collapse">
-                          <button
-                            className="dp-collapse__header"
-                            onClick={() => toggleDev(it.id)}
-                          >
+                    {filteredDevs.map(it => (
+                      <div
+                        key={it.id}
+                        className="dp-collapse"
+                        style={{
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 10,
+                          padding: 10,
+                          display: 'grid',
+                          gap: 8,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <div>
                             <div className="dp-collapse__title">
-                              <Trunc>{it?.name}</Trunc>
+                              <Trunc>{it.name}</Trunc>
                             </div>
-                            <div className="dp-collapse__subtitle">
-                              <span>{it?.ip}</span>
-                              <span>{it?.operatingSystem}</span>
-                              <span>{it?.versionSO}</span>
-                              <span>{it?.isActive ? 'Activo' : 'Inactivo'}</span>
+                            <div
+                              className="dp-collapse__subtitle"
+                              style={{ fontSize: 12, opacity: 0.8 }}
+                            >
+                              <Trunc>{it.ip ?? '-'}</Trunc>
                             </div>
-                            <div className="dp-collapse__meta">
-                              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                          </button>
-
-                          {open && (
-                            <div className="dp-collapse__body">
-                              <div>
-                                <p className="detailPanel-clientGroup__title">Descripción</p>
-                                <div
-                                  style={{
-                                    border: '1px solid #E5E7EB',
-                                    borderRadius: 8,
-                                    padding: 8,
-                                    minHeight: 40,
-                                    background: '#FAFAFA',
-                                  }}
-                                >
-                                  <Trunc>{it?.description}</Trunc>
-                                </div>
-                              </div>
-
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  marginTop: 8,
-                                }}
-                              >
-                                <h6 style={{ margin: 0 }}>Credenciales de equipo</h6>
-                                <button
-                                  className="btn"
-                                  onClick={() => {
-                                    setAddDevOpenId(it.id)
-                                    setNewDevCred({
-                                      catalogName: '',
-                                      user: '',
-                                      password: '',
-                                      instance: '',
-                                      port: '',
-                                      observation: '',
-                                    })
-                                  }}
-                                >
-                                  <Plus size={14} /> Nueva
-                                </button>
-                              </div>
-
-                              {addDevOpenId === it.id && (
-                                <div
-                                  style={{
-                                    display: 'grid',
-                                    gap: 8,
-                                    border: '1px dashed #e5e7eb',
-                                    borderRadius: 12,
-                                    padding: 10,
-                                  }}
-                                >
-                                  <div style={{ display: 'grid', gap: 8 }}>
-                                    <select
-                                      className="input"
-                                      value={(newDevCred as any).catalogName || ''}
-                                      onChange={e =>
-                                        setNewDevCred((p: any) => ({
-                                          ...p,
-                                          catalogName: e.target.value,
-                                        }))
-                                      }
-                                    >
-                                      <option value="">Seleccionar categoría</option>
-                                      {catCredential.map(c => (
-                                        <option key={`dev-cat-${c.id}`} value={c.name}>
-                                          {c.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div
-                                    style={{
-                                      display: 'grid',
-                                      gridTemplateColumns: '1fr',
-                                      gap: 8,
-                                    }}
-                                  >
-                                    <input
-                                      className="input"
-                                      placeholder="Usuario"
-                                      value={newDevCred.user}
-                                      onChange={e =>
-                                        setNewDevCred((p: any) => ({
-                                          ...p,
-                                          user: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Contraseña"
-                                      value={newDevCred.password}
-                                      onChange={e =>
-                                        setNewDevCred((p: any) => ({
-                                          ...p,
-                                          password: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Puerto"
-                                      value={newDevCred.port}
-                                      onChange={e =>
-                                        setNewDevCred((p: any) => ({
-                                          ...p,
-                                          port: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Instancia/Host"
-                                      value={newDevCred.instance}
-                                      onChange={e =>
-                                        setNewDevCred((p: any) => ({
-                                          ...p,
-                                          instance: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <textarea
-                                    className="input"
-                                    placeholder="Observación"
-                                    value={newDevCred.observation}
-                                    onChange={e =>
-                                      setNewDevCred((p: any) => ({
-                                        ...p,
-                                        observation: e.target.value,
-                                      }))
-                                    }
-                                  />
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      justifyContent: 'flex-end',
-                                      gap: 8,
-                                    }}
-                                  >
-                                    <button
-                                      className="btn btn--ghost"
-                                      onClick={() => setAddDevOpenId(null)}
-                                    >
-                                      Cancelar
-                                    </button>
-                                    <button
-                                      className="btn btn--primary"
-                                      onClick={() => addDeviceCredential(it.id)}
-                                    >
-                                      Agregar
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div
-                                style={{
-                                  display: 'grid',
-                                  gridTemplateColumns: '1fr',
-                                  gap: 8,
-                                }}
-                              >
-                                {(it.credentials ?? []).map((c: any) => (
-                                  <div
-                                    key={c.id}
-                                    style={{
-                                      border: '1px solid #e5e7eb',
-                                      borderRadius: 10,
-                                      padding: 10,
-                                      display: 'grid',
-                                      gap: 6,
-                                    }}
-                                  >
-                                    <strong>
-                                      <Trunc>{c.type ?? c.catCredencialNames}</Trunc>
-                                    </strong>
-                                    <div
-                                      style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 8,
-                                        width: '100%',
-                                      }}
-                                    >
-                                      <Row label="Usuario" value={c.user} />
-                                      <Row
-                                        label="Contraseña"
-                                        value={c.password ? c.password : '---'}
-                                      />
-                                      <Row label="Instancia" value={c.instance} />
-                                      <Row label="Puerto" value={c.port} />
-                                    </div>
-                                    <div>
-                                      <p className="detailPanel-clientGroup__title">
-                                        Observación
-                                      </p>
-                                      <div
-                                        style={{
-                                          border: '1px solid #E5E7EB',
-                                          borderRadius: 8,
-                                          padding: 8,
-                                          minHeight: 36,
-                                          background: '#FAFAFA',
-                                        }}
-                                      >
-                                        <Trunc>{c.observation}</Trunc>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                                {(it.credentials ?? []).length === 0 ? (
-                                  <div style={{ opacity: 0.7, fontSize: 12 }}>
-                                    Sin credenciales de equipo
-                                  </div>
-                                ) : null}
-                              </div>
-
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  gap: 8,
-                                  justifyContent: 'flex-end',
-                                }}
-                              >
-                                <button
-                                  className="btn btn--ghost"
-                                  onClick={() => {
-                                    setEditBuffer({ ...it, _t: 'dev' })
-                                    setShowMore(true)
-                                    setMoreTab('dev')
-                                  }}
-                                >
-                                  Editar
-                                </button>
-                              </div>
-                            </div>
-                          )}
+                          </div>
+                          <span
+                            className={
+                              it.isActive ? 'badge badge--ok' : 'badge badge--off'
+                            }
+                          >
+                            {it.isActive ? 'Activo' : 'Inactivo'}
+                          </span>
                         </div>
-                      )
-                    })}
+
+                        <div style={{ display: 'grid', gap: 8 }}>
+                          <Row label="IP" value={it.ip ?? '-'} />
+                          <Row
+                            label="Sistema operativo"
+                            value={it.operatingSystem ?? '-'}
+                          />
+                          <Row label="Versión SO" value={it.versionSO ?? '-'} />
+                        </div>
+
+                        <div>
+                          <p className="detailPanel-clientGroup__title">Descripción</p>
+                          <div
+                            style={{
+                              border: '1px solid #E5E7EB',
+                              borderRadius: 8,
+                              padding: 8,
+                              minHeight: 40,
+                              background: '#FAFAFA',
+                            }}
+                          >
+                            <Trunc>{it.description}</Trunc>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {filteredDevs.length === 0 && (
+                      <div
+                        style={{
+                          opacity: 0.7,
+                          fontSize: 12,
+                          gridColumn: '1 / -1',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Sin equipos
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1327,7 +1051,7 @@ const DetailPanel: React.FC<Props> = ({
                         style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
                       />
                     </div>
-                    <button className="btn" onClick={openSystemPicker}>
+                    <button className="btn" onClick={openSystemPicker} type="button">
                       <Plus size={14} /> Agregar sistema
                     </button>
                   </div>
@@ -1335,500 +1059,436 @@ const DetailPanel: React.FC<Props> = ({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))',
+                      gridTemplateColumns: '1fr',
                       gap: 12,
                     }}
                   >
-                    {filteredSystems.map(it => {
-                      const open = openSys.has(it.id)
-                      return (
-                        <div key={it.id} className="dp-collapse">
-                          <button
-                            className="dp-collapse__header"
-                            onClick={() => toggleSys(it.id)}
-                          >
-                            <div className="dp-collapse__title">
-                              <Trunc>{it?.name}</Trunc>
-                            </div>
-                            <div className="dp-collapse__subtitle">
-                              <span>{it?.version}</span>
-                            </div>
-                            <div className="dp-collapse__meta">
-                              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                          </button>
-
-                          {open && (
-                            <div className="dp-collapse__body">
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <h6 style={{ margin: 0 }}>Credenciales de sistema</h6>
-                                <button
-                                  className="btn"
-                                  onClick={() => {
-                                    setAddSysOpenId(it.id)
-                                    setNewSysCred({
-                                      catalogName: '',
-                                      user: '',
-                                      password: '',
-                                      instance: '',
-                                      port: '',
-                                      observation: '',
-                                    })
-                                  }}
-                                >
-                                  <Plus size={14} /> Nueva
-                                </button>
-                              </div>
-
-                              {addSysOpenId === it.id && (
-                                <div
-                                  style={{
-                                    display: 'grid',
-                                    gap: 8,
-                                    border: '1px dashed #e5e7eb',
-                                    borderRadius: 12,
-                                    padding: 10,
-                                    marginTop: 8,
-                                  }}
-                                >
-                                  <div style={{ display: 'grid', gap: 8 }}>
-                                    <select
-                                      className="input"
-                                      value={(newSysCred as any).catalogName || ''}
-                                      onChange={e =>
-                                        setNewSysCred((p: any) => ({
-                                          ...p,
-                                          catalogName: e.target.value,
-                                        }))
-                                      }
-                                    >
-                                      <option value="">Seleccionar categoría</option>
-                                      {catCredential.map(c => (
-                                        <option key={`sys-cat-${c.id}`} value={c.name}>
-                                          {c.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div style={{ display: 'grid', gap: 8 }}>
-                                    <input
-                                      className="input"
-                                      placeholder="Usuario"
-                                      value={newSysCred.user}
-                                      onChange={e =>
-                                        setNewSysCred((p: any) => ({
-                                          ...p,
-                                          user: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Contraseña"
-                                      value={newSysCred.password}
-                                      onChange={e =>
-                                        setNewSysCred((p: any) => ({
-                                          ...p,
-                                          password: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Puerto"
-                                      value={newSysCred.port}
-                                      onChange={e =>
-                                        setNewSysCred((p: any) => ({
-                                          ...p,
-                                          port: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                    <input
-                                      className="input"
-                                      placeholder="Instancia/Host"
-                                      value={newSysCred.instance}
-                                      onChange={e =>
-                                        setNewSysCred((p: any) => ({
-                                          ...p,
-                                          instance: e.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <textarea
-                                    className="input"
-                                    placeholder="Observación"
-                                    value={newSysCred.observation}
-                                    onChange={e =>
-                                      setNewSysCred((p: any) => ({
-                                        ...p,
-                                        observation: e.target.value,
-                                      }))
-                                    }
-                                  />
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      justifyContent: 'flex-end',
-                                      gap: 8,
-                                    }}
-                                  >
-                                    <button
-                                      className="btn btn--ghost"
-                                      onClick={() => setAddSysOpenId(null)}
-                                    >
-                                      Cancelar
-                                    </button>
-                                    <button
-                                      className="btn btn--primary"
-                                      onClick={() => addSystemCredential(it.id)}
-                                    >
-                                      Agregar
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div
-                                style={{
-                                  display: 'grid',
-                                  gridTemplateColumns: '1fr',
-                                  gap: 8,
-                                  marginTop: 8,
-                                }}
-                              >
-                                {(it.credentials ?? []).map((c: any) => (
-                                  <div
-                                    key={c.id}
-                                    style={{
-                                      border: '1px solid #e5e7eb',
-                                      borderRadius: 10,
-                                      padding: 10,
-                                      display: 'grid',
-                                      gap: 6,
-                                    }}
-                                  >
-                                    <strong>
-                                      <Trunc>{c.type ?? c.catCredencialNames}</Trunc>
-                                    </strong>
-                                    <div
-                                      style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 8,
-                                        width: '100%',
-                                      }}
-                                    >
-                                      <Row label="Usuario" value={c.user} />
-                                      <Row
-                                        label="Contraseña"
-                                        value={c.password ? c.password : '---'}
-                                      />
-                                      <Row label="Instancia" value={c.instance} />
-                                      <Row label="Puerto" value={c.port} />
-                                    </div>
-                                    <div>
-                                      <p className="detailPanel-clientGroup__title">
-                                        Observación
-                                      </p>
-                                      <div
-                                        style={{
-                                          border: '1px solid #E5E7EB',
-                                          borderRadius: 8,
-                                          padding: 8,
-                                          minHeight: 36,
-                                          background: '#FAFAFA',
-                                        }}
-                                      >
-                                        <Trunc>{c.observation}</Trunc>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                                {(it.credentials ?? []).length === 0 ? (
-                                  <div style={{ opacity: 0.7, fontSize: 12 }}>
-                                    Sin credenciales de sistema
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
-              )}
-
-              {moreTab === 'ctc' && (
-                <>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div style={{ position: 'relative', flex: 1 }}>
-                      <input
-                        className="input"
-                        placeholder="Buscar contactos…"
-                        value={ctcSearch}
-                        onChange={e => setCtcSearch(e.target.value)}
-                        style={{ paddingLeft: 34 }}
-                        aria-label="Buscar contactos"
-                      />
-                      <Search
-                        size={16}
-                        style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
-                      />
-                    </div>
-                    <button className="btn" onClick={openContactPicker}>
-                      <Plus size={14} /> Agregar contacto
-                    </button>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr',
-                      gap: 6,
-                    }}
-                  >
-                    {filteredContacts.map(it => (
+                    {filteredSystems.map(it => (
                       <div
                         key={it.id}
+                        className="dp-collapse"
                         style={{
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 10,
+                          padding: 10,
                           display: 'grid',
-                          gridTemplateColumns: '1fr 1fr 1fr',
-                          gap: 8,
-                          padding: '8px 0',
-                          borderBottom: '1px dashed #eee',
+                          gap: 6,
                         }}
                       >
-                        <Trunc>{it.fullName ?? it.name}</Trunc>
-                        <Trunc>Cargo</Trunc>
-                        <Trunc>{formatNiPhone(it.phone)}</Trunc>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <div className="dp-collapse__title">
+                              <Trunc>{it.name}</Trunc>
+                            </div>
+                            <div
+                              className="dp-collapse__subtitle"
+                              style={{ fontSize: 12, opacity: 0.8 }}
+                            >
+                              <Trunc>{it.version ?? '-'}</Trunc>
+                            </div>
+                          </div>
+                          <span
+                            className={
+                              it.isActive ? 'badge badge--ok' : 'badge badge--off'
+                            }
+                          >
+                            {it.isActive ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: 8 }}>
+                          <Row label="Versión" value={it.version ?? '-'} />
+                        </div>
+
+                        <div>
+                          <p className="detailPanel-clientGroup__title">Descripción</p>
+                          <div
+                            style={{
+                              border: '1px solid #E5E7EB',
+                              borderRadius: 8,
+                              padding: 8,
+                              minHeight: 36,
+                              background: '#FAFAFA',
+                              maxWidth: '100%',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {it.description}
+                          </div>
+                        </div>
                       </div>
                     ))}
+                    {filteredSystems.length === 0 && (
+                      <div
+                        style={{
+                          opacity: 0.7,
+                          fontSize: 12,
+                          gridColumn: '1 / -1',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Sin sistemas
+                      </div>
+                    )}
                   </div>
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
 
-            {editBuffer && (
+      {credModalOpen && (
+        <div
+          className="dp-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={credMode === 'create' ? 'Nueva credencial' : 'Detalle de credencial'}
+        >
+          <div
+            className="dp-modal__backdrop"
+            onClick={() => setCredModalOpen(false)}
+          />
+          <div
+            className="dp-modal__content"
+            style={{
+              width: 520,
+              maxWidth: '96vw',
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 10px 30px rgba(0,0,0,.15)',
+              position: 'fixed',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              style={{
+                padding: 12,
+                borderBottom: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <h6 style={{ margin: 0, fontSize: 14 }}>
+                {credMode === 'create' ? 'Nueva credencial' : 'Detalle de credencial'}
+              </h6>
+              <button
+                className="btn btn--ghost"
+                onClick={() => setCredModalOpen(false)}
+                aria-label="Cerrar"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div
+              style={{
+                padding: 12,
+                display: 'grid',
+                gap: 10,
+                flex: 1,
+                overflow: 'auto',
+              }}
+            >
+              {!!Object.keys(credErrors).length && (
+                <div className="cap__alert">Revise los campos marcados.</div>
+              )}
               <div
                 style={{
-                  borderTop: '1px solid #585858ff',
-                  padding: 12,
                   display: 'grid',
-                  gap: 10,
+                  gap: 5,
+                  margin: 0,
+                  padding: 0,
+                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateRows: '90px 90px 90px 90px',
+                  overflow: 'hidden',
                 }}
               >
-                <h6 style={{ margin: 0 }}>Edición rápida</h6>
-
-                {editBuffer?._t === 'cred' && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 10,
-                    }}
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_cat">
+                    Tipo
+                  </label>
+                  <select
+                    id="cred_cat"
+                    value={credReq.catCredentialId}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        catCredentialId: Number(e.target.value),
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                    className={`input ${credErrors.catCredentialId ? 'has-error' : ''}`}
                   >
-                    <input
-                      className="input"
-                      placeholder="Categoría"
-                      value={editBuffer?.catCredencialNames ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          catCredencialNames: e.target.value,
-                        }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="Usuario"
-                      value={editBuffer?.user ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({ ...p, user: e.target.value }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="Contraseña"
-                      value={editBuffer?.password ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          password: e.target.value,
-                        }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="Instancia"
-                      value={editBuffer?.instance ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          instance: e.target.value,
-                        }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="Puerto"
-                      value={editBuffer?.port ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({ ...p, port: e.target.value }))
-                      }
-                    />
-                    <textarea
-                      className="input"
-                      placeholder="Observación"
-                      style={{ gridColumn: '1 / -1', minHeight: 80 }}
-                      value={editBuffer?.observation ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          observation: e.target.value,
-                        }))
-                      }
-                    />
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!editBuffer?.isActive}
-                        onChange={e =>
-                          setEditBuffer((p: any) => ({
-                            ...p,
-                            isActive: e.target.checked,
-                          }))
-                        }
-                      />
-                      Activo
+                    <option value={0}>Seleccione tipo</option>
+                    {catCredential.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {credErrors.catCredentialId && (
+                    <div className="cap__error">{credErrors.catCredentialId}</div>
+                  )}
+                </div>
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_scope">
+                    Ámbito
+                  </label>
+                  <select
+                    id="cred_scope"
+                    value={credScope}
+                    onChange={e => setCredScope(e.target.value as any)}
+                    disabled={credMode === 'view'}
+                    className={`input ${credErrors.scope ? 'has-error' : ''}`}
+                  >
+                    <option value="client">Cliente</option>
+                    <option value="device">Equipo</option>
+                    <option value="system">Sistema</option>
+                  </select>
+                  {credErrors.scope && (
+                    <div className="cap__error">{credErrors.scope}</div>
+                  )}
+                </div>
+
+                {credScope === 'device' && (
+                  <div className="cap__field">
+                    <label className="cap__label" htmlFor="cred_device">
+                      Equipo
                     </label>
+                    <select
+                      id="cred_device"
+                      value={deviceTargetId}
+                      onChange={e =>
+                        setDeviceTargetId(
+                          e.target.value === '' ? '' : Number(e.target.value)
+                        )
+                      }
+                      disabled={credMode === 'view'}
+                      className="input"
+                    >
+                      <option value="">Seleccione equipo</option>
+                      {devs.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-                {editBuffer?._t === 'dev' && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 10,
-                    }}
-                  >
-                    <input
-                      className="input"
-                      placeholder="Nombre"
-                      value={editBuffer?.name ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({ ...p, name: e.target.value }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="IP"
-                      value={editBuffer?.ip ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({ ...p, ip: e.target.value }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="SO"
-                      value={editBuffer?.operatingSystem ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          operatingSystem: e.target.value,
-                        }))
-                      }
-                    />
-                    <input
-                      className="input"
-                      placeholder="Versión SO"
-                      value={editBuffer?.versionSO ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          versionSO: e.target.value,
-                        }))
-                      }
-                    />
-                    <textarea
-                      className="input"
-                      placeholder="Descripción"
-                      style={{ gridColumn: '1 / -1', minHeight: 80 }}
-                      value={editBuffer?.description ?? ''}
-                      onChange={e =>
-                        setEditBuffer((p: any) => ({
-                          ...p,
-                          description: e.target.value,
-                        }))
-                      }
-                    />
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!editBuffer?.isActive}
-                        onChange={e =>
-                          setEditBuffer((p: any) => ({
-                            ...p,
-                            isActive: e.target.checked,
-                          }))
-                        }
-                      />
-                      Activo
+                {credScope === 'system' && (
+                  <div className="cap__field">
+                    <label className="cap__label" htmlFor="cred_system">
+                      Sistema
                     </label>
+                    <select
+                      id="cred_system"
+                      value={systemTargetId}
+                      onChange={e =>
+                        setSystemTargetId(
+                          e.target.value === '' ? '' : Number(e.target.value)
+                        )
+                      }
+                      disabled={credMode === 'view'}
+                      className="input"
+                    >
+                      <option value="">Seleccione sistema</option>
+                      {systems.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 8,
-                  }}
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_user">
+                    Usuario
+                  </label>
+                  <input
+                    id="cred_user"
+                    className={`input ${credErrors.user ? 'has-error' : ''}`}
+                    value={credReq.user}
+                    maxLength={255}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        user: e.target.value,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  {credErrors.user && (
+                    <div className="cap__error">{credErrors.user}</div>
+                  )}
+                </div>
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_pass">
+                    Contraseña
+                  </label>
+                  <input
+                    id="cred_pass"
+                    type="password"
+                    className={`input ${credErrors.password ? 'has-error' : ''}`}
+                    value={credReq.password ?? ''}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        password: e.target.value,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  {credErrors.password && (
+                    <div className="cap__error">{credErrors.password}</div>
+                  )}
+                </div>
+
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_instance">
+                    Instancia
+                  </label>
+                  <input
+                    id="cred_instance"
+                    className={`input ${credErrors.instance ? 'has-error' : ''}`}
+                    value={credReq.instance ?? ''}
+                    maxLength={100}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        instance: e.target.value,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  {credErrors.instance && (
+                    <div className="cap__error">{credErrors.instance}</div>
+                  )}
+                </div>
+                <div className="cap__field">
+                  <label className="cap__label" htmlFor="cred_port">
+                    Puerto
+                  </label>
+                  <input
+                    id="cred_port"
+                    className={`input ${credErrors.port ? 'has-error' : ''}`}
+                    value={credReq.port ?? ''}
+                    maxLength={100}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        port: e.target.value,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  {credErrors.port && (
+                    <div className="cap__error">{credErrors.port}</div>
+                  )}
+                </div>
+                  <div
                 >
-                  <button className="btn btn--ghost" onClick={() => setEditBuffer(null)}>
-                    Cancelar
-                  </button>
-                  <button className="btn btn--primary" onClick={() => setEditBuffer(null)}>
-                    Guardar
-                  </button>
+                  <input
+                    type="checkbox"
+                    id="cred_active"
+                    checked={!!credReq.isActive}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        isActive: e.target.checked,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  <label
+                    htmlFor="cred_active"
+                    className="cap__label cap__label--inline"
+                  >
+                    Activo
+                  </label>
+                </div>
+                
+                <div className="cap__field" 
+                style={{ gridColumn: '1 / -1' }}
+                >
+                  <label className="cap__label" htmlFor="cred_obs">
+                    Observación
+                  </label>
+                  <textarea
+                    id="cred_obs"
+                    className={`input ${
+                      credErrors.observation ? 'has-error' : ''
+                    }`}
+                    value={credReq.observation ?? ''}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        observation: e.target.value,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                    rows={4}
+                  />
+                  {credErrors.observation && (
+                    <div className="cap__error">{credErrors.observation}</div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+            <div
+              style={{
+                padding: 12,
+                borderTop: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 8,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => setCredModalOpen(false)}
+              >
+                Cerrar
+              </button>
+              {credMode !== 'view' && (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={saveCred}
+                >
+                  Guardar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {clientEditOpen && (
-        <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Editar cliente">
-          <div className="dp-modal__backdrop" onClick={() => setClientEditOpen(false)} />
+        <div
+          className="dp-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Editar cliente"
+        >
+          <div
+            className="dp-modal__backdrop"
+            onClick={() => setClientEditOpen(false)}
+          />
           <div
             className="dp-modal__content"
             style={{
@@ -1940,10 +1600,18 @@ const DetailPanel: React.FC<Props> = ({
                   gap: 8,
                 }}
               >
-                <button className="btn btn--ghost" onClick={() => setClientEditOpen(false)}>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setClientEditOpen(false)}
+                  type="button"
+                >
                   Cancelar
                 </button>
-                <button className="btn btn--primary" onClick={saveClientEdits}>
+                <button
+                  className="btn btn--primary"
+                  onClick={saveClientEdits}
+                  type="button"
+                >
                   Guardar
                 </button>
               </div>
@@ -1953,8 +1621,16 @@ const DetailPanel: React.FC<Props> = ({
       )}
 
       {addDeviceOpen && (
-        <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Nuevo equipo">
-          <div className="dp-modal__backdrop" onClick={() => setAddDeviceOpen(false)} />
+        <div
+          className="dp-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Nuevo equipo"
+        >
+          <div
+            className="dp-modal__backdrop"
+            onClick={() => setAddDeviceOpen(false)}
+          />
           <div
             className="dp-modal__content"
             style={{
@@ -2075,7 +1751,10 @@ const DetailPanel: React.FC<Props> = ({
                   gap: 8,
                 }}
               >
-                <button className="btn btn--ghost" onClick={() => setAddDeviceOpen(false)}>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setAddDeviceOpen(false)}
+                >
                   Cancelar
                 </button>
                 <button className="btn btn--primary" onClick={createDevice}>
@@ -2088,8 +1767,16 @@ const DetailPanel: React.FC<Props> = ({
       )}
 
       {pickSysOpen && (
-        <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Agregar sistema">
-          <div className="dp-modal__backdrop" onClick={() => setPickSysOpen(false)} />
+        <div
+          className="dp-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Agregar sistema"
+        >
+          <div
+            className="dp-modal__backdrop"
+            onClick={() => setPickSysOpen(false)}
+          />
           <div
             className="dp-modal__content"
             style={{
@@ -2142,9 +1829,8 @@ const DetailPanel: React.FC<Props> = ({
                   <input
                     className="input"
                     placeholder="Buscar en catálogo de sistemas…"
-                    value={sysPickerLocalFilter}
+                    value={sysGlobalFilter}
                     onChange={e => {
-                      setSysPickerLocalFilter(e.target.value)
                       setSysGlobalFilter(e.target.value)
                       fetchSysPage(1, sysPageSize)
                     }}
@@ -2246,7 +1932,10 @@ const DetailPanel: React.FC<Props> = ({
                       Prev
                     </button>
                     <span style={{ fontSize: 12 }}>Página {sysPage}</span>
-                    <button className="btn btn--ghost" onClick={() => setSysPage(sysPage + 1)}>
+                    <button
+                      className="btn btn--ghost"
+                      onClick={() => setSysPage(sysPage + 1)}
+                    >
                       Next
                     </button>
                   </div>
@@ -2276,7 +1965,10 @@ const DetailPanel: React.FC<Props> = ({
                   gap: 8,
                 }}
               >
-                <button className="btn btn--ghost" onClick={() => setPickSysOpen(false)}>
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => setPickSysOpen(false)}
+                >
                   Cancelar
                 </button>
                 <button

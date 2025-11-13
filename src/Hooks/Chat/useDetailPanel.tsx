@@ -9,15 +9,19 @@ import type {
   ClientUpdateRequestDTO,
   DeviceRequestDTO,
   CredentialRequestDTO,
+  CredentialResponseDTO,
   SystemRequestDTO,
   ContactRequestDTO,
-  CredentialResponseDTO,
 } from '@/Interfaces/Crm/ClientInterface'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
-import type { CatCredencialResponseDto } from '@/Interfaces/Crm/CatCredential'
+import { CredentialsService } from '@/Services/Crm/CredentialService'
+import { useOutsourcedDevices } from '../Crm/useOutsourcedDevices'
 
 type OptionMenu = 1 | 2 | 3 | 4 | 5
 type MoreTab = 'cred' | 'dev' | 'sys' | 'ctc'
+type CredScope = 'client' | 'device' | 'system'
+type CredMode = 'create' | 'view' | 'update'
+type ErrorBag = Record<string, string>
 
 const parseQuickOptions = (selectedParam: unknown): string[] => {
   const p: any = selectedParam
@@ -55,8 +59,10 @@ const formatNiPhone = (value?: string | number | null) => {
   if (local.length > 8) local = local.slice(-8)
   return `505 - ${local}`
 }
+
 const displayOrDash = (v?: string | number | null) =>
   v === null || v === undefined || v === '' ? '---' : String(v)
+
 const formatDate = (v?: string | number | Date | null) => {
   if (!v) return '---'
   const d = new Date(v)
@@ -69,8 +75,6 @@ const formatDate = (v?: string | number | Date | null) => {
     minute: '2-digit',
   }).format(d)
 }
-
-
 
 export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const [optionMenu, setOptionMenu] = useState<OptionMenu>(1)
@@ -102,7 +106,11 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     linkExistingContactsAsync,
   } = useClient()
 
-  const { catCredential, fetchPage: refreshCatCreds } = useCatCredential()
+  const {
+    update: updateOutsourcedDevices
+  } = useOutsourcedDevices();
+
+  const { catCredential } = useCatCredential()
 
   const {
     items: sysCatalog,
@@ -129,7 +137,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   useEffect(() => {
     if (typeof contactId === 'number' && contactId > 0 && lastContactIdRef.current !== contactId) {
       lastContactIdRef.current = contactId
-      fetchContactById(contactId).catch(() => { })
+      fetchContactById(contactId).catch(() => {})
     }
   }, [contactId, fetchContactById])
 
@@ -149,24 +157,9 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
           if (c?.id) return fetchContactsByClient(c.id)
           return undefined
         })
-        .catch(() => { })
+        .catch(() => {})
     }
   }, [clienteCodigo, fetchClientByCodeOrId, fetchContactsByClient])
-
-  useEffect(() => {
-    if (!catCredential?.length) {
-      refreshCatCreds(1, 50)
-    }
-  }, [catCredential?.length, refreshCatCreds])
-
-  const getCatIdByName = useCallback(
-    (name: string) => {
-      const n = name.trim().toUpperCase()
-      const found = catCredential.find((c: CatCredencialResponseDto) => (c.name || '').trim().toUpperCase() === n)
-      return found?.id
-    },
-    [catCredential]
-  )
 
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [clientPickerFilter, setClientPickerFilter] = useState('')
@@ -181,7 +174,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
 
   useEffect(() => {
     if (clientPickerOpen) {
-      loadClientPicker().catch(() => { })
+      loadClientPicker().catch(() => {})
     }
   }, [clientPickerOpen, loadClientPicker])
 
@@ -206,7 +199,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
 
   const hostingCreds = useMemo(() => {
     const creds = (client as any)?.hostingCredentials ?? []
-    return creds.filter((c: any) => String(c.catCredencialNames || '').toUpperCase() === 'HOSTING')
+    return creds.filter((c: any) => c)
   }, [client])
 
   const devs = useMemo(() => {
@@ -226,7 +219,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const [credSearch, setCredSearch] = useState('')
   const [devSearch, setDevSearch] = useState('')
   const [sysSearch, setSysSearch] = useState('')
-  const [ctcSearch, setCtcSearch] = useState('')
 
   const filteredHosting = useMemo(() => {
     const n = credSearch.trim().toLowerCase()
@@ -254,69 +246,8 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     return systems.filter((s: any) => String(s.name).toLowerCase().includes(n) || String(s.version ?? '').toLowerCase().includes(n))
   }, [systems, sysSearch])
 
-  const filteredContacts = useMemo(() => {
-    const n = ctcSearch.trim().toLowerCase()
-    if (!n) return contacts
-    return contacts.filter(
-      (c: any) => String(c.fullName ?? c.name).toLowerCase().includes(n) || String(c.phone ?? '').toLowerCase().includes(n)
-    )
-  }, [contacts, ctcSearch])
-
   const [expandedDev, setExpandedDev] = useState<number | null>(null)
   const toggleExpandedDev = (id: number) => setExpandedDev(prev => (prev === id ? null : id))
-
-  const [addHostingOpen, setAddHostingOpen] = useState(false)
-  const [newHosting, setNewHosting] = useState<any>({
-    catalogName: 'HOSTING',
-    user: '',
-    password: '',
-    instance: '',
-    port: '',
-    observation: '',
-    isActive: true,
-  })
-  
-  const addHosting = useCallback(async () => {
-    if (!client?.id) return
-    const catId = getCatIdByName(newHosting.catalogName || 'HOSTING')
-    if (!catId) return
-    
-    const dto: CredentialRequestDTO = {
-      catCredentialId: catId,
-      clientId: client.id,
-      user: newHosting.user,
-      password: newHosting.password,
-      instance: newHosting.instance || null,
-      port: newHosting.port || null,
-      observation: newHosting.observation || null,
-      isActive: newHosting.isActive,
-    }
-    const created = await addCredentialHostingAsync(client.id, dto)
-    
-    setClient((prev: any) => {
-      if (!prev) return prev
-      // const nextCreds = Array.isArray(prev.credentials) ? [...prev.credentials] : []
-      // if (created) nextCreds.unshift(created as CredentialResponseDTO)
-      // return { ...prev, credentials: nextCreds }
-      const next = Array.isArray(prev.hostingCredentials) ? [...prev.hostingCredentials] : []
-      if (created) next.unshift(created as CredentialResponseDTO)
-      return { ...prev, hostingCredentials: next }
-    })
-
-    if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
-    
-      setNewHosting({
-      catalogName: 'HOSTING',
-      user: '',
-      password: '',
-      instance: '',
-      port: '',
-      observation: '',
-      isActive: true,
-    })
-
-    setAddHostingOpen(false)
-  }, [client?.id, newHosting, addCredentialHostingAsync, fetchClientByCodeOrId, clienteCodigo, getCatIdByName, setClient])
 
   const [addDeviceOpen, setAddDeviceOpen] = useState(false)
   const [newDevice, setNewDevice] = useState<any>({
@@ -327,6 +258,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     description: '',
     isActive: true,
   })
+
   const createDevice = useCallback(async () => {
     if (!client?.id) return
     const dto: DeviceRequestDTO = {
@@ -338,6 +270,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
       isActive: newDevice.isActive,
     }
     const created = await addDeviceAsync(client.id, dto)
+
     setClient((prev: any) => {
       if (!prev) return prev
       const list = Array.isArray(prev.outsourcedDevices) ? [...prev.outsourcedDevices] : []
@@ -349,96 +282,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     setNewDevice({ name: '', ip: '', operatingSystem: '', versionSO: '', description: '', isActive: true })
     setAddDeviceOpen(false)
   }, [client?.id, newDevice, addDeviceAsync, fetchClientByCodeOrId, clienteCodigo, setClient])
-
-  const [addDevOpenId, setAddDevOpenId] = useState<number | null>(null)
-  const [newDevCred, setNewDevCred] = useState<any>({
-    catalogName: '',
-    user: '',
-    password: '',
-    instance: '',
-    port: '',
-    observation: '',
-  })
-  const addDeviceCredential = useCallback(
-    async (deviceId: number) => {
-      if (!client?.id) return
-      const catId = getCatIdByName(newDevCred.catalogName || '')
-      if (!catId) return
-      const dto: CredentialRequestDTO = {
-        catCredentialId: catId,
-        clientId: client.id,
-        outsourcedDeviceId: deviceId,
-        user: newDevCred.user,
-        password: newDevCred.password,
-        instance: newDevCred.instance || null,
-        port: newDevCred.port || null,
-        observation: newDevCred.observation || null,
-        isActive: true,
-      }
-      const created = await addCredentialForDeviceAsync(client.id, deviceId, dto)
-      setClient((prev: any) => {
-        if (!prev) return prev
-        const devices = (prev.outsourcedDevices || []).map((d: any) => {
-          if (d.id !== deviceId) return d
-          const creds = Array.isArray(d.credentials) ? [...d.credentials] : []
-          if (created) creds.unshift(created as CredentialResponseDTO)
-          else creds.unshift({ id: Date.now(), catCredencialNames: newDevCred.catalogName, user: dto.user, password: dto.password, instance: dto.instance, port: dto.port, observation: dto.observation, isActive: true })
-          return { ...d, credentials: creds }
-        })
-        return { ...prev, outsourcedDevices: devices }
-      })
-      if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
-      setAddDevOpenId(null)
-      setNewDevCred({ catalogName: '', user: '', password: '', instance: '', port: '', observation: '' })
-    },
-    [client?.id, newDevCred, addCredentialForDeviceAsync, fetchClientByCodeOrId, clienteCodigo, getCatIdByName, setClient]
-  )
-
-  const [addSysOpenId, setAddSysOpenId] = useState<number | null>(null)
-  const [newSysCred, setNewSysCred] = useState<any>({
-    catalogName: '',
-    user: '',
-    password: '',
-    instance: '',
-    port: '',
-    observation: '',
-  })
-  const addSystemCredential = useCallback(
-    async (clientOutsourcedSystemId: number) => {
-      if (!client?.id) return
-      const catId = getCatIdByName(newSysCred.catalogName || '')
-      if (!catId) return
-      const dto: CredentialRequestDTO = {
-        catCredentialId: catId,
-        clientId: client.id,
-        clientOutsourcedSystemId,
-        user: newSysCred.user,
-        password: newSysCred.password,
-        instance: newSysCred.instance || null,
-        port: newSysCred.port || null,
-        observation: newSysCred.observation || null,
-        isActive: true,
-      }
-
-      const created = await addCredentialForSystemAsync(client.id, clientOutsourcedSystemId, dto)
-
-      setClient((prev: any) => {
-        if (!prev) return prev
-        const systemsNext = (prev.outsourcedSystems || []).map((s: any) => {
-          if (s.id !== clientOutsourcedSystemId) return s
-          const creds = Array.isArray(s.credentials) ? [...s.credentials] : []
-          if (created) creds.unshift(created as CredentialResponseDTO)
-          else creds.unshift({ id: Date.now(), catCredencialNames: newSysCred.catalogName, user: dto.user, password: dto.password, instance: dto.instance, port: dto.port, observation: dto.observation, isActive: true })
-          return { ...s, credentials: creds }
-        })
-        return { ...prev, outsourcedSystems: systemsNext }
-      })
-      if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
-      setAddSysOpenId(null)
-      setNewSysCred({ catalogName: '', user: '', password: '', instance: '', port: '', observation: '' })
-    },
-    [client?.id, newSysCred, addCredentialForSystemAsync, fetchClientByCodeOrId, clienteCodigo, getCatIdByName, setClient]
-  )
 
   const [pickSysOpen, setPickSysOpen] = useState(false)
   const [newSystem, setNewSystem] = useState<SystemRequestDTO>({ outsourcedSystemsId: 0, isActive: true })
@@ -501,6 +344,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   useEffect(() => {
     setClientLocal(client ?? null)
   }, [client])
+
   const [workModel, setWorkModel] = useState<string>(clientLocal?.workModel ?? '')
   const [priority, setPriority] = useState<string>(clientLocal?.priority ?? '')
   const [supportType, setSupportType] = useState<string>(clientLocal?.supportType ?? '')
@@ -510,6 +354,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const [supportLimitTime, setSupportLimitTime] = useState<string>(clientLocal?.supportLimitTime ?? '')
   const [recurrency, setRecurrency] = useState<string>(clientLocal?.recurrency ?? '')
   const [observation, setObservation] = useState<string>(clientLocal?.observation ?? '')
+
   useEffect(() => {
     setWorkModel(clientLocal?.workModel ?? '')
     setPriority(clientLocal?.priority ?? '')
@@ -523,12 +368,11 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   }, [clientEditOpen, clientLocal])
 
   const saveClientEdits = useCallback(async () => {
-    
     if (!client?.id) return
     const patch: Partial<ClientUpdateRequestDTO> = {
       workModel,
-      priority: priority,
-      supportType: supportType,
+      priority,
+      supportType,
       enviromentType: envType,
       isSupportActive,
       isFranchise,
@@ -548,7 +392,6 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     isSupportActive,
     isFranchise,
     supportLimitTime,
-    recurrency,
     observation,
     updateClientAsync,
     fetchClientByCodeOrId,
@@ -579,19 +422,212 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   }, [clienteCodigo, fetchClientByCodeOrId])
 
   const setTabFromParam = useCallback((p: unknown): OptionMenu => {
-    if (typeof p === 'number' && p >= 1 && p <= 4) return p as OptionMenu
+    if (typeof p === 'number' && p >= 1 && p <= 5) return p as OptionMenu
     if (typeof p === 'string') {
       const s = p.toLowerCase()
-      if (s.includes('contact')) return 1
-      if (s.includes('client') || s.includes('cliente')) return 2
+      if (s.includes('contact')) return 2
+      if (s.includes('client') || s.includes('cliente')) return 1
       if (s.includes('quick') || s.includes('rápido')) return 3
       if (s.includes('conv') || s.includes('convers')) return 4
+      if (s.includes('history') || s.includes('historial')) return 5
     }
     return 1
   }, [])
+
   useEffect(() => {
     if (selectedParam != null) setOptionMenu(setTabFromParam(selectedParam))
   }, [selectedParam, setTabFromParam])
+
+  const credentials = useMemo<CredentialResponseDTO[]>(() => {
+    const c = client as ClientResponseDTO | null
+    if (!c) return []
+    const host = (c.hostingCredentials ?? []) as CredentialResponseDTO[]
+    const dev = (c.outsourcedDevices ?? []).flatMap((d: any) =>
+      (d.credentials ?? []).map((cr: CredentialResponseDTO) => ({
+        ...cr,
+        outsourcedDeviceId: d.id,
+        outsourcedDeviceName: d.name,
+      }))
+    )
+    const sys = (c.outsourcedSystems ?? []).flatMap((sy: any) =>
+      (sy.credentials ?? []).map((cr: CredentialResponseDTO) => ({
+        ...cr,
+        clientOutsourcedSystemsId: sy.id,
+        clientOutsourcedSystemsName: sy.name,
+      }))
+    )
+    return [...host, ...dev, ...sys]
+  }, [client])
+
+  const [credModalOpen, setCredModalOpen] = useState(false)
+  const [credMode, setCredMode] = useState<CredMode>('create')
+  const [credScope, setCredScope] = useState<CredScope>('client')
+  const [deviceTargetId, setDeviceTargetId] = useState<number | ''>('')
+  const [systemTargetId, setSystemTargetId] = useState<number | ''>('')
+  const [credReq, setCredReq] = useState<CredentialRequestDTO>({
+    catCredentialId: 0,
+    clientId: client?.id ?? 0,
+    outsourcedDeviceId: null,
+    clientOutsourcedSystemId: null,
+    user: '',
+    password: '',
+    instance: '',
+    port: '',
+    observation: '',
+    isActive: true,
+  })
+  const [credErrors, setCredErrors] = useState<ErrorBag>({})
+
+  useEffect(() => {
+    setCredReq(s => ({
+      ...s,
+      clientId: client?.id ?? 0,
+    }))
+  }, [client?.id])
+
+  const openCredCreate = useCallback(() => {
+    setCredMode('create')
+    setCredScope('client')
+    setDeviceTargetId('')
+    setSystemTargetId('')
+    setCredErrors({})
+    setCredReq({
+      catCredentialId: 0,
+      clientId: client?.id ?? 0,
+      outsourcedDeviceId: null,
+      clientOutsourcedSystemId: null,
+      user: '',
+      password: '',
+      instance: '',
+      port: '',
+      observation: '',
+      isActive: true,
+    })
+    setCredModalOpen(true)
+  }, [client?.id])
+
+  const openCredView = useCallback(
+    (c: CredentialResponseDTO) => {
+      const scope: CredScope = c.outsourcedDeviceId ? 'device' : c.clientOutsourcedSystemsId ? 'system' : 'client'
+      setCredMode('view')
+      setCredScope(scope)
+      setDeviceTargetId(c.outsourcedDeviceId ?? '')
+      setSystemTargetId(c.clientOutsourcedSystemsId ?? '')
+      setCredErrors({})
+      setCredReq({
+        id: c.id,
+        catCredentialId: c.catCredencialId,
+        clientId: scope === 'client' ? client?.id ?? null : null,
+        outsourcedDeviceId: scope === 'device' ? c.outsourcedDeviceId ?? null : null,
+        clientOutsourcedSystemId: scope === 'system' ? c.clientOutsourcedSystemsId ?? null : null,
+        user: c.user,
+        password: '',
+        instance: c.instance ?? '',
+        port: c.port ?? '',
+        observation: c.observation ?? '',
+        isActive: c.isActive,
+      } as CredentialRequestDTO)
+      setCredModalOpen(true)
+    },
+    [client?.id]
+  )
+
+  const openCredEdit = useCallback(
+    (c: CredentialResponseDTO) => {
+      const scope: CredScope = c.outsourcedDeviceId ? 'device' : c.clientOutsourcedSystemsId ? 'system' : 'client'
+      setCredMode('update')
+      setCredScope(scope)
+      setDeviceTargetId(c.outsourcedDeviceId ?? '')
+      setSystemTargetId(c.clientOutsourcedSystemsId ?? '')
+      setCredErrors({})
+      setCredReq({
+        id: c.id,
+        catCredentialId: c.catCredencialId,
+        clientId: scope === 'client' ? client?.id ?? null : null,
+        outsourcedDeviceId: scope === 'device' ? c.outsourcedDeviceId ?? null : null,
+        clientOutsourcedSystemId: scope === 'system' ? c.clientOutsourcedSystemsId ?? null : null,
+        user: c.user,
+        password: '',
+        instance: c.instance ?? '',
+        port: c.port ?? '',
+        observation: c.observation ?? '',
+        isActive: c.isActive,
+      } as CredentialRequestDTO)
+      setCredModalOpen(true)
+    },
+    [client?.id]
+  )
+
+  const credPayload = useMemo<CredentialRequestDTO>(() => {
+    if (credScope === 'client') {
+      return {
+        ...credReq,
+        clientId: client?.id ?? 0,
+        outsourcedDeviceId: null,
+        clientOutsourcedSystemId: null,
+      }
+    }
+    if (credScope === 'device') {
+      return {
+        ...credReq,
+        clientId: null,
+        outsourcedDeviceId: deviceTargetId === '' ? null : Number(deviceTargetId),
+        clientOutsourcedSystemId: null,
+      }
+    }
+    return {
+      ...credReq,
+      clientId: null,
+      outsourcedDeviceId: null,
+      clientOutsourcedSystemId: systemTargetId === '' ? null : Number(systemTargetId),
+    }
+  }, [credReq, credScope, client?.id, deviceTargetId, systemTargetId])
+
+  const validateCred = useCallback((): boolean => {
+    const e: ErrorBag = {}
+    if (!credReq.catCredentialId || credReq.catCredentialId <= 0) e.catCredentialId = 'Seleccione el tipo.'
+    if (!credReq.user || credReq.user.trim().length === 0) e.user = 'Usuario es obligatorio.'
+    if (credReq.user && credReq.user.length > 255) e.user = 'Máximo 255 caracteres.'
+    if (!credReq.password || credReq.password.trim().length === 0) e.password = 'Contraseña es obligatorio.'
+    if (credReq.instance && credReq.instance.length > 100) e.instance = 'Máximo 100 caracteres.'
+    if (credReq.port && credReq.port.length > 100) e.port = 'Máximo 100 caracteres.'
+    if (credReq.observation && credReq.observation.length > 255) e.observation = 'Máximo 255 caracteres.'
+    if (credScope === 'device' && !credPayload.outsourcedDeviceId) e.scope = 'Seleccione un equipo.'
+    if (credScope === 'system' && !credPayload.clientOutsourcedSystemId) e.scope = 'Seleccione un sistema.'
+    setCredErrors(e)
+    return Object.keys(e).length === 0
+  }, [credReq, credScope, credPayload])
+
+  const saveCred = useCallback(async () => {
+    if (!client?.id) return
+    if (!validateCred()) return
+    if (credMode === 'update' && (credReq as any).id) {
+      await CredentialsService.updateAsync((credReq as any).id, credPayload)
+    } else {
+      if (credScope === 'client') {
+        await addCredentialHostingAsync(client.id, credPayload)
+      } else if (credScope === 'device' && credPayload.outsourcedDeviceId) {
+        await addCredentialForDeviceAsync(client.id, credPayload.outsourcedDeviceId, credPayload)
+      } else if (credScope === 'system' && credPayload.clientOutsourcedSystemId) {
+        await addCredentialForSystemAsync(client.id, credPayload.clientOutsourcedSystemId, credPayload)
+      }
+    }
+    if (clienteCodigo != null) await fetchClientByCodeOrId(String(clienteCodigo))
+    setCredModalOpen(false)
+  }, [
+    client?.id,
+    validateCred,
+    credMode,
+    credReq,
+    credScope,
+    credPayload,
+    addCredentialHostingAsync,
+    addCredentialForDeviceAsync,
+    addCredentialForSystemAsync,
+    fetchClientByCodeOrId,
+    clienteCodigo,
+  ])
+
   return {
     optionMenu,
     setOptionMenu,
@@ -621,34 +657,16 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     setDevSearch,
     sysSearch,
     setSysSearch,
-    ctcSearch,
-    setCtcSearch,
     filteredHosting,
     filteredDevs,
     filteredSystems,
-    filteredContacts,
     expandedDev,
     toggleExpandedDev,
-    addHostingOpen,
-    setAddHostingOpen,
-    newHosting,
-    setNewHosting,
-    addHosting,
     addDeviceOpen,
     setAddDeviceOpen,
     newDevice,
     setNewDevice,
     createDevice,
-    addDevOpenId,
-    setAddDevOpenId,
-    newDevCred,
-    setNewDevCred,
-    addDeviceCredential,
-    addSysOpenId,
-    setAddSysOpenId,
-    newSysCred,
-    setNewSysCred,
-    addSystemCredential,
     pickSysOpen,
     setPickSysOpen,
     newSystem,
@@ -711,6 +729,27 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     openSystemPicker,
     contactPickerItems,
     openContactPicker,
+    credentials,
+    credModalOpen,
+    setCredModalOpen,
+    credMode,
+    setCredMode,
+    credScope,
+    setCredScope,
+    deviceTargetId,
+    setDeviceTargetId,
+    systemTargetId,
+    setSystemTargetId,
+    credReq,
+    setCredReq,
+    credErrors,
+    setCredErrors,
+    openCredCreate,
+    openCredView,
+    openCredEdit,
+    saveCred,
+    catCredential,
+    updateOutsourcedDevices
   }
 }
 

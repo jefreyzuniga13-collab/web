@@ -10,14 +10,16 @@ import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeRespons
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import type { exportPDFArgs } from "@/Interfaces/Chat/ConversationInterface";
 
+import {format} from 'date-fns'
+
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
 
 
-function toISOStringSafe(value: string | Date | null | undefined): string | null {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  return isNaN(d.getTime()) ? null : d.toISOString();
-}
+// function toISOStringSafe(value: string | Date | null | undefined): string | null {
+//   if (!value) return null;
+//   const d = value instanceof Date ? value : new Date(value);
+//   return isNaN(d.getTime()) ? null : d.toISOString();
+// }
 
 
 export function getConversation(id: number) {
@@ -420,18 +422,29 @@ class ConversationServ {
     return data.data
   }
 
- 
 }
 
+// Las fechas no llegan a ser aceptable por endpoint de asp net core web api, no acceptable me da
 export  async function exportChatPdfByContact(  
   { contactId, from, to, title, subtitle }: exportPDFArgs
     ): Promise<void> {
-  const body = {
-    title,
-    subtitle,
-    from: toISOStringSafe(from),
-    to: toISOStringSafe(to)
-  };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any = {
+        title,
+        subtitle,
+      };
+
+      if (from) {
+        const d = typeof from === "string" ? new Date(from) : from;
+        body.from = format(d, "yyyy-MM-dd");
+      }
+
+      if (to) {
+        const d = typeof to === "string" ? new Date(to) : to;
+        body.to = format(d, "yyyy-MM-dd");
+      }
+
 
   const res = await api.post<ArrayBuffer>(
     `/Conversations/export/pdf/chat/${encodeURIComponent(contactId)}`,

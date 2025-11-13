@@ -61,8 +61,7 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
                         aria-controls="convOptions"
                         type="button"
                     >
-                        <IoIosOptions size={14} />
-                        <span style={{ marginLeft: 6 }}>Opciones</span>
+                        <IoIosOptions size={18} />
                     </button>
                 </div>
 

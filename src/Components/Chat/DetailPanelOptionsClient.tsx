@@ -6,7 +6,7 @@ import { FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaRegBuilding, FaRegClock, FaSy
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
 import ShowInformationExpanded from './ShowInformationExpanded'
 import { jwtDecode } from 'jwt-decode'
-
+import { GrMoreVertical } from "react-icons/gr";
 interface Props {
     clientLocal: ClientResponseDTO | null
     displayOrDash: (v?: string | number | null) => string;
@@ -70,7 +70,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         className="btn btn--primary"
                         onClick={() => setShowMore(true)}
                     >
-                        Ver más
+                        <GrMoreVertical />
                     </button>
                 </div>
                )}
@@ -88,14 +88,6 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         </span>
                     </div>
 
-                    {/* <div className="detailPanel-contactGroup">
-                        <p className="detailPanel-clientGroup__title">Teléfono</p>
-                        <span className="detailPanel-clientGroup__cliente">
-                            <FaPhone style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                            {formatNiPhone(clientLocal.) || '—'}
-                        </span>
-                    </div> */}
-
                     <div className="detailPanel-contactGroup">
                         <p className="detailPanel-clientGroup__title">Dirección</p>
                         <span className="detailPanel-clientGroup__cliente">
@@ -109,7 +101,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
 
                     <div className="detailPanel-contactGroup__expanded"  onClick={()=>{
                         setContent(clientLocal?.workModel)
-                        setTitle("Nombre completo")
+                        setTitle('Modelo de trabajo')
                         setIsshowInformationExpanded(true)
                         }}>
                         <p className="detailPanel-clientGroup__title">Modelo Trabajo</p>
@@ -214,33 +206,10 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                             {formatDate((clientLocal as any)?.lastContactDate)}
                         </span>
                     </div>
-
-                    {/* <div className="detailPanel-contactGroup">
-                        <p className="detailPanel-clientGroup__title">Último caso cerrado</p>
-                        <span className="detailPanel-clientGroup__cliente">
-                            <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                            {formatDate((clientLocal as any)?.lastClosedCase)}
-                        </span>
-                    </div> */}
                 </div>
-
-                {/* <div style={{ marginTop: 10 }}>
-                    <p className="detailPanel-clientGroup__title">Observación</p>
-                    <div
-                        style={{
-                            border: '1px solid #E5E7EB',
-                            borderRadius: 8,
-                            padding: 8,
-                            minHeight: 40,
-                            background: '#FAFAFA',
-                        }}
-                    >
-                        <Trunc>{(clientLocal as any)?.observation}</Trunc>
-                    </div>
-                </div> */}
             </div>
 
-{isshowInformationExpanded && (
+        {isshowInformationExpanded && (
           <ShowInformationExpanded 
               title={title}
               content={content}

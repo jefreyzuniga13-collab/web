@@ -3,21 +3,21 @@ import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import "@/Styles/Chat/SupportPage.css";
-import {FaFilter, FaUserAlt} from "react-icons/fa";
+import { FaFilter, FaUserAlt } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
-import { Sticker } from 'lucide-react';
+import { Sticker } from "lucide-react";
 import { useConversations } from "@/Hooks/useConversations";
 import TicketModal from "@/Components/Chat/TicketModal";
 import useContact from "@/Hooks/Contact/useContact";
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
-  const [ticketOpen, setTicketOpen] = useState(false)
+  const [ticketOpen, setTicketOpen] = useState(false);
 
-  const { fetchById, selectedData: contact } = useContact()
+  const { fetchById, selectedData: contact } = useContact();
 
   const {
     conversation,
@@ -39,65 +39,76 @@ const SupportPage: React.FC = () => {
     filter,
     userId,
     extraerNumero,
-    selectedParam
+    selectedParam,
   } = useSupportPage();
 
   useEffect(() => {
-    if (!conversation?.clientContactId) return
-    fetchById(conversation.clientContactId)
-  }, [conversation?.clientContactId, fetchById])
-
+    if (!conversation?.clientContactId) return;
+    fetchById(conversation.clientContactId);
+  }, [conversation?.clientContactId, fetchById]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
 
   useEffect(() => {
-    if (!convHook.loading && convId && !convHook.conversations.some((c) => c.conversationId === convId)) {
+    if (
+      !convHook.loading &&
+      convId &&
+      !convHook.conversations.some(c => c.conversationId === convId)
+    ) {
       setConvId(null);
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-  //Captura de evento de esc, para cerrar la conversación.
+  // Aun queda el DetailPanel con datos viejos, recorda que no se cierra queda abierto
+  // por que si lo cierro cada que cambia la conversacion en el inboxlist, 
+  
   const handleScapePress = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      // setDetailToggle(false);
       setContactDetailToggle(false);
       setTicketOpen(false);
-      setDetailToggle(false); 
+      setDetailToggle(false);
       setConvId(null);
       setSearchConversation("");
       convHook.clearFilter();
     }
-  }
-
+  };
 
   useEffect(() => {
     window.addEventListener("keydown", handleScapePress);
     return () => {
       window.removeEventListener("keydown", handleScapePress);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!convId) {
       setTicketOpen(false);
     }
   }, [convId]);
 
-
   return (
-    <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
+    <div
+      className={`support-layout ${
+        detailToggle && convId ? "details-open" : ""
+      }`}
+    >
       <aside className="sidebar">
         <div className="inbox-header">
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
-            <button className="sort-button" onClick={() => setOrderModalVisible(true)} title="Ordenar filtros">
+            <button
+              className="sort-button"
+              onClick={() => setOrderModalVisible(true)}
+              title="Ordenar filtros"
+            >
               <FaFilter className="sort-button-icon" />
             </button>
           </div>
 
           <div className="inbox-status__container">
-            {sortedOptions.map((opt) => (
+            {sortedOptions.map(opt => (
               <label key={opt.value} className="inbox-status__label">
                 <input
                   id={opt.value}
@@ -117,7 +128,7 @@ const SupportPage: React.FC = () => {
             <Input
               className="inbox-title-container__filter__input"
               value={searchConversation}
-              onChange={(e) => setSearchConversation(e.target.value)}
+              onChange={e => setSearchConversation(e.target.value)}
               placeholder="Filtrar Conversaciones"
             />
           </div>
@@ -138,21 +149,22 @@ const SupportPage: React.FC = () => {
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">
-            {(convId != null && conversation?.systemDefinedCompanyName != null
-              ? conversation?.systemDefinedCompanyName + " | "
-              : "")}
-            {(convId != null && conversation?.clientContactName != null
-              ? "Contacto: " + conversation?.clientContactName + " | "
-              : " ")}
+            {convId != null && conversation?.systemDefinedCompanyName != null
+              ? conversation.systemDefinedCompanyName + " | "
+              : ""}
+            {convId != null && conversation?.clientContactName != null
+              ? "Contacto: " + conversation.clientContactName + " | "
+              : " "}
             {convId != null && "Télefono: "}
-            {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}
+            {conversation?.contactNumber == null
+              ? ""
+              : extraerNumero(conversation.contactNumber)}
           </h2>
 
           <div className="btn-container">
-
             {convId && contact?.clienteCodigo && (
               <button
-                className={`crearTicket-button`}
+                className="crearTicket-button"
                 onClick={() => setTicketOpen(true)}
               >
                 <Sticker size={16} /> Crear Ticket
@@ -161,8 +173,13 @@ const SupportPage: React.FC = () => {
 
             {convId && (
               <button
-                className={`assign-button ${isAdmin ? "" : "button-cerrar"} ${conversation?.status == "Closed" ? "btnDisabled" : ""
-                  } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""}`}
+                className={`assign-button ${
+                  isAdmin ? "" : "button-cerrar"
+                } ${
+                  conversation?.status == "Closed" ? "btnDisabled" : ""
+                } ${
+                  conversation?.status == "Incomplete" ? "btnDisabled" : ""
+                }`}
                 onClick={handleAssignClick}
               >
                 <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}
@@ -183,34 +200,31 @@ const SupportPage: React.FC = () => {
         />
       </main>
 
-      <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
-        <aside className="sidebar">…</aside>
-        <main className="main-content">…</main>
-        <aside className="detail-aside">
-          {detailToggle && convId && (
-            <DetailPanel
-              key={convId}
-              contactId={conversation?.clientContactId}
-              selectedParam={selectedParam}
-              conversationId={convId ?? undefined}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
-            />
-          )}
-        </aside>
+      <aside className="detail-aside">
+        {detailToggle && convId && (
+          <DetailPanel
+            key={convId}
+            contactId={conversation?.clientContactId}
+            selectedParam={selectedParam}
+            conversationId={convId ?? undefined}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
+          />
+        )}
+      </aside>
 
-        <button
-          type="button"
-          className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
-          onClick={() => setDetailToggle(t => !t)}
-          disabled={!convId}
-          aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-          title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-        >
-          {detailToggle ? "›" : "‹"}
-        </button>
-      </div>
-
+      <button
+        type="button"
+        className={`detail-aside__handle ${
+          detailToggle ? "is-open" : "is-closed"
+        }`}
+        onClick={() => setDetailToggle(t => !t)}
+        disabled={!convId}
+        aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+        title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+      >
+        {detailToggle ? "›" : "‹"}
+      </button>
 
       {contactDetailToggle && (
         <div className="modal-overlay">
@@ -228,7 +242,7 @@ const SupportPage: React.FC = () => {
         <FilterOrderModal
           currentOrder={filterOrder}
           options={DEFAULT_OPTIONS}
-          onSave={(newOrder) => {
+          onSave={newOrder => {
             saveOrder(newOrder);
             setOrderModalVisible(false);
           }}
@@ -240,17 +254,20 @@ const SupportPage: React.FC = () => {
         />
       )}
 
-      {ticketOpen  && convId && contact?.isVerified && conversation && contact?.clienteCodigo && (
-        <TicketModal
-          isOpen={ticketOpen}
-          onClose={() => setTicketOpen(false)}
-          conversationId={conversation.conversationId}
-          codCliente={contact.clienteCodigo ?? ''}
-          clientName={contact.clienteNombre ?? ''}
-          contactId={contact.id}
-        />
-      )}
-
+      {ticketOpen &&
+        convId &&
+        contact?.isVerified &&
+        conversation &&
+        contact?.clienteCodigo && (
+          <TicketModal
+            isOpen={ticketOpen}
+            onClose={() => setTicketOpen(false)}
+            conversationId={conversation.conversationId}
+            codCliente={contact.clienteCodigo ?? ""}
+            clientName={contact.clienteNombre ?? ""}
+            contactId={contact.id}
+          />
+        )}
     </div>
   );
 };
