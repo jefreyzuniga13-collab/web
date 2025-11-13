@@ -39,7 +39,7 @@ export default function WorkShiftPage() {
     setGlobalFilter
   } = useWorkShift()
 
-  const columns = useMemo<Column<WorkShiftInterface>[]>(() => [
+  const columns: Column<WorkShiftInterface>[] = useMemo(() => [
     {
       id: "openingHour",
       label: "Horario",
@@ -145,7 +145,7 @@ export default function WorkShiftPage() {
         rowsPerPage={pageSize}
         rowsPerPageOptions={[20, 30, 50]}
         onPageChange={(_, newPage) => setPage(newPage + 1)}
-        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 5))}
+        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
       />
 
         <WorkShiftModal

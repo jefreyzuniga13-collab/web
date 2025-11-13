@@ -19,6 +19,7 @@ export const useCatCredential = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
     const [globalFilter, setGlobalFilter] = useState<string>('')
 
+
   const fetchPage = useCallback(async (p = page, s = pageSize) => {
     setLoadingList(true);
     setError(null);

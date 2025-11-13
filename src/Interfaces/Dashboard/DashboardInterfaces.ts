@@ -47,6 +47,8 @@ export interface AverageAssignmentTimeResponseDto{
    averageTime: number
 }
 
+
+//solo usar los que se requieren, no todos.
 export interface FilterForm {
   from: Date | null | string;
   to: Date | null | string;
@@ -64,7 +66,11 @@ export interface FilterForm {
   today?: boolean;
   yesterday?: boolean;
   tomorrow?: boolean;
+  codClient?: string
 }
+
+
+
 
 export interface AdminAsigmentResponseTimeResponseDto{
     id: number;

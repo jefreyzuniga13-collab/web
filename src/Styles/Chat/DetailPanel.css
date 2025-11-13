@@ -168,7 +168,8 @@
 }
 
 .detailPanel-contactGroup,
-.detailPanel-clientGroup {
+.detailPanel-clientGroup,
+.detailPanel-contactGroup__expanded {
   display: flex;
   flex-direction: row;
   gap: 6px;
@@ -178,6 +179,11 @@
   padding: 0;
 }
 
+
+.detailPanel-contactGroup__expanded{
+  min-height: 70px;
+  max-height: 100px;
+}
 .detailPanel-contactGroup__title,
 .detailPanel-clientGroup__title {
   flex: 1;

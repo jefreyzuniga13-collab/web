@@ -33,6 +33,7 @@ export function useTicketDetail(): UseTicketDetailResult {
             prioridad: args.prioridad,
             archivos: args.archivos,
             responsibleId: args.responsibleId,
+            // selectedColor: args.selectedColor
           }
         );
 

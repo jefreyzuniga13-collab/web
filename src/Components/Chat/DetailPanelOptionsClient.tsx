@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { FaCloud, FaLaptopHouse, FaMapMarkerAlt, FaRegBuilding, FaRegClock, FaSync, FaTag } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
 import ShowInformationExpanded from './ShowInformationExpanded'
+import { jwtDecode } from 'jwt-decode'
 
 interface Props {
     clientLocal: ClientResponseDTO | null
@@ -13,6 +14,17 @@ interface Props {
     formatDate: (v?: string | number | Date | null) => string;
     setClientEditOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setShowMore: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface JwtPayload {
+  role: string
+}
+
+interface AuthStorage {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  userId: number
 }
 
 const DetailPanelOptionsClient: React.FC<Props> = ({
@@ -27,21 +39,12 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
      const [content, setContent] = useState<string | null | undefined>("");
       const [title, setTitle] = useState<string>("")
 
-     const Trunc = ({ children }: { children?: React.ReactNode }) => (
-        <span
-          title={children ? String(children) : '---'}
-          style={{
-            maxWidth: '100%',
-            display: 'inline-block',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            verticalAlign: 'bottom',
-          }}
-        >
-          {displayOrDash(children as any)}
-        </span>
-      )
+
+        const authRaw = localStorage.getItem('auth') || '{}'
+  const { accessToken } = JSON.parse(authRaw) as AuthStorage
+  const { role } = jwtDecode<JwtPayload>(accessToken)
+  const isAdmin = role.toLowerCase() === 'admin'
+
       
     return (
         <>
@@ -54,7 +57,9 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                 }}
             >
                 <h5>Detalles del cliente</h5>
-                <div style={{ display: 'flex', gap: 8 }}>
+               {isAdmin && (
+
+                 <div style={{ display: 'flex', gap: 8 }}>
                     <button
                         className="btn btn--secondary"
                         onClick={() => setClientEditOpen(true)}
@@ -68,6 +73,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         Ver más
                     </button>
                 </div>
+               )}
             </header>
 
             <div
@@ -101,11 +107,11 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         </span>
                     </div>
 
-                    <div className="detailPanel-contactGroup"  onClick={()=>{
-              setContent(clientLocal?.workModel)
-              setTitle("Nombre completo")
-              setIsshowInformationExpanded(true)
-              }}>
+                    <div className="detailPanel-contactGroup__expanded"  onClick={()=>{
+                        setContent(clientLocal?.workModel)
+                        setTitle("Nombre completo")
+                        setIsshowInformationExpanded(true)
+                        }}>
                         <p className="detailPanel-clientGroup__title">Modelo Trabajo</p>
                         <span className="detailPanel-clientGroup__cliente">
                             <FaLaptopHouse style={{ verticalAlign: 'middle', marginRight: 6 }} />
@@ -139,12 +145,25 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                             {displayOrDash((clientLocal as any)?.enviromentType)}
                         </span>
                     </div>
+                            
+                             <div className="detailPanel-contactGroup">
+                        <p className="detailPanel-clientGroup__title">Horas soporte por dia</p>
+                        <span className="detailPanel-clientGroup__cliente">
+                            {clientLocal?.supportLimitTime}
+                        </span>
+                    </div>
 
+                     <div className="detailPanel-contactGroup">
+                        <p className="detailPanel-clientGroup__title">Hora soporte acumuladas</p>
+                        <span className="detailPanel-clientGroup__cliente">
+                            {clientLocal?.cumulativeTime}
+                        </span>
+                    </div>
                     <div className="detailPanel-contactGroup">
                         <p className="detailPanel-clientGroup__title">Recurrencia</p>
                         <span className="detailPanel-clientGroup__cliente">
                             <FaSync style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                            {displayOrDash((clientLocal as any)?.recurrency)}
+                            {clientLocal?.recurrency}
                         </span>
                     </div>
 
@@ -196,16 +215,16 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                         </span>
                     </div>
 
-                    <div className="detailPanel-contactGroup">
+                    {/* <div className="detailPanel-contactGroup">
                         <p className="detailPanel-clientGroup__title">Último caso cerrado</p>
                         <span className="detailPanel-clientGroup__cliente">
                             <FaRegClock style={{ verticalAlign: 'middle', marginRight: 6 }} />
                             {formatDate((clientLocal as any)?.lastClosedCase)}
                         </span>
-                    </div>
+                    </div> */}
                 </div>
 
-                <div style={{ marginTop: 10 }}>
+                {/* <div style={{ marginTop: 10 }}>
                     <p className="detailPanel-clientGroup__title">Observación</p>
                     <div
                         style={{
@@ -218,7 +237,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                     >
                         <Trunc>{(clientLocal as any)?.observation}</Trunc>
                     </div>
-                </div>
+                </div> */}
             </div>
 
 {isshowInformationExpanded && (

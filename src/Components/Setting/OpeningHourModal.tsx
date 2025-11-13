@@ -7,6 +7,8 @@ import { useOpeningHourForm } from '@/Hooks/Setting/useOpeningHourForm'
 import '@/Styles/Setting/OpeningHourModal.css'
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import type { Dayjs } from 'dayjs'
+
 const WEEK_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] as const
 
 interface OpeningHourModalProps {
@@ -15,6 +17,12 @@ interface OpeningHourModalProps {
   data?: any
   onClose: () => void
   onSubmit: (values: any) => void
+}
+
+// Helper para convertir PickerValue (Date | Dayjs | null) a Date | null
+const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
+  if (!value) return null
+  return value instanceof Date ? value : (value as Dayjs).toDate()
 }
 
 export default function OpeningHourModal({
@@ -36,27 +44,6 @@ export default function OpeningHourModal({
     handleSubmit,
   } = useOpeningHourForm({ mode, data, onSubmit })
 
-
-  //  const shouldDisableTime = (time: any, view: any) => {
-  //   const now = dayjs();
-  //   if (view === 'hours') {
-  //     return time.hour() < now.hour();
-  //   }
-  //   if (view === 'minutes') {
-  //     return time.hour() === now.hour() && time.minute() < now.minute();
-  //   }
-  //   if (view === 'seconds') {
-  //       return time.hour() === now.hour() && time.minute() === now.minute() && time.second() < now.second();
-  //   }
-  //   return false;
-  // };
-
-  //  function PastDatesDisabledDatePicker(date: Date) {
-  //     const today = new Date('es-NI');
-
-  //     return date <= today;
-  // };
-  
   if (!isOpen) return null
 
   return (
@@ -150,84 +137,26 @@ export default function OpeningHourModal({
               </>
             )}
 
-            {/* {form.recurrence === 'AnnualHoliday' && (
-              <>
-                <div className="oh-modal__col">
-                  <DatePickerField
-                    label="Día feriado"
-                    value={form.holidayDate}
-                    onChange={d => setForm(f => ({ ...f, holidayDate: d }))}
-                    disabled={isView}
-                  />
-                  {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
-                </div>
-
-              </>
-            )} */}
-
             {form.recurrence === 'OneTimeHoliday' && (
               <>
-                {/* <div className="oh-modal__col">
-                   <p className="oh-modal__inline-label">¿Es feriado corto?</p>
-                  <DatePickerField
-                    label="Fecha específica"
-                    value={form.specificDate}
-                    onChange={d => setForm(f => ({ ...f, specificDate: d }))}
-                    disabled={isView}
-                  />
-                  {errors.specificDate && <div className="oh-modal__error">{errors.specificDate}</div>}
-                </div> */}
-
                 <div className="oh-modal__col">
                   <p className="oh-modal__inline-label">¿Es feriado fijo dd/MM?</p>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
-                    label="Día feriado"
-                    value={form.holidayDate}
-                    onChange={d => setForm(f => ({ ...f, holidayDate: d }))}
-                    disabled={isView}
-                    format="dd/MM"
-                  />
+                      label="Día feriado"
+                      value={form.holidayDate}
+                      onChange={d =>
+                        setForm(f => ({
+                          ...f,
+                          holidayDate: pickerValueToDate(d as Date | Dayjs | null),
+                        }))
+                      }
+                      disabled={isView}
+                      format="dd/MM"
+                    />
                   </LocalizationProvider>
                   {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
                 </div>
-                
-                {/* <div className="oh-modal__col oh-modal__col--full">
-                  <p className="oh-modal__inline-label">¿Es feriado variable dd/MM/yyyy?</p>
-                  <div className="oh-modal__input-container">
-                    
-                    <div className="oh-modal__col">
-                      <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Desde"
-                        value={form.effectiveFrom}
-                        onChange={d => setForm(f => ({ ...f, effectiveFrom: d }))}
-                        disabled={isView}
-                        format="dd/MM/yyyy"
-                        shouldDisableDate={PastDatesDisabledDatePicker}
-                        className='ws-datePicker'
-                        sx={{width: "100%", marginBottom: "1rem"}}
-                      />
-                       </LocalizationProvider>
-                    </div>
-                    <div className="oh-modal__col">
-                       <LocalizationProvider dateAdapter={AdapterDateFns}>
-                        <DatePicker
-                        label="Hasta"
-                        value={form.effectiveTo}
-                        onChange={d => setForm(f => ({ ...f, effectiveTo: d }))}
-                        disabled={isView}
-                        shouldDisableDate={PastDatesDisabledDatePicker}
-                        format="dd/MM/yyyy"
-                        className='ws-datePicker'
-                        sx={{width: "100%"}}
-                      />
-                       </LocalizationProvider>
-                    </div>
-
-                  </div>
-                  {errors.range && <div className="oh-modal__error">{errors.range}</div>}
-                </div> */}
               </>
             )}
 
@@ -246,31 +175,57 @@ export default function OpeningHourModal({
 
             {isView && (
               <div className="oh-modal__col oh-modal__col--full oh-modal__timestamps">
-               {
-                form.recurrence === "OneTimeHoliday" &&(
+                {form.recurrence === 'OneTimeHoliday' && (
                   <>
-                     <DatePickerField label="Fecha feriado oficial" value={form.holidayMovedFrom ? form.holidayMovedFrom : null} onChange={()=>{}} disabled />
-                      <DatePickerField label='Fecha feriado transladada' value={form.holidayMoveTo ? form.holidayMoveTo : null}  onChange={()=> {}} disabled/>
+                    <DatePickerField
+                      label="Fecha feriado oficial"
+                      value={form.holidayMovedFrom ? form.holidayMovedFrom : null}
+                      onChange={() => {}}
+                      disabled
+                    />
+                    <DatePickerField
+                      label="Fecha feriado transladada"
+                      value={form.holidayMoveTo ? form.holidayMoveTo : null}
+                      onChange={() => {}}
+                      disabled
+                    />
                   </>
-                )
-               }
-               </div>
-           ) }
+                )}
+              </div>
+            )}
 
             {isView && (
               <div className="oh-modal__col oh-modal__col--full oh-modal__timestamps">
-                <DatePickerField label="Creado"     value={form.createdAt}   onChange={() => {}} disabled />
-                <DatePickerField label="Actualizado" value={form.updatedAt}   onChange={() => {}} disabled/>
+                <DatePickerField
+                  label="Creado"
+                  value={form.createdAt}
+                  onChange={() => {}}
+                  disabled
+                />
+                <DatePickerField
+                  label="Actualizado"
+                  value={form.updatedAt}
+                  onChange={() => {}}
+                  disabled
+                />
               </div>
             )}
           </div>
 
           <footer className="oh-modal__footer">
-            <Button variant="secondary" onClick={onClose} className="oh-modal__btn oh-modal__btn--cancel">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="oh-modal__btn oh-modal__btn--cancel"
+            >
               Cancelar
             </Button>
             {!isView && (
-              <Button variant="primary" type="submit" className="oh-modal__btn oh-modal__btn--confirm">
+              <Button
+                variant="primary"
+                type="submit"
+                className="oh-modal__btn oh-modal__btn--confirm"
+              >
                 {mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}

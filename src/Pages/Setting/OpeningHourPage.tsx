@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'

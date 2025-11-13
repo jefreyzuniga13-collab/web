@@ -103,8 +103,6 @@ export function useClient() {
   const addCredentialHostingAsync = useCallback(
     async (clientId: number, credential: CredentialRequestDTO) => {
 
-      console.log("En el metodo addCredentialHostingAsync, con los datos. ClienteId", clientId)
-      console.log("Credencial", credential)
       const data = await run(() => ClientsService.addCredentialHostingAsync(clientId, credential))
       return data
     },

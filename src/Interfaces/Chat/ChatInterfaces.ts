@@ -201,3 +201,11 @@ export interface ConversationHistoryDto {
   status: string;
   messages: MessageWithAttachmentsDto[];
 }
+
+
+export interface ConversationClientFilter {
+  clientCode: string
+  from?: string     // Fecha inicial (ISO string)
+  to?: string       // Fecha final (ISO string)
+  searchConversation?: string // Texto de búsqueda
+}

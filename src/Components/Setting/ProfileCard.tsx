@@ -9,6 +9,7 @@ import FileInput from "@/Components/Common/FileInput";
 import "@/Styles/Setting/ProfileCard.css";
 import { useProfileCard } from "@/Hooks/Setting/useProfileCard";
 import Button from '@/Components/Common/Button'
+import Spinner from "@/Components/Common/Spinner";
 
 const ProfileCard: React.FC = () => {
   const {
@@ -29,7 +30,7 @@ const ProfileCard: React.FC = () => {
     return (
       <div className="profile-card__loading">
         <div className="profile-card__spinner"></div>
-        <p>Cargando perfil...</p>
+       <Spinner/>
       </div>
     );
   }

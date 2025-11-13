@@ -34,13 +34,13 @@ class ContactService {
   }
 
   async getContactByClientAsync(
-    clientId: string,
+    clientCode: string,
     page: number,
     pageSize: number
   ): Promise<PagedResponse<ContactLogInterface>> {
     const { data } = await api.get<
       ApiResponse<PagedResponse<ContactLogInterface>>
-    >(`/ContactLogs/getByClient/${clientId}`, { 
+    >(`/ContactLogs/getByClient/${clientCode}`, { 
       params: { PageNumber: page, PageSize: pageSize } });
     return data.data;
   }

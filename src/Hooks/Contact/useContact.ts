@@ -51,32 +51,28 @@ const useContact = (contactId?: number) => {
     [globalFilter, page, pageSize]
   )
 
-
-  
-
 const getByClient = useCallback(
   async (clientId: string, p = page, s = pageSize) => {
-    setLoadingList(true)
-    setError(null)
-    try {
-      const res = await contactService.getContactByClientAsync(clientId, p, s)
+      setLoadingList(true)
+      setError(null)
+      try {
+        const res = await contactService.getContactByClientAsync(clientId, p, s)
 
-      setContactByClient(res.items)
-      setTotalCount(res.meta.totalCount)
-      setPage(res.meta.currentPage)
-      setPageSize(res.meta.pageSize)
+        setContactByClient(res.items)
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
 
-      return res 
-    } catch (err: any) {
-      setError(err)
-      return null
-    } finally {
-      setLoadingList(false)
-    }
-  },
-  [page, pageSize]
-)
-
+        return res 
+      } catch (err: any) {
+        setError(err)
+        return null
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [page, pageSize]
+  )
 
   const fetchById = useCallback(
     async (id: number) => {

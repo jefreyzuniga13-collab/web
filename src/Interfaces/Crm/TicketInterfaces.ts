@@ -6,9 +6,10 @@ export interface CreateTicketPayload {
   contactId: number;
   titulo: string;
   descripcion: string;
-  prioridad: string;
+  prioridad: number;
   archivos: File[];
   responsibleId: number | null;
+  // selectedColor: string;
 }
 
 export interface TicketCreateResult {
@@ -17,7 +18,11 @@ export interface TicketCreateResult {
   ticketId?: string;
 }
 
-export type Prioridad = 'Alta' | 'Media' | 'Baja'
+export interface Option {
+  id: number;
+  text: string;
+}
+
 
 export type CrearTicketArgs = {
   conversationId: number
@@ -25,10 +30,11 @@ export type CrearTicketArgs = {
   contactId: number
   titulo: string
   descripcion: string
-  prioridad: Prioridad
+  prioridad: number
   archivos: File[]
   responsibleId: number | null
   DueDate: Date
+  // selectedColor: string;
 }
 
 export interface UseTicketDetailResult {

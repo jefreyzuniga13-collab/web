@@ -70,6 +70,8 @@ const formatDate = (v?: string | number | Date | null) => {
   }).format(d)
 }
 
+
+
 export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const [optionMenu, setOptionMenu] = useState<OptionMenu>(1)
   const [showMore, setShowMore] = useState(false)
@@ -521,16 +523,16 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   }, [clientEditOpen, clientLocal])
 
   const saveClientEdits = useCallback(async () => {
+    
     if (!client?.id) return
     const patch: Partial<ClientUpdateRequestDTO> = {
       workModel,
-      priority: priority || undefined,
-      supportType: supportType || undefined,
-      enviromentType: envType || undefined,
+      priority: priority,
+      supportType: supportType,
+      enviromentType: envType,
       isSupportActive,
       isFranchise,
       supportLimitTime: supportLimitTime === '' ? null : Number(supportLimitTime),
-      // recurrency: recurrency === '' ? null : Number(recurrency),
       observation,
     }
     setClientLocal((prev: any) => ({ ...prev, ...patch }))

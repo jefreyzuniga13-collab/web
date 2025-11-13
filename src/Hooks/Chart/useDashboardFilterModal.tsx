@@ -111,12 +111,8 @@ const useDashboardFilterModal = () => {
       raw === ''
         ? null
         : isClientId
-        ? String(raw)      // clientId es string
-        : Number(raw);     // los demás ids son number
-
-        console.log("opcion", parent)
-        console.log("key", idKey)
-
+        ? String(raw)
+        : Number(raw);
     setForm(f => ({
       ...f,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

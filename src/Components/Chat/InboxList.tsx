@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
+import Spinner from '@/Components/Common/Spinner'
 
 interface Props {
   selectedId?: number
@@ -34,7 +35,7 @@ export const InboxList: React.FC<Props> = ({
   pagination,
   onPageChange
 }) => {
-  
+
   const loaderRef = useRef<HTMLLIElement>(null)
 
   const [now, setNow] = useState(Date.now())
@@ -75,13 +76,13 @@ export const InboxList: React.FC<Props> = ({
 
 
   const handleSelect = async (id: number) => {
-  if (id === selectedId) {
-    onSelect(null)
-  } else {
-    await markConversationRead(id)
-    onSelect(id)
+    if (id === selectedId) {
+      onSelect(null)
+    } else {
+      await markConversationRead(id)
+      onSelect(id)
+    }
   }
-}
 
 
   if (error) {
@@ -118,13 +119,13 @@ export const InboxList: React.FC<Props> = ({
         }
 
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
-        
+
         const unread =
           userId === c.assignedAgentId
             ? c.unreadForAgent ?? 0
             : userId === c.assignedByUserId
-            ? c.unreadForAssigner ?? 0
-            : 0
+              ? c.unreadForAssigner ?? 0
+              : 0
         const hasUnread = unread > 0
 
         let timeSinceRequest = ''
@@ -140,6 +141,23 @@ export const InboxList: React.FC<Props> = ({
           previewText += ` · Desde solicitud: ${timeSinceRequest}`
         }
 
+        // Hay un problema y es que cuando se da click en una conversacion y luego doy click en otro, me saca lanza el error de:
+        //       ndex-CQO97I8E.js:49  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+        // at Hj (index-CQO97I8E.js:49:90200)
+        // at Zn (index-CQO97I8E.js:49:91576)
+        // at Bj (index-CQO97I8E.js:49:94008)
+        // at Zn (index-CQO97I8E.js:49:91702)
+        // at Bj (index-CQO97I8E.js:49:94008)
+        // at Zn (index-CQO97I8E.js:49:91702)
+        // at Bj (index-CQO97I8E.js:49:94008)
+        // at Zn (index-CQO97I8E.js:49:91702)
+        // at Bj (index-CQO97I8E.js:49:94008)
+        // at Zn (index-CQO97I8E.js:49:91702)
+
+        // Lo que si, es que solo pasa a los usaurio con rol support, los que son de tipo admin no tiene este problema, incluso ya prove dando click una y otra ves, para ver si me lazaba la exepcion per no me carga bien los mensjaes
+        //pero cuando vea a un usuario de soporte, la primera ves le caragh bien, pero las siguiente le puede cargar bien o le puede lanzar la exepcion describa arriva.
+
+
         return (
           <li
             key={c.conversationId}
@@ -150,14 +168,13 @@ export const InboxList: React.FC<Props> = ({
             onKeyDown={e =>
               e.key === 'Enter' && handleSelect(c.conversationId)
             }
-            className={`inbox-list__item${
-              isSelected ? ' inbox-list__item--selected' : ''
-            }`}>
+            className={`inbox-list__item${isSelected ? ' inbox-list__item--selected' : ''
+              }`}>
             <div className="inbox-list__top">
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
-                   <span className="inbox-list__name">
-                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName: ''}
+                  <span className="inbox-list__name">
+                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName : ''}
                     <span className="">
                       {c.clientContactId != null ? " (" + c.clientContactName + ")" : ''}
                     </span>
@@ -173,11 +190,11 @@ export const InboxList: React.FC<Props> = ({
               <div className="inbox-list__bottom">
                 <div className='inbox-list__bottom_text'>
                   {/* <span className="inbox-list__time">{lastTime}</span> */}
-                <span
-                  className={`inbox-list__status inbox-list__status--${statusClass}`}
-                >
-                  {statusText}
-                </span>
+                  <span
+                    className={`inbox-list__status inbox-list__status--${statusClass}`}
+                  >
+                    {statusText}
+                  </span>
                 </div>
                 {hasUnread && (
                   <span className="inbox-list__unread-badge">{unread}</span>
@@ -188,8 +205,8 @@ export const InboxList: React.FC<Props> = ({
         )
       })}
       {loading && (
-        // <li className="inbox-list__loading">Cargando más conversaciones…</li>
-        <></>
+
+        <Spinner />
       )}
       <li ref={loaderRef} />
     </ul>

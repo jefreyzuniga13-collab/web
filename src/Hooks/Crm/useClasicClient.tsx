@@ -45,19 +45,32 @@ export const useClasicClient = () => {
     }
   }, [globalFilter, page, pageSize]);
 
-  const fetchById = useCallback(async (id: number) => {
-    setLoadingItem(true);
-    setError(null);
-    
-    try {
-      const resp = await ClientsService.getByIdAsync(id);
-      setForm(resp);
-    } catch (err: any) {
-      setError(err);
-    } finally {
-      setLoadingItem(false);
-    }
-  }, []);
+const fetchById = useCallback(async (id: number) => {
+  setLoadingItem(true);
+  setError(null);
+
+  try {
+    const resp = await ClientsService.getByIdAsync(id);
+
+        const normalizedForm: ClientRequestDTO = {
+          workModel: resp.workModel ?? "",
+          priority: resp.priority ?? "",
+          supportType: resp.supportType ?? "",
+          isSupportActive: resp.isSupportActive ?? false,
+          isFranchise: resp.isFranchise ?? false,
+          supportLimitTime: resp.supportLimitTime ?? null,
+          enviromentType: resp.enviromentType ?? "",
+          observation: resp.observation ?? "",
+        };
+
+        setForm(normalizedForm);
+      } catch (err: any) {
+        setError(err);
+      } finally {
+        setLoadingItem(false);
+      }
+    }, []);
+
 
   const update = useCallback(async (id: number, values: ClientRequestDTO) => {
     setLoadingItem(true);

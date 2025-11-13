@@ -9,15 +9,15 @@ import type {
 export const useWorkShift = () => {
   const [workShifts, setWorkShifts] = useState<WorkShiftInterface[]>([]);
   const [selectedWorkShift, setSelectedWorkShift] = useState<WorkShiftInterface | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(30);
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [totalCount, setTotalCount] = useState(0);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingItem, setLoadingItem] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'update' | 'view'>('create');
   const [isModalOpen, setIsModalOpen] = useState(false);
-    const [globalFilter, setGlobalFilter] = useState<string>('')
+  const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const fetchPage = useCallback(async (p = page, s = pageSize) => {
     setLoadingList(true);

@@ -51,8 +51,8 @@ export default function ContactPage() {
       minWidth: 100,
       render: row=>{
         if(row.clienteCodigo == null) return "No espesificado"
-        if(row.clienteCodigo as number < 50000) return "INNOVA"
-        if(row.clienteCodigo as number >= 50000) return "PC GROUP"
+        if(Number(row.clienteCodigo)  < 50000) return "INNOVA"
+        if(Number(row.clienteCodigo) >= 50000) return "PC GROUP"
       }
     },
     {

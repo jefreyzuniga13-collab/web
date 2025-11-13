@@ -1,6 +1,7 @@
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import '@/Styles/Common/TimePickerField.css';
+import type { Dayjs } from 'dayjs';
 
 interface TimePickerFieldProps {
   label: string;
@@ -9,6 +10,12 @@ interface TimePickerFieldProps {
   disabled?: boolean;
   className?: string;
 }
+
+// Helper: convierte Dayjs o Date a Date
+const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
+  if (!value) return null;
+  return value instanceof Date ? value : (value as Dayjs).toDate();
+};
 
 export default function TimePickerField({
   label,
@@ -21,10 +28,14 @@ export default function TimePickerField({
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <TimePicker
         label={label}
-        sx={{ width: "100%", mb: 2 }}
+        sx={{ width: '100%', mb: 2 }}
         value={value}
         disabled={disabled}
-        onChange={(newValue: Date | null) => onChange(newValue)}
+        onChange={(newValue) => {
+          // newValue es PickerValue (Date | Dayjs | null)
+          const asDate = pickerValueToDate(newValue as Date | Dayjs | null);
+          onChange(asDate);
+        }}
         slotProps={{
           textField: {
             className: `time-picker-field ${className}`,

@@ -1,6 +1,8 @@
 import React, { useMemo, 
   // useRef, 
-  useState, useCallback, useEffect } from 'react'
+  useState, useCallback, useEffect, 
+  // type ChangeEvent
+} from 'react'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import { Textarea } from '@/Components/Common/Textarea'
@@ -8,7 +10,7 @@ import { Label } from '@/Components/Common/Label'
 import Select from '@/Components/Common/Select'
 import '@/Styles/Chat/TicketModal.css'
 import { useTicketDetail } from '@/Hooks/Crm/useTicketDetail'
-import type { Prioridad } from '@/Interfaces/Crm/TicketInterfaces'
+// import type { Prioridad } from '@/Interfaces/Crm/TicketInterfaces'
 import { useUsers } from '@/Hooks/User/useUsers'
 import { jwtDecode } from 'jwt-decode'
 import DatePickerField from '@/Components/Common/DatePickerField'
@@ -35,6 +37,7 @@ interface AuthStorage {
   userId: number
 }
 
+// Dame el script en sql server.
 export default function TicketModal({
   isOpen,
   onClose,
@@ -45,12 +48,20 @@ export default function TicketModal({
 }: TicketModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState<Prioridad | ''>('')
+
+  const [priority, setPriority] = useState<number>(1)
+
   const [responsibleId, setResponsibleId] = useState<number | null>(null)
   const [dueDate, setDueDate] = useState<Date | null>(null)
+  // const [selectedColor, setSelectedColor] = useState('#ffffff'); 
+
+
+  // const handleColorChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   setSelectedColor(event.target.value);
+  // };
   // const [files, setFiles] = useState<File[]>([])
 
-  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string;dueDate?: string }>({})
+  const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string;dueDate?: string; selectedColor?: string }>({})
   // const [isDragging, setIsDragging] = useState(false)
   // const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -96,9 +107,9 @@ export default function TicketModal({
 
   const priorityOptions = useMemo(
     () => [
-      { label: 'Alta', value: 'Alta' },
-      { label: 'Media', value: 'Media' },
-      { label: 'Baja', value: 'Baja' }
+      { label: 'Alta', value: 1 },
+      { label: 'Media', value: 2 },
+      { label: 'Baja', value: 3 }
     ],
     []
   )
@@ -171,9 +182,10 @@ export default function TicketModal({
     const e: typeof errors = {}
     if (!title.trim()) e.title = 'Requerido'
     if (!description.trim()) e.description = 'Requerido'
-    if (!priority) e.priority = 'Seleccione una prioridad'
+    if (!priority || priority == 0) e.priority = 'Seleccione una prioridad'
     if (isAdmin && !responsibleId) e.responsibleId = 'Requerido'
      if (!dueDate) e.dueDate = 'Requerida'
+    //  if (!selectedColor) e.selectedColor = 'Requerido'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -188,11 +200,12 @@ export default function TicketModal({
       contactId,
       titulo: title.trim(),
       descripcion: description.trim(),
-      prioridad: priority as Prioridad,
+      prioridad: Number(priority),
       // archivos: files,
       archivos: [],
       responsibleId,
       DueDate: dueDate!,
+      // selectedColor: selectedColor
     })
 
     if (!resp || !resp.success) {
@@ -204,7 +217,7 @@ export default function TicketModal({
 
     setTitle('')
     setDescription('')
-    setPriority('')
+    setPriority(1)
     // setFiles([])
     setResponsibleId(null)
     setDueDate(null)
@@ -245,7 +258,7 @@ export default function TicketModal({
                 id="tk-priority"
                 name="prioridad"
                 value={priority}
-                onChange={e => setPriority(e.target.value as Prioridad)}
+                onChange={e => setPriority(Number(e.target.value))}
                 options={priorityOptions}
                 placeholder="Seleccione prioridad"
                 error={errors.priority}
@@ -279,7 +292,6 @@ export default function TicketModal({
             )}
 
 
-
             <div className="tm-field">
               <Label htmlFor="tk-due">Fecha Entrega *</Label>
               <DatePickerField
@@ -290,6 +302,18 @@ export default function TicketModal({
               />
               {errors.dueDate && <span className="tm-error">{errors.dueDate}</span>}
             </div>
+
+            {/* <div className="tm-field">
+               <Label htmlFor="tk-due">Seleccion color *</Label>
+              <input
+                type="color"
+                id="colorInput"
+                value={selectedColor}
+                onChange={handleColorChange}
+              />
+            </div> */}
+
+            {/* {errors.selectedColor && <span className="tm-error">{errors.selectedColor}</span>} */}
           </div>
 
           <div className="tm-field">

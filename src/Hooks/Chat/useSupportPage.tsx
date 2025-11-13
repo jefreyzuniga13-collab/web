@@ -21,7 +21,6 @@ interface JwtPayload {
 type FilterOption = { label: string; value: string; content: string };
 
 const FILTER_ORDER_STORAGE_KEY = "filterOrder";
-// const DETAIL_PANEL_KEY = "detailPanelOpen";
 
 export function useSupportPage() {
   const dispatch = useDispatch();

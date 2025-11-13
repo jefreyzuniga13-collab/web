@@ -29,7 +29,8 @@ class TicketServ {
     );
 
     formData.append("Description", payload.descripcion);
-    formData.append("Priority", payload.prioridad);
+    formData.append("Priority", payload.prioridad.toString());
+    // formData.append("SelectedColor", payload.selectedColor);
 
     payload.archivos.forEach((f) => formData.append("Attachments", f, f.name));
 

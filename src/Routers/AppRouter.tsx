@@ -25,7 +25,7 @@ const VerifyNewContactPage = lazy(() => import('@/Pages/Setting/VerifyNewContact
 const OpeningHourPage      = lazy(() => import('@/Pages/Setting/OpeningHourPage'))
 const WorkShiftPage        = lazy(() => import('@/Pages/Setting/WorkShiftPage'))
 const ContactPage          = lazy(() => import('@/Pages/Contact/ContactPage'))
-const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
+// const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
@@ -74,7 +74,7 @@ export function AppRouter() {
           <Route path="opening-hour"            element={<OpeningHourPage />} />
           <Route path="work-shift"              element={<WorkShiftPage />} />
           <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
-          <Route path="conversation/:state"     element={<ConversationsPage />} />
+          {/* <Route path="conversation/:state"     element={<ConversationsPage />} /> */}
           <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />
           <Route path="templates-management"     element={<WaTemplatesPage />} />
           <Route path="clients"     element={<ClientPage />} />

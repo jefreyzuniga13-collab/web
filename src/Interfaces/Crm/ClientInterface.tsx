@@ -9,7 +9,7 @@ export interface ClientRequestDTO {
   isFranchise: boolean
   supportLimitTime?: number | null
   enviromentType?: string | null
-  observation?: string | null
+  observation?: string
 }
 
 export interface ClientUpdateRequestDTO extends Partial<ClientRequestDTO> {}
@@ -25,6 +25,7 @@ export interface ClientResponseDTO {
   isFranchise: boolean
   supportLimitTime?: number | null
   recurrency?: number | null
+  cumulativeTime: string
   enviromentType?: string | null
   lastContactDate: string
   lastClosedCase?: string | null

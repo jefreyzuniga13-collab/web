@@ -1,6 +1,7 @@
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import "@/Styles/Common/DateTimePicker.css";
+import type { Dayjs } from "dayjs";
 
 interface DatePickerFieldProps {
   label: string;
@@ -9,6 +10,11 @@ interface DatePickerFieldProps {
   disabled?: boolean;
   className?: string;
 }
+
+const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
+  if (!value) return null;
+  return value instanceof Date ? value : (value as Dayjs).toDate();
+};
 
 export default function DatePickerField({
   label,
@@ -23,7 +29,10 @@ export default function DatePickerField({
         label={label}
         value={value}
         disabled={disabled}
-        onChange={(newValue: Date | null) => onChange(newValue)}
+        onChange={(newValue) => {
+          const asDate = pickerValueToDate(newValue as Date | Dayjs | null);
+          onChange(asDate);
+        }}
         format="dd/MM/yyyy"
         slotProps={{
           textField: {

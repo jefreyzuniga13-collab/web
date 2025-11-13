@@ -3,6 +3,7 @@ import type {
   ConversationDto,
   UpdateConversationRequest,
   ConversationHistoryDto,
+  ConversationClientFilter,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
@@ -217,21 +218,21 @@ class ConversationServ {
     return data.data;
   }
 
-  async getByStateWithOut(
-    stateWithOut: string,
-    page: number,
-    pageSize: number
-  ): Promise<PagedResponse<ConversationDto>> {
-    const params = {
-      PageNumber: page,
-      PageSize: pageSize
-    };
-    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-      `/Conversations/${encodeURIComponent(stateWithOut)}/getBystateWithout`,
-      { params }
-    );
-    return data.data;
-  }
+  // async getByStateWithOut(
+  //   stateWithOut: string,
+  //   page: number,
+  //   pageSize: number
+  // ): Promise<PagedResponse<ConversationDto>> {
+  //   const params = {
+  //     PageNumber: page,
+  //     PageSize: pageSize
+  //   };
+  //   const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+  //     `/Conversations/${encodeURIComponent(stateWithOut)}/getBystateWithout`,
+  //     { params }
+  //   );
+  //   return data.data;
+  // }
 
   async getWaitingClient(
     filters: FilterForm,
@@ -282,6 +283,25 @@ class ConversationServ {
     return data.data;
   }
 
+  async GetConversationByClientPaginationAsync(
+    filters: ConversationClientFilter,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      ...filters, // incluye clientCode, from, to, searchConversation
+      PageNumber: page,
+      PageSize: pageSize,
+    };
+
+    const { data } =
+      await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+        '/Conversations/getConversationByClientPag',
+        { params }
+      );
+
+    return data.data;
+  }
 
   async getConversationByDate(
     from: Date,

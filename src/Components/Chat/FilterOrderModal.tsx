@@ -3,10 +3,11 @@ import Button from "@/Components/Common/Button";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
+import type { Dayjs } from "dayjs";
 
 interface FormInterface {
-  validFrom: Date | null
-  validTo:   Date | null
+  validFrom: Date | null;
+  validTo: Date | null;
 }
 
 type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
@@ -24,6 +25,12 @@ interface FilterOrderModalProps {
   clearFilter: () => void;
 }
 
+// Helper para convertir PickerValue (Date | Dayjs | null) a Date | null
+const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
+  if (!value) return null;
+  return value instanceof Date ? value : (value as Dayjs).toDate();
+};
+
 const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   currentOrder,
   options,
@@ -38,8 +45,8 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const handleDragStart = (idx: number) => setDragIndex(idx);
-  const handleDragOver  = (e: React.DragEvent) => e.preventDefault();
-  const handleDrop      = (idx: number) => {
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (idx: number) => {
     if (dragIndex === null) return;
     const newOrder = [...order];
     const [moved] = newOrder.splice(dragIndex, 1);
@@ -51,11 +58,13 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   const handleSave = () => {
     onSave(order);
 
-    if(form.validTo != null && form.validFrom == null){
-      toast.warn("Para seleccionar una fecha final, seleccione una fecha de incio.");
-      return
+    if (form.validTo != null && form.validFrom == null) {
+      toast.warn(
+        "Para seleccionar una fecha final, seleccione una fecha de incio."
+      );
+      return;
     }
-    
+
     applyDateFilter();
     onClose();
   };
@@ -71,7 +80,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         <h3 className="order-modal-title">Ordenar filtros</h3>
         <ul className="order-list">
           {order.map((val, idx) => {
-            const opt = options.find(o => o.value === val);
+            const opt = options.find((o) => o.value === val);
             if (!opt) return null;
             return (
               <li
@@ -93,10 +102,19 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
             <DatePicker
               label="Válido desde"
               value={form.validFrom}
-              onChange={d => handleDate("validFrom", d)}
+              onChange={(d) =>
+                handleDate(
+                  "validFrom",
+                  pickerValueToDate(d as Date | Dayjs | null)
+                )
+              }
               format="dd/MM/yyyy"
               slotProps={{
-                textField: { className: "date-picker-field", fullWidth: true, size: "medium" },
+                textField: {
+                  className: "date-picker-field",
+                  fullWidth: true,
+                  size: "medium",
+                },
               }}
             />
           </LocalizationProvider>
@@ -105,19 +123,34 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
             <DatePicker
               label="Válido hasta"
               value={form.validTo}
-              onChange={d => handleDate("validTo", d)}
+              onChange={(d) =>
+                handleDate(
+                  "validTo",
+                  pickerValueToDate(d as Date | Dayjs | null)
+                )
+              }
               format="dd/MM/yyyy"
               slotProps={{
-                textField: { className: "date-picker-field", fullWidth: true, size: "medium" },
+                textField: {
+                  className: "date-picker-field",
+                  fullWidth: true,
+                  size: "medium",
+                },
               }}
             />
           </LocalizationProvider>
         </div>
 
         <div className="order-modal-actions">
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button variant="destructive" onClick={handleClearFilter}>Limpiar Filtros</Button>
-          <Button variant="primary" onClick={handleSave}>Aplicar Filtros</Button>
+          <Button variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" onClick={handleClearFilter}>
+            Limpiar Filtros
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Aplicar Filtros
+          </Button>
         </div>
       </div>
     </div>

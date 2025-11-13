@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type {
   ConversationRatingByAgents,
@@ -42,7 +42,7 @@ export default function CustomPieChart({
   setSelectedAgentId,
   fetchRatingByAgent,
 }: Props) {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { agents, getAgents } = useUsers();
 
   useEffect(() => {
@@ -143,8 +143,9 @@ export default function CustomPieChart({
 
   const handleClick = (entry: any) => {
     if (!enableNavigation) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const status = entry.name;
-    navigate(`/conversation/${encodeURIComponent(status)}`);
+    // navigate(`/conversation/${encodeURIComponent(status)}`);
   };
 
   return (

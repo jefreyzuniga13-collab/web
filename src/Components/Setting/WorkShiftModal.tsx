@@ -9,6 +9,7 @@ import { userService } from '@/Services/User/UserService'
 import type { WorkShiftInterface, WorkShiftFormValues } from '@/Interfaces/Setting/WorkShiftInterface'
 import '@/Styles/Setting/WorkShiftModal.css'
 import { parse } from 'date-fns'
+import type { Dayjs } from 'dayjs'
 
 interface WorkShiftModalProps {
   mode: 'create' | 'update' | 'view'
@@ -39,19 +40,25 @@ export default function WorkShiftModal({
   } = useWorkShiftForm({ mode, data, onSubmit })
 
   // Map weekday indices to names
-  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-  // Determine which dates are selectable based on the chosen opening hour
   const selected = openingHours.find(h => h.id === form.openingHourId)
 
-   const isDateEnabled = (date: Date) => {
+  // Helper para convertir Dayjs | Date a Date
+  const toDate = (value: Date | Dayjs): Date =>
+    value instanceof Date ? value : (value as Dayjs).toDate()
+
+  // Determine which dates are selectable based on the chosen opening hour
+  const isDateEnabled = (value: Date | Dayjs): boolean => {
+    const date = toDate(value)
+
     if (!selected) return false
 
     // Only allow today or future dates
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+
     const compare = new Date(date)
-    
     compare.setHours(0, 0, 0, 0)
     if (compare < today) return false
 
@@ -66,24 +73,23 @@ export default function WorkShiftModal({
 
     // One-time holiday or date range
     if (selected.recurrence === 'OneTimeHoliday') {
-      
       if (selected.holidayDate) {
         return day === selected.holidayDate.day && month === selected.holidayDate.month
       }
 
       if (selected.effectiveFrom && selected.effectiveTo) {
-        const from = parse(selected.effectiveFrom, "yyyy-MM-dd", new Date());
-        const to   = parse(selected.effectiveTo,   "yyyy-MM-dd", new Date());
+        const from = parse(selected.effectiveFrom, 'yyyy-MM-dd', new Date())
+        const to = parse(selected.effectiveTo, 'yyyy-MM-dd', new Date())
         return date >= from && date <= to
       }
-      
+
       return false
     }
 
     return false
   }
 
-  const shouldDisableDate = (date: Date) => !isDateEnabled(date)
+  const shouldDisableDate = (day: Date | Dayjs) => !isDateEnabled(day)
 
   // Fetch agents when modal opens
   useEffect(() => {
@@ -94,21 +100,19 @@ export default function WorkShiftModal({
     }
   }, [isOpen])
 
-   const isHolidaySunday = (() => {
-    if (!selected || !['OneTimeHoliday', 'AnnualHoliday'].includes(selected.recurrence) || !selected.holidayDate) return false
+  const isHolidaySunday = (() => {
+    if (
+      !selected ||
+      !['OneTimeHoliday', 'AnnualHoliday'].includes(selected.recurrence) ||
+      !selected.holidayDate
+    )
+      return false
+
     const year = new Date().getFullYear()
     const holiday = new Date(year, selected.holidayDate.month - 1, selected.holidayDate.day)
     return holiday.getDay() === 0
   })()
 
-  // Fetch agents when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      userService.getAgentsByRoleAsync('support').then(list =>
-        setAgents(list.map(x => ({ userId: x.userId, fullName: x.fullName })))
-      )
-    }
-  }, [isOpen])
   if (!isOpen) return null
 
   return (
@@ -116,13 +120,18 @@ export default function WorkShiftModal({
       <div className="ws-modal__container">
         <header className="ws-modal__header">
           <h2 className="ws-modal__title">
-            {mode === 'create' ? 'Asignar Turno' : mode === 'update' ? 'Editar Asignación de Turno' : 'Detalle Asignación de Turno'}
+            {mode === 'create'
+              ? 'Asignar Turno'
+              : mode === 'update'
+              ? 'Editar Asignación de Turno'
+              : 'Detalle Asignación de Turno'}
           </h2>
-          <button type="button" className="ws-modal__close" onClick={onClose}>×</button>
+          <button type="button" className="ws-modal__close" onClick={onClose}>
+            ×
+          </button>
         </header>
         <form className="ws-modal__body" onSubmit={handleSubmit}>
           <div className="ws-modal__grid">
-
             <div className="ws-modal__col">
               <Autocomplete
                 options={openingHours}
@@ -153,51 +162,75 @@ export default function WorkShiftModal({
                     {...params}
                     label="Usuario asignado"
                     size="small"
-                    sx={{fontSize: 16, padding: 0}}
+                    sx={{ fontSize: 16, padding: 0 }}
                   />
                 )}
-                
               />
-            {errors.assignedUserId && <div className="ws-modal__error">{errors.assignedUserId}</div>}
+              {errors.assignedUserId && (
+                <div className="ws-modal__error">{errors.assignedUserId}</div>
+              )}
             </div>
 
-            {/* Date Picker */}
+            {/* Date Picker - Válido desde */}
             <div className="ws-modal__col">
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Valido desde"
                   value={form.validFrom as Date | null}
-                  onChange={d => handleDate('validFrom', d)}
+                  onChange={value => {
+                    const date =
+                      value == null
+                        ? null
+                        : value instanceof Date
+                        ? value
+                        : (value as Dayjs).toDate()
+                    handleDate('validFrom', date)
+                  }}
                   disabled={isView}
                   format="dd/MM/yyyy"
                   shouldDisableDate={shouldDisableDate}
-                  slotProps={{ textField: { className: 'date-picker-field', fullWidth: true } }}
+                  slotProps={{
+                    textField: { className: 'date-picker-field', fullWidth: true },
+                  }}
                 />
               </LocalizationProvider>
-               {isHolidaySunday && (
+              {isHolidaySunday && (
                 <p className="ws-modal__info">
-                  <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo, crear turno para el siguiente lunes hábil y asignar agente.
+                  <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo,
+                  crear turno para el siguiente lunes hábil y asignar agente.
                 </p>
               )}
               {errors.validFrom && <div className="ws-modal__error">{errors.validFrom}</div>}
             </div>
 
+            {/* Date Picker - Válido hasta */}
             <div className="ws-modal__col">
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Valido hasta"
-                  value={form.validTo as Date || null}
-                  onChange={d => handleDate('validTo', d)}
+                  value={(form.validTo as Date) || null}
+                  onChange={value => {
+                    const date =
+                      value == null
+                        ? null
+                        : value instanceof Date
+                        ? value
+                        : (value as Dayjs).toDate()
+                    handleDate('validTo', date)
+                  }}
                   disabled={isView}
                   format="dd/MM/yyyy"
                   shouldDisableDate={shouldDisableDate}
-                  slotProps={{ textField: { className: 'date-picker-field', fullWidth: true } }}
+                  slotProps={{
+                    textField: { className: 'date-picker-field', fullWidth: true },
+                  }}
                 />
               </LocalizationProvider>
 
-               {isHolidaySunday && (
+              {isHolidaySunday && (
                 <p className="ws-modal__info">
-                  <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo, crear turno para el siguiente lunes hábil y asignar agente.
+                  <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo,
+                  crear turno para el siguiente lunes hábil y asignar agente.
                 </p>
               )}
               {errors.validTo && <div className="ws-modal__error">{errors.validTo}</div>}
@@ -211,7 +244,8 @@ export default function WorkShiftModal({
                   checked={form.isActive}
                   onChange={handleCheckbox}
                   disabled={isView}
-                /> Activo
+                />{' '}
+                Activo
               </label>
             </div>
 

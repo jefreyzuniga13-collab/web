@@ -13,7 +13,6 @@ import { useConversations } from "@/Hooks/useConversations";
 import TicketModal from "@/Components/Chat/TicketModal";
 import useContact from "@/Hooks/Contact/useContact";
 
-
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false)
@@ -149,22 +148,6 @@ const SupportPage: React.FC = () => {
             {conversation?.contactNumber == null ? "" : extraerNumero(conversation!.contactNumber)}
           </h2>
 
-          {/* Toogle para pausar y reanudar conversación */}
-          {/* {convId && isAdmin && (
-            <label className="switch">
-              <input
-                type="checkbox"
-                className="checkbox"
-                onChange={handleSetHaltedConversation}
-                checked={!!conversation?.isHalted}
-                disabled={isToggling}
-              />
-              <span className={`slider ${conversation?.isHalted ? 'halted' : 'active'}`}>
-                {conversation?.isHalted ? <FaPlay className="icon" /> :  <FaPause className="icon" /> }
-              </span>
-            </label>
-        )} */}
-
           <div className="btn-container">
 
             {convId && contact?.clienteCodigo && (
@@ -203,7 +186,6 @@ const SupportPage: React.FC = () => {
       <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
         <aside className="sidebar">…</aside>
         <main className="main-content">…</main>
-
         <aside className="detail-aside">
           {detailToggle && convId && (
             <DetailPanel
