@@ -487,7 +487,7 @@ export default function ClientAdminPanel() {
   return (
     <section className="cap">
       <div className="cap__header">
-        <h2 className="cap__title">Gestión del Cliente</h2>
+        <h2 className="cap__title">Gestión del Cliente: {client?.name}</h2>
         <p className="cap__subtitle">Datos, credenciales, equipos y sistemas</p>
       </div>
       <div className="cap__layout">
@@ -513,14 +513,11 @@ export default function ClientAdminPanel() {
                     <Select id="supportType" value={form.supportType ?? ""} onChange={(e) => handleSelect("supportType", e.target.value)} options={supportTypeOptions} disabled={!isEdit} className={`cap__select ${generalErrors.supportType ? "has-error" : ""}`} />
                     {generalErrors.supportType && <div className="cap__error">{generalErrors.supportType}</div>}
                   </div>
+                  
                   <div className="cap__field">
                     <Label htmlFor="priority" className="cap__label">Prioridad</Label>
                     <Select id="priority" value={form.priority ?? ""} onChange={(e) => handleSelect("priority", e.target.value)} options={priorityOptions} disabled={!isEdit} className={`cap__select ${generalErrors.priority ? "has-error" : ""}`} />
                     {generalErrors.priority && <div className="cap__error">{generalErrors.priority}</div>}
-                  </div>
-                  <div className="cap__field">
-                    <Label htmlFor="enviromentType" className="cap__label">Ambiente</Label>
-                    <Select id="enviromentType" value={form.enviromentType ?? ""} onChange={(e) => handleSelect("enviromentType", e.target.value)} options={enviromentOptions} disabled={!isEdit} className="cap__select" />
                   </div>
 
                   <div className="cap__field">
@@ -530,6 +527,10 @@ export default function ClientAdminPanel() {
                     {generalErrors.supportLimitTime && <div className="cap__error">{generalErrors.supportLimitTime}</div>}
                   </div>
 
+                  <div className="cap__field">
+                    <Label htmlFor="enviromentType" className="cap__label">Ambiente</Label>
+                    <Select id="enviromentType" value={form.enviromentType ?? ""} onChange={(e) => handleSelect("enviromentType", e.target.value)} options={enviromentOptions} disabled={!isEdit} className="cap__select" />
+                  </div>
 
                   <div className="cap__field cap__field--full">
                     <Label htmlFor="workModel" className="cap__label">Modelo de trabajo</Label>

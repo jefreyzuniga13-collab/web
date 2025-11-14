@@ -77,7 +77,7 @@ export default function ClientPage() {
     //   minWidth: 100,
     //   render: row => row.supportType,
     // },
-  {
+    {
       id: "enviromentType",
       label: "Entorno",
       minWidth: 100,

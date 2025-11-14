@@ -54,6 +54,7 @@
   font-size: 14px;
   color: #374151;
   transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+  cursor: pointer;
 }
 
 .cap__menuItem:hover {
@@ -120,7 +121,7 @@
 }
 
 @media (min-width: 1200px) {
-  .cap__grid--form .cap__field { grid-column: span 4; }
+  .cap__grid--form .cap__field { grid-column: span 3; }
   .cap__grid--form .cap__field--full { grid-column: 1 / -1; }
   .cap__grid--form .cap__field--half-xl,
   .cap__grid--form .cap__field--half\@xl { grid-column: span 12; }
@@ -157,7 +158,12 @@
   .cap__grid--mini .cap__field { grid-column: span 12; }
 }
 
-.cap__label { font-size: 12px; color: #374151; }
+.cap__label { 
+  font-size: 12px; 
+  color: #374151; 
+  text-align: left;
+}
+
 .cap__label--inline { 
   margin: 0 !important; 
   padding: 0; }
@@ -271,6 +277,7 @@
   color: #b91c1c;
   font-size: 12px;
   line-height: 1.2;
+  text-align: left;
 }
 
 .has-error {

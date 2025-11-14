@@ -60,9 +60,6 @@ const SupportPage: React.FC = () => {
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-  // Aun queda el DetailPanel con datos viejos, recorda que no se cierra queda abierto
-  // por que si lo cierro cada que cambia la conversacion en el inboxlist, 
-  
   const handleScapePress = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       setContactDetailToggle(false);

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react'
-import { LuContact } from 'react-icons/lu'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { FaRegBuilding, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
-import { BiConversation } from 'react-icons/bi'
+import { RiTimelineView } from "react-icons/ri";
 import { X, Plus, Search, FileDown } from 'lucide-react'
 import ConversationHistoryModal from '@/Components/Chat/ConversationHistoryModal'
 import { ThreeDot } from 'react-loading-indicators'
@@ -13,10 +12,11 @@ import '@/Styles/Chat/DetailPanel.css'
 import type { CredentialResponseDTO } from '@/Interfaces/Crm/ClientInterface'
 import useConversations from '@/Hooks/Conversation/useConversations'
 import { AiOutlineWechatWork } from 'react-icons/ai'
-import DetailPanelOptionsContact from '@/Components/Chat/DetailPanelOptionsContact'
+import { LuContact } from 'react-icons/lu'
 import DetailPanelOptionsClient from './DetailPanelOptionsClient'
 import DetailPanelMensajesRapidos from './DetailPanelMensajesRapidos'
 import DetailPanelOptionsConversation from './DetailPanelOptionsConversation'
+import DetailPanelOptionsContact from './DetailPanelOptionsContact'
 
 type Props = {
   contactId?: number
@@ -35,6 +35,8 @@ const DetailPanel: React.FC<Props> = ({
     optionMenu,
     setOptionMenu,
     selectedData,
+    client,
+    clienteCodigo,
     loading,
     qQuick,
     setQQuick,
@@ -56,6 +58,8 @@ const DetailPanel: React.FC<Props> = ({
     newDevice,
     setNewDevice,
     createDevice,
+    deviceErrors,
+    setDeviceErrors,
     pickSysOpen,
     setPickSysOpen,
     newSystem,
@@ -107,8 +111,6 @@ const DetailPanel: React.FC<Props> = ({
     openCredView,
     openCredEdit,
     saveCred,
-    devs,
-    systems,
     handleSendQuick,
   } = useDetailPanel(contactId, selectedParam)
 
@@ -183,7 +185,7 @@ const DetailPanel: React.FC<Props> = ({
   ])
 
   useEffect(() => {
-    if (optionMenu !== 5) return
+    if (optionMenu !== 3) return
     if (!selectedData?.clienteCodigo) return
     GetConversationByClientPaginationAsync({
       clientCode: selectedData.clienteCodigo,
@@ -230,6 +232,7 @@ const DetailPanel: React.FC<Props> = ({
     setDevSearch,
     setSysSearch,
     setQQuick,
+    setShowMore,
   ])
 
   const convRows = useMemo(
@@ -271,12 +274,29 @@ const DetailPanel: React.FC<Props> = ({
     )
   }, [credentials, credSearch])
 
+  const hasClient = !!clienteCodigo && !!client
+
+  const handleConvScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget
+      const atBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight < 10 && convPage < totalPages
+      const atTop = el.scrollTop <= 0 && convPage > 1
+      if (atBottom) setConvPage(p => Math.min(totalPages, p + 1))
+      if (atTop) setConvPage(p => Math.max(1, p - 1))
+    },
+    [convPage, totalPages]
+  )
+
   if (loading)
     return (
       <div className="loader-container">
         <ThreeDot color="#0070B4" size="medium" />
       </div>
     )
+
+  const firstConversationDate =
+    conversations && conversations.length > 0 ? conversations[0].createdAt : null
 
   return (
     <div
@@ -294,6 +314,7 @@ const DetailPanel: React.FC<Props> = ({
             <FaRegBuilding size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
         <li className={`detailPanel-option ${optionMenu === 2 ? 'is-active' : ''}`}>
           <button
             type="button"
@@ -301,19 +322,24 @@ const DetailPanel: React.FC<Props> = ({
             onClick={() => setOptionMenu(2)}
             aria-label="Contacto"
           >
-            <LuContact size={20} className="detailPanel-optionBtn__icon" />
+            <LuContact size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
         <li className={`detailPanel-option ${optionMenu === 3 ? 'is-active' : ''}`}>
           <button
             type="button"
             className="detailPanel-optionBtn"
-            onClick={() => setOptionMenu(3)}
-            aria-label="Rápidos"
+            onClick={() => {
+              setOptionMenu(3)
+              setConvPage(1)
+            }}
+            aria-label="Historial de conversaciones"
           >
-            <IoChatboxEllipsesOutline size={18} className="detailPanel-optionBtn__icon" />
+            <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
         <li className={`detailPanel-option ${optionMenu === 4 ? 'is-active' : ''}`}>
           <button
             type="button"
@@ -321,20 +347,18 @@ const DetailPanel: React.FC<Props> = ({
             onClick={() => setOptionMenu(4)}
             aria-label="Conversación"
           >
-            <BiConversation size={18} className="detailPanel-optionBtn__icon" />
+            <RiTimelineView size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
+
         <li className={`detailPanel-option ${optionMenu === 5 ? 'is-active' : ''}`}>
           <button
             type="button"
             className="detailPanel-optionBtn"
-            onClick={() => {
-              setOptionMenu(5)
-              setConvPage(1)
-            }}
-            aria-label="Historial de conversaciones"
+            onClick={() => setOptionMenu(5)}
+            aria-label="Mensajes rápidos"
           >
-            <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
+            <IoChatboxEllipsesOutline size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
       </ul>
@@ -347,51 +371,64 @@ const DetailPanel: React.FC<Props> = ({
         }}
       >
         {optionMenu === 1 && (
-          <DetailPanelOptionsClient
-            displayOrDash={displayOrDash}
-            formatDate={formatDate}
-            formatNiPhone={formatNiPhone}
-            clientLocal={clientLocal}
-            setShowMore={setShowMore}
-            setClientEditOpen={setClientEditOpen}
-          />
+          hasClient ? (
+            <DetailPanelOptionsClient
+              displayOrDash={displayOrDash}
+              formatDate={formatDate}
+              formatNiPhone={formatNiPhone}
+              clientLocal={clientLocal}
+              setShowMore={setShowMore}
+              setClientEditOpen={setClientEditOpen}
+            />
+          ) : (
+            <div
+              style={{
+                border: '1px dashed #e5e7eb',
+                borderRadius: 10,
+                padding: 16,
+                textAlign: 'center',
+                fontSize: 13,
+                opacity: 0.8,
+              }}
+            >
+              Esta conversación no tiene un cliente asociado.
+            </div>
+          )
         )}
 
         {optionMenu === 2 && (
-          <DetailPanelOptionsContact
-            selectedData={selectedData}
-            displayOrDash={displayOrDash}
-            formatDate={formatDate}
-            formatNiPhone={formatNiPhone}
-          />
+          selectedData ? (
+            <DetailPanelOptionsContact
+              displayOrDash={displayOrDash}
+              formatDate={formatDate}
+              formatNiPhone={formatNiPhone}
+              selectedData={selectedData}
+            />
+          ) : (
+            <div
+              style={{
+                border: '1px dashed #e5e7eb',
+                borderRadius: 10,
+                padding: 16,
+                textAlign: 'center',
+                fontSize: 13,
+                opacity: 0.8,
+              }}
+            >
+              No hay datos de contacto para esta conversación.
+            </div>
+          )
         )}
 
         {optionMenu === 3 && (
-          <DetailPanelMensajesRapidos
-            filteredQuick={filteredQuick}
-            handleSendQuick={txt => handleSendQuick(txt, onSendNow)}
-            qQuick={qQuick}
-            setQQuick={setQQuick}
-            onSendNow={onSendNow}
-          />
-        )}
-
-        {optionMenu === 4 && (
-          <DetailPanelOptionsConversation
-            conversationId={Number(conversationId)}
-            formatDate={formatDate}
-          />
-        )}
-
-        {optionMenu === 5 && (
-          <div>
+          <div className="detailPanel-container">
             <header
               className="detailPanel-content-header"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 4,
+                gap: 40,
                 position: 'relative',
               }}
             >
@@ -405,7 +442,7 @@ const DetailPanel: React.FC<Props> = ({
                   aria-expanded={showConvFilters}
                   aria-controls="convFilterPanel"
                 >
-                  <FaFilter size={14} /> <span style={{ marginLeft: 6 }}>Filtros</span>
+                  <FaFilter size={14} />
                 </button>
               </div>
 
@@ -486,30 +523,19 @@ const DetailPanel: React.FC<Props> = ({
                     />
                     <Search
                       size={16}
-                      style={{ position: 'absolute', left: 8, top: 10, opacity: 0.6 }}
+                      style={{
+                        position: 'absolute',
+                        left: 8,
+                        top: 10,
+                        opacity: 0.6,
+                      }}
                     />
                   </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                    }}
-                  />
                 </div>
               )}
             </header>
 
-            <div
-              style={{
-                display: 'grid',
-                marginTop: 10,
-                maxHeight: 420,
-                overflow: 'auto',
-                paddingRight: 2,
-              }}
-            >
+            <div className="detailPanel-convesaionHistory__container">
               <div
                 style={{
                   display: 'grid',
@@ -527,112 +553,128 @@ const DetailPanel: React.FC<Props> = ({
                 <span>Ticket</span>
               </div>
 
-              {convRows.map(r => (
-                <div
-                  key={r.id}
-                  onMouseEnter={() => setHoverId(r.id)}
-                  onMouseLeave={() => setHoverId(null)}
-                  style={{
-                    position: 'relative',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: 10,
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr 1fr',
-                    alignItems: 'center',
-                    gap: 8,
-                    cursor: 'pointer',
-                  }}
-                >
+              <div
+                style={{
+                  overflowY: 'auto',
+                  maxHeight: '90%',
+                }}
+                onScroll={handleConvScroll}
+              >
+                {convRows.map(r => (
                   <div
-                    title={formatDate(r.createdAt)}
-                    style={{ overflow: 'hidden' }}
-                    className="detailPanel-clientGroup__cliente"
-                  >
-                    <Trunc>{formatDate(r.createdAt)}</Trunc>
-                  </div>
-                  <div
-                    title={r.contactName}
-                    style={{ overflow: 'hidden' }}
-                    className="detailPanel-clientGroup__cliente"
-                  >
-                    {r.contactName != null ? (
-                      <Trunc>{r.contactName}</Trunc>
-                    ) : (
-                      '------------------------'
-                    )}
-                  </div>
-                  <div
-                    title={r.agent}
-                    style={{ overflow: 'hidden' }}
-                    className="detailPanel-clientGroup__cliente"
-                  >
-                    {r.agent != null ? <Trunc>{r.agent}</Trunc> : '------------------------'}
-                  </div>
-                  <div
+                    key={r.id}
+                    onMouseEnter={() => setHoverId(r.id)}
+                    onMouseLeave={() => setHoverId(null)}
                     style={{
-                      display: 'flex',
+                      position: 'relative',
+                      borderBottom: '1px solid #e5e7eb',
+                      padding: 10,
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 1fr 1fr',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
                       gap: 8,
+                      cursor: 'pointer',
                     }}
                   >
-                    <span
-                      title={`#${r.id}`}
-                      style={{ overflow: 'hidden', flex: 1, textAlign: 'center' }}
+                    <div
+                      title={formatDate(r.createdAt)}
+                      style={{ overflow: 'hidden' }}
                       className="detailPanel-clientGroup__cliente"
                     >
-                      <Trunc>{r.id}</Trunc>
-                    </span>
-                  </div>
+                      <Trunc>{formatDate(r.createdAt)}</Trunc>
+                    </div>
+                    <div
+                      title={r.contactName}
+                      style={{ overflow: 'hidden' }}
+                      className="detailPanel-clientGroup__cliente"
+                    >
+                      {r.contactName != null ? (
+                        <Trunc>{r.contactName}</Trunc>
+                      ) : (
+                        '------------------------'
+                      )}
+                    </div>
+                    <div
+                      title={r.agent}
+                      style={{ overflow: 'hidden' }}
+                      className="detailPanel-clientGroup__cliente"
+                    >
+                      {r.agent != null ? (
+                        <Trunc>{r.agent}</Trunc>
+                      ) : (
+                        '------------------------'
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                      }}
+                    >
+                      <span
+                        title={`#${r.id}`}
+                        style={{
+                          overflow: 'hidden',
+                          flex: 1,
+                          textAlign: 'center',
+                        }}
+                        className="detailPanel-clientGroup__cliente"
+                      >
+                        <Trunc>{r.id}</Trunc>
+                      </span>
+                    </div>
 
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        display: hoverId === r.id ? 'inline-flex' : 'none',
+                        gap: 6,
+                        background: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 8,
+                        padding: '4px 6px',
+                        zIndex: 3,
+                      }}
+                    >
+                      <button
+                        className="btn btn--ghost"
+                        onClick={e => {
+                          e.stopPropagation()
+                          exportConversationHistoryToPDFAsync({
+                            contactId: r.contactId,
+                            from: convFrom || null,
+                            to: convTo || null,
+                            title: 'Reporte de Conversaciones',
+                            subtitle: 'Historia de conversaciones',
+                          })
+                        }}
+                        disabled={!!LoadingPDF}
+                        title="Descargar PDF"
+                      >
+                        <FileDown size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {convRows.length === 0 && (
                   <div
                     style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      display: hoverId === r.id ? 'inline-flex' : 'none',
-                      gap: 6,
-                      background: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: 8,
-                      padding: '4px 6px',
-                      zIndex: 3,
+                      border: '1px dashed #e5e7eb',
+                      borderRadius: 10,
+                      padding: 16,
+                      textAlign: 'center',
+                      opacity: 0.7,
                     }}
                   >
-                    <button
-                      className="btn btn--ghost"
-                      onClick={e => {
-                        e.stopPropagation()
-                        exportConversationHistoryToPDFAsync({
-                          contactId: r.contactId,
-                          from: convFrom || null,
-                          to: convTo || null,
-                          title: 'Reporte de Conversaciones',
-                          subtitle: 'Historia de conversaciones',
-                        })
-                      }}
-                      disabled={!!LoadingPDF}
-                      title="Descargar PDF"
-                    >
-                      <FileDown size={16} />
-                    </button>
+                    Sin resultados
                   </div>
-                </div>
-              ))}
-
-              {convRows.length === 0 && (
-                <div
-                  style={{
-                    border: '1px dashed #e5e7eb',
-                    borderRadius: 10,
-                    padding: 16,
-                    textAlign: 'center',
-                    opacity: 0.7,
-                  }}
-                >
-                  Sin resultados
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div
@@ -645,39 +687,31 @@ const DetailPanel: React.FC<Props> = ({
             >
               <div style={{ fontSize: 12, opacity: 0.7 }}>
                 {totalCount && totalCount > 0
-                  ? `Mostrando ${convRows.length} de ${totalCount} conversaciones`
+                  ? `Mostrando página ${convPage} de ${totalPages} (${totalCount} conversaciones)`
                   : 'Sin resultados'}
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <button
-                  className="btn btn--ghost"
-                  disabled={convPage <= 1}
-                  onClick={() => setConvPage(p => Math.max(1, p - 1))}
-                >
-                  Prev
-                </button>
-                <span style={{ fontSize: 12, opacity: 0.8 }}>
-                  Página {convPage} de {totalPages}
-                </span>
-                <button
-                  className="btn btn--ghost"
-                  disabled={convPage >= totalPages}
-                  onClick={() => setConvPage(p => p + 1)}
-                >
-                  Next
-                </button>
-                {LoadingPDF ? (
-                  <span style={{ fontSize: 12, opacity: 0.7 }}>Preparando PDF…</span>
-                ) : null}
-              </div>
+              {LoadingPDF ? (
+                <span style={{ fontSize: 12, opacity: 0.7 }}>Preparando PDF…</span>
+              ) : null}
             </div>
           </div>
+        )}
+
+        {optionMenu === 4 && (
+          <DetailPanelOptionsConversation
+            conversationId={Number(conversationId)}
+            formatDate={formatDate}
+          />
+        )}
+
+        {optionMenu === 5 && (
+          <DetailPanelMensajesRapidos
+            filteredQuick={filteredQuick}
+            handleSendQuick={txt => handleSendQuick(txt, onSendNow)}
+            qQuick={qQuick}
+            setQQuick={setQQuick}
+            onSendNow={onSendNow}
+          />
         )}
       </section>
 
@@ -779,7 +813,12 @@ const DetailPanel: React.FC<Props> = ({
                       />
                       <Search
                         size={16}
-                        style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
+                        style={{
+                          position: 'absolute',
+                          left: 10,
+                          top: 10,
+                          opacity: 0.6,
+                        }}
                       />
                     </div>
                     <button className="btn" onClick={openCredCreate} type="button">
@@ -832,9 +871,7 @@ const DetailPanel: React.FC<Props> = ({
                               </div>
                             </div>
                             <span
-                              className={
-                                it.isActive ? 'badge badge--ok' : 'badge badge--off'
-                              }
+                              className={it.isActive ? 'badge badge--ok' : 'badge badge--off'}
                             >
                               {it.isActive ? 'Activo' : 'Inactivo'}
                             </span>
@@ -842,10 +879,7 @@ const DetailPanel: React.FC<Props> = ({
 
                           <div style={{ display: 'grid', gap: 8 }}>
                             <Row label="Usuario" value={it.user} />
-                            <Row
-                              label="Instancia"
-                              value={it.instance ? it.instance : '---'}
-                            />
+                            <Row label="Instancia" value={it.instance ? it.instance : '---'} />
                             <Row label="Puerto" value={it.port ? it.port : '---'} />
                           </div>
                           <div>
@@ -926,13 +960,21 @@ const DetailPanel: React.FC<Props> = ({
                       />
                       <Search
                         size={16}
-                        style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
+                        style={{
+                          position: 'absolute',
+                          left: 10,
+                          top: 10,
+                          opacity: 0.6,
+                        }}
                       />
                     </div>
                     <button
                       className="btn"
                       type="button"
-                      onClick={() => setAddDeviceOpen(true)}
+                      onClick={() => {
+                        setDeviceErrors({})
+                        setAddDeviceOpen(true)
+                      }}
                     >
                       <Plus size={14} /> Nuevo equipo
                     </button>
@@ -977,9 +1019,7 @@ const DetailPanel: React.FC<Props> = ({
                             </div>
                           </div>
                           <span
-                            className={
-                              it.isActive ? 'badge badge--ok' : 'badge badge--off'
-                            }
+                            className={it.isActive ? 'badge badge--ok' : 'badge badge--off'}
                           >
                             {it.isActive ? 'Activo' : 'Inactivo'}
                           </span>
@@ -987,10 +1027,7 @@ const DetailPanel: React.FC<Props> = ({
 
                         <div style={{ display: 'grid', gap: 8 }}>
                           <Row label="IP" value={it.ip ?? '-'} />
-                          <Row
-                            label="Sistema operativo"
-                            value={it.operatingSystem ?? '-'}
-                          />
+                          <Row label="Sistema operativo" value={it.operatingSystem ?? '-'} />
                           <Row label="Versión SO" value={it.versionSO ?? '-'} />
                         </div>
 
@@ -1048,7 +1085,12 @@ const DetailPanel: React.FC<Props> = ({
                       />
                       <Search
                         size={16}
-                        style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
+                        style={{
+                          position: 'absolute',
+                          left: 10,
+                          top: 10,
+                          opacity: 0.6,
+                        }}
                       />
                     </div>
                     <button className="btn" onClick={openSystemPicker} type="button">
@@ -1095,9 +1137,7 @@ const DetailPanel: React.FC<Props> = ({
                             </div>
                           </div>
                           <span
-                            className={
-                              it.isActive ? 'badge badge--ok' : 'badge badge--off'
-                            }
+                            className={it.isActive ? 'badge badge--ok' : 'badge badge--off'}
                           >
                             {it.isActive ? 'Activo' : 'Inactivo'}
                           </span>
@@ -1198,7 +1238,7 @@ const DetailPanel: React.FC<Props> = ({
                 display: 'grid',
                 gap: 10,
                 flex: 1,
-                overflow: 'auto',
+                overflow: 'hidden',
               }}
             >
               {!!Object.keys(credErrors).length && (
@@ -1279,7 +1319,7 @@ const DetailPanel: React.FC<Props> = ({
                       className="input"
                     >
                       <option value="">Seleccione equipo</option>
-                      {devs.map(d => (
+                      {filteredDevs.map(d => (
                         <option key={d.id} value={d.id}>
                           {d.name}
                         </option>
@@ -1305,7 +1345,7 @@ const DetailPanel: React.FC<Props> = ({
                       className="input"
                     >
                       <option value="">Seleccione sistema</option>
-                      {systems.map(s => (
+                      {filteredSystems.map(s => (
                         <option key={s.id} value={s.id}>
                           {s.name}
                         </option>
@@ -1399,8 +1439,7 @@ const DetailPanel: React.FC<Props> = ({
                     <div className="cap__error">{credErrors.port}</div>
                   )}
                 </div>
-                  <div
-                >
+                <div>
                   <input
                     type="checkbox"
                     id="cred_active"
@@ -1420,18 +1459,17 @@ const DetailPanel: React.FC<Props> = ({
                     Activo
                   </label>
                 </div>
-                
-                <div className="cap__field" 
-                style={{ gridColumn: '1 / -1' }}
+
+                <div
+                  className="cap__field"
+                  style={{ gridColumn: '1 / -1' }}
                 >
                   <label className="cap__label" htmlFor="cred_obs">
                     Observación
                   </label>
                   <textarea
                     id="cred_obs"
-                    className={`input ${
-                      credErrors.observation ? 'has-error' : ''
-                    }`}
+                    className={`input ${credErrors.observation ? 'has-error' : ''}`}
                     value={credReq.observation ?? ''}
                     onChange={e =>
                       setCredReq(s => ({
@@ -1505,7 +1543,7 @@ const DetailPanel: React.FC<Props> = ({
             <div
               style={{
                 padding: 12,
-                borderBottom: '1px solid #eee',
+                borderBottom: '1px solid#eee',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -1629,7 +1667,10 @@ const DetailPanel: React.FC<Props> = ({
         >
           <div
             className="dp-modal__backdrop"
-            onClick={() => setAddDeviceOpen(false)}
+            onClick={() => {
+              setAddDeviceOpen(false)
+              setDeviceErrors({})
+            }}
           />
           <div
             className="dp-modal__content"
@@ -1658,7 +1699,10 @@ const DetailPanel: React.FC<Props> = ({
               <h6 style={{ margin: 0 }}>Nuevo equipo</h6>
               <button
                 className="btn btn--ghost"
-                onClick={() => setAddDeviceOpen(false)}
+                onClick={() => {
+                  setAddDeviceOpen(false)
+                  setDeviceErrors({})
+                }}
                 aria-label="Cerrar"
               >
                 <X size={16} />
@@ -1671,6 +1715,9 @@ const DetailPanel: React.FC<Props> = ({
                 gap: 10,
               }}
             >
+              {!!Object.keys(deviceErrors).length && (
+                <div className="cap__alert">Revise los campos del equipo.</div>
+              )}
               <div
                 style={{
                   display: 'grid',
@@ -1678,53 +1725,82 @@ const DetailPanel: React.FC<Props> = ({
                   gap: 10,
                 }}
               >
-                <input
-                  className="input"
-                  placeholder="Nombre"
-                  value={newDevice.name}
-                  onChange={e =>
-                    setNewDevice((p: any) => ({ ...p, name: e.target.value }))
-                  }
-                />
-                <input
-                  className="input"
-                  placeholder="IP"
-                  value={newDevice.ip}
-                  onChange={e =>
-                    setNewDevice((p: any) => ({ ...p, ip: e.target.value }))
-                  }
-                />
-                <input
-                  className="input"
-                  placeholder="SO"
-                  value={newDevice.operatingSystem}
-                  onChange={e =>
-                    setNewDevice((p: any) => ({
-                      ...p,
-                      operatingSystem: e.target.value,
-                    }))
-                  }
-                />
-                <input
-                  className="input"
-                  placeholder="Versión SO"
-                  value={newDevice.versionSO}
-                  onChange={e =>
-                    setNewDevice((p: any) => ({
-                      ...p,
-                      versionSO: e.target.value,
-                    }))
-                  }
-                />
+                <div className="cap__field">
+                  <input
+                    className={`input ${deviceErrors.name ? 'has-error' : ''}`}
+                    placeholder="Nombre"
+                    value={newDevice.name}
+                    onChange={e =>
+                      setNewDevice((p: any) => ({ ...p, name: e.target.value }))
+                    }
+                  />
+                  {deviceErrors.name && (
+                    <div className="cap__error">{deviceErrors.name}</div>
+                  )}
+                </div>
+                <div className="cap__field">
+                  <input
+                    className="input"
+                    placeholder="IP"
+                    value={newDevice.ip}
+                    maxLength={100}
+                    onChange={e =>
+                      setNewDevice((p: any) => ({ ...p, ip: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="cap__field">
+                  <input
+                    className={`input ${deviceErrors.operatingSystem ? 'has-error' : ''}`}
+                    maxLength={100}
+                    placeholder="SO"
+                    value={newDevice.operatingSystem}
+                    onChange={e =>
+                      setNewDevice((p: any) => ({
+                        ...p,
+                        operatingSystem: e.target.value,
+                      }))
+                    }
+                  />
+                  {deviceErrors.operatingSystem && (
+                    <div className="cap__error">{deviceErrors.operatingSystem}</div>
+                  )}
+                </div>
+                <div className="cap__field">
+                  <input
+                    className={`input ${deviceErrors.versionSO ? 'has-error' : ''}`}
+                    placeholder="Versión SO"
+                    maxLength={100}
+                    value={newDevice.versionSO}
+                    onChange={e =>
+                      setNewDevice((p: any) => ({
+                        ...p,
+                        versionSO: e.target.value,
+                      }))
+                    }
+                  />
+                  {deviceErrors.versionSO && (
+                    <div className="cap__error">{deviceErrors.versionSO}</div>
+                  )}
+                </div>
               </div>
-              <textarea
-                className="input"
-                placeholder="Descripción"
-                value={newDevice.description}
-                onChange={e =>
-                  setNewDevice((p: any) => ({ ...p, description: e.target.value }))
-                }
-              />
+              <div className="cap__field">
+                <textarea
+                  className={`input ${deviceErrors.description ? 'has-error' : ''}`}
+                  placeholder="Descripción"
+                  value={newDevice.description}
+                  maxLength={500}
+                  onChange={e =>
+                    setNewDevice((p: any) => ({
+                      ...p,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+                {deviceErrors.description && (
+                  <div className="cap__error">{deviceErrors.description}</div>
+                )}
+              </div>
               <label
                 style={{
                   display: 'flex',
@@ -1753,7 +1829,10 @@ const DetailPanel: React.FC<Props> = ({
               >
                 <button
                   className="btn btn--ghost"
-                  onClick={() => setAddDeviceOpen(false)}
+                  onClick={() => {
+                    setAddDeviceOpen(false)
+                    setDeviceErrors({})
+                  }}
                 >
                   Cancelar
                 </button>
@@ -1839,7 +1918,12 @@ const DetailPanel: React.FC<Props> = ({
                   />
                   <Search
                     size={16}
-                    style={{ position: 'absolute', left: 10, top: 10, opacity: 0.6 }}
+                    style={{
+                      position: 'absolute',
+                      left: 10,
+                      top: 10,
+                      opacity: 0.6,
+                    }}
                   />
                 </div>
                 <select
@@ -1879,7 +1963,10 @@ const DetailPanel: React.FC<Props> = ({
                               name="pickSys"
                               checked={newSystem.outsourcedSystemsId === s.id}
                               onChange={() =>
-                                setNewSystem({ ...newSystem, outsourcedSystemsId: s.id })
+                                setNewSystem({
+                                  ...newSystem,
+                                  outsourcedSystemsId: s.id,
+                                })
                               }
                               aria-label={`Seleccionar ${s.name}`}
                             />
@@ -1990,7 +2077,7 @@ const DetailPanel: React.FC<Props> = ({
           onClose={() => setShowHistoryModal(false)}
           conversationId={selectedConversation || Number(conversationId) || 0}
           clientId={selectedData?.clientId != null ? selectedData?.clientId : null}
-          conversationStart={conversations.length > 0 ? conversations[0].createdAt : null}
+          conversationStart={firstConversationDate}
         />
       )}
     </div>
