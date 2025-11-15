@@ -430,7 +430,14 @@
   text-overflow: ellipsis;
   vertical-align: bottom;
 }
+.cap__field{
+  text-align: left;
+}
 
+.cap__label{
+  min-width: 100%;
+  text-align: left;
+}
 .detailsPanel-contactGroup__value {
   font-size: 13px;
 }

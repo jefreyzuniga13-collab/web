@@ -5,6 +5,7 @@ import {RequireAuth} from '@/Layout/RequireAuth'
 import PublicRoute from '@/Layout/PublicRoute'
 import { ThreeDot } from 'react-loading-indicators'
 import ClientPage from '@/Pages/Crm/ClientPage'
+import UserSessionPage from '@/Pages/Auth/UserSessionPage'
 
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
 const Login                = lazy(() => import('@/Pages/Auth/LoginPage'))
@@ -65,6 +66,7 @@ export function AppRouter() {
           <Route index element={<Navigate to="chat" replace />} />
           <Route path="dashboard"               element={<DashboardPage />} />
           <Route path="chat"                    element={<SupportPage />} />
+          <Route path="UserSessions"                    element={<UserSessionPage />} />
           <Route path="contacts"                element={<ContactPage />} />
           <Route path="users"                   element={<UsersPage />} />
           <Route path="notifications"           element={<NotificationsPage />} />

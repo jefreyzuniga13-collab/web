@@ -91,7 +91,7 @@
    "forgotPassword": {
     "title": "¿Olvidaste tu contraseña?",
     "description": "¡No te preocupes! Ingresa tu correo y te enviaremos un enlace.",
-    "subtitle": "Revisa tu bandeja para el enlace de restablecimiento",
+    "subtitle": "Revise su bandeja del correo institucional",
     "emailLabel": "Correo electrónico",
     "emailPlaceholder": "tú@ejemplo.com",
     "handleSubmit": "Enviar enlace",

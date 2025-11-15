@@ -45,6 +45,20 @@ class ContactService {
     return data.data;
   }
 
+
+  // Solo recupera a los contactos del cliente
+    async getContactByClientCodeAsync(
+    clientCode: string,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ContactLogInterface>> {
+    const { data } = await api.get<
+      ApiResponse<PagedResponse<ContactLogInterface>>
+    >(`/ContactLogs/getByClient/${clientCode}`, { 
+      params: { PageNumber: page, PageSize: pageSize } });
+    return data.data;
+  }
+
   async getContactByIdAsync(id: number): Promise<ContactLogInterface> {
     const { data } = await api.get<ApiResponse<ContactLogInterface>>(
       `/contactLogs/${id}`
@@ -59,6 +73,7 @@ class ContactService {
 
     return data.data;
   }
+
   async createAsync(params: ContactLogInterface): Promise<ContactLogInterface> {
     try {
       const { data } = await api.post<ApiResponse<ContactLogInterface>>(

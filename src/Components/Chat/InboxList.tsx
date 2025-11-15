@@ -5,7 +5,8 @@ import { format } from 'date-fns'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
-import Spinner from '@/Components/Common/Spinner'
+// import Spinner from '@/Components/Common/Spinner'
+import { ThreeDot } from 'react-loading-indicators'
 
 interface Props {
   selectedId?: number
@@ -74,7 +75,6 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
-
   const handleSelect = async (id: number) => {
     if (id === selectedId) {
       onSelect(null)
@@ -83,7 +83,6 @@ export const InboxList: React.FC<Props> = ({
       onSelect(id)
     }
   }
-
 
   if (error) {
     return (
@@ -141,23 +140,6 @@ export const InboxList: React.FC<Props> = ({
           previewText += ` · Desde solicitud: ${timeSinceRequest}`
         }
 
-        // Hay un problema y es que cuando se da click en una conversacion y luego doy click en otro, me saca lanza el error de:
-        //       ndex-CQO97I8E.js:49  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
-        // at Hj (index-CQO97I8E.js:49:90200)
-        // at Zn (index-CQO97I8E.js:49:91576)
-        // at Bj (index-CQO97I8E.js:49:94008)
-        // at Zn (index-CQO97I8E.js:49:91702)
-        // at Bj (index-CQO97I8E.js:49:94008)
-        // at Zn (index-CQO97I8E.js:49:91702)
-        // at Bj (index-CQO97I8E.js:49:94008)
-        // at Zn (index-CQO97I8E.js:49:91702)
-        // at Bj (index-CQO97I8E.js:49:94008)
-        // at Zn (index-CQO97I8E.js:49:91702)
-
-        // Lo que si, es que solo pasa a los usaurio con rol support, los que son de tipo admin no tiene este problema, incluso ya prove dando click una y otra ves, para ver si me lazaba la exepcion per no me carga bien los mensjaes
-        //pero cuando vea a un usuario de soporte, la primera ves le caragh bien, pero las siguiente le puede cargar bien o le puede lanzar la exepcion describa arriva.
-
-
         return (
           <li
             key={c.conversationId}
@@ -206,7 +188,7 @@ export const InboxList: React.FC<Props> = ({
       })}
       {loading && (
 
-        <Spinner />
+       <ThreeDot color="#0070B4" size="medium" />
       )}
       <li ref={loaderRef} />
     </ul>

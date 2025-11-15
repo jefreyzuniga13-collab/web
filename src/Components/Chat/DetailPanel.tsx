@@ -2,8 +2,11 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { FaRegBuilding, FaFilter } from 'react-icons/fa'
 import { IoChatboxEllipsesOutline } from 'react-icons/io5'
-import { RiTimelineView } from "react-icons/ri";
-import { X, Plus, Search, FileDown } from 'lucide-react'
+import { RiTimelineView } from 'react-icons/ri'
+import { X, Plus, Search, FileDown, 
+  // FileClock 
+
+} from 'lucide-react'
 import ConversationHistoryModal from '@/Components/Chat/ConversationHistoryModal'
 import { ThreeDot } from 'react-loading-indicators'
 import { useDetailPanel } from '@/Hooks/Chat/useDetailPanel'
@@ -159,9 +162,19 @@ const DetailPanel: React.FC<Props> = ({
   const [convPage, setConvPage] = useState(1)
   const convPageSize = 20
 
+  const [convItems, setConvItems] = useState<any[]>([])
+  const [hoverId, setHoverId] = useState<number | null>(null)
+
   useEffect(() => {
     setConvPage(1)
   }, [optionMenu, contactId, selectedData?.clienteCodigo])
+
+  useEffect(() => {
+    if (optionMenu === 3 || optionMenu === 4) {
+      setConvItems([])
+      setConvPage(1)
+    }
+  }, [optionMenu, contactId, selectedData?.clienteCodigo, convFrom, convTo, convQuery])
 
   useEffect(() => {
     if (optionMenu !== 4) return
@@ -208,6 +221,23 @@ const DetailPanel: React.FC<Props> = ({
   ])
 
   useEffect(() => {
+    if (!conversations || !Array.isArray(conversations)) {
+      if (convPage === 1) setConvItems([])
+      return
+    }
+    setConvItems(prev => {
+      if (convPage === 1) {
+        return conversations
+      }
+      const prevIds = new Set(prev.map((c: any) => c.conversationId ?? c.id))
+      const newOnes = (conversations as any[]).filter(
+        c => !prevIds.has(c.conversationId ?? c.id)
+      )
+      return [...prev, ...newOnes]
+    })
+  }, [conversations, convPage])
+
+  useEffect(() => {
     setShowMore(false)
     setClientEditOpen(false)
     setAddDeviceOpen(false)
@@ -222,6 +252,7 @@ const DetailPanel: React.FC<Props> = ({
     setConvPage(1)
     setShowHistoryModal(false)
     setSelectedConversation(0)
+    setConvItems([])
   }, [
     contactId,
     conversationId,
@@ -237,15 +268,15 @@ const DetailPanel: React.FC<Props> = ({
 
   const convRows = useMemo(
     () =>
-      (conversations || []).map((c: any) => ({
-        id: c.conversationId,
+      (convItems || []).map((c: any) => ({
+        id: c.conversationId ?? c.id,
         createdAt: c.createdAt,
         contactName: c.clientContactName || c.contactName,
         agent: c.assignedAgentName || '—',
         status: c.status || '—',
-        contactId: c.clientContactId,
+        contactId: c.clientContactId ?? c.contactId,
       })),
-    [conversations]
+    [convItems]
   )
 
   const totalPages = useMemo(
@@ -253,8 +284,6 @@ const DetailPanel: React.FC<Props> = ({
       convPageSize ? Math.max(1, Math.ceil((totalCount ?? 0) / convPageSize)) : 1,
     [totalCount, convPageSize]
   )
-
-  const [hoverId, setHoverId] = useState<number | null>(null)
 
   const filteredCreds = useMemo<CredentialResponseDTO[]>(() => {
     const n = credSearch.trim().toLowerCase()
@@ -281,9 +310,7 @@ const DetailPanel: React.FC<Props> = ({
       const el = e.currentTarget
       const atBottom =
         el.scrollHeight - el.scrollTop - el.clientHeight < 10 && convPage < totalPages
-      const atTop = el.scrollTop <= 0 && convPage > 1
       if (atBottom) setConvPage(p => Math.min(totalPages, p + 1))
-      if (atTop) setConvPage(p => Math.max(1, p - 1))
     },
     [convPage, totalPages]
   )
@@ -296,7 +323,7 @@ const DetailPanel: React.FC<Props> = ({
     )
 
   const firstConversationDate =
-    conversations && conversations.length > 0 ? conversations[0].createdAt : null
+    convRows && convRows.length > 0 ? convRows[0].createdAt : null
 
   return (
     <div
@@ -333,10 +360,12 @@ const DetailPanel: React.FC<Props> = ({
             onClick={() => {
               setOptionMenu(3)
               setConvPage(1)
+              setConvItems([])
             }}
             aria-label="Historial de conversaciones"
           >
-            <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
+            <RiTimelineView size={18} className="detailPanel-optionBtn__icon" />
+
           </button>
         </li>
 
@@ -344,10 +373,14 @@ const DetailPanel: React.FC<Props> = ({
           <button
             type="button"
             className="detailPanel-optionBtn"
-            onClick={() => setOptionMenu(4)}
+            onClick={() => {
+              setOptionMenu(4)
+              setConvPage(1)
+              setConvItems([])
+            }}
             aria-label="Conversación"
           >
-            <RiTimelineView size={18} className="detailPanel-optionBtn__icon" />
+            <AiOutlineWechatWork size={18} className="detailPanel-optionBtn__icon" />
           </button>
         </li>
 
@@ -370,8 +403,8 @@ const DetailPanel: React.FC<Props> = ({
           paddingRight: 12,
         }}
       >
-        {optionMenu === 1 && (
-          hasClient ? (
+        {optionMenu === 1 &&
+          (hasClient ? (
             <DetailPanelOptionsClient
               displayOrDash={displayOrDash}
               formatDate={formatDate}
@@ -393,11 +426,10 @@ const DetailPanel: React.FC<Props> = ({
             >
               Esta conversación no tiene un cliente asociado.
             </div>
-          )
-        )}
+          ))}
 
-        {optionMenu === 2 && (
-          selectedData ? (
+        {optionMenu === 2 &&
+          (selectedData ? (
             <DetailPanelOptionsContact
               displayOrDash={displayOrDash}
               formatDate={formatDate}
@@ -417,8 +449,7 @@ const DetailPanel: React.FC<Props> = ({
             >
               No hay datos de contacto para esta conversación.
             </div>
-          )
-        )}
+          ))}
 
         {optionMenu === 3 && (
           <div className="detailPanel-container">
@@ -485,6 +516,7 @@ const DetailPanel: React.FC<Props> = ({
                         onChange={e => {
                           setConvFrom(e.target.value)
                           setConvPage(1)
+                          setConvItems([])
                         }}
                       />
                     </div>
@@ -502,6 +534,7 @@ const DetailPanel: React.FC<Props> = ({
                         onChange={e => {
                           setConvTo(e.target.value)
                           setConvPage(1)
+                          setConvItems([])
                         }}
                       />
                     </div>
@@ -516,6 +549,7 @@ const DetailPanel: React.FC<Props> = ({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           setConvPage(1)
+                          setConvItems([])
                           setShowConvFilters(false)
                         }
                       }}
@@ -640,6 +674,15 @@ const DetailPanel: React.FC<Props> = ({
                         zIndex: 3,
                       }}
                     >
+
+                      {/* <button
+                        className="btn btn--ghost"
+                        onClick={() => setShowHistoryModal(true)}
+                        title="Historial"
+                      >
+                        <FileClock size={16} />
+                      </button> */}
+
                       <button
                         className="btn btn--ghost"
                         onClick={e => {
@@ -661,7 +704,7 @@ const DetailPanel: React.FC<Props> = ({
                   </div>
                 ))}
 
-                {convRows.length === 0 && (
+                {convRows.length === 0 && convPage === 1 && (
                   <div
                     style={{
                       border: '1px dashed #e5e7eb',
@@ -837,8 +880,8 @@ const DetailPanel: React.FC<Props> = ({
                       const scopeText = (it as any).outsourcedDeviceName
                         ? `Equipo: ${(it as any).outsourcedDeviceName}`
                         : (it as any).clientOutsourcedSystemsName
-                        ? `Sistema: ${(it as any).clientOutsourcedSystemsName}`
-                        : 'Cliente'
+                          ? `Sistema: ${(it as any).clientOutsourcedSystemsName}`
+                          : 'Cliente'
                       return (
                         <div
                           key={it.id}
@@ -1238,7 +1281,7 @@ const DetailPanel: React.FC<Props> = ({
                 display: 'grid',
                 gap: 10,
                 flex: 1,
-                overflow: 'hidden',
+                overflow: 'hidden auto ',
               }}
             >
               {!!Object.keys(credErrors).length && (
@@ -1247,12 +1290,8 @@ const DetailPanel: React.FC<Props> = ({
               <div
                 style={{
                   display: 'grid',
-                  gap: 5,
-                  margin: 0,
-                  padding: 0,
-                  gridTemplateColumns: '1fr 1fr',
-                  gridTemplateRows: '90px 90px 90px 90px',
-                  overflow: 'hidden',
+                  gridTemplateColumns: '1fr',
+                  gap: 10,
                 }}
               >
                 <div className="cap__field">
@@ -1278,6 +1317,7 @@ const DetailPanel: React.FC<Props> = ({
                       </option>
                     ))}
                   </select>
+                  
                   {credErrors.catCredentialId && (
                     <div className="cap__error">{credErrors.catCredentialId}</div>
                   )}
@@ -1439,26 +1479,6 @@ const DetailPanel: React.FC<Props> = ({
                     <div className="cap__error">{credErrors.port}</div>
                   )}
                 </div>
-                <div>
-                  <input
-                    type="checkbox"
-                    id="cred_active"
-                    checked={!!credReq.isActive}
-                    onChange={e =>
-                      setCredReq(s => ({
-                        ...s,
-                        isActive: e.target.checked,
-                      }))
-                    }
-                    disabled={credMode === 'view'}
-                  />
-                  <label
-                    htmlFor="cred_active"
-                    className="cap__label cap__label--inline"
-                  >
-                    Activo
-                  </label>
-                </div>
 
                 <div
                   className="cap__field"
@@ -1483,6 +1503,35 @@ const DetailPanel: React.FC<Props> = ({
                   {credErrors.observation && (
                     <div className="cap__error">{credErrors.observation}</div>
                   )}
+                </div>
+
+
+              <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="cred_active"
+                    checked={!!credReq.isActive}
+                    onChange={e =>
+                      setCredReq(s => ({
+                        ...s,
+                        isActive: e.target.checked,
+                      }))
+                    }
+                    disabled={credMode === 'view'}
+                  />
+                  <label
+                    htmlFor="cred_active"
+                    className="cap__label cap__label--inline"
+                    style={{ margin: 0 }}
+                  >
+                    Activo
+                  </label>
                 </div>
               </div>
             </div>
@@ -1530,12 +1579,15 @@ const DetailPanel: React.FC<Props> = ({
           <div
             className="dp-modal__content"
             style={{
-              width: 500,
+              width: 520,
               maxWidth: '94vw',
               background: '#fff',
               borderRadius: 12,
               boxShadow: '0 10px 30px rgba(0,0,0,.15)',
               position: 'fixed',
+              right: 0,
+              top: 0,
+              bottom: 0,
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -1565,14 +1617,26 @@ const DetailPanel: React.FC<Props> = ({
                 gap: 10,
               }}
             >
-              <div className="grid2">
-                <textarea
-                  className="input"
-                  placeholder="Modelo de trabajo"
-                  value={workModel}
-                  onChange={e => setWorkModel(e.target.value)}
-                  rows={10}
-                />
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                  }}
+                >
+                  <textarea
+                    className="input"
+                    placeholder="Modelo de trabajo"
+                    value={workModel}
+                    onChange={e => setWorkModel(e.target.value)}
+                    rows={8}
+                  />
+                </div>
                 <select
                   className="input"
                   value={priority}
@@ -1675,7 +1739,7 @@ const DetailPanel: React.FC<Props> = ({
           <div
             className="dp-modal__content"
             style={{
-              width: 500,
+              width: 520,
               background: '#fff',
               borderRadius: 12,
               boxShadow: '0 10px 30px rgba(0,0,0,.15)',
@@ -1783,23 +1847,26 @@ const DetailPanel: React.FC<Props> = ({
                     <div className="cap__error">{deviceErrors.versionSO}</div>
                   )}
                 </div>
-              </div>
-              <div className="cap__field">
-                <textarea
-                  className={`input ${deviceErrors.description ? 'has-error' : ''}`}
-                  placeholder="Descripción"
-                  value={newDevice.description}
-                  maxLength={500}
-                  onChange={e =>
-                    setNewDevice((p: any) => ({
-                      ...p,
-                      description: e.target.value,
-                    }))
-                  }
-                />
-                {deviceErrors.description && (
-                  <div className="cap__error">{deviceErrors.description}</div>
-                )}
+                <div
+                  className="cap__field"
+                  style={{ gridColumn: '1 / -1' }}
+                >
+                  <textarea
+                    className={`input ${deviceErrors.description ? 'has-error' : ''}`}
+                    placeholder="Descripción"
+                    value={newDevice.description}
+                    maxLength={500}
+                    onChange={e =>
+                      setNewDevice((p: any) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                  {deviceErrors.description && (
+                    <div className="cap__error">{deviceErrors.description}</div>
+                  )}
+                </div>
               </div>
               <label
                 style={{

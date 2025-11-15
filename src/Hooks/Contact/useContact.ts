@@ -74,6 +74,31 @@ const getByClient = useCallback(
     [page, pageSize]
   )
 
+  const getByClientCode = useCallback(
+  async (clientCode: string, p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+
+        const res = await contactService.getContactByClientAsync(clientCode, p, s)
+
+        //aqui esta no es a contacto es a contactByClientem, y no se hace la peticion
+        setContactByClient(res.items)
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
+
+        return res 
+      } catch (err: any) {
+        setError(err)
+        return null
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [page, pageSize]
+)
+
   const fetchById = useCallback(
     async (id: number) => {
       setLoadingItem(true)
@@ -222,7 +247,6 @@ const getByClient = useCallback(
     loading: loadingList || loadingItem,
     error,
     page,
-    contactByClient,
     pageSize,
     totalCount,
     isModalOpen,
@@ -244,6 +268,9 @@ const getByClient = useCallback(
     toggle,
     verify,
     setGlobalFilter,
+    getByClientCode,
+    // contactos del cliente
+    contactByClient
     
   }
 }

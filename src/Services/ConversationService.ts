@@ -148,6 +148,7 @@ class ConversationServ {
           PageNumber: page,
           PageSize: pageSize
         };
+        
         if (from) params.from = from.toISOString();
         if (to) params.to = to.toISOString();
         if (searchContent && searchContent.trim() !== "") {
@@ -160,7 +161,7 @@ class ConversationServ {
         );
         return data.data;
       }
-  
+
   private normalizeFilters(filters: FilterForm) {
     return Object.entries(filters).reduce((acc, [key, val]) => {
       acc[key] = val == null ? "" : val;

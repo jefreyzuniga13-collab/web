@@ -5,6 +5,8 @@ import "@/Styles/Auth/ForgotPasswordPresentation.css";
 import {Link} from 'react-router-dom'
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
 import logopcg from '@/assets/pcgroup.png'
+import addGroup from '@/assets/Add_Group_2025.png'
+
 
 export default function ForgotPasswordPresentation() {
   const { t } = useTranslation();
@@ -13,7 +15,7 @@ export default function ForgotPasswordPresentation() {
   return (
     <div className={`forgot-password ${loading ? 'forgot-password--loading' : ''}`}>
       <div className="forgot-password__container">
-        <aside className="forgot-password__info-panel">
+        {/* <aside className="forgot-password__info-panel">
           <h1 className="forgot-password__title">
             {t("forgotPassword.title")}
           </h1>
@@ -25,17 +27,29 @@ export default function ForgotPasswordPresentation() {
             src={`${logopcg}`}
             alt={t("forgotPassword.imageAlt")}
           />
-        </aside>
+        </aside> */}
 
         <section className={`forgot-password__form-section ${formError ? 'forgot-password__form-section--error' : ''}`}>
-          <p className="forgot-password__subtitle">
+          {/* <p className="forgot-password__subtitle">
             {t("forgotPassword.subtitle")}
-          </p>
+          </p> */}
           {formError && (
             <div className="forgot-password__error">{formError}</div>
           )}
 
+                  <div className="image__container">
+            <img
+            className="login__image"
+            src={`${addGroup}`}
+            alt={t("login.imageAlt")}
+          />
+          </div>
+
           <form onSubmit={formik.handleSubmit} noValidate>
+
+             <p className="forgot-password__subtitle">
+            {t("forgotPassword.subtitle")}
+          </p>
             <label
               htmlFor="email"
               className="forgot-password__label"
@@ -78,8 +92,14 @@ export default function ForgotPasswordPresentation() {
         
       </div>
 
-       <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
-        <p className="login__footer"><span className="derechos">Versión 1.1.0</span></p>
+        <img
+            className="login__image-footer"
+            src={`${logopcg}`}
+            alt={t("login.imageAlt")}
+          />
+      <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
+      <p className="login__footer"><span className="derechos">Add Group 2.0</span></p>
+
     </div>
   );
 }
