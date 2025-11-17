@@ -1,0 +1,191 @@
+.detailPanel-history {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.detailPanel-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2xl);
+  position: relative;
+}
+
+.detailPanel-history__title {
+  margin: 0;
+  padding-left: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.detailPanel-history__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.detailPanel-history__filter-btn {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.detailPanel-history__filters {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  width: 32rem;
+  background: var(--bg-primary);
+  border: 0.1rem solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-sm);
+  z-index: 2;
+  display: grid;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xs);
+}
+
+.detailPanel-history__filters-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.detailPanel-history__filters-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.detailPanel-history__filters-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.detailPanel-history__filters-input {
+  width: 100%;
+  font-size: var(--font-size-xs);
+}
+
+.detailPanel-history__search {
+  position: relative;
+}
+
+.detailPanel-history__search-input {
+  padding-left: 3.2rem;
+  width: 100%;
+  font-size: var(--font-size-xs);
+}
+
+.detailPanel-history__search-icon {
+  position: absolute;
+  left: var(--space-sm);
+  top: 0.9rem;
+  opacity: 0.6;
+  color: var(--color-gray-500);
+}
+
+.detailPanel-history__list-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: var(--space-sm);
+  padding: 0.6rem var(--space-sm);
+  border-bottom: 0.1rem solid var(--border-secondary);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+}
+
+.detailPanel-history__list-header-cell {
+  white-space: nowrap;
+}
+
+.detailPanel-history__list {
+  overflow-y: auto;
+  max-height: 90%;
+}
+
+.detailPanel-history__row {
+  position: relative;
+  border-bottom: 0.1rem solid var(--border-secondary);
+  padding: var(--space-sm);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+}
+
+.detailPanel-history__row--hovered {
+  background-color: var(--color-gray-50);
+}
+
+.detailPanel-history__cell {
+  overflow: hidden;
+}
+
+.detailPanel-history__ticket-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.detailPanel-history__ticket-text {
+  flex: 1;
+  text-align: center;
+}
+
+.detailPanel-history__row-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: none;
+  gap: var(--space-xs);
+  background: var(--bg-primary);
+  border: 0.1rem solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.6rem;
+  z-index: 3;
+}
+
+.detailPanel-history__row-actions--visible {
+  display: inline-flex;
+}
+
+.detailPanel-history__row-actions-btn {
+  padding: 0.2rem 0.4rem;
+  font-size: var(--font-size-1xs);
+}
+
+.detailPanel-history__empty {
+  border: 0.1rem dashed var(--border-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  text-align: center;
+  opacity: 0.7;
+  margin: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.detailPanel-history__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-sm);
+  font-size: var(--font-size-1xs);
+  color: var(--text-secondary);
+}
+
+.detailPanel-history__footer-text {
+  opacity: 0.7;
+}
+
+.detailPanel-history__footer-pdf {
+  opacity: 0.7;
+}

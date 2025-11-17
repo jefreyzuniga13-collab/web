@@ -15,6 +15,7 @@ interface ConversationHistoryModalProps {
   conversationId: number;
   clientId: string | null;
   conversationStart: string | null;
+  initialContactId?: number | null;
 }
 
 const formatTime = (iso?: string) => {
@@ -107,18 +108,14 @@ const renderAttachments = (message: any) => {
 const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   isOpen,
   onClose,
+  conversationId,
   clientId,
-  conversationStart
+  conversationStart,
+  initialContactId
 }) => {
   const {
-    //estos son los cliente obtenidos por cliente, no data o contact del hook
     contactByClient: contacts,
     getByClientCode,
-    
-    //Estos es la paginacion desde, que viene desde el hook, para mandar a paginar a los contactos
-    
-    // page: pageContact,
-    // pageSize: pageSizeContact,
     loading: contactsLoading,
     error: contactsError
   } = useContact();
@@ -129,9 +126,8 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const initialDate = conversationStart ?? "";
-  const [startDate, setStartDate] = useState<string>(initialDate);
-  const [endDate, setEndDate] = useState<string>(initialDate);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
@@ -143,6 +139,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   const [stickyDate, setStickyDate] = useState<string | null>(null);
   const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Calcular etiqueta de fecha fija según scroll
   const computeStickyDate = useCallback(() => {
     const root = listRef.current;
     if (!root) return;
@@ -160,6 +157,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
     setStickyDate(current);
   }, []);
 
+  // Resaltar coincidencias de búsqueda en texto
   const highlightText = useCallback((text: string, term: string) => {
     if (!term) return text;
     const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -176,6 +174,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
     );
   }, []);
 
+  // Calcular ids de mensajes que coinciden con la búsqueda
   const updateMatches = useCallback(() => {
     const term = searchTerm.trim();
     if (!term) {
@@ -186,23 +185,24 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
     }
     const ids = messages
       .filter(
-        (m) =>
+        m =>
           typeof m.content === "string" &&
           m.content.toLowerCase().includes(term.toLowerCase())
       )
-      .map((m) => m.messageId);
+      .map(m => m.messageId as number);
     setMatchIds(ids);
     setTotalMatches(ids.length);
     setCurrentMatch(0);
   }, [messages, searchTerm]);
 
+  // Navegar entre coincidencias
   const gotoMatch = useCallback(
     (dir: number) => {
       if (!totalMatches) return;
       const idx = (currentMatch + dir + totalMatches) % totalMatches;
       setCurrentMatch(idx);
       const id = matchIds[idx];
-      const pos = messages.findIndex((m) => m.messageId === id);
+      const pos = messages.findIndex(m => m.messageId === id);
       if (pos >= 0 && messageRefs.current[pos]) {
         messageRefs.current[pos]?.scrollIntoView({ block: "center" });
       }
@@ -210,53 +210,88 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
     [currentMatch, totalMatches, matchIds, messages]
   );
 
+  // Ir al mensaje original de un reply
+  const scrollToMessage = useCallback(
+    (messageId?: number | null) => {
+      if (!messageId) return;
+
+      const idx = messages.findIndex(m => m.messageId === messageId);
+      if (idx === -1) return;
+
+      const el = messageRefs.current[idx];
+      if (!el) return;
+
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("chm-item--highlight");
+      setTimeout(() => {
+        el.classList.remove("chm-item--highlight");
+      }, 1500);
+    },
+    [messages]
+  );
+
   const toDate = (v?: string) => {
     if (!v) return undefined;
     return new Date(`${v}T00:00:00`);
   };
 
+  // Obtener página de mensajes
   const fetchPage = useCallback(
     async (reset = false) => {
       if (!selectedIds.length) return;
       if (loading) return;
+
       setLoading(true);
       try {
         const pg = reset ? 1 : page;
+
+        let fromDate = toDate(startDate || undefined);
+        let toDateVal = toDate(endDate || undefined);
+
+        // Intercambiar fechas si vienen invertidas
+        if (fromDate && toDateVal && fromDate > toDateVal) {
+          const tmp = fromDate;
+          fromDate = toDateVal;
+          toDateVal = tmp;
+        }
+
         const res = await ConversationService.getByContacts(
           selectedIds,
           pg,
           pageSize,
-          toDate(startDate || undefined),
-          toDate(endDate || undefined),
+          fromDate,
+          toDateVal,
           searchTerm.trim() || undefined
         );
+
         const nextMessages = res.items.flatMap((c: any) =>
           (c.messages || []).map((m: any) => ({
             ...m,
             _convId: c.conversationId
           }))
         );
-        const merged = reset ? nextMessages : [...messages, ...nextMessages];
-        const sorted = merged.sort((a, b) =>
-          a.sentAt < b.sentAt ? -1 : 1
-        );
-        setMessages(sorted);
+
+        setMessages(prev => {
+          const merged = reset ? nextMessages : [...prev, ...nextMessages];
+          return merged.sort((a, b) => (a.sentAt < b.sentAt ? -1 : 1));
+        });
+
         setHasMore(pg < (res.meta?.totalPages ?? 0));
         setPage(pg + 1);
-      // eslint-disable-next-line no-empty
       } catch {
+        // ignorar
       } finally {
         setLoading(false);
       }
     },
-    [selectedIds, page, pageSize, startDate, endDate, searchTerm, messages, loading]
+    [selectedIds, page, pageSize, startDate, endDate, searchTerm, loading]
   );
 
+  // Detectar scroll para infinite scroll y fecha fija
   const onScroll = useCallback(() => {
     const root = listRef.current;
     if (!root || loading || !hasMore) return;
-    const nearBottom =
-      root.scrollTop + root.clientHeight >= root.scrollHeight - 200;
+    const nearBottom = root.scrollTop + root.clientHeight >= root.scrollHeight - 200;
     if (nearBottom) fetchPage(false);
     requestAnimationFrame(computeStickyDate);
   }, [loading, hasMore, fetchPage, computeStickyDate]);
@@ -266,23 +301,40 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   }, [isOpen, clientId, getByClientCode]);
 
   useEffect(() => {
-    if (!contactsLoading && contacts && contacts.length && selectedIds.length === 0) {
-      const first = Number(
-        contacts[0]?.id || contacts[0]?.id || contacts[0]?.id
+    if (!isOpen) return;
+    const d = conversationStart ?? "";
+    setStartDate(d);
+    setEndDate(d);
+  }, [conversationId, conversationStart, isOpen]);
+
+  useEffect(() => {
+    if (contactsLoading || !contacts || !contacts.length) return;
+    if (selectedIds.length > 0) return;
+
+    let candidate: number | null = null;
+    if (initialContactId && Number.isFinite(initialContactId)) {
+      candidate = Number(initialContactId);
+    } else {
+      const c0: any = contacts[0];
+      candidate = Number(
+        c0?.clientContactId ?? c0?.id ?? c0?.contactId ?? 0
       );
-      if (first) setSelectedIds([first]);
     }
-  }, [contactsLoading, contacts, selectedIds.length]);
+
+    if (candidate) setSelectedIds([candidate]);
+  }, [contactsLoading, contacts, selectedIds.length, initialContactId]);
 
   useEffect(() => {
     if (!isOpen) return;
     if (!selectedIds.length) return;
+
     setPage(1);
     setHasMore(true);
     setMessages([]);
     dateRefs.current = {};
     fetchPage(true);
-  }, [isOpen, selectedIds, startDate, endDate, searchTerm, fetchPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedIds, startDate, endDate, searchTerm]);
 
   useEffect(() => {
     const root = listRef.current;
@@ -307,7 +359,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="chm-container chm-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="chm-container chm-lg" onClick={e => e.stopPropagation()}>
         <div className="chm-header">
           <h2 className="chm-title">Historial de Conversaciones</h2>
           <button className="chm-close" onClick={onClose} aria-label="Cerrar">
@@ -348,7 +400,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                           dateRefs.current = {};
                           if (checked)
                             setSelectedIds(
-                              selectedIds.filter((x) => x !== id)
+                              selectedIds.filter(x => x !== id)
                             );
                           else setSelectedIds([...selectedIds, id]);
                         }}
@@ -374,8 +426,8 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                     className="chm-input"
                     placeholder="Buscar en mensajes…"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={e => setSearchTerm(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === "Enter") gotoMatch(1);
                     }}
                   />
@@ -410,7 +462,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                   id="startDate"
                   name="startDate"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={e => setStartDate(e.target.value)}
                 />
                 <input
                   type="date"
@@ -418,7 +470,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                   id="endDate"
                   name="endDate"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={e => setEndDate(e.target.value)}
                 />
               </div>
             </div>
@@ -445,8 +497,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
 
                   {sortedMessages.map((m: any, index: number) => {
                     const label = dateLabel(m.sentAt);
-                    const prev =
-                      index > 0 ? sortedMessages[index - 1] : null;
+                    const prev = index > 0 ? sortedMessages[index - 1] : null;
                     const prevLabel = prev ? dateLabel(prev.sentAt) : null;
                     const showDivider = !prev || label !== prevLabel;
                     const isIncoming = !!m.senderContactId;
@@ -456,7 +507,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                         {showDivider && (
                           <div
                             className="chat-window__date-divider"
-                            ref={(el) => {
+                            ref={el => {
                               if (el) dateRefs.current[label] = el;
                             }}
                           >
@@ -467,7 +518,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                         )}
 
                         <div
-                          ref={(el) => {
+                          ref={el => {
                             messageRefs.current[index] =
                               el as HTMLDivElement | null;
                           }}
@@ -498,6 +549,14 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                                   className="chat-window__reply-preview"
                                   role="button"
                                   tabIndex={0}
+                                  onClick={() =>
+                                    scrollToMessage(m.repliedMessageId)
+                                  }
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      scrollToMessage(m.repliedMessageId);
+                                    }
+                                  }}
                                 >
                                   <div className="chat-window__reply-author">
                                     {m.repliedMessage.senderContactId

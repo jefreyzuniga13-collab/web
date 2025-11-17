@@ -18,7 +18,11 @@
   text-align: center;
   position: relative;
 }
-
+.chm-item--highlight {
+  outline: 2px solid #facc15;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.5);
+  transition: outline 0.2s ease, box-shadow 0.2s ease;
+}
 .contact-avatar {
   width: 5rem;
   height: 5rem;

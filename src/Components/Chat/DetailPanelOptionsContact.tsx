@@ -201,5 +201,3 @@ const DetailPanelOptionsContact: React.FC<Props> = ({
 }
 
 export default DetailPanelOptionsContact;
-
-//Deve de res reutiliable, evitar el pasar en cada uno un conclick, que al final es repetido una y otra ves.

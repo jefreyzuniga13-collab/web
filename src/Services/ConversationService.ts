@@ -427,7 +427,7 @@ class ConversationServ {
 
 // Las fechas no llegan a ser aceptable por endpoint de asp net core web api, no acceptable me da
 export  async function exportChatPdfByContact(  
-  { contactId, from, to, title, subtitle }: exportPDFArgs
+  { contactId, conversationId, from, to, title, subtitle }: exportPDFArgs
     ): Promise<void> {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -435,6 +435,10 @@ export  async function exportChatPdfByContact(
         title,
         subtitle,
       };
+
+      if (conversationId != null) {
+        body.conversationId = conversationId;
+      }
 
       if (from) {
         const d = typeof from === "string" ? new Date(from) : from;

@@ -1,0 +1,49 @@
+.detailPanel-clientHeaderActions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.detailPanel-clientGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
+}
+
+.detailPanel-icon {
+  vertical-align: middle;
+  margin-right: var(--space-xs);
+  opacity: 0.85;
+}
+
+.detailPanel-contactGroup__expanded {
+  cursor: pointer;
+}
+
+.detailPanel-contactGroup__expanded:hover {
+  background-color: var(--bg-secondary-hover);
+  border-radius: var(--radius-sm);
+}
+
+.detailPanel-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.detailPanel-statusIcon {
+  vertical-align: middle;
+  margin-right: var(--space-xs);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.detailPanel-statusIcon--true {
+  background-color: var(--color-success);
+  color: var(--text-white);
+}
+
+.detailPanel-statusIcon--false {
+  background-color: var(--color-error);
+  color: var(--text-white);
+}

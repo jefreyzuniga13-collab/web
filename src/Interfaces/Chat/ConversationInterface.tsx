@@ -9,6 +9,7 @@ export type GetConvArgs = {
 
 export type exportPDFArgs ={
     contactId: number;
+    conversationId?: number | null;
     from: Date | string | null;
     to: Date | string | null;
     title: string;
