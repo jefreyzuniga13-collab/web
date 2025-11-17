@@ -162,6 +162,11 @@
   font-weight: var(--font-weight-medium);
 }
 
+.inbox-list__status--paused {
+  background-color: var(--color-secondary);
+  color: var(--bg-primary);
+}
+
 .inbox-list__status--bot {
   background-color: #dbeafe;
   color: #1e40af;

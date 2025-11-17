@@ -55,7 +55,7 @@
 }
 
 .login__title {
-  font-size: var(--font-size-4xl);
+  font-size: var(--font-size-base);
   margin-bottom: var(--space-sm);
   color: var(--text-white);
   font-weight: var(--font-weight-bold);
@@ -87,12 +87,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: var(--space-2xl);
+  /* margin-bottom: var(--space-2xl); */
 }
 
 .login__image {
   max-width: 70%;
-  max-height: 15rem;
+  max-height: 20rem;
   height: auto;
   text-align: center;
   margin: 0 auto;
@@ -288,7 +288,7 @@
 }
 
 .login__info-panel--compact .login__title {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-base);
 }
 
 .login__info-panel--compact .login__description {
@@ -362,6 +362,5 @@
   .login__container {
     max-width: 52rem;
     padding: var(--space-2xl) var(--space-3xl);
-    box-shadow: var(--shadow-xl);
   }
 }

@@ -417,19 +417,6 @@ const DashboardPage: React.FC = () => {
                 {`Promedio de respuesta a mensajes del clientes por agente. Seleccione un agente en el filtro.`}
               </p>
 
-              {/* {responseAgentAverage ? (
-                <AgentResponseChart
-                  data={responseAgentAverage.clienteData!}
-                  agentName={responseAgentAverage.name!}
-                  title="Tiempo de respuesta por agente"
-                  subtitle=""
-                />
-              ) : (
-                <p className="empty-dashboard">
-                  Agente sin mensajes de respuesta el dia de hoy.
-                </p>
-              )} */}
-
                <AgentResponseChart
                   title="Tiempo de respuesta por agente"
                   subtitle=""

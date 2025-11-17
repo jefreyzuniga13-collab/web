@@ -31,6 +31,7 @@ type Props = {
   contactId?: number;
   conversationId?: number;
   selectedParam?: unknown;
+  isAdmin?: boolean;
   onSendNow?: (txt: string) => void | Promise<void>;
 };
 
@@ -39,6 +40,7 @@ const DetailPanel: React.FC<Props> = ({
   conversationId,
   selectedParam,
   onSendNow,
+  isAdmin
 }) => {
   const {
     optionMenu,
@@ -126,6 +128,8 @@ const DetailPanel: React.FC<Props> = ({
 
   const hasClient = !!clienteCodigo && !!client;
 
+  
+
   const {
     loading: loadingHistory,
     exportConversationHistoryToPDFAsync,
@@ -193,6 +197,7 @@ const DetailPanel: React.FC<Props> = ({
         agent: c.assignedAgentName || "—",
         status: c.status || "—",
         contactId: c.clientContactId ?? c.contactId,
+        rating: c.rating
       }));
 
       if (convPage === 1) return mapped;
@@ -299,6 +304,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
               clientLocal={clientLocal}
               setShowMore={setShowMore}
               setClientEditOpen={setClientEditOpen}
+              isAdmin={isAdmin}
             />
           ) : (
             <div className="detailPanel-emptyState">
@@ -338,6 +344,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
             formatDate={formatDate}
             exportConversationHistoryToPDFAsync={handleExportPdf}
             onOpenHistoryModal={openHistoryModal}
+           
           />
         )}
 
@@ -345,6 +352,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
           <DetailPanelCurrentConversationTab
             conversationId={Number(conversationId) || 0}
             formatDate={formatDate}
+             isAdmin={isAdmin}
           />
         )}
 
@@ -425,13 +433,16 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                       />
                       <span className="dp-search__icon">🔍</span>
                     </div>
-                    <button
+                   {isAdmin && (
+
+                     <button
                       className="btn"
                       onClick={openCredCreate}
                       type="button"
                     >
                       Nueva
                     </button>
+                   )}
                   </div>
 
                   <div className="dp-sectionGrid">
@@ -506,7 +517,8 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                                 </div>
                               </div>
 
-                              <div className="dp-cred__actions">
+                              {isAdmin && (
+                                <div className="dp-cred__actions">
                                 <button
                                   className="btn btn--ghost"
                                   type="button"
@@ -522,6 +534,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                                   Editar
                                 </button>
                               </div>
+                              )}
                             </div>
                           );
                         })
@@ -547,7 +560,8 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                       />
                       <span className="dp-search__icon">🔍</span>
                     </div>
-                    <button
+                    {isAdmin && (
+                      <button
                       className="btn"
                       type="button"
                       onClick={() => {
@@ -557,6 +571,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                     >
                       Nuevo
                     </button>
+                    )}
                   </div>
 
                   <div className="dp-sectionGrid">
@@ -624,13 +639,15 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
                       />
                       <span className="dp-search__icon">🔍</span>
                     </div>
-                    <button
+                    {isAdmin &&(
+                      <button
                       className="btn"
                       onClick={openSystemPicker}
                       type="button"
                     >
                       Agregar
                     </button>
+                    )}
                   </div>
 
                   <div className="dp-sectionGrid">
@@ -755,7 +772,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
           isOpen={showHistoryModal}
           onClose={() => setShowHistoryModal(false)}
           conversationId={selectedHistoryConversationId ?? 0}
-          clientId={clientLocal?.id?.toString() ?? null}
+          clientId={clientLocal?.codClient?.toString() ?? null}
           conversationStart={selectedHistoryConversationStart ?? null}
           initialContactId={selectedHistoryContactId ?? null}
         />

@@ -324,9 +324,6 @@ const getConversationStringDate = (sentAt: string) => {
           </span>
         </div>
       )}
-        {/* Fecha deve de quedar fija en la parte de arriba*/}
-        {/* Y esta misma se ambia en dependenias de cuanto es el mensaje. Como whatsappp */}
-        {/*  */}
         {visibleMessages.map((m, i) => {
           const sentAt = formatTime(m.sentAt);
           const isCurrentUser = m.senderUserId === userId;
@@ -390,6 +387,17 @@ const getConversationStringDate = (sentAt: string) => {
                           onPointerCancel: cancelLongPress,
                         }
                       : { onDoubleClick: focusTextarea })}
+                        
+                      //si es ogual a 1 pintar con el color
+                      style={
+                          m.messageSourceId === 1
+                            ? {
+                                backgroundColor: m.messageSourceColor ?? "#fff",
+                                color: "#fff",
+                              }
+                            : undefined
+                        }
+
                   >
                     {m.repliedMessage && (
                       <div

@@ -58,6 +58,7 @@ export function useSupportPage() {
       { label: "Humano", value: "human", content: "Asignado" },
       { label: "Cerrado", value: "closed", content: "Cerrado" },
       { label: "Incompleto", value: "incomplete", content: "Incompleto" },
+      { label: "Pausado", value: "paused", content: "Pausado" },
     ];
   } else {
     DEFAULT_OPTIONS = [
@@ -65,6 +66,7 @@ export function useSupportPage() {
       { label: "Humano", value: "human", content: "Humano" },
       { label: "Cerrado", value: "closed", content: "Cerrado" },
       { label: "Incompleto", value: "incomplete", content: "Incompleto" },
+      { label: "Pausado", value: "paused", content: "Pausado" },
     ];
   }
 
@@ -91,20 +93,21 @@ export function useSupportPage() {
       .filter((o): o is FilterOption => !!o);
   }, [DEFAULT_OPTIONS, filterOrder]);
 
-  useEffect(() => {
-
+    useEffect(() => {
     if (!convId) {
-      setConversation(null);
-      return;
+      setConversation(null)
+      return
     }
-    getConversation(convId)
-      .then((res) => setConversation(res.data.data))
-      .catch(console.error);
+
+      setConversation(null)
+
+      getConversation(convId)
+        .then(res => setConversation(res.data.data))
+        .catch(console.error)
 
       fetchByName('OpcionesRapidas')
-  }, [convId]);
+    }, [convId, fetchByName])
   
-
   const handleAfterAssign = () => {
     if (!convId) return;
     getConversation(convId)

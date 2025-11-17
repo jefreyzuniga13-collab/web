@@ -70,6 +70,8 @@ export default function LoginPresentation() {
             alt={t("login.imageAlt")}
           />
           </div>
+
+          
           <form onSubmit={formik.handleSubmit} noValidate>
             <label htmlFor="email" className="login__label">
               {t("login.emailLabel")}

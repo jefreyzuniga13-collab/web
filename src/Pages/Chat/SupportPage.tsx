@@ -17,7 +17,8 @@ const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
 
-  const { fetchById, selectedData: contact } = useContact();
+  const { fetchById, 
+    selectedData: contact } = useContact();
 
   const {
     conversation,
@@ -206,6 +207,7 @@ const SupportPage: React.FC = () => {
             conversationId={convId ?? undefined}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
+            isAdmin={isAdmin}
           />
         )}
       </aside>

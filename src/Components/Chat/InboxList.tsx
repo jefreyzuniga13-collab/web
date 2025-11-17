@@ -75,14 +75,15 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
-  const handleSelect = async (id: number) => {
+  const handleSelect = (id: number) => {
     if (id === selectedId) {
       onSelect(null)
     } else {
-      await markConversationRead(id)
       onSelect(id)
+      void markConversationRead(id) 
     }
   }
+
 
   if (error) {
     return (
@@ -114,7 +115,8 @@ export const InboxList: React.FC<Props> = ({
           waiting: 'Pendiente',
           human: 'Asignado',
           closed: 'Cerrado',
-          incomplete: 'Incompleta'
+          incomplete: 'Incompleta',
+          paused: "Pausada"
         }
 
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
@@ -177,6 +179,16 @@ export const InboxList: React.FC<Props> = ({
                   >
                     {statusText}
                   </span>
+
+                  {/* <span
+                  className={`inbox-list__status ${
+                    c.isHalted ? "inbox-list__status--paused" : `inbox-list__status--${statusClass}`
+                  }`}
+                >
+                  {statusText}
+                  {c.isHalted ? "Pausada" : statusText} 
+                </span> */}
+
                 </div>
                 {hasUnread && (
                   <span className="inbox-list__unread-badge">{unread}</span>

@@ -8,11 +8,13 @@ import "@/Styles/Chat/DetailPanel/DetailPanelCurrentConversationTab.css";
 interface Props {
   conversationId: number;
   formatDate: (v?: string | number | Date | null) => string;
+  isAdmin?: boolean;
 }
 
 const DetailPanelCurrentConversationTab: React.FC<Props> = ({
   conversationId,
   formatDate,
+  isAdmin
 }) => {
   const [showConversationOptions, setShowConversationOptions] = useState(false);
 
@@ -27,19 +29,33 @@ const DetailPanelCurrentConversationTab: React.FC<Props> = ({
     handleAddTag,
     handleRemoveTag,
     handleKeyDown,
-    toggleHaltedLocal,
+    // toggleHaltedLocal,
   } = useContactDetail(Number(conversationId));
 
+  // const handleSetHaltedConversation = useCallback(async () => {
+  //   if (!conv?.conversationId) return;
+  //   try {
+  //     await SetHaltedConversation(conv.conversationId);
+  //     toggleHaltedLocal();
+  //     setShowConversationOptions(false);
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // }, [conv, toggleHaltedLocal]);
+
   const handleSetHaltedConversation = useCallback(async () => {
-    if (!conv?.conversationId) return;
-    try {
-      await SetHaltedConversation(conv.conversationId);
-      toggleHaltedLocal();
-      setShowConversationOptions(false);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [conv, toggleHaltedLocal]);
+  if (!conv?.conversationId) return;
+
+  try {
+    await SetHaltedConversation(conv.conversationId);
+    // NO toggleHaltedLocal aquí
+    setShowConversationOptions(false);
+    // Dejas que SignalR actualice conv.isHalted
+  } catch (e) {
+    console.error(e);
+  }
+}, [conv?.conversationId]);
+
 
   return (
     <div className="detailPanel-card detailPanel-currentConv">
@@ -48,6 +64,8 @@ const DetailPanelCurrentConversationTab: React.FC<Props> = ({
           Conversación Actual
         </h5>
 
+        {isAdmin && (
+          
         <div className="detailPanel-currentConv__header-actions">
           <button
             className="btn btn--ghost detailPanel-currentConv__options-btn"
@@ -63,6 +81,7 @@ const DetailPanelCurrentConversationTab: React.FC<Props> = ({
           </button>
         </div>
 
+        )}
         {showConversationOptions && (
           <div
             id="convOptions"

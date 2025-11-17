@@ -13,7 +13,6 @@ import {
 } from "react-icons/fa";
 import { IoChatboxEllipsesOutline } from "react-icons/io5";
 import { GrMoreVertical } from "react-icons/gr";
-import { jwtDecode } from "jwt-decode";
 import ShowInformationExpanded from "@/Components/Chat/ShowInformationExpanded";
 import "@/Styles/Chat/DetailPanel/DetailPanelOptionsClient.css";
 
@@ -24,17 +23,7 @@ interface Props {
   formatDate: (v?: string | number | Date | null) => string;
   setClientEditOpen: (open: boolean) => void;
   setShowMore: (value: boolean) => void;
-}
-
-interface JwtPayload {
-  role: string;
-}
-
-interface AuthStorage {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: string;
-  userId: number;
+  isAdmin?: boolean
 }
 
 const DetailPanelOptionsClient: React.FC<Props> = ({
@@ -43,16 +32,12 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
   formatDate,
   setClientEditOpen,
   setShowMore,
+  isAdmin
 }) => {
   const [isshowInformationExpanded, setIsshowInformationExpanded] =
     useState<boolean>(false);
   const [content, setContent] = useState<string | null | undefined>("");
   const [title, setTitle] = useState<string>("");
-
-  const authRaw = localStorage.getItem("auth") || "{}";
-  const { accessToken } = JSON.parse(authRaw) as AuthStorage;
-  const { role } = jwtDecode<JwtPayload>(accessToken);
-  const isAdmin = role.toLowerCase() === "admin";
 
   return (
     <>
@@ -62,8 +47,10 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
             Detalles del cliente
           </h5>
 
-          {isAdmin && (
+          
             <div className="detailPanel-clientHeaderActions">
+
+              {isAdmin && (
               <button
                 className="btn btn--secondary"
                 onClick={() => setClientEditOpen(true)}
@@ -71,6 +58,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
               >
                 <Edit size={14} />
               </button>
+              )}
               <button
                 className="btn btn--primary"
                 onClick={() => setShowMore(true)}
@@ -79,7 +67,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                 <GrMoreVertical />
               </button>
             </div>
-          )}
+          
         </header>
 
         <div className="detailPanel-clientGrid">

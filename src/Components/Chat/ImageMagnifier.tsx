@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./ImageMagnifier.css";
+import "@/Styles/Chat/ImageMagnifier.css";
 
 type Props = {
   src: string;

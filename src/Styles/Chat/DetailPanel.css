@@ -264,7 +264,7 @@
   .detailPanel-clientGroup__title,
   .detailPanel-contactGroup__title,
   .detailPanel-clientGroup__cliente {
-    font-size: var(--font-size-sm, 14px);
+    font-size: var(--font-size-xs, 14px);
   }
 }
 
@@ -272,7 +272,7 @@
   .detailPanel-clientGroup__title,
   .detailPanel-contactGroup__title,
   .detailPanel-clientGroup__cliente {
-    font-size: var(--font-size-base, 16px);
+    font-size: var(--font-size-xs, 14px);
   }
 }
 

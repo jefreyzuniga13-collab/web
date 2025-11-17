@@ -318,6 +318,8 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
   }
 
   const getMessageClassName = (m: MessageDto) => {
+    // if(m.MessageSourceId != null) return `chat-window__message chat-window__message--incoming ${m.mess}`
+    
     if (m.senderContactId) return "chat-window__message chat-window__message--incoming"
     if (m.senderUserId && m.senderUserId !== userId) return "chat-window__message chat-window__message--agent"
     return "chat-window__message chat-window__message--outgoing"

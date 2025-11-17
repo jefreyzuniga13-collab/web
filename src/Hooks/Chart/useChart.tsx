@@ -59,10 +59,10 @@ export const useConversationChart = () => {
   const [threshold, setThreshold] = useState<number>(() => getInitialThreshold(60));
 
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(3);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [waitingPage, setWaitingPage] = useState<number>(1);
-  const [waitingPageSize, setWaitingPageSize] = useState<number>(3);
+  const [waitingPageSize, setWaitingPageSize] = useState<number>(10);
   const [totalCountWaiting, setTotalCountWaiting] = useState<number>(0);
 
   const [loadingRatingConversation, setLoadingRatingConversation] = useState<boolean>(false);
@@ -268,6 +268,7 @@ export const useConversationChart = () => {
     responseAgentAverage,
     conversationClient,
     // criticialClientTime,
+    
     threshold,
     setThreshold,
     filterRatingConversationByAgent,

@@ -10,6 +10,7 @@ export interface ConversationRow {
   agent?: string | null;
   status?: string | null;
   contactId: number;
+  rating?: number | null
 }
 
 interface DetailPanelHistoryTabProps {
@@ -60,6 +61,15 @@ const DetailPanelHistoryTab: React.FC<DetailPanelHistoryTabProps> = ({
   const [hoverId, setHoverId] = useState<number | null>(null);
 
   const hasResults = convRows.length > 0;
+
+
+  const RatingStars: React.FC<{ value: number }> = ({ value }) => {
+  return (
+    <span className="detailPanelHistoryTab_rating">
+      {"★".repeat(value).padEnd(3, "☆")}
+    </span>
+  );
+};
 
   return (
     <div className="detailPanel-container detailPanel-history">
@@ -137,6 +147,7 @@ const DetailPanelHistoryTab: React.FC<DetailPanelHistoryTabProps> = ({
           <span className="detailPanel-history__list-header-cell">Contacto</span>
           <span className="detailPanel-history__list-header-cell">Agente</span>
           <span className="detailPanel-history__list-header-cell">Ticket</span>
+          <span className="detailPanel-history__list-header-cell">Rating</span>
         </div>
 
         <div
@@ -188,6 +199,16 @@ const DetailPanelHistoryTab: React.FC<DetailPanelHistoryTabProps> = ({
                   className="detailPanel-clientGroup__cliente detailPanel-history__cell detailPanel-history__ticket-text"
                 >
                   <Trunc>{r.id}</Trunc>
+                </span>
+              </div>
+
+              <div className="detailPanel-history__ticket-cell">
+                <span
+                  title={`#${r.rating}`}
+                  className="detailPanel-clientGroup__cliente detailPanel-history__cell detailPanel-history__ticket-text"
+                >
+                <RatingStars value={r.rating ?? 0} />
+
                 </span>
               </div>
 

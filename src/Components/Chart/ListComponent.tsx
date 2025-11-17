@@ -194,7 +194,7 @@ export function ListComponent<T extends Record<string, any>>({
               setPageSize(parseInt(e.target.value, 10));
               setPage(1);
             }}
-            rowsPerPageOptions={[3, 5, 10]}
+            rowsPerPageOptions={[10, 15, 20]}
             labelRowsPerPage="Filas"
             sx={{ mt: 2, fontSize: 12 }}
           />

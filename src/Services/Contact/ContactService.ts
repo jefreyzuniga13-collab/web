@@ -54,7 +54,7 @@ class ContactService {
   ): Promise<PagedResponse<ContactLogInterface>> {
     const { data } = await api.get<
       ApiResponse<PagedResponse<ContactLogInterface>>
-    >(`/ContactLogs/getByClient/${clientCode}`, { 
+    >(`/ContactLogs/getByClientCode/${clientCode}`, { 
       params: { PageNumber: page, PageSize: pageSize } });
     return data.data;
   }

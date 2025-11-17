@@ -22,11 +22,7 @@ const useContact = (contactId?: number) => {
 
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (typeof contactId === 'number') {
-      fetchById(contactId);
-    }
-  }, [contactId])
+
   
   const fetchPage = useCallback(
     async (p = page, s = pageSize) => {
@@ -80,7 +76,7 @@ const getByClient = useCallback(
       setError(null)
       try {
 
-        const res = await contactService.getContactByClientAsync(clientCode, p, s)
+        const res = await contactService.getContactByClientCodeAsync(clientCode, p, s)
 
         //aqui esta no es a contacto es a contactByClientem, y no se hace la peticion
         setContactByClient(res.items)
@@ -240,6 +236,17 @@ const getByClient = useCallback(
     [modalMode, selectedData, create, update, closeModal]
   )
 
+
+  useEffect(() => {
+  if (typeof contactId !== 'number' || contactId <= 0) {
+    setSelectedData(null)
+    return
+  }
+
+  setSelectedData(null) 
+  fetchById(contactId)
+}, [contactId, fetchById])
+
   return {
     data,
     verifiedContact,
@@ -268,8 +275,9 @@ const getByClient = useCallback(
     toggle,
     verify,
     setGlobalFilter,
+
+    //Contcatos del clientes
     getByClientCode,
-    // contactos del cliente
     contactByClient
     
   }

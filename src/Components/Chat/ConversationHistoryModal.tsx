@@ -297,6 +297,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   }, [loading, hasMore, fetchPage, computeStickyDate]);
 
   useEffect(() => {
+    console.log(clientId)
     if (isOpen && clientId) getByClientCode(clientId);
   }, [isOpen, clientId, getByClientCode]);
 

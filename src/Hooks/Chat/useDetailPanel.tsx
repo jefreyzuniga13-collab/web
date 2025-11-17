@@ -82,17 +82,17 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const loading = contactLoading || clientLoading;
   const error = contactError ?? clientError ?? null;
 
-  const lastContactIdRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (
-      typeof contactId === "number" &&
-      contactId > 0 &&
-      lastContactIdRef.current !== contactId
-    ) {
-      lastContactIdRef.current = contactId;
-      fetchContactById(contactId).catch(() => {});
-    }
-  }, [contactId, fetchContactById]);
+  // const lastContactIdRef = useRef<number | undefined>(undefined);
+  // useEffect(() => {
+  //   if (
+  //     typeof contactId === "number" &&
+  //     contactId > 0 &&
+  //     lastContactIdRef.current !== contactId
+  //   ) {
+  //     lastContactIdRef.current = contactId;
+  //     fetchContactById(contactId).catch(() => {});
+  //   }
+  // }, [contactId, fetchContactById]);
 
   const clienteCodigo = useMemo(() => {
     const c: any = selectedData;
@@ -203,17 +203,29 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
 
 
    // Cada vez que cambie el contactId, resetear el cliente local
-  useEffect(() => {
-    // si no hay contactId, limpiar completamente el cliente
-    if (contactId == null || contactId <= 0) {
-      setClient(null as any);
-      setClientLocal(null);
-      return;
-    }
+  // useEffect(() => {
+  //   // si no hay contactId, limpiar completamente el cliente
+  //   if (contactId == null || contactId <= 0) {
+  //     setClient(null as any);
+  //     setClientLocal(null);
+  //     return;
+  //   }
 
-    // también, cuando cambia de contacto, limpiar el buffer de edición, etc.
-    setClientLocal(null);
-  }, [contactId, setClient]);
+  //   // también, cuando cambia de contacto, limpiar el buffer de edición, etc.
+  //   setClientLocal(null);
+  // }, [contactId, setClient]);
+
+    useEffect(() => {
+      if (contactId == null || contactId <= 0) {
+        setClient(null as any)
+        setClientLocal(null)
+        return
+      }
+
+      setClientLocal(null) //limpiar buffer local del cliente
+    }, [contactId, setClient])
+
+
   
   const {
     clientEditOpen,
