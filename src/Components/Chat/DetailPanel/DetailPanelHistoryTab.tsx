@@ -3,6 +3,7 @@ import { FaFilter } from "react-icons/fa";
 import { Search, FileDown, FileClock } from "lucide-react";
 import { Trunc } from "@/Components/Chat/DetailPanel/DetailPanelCommon";
 import "@/Styles/Chat/DetailPanel/DetailPanelHistoryTab.css";
+import RatingStars from '@/Utils/ConvertToStarts'
 export interface ConversationRow {
   id: number;
   createdAt: string | Date;
@@ -60,16 +61,7 @@ const DetailPanelHistoryTab: React.FC<DetailPanelHistoryTabProps> = ({
   const [showConvFilters, setShowConvFilters] = useState(false);
   const [hoverId, setHoverId] = useState<number | null>(null);
 
-  const hasResults = convRows.length > 0;
-
-
-  const RatingStars: React.FC<{ value: number }> = ({ value }) => {
-  return (
-    <span className="detailPanelHistoryTab_rating">
-      {"★".repeat(value).padEnd(3, "☆")}
-    </span>
-  );
-};
+  const hasResults = convRows.length > 0;;
 
   return (
     <div className="detailPanel-container detailPanel-history">

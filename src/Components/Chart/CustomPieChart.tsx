@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type {
   ConversationRatingByAgents,
@@ -14,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import { useUsers } from "@/Hooks/User/useUsers";
+import { useNavigate } from "react-router-dom";
 
 const COLORS = [
   "#0070B4",
@@ -32,6 +32,7 @@ interface Props {
   selectedAgentId?: number | null;
   setSelectedAgentId?: (agentId: number | null) => void;
   fetchRatingByAgent?: (agentId: number | null, pg: number, ps: number) => Promise<void>;
+  typePieChart: 'status' | 'rating';
 }
 
 export default function CustomPieChart({
@@ -41,9 +42,11 @@ export default function CustomPieChart({
   selectedAgentId = null,
   setSelectedAgentId,
   fetchRatingByAgent,
+  typePieChart
 }: Props) {
-  // const navigate = useNavigate();
-  const { agents, getAgents } = useUsers();
+  const navigate = useNavigate()
+
+  const {getAgents, agents } = useUsers();
 
   useEffect(() => {
     if (filterableByAgent) {
@@ -70,7 +73,7 @@ export default function CustomPieChart({
   const chartData = isRatingByAgent
     ? [
         {
-          name: "Excelente",
+          name: "Negativo",
           value: (filteredData as ConversationRatingByAgents[]).reduce(
             (acc, cur) => acc + cur.excelentRatings,
             0
@@ -84,7 +87,7 @@ export default function CustomPieChart({
           ),
         },
         {
-          name: "Negativo",
+          name: "Excelente",
           value: (filteredData as ConversationRatingByAgents[]).reduce(
             (acc, cur) => acc + cur.negativeRatings,
             0
@@ -143,25 +146,34 @@ export default function CustomPieChart({
 
   const handleClick = (entry: any) => {
     if (!enableNavigation) return;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const status = entry.name;
-    // navigate(`/conversation/${encodeURIComponent(status)}`);
+
+    if(typePieChart === 'status'){
+      const status = entry.name;
+      navigate(`/conversation/status/${encodeURIComponent(status)}`);
+    }else if(typePieChart === 'rating'){
+
+      const value = entry.name === 'Excelente' ? '3': entry.name === 'Regular' ? 2 : entry.name === 'Negativo' ? 1 : 0
+      
+      navigate(`/conversation/rating/${value}/${selectedAgentId}`);
+    }
   };
 
   return (
     <div className="pieChart__container">
       {filterableByAgent && (
         <FormControl fullWidth size="small" style={{ marginBottom: "1rem" }}>
+
           <InputLabel>Agente</InputLabel>
           <Select
-            value={selectedAgentId !== null ? selectedAgentId.toString() : ""}
-            label="Agente"
+          value={selectedAgentId !== null ? selectedAgentId.toString() : ""}
+          label="Agente"
             onChange={(e) => {
               const value = e.target.value as string;
               const selected = value === "" ? null : parseInt(value, 10);
-              setSelectedAgentId?.(selected);
-              fetchRatingByAgent?.(selected, 1, 5);
+              setSelectedAgentId?.(selected ?? 0);
+              fetchRatingByAgent?.(selected ?? 0, 1, 100);
             }}
+
             sx={{ maxWidth: "40%", maxHeight: "40px", minHeight: "40px" }}
             MenuProps={{
               PaperProps: {

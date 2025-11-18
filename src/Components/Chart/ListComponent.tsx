@@ -35,6 +35,7 @@ export interface DataTableProps<T> {
   setPageSize: (size: number) => void;
   maxHeight?: number;
   showAutoComplete: boolean;
+  fetchWaiting?: (pg:number, ps: number) => void;
 }
 
 export function ListComponent<T extends Record<string, any>>({
@@ -51,6 +52,7 @@ export function ListComponent<T extends Record<string, any>>({
   setPageSize,
   maxHeight = 500,
   showAutoComplete,
+  fetchWaiting
 }: DataTableProps<T>) {
   const [filterValue, setFilterValue] = React.useState<string | null>(null);
 
@@ -127,6 +129,7 @@ export function ListComponent<T extends Record<string, any>>({
               value={threshold}
               min={1}
               onChange={(e) => onThresholdChange(Number(e.target.value))}
+              onBlur={()=> fetchWaiting!(page, pageSize)}
               style={{
                 minWidth: 50,
                 maxWidth: 60,
@@ -194,7 +197,7 @@ export function ListComponent<T extends Record<string, any>>({
               setPageSize(parseInt(e.target.value, 10));
               setPage(1);
             }}
-            rowsPerPageOptions={[10, 15, 20]}
+            rowsPerPageOptions={[10, 20, 30]}
             labelRowsPerPage="Filas"
             sx={{ mt: 2, fontSize: 12 }}
           />

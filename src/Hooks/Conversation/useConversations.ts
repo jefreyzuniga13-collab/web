@@ -183,24 +183,44 @@ export default function useConversations({
     [page, pageSize]
   )
 
-  // const fetchPage = useCallback(
-  //   async (st = stateFilter, pg = page, ps = pageSize) => {
-  //     setLoading(true)
-  //     setError(null)
-  //     try {
-  //       const res = await ConversationService.getByStateWithOut(st, pg, ps)
-  //       setTotalCount(res.meta.totalCount)
-  //       setData(res.items)
-  //       setPage(pg)
-  //       setPageSize(ps)
-  //     } catch (err: any) {
-  //       setError(err)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   },
-  //   [stateFilter, page, pageSize]
-  // )
+  const fetchPage = useCallback(
+    async (st = stateFilter, pg = page, ps = pageSize) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await ConversationService.getByStateWithOut(st, pg, ps)
+        setTotalCount(res.meta.totalCount)
+        setData(res.items)
+        setPage(pg)
+        setPageSize(ps)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [stateFilter, page, pageSize]
+  )
+
+    const getByRating = useCallback(
+    async (rating: number, selectedAgentId?: number, pg = page, ps = pageSize) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await ConversationService
+        .getByRatingAsync(rating, pg, ps, selectedAgentId)
+        setTotalCount(res.meta.totalCount)
+        setData(res.items)
+        setPage(pg)
+        setPageSize(ps)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [page, pageSize]
+  )
 
   // useEffect(() => {
   //   fetchPage()
@@ -237,6 +257,8 @@ export default function useConversations({
     selectedConversation,
     // setPage: (pg: number) => fetchPage(stateFilter, pg, pageSize),
     // setPageSize: (ps: number) => fetchPage(stateFilter, 1, ps),
+    setPage,
+    setPageSize,
     changeState,
     // refresh: () => fetchPage(),
     openView,
@@ -246,5 +268,7 @@ export default function useConversations({
     GetConversaionContact,
     getConversationsByContacts,
     GetConversationByClientPaginationAsync,
+    fetchPage,
+    getByRating
   }
 }

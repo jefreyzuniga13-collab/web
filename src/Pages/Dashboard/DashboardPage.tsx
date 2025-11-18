@@ -14,6 +14,7 @@ import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import type { WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { format, toZonedTime } from "date-fns-tz";
 import { parseISO, parse } from "date-fns";
+import RatingStars from '@/Utils/ConvertToStarts'
 
 const DashboardPage: React.FC = () => {
   const {
@@ -45,16 +46,17 @@ const DashboardPage: React.FC = () => {
     filters,
     loadingWaiting,
     ratingConversationData,
-   RatingConversation,
-   loadingRatingConversation,
-   ratingConversationPage,
-   ratingConversationPageSize,
-   ratingConversationPageTotalCount,
-   setRatingConversationPage,
-   setRatingConversationPageSize,
-   selectedAgentId,
-   setSelectedAgentId,
-   fetchRatingByAgent
+    RatingConversation,
+    loadingRatingConversation,
+    ratingConversationPage,
+    ratingConversationPageSize,
+    ratingConversationPageTotalCount,
+    setRatingConversationPage,
+    setRatingConversationPageSize,
+    selectedAgentId,
+    setSelectedAgentId,
+    fetchRatingByAgent,
+    fetchWaiting
   } = useConversationChart();
 
   const formatTime = (d: Date | string) => {
@@ -118,7 +120,9 @@ const DashboardPage: React.FC = () => {
       render: c =>  c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName :
       "-"
     },
-    {field: "rating", headerName: "Calificación", render: c => c.rating ?? "-"},
+    {field: "rating", headerName: "Calificación", render: c => {
+      return <RatingStars value={c.rating ?? 0} />
+    }},
     {
       field: "ratingReceivedAt",
       headerName: "Calificación Recibida",
@@ -299,7 +303,7 @@ const DashboardPage: React.FC = () => {
                 {`Porcentaje de conversaciones por estado actual`}
               </p>
               {statusData.length > 0 ? (
-                <CustomPieChart data={statusData} />
+                <CustomPieChart data={statusData} typePieChart="status"/>
               ) : (
                 <p className="empty__dashboard-list">
                   No hay conversaciones recientes hoy
@@ -339,7 +343,7 @@ const DashboardPage: React.FC = () => {
                   totalCount={totalCount}
                   setPage={setPage}
                   setPageSize={setPageSize}
-                  maxHeight={400}
+                  maxHeight={700}
                   showAutoComplete={false}
                 />
               ) : (
@@ -369,13 +373,13 @@ const DashboardPage: React.FC = () => {
                   totalCount={totalCountWaiting}
                   setPage={setWaitingPage}
                   setPageSize={setWaitingPageSize}
-                  maxHeight={400}
+                  maxHeight={700}
                   showAutoComplete= {false}
+                  fetchWaiting={fetchWaiting}
                 />
               )}
             </div>
 
-            {/* Chart de calificaciones de conversaciones y tabla pagina desde la mas reciente */}
             <div className="dashboard-waiting__container">
               <h4 className="dashboard-waiting__title">
                 Calificaciones de conversaciones por agentes
@@ -385,8 +389,11 @@ const DashboardPage: React.FC = () => {
               </p>
 
                 <>
-                  <CustomPieChart data={ratingConversationData} enableNavigation={false} filterableByAgent={true}
-                  selectedAgentId={selectedAgentId} setSelectedAgentId={setSelectedAgentId} fetchRatingByAgent={fetchRatingByAgent}/>
+                  <CustomPieChart data={ratingConversationData} 
+                  // enableNavigation={false} 
+                  filterableByAgent={true}
+                  selectedAgentId={selectedAgentId} setSelectedAgentId={setSelectedAgentId} 
+                  fetchRatingByAgent={fetchRatingByAgent} typePieChart="rating"/>
 
                   {loadingRatingConversation ? (
                     <Spinner size={24} text="Cargando conversaciones calificadas..." />
@@ -404,7 +411,7 @@ const DashboardPage: React.FC = () => {
                       totalCount={ratingConversationPageTotalCount}
                       setPage={setRatingConversationPage}
                       setPageSize={setRatingConversationPageSize}
-                      maxHeight={400}
+                      maxHeight={700}
                       showAutoComplete= {false}
                     />
                   )}

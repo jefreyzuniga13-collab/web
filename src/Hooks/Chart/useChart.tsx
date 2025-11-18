@@ -10,14 +10,14 @@ import type {
   WaitingClientResponseDto,
   ResponseAgentAverageResponseDto,
   FilterForm,
-  ConversationRatingByAgents
+  ConversationRatingByAgents,
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem("dashboardFilters");
   if (saved) return JSON.parse(saved) as FilterForm;
-  
+
   const fmt = formatoNicaragua(new Date());
 
   return {
@@ -36,7 +36,7 @@ const getInitialFilters = (): FilterForm => {
     clientName: null,
     today: false,
     yesterday: false,
-    tomorrow: false
+    tomorrow: false,
   };
 };
 
@@ -68,13 +68,13 @@ export const useConversationChart = () => {
   const [loadingRatingConversation, setLoadingRatingConversation] = useState<boolean>(false);
   const [ratingConversationPage, setRatingConversationPage] = useState<number>(1);
   const [filterRatingConversationByAgent, setFilterRatingConversationByAgent] = useState<number>();
-  const [ratingConversationPageSize, setRatingConversationPageSize] = useState<number>(3);
+  const [ratingConversationPageSize, setRatingConversationPageSize] = useState<number>(10);
   const [ratingConversationPageTotalCount, setRatingConversationPageTotalCount] = useState<number>(0);
 
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(
     localStorage.getItem("selectedAgentId") ? parseInt(localStorage.getItem("selectedAgentId")!, 10) : null
   );
-
+  
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [loadingCharts, setLoadingCharts] = useState<boolean>(false);
   const [loadingWaiting, setLoadingWaiting] = useState<boolean>(false);
@@ -88,17 +88,13 @@ export const useConversationChart = () => {
 
   useEffect(() => {
     (async () => {
-      
       const res = await SystemParamService.getByNameAsync("ClientCriticalStateTime");
-      // setCriticialClientTime(res.value); 
-      const def = parseInt(res.value, 10);   
+      const def = parseInt(res.value, 10);
       if (localStorage.getItem("criticalThreshold") === null) {
         setThreshold(def);
       }
     })();
-
   }, []);
-
 
   useEffect(() => {
     localStorage.setItem("criticalThreshold", String(threshold));
@@ -112,29 +108,20 @@ export const useConversationChart = () => {
       const [statusRes, avgRes, adminRes] = await Promise.all([
         ConversationService.getByDateRange(filters),
         ConversationService.getAverageAssignmentTime(filters),
-        ConversationService.getAverageAssigmentAdminTime(filters)
+        ConversationService.getAverageAssigmentAdminTime(filters),
       ]);
-      const result = await ConversationService.getConversationRatingByAgents(selectedAgentId!);
 
-      setRatingConversationData(result);
       setStatusData(statusRes);
       setAverageAssignmentTime(avgRes);
       setAdminAvgAssignmentTime(adminRes);
 
-      //new fetch for conversation rating by agents
-      // const ratingRes = await ConversationService.getConversationRatingByAgents();
-      // setRatingConversationData(ratingRes);
-
-      // const conversationRating = await ConversationService.getByStateWithOut("rating", 1, 1000);
-      // setRatingConversation(conversationRating.items);
-
       if (filters.agentId != null) {
         const resp = await ConversationService.responseAgentAverageAsync(filters);
         setResponseAgentAverage(resp);
+        await fetchRatingConversation(filters.agentId);
       } else {
         setResponseAgentAverage(null);
       }
-
     } catch (err: any) {
       setError(err.message || String(err));
     } finally {
@@ -146,118 +133,144 @@ export const useConversationChart = () => {
     fetchData();
   }, [fetchData]);
 
-  
-  const fetchRatingConversation = useCallback(async (pg = ratingConversationPage, ps = ratingConversationPageSize) => {
-    
-    setLoadingRatingConversation(true);
-    setError(null);
-    try {
-      const list = await ConversationService.getRatingConversation(pg, ps);
+  const fetchRatingConversation = useCallback(
+    async (
+      agentId: number | null = selectedAgentId,
+      pg = ratingConversationPage,
+      ps = ratingConversationPageSize
+    ) => {
+      setLoadingRatingConversation(true);
+      setError(null);
 
-      setRatingConversation(list.items);
+      try {
+        const effectiveAgentId = agentId ?? selectedAgentId ?? null;
+        localStorage.setItem("selectedAgentId", effectiveAgentId ? effectiveAgentId.toString() : "");
 
-      setRatingConversationPageTotalCount(list.meta.totalCount);
-      setRatingConversationPage(pg);
-      setRatingConversationPageSize(ps);
-    } catch (err: any) {
-      setError(err.message || String(err));
-    } finally {
-      setLoadingRatingConversation(false);
-    }
-  }, [ratingConversationPage, ratingConversationPageSize]);
+        const result = await ConversationService.getConversationRatingByAgents(
+          filters,
+          effectiveAgentId ?? undefined
+        );
 
+        const list = await ConversationService.getRatingConversation(
+          pg,
+          ps,
+          filters,
+          effectiveAgentId ?? undefined
+        );
 
-  const fetchRatingByAgent = useCallback(async (agentId?: number | null, pg: number = 1, ps: number =5) => {
-  setLoadingRatingConversation(true);
-  setError(null);
+        setRatingConversationData(result);
+        setRatingConversation(list.items);
+        setRatingConversationPageTotalCount(list.meta.totalCount);
+        setRatingConversationPage(pg);
+        setRatingConversationPageSize(ps);
+      } catch (err: any) {
+        setError(err.message || String(err));
+      } finally {
+        setLoadingRatingConversation(false);
+      }
+    },
+    [filters, selectedAgentId, ratingConversationPage, ratingConversationPageSize]
+  );
 
-  try {
-    const list = await ConversationService.getRatingConversation(pg, ps, agentId !== null ? agentId : undefined);
-    const result = await ConversationService.getConversationRatingByAgents(agentId !== null ? agentId : undefined);
+  const fetchRatingByAgent = useCallback(
+    async (agentId: number | null, pg: number = 1, ps: number = 5) => {
+      await fetchRatingConversation(agentId, pg, ps);
+    },
+    [fetchRatingConversation]
+  );
 
-    setRatingConversation(list.items);
-    setRatingConversationData(result);
+  const fetchWaiting = useCallback(
+    async (pg = waitingPage, ps = waitingPageSize) => {
+      setLoadingWaiting(true);
+      setError(null);
+      try {
+        const list = await ConversationService.getWaitingClient(filters, pg, ps, threshold);
+        setWaitingClient(list.items);
+        setTotalCountWaiting(list.meta.totalCount);
+        setWaitingPage(pg);
+        setWaitingPageSize(ps);
+      } catch (err: any) {
+        setError(err.message || String(err));
+      } finally {
+        setLoadingWaiting(false);
+      }
+    },
+    [filters, waitingPage, waitingPageSize, threshold]
+  );
 
-    setRatingConversationPageTotalCount(list.meta.totalCount);
-    setRatingConversationPage(pg);
-    setRatingConversationPageSize(ps);
+  const fetchConversationByClientPage = useCallback(
+    async (pg = page, ps = pageSize) => {
+      setLoadingList(true);
+      setError(null);
 
-    localStorage.setItem("selectedAgentId", agentId ? agentId.toString() : "");
-  } catch (err: any) {
-    setError(err.message || String(err));
-  } finally {
-    setLoadingRatingConversation(false);
-  }
-}, []);
+      const normalized = {
+        ...filters,
+        from:
+          typeof filters.from === "string"
+            ? filters.from
+            : formatoNicaragua(filters.from as Date),
+        to:
+          typeof filters.to === "string"
+            ? filters.to
+            : formatoNicaragua(filters.to as Date),
+      };
 
-
-  const fetchWaiting = useCallback(async (pg = waitingPage, ps = waitingPageSize) => {
-    setLoadingWaiting(true);
-    setError(null);
-    try {
-      const list = await ConversationService.getWaitingClient(filters, pg, ps, threshold);
-      setWaitingClient(list.items);
-      setTotalCountWaiting(list.meta.totalCount);
-      setWaitingPage(pg);
-      setWaitingPageSize(ps);
-    } catch (err: any) {
-      setError(err.message || String(err));
-    } finally {
-      setLoadingWaiting(false);
-    }
-  }, [filters, threshold, waitingPage, waitingPageSize]);
-
-  useEffect(() => {
-    fetchWaiting();
-  }, [fetchWaiting]);
-
-    useEffect(() => {
-    fetchRatingConversation();
-  }, [fetchWaiting, fetchRatingConversation]);
-
-  const fetchConversationByClientPage = useCallback(async (pg = page, ps = pageSize) => {
-    setLoadingList(true);
-    setError(null);
-    const normalized = {
-      ...filters,
-      from: typeof filters.from === "string" ? filters.from : formatoNicaragua(filters.from as Date),
-      to: typeof filters.to === "string" ? filters.to : formatoNicaragua(filters.to as Date)
-    };
-    try {
-      const res = await ConversationService.getConversationByClient(normalized as FilterForm, pg, ps);
-      setConversationClient(res.items);
-      setTotalCount(res.meta.totalCount);
-      setPage(pg);
-      setPageSize(ps);
-    } catch (err: any) {
-      setError(err.message || String(err));
-    } finally {
-      setLoadingList(false);
-    }
-  }, [filters, page, pageSize]);
+      try {
+        const res = await ConversationService.getConversationByClient(normalized as FilterForm, pg, ps);
+        setConversationClient(res.items);
+        setTotalCount(res.meta.totalCount);
+        setPage(pg);
+        setPageSize(ps);
+      } catch (err: any) {
+        setError(err.message || String(err));
+      } finally {
+        setLoadingList(false);
+      }
+    },
+    [filters, page, pageSize]
+  );
 
   useEffect(() => {
     fetchConversationByClientPage();
   }, [fetchConversationByClientPage, refresh]);
 
+  useEffect(() => {
+    fetchWaiting();
+  }, [fetchWaiting]);
+
   const updateDate = (field: keyof FilterForm, date: Date | null) => {
     if (date) {
-      setFilters(prev => ({ ...prev, [field]: formatoNicaragua(date) }));
+      setFilters((prev) => ({ ...prev, [field]: formatoNicaragua(date) }));
     }
   };
 
   const handleApply = (form: FilterForm) => {
-    setFilters(form);
-    setIsFilterOpen(false);
-  };
+  setFilters(form);
+  setIsFilterOpen(false);
+
+  setPage(1);
+  setWaitingPage(1);
+  setRatingConversationPage(1);
+
+  const agentFromFilter = form.agentId ?? null;
+  console.log("Limipar al agente del filtro", form.agentId)
+
+  // if (agentFromFilter !== null) {
+  //   setSelectedAgentId(agentFromFilter);
+  // }
+
+  fetchRatingConversation(agentFromFilter, 1, ratingConversationPageSize);
+};
+
 
   const handleRefresh = () => {
-    setRefresh(prev => !prev);
-    setPage(1)
-    setWaitingPage(1)
-      fetchData();
+    setRefresh((prev) => !prev);
+    setPage(1);
+    setWaitingPage(1);
+    fetchData();
     fetchWaiting(1, waitingPageSize);
     fetchConversationByClientPage(1, pageSize);
+    fetchRatingConversation(selectedAgentId, 1, ratingConversationPageSize);
   };
 
   return {
@@ -267,8 +280,6 @@ export const useConversationChart = () => {
     waitingClient,
     responseAgentAverage,
     conversationClient,
-    // criticialClientTime,
-    
     threshold,
     setThreshold,
     filterRatingConversationByAgent,
@@ -294,8 +305,6 @@ export const useConversationChart = () => {
     handleApply,
     setPageSize,
     handleRefresh,
-
-    // New data
     ratingConversationData,
     RatingConversation,
     fetchRatingConversation,
@@ -308,6 +317,7 @@ export const useConversationChart = () => {
     setRatingConversationPageTotalCount,
     selectedAgentId,
     setSelectedAgentId,
-    fetchRatingByAgent
+    fetchRatingByAgent,
+    fetchWaiting,
   };
 };

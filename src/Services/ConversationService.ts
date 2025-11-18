@@ -221,21 +221,45 @@ class ConversationServ {
     return data.data;
   }
 
-  // async getByStateWithOut(
-  //   stateWithOut: string,
-  //   page: number,
-  //   pageSize: number
-  // ): Promise<PagedResponse<ConversationDto>> {
-  //   const params = {
-  //     PageNumber: page,
-  //     PageSize: pageSize
-  //   };
-  //   const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-  //     `/Conversations/${encodeURIComponent(stateWithOut)}/getBystateWithout`,
-  //     { params }
-  //   );
-  //   return data.data;
-  // }
+  async getByStateWithOut(
+    stateWithOut: string,
+    page: number,
+    pageSize: number
+  ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      PageNumber: page,
+      PageSize: pageSize
+    };
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      `/Conversations/${encodeURIComponent(stateWithOut)}/getBystateWithout`,
+      { params }
+    );
+    return data.data;
+  }
+
+    async getByRatingAsync(
+    rating: number,
+    page: number,
+    pageSize: number,
+    selectedAgentId?: number,
+  ): Promise<PagedResponse<ConversationDto>> {
+    const params = {
+      PageNumber: page,
+      PageSize: pageSize
+    };
+
+    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+      `/Conversations/${encodeURIComponent(rating)}/getByRating`,
+      { 
+        params:{
+          selectedAgentId,
+          ...params,
+          
+        }
+       }
+    );
+    return data.data;
+  }
 
   async getWaitingClient(
     filters: FilterForm,
@@ -328,57 +352,45 @@ class ConversationServ {
     return data.data;
   }
 
-  async getRatingConversation(
-    page: number,
-    pageSize: number,
-    agentId?: number
-  ): Promise<PagedResponse<ConversationDto>> {
+async getRatingConversation(
+  page: number,
+  pageSize: number,
+  filters: FilterForm,
+  agentId?: number
+): Promise<PagedResponse<ConversationDto>> {
 
-    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-      "/Conversations/ratingConversation",
-      {
-        params: {
-          PageNumber: page,
-          PageSize: pageSize,
-          agentId: agentId || null
-        }
-      }
-    );
-    return data.data;
-  }
+  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+    "/Conversations/ratingConversation",
+    {
+      params: {
+        PageNumber: page,
+        PageSize: pageSize,
+        agentPId: agentId,
+        ...filters
+      },
+    }
+  );
+
+  return data.data;
+}
 
   async getConversationRatingByAgents(
-    agentId?: number
+  filters: FilterForm,
+  agentId?: number
   ): Promise<ConversationRatingByAgents[]> {
 
-    const { data } = await api.get<ApiResponse<ConversationRatingByAgents[]>>(
-      "/Conversations/ratingByAgents",
-      {
-        params: {
-          agentId: agentId || null
-        }
+  const { data } = await api.get<ApiResponse<ConversationRatingByAgents[]>>(
+    "/Conversations/ratingByAgents",
+    {
+      params: {
+        agentPId: agentId ?? null,
+        ...filters,
       }
-    );
-    return data.data;
-  }
+    }
+  );
 
-  // async getConversationsByRole(
-  //   from?: Date,
-  //   to?: Date,
-  //   page: number = 1,
-  //   pageSize: number = 10
-  // ): Promise<PagedResponse<ConversationDto>> {
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   const params: Record<string, any> = { pageNumber: page, pageSize }
-  //   if (from) params.from = from.toISOString()
-  //   if (to)   params.to   = to.toISOString()
-
-  //   const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-  //     "/Conversations/getByRole",
-  //     { params }
-  //   )
-  //   return data.data
-  // }
+  return data.data;
+}
 
   async getConversationsByRole(
     from?: Date,
@@ -425,7 +437,6 @@ class ConversationServ {
 
 }
 
-// Las fechas no llegan a ser aceptable por endpoint de asp net core web api, no acceptable me da
 export  async function exportChatPdfByContact(  
   { contactId, conversationId, from, to, title, subtitle }: exportPDFArgs
     ): Promise<void> {

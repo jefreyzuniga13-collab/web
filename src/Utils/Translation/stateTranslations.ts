@@ -6,4 +6,5 @@ export const stateTranslations: Record<StateTranslation, string> = {
     Human: "Asignado",
     Closed: "Cerrado",
     Incomplete: "Incompleto",
+    Paused: 'Pausada'
 };

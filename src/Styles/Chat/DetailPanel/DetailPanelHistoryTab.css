@@ -30,9 +30,6 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
-.detailPanelHistoryTab_rating{
-  color: rgb(192, 192, 34);
-}
 
 .detailPanel-history__filters {
   position: absolute;

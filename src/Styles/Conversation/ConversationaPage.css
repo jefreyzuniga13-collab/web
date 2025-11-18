@@ -101,7 +101,9 @@
 .status_Waiting{
   background-color: var(--color-warning);
 }
-
+.status_Paused{
+  background-color: var(--color-secondary);
+}
 .conversationList{
   max-height: 500px;
   overflow-y: scroll;

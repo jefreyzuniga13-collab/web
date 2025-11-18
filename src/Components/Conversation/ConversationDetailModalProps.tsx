@@ -1,6 +1,8 @@
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
-import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
+import type { ConversationDto, 
+  // MessageDto, AttachmentDto 
+} from '@/Interfaces/Chat/ChatInterfaces'
 import '@/Styles/Conversation/ConversationDetailModal.css'
 import type { StateTranslation } from '@/Interfaces/GlobalInterface'
 import { stateTranslations } from '@/Utils/Translation/stateTranslations'
@@ -21,11 +23,11 @@ interface ConversationDetailModalProps {
         }
   }
 
-  const formatTime = (iso?: string) => {
-  if (!iso) return ''
-  const match = iso.match(/T(\d{2}:\d{2})/)
-  return match ? match[1] : ''
-}
+//   const formatTime = (iso?: string) => {
+//   if (!iso) return ''
+//   const match = iso.match(/T(\d{2}:\d{2})/)
+//   return match ? match[1] : ''
+// }
 
 export default function ConversationDetailModal({ isOpen, data, onClose }: ConversationDetailModalProps) {
   if (!isOpen || !data) return null
@@ -82,7 +84,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
           </div>
         </section>
 
-        {data.messages && (
+        {/* {data.messages && (
           <section className="conversation-modal__section conversation-modal__section--messages">
             <h3 className="conversation-modal__section-title">Mensajes</h3>
             <ul className="conversation-modal__messages">
@@ -114,7 +116,7 @@ export default function ConversationDetailModal({ isOpen, data, onClose }: Conve
               ))}
             </ul>
           </section>
-        )}
+        )} */}
       </div>
     </div>
   )
