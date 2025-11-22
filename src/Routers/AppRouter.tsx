@@ -34,8 +34,6 @@ const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
 // const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
 const ClientManagementPanel    = lazy(() => import('@/Pages/Crm/ClientManagementPanel'))
 
-
-
 export function AppRouter() {
   return (
     <Suspense fallback={

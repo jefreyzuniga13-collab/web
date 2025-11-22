@@ -5,12 +5,22 @@ import { Check, Edit, X } from "lucide-react";
 import {
   FaCloud,
   FaLaptopHouse,
-  FaMapMarkerAlt,
   FaRegBuilding,
   FaRegClock,
   FaSync,
   FaTag,
+  // FaBuilding,
+  FaExclamationTriangle,
+  FaFlag,
+  FaMapMarkerAlt,
+  FaHome,
+  FaCalendarAlt,
+  FaEnvelope,
+  FaIdCard,
+  FaUserTie,
+  FaServer
 } from "react-icons/fa";
+
 import { IoChatboxEllipsesOutline } from "react-icons/io5";
 import { GrMoreVertical } from "react-icons/gr";
 import ShowInformationExpanded from "@/Components/Chat/ShowInformationExpanded";
@@ -38,6 +48,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
     useState<boolean>(false);
   const [content, setContent] = useState<string | null | undefined>("");
   const [title, setTitle] = useState<string>("");
+
 
   return (
     <>
@@ -70,6 +81,16 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
           
         </header>
 
+{/* PCG START*/}
+          {/* <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Razón social</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaBuilding className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.registeredName)}
+            </span>
+          </div> */}
+
+
         <div className="detailPanel-clientGrid">
           <div className="detailPanel-contactGroup">
             <p className="detailPanel-clientGroup__title">Nombre</p>
@@ -78,6 +99,112 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
               {displayOrDash(clientLocal?.name)}
             </span>
           </div>
+          
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Origen</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaServer className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.legacySourceSystem)}
+            </span>
+          </div>
+
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">País de origen</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaFlag className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.homeCountry)}
+            </span>
+          </div>
+
+
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Email representante</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaUserTie className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.representativeEmail)}
+            </span>
+          </div>
+          
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Email</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaEnvelope className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.email)}
+            </span>
+          </div>
+
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Dirección</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaHome className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.address)}
+            </span>
+          </div>
+
+          <div className="detailPanel-contactGroup detailPanel-contactGroup__expanded"
+          onClick={() => {
+              setContent(clientLocal?.location);
+              setTitle("Ubicación");
+              setIsshowInformationExpanded(true);
+            }}
+            >
+            <p className="detailPanel-clientGroup__title">Ubicación</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaMapMarkerAlt className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.location)}
+            </span>
+          </div>
+
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Fecha ingreso</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaCalendarAlt className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.activity?.toLocaleLowerCase())}
+            </span>
+          </div>
+
+          {/* <div
+            className="detailPanel-contactGroup detailPanel-contactGroup__expanded"
+            onClick={() => {
+              setContent(clientLocal?.workModel);
+              setTitle("Modelo de trabajo");
+              setIsshowInformationExpanded(true);
+            }}
+          >
+            <p className="detailPanel-clientGroup__title">Modelo Trabajo</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaLaptopHouse className="detailPanel-icon" />
+              {displayOrDash(
+                (clientLocal as any)?.workModel
+              )}
+            </span>
+          </div> */}
+
+          <div className="detailPanel-contactGroup detailPanel-contactGroup__expanded"
+           onClick={() => {
+              setContent(clientLocal?.ambiguity);
+              setTitle("Observación");
+              setIsshowInformationExpanded(true);
+            }}>
+            <p className="detailPanel-clientGroup__title">Observación</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaExclamationTriangle className="detailPanel-icon" />
+              {clientLocal?.ambiguity}
+            </span>
+          </div>
+
+          <div className="detailPanel-contactGroup">
+            <p className="detailPanel-clientGroup__title">Identificación</p>
+            <span className="detailPanel-clientGroup__cliente">
+              <FaIdCard className="detailPanel-icon" />
+              {displayOrDash(clientLocal?.identificationTypeCode)}
+            </span>
+          </div>
+
+
+
+            
+          {/* PCG END */}
 
           <div className="detailPanel-contactGroup">
             <p className="detailPanel-clientGroup__title">Dirección</p>

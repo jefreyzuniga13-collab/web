@@ -253,8 +253,6 @@ export const useConversationChart = () => {
   setRatingConversationPage(1);
 
   const agentFromFilter = form.agentId ?? null;
-  console.log("Limipar al agente del filtro", form.agentId)
-
   // if (agentFromFilter !== null) {
   //   setSelectedAgentId(agentFromFilter);
   // }

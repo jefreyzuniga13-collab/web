@@ -9,15 +9,7 @@ import {
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/assignModalSlice";
 import { useSystemParams } from "@/Hooks/Setting/useSystemParams";
-interface AuthStorage {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: string;
-  userId: number;
-}
-interface JwtPayload {
-  role: string;
-}
+import type { AuthStorage, JwtPayload } from "@/Interfaces/Auth/AuthInterface";
 type FilterOption = { label: string; value: string; content: string };
 
 const FILTER_ORDER_STORAGE_KEY = "filterOrder";

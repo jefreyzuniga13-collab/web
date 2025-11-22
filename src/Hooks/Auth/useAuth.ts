@@ -122,12 +122,35 @@ export function useAuth() {
     )
 
 
-  const logout = useCallback(() => {
-    dispatch(clearAuth())
-    toast.info(t('login.notifications.logout'))
-    navigate('/login')
+  // const logout = useCallback(() => {
+  //   dispatch(clearAuth())
+  //   toast.info(t('login.notifications.logout'))
+  //   navigate('/login')
 
-  }, [dispatch, navigate, t])
+  // }, [dispatch, navigate, t])
+
+  const logout = useCallback(async () => {
+    const authRaw = localStorage.getItem('auth')
+    const auth: AuthData | null = authRaw ? JSON.parse(authRaw) : null
+    const uid = auth?.userId
+
+    try {
+      if (uid) {
+        const res = await authService.logoutAsync(Number(uid))
+        toast.info(res?.message ?? 'Sesión cerrada')
+      } else {
+        toast.info('Sesión cerrada')
+      }
+    } catch {
+      toast.error('Error al cerrar sesión')
+    }
+
+    dispatch(clearAuth())
+    localStorage.removeItem('auth')
+    navigate('/login', { replace: true })
+  }, [dispatch, navigate])
+
+
 
   return {
     login,

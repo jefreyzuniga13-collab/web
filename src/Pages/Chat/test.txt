@@ -1,0 +1,1303 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Contact/ContactInterface'
+import { contactService } from '@/Services/Contact/ContactService'
+import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+
+const useContact = (contactId?: number) => {
+  const [data, setData] = useState<ContactLogInterface[]>([])
+  const [contactByClient, setContactByClient] = useState<ContactLogInterface[]>([])
+  const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
+  const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(30)
+  const [totalCount, setTotalCount] = useState(0)
+  const [loadingList, setLoadingList] = useState(false)
+  const [loadingItem, setLoadingItem] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
+
+  const navigate = useNavigate()
+
+
+  
+  const fetchPage = useCallback(
+    async (p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+        const res: PagedResponse<ContactLogInterface> = await contactService.getAllAsync(globalFilter, p, s)
+        const verifiedRes: PagedResponse<ContactLogInterface> = await contactService.getAllVerifiedAsync(p, s)
+
+        setData(res.items)
+        setVerifiedContact(verifiedRes.items);
+
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [globalFilter, page, pageSize]
+  )
+
+const getByClient = useCallback(
+  async (clientId: string, p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+        const res = await contactService.getContactByClientAsync(clientId, p, s)
+
+        setContactByClient(res.items)
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
+
+        return res 
+      } catch (err: any) {
+        setError(err)
+        return null
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [page, pageSize]
+  )
+
+  const getByClientCode = useCallback(
+  async (clientCode: string, p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+
+        const res = await contactService.getContactByClientCodeAsync(clientCode, p, s)
+
+        //aqui esta no es a contacto es a contactByClientem, y no se hace la peticion
+        setContactByClient(res.items)
+        setTotalCount(res.meta.totalCount)
+        setPage(res.meta.currentPage)
+        setPageSize(res.meta.pageSize)
+
+        return res 
+      } catch (err: any) {
+        setError(err)
+        return null
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [page, pageSize]
+)
+
+  const fetchById = useCallback(
+    async (id: number) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        const item = await contactService.getContactByIdAsync(id)
+        setSelectedData(item)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    []
+  )
+
+  const fetchByPhone = useCallback(
+    async (phone: string) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        const item = await contactService.getContactByPhoneAsync(phone)
+        setSelectedData(item)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    []
+  )
+
+  const create = useCallback(
+    async (values: ContactFormValues) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        const payload = { ...values } as ContactLogInterface
+        const newItem = await contactService.createAsync(payload)
+        setData(prev => [...prev, newItem])
+        setTotalCount(prev => prev + 1)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    []
+  )
+
+  const update = useCallback(
+    async (id: number, values: ContactFormValues) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        const payload = { ...(selectedData ?? {}), ...values, id } as ContactLogInterface
+        const updatedItem = await contactService.updateContactAsync(payload)
+        setData(prev => prev.map(item => (item.id === id ? updatedItem : item)))
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    [selectedData]
+  )
+
+  const toggle = useCallback(
+    async (id: number) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        await contactService.toggleAsync(id)
+        setData(prev =>
+          prev.map(item =>
+            item.id === id ? { ...item, isActive: !item.isActive } : item
+          )
+        )
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    []
+  )
+
+  const verify = useCallback(
+    async (phone: string) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        navigate(`/verify-contact/${phone}`)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  const openCreate = useCallback(() => {
+    setSelectedData(null)
+    setModalMode('create')
+    setModalOpen(true)
+  }, [])
+
+  const openEdit = useCallback((item: ContactLogInterface) => {
+    setSelectedData(item)
+    setModalMode('edit')
+    setModalOpen(true)
+  }, [])
+
+  const openView = useCallback((item: ContactLogInterface) => {
+    setSelectedData(item)
+    setModalMode('view')
+    setModalOpen(true)
+  }, [])
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+    setSelectedData(null)
+    setModalMode('create')
+  }, [])
+
+  useEffect(() => {
+    fetchPage()
+  }, [fetchPage, globalFilter, page, pageSize])
+
+  const handleSubmit = useCallback(
+    (values: ContactFormValues) => {
+      if (modalMode === 'create') create(values)
+      else if (modalMode === 'edit' && selectedData)
+        update(selectedData.id as number, values)
+      closeModal()
+    },
+    [modalMode, selectedData, create, update, closeModal]
+  )
+
+
+  useEffect(() => {
+  if (typeof contactId !== 'number' || contactId <= 0) {
+    setSelectedData(null)
+    return
+  }
+
+  setSelectedData(null) 
+  fetchById(contactId)
+}, [contactId, fetchById])
+
+  return {
+    data,
+    verifiedContact,
+    selectedData,
+    loading: loadingList || loadingItem,
+    error,
+    page,
+    pageSize,
+    totalCount,
+    isModalOpen,
+    modalMode,
+    globalFilter,
+    setPage: (p: number) => fetchPage(p, pageSize),
+    setPageSize: (s: number) => fetchPage(1, s),
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
+    fetchPage,
+    fetchById,
+    fetchByPhone,
+    getByClient,
+    create,
+    update,
+    toggle,
+    verify,
+    setGlobalFilter,
+
+    //Contcatos del clientes
+    getByClientCode,
+    contactByClient
+    
+  }
+}
+
+export default useContact;
+
+import { useCallback, useMemo, useState } from 'react'
+import { ClientsService } from '@/Services/Crm/ClientService'
+import type {
+  ClientRequestDTO,
+  ClientUpdateRequestDTO,
+  ClientResponseDTO,
+  DeviceRequestDTO,
+  CredentialRequestDTO,
+  SystemRequestDTO,
+} from '@/Interfaces/Crm/ClientInterface'
+
+export function useClient() {
+  const [client, setClient] = useState<ClientResponseDTO | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fn()
+      return res
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e))
+      setError(err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const getAllAsync = useCallback(
+    (filter: string, page: number, pageSize: number) =>
+      run(() => ClientsService.getAllAsync(filter, page, pageSize)),
+    [run]
+  )
+
+  const getByIdAsync = useCallback(
+    async (idOrCode: number | string) => {
+      const data =
+        typeof idOrCode === 'number'
+          ? await run(() => ClientsService.getByIdAsync(idOrCode))
+          : await run(() => ClientsService.getByCodeAsync(String(idOrCode)))
+      setClient(data)
+      return data
+    },
+    [run]
+  )
+
+  const createAsync = useCallback(
+    async (payload: ClientRequestDTO) => {
+      const data = await run(() => ClientsService.createAsync(payload))
+      setClient(data)
+      return data
+    },
+    [run]
+  )
+
+  const updateAsync = useCallback(
+    async (id: number, payload: ClientUpdateRequestDTO) => {
+      const data = await run(() => ClientsService.updateAsync(id, payload))
+      setClient(data)
+      return data
+    },
+    [run]
+  )
+
+  const toggleStatusAsync = useCallback(
+    async (id: number) => {
+      const data = await run(() => ClientsService.toggleStatusAsync(id))
+      setClient(data)
+      return data
+    },
+    [run]
+  )
+
+  const addDeviceAsync = useCallback(
+    async (clientId: number, device: DeviceRequestDTO) => {
+      const data = await run(() => ClientsService.addDeviceAsync(clientId, device))
+      return data
+    },
+    [run]
+  )
+
+  const addSystemAsync = useCallback(
+    async (clientId: number, system: SystemRequestDTO) => {
+      const data = await run(() =>
+        ClientsService.addSystemByIdAsync(clientId, system.outsourcedSystemsId)
+      )
+      return data
+    },
+    [run]
+  )
+
+  const addSystemByIdAsync = useCallback(
+    async (clientId: number, systemId: number) => {
+      const data = await run(() => ClientsService.addSystemByIdAsync(clientId, systemId))
+      return data
+    },
+    [run]
+  )
+
+  const addCredentialHostingAsync = useCallback(
+    async (clientId: number, credential: CredentialRequestDTO) => {
+
+      const data = await run(() => ClientsService.addCredentialHostingAsync(clientId, credential))
+      return data
+    },
+    [run]
+  )
+
+  const addCredentialForDeviceAsync = useCallback(
+    async (clientId: number, deviceId: number, credential: CredentialRequestDTO) => {
+      const data = await run(() =>
+        ClientsService.addCredentialForDeviceAsync(clientId, deviceId, credential)
+      )
+      return data
+    },
+    [run]
+  )
+
+  const addCredentialForSystemAsync = useCallback(
+    async (clientId: number, clientSystemId: number, credential: CredentialRequestDTO) => {
+      const data = await run(() =>
+        ClientsService.addCredentialForSystemAsync(clientId, clientSystemId, credential)
+      )
+      return data
+    },
+    [run]
+  )
+
+  const linkExistingContactsAsync = useCallback(
+    async (clientId: number, contactIds: number[]) => {
+      const data = await run(() => ClientsService.linkExistingContactsAsync(clientId, contactIds))
+      return data
+    },
+    [run]
+  )
+
+  const value = useMemo(
+    () => ({
+      client,
+      loading,
+      error,
+      setClient,
+      getAllAsync,
+      getByIdAsync,
+      createAsync,
+      updateAsync,
+      toggleStatusAsync,
+      addDeviceAsync,
+      addSystemAsync,
+      addSystemByIdAsync,
+      addCredentialHostingAsync,
+      addCredentialForDeviceAsync,
+      addCredentialForSystemAsync,
+      linkExistingContactsAsync,
+    }),
+    [
+      client,
+      loading,
+      error,
+      getAllAsync,
+      getByIdAsync,
+      createAsync,
+      updateAsync,
+      toggleStatusAsync,
+      addDeviceAsync,
+      addSystemAsync,
+      addSystemByIdAsync,
+      addCredentialHostingAsync,
+      addCredentialForDeviceAsync,
+      addCredentialForSystemAsync,
+      linkExistingContactsAsync,
+    ]
+  )
+
+  return value
+}
+
+export default useClient/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from 'react'
+import { OutsourcedSystemsService } from '@/Services/Crm/OutsourcedSystemService'
+import type {
+  OutsourcedSystemsRequestDTO,
+  OutsourcedSystemsResponseDTO,
+} from '@/Interfaces/Crm/ClientInterface'
+
+export const useOutsourcedSystems = () => {
+  const [items, setItems] = useState<OutsourcedSystemsResponseDTO[]>([])
+  const [selected, setSelected] = useState<OutsourcedSystemsResponseDTO | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(30)
+  const [totalCount, setTotalCount] = useState(0)
+  const [loadingList, setLoadingList] = useState(false)
+  const [loadingItem, setLoadingItem] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'update' | 'view'>('create')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState<string>('')
+
+  const fetchPage = useCallback(
+    async (p = page, s = pageSize) => {
+      setLoadingList(true)
+      setError(null)
+      try {
+        const resp = await OutsourcedSystemsService.getAllAsync(globalFilter, p, s)
+        setItems(resp.items)
+        setTotalCount(resp.meta.totalCount)
+        setPage(resp.meta.currentPage)
+        setPageSize(resp.meta.pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingList(false)
+      }
+    },
+    [globalFilter, page, pageSize]
+  )
+
+  const fetchById = useCallback(async (id: number) => {
+    setLoadingItem(true)
+    setError(null)
+    try {
+      const ws = await OutsourcedSystemsService.getByIdAsync(id)
+      setSelected(ws)
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoadingItem(false)
+    }
+  }, [])
+
+  const create = useCallback(
+    async (values: OutsourcedSystemsRequestDTO) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        await OutsourcedSystemsService.createAsync(values)
+        await fetchPage(1, pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    [fetchPage, pageSize]
+  )
+
+  const update = useCallback(
+    async (id: number, values: OutsourcedSystemsRequestDTO) => {
+      setLoadingItem(true)
+      setError(null)
+      try {
+        await OutsourcedSystemsService.updateAsync(id, values)
+        await fetchPage(page, pageSize)
+      } catch (err: any) {
+        setError(err)
+      } finally {
+        setLoadingItem(false)
+      }
+    },
+    [fetchPage, page, pageSize]
+  )
+
+  const toggleStatus = useCallback(async (id: number) => {
+    setLoadingItem(true)
+    setError(null)
+    try {
+      const updated = await OutsourcedSystemsService.toggleAsync(id)
+      setItems(ws => ws.map(w => (w.id === updated.id ? updated : w)))
+      setSelected(s => (s && s.id === updated.id ? updated : s))
+    } catch (err: any) {
+      setError(err)
+    } finally {
+      setLoadingItem(false)
+    }
+  }, [])
+
+  const openCreate = useCallback(() => {
+    setSelected(null)
+    setModalMode('create')
+    setIsModalOpen(true)
+  }, [])
+
+  const openEdit = useCallback(
+    (id: number) => {
+      const cached = items.find(w => w.id === id) || null
+      setSelected(cached)
+      setModalMode('update')
+      setIsModalOpen(true)
+      fetchById(id)
+    },
+    [items, fetchById]
+  )
+
+  const openView = useCallback(
+    (id: number) => {
+      const cached = items.find(w => w.id === id) || null
+      setSelected(cached)
+      setModalMode('view')
+      setIsModalOpen(true)
+      fetchById(id)
+    },
+    [items, fetchById]
+  )
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false)
+    setSelected(null)
+  }, [])
+
+  const handleSubmit = useCallback(
+    (values: OutsourcedSystemsRequestDTO) => {
+      if (modalMode === 'create') {
+        create(values)
+      } else if (modalMode === 'update' && selected) {
+        update(selected.id, values)
+      }
+      closeModal()
+    },
+    [modalMode, selected, create, update, closeModal]
+  )
+
+  useEffect(() => {
+    fetchPage()
+  }, [fetchPage, globalFilter])
+
+  return {
+    items,
+    selected,
+    loading: loadingList || loadingItem,
+    error,
+    page,
+    pageSize,
+    totalCount,
+    fetchPage,
+    setPage: (p: number) => fetchPage(p, pageSize),
+    setPageSize: (s: number) => fetchPage(1, s),
+    modalMode,
+    isModalOpen,
+    openCreate,
+    openEdit,
+    openView,
+    closeModal,
+    handleSubmit,
+    toggleStatus,
+    globalFilter,
+    setGlobalFilter,
+    create,
+    update,
+    fetchById,
+  }
+}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useEffect, useState } from "react";
+import type { ClientUpdateRequestDTO } from "@/Interfaces/Crm/ClientInterface";
+
+
+/**
+ * Maneja el estado y la lógica para editar datos del cliente.
+ * Centraliza los campos editables en un solo objeto y expone
+ * setters generales y la función de guardado.
+ */
+export interface UseClientEditSectionResult {
+  clientEditOpen: boolean;
+  setClientEditOpen: (v: boolean) => void;
+  clientEdit: ClientUpdateRequestDTO;
+  handleChange: <K extends keyof ClientUpdateRequestDTO>(
+    field: K,
+    value: ClientUpdateRequestDTO[K]
+  ) => void;
+  handleNumberChange: (field: keyof ClientUpdateRequestDTO, value: string) => void;
+  saveClientEdits: () => Promise<void>;
+}
+
+export const useClientEditSection = (
+  clientLocal: any,
+  clientId: number | undefined,
+  updateClientAsync: (id: number, dto: Partial<ClientUpdateRequestDTO>) => Promise<any>,
+  reloadClient: () => Promise<void>
+): UseClientEditSectionResult => {
+  const [clientEditOpen, setClientEditOpen] = useState(false);
+
+  const [clientEdit, setClientEdit] = useState<ClientUpdateRequestDTO>({
+    workModel: clientLocal?.workModel ?? "",
+    priority: clientLocal?.priority ?? "",
+    supportType: clientLocal?.supportType ?? "",
+    enviromentType: clientLocal?.enviromentType ?? "",
+    isSupportActive: !!clientLocal?.isSupportActive,
+    isFranchise: !!clientLocal?.isFranchise,
+    supportLimitTime: clientLocal?.supportLimitTime ?? null,
+    observation: clientLocal?.observation ?? "",
+  });
+
+  useEffect(() => {
+    setClientEdit({
+      workModel: clientLocal?.workModel ?? "",
+      priority: clientLocal?.priority ?? "",
+      supportType: clientLocal?.supportType ?? "",
+      enviromentType: clientLocal?.enviromentType ?? "",
+      isSupportActive: !!clientLocal?.isSupportActive,
+      isFranchise: !!clientLocal?.isFranchise,
+      supportLimitTime: clientLocal?.supportLimitTime ?? null,
+      observation: clientLocal?.observation ?? "",
+    });
+  }, [clientLocal, clientEditOpen]);
+
+  const handleChange = useCallback(
+    <K extends keyof ClientUpdateRequestDTO>(field: K, value: ClientUpdateRequestDTO[K]) => {
+      setClientEdit(prev => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    []
+  );
+
+  const handleNumberChange = useCallback(
+    (field: keyof ClientUpdateRequestDTO, value: string) => {
+      setClientEdit(prev => ({
+        ...prev,
+        [field]: value === "" ? null : Number(value),
+      }));
+    },
+    []
+  );
+
+  const saveClientEdits = useCallback(async () => {
+    if (!clientId) return;
+
+    const patch: Partial<ClientUpdateRequestDTO> = {
+      workModel: clientEdit.workModel,
+      priority: clientEdit.priority,
+      supportType: clientEdit.supportType,
+      enviromentType: clientEdit.enviromentType,
+      isSupportActive: clientEdit.isSupportActive,
+      isFranchise: clientEdit.isFranchise,
+      supportLimitTime: clientEdit.supportLimitTime ?? null,
+      observation: clientEdit.observation,
+    };
+
+    await updateClientAsync(clientId, patch);
+    await reloadClient();
+    setClientEditOpen(false);
+  }, [clientId, clientEdit, updateClientAsync, reloadClient]);
+
+  return {
+    clientEditOpen,
+    setClientEditOpen,
+    clientEdit,
+    handleChange,
+    handleNumberChange,
+    saveClientEdits,
+  };
+};/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useMemo, useState } from "react";
+import type { SystemRequestDTO } from "@/Interfaces/Crm/ClientInterface";
+
+export interface UseSystemSectionArgs {
+  clientId?: number;
+  client: any;
+  sysCatalog: any[];
+  sysPageSize: number;
+  fetchSysPage: (page: number, size: number) => Promise<void> | void;
+  addSystemAsync: (clientId: number, dto: SystemRequestDTO) => Promise<any>;
+  reloadClient: () => Promise<void>;
+  setClient: (updater: (prev: any) => any) => void;
+}
+
+export interface UseSystemSectionResult {
+  systems: any[];
+  sysSearch: string;
+  setSysSearch: (v: string) => void;
+  filteredSystems: any[];
+  pickSysOpen: boolean;
+  setPickSysOpen: (v: boolean) => void;
+  newSystem: SystemRequestDTO;
+  setNewSystem: (v: SystemRequestDTO) => void;
+  openSystemPicker: () => void;
+  addPickedSystem: () => Promise<void>;
+}
+
+
+/**
+ * Gestiona los sistemas asociados al cliente: selección desde catálogo
+ * y registro de nuevos sistemas en la relación cliente-sistema.
+ */
+export const useSystemSection = ({
+  clientId,
+  client,
+  sysCatalog,
+  sysPageSize,
+  fetchSysPage,
+  addSystemAsync,
+  reloadClient,
+  setClient,
+}: UseSystemSectionArgs): UseSystemSectionResult => {
+  const systems = useMemo(() => {
+    const list = ((client as any)?.outsourcedSystems ?? []) as any[];
+    return list.map(s => ({ ...s, credentials: s.credentials ?? [] }));
+  }, [client]);
+
+  const [sysSearch, setSysSearch] = useState("");
+  const filteredSystems = useMemo(() => {
+    const n = sysSearch.trim().toLowerCase();
+    if (!n) return systems;
+    return systems.filter((s: any) =>
+      String(s.name).toLowerCase().includes(n) ||
+      String(s.version ?? "").toLowerCase().includes(n)
+    );
+  }, [systems, sysSearch]);
+
+  const [pickSysOpen, setPickSysOpen] = useState(false);
+  const [newSystem, setNewSystem] = useState<SystemRequestDTO>({
+    outsourcedSystemsId: 0,
+    isActive: true,
+  });
+
+  const openSystemPicker = useCallback(() => {
+    setPickSysOpen(true);
+    fetchSysPage(1, sysPageSize);
+  }, [fetchSysPage, sysPageSize]);
+
+  const addPickedSystem = useCallback(async () => {
+    if (!clientId || !newSystem.outsourcedSystemsId) return;
+    const added = await addSystemAsync(clientId, newSystem);
+    if (added) {
+      setClient((prev: any) => {
+        if (!prev) return prev;
+        const list = Array.isArray(prev.outsourcedSystems)
+          ? [...prev.outsourcedSystems]
+          : [];
+        const fromCatalog = sysCatalog.find(
+          s => s.id === newSystem.outsourcedSystemsId
+        );
+        if (fromCatalog) {
+          list.unshift({
+            id: (added as any).id ?? Date.now(),
+            name: fromCatalog.name,
+            description: fromCatalog.description,
+            version: fromCatalog.version,
+            isActive: !!newSystem.isActive,
+            credentials: [],
+          });
+        }
+        return { ...prev, outsourcedSystems: list };
+      });
+    }
+    await reloadClient();
+    setNewSystem({ outsourcedSystemsId: 0, isActive: true });
+    setPickSysOpen(false);
+  }, [
+    clientId,
+    newSystem,
+    addSystemAsync,
+    reloadClient,
+    sysCatalog,
+    setClient,
+  ]);
+
+  return {
+    systems,
+    sysSearch,
+    setSysSearch,
+    filteredSystems,
+    pickSysOpen,
+    setPickSysOpen,
+    newSystem,
+    setNewSystem,
+    openSystemPicker,
+    addPickedSystem,
+  };
+};
+
+export default useSystemSection;/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useMemo, useState } from "react";
+import type { ContactRequestDTO } from "@/Interfaces/Crm/ClientInterface";
+
+export interface UseContactSectionArgs {
+  clientId?: any;
+  client: any;
+  fetchContactsByClient: (clientId: any) => Promise<{ items?: any[] } | null | undefined>;
+  linkExistingContactsAsync: (clientId: number, contactIds: number[]) => Promise<any>;
+  reloadClient: () => Promise<void>;
+  setClient: (updater: (prev: any) => any) => void;
+}
+
+export interface PickerContactItem {
+  id: number;
+  fullName?: string | null;
+  phone?: string | null;
+}
+
+export interface UseContactSectionResult {
+  contacts: any[];
+  pickCtcOpen: boolean;
+  setPickCtcOpen: (v: boolean) => void;
+  newContact: ContactRequestDTO;
+  setNewContact: (v: ContactRequestDTO) => void;
+  contactPickerItems: PickerContactItem[];
+  openContactPicker: () => Promise<void>;
+  addPickedContact: () => Promise<void>;
+}
+
+/**
+ * Maneja la asignación de contactos a un cliente existente.
+ * Implementa carga dinámica, picker y vinculación en una sola fuente lógica.
+ */
+export const useContactSection = ({
+  clientId,
+  client,
+  fetchContactsByClient,
+  linkExistingContactsAsync,
+  reloadClient,
+  setClient,
+}: UseContactSectionArgs): UseContactSectionResult => {
+  const contacts = useMemo(() => {
+    return ((client as any)?.clientContacts ?? []) as any[];
+  }, [client]);
+
+  const [pickCtcOpen, setPickCtcOpen] = useState(false);
+  const [newContact, setNewContact] = useState<ContactRequestDTO>({
+    contactId: 0,
+    isActive: true,
+  });
+  const [contactPickerItems, setContactPickerItems] = useState<PickerContactItem[]>([]);
+
+  const openContactPicker = useCallback(async () => {
+    setPickCtcOpen(true);
+    if (clientId != null) {
+      const res = await fetchContactsByClient(clientId);
+      if (res?.items) {
+        setContactPickerItems(
+          res.items.map((r: any) => ({
+            id: r.id,
+            fullName: r.fullName ?? r.name ?? "",
+            phone: r.phone ?? "",
+          }))
+        );
+      }
+    }
+  }, [clientId, fetchContactsByClient]);
+
+  const addPickedContact = useCallback(async () => {
+    if (!clientId || !newContact.contactId) return;
+    await linkExistingContactsAsync(Number(clientId), [newContact.contactId]);
+    setClient((prev: any) => {
+      if (!prev) return prev;
+      const list = Array.isArray(prev.clientContacts)
+        ? [...prev.clientContacts]
+        : [];
+      const found = contactPickerItems.find(
+        c => c.id === newContact.contactId
+      );
+      if (found) {
+        list.unshift({
+          id: found.id,
+          fullName: found.fullName,
+          phone: found.phone,
+        });
+      }
+      return { ...prev, clientContacts: list };
+    });
+    await reloadClient();
+    setNewContact({ contactId: 0, isActive: true });
+    setPickCtcOpen(false);
+  }, [
+    clientId,
+    newContact,
+    linkExistingContactsAsync,
+    reloadClient,
+    setClient,
+    contactPickerItems,
+  ]);
+
+  return {
+    contacts,
+    pickCtcOpen,
+    setPickCtcOpen,
+    newContact,
+    setNewContact,
+    contactPickerItems,
+    openContactPicker,
+    addPickedContact,
+  };
+};
+
+export default useContactSection;/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type {
+  ClientResponseDTO,
+  CredentialRequestDTO,
+  CredentialResponseDTO,
+} from "@/Interfaces/Crm/ClientInterface";
+import { CredentialsService } from "@/Services/Crm/CredentialService";
+
+export type CredScope = "client" | "device" | "system";
+export type CredMode = "create" | "view" | "update";
+export type ErrorBag = Record<string, string>;
+
+export interface UseCredentialSectionArgs {
+  client: ClientResponseDTO | null | any;
+  addCredentialHostingAsync: (clientId: number, dto: CredentialRequestDTO) => Promise<any>;
+  addCredentialForDeviceAsync: (
+    clientId: number,
+    deviceId: number,
+    dto: CredentialRequestDTO
+  ) => Promise<any>;
+  addCredentialForSystemAsync: (
+    clientId: number,
+    systemId: number,
+    dto: CredentialRequestDTO
+  ) => Promise<any>;
+  reloadClient: () => Promise<void>;
+}
+
+export interface UseCredentialSectionResult {
+  credentials: CredentialResponseDTO[];
+  credModalOpen: boolean;
+  setCredModalOpen: (v: boolean) => void;
+  credMode: CredMode;
+  setCredMode: (v: CredMode) => void;
+  credScope: CredScope;
+  setCredScope: (v: CredScope) => void;
+  deviceTargetId: number | "";
+  setDeviceTargetId: (v: number | "") => void;
+  systemTargetId: number | "";
+  setSystemTargetId: (v: number | "") => void;
+  credReq: CredentialRequestDTO;
+  setCredReq: (
+    v: CredentialRequestDTO | ((prev: CredentialRequestDTO) => CredentialRequestDTO)
+  ) => void;
+  credErrors: ErrorBag;
+  setCredErrors: (v: ErrorBag) => void;
+  openCredCreate: () => void;
+  openCredView: (c: CredentialResponseDTO) => void;
+  openCredEdit: (c: CredentialResponseDTO) => void;
+  saveCred: () => Promise<void>;
+}
+
+/**
+ * Encapsula la gestión de credenciales para cliente, dispositivo o sistema.
+ * Controla modal, contextos de destino, validación y persistencia.
+ */
+export const useCredentialSection = ({
+  client,
+  addCredentialHostingAsync,
+  addCredentialForDeviceAsync,
+  addCredentialForSystemAsync,
+  reloadClient,
+}: UseCredentialSectionArgs): UseCredentialSectionResult => {
+  const credentials = useMemo<CredentialResponseDTO[]>(() => {
+    const c = client as ClientResponseDTO | null;
+    if (!c) return [];
+    const host = (c.hostingCredentials ?? []) as CredentialResponseDTO[];
+    const dev = (c.outsourcedDevices ?? []).flatMap((d: any) =>
+      (d.credentials ?? []).map((cr: CredentialResponseDTO) => ({
+        ...cr,
+        outsourcedDeviceId: d.id,
+        outsourcedDeviceName: d.name,
+      }))
+    );
+    const sys = (c.outsourcedSystems ?? []).flatMap((sy: any) =>
+      (sy.credentials ?? []).map((cr: CredentialResponseDTO) => ({
+        ...cr,
+        clientOutsourcedSystemsId: sy.id,
+        clientOutsourcedSystemsName: sy.name,
+      }))
+    );
+    return [...host, ...dev, ...sys];
+  }, [client]);
+
+  const [credModalOpen, setCredModalOpen] = useState(false);
+  const [credMode, setCredMode] = useState<CredMode>("create");
+  const [credScope, setCredScope] = useState<CredScope>("client");
+  const [deviceTargetId, setDeviceTargetId] = useState<number | "">("");
+  const [systemTargetId, setSystemTargetId] = useState<number | "">("");
+  const [credReq, internalSetCredReq] = useState<CredentialRequestDTO>({
+    catCredentialId: 0,
+    clientId: (client as any)?.id ?? 0,
+    outsourcedDeviceId: null,
+    clientOutsourcedSystemId: null,
+    user: "",
+    password: "",
+    instance: "",
+    port: "",
+    observation: "",
+    isActive: true,
+  });
+  const [credErrors, setCredErrors] = useState<ErrorBag>({});
+
+  const setCredReq = (
+    v: CredentialRequestDTO | ((prev: CredentialRequestDTO) => CredentialRequestDTO)
+  ) => {
+    internalSetCredReq(v as any);
+  };
+
+  useEffect(() => {
+    internalSetCredReq(s => ({
+      ...s,
+      clientId: (client as any)?.id ?? 0,
+    }));
+  }, [client?.id]);
+
+  const credPayload = useMemo<CredentialRequestDTO>(() => {
+    const clientId = (client as any)?.id ?? 0;
+    if (credScope === "client") {
+      return {
+        ...credReq,
+        clientId,
+        outsourcedDeviceId: null,
+        clientOutsourcedSystemId: null,
+      };
+    }
+    if (credScope === "device") {
+      return {
+        ...credReq,
+        clientId: null,
+        outsourcedDeviceId: deviceTargetId === "" ? null : Number(deviceTargetId),
+        clientOutsourcedSystemId: null,
+      };
+    }
+    return {
+      ...credReq,
+      clientId: null,
+      outsourcedDeviceId: null,
+      clientOutsourcedSystemId:
+        systemTargetId === "" ? null : Number(systemTargetId),
+    };
+  }, [credReq, credScope, client?.id, deviceTargetId, systemTargetId]);
+
+  const openCredCreate = useCallback(() => {
+    setCredMode("create");
+    setCredScope("client");
+    setDeviceTargetId("");
+    setSystemTargetId("");
+    setCredErrors({});
+    internalSetCredReq({
+      catCredentialId: 0,
+      clientId: (client as any)?.id ?? 0,
+      outsourcedDeviceId: null,
+      clientOutsourcedSystemId: null,
+      user: "",
+      password: "",
+      instance: "",
+      port: "",
+      observation: "",
+      isActive: true,
+    });
+    setCredModalOpen(true);
+  }, [client?.id]);
+
+  const openCredView = useCallback(
+    (c: CredentialResponseDTO) => {
+      const scope: CredScope = c.outsourcedDeviceId
+        ? "device"
+        : c.clientOutsourcedSystemsId
+        ? "system"
+        : "client";
+      setCredMode("view");
+      setCredScope(scope);
+      setDeviceTargetId(c.outsourcedDeviceId ?? "");
+      setSystemTargetId(c.clientOutsourcedSystemsId ?? "");
+      setCredErrors({});
+      internalSetCredReq({
+        id: c.id,
+        catCredentialId: c.catCredencialId,
+        clientId: scope === "client" ? (client as any)?.id ?? null : null,
+        outsourcedDeviceId:
+          scope === "device" ? c.outsourcedDeviceId ?? null : null,
+        clientOutsourcedSystemId:
+          scope === "system"
+            ? c.clientOutsourcedSystemsId ?? null
+            : null,
+        user: c.user,
+        password: "",
+        instance: c.instance ?? "",
+        port: c.port ?? "",
+        observation: c.observation ?? "",
+        isActive: c.isActive,
+      } as CredentialRequestDTO);
+      setCredModalOpen(true);
+    },
+    [client?.id]
+  );
+
+  const openCredEdit = useCallback(
+    (c: CredentialResponseDTO) => {
+      const scope: CredScope = c.outsourcedDeviceId
+        ? "device"
+        : c.clientOutsourcedSystemsId
+        ? "system"
+        : "client";
+      setCredMode("update");
+      setCredScope(scope);
+      setDeviceTargetId(c.outsourcedDeviceId ?? "");
+      setSystemTargetId(c.clientOutsourcedSystemsId ?? "");
+      setCredErrors({});
+      internalSetCredReq({
+        id: c.id,
+        catCredentialId: c.catCredencialId,
+        clientId: scope === "client" ? (client as any)?.id ?? null : null,
+        outsourcedDeviceId:
+          scope === "device" ? c.outsourcedDeviceId ?? null : null,
+        clientOutsourcedSystemId:
+          scope === "system"
+            ? c.clientOutsourcedSystemsId ?? null
+            : null,
+        user: c.user,
+        password: "",
+        instance: c.instance ?? "",
+        port: c.port ?? "",
+        observation: c.observation ?? "",
+        isActive: c.isActive,
+      } as CredentialRequestDTO);
+      setCredModalOpen(true);
+    },
+    [client?.id]
+  );
+
+  const validateCred = useCallback((): boolean => {
+    const e: ErrorBag = {};
+    if (!credReq.catCredentialId || credReq.catCredentialId <= 0)
+      e.catCredentialId = "Seleccione el tipo.";
+    if (!credReq.user || credReq.user.trim().length === 0)
+      e.user = "Usuario es obligatorio.";
+    if (credReq.user && credReq.user.length > 255)
+      e.user = "Máximo 255 caracteres.";
+    if (!credReq.password || credReq.password.trim().length === 0)
+      e.password = "Contraseña es obligatorio.";
+    if (credReq.instance && credReq.instance.length > 100)
+      e.instance = "Máximo 100 caracteres.";
+    if (credReq.port && credReq.port.length > 100)
+      e.port = "Máximo 100 caracteres.";
+    if (credReq.observation && credReq.observation.length > 255)
+      e.observation = "Máximo 255 caracteres.";
+    if (credScope === "device" && !credPayload.outsourcedDeviceId)
+      e.scope = "Seleccione un equipo.";
+    if (credScope === "system" && !credPayload.clientOutsourcedSystemId)
+      e.scope = "Seleccione un sistema.";
+    setCredErrors(e);
+    return Object.keys(e).length === 0;
+  }, [credReq, credScope, credPayload]);
+
+  const saveCred = useCallback(async () => {
+    const clientId = (client as any)?.id;
+    if (!clientId) return;
+    if (!validateCred()) return;
+    if (credMode === "update" && (credReq as any).id) {
+      await CredentialsService.updateAsync(
+        (credReq as any).id,
+        credPayload
+      );
+    } else {
+      if (credScope === "client") {
+        await addCredentialHostingAsync(clientId, credPayload);
+      } else if (
+        credScope === "device" &&
+        credPayload.outsourcedDeviceId
+      ) {
+        await addCredentialForDeviceAsync(
+          clientId,
+          credPayload.outsourcedDeviceId,
+          credPayload
+        );
+      } else if (
+        credScope === "system" &&
+        credPayload.clientOutsourcedSystemId
+      ) {
+        await addCredentialForSystemAsync(
+          clientId,
+          credPayload.clientOutsourcedSystemId,
+          credPayload
+        );
+      }
+    }
+    await reloadClient();
+    setCredModalOpen(false);
+  }, [
+    client?.id,
+    validateCred,
+    credMode,
+    credReq,
+    credScope,
+    credPayload,
+    addCredentialHostingAsync,
+    addCredentialForDeviceAsync,
+    addCredentialForSystemAsync,
+    reloadClient,
+  ]);
+
+  return {
+    credentials,
+    credModalOpen,
+    setCredModalOpen,
+    credMode,
+    setCredMode,
+    credScope,
+    setCredScope,
+    deviceTargetId,
+    setDeviceTargetId,
+    systemTargetId,
+    setSystemTargetId,
+    credReq,
+    setCredReq,
+    credErrors,
+    setCredErrors,
+    openCredCreate,
+    openCredView,
+    openCredEdit,
+    saveCred,
+  };
+};
+
+export default useCredentialSection;

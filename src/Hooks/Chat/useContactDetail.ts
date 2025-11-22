@@ -39,11 +39,11 @@ export function useContactDetail(conversationId: number) {
     []
   );
 
-  // const toggleHaltedLocal = useCallback(() => {
-  //   setConv(prev =>
-  //     prev ? { ...prev, isHalted: !prev.isHalted } : prev
-  //   );
-  // }, [conversationId]);
+  const toggleHaltedLocal = useCallback(() => {
+    setConv(prev =>
+      prev ? { ...prev, isHalted: !prev.isHalted } : prev
+    );
+  }, [conversationId]);
 
   // Carga o recarga datos de la conversación
   const fetchDetail = useCallback(async (id: number) => {
@@ -152,6 +152,6 @@ export function useContactDetail(conversationId: number) {
     setShowHistoryModal,
     handleRemoveTag,
     fetchDetail,
-    // toggleHaltedLocal
+    toggleHaltedLocal
   };
 }

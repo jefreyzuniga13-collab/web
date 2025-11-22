@@ -31,13 +31,6 @@ export interface ClientResponseDTO {
   lastClosedCase?: string | null
   observation?: string | null
   delinquentClient?: string | null
-  homeCountry?: string | null
-  email?: string | null
-  ambiguity?: string | null
-  registeredName?: string | null
-  address?: string | null
-  location?: string | null
-  activity?: string | null
   isActive: boolean
   createdById: number
   createdByName?: string | null
@@ -46,6 +39,19 @@ export interface ClientResponseDTO {
   outsourcedDevices: OutsourcedDeviceResponseDTO[]
   outsourcedSystems: OutsourcedSystemsResponseDTO[]
   hostingCredentials: CredentialResponseDTO[]
+
+  //PCG
+  registeredName?: string;
+  ambiguity?: string;
+  homeCountry?: string;
+  address?: string;
+  location?: string;
+  activity?: string | null;
+  email?: string;
+  identificationTypeCode?: string;
+  representativeEmail?: string;
+  legacySourceSystem?: string;
+
 }
 
 export interface DeviceRequestDTO {

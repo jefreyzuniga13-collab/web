@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useClient from "@/Hooks/Crm/useClient";
 import useContact from "@/Hooks/Contact/useContact";
 import { useCatCredential } from "@/Hooks/Crm/useCatCredential";
 import { useOutsourcedSystems } from "@/Hooks/Crm/useOutsourcedSystems";
-import type {
-  ClientResponseDTO
-} from "@/Interfaces/Crm/ClientInterface";
+import type { ClientResponseDTO } from "@/Interfaces/Crm/ClientInterface";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import { useOutsourcedDevices } from "../Crm/useOutsourcedDevices";
 
@@ -82,19 +79,20 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   const loading = contactLoading || clientLoading;
   const error = contactError ?? clientError ?? null;
 
-  // const lastContactIdRef = useRef<number | undefined>(undefined);
-  // useEffect(() => {
-  //   if (
-  //     typeof contactId === "number" &&
-  //     contactId > 0 &&
-  //     lastContactIdRef.current !== contactId
-  //   ) {
-  //     lastContactIdRef.current = contactId;
-  //     fetchContactById(contactId).catch(() => {});
-  //   }
-  // }, [contactId, fetchContactById]);
+  const lastContactIdRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (
+      typeof contactId === "number" &&
+      contactId > 0 &&
+      lastContactIdRef.current !== contactId
+    ) {
+      lastContactIdRef.current = contactId;
+      fetchContactById(contactId).catch(() => {});
+    }
+  }, [contactId, fetchContactById]);
 
   const clienteCodigo = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c: any = selectedData;
     return (
       c?.clienteCodigo ??
@@ -106,11 +104,12 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   }, [selectedData]);
 
   const clientKeyId = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c: any = selectedData;
     return c?.clientId ?? c?.clienteId ?? null;
   }, [selectedData]);
 
-  const [clientLocal, setClientLocal] = useState<any>(client ?? null);
+  const [clientLocal, setClientLocal] = useState<ClientResponseDTO | null>(client ?? null);
   useEffect(() => {
     setClientLocal(client ?? null);
   }, [client]);
@@ -122,7 +121,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
 
     if (!key) {
       lastClientKeyRef.current = null;
-      setClient(null as any);
+      setClient(null);
       setClientLocal(null);
       return;
     }
@@ -180,18 +179,20 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
   );
 
   const clientPhone =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (client as any)?.telefono || (client as any)?.celular || "";
   const clientPhoneFmt = formatNiPhone(clientPhone);
 
   const hostingCreds = useMemo(() => {
-    const creds = (client as any)?.hostingCredentials ?? [];
-    return creds.filter((c: any) => c);
+    const creds = (client as ClientResponseDTO)?.hostingCredentials ?? [];
+    return creds.filter((c) => c);
   }, [client]);
 
   const [credSearch, setCredSearch] = useState("");
   const filteredHosting = useMemo(() => {
     const n = credSearch.trim().toLowerCase();
     if (!n) return hostingCreds;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return hostingCreds.filter((c: any) =>
       [c.catCredencialNames, c.user, c.instance, c.port, c.observation]
         .filter(Boolean)
@@ -199,34 +200,18 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     );
   }, [hostingCreds, credSearch]);
 
-  const clientRecordId = (client as any)?.id as number | undefined;
+  const clientRecordId = (client)?.id as number | undefined;
 
+  useEffect(() => {
+    if (contactId == null || contactId <= 0) {
+      setClient(null);
+      setClientLocal(null);
+      return;
+    }
 
-   // Cada vez que cambie el contactId, resetear el cliente local
-  // useEffect(() => {
-  //   // si no hay contactId, limpiar completamente el cliente
-  //   if (contactId == null || contactId <= 0) {
-  //     setClient(null as any);
-  //     setClientLocal(null);
-  //     return;
-  //   }
+    setClientLocal(null);
+  }, [contactId, setClient]);
 
-  //   // también, cuando cambia de contacto, limpiar el buffer de edición, etc.
-  //   setClientLocal(null);
-  // }, [contactId, setClient]);
-
-    useEffect(() => {
-      if (contactId == null || contactId <= 0) {
-        setClient(null as any)
-        setClientLocal(null)
-        return
-      }
-
-      setClientLocal(null) //limpiar buffer local del cliente
-    }, [contactId, setClient])
-
-
-  
   const {
     clientEditOpen,
     setClientEditOpen,

@@ -84,7 +84,6 @@ export const InboxList: React.FC<Props> = ({
     }
   }
 
-
   if (error) {
     return (
       <ul className="inbox-list">
@@ -103,7 +102,7 @@ export const InboxList: React.FC<Props> = ({
       </ul>
     )
   }
-
+  
   return (
     <ul className="inbox-list">
       {conversations.map(c => {

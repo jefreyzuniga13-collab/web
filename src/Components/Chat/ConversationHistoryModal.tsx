@@ -113,6 +113,9 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   conversationStart,
   initialContactId
 }) => {
+  //Los contactos son paginados, por ende se deve de obtener la pagina pero no por tabla
+  //deve de manda a traer por medio del scroll en la lista que hay, cuando se muestran todos hay que hacer la solicitud para recuperar
+  //los siguientes, etc. getByClientCode =  clientId
   const {
     contactByClient: contacts,
     getByClientCode,
@@ -297,7 +300,6 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   }, [loading, hasMore, fetchPage, computeStickyDate]);
 
   useEffect(() => {
-    console.log(clientId)
     if (isOpen && clientId) getByClientCode(clientId);
   }, [isOpen, clientId, getByClientCode]);
 

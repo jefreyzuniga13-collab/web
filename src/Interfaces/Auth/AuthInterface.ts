@@ -93,3 +93,20 @@ export interface SystemParamRequestDto {
   type: string;
   isActive?: boolean;
 }
+
+export interface LogOutAtResponseDto{
+  isSuccess?: boolean;
+  message?: string;
+}
+
+
+export interface JwtPayload {
+  role: string
+}
+
+export interface AuthStorage {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+  userId: number
+}

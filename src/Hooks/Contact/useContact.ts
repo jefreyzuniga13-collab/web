@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Contact/ContactInterface'
 import { contactService } from '@/Services/Contact/ContactService'
@@ -21,9 +21,8 @@ const useContact = (contactId?: number) => {
   const [globalFilter, setGlobalFilter] = useState<string>('')
 
   const navigate = useNavigate()
+  const lastRequestRef = useRef(0)
 
-
-  
   const fetchPage = useCallback(
     async (p = page, s = pageSize) => {
       setLoadingList(true)
@@ -33,8 +32,7 @@ const useContact = (contactId?: number) => {
         const verifiedRes: PagedResponse<ContactLogInterface> = await contactService.getAllVerifiedAsync(p, s)
 
         setData(res.items)
-        setVerifiedContact(verifiedRes.items);
-
+        setVerifiedContact(verifiedRes.items)
         setTotalCount(res.meta.totalCount)
         setPage(res.meta.currentPage)
         setPageSize(res.meta.pageSize)
@@ -47,19 +45,17 @@ const useContact = (contactId?: number) => {
     [globalFilter, page, pageSize]
   )
 
-const getByClient = useCallback(
-  async (clientId: string, p = page, s = pageSize) => {
+  const getByClient = useCallback(
+    async (clientId: string, p = page, s = pageSize) => {
       setLoadingList(true)
       setError(null)
       try {
         const res = await contactService.getContactByClientAsync(clientId, p, s)
-
         setContactByClient(res.items)
         setTotalCount(res.meta.totalCount)
         setPage(res.meta.currentPage)
         setPageSize(res.meta.pageSize)
-
-        return res 
+        return res
       } catch (err: any) {
         setError(err)
         return null
@@ -71,20 +67,16 @@ const getByClient = useCallback(
   )
 
   const getByClientCode = useCallback(
-  async (clientCode: string, p = page, s = pageSize) => {
+    async (clientCode: string, p = page, s = pageSize) => {
       setLoadingList(true)
       setError(null)
       try {
-
         const res = await contactService.getContactByClientCodeAsync(clientCode, p, s)
-
-        //aqui esta no es a contacto es a contactByClientem, y no se hace la peticion
         setContactByClient(res.items)
         setTotalCount(res.meta.totalCount)
         setPage(res.meta.currentPage)
         setPageSize(res.meta.pageSize)
-
-        return res 
+        return res
       } catch (err: any) {
         setError(err)
         return null
@@ -93,19 +85,21 @@ const getByClient = useCallback(
       }
     },
     [page, pageSize]
-)
+  )
 
   const fetchById = useCallback(
     async (id: number) => {
       setLoadingItem(true)
       setError(null)
+      const requestId = ++lastRequestRef.current
       try {
         const item = await contactService.getContactByIdAsync(id)
+        if (requestId !== lastRequestRef.current) return
         setSelectedData(item)
       } catch (err: any) {
-        setError(err)
+        if (requestId === lastRequestRef.current) setError(err)
       } finally {
-        setLoadingItem(false)
+        if (requestId === lastRequestRef.current) setLoadingItem(false)
       }
     },
     []
@@ -115,13 +109,15 @@ const getByClient = useCallback(
     async (phone: string) => {
       setLoadingItem(true)
       setError(null)
+      const requestId = ++lastRequestRef.current
       try {
         const item = await contactService.getContactByPhoneAsync(phone)
+        if (requestId !== lastRequestRef.current) return
         setSelectedData(item)
       } catch (err: any) {
-        setError(err)
+        if (requestId === lastRequestRef.current) setError(err)
       } finally {
-        setLoadingItem(false)
+        if (requestId === lastRequestRef.current) setLoadingItem(false)
       }
     },
     []
@@ -194,7 +190,6 @@ const getByClient = useCallback(
         setLoadingItem(false)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -236,16 +231,14 @@ const getByClient = useCallback(
     [modalMode, selectedData, create, update, closeModal]
   )
 
-
   useEffect(() => {
-  if (typeof contactId !== 'number' || contactId <= 0) {
+    if (typeof contactId !== 'number' || contactId <= 0) {
+      setSelectedData(null)
+      return
+    }
     setSelectedData(null)
-    return
-  }
-
-  setSelectedData(null) 
-  fetchById(contactId)
-}, [contactId, fetchById])
+    fetchById(contactId)
+  }, [contactId, fetchById])
 
   return {
     data,
@@ -275,12 +268,9 @@ const getByClient = useCallback(
     toggle,
     verify,
     setGlobalFilter,
-
-    //Contcatos del clientes
     getByClientCode,
-    contactByClient
-    
+    contactByClient,
   }
 }
 
-export default useContact;
+export default useContact

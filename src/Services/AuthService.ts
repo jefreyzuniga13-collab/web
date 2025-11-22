@@ -7,7 +7,8 @@ import type {
   RefreshRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-  VerifyEmailRequest
+  VerifyEmailRequest,
+  LogOutAtResponseDto
 } from '@/Interfaces/Auth/AuthInterface'
 import type { AxiosError } from 'axios'
 
@@ -22,6 +23,16 @@ class AuthService {
     if (!email || !password) throw new Error('Email y contraseña son requeridos')
     try {
       const { data } = await api.post<ApiResponse<AuthData>>('Auth/login', { email, password })
+      return data.data
+    } catch (error) {
+      throw formatError<AuthData>(error)
+    }
+  }
+
+
+  async logoutAsync(id: number): Promise<LogOutAtResponseDto> {
+    try {
+      const { data } = await api.post<ApiResponse<LogOutAtResponseDto>>(`Auth/logout/${id}`)
       return data.data
     } catch (error) {
       throw formatError<AuthData>(error)

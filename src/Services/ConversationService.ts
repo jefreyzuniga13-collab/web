@@ -6,21 +6,14 @@ import type {
   ConversationClientFilter,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
+import type { AdminAsigmentResponseTimeResponseDto, AverageAssignmentTimeResponseDto, ConversationRatingByAgents, 
+  ConversationStatusCountResponseDto, FilterForm, ResponseAgentAverageResponseDto, WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import type { PagedResponse } from "@/Interfaces/GlobalInterface";
 import type { exportPDFArgs } from "@/Interfaces/Chat/ConversationInterface";
 
 import {format} from 'date-fns'
 
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
-
-
-// function toISOStringSafe(value: string | Date | null | undefined): string | null {
-//   if (!value) return null;
-//   const d = value instanceof Date ? value : new Date(value);
-//   return isNaN(d.getTime()) ? null : d.toISOString();
-// }
-
 
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/Conversations/${id}`);
@@ -30,6 +23,7 @@ export async function getConversationToneAsync(id: number) {
   const data = await api.get<ApiResponse<number>>(`/Conversations/${id}/tone`);
   return data.data.data;
 }
+
 export async function SetHaltedConversation(id: number) {
   const data = await api.patch<ApiResponse<number>>(`/Conversations/SetHaltedConversation/${id}`);
   return data.data.data;

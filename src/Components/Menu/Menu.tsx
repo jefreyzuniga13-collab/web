@@ -12,7 +12,7 @@ import { useUsers } from '@/Hooks/User/useUsers';
 import { presenceConnection } from '@/Services/signalr';
 import { markOffline } from '@/Hooks/useUserPresence';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
-
+import { useAuth } from '@/Hooks/Auth/useAuth'
 
 interface NavbarProps {
   id: number;
@@ -26,6 +26,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUser, loading: userLoading, fetchOne } = useUsers();
+
+  const { logout: logoutAuth } = useAuth()
 
     const authRaw = localStorage.getItem('auth') || '{}';
     const { userId } = JSON.parse(authRaw) as AuthData;
@@ -43,6 +45,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
       try { await markOffline(Number(userId)); } catch (e) { console.warn(e); }
       // eslint-disable-next-line no-empty
       try { await presenceConnection?.stop(); } catch {}
+
+      await logoutAuth();
       dispatch(logout());
       navigate('/login', { replace: true });
     } else {

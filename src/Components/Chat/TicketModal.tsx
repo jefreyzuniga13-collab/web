@@ -16,6 +16,7 @@ import { jwtDecode } from 'jwt-decode'
 import DatePickerField from '@/Components/Common/DatePickerField'
 import { toast } from 'react-toastify'
 import CustomAutocomplete from '@/Components/Common/CustomAutocomplete'
+import type { AuthStorage, JwtPayload } from '@/Interfaces/Auth/AuthInterface'
 
 interface TicketModalProps {
   isOpen: boolean
@@ -26,18 +27,7 @@ interface TicketModalProps {
   conversationId: number
 }
 
-interface JwtPayload {
-  role: string
-}
 
-interface AuthStorage {
-  accessToken: string
-  refreshToken: string
-  expiresAt: string
-  userId: number
-}
-
-// Dame el script en sql server.
 export default function TicketModal({
   isOpen,
   onClose,

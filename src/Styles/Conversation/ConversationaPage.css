@@ -105,6 +105,6 @@
   background-color: var(--color-secondary);
 }
 .conversationList{
-  max-height: 500px;
+  max-height: 1000px;
   overflow-y: scroll;
 }
