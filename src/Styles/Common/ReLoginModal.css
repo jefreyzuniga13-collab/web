@@ -8,6 +8,10 @@
   padding: 2.4rem;
 }
 
+.modal-background{
+  background-color: var(--bg-tertiary) !important;
+}
+
 @media (prefers-color-scheme: dark){
   .modal-backdrop{ background: rgba(0,0,0,.6); }
 }

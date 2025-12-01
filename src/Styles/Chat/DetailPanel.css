@@ -142,9 +142,6 @@
   stroke: #fff;
 }
 
-/* =========================================================
-   DETAIL PANEL - CONTENIDO GENERAL
-   ========================================================= */
 .detailPanel-content {
   padding: 0;
   flex: 1;
@@ -154,7 +151,28 @@
   flex-direction: column;
   gap: 4px;
   overflow: hidden;
+  overflow-y: auto;
 }
+
+
+/* Barra de scroll */
+.detailPanel-content::-webkit-scrollbar,
+.detailPanel-card::-webkit-scrollbar {
+  width: 3px;
+  height: 10px; 
+}
+
+.detailPanel-content::-webkit-scrollbar-thumb,
+.detailPanel-card::-webkit-scrollbar-thumb {
+  background-color: var(--color-gray-400) !important;
+  border-radius: 5px; 
+}
+
+.detailPanel-content:-webkit-scrollbar-thumb:hover,
+.detailPanel-card:-webkit-scrollbar-thumb:hover {
+  background-color: #707070; 
+}
+
 
 .detailPanel-content--padded {
   padding: 0 12px;
@@ -275,10 +293,8 @@
     font-size: var(--font-size-xs, 14px);
   }
 }
-
-/* =========================================================
-   MENSAJES RÁPIDOS
-   ========================================================= */
+   
+/* MENSAJES RÁPIDOS */
 .detailPanel-quick__header {
   display: flex;
   align-items: center;

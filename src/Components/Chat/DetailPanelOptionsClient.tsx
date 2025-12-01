@@ -9,7 +9,6 @@ import {
   FaRegClock,
   FaSync,
   FaTag,
-  // FaBuilding,
   FaExclamationTriangle,
   FaFlag,
   FaMapMarkerAlt,
@@ -78,17 +77,7 @@ const DetailPanelOptionsClient: React.FC<Props> = ({
                 <GrMoreVertical />
               </button>
             </div>
-          
         </header>
-
-{/* PCG START*/}
-          {/* <div className="detailPanel-contactGroup">
-            <p className="detailPanel-clientGroup__title">Razón social</p>
-            <span className="detailPanel-clientGroup__cliente">
-              <FaBuilding className="detailPanel-icon" />
-              {displayOrDash(clientLocal?.registeredName)}
-            </span>
-          </div> */}
 
 
         <div className="detailPanel-clientGrid">

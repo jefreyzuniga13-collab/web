@@ -28,7 +28,7 @@ export default function ReLoginModal() {
   }
 
   const modal = (
-    <div className="modal-backdrop" role="presentation">
+    <div className="modal-backdrop modal-background" role="presentation">
       <div
         className="modal"
         role="dialog"

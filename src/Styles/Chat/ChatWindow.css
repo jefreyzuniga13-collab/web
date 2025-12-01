@@ -573,13 +573,13 @@
 }
 
 .chat-window__image-preview-full {
-  min-width: 70%;
-  min-height: 70%;
+  min-width: 20%;
+  min-height: 20%;
+  max-width: 100%;
+  max-width: 100%;
   border-radius: 12px;
   box-shadow: 0 0 10px #000;
   overflow: scroll;
-  /* padding: 20rem 0;
-  margin: 30rem; */
 }
 
 .chat-window__media-video {

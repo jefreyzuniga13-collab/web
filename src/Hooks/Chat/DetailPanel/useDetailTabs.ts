@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from "react";
 
-export type OptionMenu = 1 | 2 | 3 | 4 | 5;
+export type OptionMenu = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export type MoreTab = "cred" | "dev" | "sys" | "ctc";
 
 export interface UseDetailTabsResult {
@@ -16,7 +16,7 @@ export interface UseDetailTabsResult {
 }
 
 const setTabFromParam = (p: unknown): OptionMenu => {
-  if (typeof p === "number" && p >= 1 && p <= 5) return p as OptionMenu;
+  if (typeof p === "number" && p >= 1 && p <= 7) return p as OptionMenu;
 
   if (typeof p === "string") {
     const s = p.toLowerCase();
@@ -25,6 +25,8 @@ const setTabFromParam = (p: unknown): OptionMenu => {
     if (s.includes("history") || s.includes("historial")) return 3;
     if (s.includes("conv") || s.includes("convers")) return 4;
     if (s.includes("quick") || s.includes("rápido")) return 5;
+    if (s.includes("prod") || s.includes("product")) return 6;
+    if (s.includes("cart") || s.includes("cart")) return 7;
   }
 
   return 1;

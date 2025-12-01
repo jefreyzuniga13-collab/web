@@ -13,7 +13,7 @@ import { presenceConnection } from '@/Services/signalr';
 import { markOffline } from '@/Hooks/useUserPresence';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 import { useAuth } from '@/Hooks/Auth/useAuth'
-
+import AddGroup from '@/assets/Add_Group_2025.png'
 interface NavbarProps {
   id: number;
 }
@@ -105,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
         ) : currentUser && (
           <div className="navbar__profile">
             <img 
-              src={currentUser.imageUrl || '/placeholder-avatar.png'} 
+              src={currentUser.imageUrl || AddGroup} 
               alt="Foto de perfil" 
               className="navbar__profile-photo"
             />

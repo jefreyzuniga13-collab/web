@@ -75,7 +75,8 @@ export type NameTranslation =
   | 'MaxStickerMB'
   | 'MaxDocumentMB'
   | 'MaximoMediaPorMensaje'
-  | 'PesoMediaMbMaximoMensaje';
+  | 'PesoMediaMbMaximoMensaje'
+  | 'MensajeLinkCarrito'
   ;
 
   export type TypeTranslation =

@@ -10,7 +10,7 @@ import "@/Styles/Setting/ProfileCard.css";
 import { useProfileCard } from "@/Hooks/Setting/useProfileCard";
 import Button from '@/Components/Common/Button'
 import Spinner from "@/Components/Common/Spinner";
-
+import AddGroup from '@/assets/Add_Group_2025.png'
 const ProfileCard: React.FC = () => {
   const {
     loading,
@@ -50,7 +50,7 @@ const ProfileCard: React.FC = () => {
           <div className="profile-card__user-section">
             <div className="profile-card__avatar-container">
               <img
-                src={currentUser.imageUrl || "/placeholder-avatar.png"}
+                src={currentUser.imageUrl || AddGroup}
                 alt={currentUser.fullName}
                 className="profile-card__avatar"
               />

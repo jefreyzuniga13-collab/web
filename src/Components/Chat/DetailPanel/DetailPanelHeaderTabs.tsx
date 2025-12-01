@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { FaRegBuilding } from "react-icons/fa";
 import { IoChatboxEllipsesOutline } from "react-icons/io5";
@@ -6,7 +5,8 @@ import { RiTimelineView } from "react-icons/ri";
 import { AiOutlineWechatWork } from "react-icons/ai";
 import { LuContact } from "react-icons/lu";
 import type { OptionMenu } from "@/Hooks/Chat/DetailPanel/useDetailTabs";
-
+import { TbShoppingCartSearch } from "react-icons/tb";
+import { LuChartBarStacked } from "react-icons/lu";
 interface DetailPanelHeaderTabsProps {
   optionMenu: OptionMenu;
   onSelectTab: (tab: OptionMenu) => void;
@@ -84,6 +84,27 @@ const DetailPanelHeaderTabs: React.FC<DetailPanelHeaderTabsProps> = ({
           aria-label="Mensajes rápidos"
         >
           <IoChatboxEllipsesOutline size={18} className="detailPanel-optionBtn__icon" />
+        </button>
+      </li>
+
+      <li className={`detailPanel-option ${optionMenu  === 6 ? "is-active": ""}`}>
+        <button
+        type="button"
+        className="detailPanel-optionBtn"
+        onClick={()=> onSelectTab(6)}
+        aria-label="Venta productos">
+
+          <LuChartBarStacked size={18} className="detailPanel-optionBtn__icon"/>
+        </button>
+      </li>
+          <li className={`detailPanel-option ${optionMenu  === 7 ? "is-active": ""}`}>
+        <button
+        type="button"
+        className="detailPanel-optionBtn"
+        onClick={()=> onSelectTab(7)}
+        aria-label="Venta productos">
+
+          <TbShoppingCartSearch size={18} className="detailPanel-optionBtn__icon"/>
         </button>
       </li>
     </ul>

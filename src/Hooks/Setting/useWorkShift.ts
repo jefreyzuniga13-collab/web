@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import { WorkShiftService } from "@/Services/Config/WorkShiftService";
+import { WorkShiftService } from "@/Services/Setting/WorkShiftService";
 import type {
   WorkShiftInterface,
   WorkShiftFormValues,

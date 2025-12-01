@@ -31,8 +31,11 @@ const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategory
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
 const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
-// const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
+const DynamicParamPage  = lazy(() => import('@/Pages/Setting/DynamicParamPage'))
 const ClientManagementPanel    = lazy(() => import('@/Pages/Crm/ClientManagementPanel'))
+const CarPage    = lazy(() => import('@/Pages/Car/CarPage'))
+
+// const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
 
 export function AppRouter() {
   return (
@@ -51,6 +54,7 @@ export function AppRouter() {
           <Route path="reset-password"  element={<ResetPassword />} />
           <Route path="verify-account"  element={<Activation />} />
           <Route path="privacy-policy"  element={<PrivacyPolicy />} />
+         <Route path="cart"  element={<CarPage />} />
           {/* <Route path="privacy-policy"  element={<WorkOrderPage />} /> */}
         </Route>
 
@@ -81,6 +85,7 @@ export function AppRouter() {
           <Route path="clients"     element={<ClientPage />} />
           <Route path="clientManagementPanel/:id"     element={<ClientManagementPanel />} />
           <Route path="services"     element={<ServicePage />} />
+          <Route path="live-dashboard"     element={<DynamicParamPage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>
 

@@ -20,6 +20,7 @@ export function useSupportPage() {
   const [conversation, setConversation] = useState<ConversationDto | null>(
     null
   );
+
   const [isToggling, setIsToggling] = useState(false);
 
   const [filter, setFilter] = useState<string>(
@@ -29,6 +30,7 @@ export function useSupportPage() {
   const [selectedFilter, setSelectedFilter] = useState<string>(
     () => localStorage.getItem("selectedFilter") || "all"
   );
+  
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);

@@ -4,7 +4,7 @@ import type {
   CustomMessageRequestDto,
   CustomMessageResponseDto,
 } from '@/Interfaces/Setting/CustomMessageInterface'
-import { CustomMessageServices } from '@/Services/Config/CustomMessageServices'
+import { CustomMessageServices } from '@/Services/Setting/CustomMessageServices'
 
 export function useCustomMessage(autoLoad = true) {
   const [customMessages, setCustomMessages] = useState<CustomMessageResponseDto[]>([])

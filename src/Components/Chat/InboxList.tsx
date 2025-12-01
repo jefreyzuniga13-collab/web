@@ -5,7 +5,6 @@ import { format } from 'date-fns'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
-// import Spinner from '@/Components/Common/Spinner'
 import { ThreeDot } from 'react-loading-indicators'
 
 interface Props {
@@ -102,7 +101,6 @@ export const InboxList: React.FC<Props> = ({
       </ul>
     )
   }
-  
   return (
     <ul className="inbox-list">
       {conversations.map(c => {
@@ -117,7 +115,7 @@ export const InboxList: React.FC<Props> = ({
           incomplete: 'Incompleta',
           paused: "Pausada"
         }
-
+        
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
 
         const unread =
@@ -179,15 +177,6 @@ export const InboxList: React.FC<Props> = ({
                     {statusText}
                   </span>
 
-                  {/* <span
-                  className={`inbox-list__status ${
-                    c.isHalted ? "inbox-list__status--paused" : `inbox-list__status--${statusClass}`
-                  }`}
-                >
-                  {statusText}
-                  {c.isHalted ? "Pausada" : statusText} 
-                </span> */}
-
                 </div>
                 {hasUnread && (
                   <span className="inbox-list__unread-badge">{unread}</span>
@@ -205,3 +194,16 @@ export const InboxList: React.FC<Props> = ({
     </ul>
   )
 }
+                  // un usuario al cambiar de conversaion le da el error de:
+                // index-CQO97I8E.js:49  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+                //     at Hj (index-CQO97I8E.js:49:90200)
+                //     at Zn (index-CQO97I8E.js:49:91576)
+                //     at Bj (index-CQO97I8E.js:49:94008)
+                //     at Zn (index-CQO97I8E.js:49:91702)
+                //     at Bj (index-CQO97I8E.js:49:94008)
+                //     at Zn (index-CQO97I8E.js:49:91702)
+                //     at Bj (index-CQO97I8E.js:49:94008)
+                //     at Zn (index-CQO97I8E.js:49:91702)
+                //     at Bj (index-CQO97I8E.js:49:94008)
+                //     at Zn (index-CQO97I8E.js:49:91702)
+                  //a que se deve este caso

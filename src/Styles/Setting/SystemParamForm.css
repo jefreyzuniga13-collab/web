@@ -163,12 +163,20 @@
   margin-bottom: var(--space-md);
 }
 
-.sp-modal__grid {
+.sp-modal__grid,
+.sp-modal__grid__dynamicParam  {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-3xl) var(--space-xl);
+  gap: var(--space-md) var(--space-md);
 }
 
+.sp-modal__grid__dynamicParam {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.sp-modal__col__dynamicParam--full{
+    grid-column: span 3;
+}
 @media (min-width: var(--breakpoint-tablet)) {
   .sp-modal__grid {
     grid-template-columns: 1fr 1fr;

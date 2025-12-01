@@ -17,7 +17,8 @@ import { useCredentialSection } from "@/Hooks/Chat/DetailPanel/useCredentialSect
 import { useContactSection } from "@/Hooks/Chat/DetailPanel/useContactSection";
 import { useSystemSection } from "@/Hooks/Chat/DetailPanel/useSystemSection";
 
-export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
+export const useDetailPanel = 
+(contactId?: number, selectedParam?: unknown) => {
   const {
     optionMenu,
     setOptionMenu,
@@ -317,7 +318,8 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     return Promise.resolve();
   }, [contactId, fetchContactById]);
 
-  const refreshClient = useCallback(() => reloadClient(), [reloadClient]);
+  const refreshClient = 
+  useCallback(() => reloadClient(), [reloadClient]);
 
   return {
     optionMenu,

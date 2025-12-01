@@ -144,9 +144,12 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
     [messages]
   )
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" })
-  }, [visibleMessages])
+useEffect(() => {
+  const el = bottomRef.current;
+  if (el && el.isConnected) {
+    el.scrollIntoView({ block: "end" });
+  }
+}, [visibleMessages]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -213,31 +216,35 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
 
   
     function renderMessageContent(content: string, searchTerm: string) {
-      // detecta URLs
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
 
-      // divide el texto en partes (texto + URLs)
-      const parts = content.split(urlRegex);
+  return parts.map((part, i) => {
+    // comprobamos con un regex SIN la flag "g" para este fragmento
+    const isUrl = /^https?:\/\/[^\s]+$/.test(part);
 
-      return parts.map((part, i) => {
-        if (urlRegex.test(part)) {
-          return (
-            <a
-              key={i}
-              href={part}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#1a73e8', textDecoration: 'underline' }}
-            >
-              {part}
-            </a>
-          );
-        }
-
-        // si usas highlightText para resaltar búsqueda:
-        return <React.Fragment key={i}>{highlightText(part, searchTerm)}</React.Fragment>;
-      });
+    if (isUrl) {
+      return (
+        <a
+          key={`url-${i}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "#1a73e8", textDecoration: "underline" }}
+        >
+          {part}
+        </a>
+      );
     }
+
+    return (
+      <React.Fragment key={`txt-${i}`}>
+        {highlightText(part, searchTerm)}
+      </React.Fragment>
+    );
+  });
+}
+
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

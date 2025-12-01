@@ -96,7 +96,6 @@ export default function App() {
     return () => window.removeEventListener("DesktopNotify", onDesktopNotify);
   }, []);
 
-  // Mapeo del payload hacia título/cuerpo/url (default: URL EXTERNA correcta)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   function mapNotificationPayload(evt: any) {
 
@@ -188,7 +187,7 @@ export default function App() {
         <ReLoginModal />
         <ToastContainer
           position="top-right"
-          autoClose={3000}
+          autoClose={1000}
           hideProgressBar={false}
           newestOnTop={false}
           closeOnClick

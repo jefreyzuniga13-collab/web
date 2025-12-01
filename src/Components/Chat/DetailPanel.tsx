@@ -26,6 +26,8 @@ import SystemPickerModal from "@/Components/Chat/DetailPanel/SystemPickerModal";
 import ClientEditModal from "@/Components/Chat/DetailPanel/ClientEditModal";
 import { Trunc, Row } from "@/Components/Chat/DetailPanel/DetailPanelCommon";
 import ConversationHistoryModal from "@/Components/Chat/ConversationHistoryModal";
+import {ProductTab} from '@/Components/Chat/DetailPanel/ProductTab'
+import CarPCPanelTab from "@/Components/Chat/DetailPanel/CarPCPanelTab";
 
 type Props = {
   contactId?: number;
@@ -127,8 +129,6 @@ const DetailPanel: React.FC<Props> = ({
   } = useDetailPanel(contactId, selectedParam);
 
   const hasClient = !!clienteCodigo && !!client;
-
-  
 
   const {
     loading: loadingHistory,
@@ -350,7 +350,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
 
         {optionMenu === 4 && (
           <DetailPanelCurrentConversationTab
-            conversationId={Number(conversationId) || 0}
+            conversationId={Number(conversationId)}
             formatDate={formatDate}
              isAdmin={isAdmin}
           />
@@ -363,6 +363,16 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
             qQuick={qQuick}
             setQQuick={setQQuick}
             onSendNow={onSendNow}
+          />
+        )}
+        
+        {optionMenu === 6 && (
+          <ProductTab/>
+        )}
+
+        {optionMenu === 7 && (
+          <CarPCPanelTab 
+           conversationId={Number(conversationId)}
           />
         )}
       </section>

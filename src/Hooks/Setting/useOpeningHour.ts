@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
-import { OpeningHourService } from '@/Services/Config/OpeningHourService'
+import { OpeningHourService } from '@/Services/Setting/OpeningHourService'
 import type {
   OpeningHourInterface,
   OpeningHourFormValues,

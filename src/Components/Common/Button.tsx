@@ -1,7 +1,7 @@
 import React from 'react'
 import '@/Styles/Common/Button.css'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive'
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'destructive'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
