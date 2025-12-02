@@ -14,6 +14,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="general-container">
       <Navbar id={Number(userId)} />
+      
       {/*Modal global */}
       <AssignModal />
       <Outlet />

@@ -12,7 +12,11 @@ import { FaShoppingCart } from "react-icons/fa";
 import { useCarPCG } from "@/Hooks/useCarPCG";
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface";
 
-export const ProductTab = () => {
+interface Props{
+  conversationId: number
+}
+
+export const ProductTab = ({conversationId}: Props) => {
   const [search, setSearch] = useState<string>("");
   const [selectedCategory, setselectedCategory] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null);
@@ -220,7 +224,11 @@ export const ProductTab = () => {
                     </div>
                   )}
 
-                <ProductPCGTab prod={e} onClick={handleOpenDetail} />
+                <ProductPCGTab prod={e}
+                          conversationId={conversationId}
+                          userId={1}
+                onClick={handleOpenDetail} 
+                />
               </div>
             ))
           )}

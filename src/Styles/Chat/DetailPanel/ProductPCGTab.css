@@ -10,6 +10,7 @@
     max-height: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
 }
 .product-row__description{
     font-size: var(--font-size-xs);
@@ -50,4 +51,23 @@
 
 .productPCG-row--selected{
     opacity: 0.3;
+}
+
+
+
+.product-row__btn{
+    display: none;
+}
+
+.productPCG-row:hover .product-row__btn{
+    display: block;
+    position: absolute;
+    top: 0;
+    /* left: 0; */
+    right: 0;
+    /* bottom: 0; */
+    max-width: fit-content;
+}
+.product-row__iconBtn{
+    color: var(--color-gray-100);
 }

@@ -4,10 +4,12 @@ import { useCarPCG } from "@/Hooks/useCarPCG";
 import '@/Styles/Cart/CartPage.css'
 const USER_ID = 800;
 import noimageavailable from '@/assets/noimageavailable.webp'
+import {useNavigate} from 'react-router-dom'
 
 const CarPage: React.FC = () => {
   const { getProductFromCarAsync , carPCG, error, loading } =
     useCarPCG();
+    const navigate = useNavigate();
 
   useEffect(() => {
     getProductFromCarAsync(USER_ID);
@@ -22,14 +24,17 @@ const CarPage: React.FC = () => {
       (c) => c.listDetalle && c.listDetalle.length > 0
     );
 
+
+    const goToCheckout = ()=>{
+      // Falta mucha logica
+      navigate('/checkout')
+    }
+
   if (loading) {
     return (
       <main className="cart-page cart-page--centered">
         <div className="cart-page__loader">
-          <ThreeDot color="#f97316" size="medium" />
-          <span className="cart-page__loader-text">
-            Cargando carrito...
-          </span>
+          <ThreeDot color="#0070B4" size="medium" />
         </div>
       </main>
     );
@@ -206,6 +211,7 @@ const CarPage: React.FC = () => {
             <button
               type="button"
               className="cart-totals__button"
+              onClick={()=> goToCheckout()}
             >
               <p className="cart-totals_text">Procesar Pago</p>
             </button>

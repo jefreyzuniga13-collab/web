@@ -367,7 +367,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
         )}
         
         {optionMenu === 6 && (
-          <ProductTab/>
+          <ProductTab conversationId={Number(conversationId)}/>
         )}
 
         {optionMenu === 7 && (

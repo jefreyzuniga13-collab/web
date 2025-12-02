@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { FaShoppingCart } from "react-icons/fa";
 import { useProductPCG } from "@/Hooks/useProductPCG";
 import { useCarPCG } from "@/Hooks/useCarPCG";
-import type { listaOpciones, ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface";
+import type { listaOpciones, ProductoModificadorPCGInterface, ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface";
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface";
 import "@/Styles/Chat/DetailPanel/DetailProduct.css";
 import noimageavailable from '@/assets/noimageavailable.webp'
@@ -44,15 +43,16 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
       }
     >();
     if (productModifiers) {
-      productModifiers.forEach((mod: any) => {
-        mod.listOpciones.forEach((op: any) => {
+      productModifiers.forEach((mod: ProductoModificadorPCGInterface) => {
+        mod.listOpciones.forEach((op: listaOpciones) => {
           map.set(op.codOpcion, {
             codOpcion: op.codOpcion,
             descripcionOp: op.descripcionOp,
             codPrecio: op.codPrecio,
             precioVenta: Number(op.precioVenta),
-            cantidad: op.cantidad ?? 0,
-            totalMenu: op.totalMenu ?? 0,
+            cantidad: op.cantidad,
+            // Calcular el total
+            totalMenu: op.precioVenta * op.cantidad,
             codUm: op.codUm,
             codTipoModificador: mod.codTipoModificador,
             codModificador: mod.codModificador,
@@ -86,27 +86,27 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
     }
   };
 
-  const handleToggleOption = (modifier: any, optionId: string) => {
+  const handleToggleOption = (modifier: ProductoModificadorPCGInterface, codOpcion: string) => {
     setSelectedOptions((prev) => {
       const key = String(modifier.codModificador);
       const current = prev[key] ?? [];
       let nextForModifier: string[] = [];
 
       if (modifier.esMultipleSeleccion) {
-        if (current.includes(optionId)) {
-          nextForModifier = current.filter((id) => id !== optionId);
+        if (current.includes(codOpcion)) {
+          nextForModifier = current.filter((id) => id !== codOpcion);
         } else {
           const max = Number(modifier.maximoSel ?? 0);
           if (max > 0 && current.length >= max) {
             return prev;
           }
-          nextForModifier = [...current, optionId];
+          nextForModifier = [...current, codOpcion];
         }
       } else {
-        if (current.includes(optionId)) {
+        if (current.includes(codOpcion)) {
           nextForModifier = [];
         } else {
-          nextForModifier = [optionId];
+          nextForModifier = [codOpcion];
         }
       }
 
@@ -114,10 +114,10 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
     });
   };
 
-  const isOptionSelected = (modifier: any, optionId: string) => {
+  const isOptionSelected = (modifier: ProductoModificadorPCGInterface, codOpcion: string) => {
     const key = String(modifier.codModificador);
     const current = selectedOptions[key] ?? [];
-    return current.includes(optionId);
+    return current.includes(codOpcion);
   };
 
   const buildCartRequest = (): CarDto => {
@@ -130,14 +130,14 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
       indice: 1,
       codTipoModificador: "0000",
       codModificador: "00000",
-      codGrupo: (detail as any).codGrupo ?? "000",
+      codGrupo: detail.codCategoria,
       codProducto: detail.codProducto,
       codOpcion: "00000",
       descripcion: detail.descripcion,
       cantidad,
       precioV: basePrice,
       totalMenu: baseTotal,
-      codUm: (detail as any).codUm ?? "",
+      codUm: detail.codUm,
       observaciones: observacion,
       unico: "",
       noPedido: 0,
@@ -160,7 +160,7 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
           indice: index++,
           codTipoModificador: option.codTipoModificador ?? "0000",
           codModificador: option.codModificador ?? modifierId,
-          codGrupo: (detail as any).codGrupo ?? "000",
+          codGrupo: detail.codCategoria,
           codProducto: detail.codProducto,
           codOpcion: option.codOpcion,
           descripcion: option.descripcionOp,
@@ -221,14 +221,12 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
         {productModifiers != null && productModifiers.length > 0 && (
           <div className="product-modifiers">
             <header className="product-modifiers__content">
-              {productModifiers.map((mod: any, index: number) => (
+              {productModifiers.map((mod: ProductoModificadorPCGInterface, index: number) => (
                 <div className="product-modifiers__product" key={index}>
                   <p className="product-modifiers__product__title">{mod.descripcionMod}</p>
                   <div className="product-modifiers__option__container">
                     {mod.listOpciones.map((op: listaOpciones, idx: number) => (
                       <div className="product-modifiers__options" key={idx}>
-                        {Number(op.precioVenta) > 0 && (
-                          <>
                             <input
                               type="checkbox"
                               className="product-modifiers__checkout"
@@ -241,12 +239,16 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
                               className="product-modifiers__option"
                             >
                               {op.descripcionOp}
-                              <span className="product-modifiers__option__price">
+
+                              {/* Mostrar precio, si es mayor a 0. */}
+                              {Number(op.precioVenta) > 0 && (
+                               <span className="product-modifiers__option__price">
                                 C$ {Number(op.precioVenta).toFixed(2)}
                               </span>
+                              )}
+                              
                             </label>
-                          </>
-                        )}
+                        
                       </div>
                     ))}
                   </div>

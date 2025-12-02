@@ -107,18 +107,65 @@
     font-size: var(--font-size-xs);
 }
 
-.productTab-content-footer__total{
-    color: var(--color-gray-700);
-    text-align: left;
+.productTab-content__container{
+    display: grid;
+    grid-template-columns: 1fr 0.5fr;
+    text-align: right;
 }
-.productTab-content-footer__value{
+
+.productTab-content-footer{
+    margin-top: var(--space-lg);
+}
+
+.productTab-content-footer__total,
+.productTab-content-footer__title{
+    color: var(--color-gray-700);
+    text-align: right;
+    margin: 0;
+    padding: 0;
+}
+
+.productTab-content-footer__title{
+    color: var(--color-gray-700);
+    font-size: var(--font-size-base);
+}
+
+.productTab-content-footer__value,
+.productTab-content-footer__totalValue{
+    margin-left: 10px;
+    color: var(--color-gray-700);
+    font-size: var(--font-size-sm);
+}
+
+.productTab-content-footer__totalValue{
     color: var(--greenColor);
     font-weight: var(--font-weight-bold);
-    margin-left: 10px;
     text-decoration: underline;
 }
 
 
+
+.productTab-footer__payment{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-top: var(--space-lg);
+}
+
+.payment-btn,
+.carPanel-btn{
+    font-size: var(--font-size-sm);
+    margin: 0;
+
+}
+.carPanel-btn{
+    background-color: var(--color-secondary);
+}
+.payment-btn{
+    background-color: var(--grayColor);
+}
 .cartPanel-loadingCartContiner,
 .cartPanel-errorContiner{
 
@@ -132,10 +179,30 @@
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-sm);
 }
+
 .cartPanel-errorContiner{
     color: var( --color-destructive);
 }
 
 .cartPanel-loadingCartText{
     color: var(-text-secondary);
+}
+
+
+
+@media (max-width: 640px) {    
+    .productTab-content__container{
+        display: grid;
+        grid-template-columns: 1fr 0.4fr;
+        text-align: right;
+    }
+
+    .productTab-footer__payment{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0;
+        margin-top: var(--space-lg);
+    }
 }
