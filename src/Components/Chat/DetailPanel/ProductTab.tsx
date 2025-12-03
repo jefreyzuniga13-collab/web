@@ -14,9 +14,10 @@ import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterfa
 
 interface Props{
   conversationId: number
+  contactId:  number
 }
 
-export const ProductTab = ({conversationId}: Props) => {
+export const ProductTab = ({conversationId, contactId}: Props) => {
   const [search, setSearch] = useState<string>("");
   const [selectedCategory, setselectedCategory] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null);
@@ -88,7 +89,7 @@ export const ProductTab = ({conversationId}: Props) => {
     };
 
     const carrito: CarDto = {
-      idUsuario: 800,
+      idUsuario: contactId,
       fecha: new Date().toISOString(),
       total: totalMenu,
       listDetalle: [detalle]
@@ -142,7 +143,7 @@ export const ProductTab = ({conversationId}: Props) => {
             />
           </div>
         </header>
-        <DetailPCGProduct detail={detailProduct} idUsuario={800}
+        <DetailPCGProduct detail={detailProduct} idUsuario={contactId}
         setDetailProduct={setDetailProduct}
         setselectedCategory={setselectedCategory} />
       </section>
@@ -173,6 +174,7 @@ export const ProductTab = ({conversationId}: Props) => {
           id="searchProduct"
           name="searchProduct"
           value={search}
+          max={500}
           placeholder="Buscar categoria o producto"
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -225,10 +227,9 @@ export const ProductTab = ({conversationId}: Props) => {
                   )}
 
                 <ProductPCGTab prod={e}
-                          conversationId={conversationId}
-                          userId={1}
-                onClick={handleOpenDetail} 
-                />
+                  conversationId={conversationId}
+                  userId={contactId}
+                  onClick={handleOpenDetail} />
               </div>
             ))
           )}

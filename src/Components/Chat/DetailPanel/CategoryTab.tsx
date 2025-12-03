@@ -12,7 +12,6 @@ export const CategoryTab = ({
     setselectedCategory
 }: Props) => {
   return (
-    // <div className="category-card">
         <div className="category-row" onClick={()=> setselectedCategory(cat?.codGrupo ?? null)}>
             <div className="category-row__image">
                 <img src={cat?.imagen ?? noimageavailable} 
@@ -20,7 +19,6 @@ export const CategoryTab = ({
                 aria-label="category mage" 
                 className="category-image"/>
             </div>
-            {/* Si el contenido es muy grande se muestra el tooltip */}
             <span className="category-row__label">
                 <Tooltip title={cat?.grupo} children={
                 <span>
@@ -29,6 +27,5 @@ export const CategoryTab = ({
                 } />
             </span>
         </div>
-    // </div>
   )
 }

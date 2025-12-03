@@ -15,6 +15,7 @@ import autoTable from "jspdf-autotable"
 
 interface Props {
   conversationId: number
+  contactId: number
 }
 
 const buildRowsFromCart = (cart: CarDto): any[][] => {
@@ -125,7 +126,7 @@ const generateCartPdfFile = (cart: CarDto): File => {
   return new File([blob], `carrito.pdf`, { type: "application/pdf" })
 }
 
-const CarPCPanelTab = ({ conversationId }: Props) => {
+const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const { loading, carPCG, getProductFromCarAsync, updateCarAsync, error } = useCarPCG()
   const { SendMessageLink, error: errorCart, loading: loadingCart } = useCart()
@@ -133,7 +134,7 @@ const CarPCPanelTab = ({ conversationId }: Props) => {
 
   useEffect(() => {
     //test de id temporal
-    getProductFromCarAsync(800)
+    getProductFromCarAsync(contactId)
   }, [])
 
   useEffect(() => {
@@ -145,7 +146,7 @@ const CarPCPanelTab = ({ conversationId }: Props) => {
   const handleRemoveItem = async (idUsuario: number, noPedido?: number | null) => {
     if (!noPedido) return
     await updateCarAsync(idUsuario, noPedido)
-    await getProductFromCarAsync(800)
+    await getProductFromCarAsync(contactId)
   }
 
   const hasItems = useMemo(() => carPCG != null && carPCG.length > 0, [carPCG])

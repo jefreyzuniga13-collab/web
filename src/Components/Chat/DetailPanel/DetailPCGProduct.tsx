@@ -10,8 +10,8 @@ import noimageavailable from '@/assets/noimageavailable.webp'
 interface Props {
   detail: ProductoPCGInterface;
   idUsuario: number;
-  setDetailProduct: (detailP: ProductoPCGInterface | null)=> void;
-  setselectedCategory: (category: string | null)=> void;
+  setDetailProduct: (detailP: ProductoPCGInterface | null) => void;
+  setselectedCategory: (category: string | null) => void;
 }
 
 const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCategory }: Props) => {
@@ -51,6 +51,7 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
             codPrecio: op.codPrecio,
             precioVenta: Number(op.precioVenta),
             cantidad: op.cantidad,
+
             // Calcular el total
             totalMenu: op.precioVenta * op.cantidad,
             codUm: op.codUm,
@@ -146,6 +147,7 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
 
     items.push(baseItem);
 
+    // Las opciones seleccionadas, de los modificadores.
     let index = 2;
     Object.entries(selectedOptions).forEach(([modifierId, optionIds]) => {
       optionIds.forEach((id) => {
@@ -203,7 +205,7 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
       <section className="detail-product__section">
         <div className="detail-product__image">
           <img
-             src={detail.imagen != null ? detail.imagen : noimageavailable}
+            src={detail.imagen != null ? detail.imagen : noimageavailable}
             // alt="product image"
             aria-label="product-image"
             className="detail-image"
@@ -223,32 +225,31 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
             <header className="product-modifiers__content">
               {productModifiers.map((mod: ProductoModificadorPCGInterface, index: number) => (
                 <div className="product-modifiers__product" key={index}>
+
                   <p className="product-modifiers__product__title">{mod.descripcionMod}</p>
                   <div className="product-modifiers__option__container">
                     {mod.listOpciones.map((op: listaOpciones, idx: number) => (
                       <div className="product-modifiers__options" key={idx}>
-                            <input
-                              type="checkbox"
-                              className="product-modifiers__checkout"
-                              id={String(op.codOpcion)}
-                              checked={isOptionSelected(mod, op.codOpcion)}
-                              onChange={() => handleToggleOption(mod, op.codOpcion)}
-                            />
-                            <label
-                              htmlFor={String(op.codOpcion)}
-                              className="product-modifiers__option"
-                            >
-                              {op.descripcionOp}
+                        <input
+                          type="checkbox"
+                          className="product-modifiers__checkout"
+                          id={String(op.codOpcion)}
+                          checked={isOptionSelected(mod, op.codOpcion)}
+                          onChange={() => handleToggleOption(mod, op.codOpcion)}
+                        />
+                        <label
+                          htmlFor={String(op.codOpcion)}
+                          className="product-modifiers__option"
+                        >
+                          {op.descripcionOp}
+                          {Number(op.precioVenta) > 0 && (
+                            <span className="product-modifiers__option__price">
+                              C$ {Number(op.precioVenta).toFixed(2)}
+                            </span>
+                          )}
 
-                              {/* Mostrar precio, si es mayor a 0. */}
-                              {Number(op.precioVenta) > 0 && (
-                               <span className="product-modifiers__option__price">
-                                C$ {Number(op.precioVenta).toFixed(2)}
-                              </span>
-                              )}
-                              
-                            </label>
-                        
+                        </label>
+
                       </div>
                     ))}
                   </div>
@@ -276,6 +277,7 @@ const DetailPCGProduct = ({ detail, idUsuario, setDetailProduct, setselectedCate
           type="number"
           className="detail-product__inputNumber"
           min={1}
+          max={10}
           value={cantidad}
           onChange={handleQuantityChange}
         />

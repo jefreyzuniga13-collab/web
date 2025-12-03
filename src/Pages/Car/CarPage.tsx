@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { ThreeDot } from "react-loading-indicators";
 import { useCarPCG } from "@/Hooks/useCarPCG";
 import '@/Styles/Cart/CartPage.css'
-const USER_ID = 800;
 import noimageavailable from '@/assets/noimageavailable.webp'
 import {useNavigate} from 'react-router-dom'
 
@@ -12,7 +11,7 @@ const CarPage: React.FC = () => {
     const navigate = useNavigate();
 
   useEffect(() => {
-    getProductFromCarAsync(USER_ID);
+    getProductFromCarAsync(8);
   }, [getProductFromCarAsync]);
 
   const firstSummaryItem =
@@ -166,7 +165,7 @@ const CarPage: React.FC = () => {
           ) : (
             <div className="cart-page__empty">
               <p className="cart-page__empty-text">
-                Your cart is currently empty.
+              Tu carrito esta vacio
               </p>
             </div>
           )}

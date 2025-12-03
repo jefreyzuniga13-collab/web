@@ -1,6 +1,4 @@
 .detail-product__container{
-    /* Los dos hijos deben de ocupar el espacio del contenido, propio,
-    es decir uno debajo del otro, seguidos */
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -14,13 +12,13 @@
 .detail-product__section{
     width: 100%;
     max-width: 100%;
+    min-height: fit-content;
     overflow-x: hidden;
     overflow-y: hidden;
     display: flex;
     flex-direction: column;
     gap: 4px;
     flex: 0.5;
-    max-height: fit-content;
 }
 
 .detail-product__image{
@@ -105,20 +103,16 @@
     background-color: var(--color-gray-900) !important;
 }
 
-
-/* Modificadores */
 .product-modifiers{
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex-wrap: wrap;
+    margin-top: var(--space-xs);
 }
 
 .product-modifiers__content{
     display: flex;
     flex-direction: column;
-    /* Hay veces que este contenido no se ve, por que el padre es mas pequeño
-    y deveria ser cubirlo por que deve de ser de alto, a como es el contenido el padre. */
 }
 
 .product-modifiers__product{
@@ -138,11 +132,6 @@
     margin: 0;
 }
 .product-modifiers__option__container{
-    /* display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 2px;
-    justify-content: start; */
     display: grid;
     grid-template-columns: 1fr 1fr;
     flex-wrap: wrap;
@@ -164,6 +153,7 @@
 .product-modifiers__option{
     list-style: none;
     font-weight: var(--font-weight-medium);
+    align-self: center;
 }
 
 .productDetail-total{
@@ -197,4 +187,16 @@
     border-radius: 12px;
     padding: 5px 10px;
     min-width: 100%;
+}
+
+
+
+@media (max-width: 640px) {
+    .product-modifiers__option__container{
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .product-modifiers__option{
+        font-size: var(--font-size-xs);
+    }
 }

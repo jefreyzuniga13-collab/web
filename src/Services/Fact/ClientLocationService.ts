@@ -1,0 +1,20 @@
+import type {ApiPCGResponse} from '@/Interfaces/GlobalPCGInterface'
+import {apiPCG} from '@/Utils/ApiConfig'
+import type {ClientLocationDto} from '@/Interfaces/Fact/ClientLocationInterface'
+
+class ClientLocationServ {
+    async Create(req: ClientLocationDto): Promise<ApiPCGResponse<ClientLocationDto>>{
+        const {data} = await apiPCG.post<ApiPCGResponse<ClientLocationDto>>
+        (`Direcciones/AgregaDireccion`, req)
+
+        return data;
+    }
+
+    async Get(req: number): Promise<ApiPCGResponse<ClientLocationDto>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<ClientLocationDto>>
+        (`Direcciones/ListaDirecciones/${req}`);
+        return data;
+    }
+}
+
+export const ClientLocationService = new ClientLocationServ();

@@ -367,12 +367,15 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
         )}
         
         {optionMenu === 6 && (
-          <ProductTab conversationId={Number(conversationId)}/>
+          <ProductTab 
+          conversationId={Number(conversationId)}
+          contactId= {Number(contactId)}/>
         )}
 
         {optionMenu === 7 && (
           <CarPCPanelTab 
            conversationId={Number(conversationId)}
+           contactId= {Number(contactId)}
           />
         )}
       </section>

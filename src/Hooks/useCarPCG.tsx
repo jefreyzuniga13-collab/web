@@ -21,10 +21,11 @@ export function useCarPCG() {
 
         try {
             const item = await CartService.AddProductToCar(req);
-            setCarPCG(item.data)
             if(item.success){
-                toast.success(item.message)
+                setCarPCG(item.data)
+                // toast.success(item.message)
             }else{
+                setCarPCG([])
                 toast.error(item.message)
             }
         } catch (err: any) {
