@@ -142,6 +142,21 @@
   stroke: #fff;
 }
 
+.detailPanel-optionBtn{
+  position: relative;
+}
+
+.detailPanel__cartItemsCount{
+  /* position: absolute;
+  top: -100;
+  left: -100;  */
+ 
+  background-color: var(--color-destructive);
+  color: var(--text-white);
+  font-size: var(--font-size-1xs);
+  padding: 4px;
+  border-radius: 50%;
+}
 .detailPanel-content {
   padding: 0;
   flex: 1;

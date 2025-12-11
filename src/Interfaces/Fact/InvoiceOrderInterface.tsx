@@ -1,39 +1,40 @@
-export interface InvoiceOrderRequestDto{
-    idUsuario: number;
-    nombrede: string;
-    registroMaquina: string;
-    noIdentificacion: string;
-    observaciones: string;
-    transporte: number; // distancia en km
-    propina: number //Opcional
-    tipoServicio: number;
-    idEstado: number;
-    codSucursal?: string;
-    direcciones: Direcciones[];
-    detPago: DetPago[]
-    
+export interface InvoiceOrderRequestDto {
+  idUsuario: number;
+  nombrede: string;
+  noPedido: number;
+  registroMaquina: string;
+  noIdentificacion: string;
+  observaciones: string;
+  transporte: number;
+  propina: number;
+  tipoServicio: number;
+  idEstado: number;
+  codSucursal?: string;
+  direcciones: Direcciones;
+  detPago: DetPago; 
 }
 
-//recupera, la informacion el uso de un map picker
-interface Direcciones{
-    idDireccion: number;
-    nombre: string;
-    referencia: string;
-    latitud: number;
-    longitud: number;
+interface Direcciones {
+  idDireccion: number;
+  nombre: string;
+  descripcion: string;
+  referencia: string;
+  latitud: number;
+  longitud: number;
 }
 
-interface DetPago{
-    codPago: number;
-    monto: number;
-    codBanco: string;
-    montoC: number
-    cambio: number;
-    valor_Pagar: number;
-    nomsol: string;
-    registro_maquina: string;
-    codPagoNew: number
+interface DetPago {
+  codPago: number;
+  monto: number;
+  codBanco: string;
+  montoC: number;
+  cambio: number;
+  valor_Pagar: number;
+  nomsol: string;
+  registro_maquina: string;
+  codPagoNew: number;
 }
+
 
 
 // Get last invoice order
@@ -67,4 +68,11 @@ export interface NearestBranchResponseDto{
     serie: string;
     latitud: number;
     longitud: number;
+}
+
+
+export interface SendOrderMessage{
+  conversationId: number;
+  orderId: number;
+  userId: number;
 }

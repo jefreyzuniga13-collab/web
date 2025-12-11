@@ -1,9 +1,10 @@
 export interface CarDto{
-    idUsuario: number;
+    idUsuario?: number;
     fecha: string;
+    noPedido: number;
     total: number;
+    tipoServicio: number;
     listDetalle: ListDetalleCarrito[]
-
 
     //Para la respuesta:
     venta?: number;
@@ -27,8 +28,9 @@ export interface ListDetalleCarrito{
     codUm: string;
     observaciones?: string;
     unico?: string;//basillo, lo genera la api, se obtiene haytas que se recupe4ra
-    noPedido?: number;//al agregarlo es basillo, hasta cuando se recupera si se ontiene,pra el agregar al crrito basillloo
+    noPedido: number;//al agregarlo es basillo, hasta cuando se recupera si se ontiene,pra el agregar al crrito basillloo
     imagen?: string;
+    tipoServicio?: number;
 
     // Para las respuestas:
     listOpciones?: ListOpciones[]

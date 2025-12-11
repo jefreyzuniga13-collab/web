@@ -1,18 +1,40 @@
 import { useEffect } from "react";
 import { ThreeDot } from "react-loading-indicators";
-import { useCarPCG } from "@/Hooks/useCarPCG";
-import '@/Styles/Cart/CartPage.css'
-import noimageavailable from '@/assets/noimageavailable.webp'
-import {useNavigate} from 'react-router-dom'
+import "@/Styles/Cart/CartPage.css";
+import noimageavailable from "@/assets/noimageavailable.webp";
+import { useNavigate } from "react-router-dom";
+import type { TempLinkResolveResponseDto } from "@/Interfaces/GlobalPCGInterface";
 
-const CarPage: React.FC = () => {
-  const { getProductFromCarAsync , carPCG, error, loading } =
-    useCarPCG();
-    const navigate = useNavigate();
+import {
+  selectCarPCG,
+  selectCartError,
+  selectCartLoading,
+  getProductFromCarAsync
+} from "@/Context/Slices/Cart/cartSlice";
+
+import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
+import type { RootState, AppDispatch } from "@/Context";
+
+interface CarPageProps {
+  payload: TempLinkResolveResponseDto;
+}
+
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+const CarPage: React.FC<CarPageProps> = ({ payload }) => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const carPCG = useAppSelector(selectCarPCG);
+  const loading = useAppSelector(selectCartLoading);
+  const error = useAppSelector(selectCartError);
 
   useEffect(() => {
-    getProductFromCarAsync(8);
-  }, [getProductFromCarAsync]);
+    if (payload) {
+      dispatch(getProductFromCarAsync(payload.orderId));
+    }
+  }, [dispatch, payload.contactId]);
 
   const firstSummaryItem =
     carPCG && carPCG.length > 0 ? carPCG[0] : null;
@@ -23,11 +45,9 @@ const CarPage: React.FC = () => {
       (c) => c.listDetalle && c.listDetalle.length > 0
     );
 
-
-    const goToCheckout = ()=>{
-      // Falta mucha logica
-      navigate('/checkout')
-    }
+  const goToCheckout = () => {
+    navigate("/checkout", { state: { payload } });
+  };
 
   if (loading) {
     return (
@@ -43,7 +63,7 @@ const CarPage: React.FC = () => {
     return (
       <main className="cart-page cart-page--centered">
         <div className="cart-page__error">
-          <span className="cart-page__error-text">{error.message}</span>
+          <span className="cart-page__error-text">{error}</span>
         </div>
       </main>
     );
@@ -77,7 +97,7 @@ const CarPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="cart-table__body">
-                  {carPCG?.map((group) =>
+                  {carPCG?.flatMap((group) =>
                     group.listDetalle?.map((item) => {
                       const options = item.listOpciones ?? [];
                       const quantity =
@@ -105,7 +125,6 @@ const CarPage: React.FC = () => {
                               <div className="cart-item__image-wrapper">
                                 <img
                                   src={item.imagen != null ? item.imagen : noimageavailable}
-                                  // alt={item.descripcion}
                                   className="cart-item__image"
                                 />
                               </div>
@@ -141,7 +160,6 @@ const CarPage: React.FC = () => {
 
                           <td className="cart-table__cell cart-table__cell--qty">
                             <div className="cart-qty">
-
                               <span className="cart-qty__value">
                                 {quantity}
                               </span>
@@ -157,7 +175,7 @@ const CarPage: React.FC = () => {
                           </td>
                         </tr>
                       );
-                    })
+                    }) ?? []
                   )}
                 </tbody>
               </table>
@@ -165,7 +183,7 @@ const CarPage: React.FC = () => {
           ) : (
             <div className="cart-page__empty">
               <p className="cart-page__empty-text">
-              Tu carrito esta vacio
+                Tu carrito esta vacio
               </p>
             </div>
           )}
@@ -192,6 +210,7 @@ const CarPage: React.FC = () => {
                   : "--"}
               </span>
             </div>
+            
             <div className="cart-totals__row cart-totals__row--total">
               <span className="cart-totals__label">Total</span>
               <span className="cart-totals__value cart-totals__value--strong">
@@ -210,7 +229,7 @@ const CarPage: React.FC = () => {
             <button
               type="button"
               className="cart-totals__button"
-              onClick={()=> goToCheckout()}
+              onClick={goToCheckout}
             >
               <p className="cart-totals_text">Procesar Pago</p>
             </button>

@@ -23,6 +23,12 @@ class ContactService {
     return data.data;
   }
 
+  async UpdateEcommerceUser(id: number, ecommerceUserId: number): Promise<ApiResponse<ContactLogInterface>>{
+    const {data} = await api.patch<ApiResponse<ContactLogInterface>>
+    (`/ContactLogs/UpdateEcommerceUserId/${id}/${ecommerceUserId}`)
+    return data;
+  }
+
    async getAllVerifiedAsync(
     page: number,
     pageSize: number
@@ -64,6 +70,13 @@ class ContactService {
       `/contactLogs/${id}`
     );
     return data.data;
+  }
+
+    async getById(id: number): Promise<ApiResponse<ContactLogInterface>> {
+    const { data } = await api.get<ApiResponse<ContactLogInterface>>(
+      `/contactLogs/${id}`
+    );
+    return data;
   }
 
   async getContactByPhoneAsync(phone: string): Promise<ContactLogInterface> {

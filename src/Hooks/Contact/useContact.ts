@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Contact/ContactInterface'
 import { contactService } from '@/Services/Contact/ContactService'
 import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import { toast } from 'react-toastify'
 
 const useContact = (contactId?: number) => {
   const [data, setData] = useState<ContactLogInterface[]>([])
@@ -87,6 +88,29 @@ const useContact = (contactId?: number) => {
     [page, pageSize]
   )
 
+  const getById = useCallback(async (id: number) => {
+  setLoadingItem(true)
+  setError(null)
+
+  try {
+    const res = await contactService.getById(id)
+
+    if (res.success) {
+      setSelectedData(res.data)
+      return res.data
+    } else {
+      toast.error(res.message)
+      return null
+    }
+  } catch (err: any) {
+    setError(err)
+    return null
+  } finally {
+    setLoadingItem(false)
+  }
+}, [])
+
+
   const fetchById = useCallback(
     async (id: number) => {
       setLoadingItem(true)
@@ -158,6 +182,20 @@ const useContact = (contactId?: number) => {
     [selectedData]
   )
 
+const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: number)=>{
+  setLoadingItem(true);
+  setError(null);
+
+  try{
+    const res = await contactService.UpdateEcommerceUser(id, ecommerceUserId)
+     
+    return res;
+  }catch(err: any){
+    setError(err)
+  }finally{
+    setLoadingItem(false)
+  }
+}, [])
   const toggle = useCallback(
     async (id: number) => {
       setLoadingItem(true)
@@ -270,6 +308,8 @@ const useContact = (contactId?: number) => {
     setGlobalFilter,
     getByClientCode,
     contactByClient,
+    UpdateEcommerceUserAsync,
+    getById
   }
 }
 

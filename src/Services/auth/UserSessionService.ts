@@ -60,7 +60,8 @@ class UserSessionServ {
     );
     return data.data;
   }
-
+  
+  
   async exportPdf({
     sessionId,
     title = "Reporte de Sesión",
@@ -100,6 +101,14 @@ class UserSessionServ {
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
+  }
+
+  async revokeCartTempLink(orderId: number): Promise<ApiResponse<boolean>> {
+    const { data } = await api.post<ApiResponse<boolean>>(
+      `/Auth/TempLink/Revoke/${orderId}`
+    );
+
+    return data;
   }
 }
 

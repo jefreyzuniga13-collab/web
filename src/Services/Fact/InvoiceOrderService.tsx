@@ -1,10 +1,12 @@
 import {apiPCG} from '@/Utils/ApiConfig'
 import type {ApiPCGResponse} from '@/Interfaces/GlobalPCGInterface'
-import type {InvoiceOrderRequestDto, InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto} from '@/Interfaces/Fact/InvoiceOrderInterface'
+import type {InvoiceOrderRequestDto, 
+    InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto} from '@/Interfaces/Fact/InvoiceOrderInterface'
+
 
 class InvoiceOrderServ{
     async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<InvoiceOrderRequestDto>>{
-        const {data} = await apiPCG.post<ApiPCGResponse<InvoiceOrderRequestDto>>(`/api/OrdenFactura/AgregaOrdenFact`, req)
+        const {data} = await apiPCG.post<ApiPCGResponse<InvoiceOrderRequestDto>>(`OrdenFactura/AgregaOrdenFact`, req)
 
         return data;
     }
@@ -32,6 +34,7 @@ class InvoiceOrderServ{
 
         return data;
     }
+
 }
 
 export const InvoiceOrderService = new InvoiceOrderServ();

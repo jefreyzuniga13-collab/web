@@ -18,6 +18,7 @@ export const useClientLocation = () =>{
             if(res.success){
                 setClientLocation(res.data)
                 toast.success(res.message);
+                return res.data
             }else{
                 toast.error(res.message);
             }

@@ -48,9 +48,16 @@
     gap: 4px;
     overflow-y: auto;
 }
+
+
+.button-text{
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-base);
+}
+
 .productTab-buyButton {
   margin-left: 0.75rem;
-  padding: 0.4rem 0.9rem;
   border-radius: 4px;
   border: none;
   cursor: pointer;

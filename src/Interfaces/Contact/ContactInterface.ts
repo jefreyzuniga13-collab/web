@@ -29,6 +29,7 @@ export interface ContactLogInterface {
   companyId?: number | null;
   clientId?: string | null;
   isProvidingData?: boolean;
+  email?: string | null;
   isVerified?: boolean;
   isActive?: boolean;
   status: ContactStatus;
@@ -39,6 +40,8 @@ export interface ContactLogInterface {
   verifiedBy?: User | null;
   clienteCodigo?: string;
   clienteNombre?: string;
+
+   ecommerceUserId?: number;
 }
 
 export interface ContactFormValues {
@@ -59,6 +62,8 @@ export interface ContactFormValues {
   isActive: boolean;
   verifiedAt: string | null;
   verifiedBy: number | null;
+
+  ecommerceUserId?: number
 }
 
 /**

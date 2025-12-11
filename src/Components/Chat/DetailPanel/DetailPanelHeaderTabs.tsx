@@ -4,9 +4,15 @@ import { IoChatboxEllipsesOutline } from "react-icons/io5";
 import { RiTimelineView } from "react-icons/ri";
 import { AiOutlineWechatWork } from "react-icons/ai";
 import { LuContact } from "react-icons/lu";
-import type { OptionMenu } from "@/Hooks/Chat/DetailPanel/useDetailTabs";
 import { TbShoppingCartSearch } from "react-icons/tb";
 import { LuChartBarStacked } from "react-icons/lu";
+import type { OptionMenu } from "@/Hooks/Chat/DetailPanel/useDetailTabs";
+import type { RootState } from '@/Context/index'
+import { selectCartItemsCount } from "@/Context/Slices/Cart/cartSlice";
+import { useSelector, type TypedUseSelectorHook } from "react-redux";
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+
 interface DetailPanelHeaderTabsProps {
   optionMenu: OptionMenu;
   onSelectTab: (tab: OptionMenu) => void;
@@ -20,6 +26,8 @@ const DetailPanelHeaderTabs: React.FC<DetailPanelHeaderTabsProps> = ({
   onSelectHistory,
   onSelectCurrentConversation,
 }) => {
+  const cartItemsCount = useAppSelector(selectCartItemsCount);
+
   return (
     <ul className="detail-panel__header">
       <li className={`detailPanel-option ${optionMenu === 1 ? "is-active" : ""}`}>
@@ -87,24 +95,32 @@ const DetailPanelHeaderTabs: React.FC<DetailPanelHeaderTabsProps> = ({
         </button>
       </li>
 
-      <li className={`detailPanel-option ${optionMenu  === 6 ? "is-active": ""}`}>
+      <li className={`detailPanel-option ${optionMenu === 6 ? "is-active" : ""}`}>
         <button
-        type="button"
-        className="detailPanel-optionBtn"
-        onClick={()=> onSelectTab(6)}
-        aria-label="Venta productos">
-
-          <LuChartBarStacked size={18} className="detailPanel-optionBtn__icon"/>
+          type="button"
+          className="detailPanel-optionBtn"
+          onClick={() => onSelectTab(6)}
+          aria-label="Venta productos"
+        >
+          <LuChartBarStacked size={18} className="detailPanel-optionBtn__icon" />
         </button>
       </li>
-          <li className={`detailPanel-option ${optionMenu  === 7 ? "is-active": ""}`}>
-        <button
-        type="button"
-        className="detailPanel-optionBtn"
-        onClick={()=> onSelectTab(7)}
-        aria-label="Venta productos">
 
-          <TbShoppingCartSearch size={18} className="detailPanel-optionBtn__icon"/>
+      <li className={`detailPanel-option ${optionMenu === 7 ? "is-active" : ""}`}>
+        <button
+          type="button"
+          className="detailPanel-optionBtn detailPanel-optionBtn--cart"
+          onClick={() => onSelectTab(7)}
+          aria-label="Carrito de compra"
+        >
+          <TbShoppingCartSearch size={18} className="detailPanel-optionBtn__icon" />
+
+
+          {cartItemsCount > 0 && (
+            <span className="detailPanel__cartItemsCount">
+              {cartItemsCount > 99 ? "99+" : cartItemsCount}
+            </span>
+          )}
         </button>
       </li>
     </ul>

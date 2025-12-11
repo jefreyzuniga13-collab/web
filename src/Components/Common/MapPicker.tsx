@@ -9,6 +9,7 @@ import {
 import type { LatLngExpression } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default as any).prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -23,13 +24,19 @@ interface MapPickerProps {
   onChange?: (coords: { latitud: number; longitud: number }) => void;
 }
 
+// Tipo “real” de lo que vamos a guardar
+type PositionState =
+  | [number, number]
+  | { lat: number; lng: number }
+  | null;
+
 const MapClickHandler = ({
   onSelect,
 }: {
   onSelect: (coords: { latitud: number; longitud: number }) => void;
 }) => {
   useMapEvents({
-    click(e: { latlng: { lat: number; lng: number; }; }) {
+    click(e) {
       onSelect({
         latitud: e.latlng.lat,
         longitud: e.latlng.lng,
@@ -41,21 +48,22 @@ const MapClickHandler = ({
 };
 
 const MapPicker: React.FC<MapPickerProps> = ({ value, onChange }) => {
-  // Centro por defecto (Managua)
   const defaultCenter: LatLngExpression = [12.114993, -86.236174];
 
-  const [position, setPosition] = useState<LatLngExpression | null>(
+  const [position, setPosition] = useState<PositionState>(
     value ? [value.latitud, value.longitud] : null
   );
 
-  // Intentar obtener ubicación actual del navegador la primera vez
   useEffect(() => {
     if (value) {
       setPosition([value.latitud, value.longitud]);
       return;
     }
 
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setPosition(defaultCenter as [number, number]);
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -63,31 +71,48 @@ const MapPicker: React.FC<MapPickerProps> = ({ value, onChange }) => {
         setPosition([latitude, longitude]);
       },
       () => {
-        // Si el usuario no da permiso, usar el centro por defecto
-        setPosition(defaultCenter);
+        setPosition(defaultCenter as [number, number]);
       }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [value]);
 
   const handleSelect = (coords: { latitud: number; longitud: number }) => {
+    // Siempre guardamos como array [lat, lng] cuando el usuario hace click
     setPosition([coords.latitud, coords.longitud]);
-
-    // Devolver valores al padre (para guardar en direcciones de la factura)
-    if (onChange) {
-      onChange(coords);
-    }
+    onChange?.(coords);
   };
+
+  // ====== Normalizar lat/lng de forma segura ======
+  let lat: number | undefined;
+  let lng: number | undefined;
+
+  if (Array.isArray(position)) {
+    lat = position[0];
+    lng = position[1];
+  } else if (position && typeof position === "object") {
+    // Por si en algún momento Leaflet mete un LatLng
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p: any = position;
+    lat = p.lat;
+    lng = p.lng;
+  }
+
+  const hasValidCoords =
+    typeof lat === "number" && typeof lng === "number";
+
+  const center: LatLngExpression = hasValidCoords
+    ? [lat!, lng!]
+    : defaultCenter;
 
   return (
     <div className="mapPickert-container">
       <MapContainer
-        center={position ?? defaultCenter}
+        center={center}
         zoom={15}
         scrollWheelZoom={true}
         style={{ height: "350px", width: "100%", borderRadius: "8px" }}
       >
-        {/* Capa de mapa gratis usando OpenStreetMap */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -95,14 +120,14 @@ const MapPicker: React.FC<MapPickerProps> = ({ value, onChange }) => {
 
         <MapClickHandler onSelect={handleSelect} />
 
-        {position && (
-          <Marker position={position}>
+        {hasValidCoords && (
+          <Marker position={[lat!, lng!]}>
             <Popup>
               Ubicación seleccionada
               <br />
-              Lat: {(position as [number, number])[0].toFixed(6)}
+              Lat: {lat!.toFixed(6)}
               <br />
-              Lng: {(position as [number, number])[1].toFixed(6)}
+              Lng: {lng!.toFixed(6)}
             </Popup>
           </Marker>
         )}

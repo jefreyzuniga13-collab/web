@@ -7,17 +7,20 @@ import { IoMdSend } from "react-icons/io"
 import { useProductPCG } from "@/Hooks/useProductPCG"
 import { sendMedia, sendText } from "@/Services/MessageService"
 import "@/Styles/Chat/DetailPanel/ProductPCGTab.css"
+import axios from "axios"
 
 interface Props {
   prod: ProductoPCGInterface
   onClick?: (product: ProductoPCGInterface) => void
   conversationId: number
-  userId: number
 }
 
-export const ProductPCGTab = ({ prod, onClick, conversationId, userId }: Props) => {
+export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
   const { getProductModifiers } = useProductPCG()
   const [sending, setSending] = useState(false)
+
+    const authRaw = localStorage.getItem("auth") || "{}";
+  const { userId } = JSON.parse(authRaw);
 
   const handleClick = () => {
     if (onClick) onClick(prod)
@@ -68,8 +71,10 @@ export const ProductPCGTab = ({ prod, onClick, conversationId, userId }: Props) 
       if (!caption) return
 
       if (prod.imagen) {
-        const response = await fetch(prod.imagen)
-        const blob = await response.blob()
+        console.log("La imagen del recurso para obtener y enviar es" + prod.imagen)
+        const response = await axios.get(prod.imagen)
+
+        const blob = await response.data.blob()
         const mime = blob.type || "image/jpeg"
         const ext = mime.split("/")[1] || "jpg"
         const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })

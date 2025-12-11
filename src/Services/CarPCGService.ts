@@ -36,7 +36,8 @@ class CartServ {
 
     async getProductFromCar(codCliente: number):  Promise<CarDto[]>{
         try{
-            const {data} = await apiPCG.get<ApiPCGResponse<CarDto[]>>(`CarritoCompra/OrdenEn/${codCliente}`)
+            const {data} = await apiPCG.get<ApiPCGResponse<CarDto[]>>
+            (`CarritoCompra/OrdenEn/${codCliente}`)
 
             return data.data;
         }catch(error){
@@ -44,15 +45,33 @@ class CartServ {
         }
     }
 
-    async updateCar(idUsuario: number, noPedido: number): Promise<ApiPCGResponse<CarDto[]>>{
-        try{
-            const {data} = await apiPCG.put<ApiPCGResponse<CarDto[]>>(`CarritoCompra/QuitarCarrito/${idUsuario}/${noPedido}`);
+async removeProductFromCar(
+  idUsuario: number,
+  noPedido: number,
+  codProducto: string,
+  unico: string
+): Promise<ApiPCGResponse<CarDto[]>> {
+  try {
+    const cleanCode = codProducto.trim();
 
-            return data;
-        }catch(error){
-            throw formatError(error)
-        }
-    }
+    const { data } = await apiPCG.put<ApiPCGResponse<CarDto[]>>(
+      `CarritoCompra/QuitarCarrito/${idUsuario}/${noPedido}`,
+      null,
+      {
+        params: {
+          CodProducto: cleanCode,
+          Unico: unico,
+        },
+      }
+    );
+
+    return data;
+  } catch (error) {
+    throw formatError(error);
+  }
+}
+
+
 }
 
 export const CartService = new CartServ();

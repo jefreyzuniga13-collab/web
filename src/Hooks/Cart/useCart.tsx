@@ -2,17 +2,18 @@
 import {useState} from 'react'
 import {CartService} from '@/Services/Cart/CartService'
 import { toast } from 'react-toastify'
+import type { SendLinkRequestDto } from '@/Interfaces/Cart/SendLinkInterface'
 
 export const useCart = () => {
     const [cart, setCart] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null)
 
-    const SendMessageLink = async(conversationId: number)=>{
+    const SendMessageLink = async(req: SendLinkRequestDto)=>{
         setLoading(true)
         setError(null)
         try{
-            const data = await CartService.SendMessageLink(conversationId);
+            const data = await CartService.SendMessageLink(req);
             setCart(data.data);
             if(data.success){
                 toast.success(data.message);

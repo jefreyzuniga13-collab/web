@@ -12,8 +12,22 @@
     overflow-y: auto;
 }
 
+.carPCPanel-container{
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+}
+
+.carPCPanel-emptyContainer{
+    overflow: hidden;
+}
 .carPCPanel-header{
     min-width: 100%;
+}
+
+.cardPanel-emptyImage{
     max-width: 100%;
 }
 
@@ -39,6 +53,22 @@
     margin-top: 12px;
     border-bottom: 1px solid var(--color-gray-200);
     cursor: pointer;
+    position: relative !important;
+}
+
+.carPCPanel-content__removeIcon{
+    display: none;
+}
+
+.carPCPanel-content__list:hover
+.carPCPanel-content__removeIcon{
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    /* font: var(--font-size-base); */
+    color: var(--color-destructive);
 }
 
 .carPCPanel-content__list-imgContainer {
@@ -101,6 +131,11 @@
     text-transform: lowercase;
 }
 
+/* .carPCPanel-content__removeIconContainer{
+    
+} */
+
+
 .carPCPanel-content__list-input{
     max-width: 40px;
     max-height: 40px;
@@ -143,8 +178,6 @@
     text-decoration: underline;
 }
 
-
-
 .productTab-footer__payment{
     display: flex;
     align-items: center;
@@ -154,11 +187,27 @@
     margin-top: var(--space-lg);
 }
 
+.btn_text{
+    font: var(--font-size-sm);
+    padding: 0;
+    margin: 0;
+}
 .payment-btn,
-.carPanel-btn{
+.carPanel-btn,
+.cancelPanel-btn{
     font-size: var(--font-size-sm);
     margin: 0;
+    transition: all ease-out .3s;
+}
 
+.cancelPanel-btn{
+    margin-top: var(--space-lg);
+    background-color: var(--color-destructive);
+    color: var(--text-white);
+}
+
+.cancelPanel-btn:hover{
+    opacity: 0.6;
 }
 .carPanel-btn{
     background-color: var(--color-secondary);

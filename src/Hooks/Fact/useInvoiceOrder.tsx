@@ -55,6 +55,7 @@ const useInvoiceOrder = () => {
         setLoading(false)
     }
   },[])
+  
 
   const GetNearestBranchAsync = useCallback(async(req: NearestBranchRequestDto)=>{
     setLoading(false)
@@ -64,11 +65,16 @@ const useInvoiceOrder = () => {
         const data = await InvoiceOrderService.GetNearestBranch(req);
 
         if(data.success){
+
+            console.log("Data de GetNearestBranchAsync", data.data)
             setNearestBranch(data.data)
             toast.success(data.message)
+            return data.data
         }else{
             toast.error(data.message);
         }
+        
+        return data.data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }catch(err: any){
         setError(err)
@@ -87,6 +93,7 @@ const useInvoiceOrder = () => {
         if(res.success){
             setTransportationCost(res.data)
             toast.success(res.success)
+            return res.data
         }else{
             toast.error(res.message)
         }
