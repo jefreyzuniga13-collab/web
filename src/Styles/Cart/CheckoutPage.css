@@ -88,6 +88,10 @@
   gap: 0.35rem;
   flex: 1;
 }
+.checkout-location__container{
+  max-height: 270px;
+  overflow-y: auto;
+}
 
 .checkout-location-mode {
   margin-bottom: 1.5rem;

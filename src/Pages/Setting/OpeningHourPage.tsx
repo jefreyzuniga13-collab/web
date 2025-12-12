@@ -163,6 +163,7 @@ export default function OpeningHourPage() {
         </div> 
       {/* {loading &&  <div className="loader-container">
         <ThreeDot color="#3142cc" size="medium" /></div>} */}
+        
       {error   && <p className="oh-page__error">Error: {error.message}</p>}
 
       <CustomTable<OpeningHourInterface>

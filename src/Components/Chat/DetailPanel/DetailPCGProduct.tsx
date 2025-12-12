@@ -408,13 +408,13 @@ const DetailPCGProduct = ({
     const existingLog = await fetchByContactId(contactId)
 
     if (existingLog) {
-      req.idUsuario = existingLog.orderId
+      // req.idUsuario = existingLog.orderId
       req.noPedido = existingLog.orderId
       await dispatch(addProductToCarAsync(req)).unwrap()
     } else {
       const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
       const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-      const orderId = first?.idUsuario ?? 0
+      const orderId = first?.noPedido
 
       const logOrderRequest: LogCartRequestDto = {
         orderId,

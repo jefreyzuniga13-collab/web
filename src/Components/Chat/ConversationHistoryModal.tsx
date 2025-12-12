@@ -7,7 +7,7 @@ import bg from "@/assets/backgroundchat.png";
 import "@/Styles/Chat/ConversationHistoryModal.css";
 import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";
-import { ThreeDot } from "react-loading-indicators";
+import CustomLoader from '@/Components/Common/CustomLoader'
 
 interface ConversationHistoryModalProps {
   isOpen: boolean;
@@ -670,9 +670,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                   })}
 
                   {loading && hasMore && (
-                    <div className="chm-loading chm-loading--inline">
-                      <ThreeDot color="#0070B4" size="medium" />
-                    </div>
+                    <CustomLoader/>
                   )}
 
                   {!hasMore && (

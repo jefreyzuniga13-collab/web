@@ -60,7 +60,7 @@ export function useCarPCG() {
     setLoading(true);
     setError(null);
     try {
-      const item = await CartService.getProductFromCar(codCliente);
+      const item = await CartService.getProductFromCar(codCliente, 0);
       setCarPCG(item);
     } catch (err: any) {
       setError(err);
@@ -76,9 +76,9 @@ export function useCarPCG() {
       const item = await CartService.removeProductFromCar(idUsuario, noPedido, codProducto, unico);
       setCarPCG(item.data);
 
-      if (item.success) {
-        toast.success(item.message);
-      } 
+      // if (item.success) {
+      //   toast.success(item.message);
+      // } 
       // else {
       //   toast.error(item.message);
       // }

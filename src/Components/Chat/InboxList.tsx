@@ -5,8 +5,7 @@ import { format } from 'date-fns'
 import { markConversationRead } from '@/Services/ConversationService'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
-import { ThreeDot } from 'react-loading-indicators'
-
+import CustomLoader from '@/Components/Common/CustomLoader'
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
@@ -43,10 +42,12 @@ export const InboxList: React.FC<Props> = ({
     userId: number
   }
 
+
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [])
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -62,8 +63,9 @@ export const InboxList: React.FC<Props> = ({
       { root: null, rootMargin: '0px', threshold: 1.0 }
     )
     if (loaderRef.current) observer.observe(loaderRef.current)
+
     return () => observer.disconnect()
-  }, [page, pagination.totalPages, loading, onPageChange])
+  }, [loading, onPageChange, page, pagination.totalPages])
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
@@ -101,11 +103,11 @@ export const InboxList: React.FC<Props> = ({
       </ul>
     )
   }
+
   return (
     <ul className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
-        // const lastTime = formatDate(c.updatedAt || c.createdAt)
         const statusClass = c.status.toLowerCase()
         const statusTextMap: Record<string, string> = {
           bot: 'Bot',
@@ -168,9 +170,9 @@ export const InboxList: React.FC<Props> = ({
                 )}
                 <span className="inbox-list__preview">{previewText}</span>
               </div>
+
               <div className="inbox-list__bottom">
                 <div className='inbox-list__bottom_text'>
-                  {/* <span className="inbox-list__time">{lastTime}</span> */}
                   <span
                     className={`inbox-list__status inbox-list__status--${statusClass}`}
                   >
@@ -187,23 +189,9 @@ export const InboxList: React.FC<Props> = ({
         )
       })}
       {loading && (
-
-       <ThreeDot color="#0070B4" size="medium" />
+        <CustomLoader/>
       )}
       <li ref={loaderRef} />
     </ul>
   )
 }
-                  // un usuario al cambiar de conversaion le da el error de:
-                // index-CQO97I8E.js:49  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
-                //     at Hj (index-CQO97I8E.js:49:90200)
-                //     at Zn (index-CQO97I8E.js:49:91576)
-                //     at Bj (index-CQO97I8E.js:49:94008)
-                //     at Zn (index-CQO97I8E.js:49:91702)
-                //     at Bj (index-CQO97I8E.js:49:94008)
-                //     at Zn (index-CQO97I8E.js:49:91702)
-                //     at Bj (index-CQO97I8E.js:49:94008)
-                //     at Zn (index-CQO97I8E.js:49:91702)
-                //     at Bj (index-CQO97I8E.js:49:94008)
-                //     at Zn (index-CQO97I8E.js:49:91702)
-                  //a que se deve este caso

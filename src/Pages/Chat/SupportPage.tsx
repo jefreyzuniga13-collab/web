@@ -12,12 +12,23 @@ import { Sticker } from "lucide-react";
 import { useConversations } from "@/Hooks/useConversations";
 import TicketModal from "@/Components/Chat/TicketModal";
 import useContact from "@/Hooks/Contact/useContact";
+import {
+  // selectCartError,
+  // selectCartLoading,
+  getProductFromCarAsync,
+} from "@/Context/Slices/Cart/cartSlice"
+import { useDispatch } from "react-redux"
+import type { AppDispatch } from "@/Context";
+import useLogCart from "@/Hooks/Crm/useLogCard";
+
+export const useAppDispatch: () => AppDispatch = useDispatch
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
+  const dispatch = useAppDispatch()
 
-  const { fetchById, 
+  const { fetchById,
     selectedData: contact } = useContact();
 
   const {
@@ -42,6 +53,11 @@ const SupportPage: React.FC = () => {
     extraerNumero,
     selectedParam,
   } = useSupportPage();
+
+
+  const {
+    fetchByContactId
+  } = useLogCart();
 
   useEffect(() => {
     if (!conversation?.clientContactId) return;
@@ -77,20 +93,42 @@ const SupportPage: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleScapePress);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!convId) {
-      setTicketOpen(false);
-    }
-  }, [convId]);
+
+    useEffect(() => {
+      // Si no hay conversación o no hay contacto -> limpiar carrito
+      if (!convId || !contact?.id) {
+        void dispatch(
+          getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
+        );
+        setTicketOpen(false);
+        return;
+      }
+
+      const loadCart = async () => {
+        const log = await fetchByContactId(contact.id);
+        if (log) {
+          await dispatch(
+            getProductFromCarAsync({ codCliente: 0, noPedido: log.orderId })
+          ).unwrap();
+        } 
+        else {
+          await dispatch(
+            getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
+          ).unwrap();
+        }
+      };
+
+      void loadCart();
+    }, [convId, contact?.id, dispatch, fetchByContactId]);
+
 
   return (
     <div
-      className={`support-layout ${
-        detailToggle && convId ? "details-open" : ""
-      }`}
+      className={`support-layout ${detailToggle && convId ? "details-open" : ""
+        }`}
     >
       <aside className="sidebar">
         <div className="inbox-header">
@@ -171,13 +209,10 @@ const SupportPage: React.FC = () => {
 
             {convId && (
               <button
-                className={`assign-button ${
-                  isAdmin ? "" : "button-cerrar"
-                } ${
-                  conversation?.status == "Closed" ? "btnDisabled" : ""
-                } ${
-                  conversation?.status == "Incomplete" ? "btnDisabled" : ""
-                }`}
+                className={`assign-button ${isAdmin ? "" : "button-cerrar"
+                  } ${conversation?.status == "Closed" ? "btnDisabled" : ""
+                  } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""
+                  }`}
                 onClick={handleAssignClick}
               >
                 <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"}
@@ -187,7 +222,7 @@ const SupportPage: React.FC = () => {
         </header>
 
         <ChatWindow
-          key={convId ?? 0}
+          // key={convId ?? 0}
           conversationId={convId ?? undefined}
           userId={userId}
           conversationStatus={conversation?.status}
@@ -201,7 +236,7 @@ const SupportPage: React.FC = () => {
       <aside className="detail-aside">
         {detailToggle && convId && (
           <DetailPanel
-            key={convId ?? 0}
+            // key={convId ?? 0}
             contactId={conversation?.clientContactId}
             selectedParam={selectedParam}
             conversationId={convId ?? undefined}
@@ -214,9 +249,8 @@ const SupportPage: React.FC = () => {
 
       <button
         type="button"
-        className={`detail-aside__handle ${
-          detailToggle ? "is-open" : "is-closed"
-        }`}
+        className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"
+          }`}
         onClick={() => setDetailToggle(t => !t)}
         disabled={!convId}
         aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}

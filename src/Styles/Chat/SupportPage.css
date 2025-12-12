@@ -290,14 +290,15 @@
   min-width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  padding: var(--space-lg) 0 var(--space-xs);
+  /* padding: var(--space-lg) 0 var(--space-xs); */
   box-sizing: border-box;
   scrollbar-width: thin;
+  padding: var(--space-xs) var(--space-3xl) var(--space-xs) 0;
 }
 .inbox-status__container::-webkit-scrollbar-thumb { color: var(--color-primary) !important; }
 
 .inbox-status__label {
-  font-size: var(--font-size-xs) !important;
+  font-size: var(--font-size-xs);
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--space-2xl);
   color: var(--color-primary);

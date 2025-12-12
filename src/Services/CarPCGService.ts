@@ -34,16 +34,18 @@ class CartServ {
        }
     }
 
-    async getProductFromCar(codCliente: number):  Promise<CarDto[]>{
-        try{
-            const {data} = await apiPCG.get<ApiPCGResponse<CarDto[]>>
-            (`CarritoCompra/OrdenEn/${codCliente}`)
+    async getProductFromCar(codCliente: number, noPedido: number): Promise<CarDto[]> {
+      try {
+        const { data } = await apiPCG.get<ApiPCGResponse<CarDto[]>>(
+          `CarritoCompra/OrdenEn/${codCliente}/${noPedido}`
+        )
 
-            return data.data;
-        }catch(error){
-            throw formatError(error)
-        }
+        return data.data
+      } catch (error) {
+        throw formatError(error)
+      }
     }
+
 
 async removeProductFromCar(
   idUsuario: number,

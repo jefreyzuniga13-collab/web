@@ -71,7 +71,6 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
       if (!caption) return
 
       if (prod.imagen) {
-        console.log("La imagen del recurso para obtener y enviar es" + prod.imagen)
         const response = await axios.get(prod.imagen)
 
         const blob = await response.data.blob()

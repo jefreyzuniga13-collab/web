@@ -5,10 +5,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { ThreeDot } from "react-loading-indicators";
-
-import "@/Styles/Chat/DetailPanel.css";
-
 import { useDetailPanel } from "@/Hooks/Chat/useDetailPanel";
 import useConversations from "@/Hooks/Conversation/useConversations";
 
@@ -28,6 +24,8 @@ import { Trunc, Row } from "@/Components/Chat/DetailPanel/DetailPanelCommon";
 import ConversationHistoryModal from "@/Components/Chat/ConversationHistoryModal";
 import {ProductTab} from '@/Components/Chat/DetailPanel/ProductTab'
 import CarPCPanelTab from "@/Components/Chat/DetailPanel/CarPCPanelTab";
+import "@/Styles/Chat/DetailPanel.css";
+import CustomLoader from "@/Components/Common/CustomLoader";
 
 type Props = {
   contactId?: number;
@@ -124,9 +122,9 @@ const DetailPanel: React.FC<Props> = ({
     openCredView,
     openCredEdit,
     saveCred,
-
     catCredential,
   } = useDetailPanel(contactId, selectedParam);
+
 
   const hasClient = !!clienteCodigo && !!client;
 
@@ -275,9 +273,7 @@ const openHistoryModal = useCallback((row: ConversationRow) => {
 
   if (loading) {
     return (
-      <div className="loader-container">
-        <ThreeDot color="#0070B4" size="medium" />
-      </div>
+      <CustomLoader/>
     );
   }
 

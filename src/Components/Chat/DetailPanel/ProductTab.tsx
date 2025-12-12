@@ -121,7 +121,7 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
 
       const cartCreated = await dispatch(addProductToCarAsync(carrito)).unwrap()
       const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-      const orderId = first?.idUsuario ?? 0
+      const orderId = first?.noPedido
 
       const logOrderRequest: LogCartRequestDto = {
         orderId,

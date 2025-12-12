@@ -77,7 +77,7 @@ export type NameTranslation =
   | 'MaximoMediaPorMensaje'
   | 'PesoMediaMbMaximoMensaje'
   | 'MensajeLinkCarrito'
-  ;
+  | 'TiempoLinkTemporal';
 
   export type TypeTranslation =
   | 'Prompts'

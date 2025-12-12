@@ -28,8 +28,10 @@ export async function createHubConnection(token: string) {
 
   chatConnection.onreconnecting(err => console.warn('Reconnecting to Chat Hub...', err))
   chatConnection.onreconnected(() => console.info('Reconnected to Chat Hub'))
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   chatConnection.onclose(err => {
-     console.info("Coneccion cerrada", err)
+    //  console.info("Coneccion cerrada", err)
     // toast.warn('La conexión al chat ha finalizado. Por favor inicia sesión nuevamente.')
   })
 

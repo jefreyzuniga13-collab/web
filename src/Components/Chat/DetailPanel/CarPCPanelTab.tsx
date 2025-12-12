@@ -21,7 +21,8 @@ import {
   selectCartItemsCount
 } from "@/Context/Slices/Cart/cartSlice"
 
-import {useDispatch, useSelector,type TypedUseSelectorHook} from "react-redux"
+
+import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import useContact from "@/Hooks/Contact/useContact"
 import { useUserEcommerce } from "@/Hooks/UserEcommerce/useUserEcommerce"
@@ -30,7 +31,9 @@ import type { SendLinkRequestDto } from "@/Interfaces/Cart/SendLinkInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { UserSessionService } from '@/Services/auth/UserSessionService'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 interface Props {
@@ -137,7 +140,7 @@ const generateCartPdfFile = (cart: CarDto): File => {
   doc.text(`C$ ${total}`, valueX, lineY, { align: "right" })
 
   const blob = doc.output("blob")
-  return new File([blob], `carrito.pdf`, { type: "application/pdf" })
+  return new File([blob], `carrito.pdf`, { type: "application/pdf" }) 
 }
 
 const generateRandomString = () => {
@@ -172,6 +175,7 @@ const generateRandomString = () => {
   return result
 }
 
+
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const [orderId, setOrderId] = useState<number | null>(null)
@@ -181,35 +185,45 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const loading = useAppSelector(selectCartLoading)
   const error = useAppSelector(selectCartError)
   const cartItemsCount = useAppSelector(selectCartItemsCount)
- 
+
   const { SendMessageLink,
     error: errorCart,
     loading: loadingCart } = useCart()
 
   const {
     UpdatedStatus,
+    fetchByContactId
   } = useLogCart();
-  const { UpdateEcommerceUserAsync, getById } = useContact()
+
+  const { UpdateEcommerceUserAsync, 
+    getById } = useContact()
 
   const { CreateAsync } = useUserEcommerce()
-
-  const { fetchByContactId } = useLogCart()
 
   const { setFile, setText, handleSend, sending } = useChatWindow({ conversationId })
 
   useEffect(() => {
     const loadCart = async () => {
       const log = await fetchByContactId(contactId)
+
       if (log) {
         setOrderId(log.orderId)
-        await dispatch(getProductFromCarAsync(log.orderId)).unwrap()
-
+        await dispatch(
+          getProductFromCarAsync({ codCliente: 0, noPedido: log.orderId! })
+        ).unwrap()
       } else {
         setOrderId(null)
+        await dispatch(
+          getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
+        ).unwrap()
+        // o un clearCart() si lo tienes
       }
     }
-    loadCart()
-  }, [contactId, dispatch, fetchByContactId])
+
+    if (contactId && conversationId) {
+      void loadCart()
+    }
+  }, [contactId, conversationId, dispatch, fetchByContactId])
 
   useEffect(() => {
     if (error) {
@@ -217,29 +231,33 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     }
   }, [error])
 
-  const handleRemoveItem = async (idUsuario: number, noPedido: number, codProducto: string, unico: string) => {
+
+  const handleRemoveItem = async (
+    idUsuario: number,
+    noPedido: number,
+    codProducto: string,
+    unico: string
+  ) => {
     if (!noPedido) return
 
-    //Actualizar carrito y obtener el carrito actualizado
+    // Actualizar item en el carrito
     await dispatch(
       updateCarAsync({
-        idUsuario: noPedido,
-        noPedido: noPedido,
-        codProducto: codProducto,
-        unico: unico
+        idUsuario,
+        noPedido,
+        codProducto,
+        unico
       })
     ).unwrap()
 
-    // Ver si el carrito quedó vacío
-    // const isEmpty = !carPCG && !carPCG[0]
-    // refrescar el estado global del carrito
-    await dispatch(getProductFromCarAsync(noPedido!)).unwrap()
+    const updatedCart = await dispatch(
+      getProductFromCarAsync({ codCliente: 0, noPedido })
+    ).unwrap()
 
-    // Si quedó vacío, actualizar el estado del LogCart
-    if (carPCG[0].listDetalle.length <= 0) {
 
+    if (updatedCart == null) {
       const existingLog = await fetchByContactId(contactId)
-      
+
       if (existingLog) {
         await UpdatedStatus(existingLog.id, 3)
       }
@@ -261,6 +279,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     })
     return result
   }, [carPCG, hasItems, search])
+
 
   if (loading) return <span>Cargando...</span>
   if (loadingCart)
@@ -347,7 +366,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     const sendLinkRequest: SendLinkRequestDto = {
       conversationId,
       orderId: existingLog!.orderId!,
-      // ecommerceUserId: cart.idUsuario,
       ecommerceUserId: ecommerceUserId,
       email: contact.email ?? "",
       fullName: contact.fullName ?? "",
@@ -385,7 +403,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
             <div className="carPCPanel-content__list-info">
               <p className="carPCPanel-content__list-text">{detail.descripcion}</p>
-              <p className="carPCPanel-content__list-price">C$ {detail.totalMenu.toFixed(2)}</p>
+              <p className="carPCPanel-content__list-price">C$ {detail.cantidad.toFixed(2)}</p>
             </div>
 
             <div className="carPCPanel-listaOpciones">
@@ -399,7 +417,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             <MdDelete
               fontSize={24}
               onClick={() =>
-                handleRemoveItem(contactId, detail.noPedido,
+                handleRemoveItem(cart.idUsuario ?? 0, detail.noPedido,
                   detail.codProducto, detail.unico!)}
               className="carPCPanel-content__removeIcon"
             />
@@ -443,7 +461,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
                 </div>
               )}
             </div>
-            
+
             <div className="productTab-footer__payment">
               <Button className="carPanel-btn"
                 disabled={sending}

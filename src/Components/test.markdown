@@ -1,3 +1,1 @@
-## Test de componente mediante JEST.js
-
-
+## Test de scroll de conversacines por medio de scroll paginado

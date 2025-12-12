@@ -1,5 +1,5 @@
 export interface InvoiceOrderRequestDto {
-  idUsuario: number;
+  idUsuario: string;
   nombrede: string;
   noPedido: number;
   registroMaquina: string;

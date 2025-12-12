@@ -30,6 +30,7 @@ import {
 } from "react-redux";
 import type { AppDispatch, RootState } from "@/Context";
 import { UserSessionService } from "@/Services/auth/UserSessionService";
+import useLogCart from "@/Hooks/Crm/useLogCard";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -144,16 +145,23 @@ const CheckoutPage: React.FC = () => {
     loading: invoiceLoading,
   } = useInvoiceOrder();
 
+
+  const { fetchByContactId } = useLogCart()
+
+    const {
+      UpdatedStatus,
+    } = useLogCart();
+
   const {
     CreateAsync: createLocationAsync,
     GetAsync,
     clientLocation,
-    loading: locationLoading,
+    // loading: locationLoading,
   } = useClientLocation();
 
   useEffect(() => {
     const loadCart = async () => {
-      await dispatch(getProductFromCarAsync(payload!.orderId!)).unwrap;
+      await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })).unwrap;
       GetCurrencyAsync();
       GetAsync(ecommerceUserId);
     };
@@ -233,21 +241,21 @@ const CheckoutPage: React.FC = () => {
     fetchAddress();
   }, [selectedCoords, locationMode]);
 
-  const isSubmitting = invoiceLoading || locationLoading;
+  // const isSubmitting = invoiceLoading || locationLoading;
 
   const goToCart = () => navigate("/cart");
 
   const toastError = (msg: string) => {
-    toast.error(msg);
+    toast.error(msg)
     return false;
   };
 
   const validateBillingForm = () => {
     if (!billingForm.firstName.trim()) return toastError("El nombre es obligatorio.");
     if (!billingForm.lastName.trim()) return toastError("Los apellidos son obligatorios.");
-    if (!billingForm.email.trim()) return toastError("El correo es obligatorio.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingForm.email.trim()))
-      return toastError("Correo electrónico inválido.");
+    // if (!billingForm.email.trim()) return toastError("El correo es obligatorio.");
+    // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingForm.email.trim()))
+    //   return toastError("Correo electrónico inválido.");
     if (!billingForm.city.trim()) return toastError("La ciudad es obligatoria.");
     if (!billingForm.address.trim()) return toastError("La dirección es obligatoria.");
     if (locationMode === "new" && !billingForm.addressName.trim())
@@ -319,18 +327,34 @@ const CheckoutPage: React.FC = () => {
       toast.error("Debe seleccionar un método de pago.");
       return;
     }
+    
 
     if (!validateBillingForm()) return;
     if (!validateLocation()) return;
+
     if (method === "card" && !validateCardForm()) return;
+      const cart = carPCG[0];
+      const total = cart.total ?? 0;
 
-    const cart = carPCG[0];
-    const total = cart.total ?? 0;
+      if (method === "cash") {
 
-    if (method === "cash" && (cashAmount <= 0 || cashAmount < total)) {
-      toast.error("Monto en efectivo insuficiente.");
-      return;
-    }
+        if (cashAmount <= 0) {
+          return toastError("El monto en efectivo debe ser mayor a 0.");
+        }
+
+        if (tip > cashAmount) {
+          return toastError("La propina no puede ser mayor al monto ingresado.");
+        }
+
+        const disponible = cashAmount - tip;
+
+        if (disponible < total) {
+          return toastError(
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+          );
+        }
+      }
+
 
     let finalLocation: ClientLocationDto | null = null;
     let coords: Coords;
@@ -417,54 +441,71 @@ const CheckoutPage: React.FC = () => {
     const change =
       method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
 
-    const invoiceReq: InvoiceOrderRequestDto = {
-      idUsuario: ecommerceUserId,
-      nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
-      registroMaquina: `CRM ${ecommerceUserId}`,
-      noIdentificacion: "",
-      observaciones: "",
-      noPedido: orderId,
-      transporte: transporte ?? 0,
-      propina: method === "cash" ? tip : 0,
-      tipoServicio: 8,
-      idEstado: 6,
-      codSucursal: nearest.codSucursal,
+      const invoiceReq: InvoiceOrderRequestDto = {
+          idUsuario: ecommerceUserId.toString(),
+          nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
+          registroMaquina: `CRM ${ecommerceUserId}`,
+          noIdentificacion: "",
+          observaciones: "",
+          noPedido: Number(orderId),
 
-      direcciones: {
-        idDireccion: finalLocation.idDireccion,
-        nombre: finalLocation.nombre,
-        referencia: finalLocation.referencia,
-        descripcion: finalLocation.descripcion,
-        latitud: finalLocation.latitud,
-        longitud: finalLocation.longitud,
-      },
+          transporte: Number(transporte ?? 0),
+          propina: method === "cash" ? Number(tip) : 0,
+          tipoServicio: 8,
+          idEstado: 15,
+          codSucursal: String(nearest.codSucursal),
 
-      detPago: {
-        codPago: selectedCurrency.codPago,
-        monto: total,
-        codBanco: selectedCurrency.codigo_Banco,
-        montoC: method === "cash" ? cashAmount : total,
-        cambio: change,
-        valor_Pagar: total,
-        nomsol: selectedCurrency.descripcion_Pago,
-        registro_maquina: `CRM ${ecommerceUserId}`,
-        codPagoNew: Number(selectedCurrency.codExterno),
-      },
-    };
+          direcciones: {
+            idDireccion: Number(finalLocation.idDireccion),
+            nombre: String(finalLocation.nombre),
+            referencia: String(finalLocation.referencia),
+            descripcion: String(finalLocation.descripcion).trim(),
+            latitud: Number(finalLocation.latitud),
+            longitud: Number(finalLocation.longitud),
+          },
 
-    try {
-      await createInvoiceAsync(invoiceReq);
-
-      if (payload != null && payload.conversationId > 0 && payload.orderId > 0) {
-        const orderMessage: SendOrderMessage = {
-          conversationId: payload.conversationId,
-          orderId: payload.orderId,
-          userId: 33,
+          detPago: {
+            codPago: Number(selectedCurrency.codPago),
+            monto: Number(total),
+            codBanco: String(selectedCurrency.codigo_Banco).trim(),
+            montoC: Number(total),
+            cambio: Number(change),
+            valor_Pagar: Number(total),
+            nomsol: String(selectedCurrency.descripcion_Pago).trim(),
+            registro_maquina: `CRM ${ecommerceUserId}`,
+            codPagoNew: Number(selectedCurrency.codExterno),
+          },
         };
 
-        await CartService.sendOrderMessage(orderMessage);
 
-        await UserSessionService.revokeCartTempLink(orderId);
+    try {
+      const res = await createInvoiceAsync(invoiceReq);
+
+      // Si crear orden factura, esta bien, se procede a revokar el token, y cambiar el estado de logcart
+      if(res){
+      if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) 
+        {
+          const orderMessage: SendOrderMessage = {
+            conversationId: payload.conversationId,
+            orderId: payload.orderId,
+            userId: payload.userId,
+          };
+
+          await CartService.sendOrderMessage(orderMessage);
+          const existingLog = await fetchByContactId(payload.contactId)
+        
+
+          await UpdatedStatus(existingLog!.id, 3)
+
+          // Al final, se revoca
+          await UserSessionService.revokeCartTempLink(orderId);
+
+          //Refrescar el carrito de ese pedida, en toda la app, para refrecar componente de carrito a los usuarios.
+          await dispatch(
+            getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
+          ).unwrap()
+
+        }
       }
 
       navigate("/successOrder", { replace: true });
@@ -544,8 +585,8 @@ const CheckoutPage: React.FC = () => {
 
             {step === "location" && (
               <div className="checkout-section checkout-section__location">
-                 <div>
-                                  <h2 className="checkout-section__title">
+                 <div className="checkout-location__container">
+              <h2 className="checkout-section__title">
                   Selecciona la ubicación y tus datos
                 </h2>
 
@@ -658,19 +699,6 @@ const CheckoutPage: React.FC = () => {
                       type="text"
                       className="checkout-input"
                       value={billingForm.lastName}
-                      onChange={handleBillingChange}
-                    />
-                  </div>
-
-                  <div className="checkout-field checkout-field--full">
-                    <label className="checkout-label" htmlFor="email">
-                      Correo
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      className="checkout-input"
-                      value={billingForm.email}
                       onChange={handleBillingChange}
                     />
                   </div>
@@ -910,9 +938,9 @@ const CheckoutPage: React.FC = () => {
                     type="button"
                     className="checkout-paybtn"
                     onClick={handlePayNow}
-                    disabled={isSubmitting}
+                    disabled={invoiceLoading}
                   >
-                    {isSubmitting ? "Procesando..." : "Pagar ahora"}
+                    {invoiceLoading ? "Procesando..." : "Pagar ahora"}
                   </button>
                 </div>
               </div>

@@ -63,15 +63,16 @@ export const addProductsToCarAsync = createAsyncThunk<
   }
 );
 
+
 export const getProductFromCarAsync = createAsyncThunk<
-  CarDto[],   // Resultado (CarDto[])
-  number,     // Parámetro: codCliente
+  CarDto[],                         // Resultado
+  { codCliente: number; noPedido: number },   // Parámetros
   { rejectValue: string }
 >(
   "cart/getProductFromCar",
-  async (codCliente, { rejectWithValue }) => {
+  async ({ codCliente, noPedido }, { rejectWithValue }) => {
     try {
-      const data = await CartService.getProductFromCar(codCliente); // CarDto[]
+      const data = await CartService.getProductFromCar(codCliente, noPedido);
       return data;
     } catch (error: any) {
       const message = error?.message ?? "Error al obtener el carrito";
@@ -80,6 +81,8 @@ export const getProductFromCarAsync = createAsyncThunk<
     }
   }
 );
+
+
 
 export const updateCarAsync = createAsyncThunk<
   CarDto[],
@@ -94,7 +97,7 @@ export const updateCarAsync = createAsyncThunk<
         noPedido, codProducto, unico);
 
       if (res.success) {
-        toast.success(res.message);
+        // toast.success(res.message);
         return res.data;
       } else {
         toast.error(res.message);

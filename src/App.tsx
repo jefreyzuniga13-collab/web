@@ -175,29 +175,33 @@ export default function App() {
     } catch {}
   }, [lastEvent]);
 
-  if (!accessToken) {
-    return <AppRouter />;
-  }
+  // if (!accessToken) {
+  //   return <AppRouter />;
+  // }
 
   return (
-    <SignalRProvider token={accessToken}>
-      <ThemeProvider theme={theme}>
-        {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
+     <ThemeProvider theme={theme}>
+      <ToastContainer
+        position="top-right"
+        autoClose={500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+      />
 
-        <ReLoginModal />
-        <ToastContainer
-          position="top-right"
-          autoClose={1000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          pauseOnHover
-          draggable
-          theme="colored"
-        />
-
+      {accessToken ? (
+        <SignalRProvider token={accessToken}>
+          {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
+          <ReLoginModal />
+          <AppRouter />
+        </SignalRProvider>
+      ) : (
+        // Rutas públicas (login, cart, checkout, etc.)
         <AppRouter />
-      </ThemeProvider>
-    </SignalRProvider>
+      )}
+    </ThemeProvider>
   );
 }

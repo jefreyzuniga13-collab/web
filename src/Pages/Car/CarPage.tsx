@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { ThreeDot } from "react-loading-indicators";
 import "@/Styles/Cart/CartPage.css";
 import noimageavailable from "@/assets/noimageavailable.webp";
 import { useNavigate } from "react-router-dom";
 import type { TempLinkResolveResponseDto } from "@/Interfaces/GlobalPCGInterface";
+import CustomLoader from '@/Components/Common/CustomLoader'
 
 import {
   selectCarPCG,
@@ -32,7 +32,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
   useEffect(() => {
     if (payload) {
-      dispatch(getProductFromCarAsync(payload.orderId));
+      dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId! }));
     }
   }, [dispatch, payload.contactId]);
 
@@ -52,9 +52,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
   if (loading) {
     return (
       <main className="cart-page cart-page--centered">
-        <div className="cart-page__loader">
-          <ThreeDot color="#0070B4" size="medium" />
-        </div>
+        <CustomLoader/>
       </main>
     );
   }
@@ -100,13 +98,14 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   {carPCG?.flatMap((group) =>
                     group.listDetalle?.map((item) => {
                       const options = item.listOpciones ?? [];
-                      const quantity =
-                        options.length > 0
-                          ? options.reduce(
-                              (sum, opt) => sum + (opt.cantidad ?? 0),
-                              0
-                            )
-                          : 1;
+                      // const quantity =
+                      //   options.length > 0
+                      //     ? options.reduce(
+                      //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                      //         (sum, opt) => sum + (item.cantidad ?? 0),
+                      //         0
+                      //       )
+                      //     : 1;
                       const rowTotal =
                         options.length > 0
                           ? options.reduce(
@@ -161,7 +160,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                           <td className="cart-table__cell cart-table__cell--qty">
                             <div className="cart-qty">
                               <span className="cart-qty__value">
-                                {quantity}
+                                {item.cantidad}
                               </span>
                             </div>
                           </td>

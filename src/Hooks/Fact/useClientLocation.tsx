@@ -17,7 +17,7 @@ export const useClientLocation = () =>{
 
             if(res.success){
                 setClientLocation(res.data)
-                toast.success(res.message);
+                // toast.success(res.message);
                 return res.data
             }else{
                 toast.error(res.message);
@@ -41,7 +41,7 @@ export const useClientLocation = () =>{
             const res = await ClientLocationService.Get(req);
             if(res.success){
                 setClientLocation(res.data)
-                toast.success(res.message)
+                // toast.success(res.message)
             }else{
                 toast.error(res.message)
             }

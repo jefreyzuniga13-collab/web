@@ -137,9 +137,9 @@ export function useAuth() {
     try {
       if (uid) {
         const res = await authService.logoutAsync(Number(uid))
-        toast.info(res?.message ?? 'Sesión cerrada')
+        toast.success(res?.message ?? 'Sesión cerrada')
       } else {
-        toast.info('Sesión cerrada')
+        toast.success('Sesión cerrada')
       }
     } catch {
       toast.error('Error al cerrar sesión')

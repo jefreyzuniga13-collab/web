@@ -22,7 +22,8 @@ const useInvoiceOrder = () => {
 
         if(res.success){
             setInvoiceOrders(res.data);
-            toast.success(res.message);
+            return res.success;
+            // toast.success(res.message);
         }else{
             toast.error(res.message);
         }
@@ -44,7 +45,7 @@ const useInvoiceOrder = () => {
 
         if(res.success){
             setInvoiceOrder(res.data)
-            toast.success(res.message)
+            // toast.success(res.message)
         }else{
             toast.error(res.message)
         }
@@ -68,7 +69,7 @@ const useInvoiceOrder = () => {
 
             console.log("Data de GetNearestBranchAsync", data.data)
             setNearestBranch(data.data)
-            toast.success(data.message)
+            // toast.success(data.message)
             return data.data
         }else{
             toast.error(data.message);
@@ -92,7 +93,7 @@ const useInvoiceOrder = () => {
 
         if(res.success){
             setTransportationCost(res.data)
-            toast.success(res.success)
+            // toast.success(res.success)
             return res.data
         }else{
             toast.error(res.message)
@@ -115,7 +116,7 @@ const useInvoiceOrder = () => {
 
             if(res.success){
                 setCurrency(res.data)
-                toast.success(res.message)
+                // toast.success(res.message)
             }else{
                 toast.error(res.message)
             }

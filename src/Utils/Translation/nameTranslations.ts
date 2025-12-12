@@ -75,4 +75,5 @@ export const nameTranslations: Record<NameTranslation, string> = {
   MaximoMediaPorMensaje: "Mensaje cuando se supera el máximo de archivos por mensaje",
   PesoMediaMbMaximoMensaje: "Mensaje cuando el archivo supera el tamaño máximo permitido",
   MensajeLinkCarrito: "MensajeLinkCarrito",
+  TiempoLinkTemporal: "TiempoLinkTemporal"
 };

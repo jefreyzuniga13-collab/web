@@ -3,12 +3,12 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from '@/Layout/MainLayout'
 import {RequireAuth} from '@/Layout/RequireAuth'
 import PublicRoute from '@/Layout/PublicRoute'
-import { ThreeDot } from 'react-loading-indicators'
 import ClientPage from '@/Pages/Crm/ClientPage'
 import UserSessionPage from '@/Pages/Auth/UserSessionPage'
 import ProtectedCartRoute from '@/Pages/Car/ProtectedCartRoute'
 import CheckoutPage from '@/Pages/Car/CheckoutPage'
 import SuccessRequest from '@/Pages/SuccessRequest'
+import CustomLoader from '@/Components/Common/CustomLoader'
 
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
 const Login                = lazy(() => import('@/Pages/Auth/LoginPage'))
@@ -33,25 +33,20 @@ const ConversationsPage    = lazy(() => import('@/Pages/Conversation/Conversatio
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
-const ServicePage    = lazy(() => import('@/Pages/Crm/ServicePage'))
 const DynamicParamPage  = lazy(() => import('@/Pages/Setting/DynamicParamPage'))
 const ClientManagementPanel    = lazy(() => import('@/Pages/Crm/ClientManagementPanel'))
-
-// const WorkOrderPage    = lazy(() => import('@/Pages/Crm/WorkOrderPage'))
 
 export function AppRouter() {
   return (
     <Suspense fallback={
-      <div className="loader-container">
-        <ThreeDot color="#0070B4" size="medium" />
-      </div>
+      <CustomLoader/>
     }>
       <Routes>
 
         {/* rutas externas (no necesitan login, y no son parte de auth del crm) */}
-      <Route path="cart" element={<ProtectedCartRoute />} />
-      <Route path="checkout" element={<CheckoutPage />} />
-      <Route path="successOrder" element={<SuccessRequest />} />
+        <Route path="cart" element={<ProtectedCartRoute />} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="successOrder" element={<SuccessRequest />} />
 
       
         <Route element={<PublicRoute />}>
@@ -92,7 +87,6 @@ export function AppRouter() {
           <Route path="templates-management"     element={<WaTemplatesPage />} />
           <Route path="clients"     element={<ClientPage />} />
           <Route path="clientManagementPanel/:id"     element={<ClientManagementPanel />} />
-          <Route path="services"     element={<ServicePage />} />
           <Route path="live-dashboard"     element={<DynamicParamPage />} />
           <Route path="settings" element={<Navigate to="system-params" replace />} />
         </Route>
