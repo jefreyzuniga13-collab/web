@@ -1,4 +1,3 @@
-// src/Components/Chat/AssignModal.tsx
 import  { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { AgentDto, ConversationDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
@@ -24,6 +23,7 @@ interface AssignModalHook {
   handleAssign: () => Promise<void>
   handleStatusChange: (newStatus: ConversationStatus) => void
   handleClose: () => void
+  loading:boolean;
 }
   
 
@@ -35,6 +35,7 @@ export function useAssignModal () :  AssignModalHook{
   const [selectedAgent, setSelectedAgent] = useState<string>('')
   const [status, setStatus] = useState<ConversationStatus>('Bot')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const selectedAgentId = selectedAgent ? Number(selectedAgent) : 0
   const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId)
@@ -77,6 +78,7 @@ export function useAssignModal () :  AssignModalHook{
   const handleAssign = async () => {
     if (!conversation) return
 
+    setLoading(true)
     try {
       if (status === 'Closed') {
         await apiCloseConversation(conversation.conversationId)
@@ -86,9 +88,10 @@ export function useAssignModal () :  AssignModalHook{
         toast.success('Agente asignado correctamente.')
       } else {
         toast.warn('No se aplicaron cambios.')
+        setLoading(false)
         return
       }
-
+      setLoading(false)
       dispatch(closeAssignModal())
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
    } catch (err: any) {
@@ -116,6 +119,7 @@ export function useAssignModal () :  AssignModalHook{
     setSelectedAgent,
     handleAssign,
     handleStatusChange,
-    handleClose
+    handleClose,
+    loading,
   }
 }

@@ -4,15 +4,14 @@ import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
-// import OfflineBanner from "@/Components/Common/OfflineBanner";
-// import { useOnline } from "@/Hooks/useOnline";
+import OfflineBanner from "@/Components/Common/OfflineBanner";
+import { useOnline } from "@/Hooks/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
 import { enqueuePopup } from "@/Context/Slices/popupSlice";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "@/Utils/materialTheme";
-
 import "@/App.css";
 import "@/i18n";
 import "react-toastify/dist/ReactToastify.css";
@@ -29,7 +28,7 @@ function sanitizeExternalUrl(url: string): string {
 }
 
 export default function App() {
-  // const online = useOnline();
+  const online = useOnline();
 
   const authRaw = localStorage.getItem("auth") ?? "{}";
   const { accessToken } = JSON.parse(authRaw) as AuthData;
@@ -194,7 +193,7 @@ export default function App() {
 
       {accessToken ? (
         <SignalRProvider token={accessToken}>
-          {/* {!online && <OfflineBanner onRetry={() => window.location.reload()} />} */}
+          {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
           <ReLoginModal />
           <AppRouter />
         </SignalRProvider>

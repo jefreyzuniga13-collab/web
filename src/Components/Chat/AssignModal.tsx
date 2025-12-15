@@ -18,7 +18,8 @@ export const AssignModal: React.FC = () => {
     selectedAgent,
     handleAssign,
     handleStatusChange,
-    handleClose
+    handleClose,
+    loading
   } = useAssignModal();
 
     if (!isOpen || !conversation) return null
@@ -157,8 +158,9 @@ export const AssignModal: React.FC = () => {
             type="button"
             className="assign-modal__button assign-modal__button--primary"
             onClick={handleAssign}
+            disabled={loading}
           >
-            Guardar cambios
+            {loading ? "Cargando..." : "Guardar Cambios"}
           </button>
         </footer>
       </div>

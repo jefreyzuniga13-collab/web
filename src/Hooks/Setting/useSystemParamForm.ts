@@ -27,6 +27,7 @@ export function useSystemParamForm({
   };
 
   const [form, setForm] = useState<SystemParamRequestDto>(initialForm);
+  const [loading, setLoading] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -113,9 +114,11 @@ export function useSystemParamForm({
     (e: React.FormEvent) => {
       e.preventDefault();
       if (!validate()) return;
+      setLoading(true)
       onSubmit(form);
       setForm(initialForm);
       setErrors({});
+      setLoading(false)
     },
     [form, onSubmit, validate]
   );
@@ -128,6 +131,7 @@ export function useSystemParamForm({
     handleSelect,
     handleSubmit: handleSubmitForm,
     handleCheckbox,
-    inputRef
+    inputRef,
+    loading
   };
 }

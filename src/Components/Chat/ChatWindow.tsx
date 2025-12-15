@@ -1,16 +1,31 @@
-// Componente de ventana de chat, muestra los menajes, ordenados, multimedia, mensajes de reply.
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Paperclip, Download, MessageSquareMore } from "lucide-react";
+import {
+  Send,
+  Paperclip,
+  Download,
+  MessageSquareMore,
+  Mic,
+  Square,
+  Trash2,
+  // Play,
+  Check,
+} from "lucide-react";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
-import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
+import {
+  format,
+  isToday,
+  isYesterday,
+  parseISO,
+  differenceInCalendarDays,
+} from "date-fns";
 import { es } from "date-fns/locale/es";
 import SmsIcon from "@mui/icons-material/Sms";
 import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
-import "@/Styles/Chat/custom-messages-flyout.css"
+import "@/Styles/Chat/custom-messages-flyout.css";
 import { FaArrowDown } from "react-icons/fa";
 import "@/styles/Chat/ChatWindow.css";
 
@@ -25,11 +40,10 @@ interface Props {
   conversationStatus?: string | null;
   userId: number;
   selectedParam: SystemParamResponseDto | null;
-  highlightTerm?: string 
-  validFrom: Date | null
-  validTo: Date | null
+  highlightTerm?: string;
+  validFrom: Date | null;
+  validTo: Date | null;
 }
-
 
 export const ChatWindow: React.FC<Props> = ({
   conversationId,
@@ -38,29 +52,20 @@ export const ChatWindow: React.FC<Props> = ({
   selectedParam,
   highlightTerm,
   validFrom,
-  validTo
+  validTo,
 }) => {
-
   const smsBtnRef = useRef<HTMLDivElement | null>(null);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [stickyDate, setStickyDate] = useState<string | null>(null);
 
-  const messagesContainerRef = useRef<HTMLDivElement|null>(null);
-  const composerRef = useRef<HTMLDivElement|null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLDivElement | null>(null);
 
-const {
-  customMessages,
-  create,
-  update,
-  toggleSystemParam,
-  loading,
-  error,
-  load,
-  loaded,
-} = useCustomMessage(false)
-  
+  const { customMessages, create, update, toggleSystemParam, loading, error, load, loaded } =
+    useCustomMessage(false);
+
   const {
     setConversationId,
     setUserId,
@@ -76,7 +81,6 @@ const {
     fileInputRef,
     handleFileChange,
     handlePaste,
-    // handleKeyPress,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
@@ -89,183 +93,176 @@ const {
     beginReply,
     cancelReply,
     replyTo,
-    // quickOptions,
-    // sendQuick,
     startLongPress,
     cancelLongPress,
     focusTextarea,
     onComposerKeyDown,
-    // popoverRef,
     textAreaRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
-    // visibleState,
     searchTerm,
     setSearchTerm,
     matchIds,
     matchIndex,
     gotoMatch,
-    renderMessageContent
-  } = useChatWindow({
-    conversationId,
-    userId,
-    conversationStatus,
-    selectedParam,
-    highlightTerm
-  },
-  validFrom,
-  validTo
-);
-
-useEffect(() => {
-  if (flyoutOpen && !loaded) {
-    void load()
-  }
-}, [flyoutOpen, loaded, load])
+    renderMessageContent,
+    isRecording,
+    clearRecording,
+    handleSendAudio,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    secondsToTime,
+  } = useChatWindow(
+    {
+      conversationId,
+      userId,
+      conversationStatus,
+      selectedParam,
+      highlightTerm,
+    },
+    validFrom,
+    validTo
+  );
 
   useEffect(() => {
-      setConversationId(Number(conversationId));
-      setUserId(Number(userId));
-      return () => {
-        setConversationId(0);
-        setUserId(0);
-      };
-    }, [conversationId, setConversationId, setUserId, userId]);
+    if (flyoutOpen && !loaded) void load();
+  }, [flyoutOpen, loaded, load]);
 
-    const computeStickyDate = React.useCallback(() => {
+  useEffect(() => {
+    setConversationId(Number(conversationId));
+    setUserId(Number(userId));
+    return () => {
+      setConversationId(0);
+      setUserId(0);
+    };
+  }, [conversationId, setConversationId, setUserId, userId]);
+
+  const computeStickyDate = React.useCallback(() => {
     const root = messagesContainerRef.current;
     if (!root) return;
-    const y = root.scrollTop + 8; // un pequeño margen
+    const y = root.scrollTop + 8;
 
-    // toma el último día cuyo separador ya pasó por arriba
     const entries = Object.entries(dateRefs.current)
       .filter(([, el]) => el)
-      .sort((a, b) => (a[1]!.offsetTop - b[1]!.offsetTop));
+      .sort((a, b) => a[1]!.offsetTop - b[1]!.offsetTop);
 
     let current: string | null = null;
     for (const [label, el] of entries) {
       if (el!.offsetTop <= y) current = label;
       else break;
     }
-    // si aún no pasó ninguno, muestra el primero
     if (!current && entries.length) current = entries[0][0];
 
     setStickyDate(current);
   }, []);
 
-useEffect(() => {
-  const root = messagesContainerRef.current;
-  if (!root) return;
-  const onScroll = () => computeStickyDate();
-  root.addEventListener("scroll", onScroll, { passive: true });
+  useEffect(() => {
+    const root = messagesContainerRef.current;
+    if (!root) return;
+    const onScroll = () => computeStickyDate();
+    root.addEventListener("scroll", onScroll, { passive: true });
 
-  requestAnimationFrame(computeStickyDate);
-  return () => root.removeEventListener("scroll", onScroll);
-}, [computeStickyDate]);
+    requestAnimationFrame(computeStickyDate);
+    return () => root.removeEventListener("scroll", onScroll);
+  }, [computeStickyDate]);
 
-// cuando cambie el listado, recalcúlalo
-useEffect(() => {
-  // limpia refs obsoletos
-  dateRefs.current = {};
-  requestAnimationFrame(computeStickyDate);
-}, [visibleMessages.length, computeStickyDate]);
+  useEffect(() => {
+    dateRefs.current = {};
+    requestAnimationFrame(computeStickyDate);
+  }, [visibleMessages.length, computeStickyDate]);
 
-const isAtBottom = (el: HTMLElement) =>
-  el.scrollTop >= el.scrollHeight - el.clientHeight - 12;
+  const isAtBottom = (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 12;
 
-const handleSendNow = React.useCallback(async (txt: string) => {
-  setSelectedOption(txt);
-  await handleSend();
-}, [setSelectedOption, handleSend]);
+  const handleSendNow = React.useCallback(
+    async (txt: string) => {
+      setSelectedOption(txt);
+      await handleSend();
+    },
+    [setSelectedOption, handleSend]
+  );
 
+  useEffect(() => {
+    const sendQuick = async (txt: string) => {
+      if (typeof txt === "string" && txt.trim()) await handleSendNow(txt);
+    };
 
-useEffect(() => {
-  const sendQuick = async (txt: string) => {
-    if (typeof txt === 'string' && txt.trim()) {
-      await handleSendNow(txt);
-    }
-  };
+    (window as any).__CHAT_SEND_QUICK__ = sendQuick;
 
-  (window as any).__CHAT_SEND_QUICK__ = sendQuick;
+    const onEvt = (e: Event) => {
+      const ce = e as CustomEvent<{ text?: string }>;
+      const txt = ce?.detail?.text;
+      if (typeof txt === "string") void sendQuick(txt);
+    };
 
-  const onEvt = (e: Event) => {
-    const ce = e as CustomEvent<{ text?: string }>;
-    const txt = ce?.detail?.text;
-    if (typeof txt === 'string') void sendQuick(txt);
-  };
+    window.addEventListener("chat:sendQuick", onEvt as EventListener);
 
-  window.addEventListener('chat:sendQuick', onEvt as EventListener);
+    return () => {
+      try {
+        delete (window as any).__CHAT_SEND_QUICK__;
+      } catch {}
+      window.removeEventListener("chat:sendQuick", onEvt as EventListener);
+    };
+  }, [handleSendNow]);
 
-  return () => {
-    try { delete (window as any).__CHAT_SEND_QUICK__; } catch {}
-    window.removeEventListener('chat:sendQuick', onEvt as EventListener);
-  };
-}, [handleSendNow]);
+  useEffect(() => {
+    const root = messagesContainerRef.current;
+    const composer = composerRef.current;
+    if (!root || !composer) return;
 
+    const setVar = () => root.style.setProperty("--composer-h", `${composer.offsetHeight}px`);
+    setVar();
 
-useEffect(() => {
-  const root = messagesContainerRef.current;
-  const composer = composerRef.current;
-  if (!root || !composer) return;
+    const ro = new ResizeObserver(setVar);
+    ro.observe(composer);
+    window.addEventListener("resize", setVar);
 
-  const setVar = () =>
-    root.style.setProperty("--composer-h", `${composer.offsetHeight}px`);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", setVar);
+    };
+  }, []);
 
-  setVar();
+  useEffect(() => {
+    const root = messagesContainerRef.current;
+    if (!root) return;
 
-  const ro = new ResizeObserver(setVar);
-  ro.observe(composer);
-  window.addEventListener("resize", setVar);
+    const onScroll = () => setShowScrollButton(!isAtBottom(root));
+    root.addEventListener("scroll", onScroll, { passive: true });
 
-  return () => {
-    ro.disconnect();
-    window.removeEventListener("resize", setVar);
-  };
-}, []);
+    requestAnimationFrame(onScroll);
+    return () => root.removeEventListener("scroll", onScroll);
+  }, []);
 
+  useEffect(() => {
+    const root = messagesContainerRef.current;
+    if (!root) return;
+    requestAnimationFrame(() => {
+      root.scrollTop = root.scrollHeight;
+      setShowScrollButton(false);
+    });
+  }, [conversationId, visibleMessages.length]);
 
-useEffect(() => {
-  const root = messagesContainerRef.current;
-  if (!root) return;
-
-  const onScroll = () => setShowScrollButton(!isAtBottom(root));
-  root.addEventListener("scroll", onScroll, { passive: true });
-
-  // chequeo inicial ya con layout listo
-  requestAnimationFrame(onScroll);
-  return () => root.removeEventListener("scroll", onScroll);
-}, []);
-
-useEffect(() => {
-  const root = messagesContainerRef.current;
-  if (!root) return;
-  requestAnimationFrame(() => {
-    root.scrollTop = root.scrollHeight;
+  const scrollToBottom = () => {
+    const root = messagesContainerRef.current;
+    if (!root) return;
+    root.scrollTo({ top: root.scrollHeight, behavior: "instant" });
     setShowScrollButton(false);
-  });
-}, [conversationId, visibleMessages.length]);
+  };
 
-const scrollToBottom = () => {
-  const root = messagesContainerRef.current;
-  if (!root) return;
-  root.scrollTo({ top: root.scrollHeight, behavior: "instant" });
-  setShowScrollButton(false);
-};
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-
-const getConversationStringDate = (sentAt: string) => {
+  const getConversationStringDate = (sentAt: string) => {
     const fecha = parseISO(sentAt);
 
     if (isToday(fecha)) return "Hoy";
     if (isYesterday(fecha)) return "Ayer";
 
-    const diff = differenceInCalendarDays(new Date(), fecha); // 0 = hoy, 1 = ayer, etc.
+    const diff = differenceInCalendarDays(new Date(), fecha);
 
-    // En los últimos 7 días (excluyendo hoy/ayer ya cubiertos): mostrar día de la semana
     if (diff >= 2 && diff < 7) {
-      return cap(format(fecha, "EEEE", { locale: es })); // Lunes, Martes, …
+      return cap(format(fecha, "EEEE", { locale: es }));
     }
 
     return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
@@ -276,11 +273,6 @@ const getConversationStringDate = (sentAt: string) => {
     setText(text + glue + txt);
     textAreaRef.current?.focus();
   };
-
-  // const handleSendNow = async (txt: string) => {
-  //   setSelectedOption(txt);
-  //   await handleSend();
-  // };
 
   const showEmpty = !conversationId;
 
@@ -296,9 +288,38 @@ const getConversationStringDate = (sentAt: string) => {
     );
   }
 
+  const canType = !!conversationId && !sending && conversationStatus !== "Closed";
+  const hasAudioToSend = Number(recordingTime ?? 0) > 0;
+
+  const onStartRecord = async () => {
+    if (!canType) return;
+    await startRecording();
+  };
+
+  const onStopRecord = async () => {
+    if (!canType) return;
+    await stopRecording();
+  };
+
+  // const onResumeRecord = async () => {
+  //   if (!canType) return;
+  //   await resumeRecording();
+  // };
+
+  const onClearRecord = () => {
+    clearRecording();
+    focusTextarea();
+  };
+
+  const onSendRecord = async () => {
+    if (!canType || !hasAudioToSend) return;
+    await handleSendAudio();
+    focusTextarea();
+  };
+
   return (
     <div className="chat-window">
-        {searchTerm && (
+      {searchTerm && (
         <div className="chat-window__searchbar">
           <input
             className="chat-window__searchbar-input"
@@ -308,22 +329,24 @@ const getConversationStringDate = (sentAt: string) => {
           />
           <div className="chat-window__searchbar-meta">
             <span>{matchIds.length ? `${matchIndex + 1}/${matchIds.length}` : "0/0"}</span>
-            <button onClick={() => gotoMatch(-1)} disabled={!matchIds.length}>◀</button>
-            <button onClick={() => gotoMatch(1)} disabled={!matchIds.length}>▶</button>
+            <button onClick={() => gotoMatch(-1)} disabled={!matchIds.length}>
+              ◀
+            </button>
+            <button onClick={() => gotoMatch(1)} disabled={!matchIds.length}>
+              ▶
+            </button>
             <button onClick={() => setSearchTerm("")}>✕</button>
           </div>
         </div>
       )}
-      
-      <div className="chat-window__messages" onDoubleClick={focusTextarea}  ref={messagesContainerRef}>
-        
-         {stickyDate && (
-        <div className="chat-window__sticky-date">
-          <span className="chat-window__date-text chat-window__date-text--dark">
-            {stickyDate}
-          </span>
-        </div>
-      )}
+
+      <div className="chat-window__messages" onDoubleClick={focusTextarea} ref={messagesContainerRef}>
+        {stickyDate && (
+          <div className="chat-window__sticky-date">
+            <span className="chat-window__date-text chat-window__date-text--dark">{stickyDate}</span>
+          </div>
+        )}
+
         {visibleMessages.map((m, i) => {
           const sentAt = formatTime(m.sentAt);
           const isCurrentUser = m.senderUserId === userId;
@@ -334,25 +357,21 @@ const getConversationStringDate = (sentAt: string) => {
           const showDivider = !prev || label !== prevLabel;
           const isIncomingFromContact = !isCurrentUser;
 
+          const hasContacts = Array.isArray((m as any).contact) && (m as any).contact.length > 0;
+          const isContactMessage = m.messageType === "Contact" || hasContacts;
+
           return (
             <React.Fragment key={m.messageId}>
-              {/* {showDivider && (
-                <div className="chat-window__date-divider">
-                  <span className="chat-window__date-text chat-window__date-text--dark">
-                    {label}
-                  </span>
+              {showDivider && (
+                <div
+                  className="chat-window__date-divider"
+                  ref={(el) => {
+                    if (el) dateRefs.current[label] = el;
+                  }}
+                >
+                  <span className="chat-window__date-text chat-window__date-text--dark">{label}</span>
                 </div>
-              )} */}
-               {showDivider && (
-              <div
-                className="chat-window__date-divider"
-                ref={(el) => { if (el) dateRefs.current[label] = el; }}
-              >
-                <span className="chat-window__date-text chat-window__date-text--dark">
-                  {label}
-                </span>
-              </div>
-            )}
+              )}
 
               <div
                 className="chat-window_message-group_container"
@@ -371,9 +390,7 @@ const getConversationStringDate = (sentAt: string) => {
                 >
                   {showSender && !isCurrentUser && (
                     <div className="chat-window__message-sender">
-                      {m.senderContactId
-                        ? m.senderContactName || "Cliente"
-                        : m.senderUserName || "Sistema"}
+                      {m.senderContactId ? m.senderContactName || "Cliente" : m.senderUserName || "Sistema"}
                     </div>
                   )}
 
@@ -387,99 +404,47 @@ const getConversationStringDate = (sentAt: string) => {
                           onPointerCancel: cancelLongPress,
                         }
                       : { onDoubleClick: focusTextarea })}
-                        
-                      //si es ogual a 1 pintar con el color
-                      style={
-                          m.messageSourceId === 1
-                            ? {
-                                backgroundColor: m.messageSourceColor ?? "#fff",
-                                color: "#fff",
-                              }
-                            : undefined
-                        }
-
+                    style={
+                      m.messageSourceId === 1
+                        ? { backgroundColor: m.messageSourceColor ?? "#fff", color: "#fff" }
+                        : undefined
+                    }
                   >
-                    {m.repliedMessage && (
-                      <div
-                        className="chat-window__reply-preview"
-                        onClick={() => scrollToMessage(m.repliedMessage?.messageId)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) =>
-                          (e.key === "Enter" || e.key === " ") &&
-                          scrollToMessage(m.repliedMessage?.messageId)
-                        }
-                      >
-                        <div className="chat-window__reply-author">
-                          {m.repliedMessage.senderContactId
-                            ? m.repliedMessage.senderContactName || "Cliente"
-                            : m.repliedMessage.senderUserName || "Sistema"}
-                        </div>
-
-                        <div className="chat-window__reply-content chat-window__reply-row">
-                          {m.repliedMessage.attachments?.length ? (
-                            (() => {
-                              const att = m.repliedMessage.attachments[0];
-                              const mime = att?.mimeType || "";
-                              if (mime.startsWith("image/") || mime === "image/webp") {
-                                return (
-                                  <div className="chat-window__reply-thumb">
-                                    <img
-                                      src={att.mediaUrl}
-                                      alt={att.fileName || "Imagen"}
-                                      className="chat-window__reply-thumb-img"
-                                      loading="lazy"
-                                    />
-                                    <span className="chat-window__reply-thumb-label">
-                                      {att.fileName || "Imagen"}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              if (mime.startsWith("video/")) {
-                                return (
-                                  <div className="chat-window__reply-thumb">
-                                    <span>🎬</span>
-                                    <span className="chat-window__reply-thumb-label">
-                                      {att.fileName || "Video"}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              if (mime.startsWith("audio/")) {
-                                return (
-                                  <div className="chat-window__reply-thumb">
-                                    <span>🎵</span>
-                                    <span className="chat-window__reply-thumb-label">
-                                      {att.fileName || "Audio"}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div className="chat-window__reply-thumb">
-                                  <span>📄</span>
-                                  <span className="chat-window__reply-thumb-label">
-                                    {att.fileName || att.mimeType || "Adjunto"}
-                                  </span>
-                                </div>
-                              );
-                            })()
-                          ) : (
-                            <span className="chat-window__reply-thumb-label">
-                              {m.repliedMessage.content
-                                ? m.repliedMessage.content.length > 80
-                                  ? m.repliedMessage.content.slice(0, 80) + "…"
-                                  : m.repliedMessage.content
-                                : ""}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
                     <div className="chat-window__message-content">
-                      {m.attachments?.length ? (
+                      {isContactMessage && (
+                        <div className="chat-window__contact-list">
+                          {(m as any).contact.map((c: any, idx: number) => {
+                            const phone = c?.phones?.[0];
+                            const key =
+                              phone?.wa_id ||
+                              phone?.phone ||
+                              c?.name?.formatted_name ||
+                              `${m.messageId}-${idx}`;
+
+                            return (
+                              <div key={key} className="chat-window__media chat-window__contact-card">
+                                <div className="chat-window__contact-icon">👤</div>
+                                <div className="chat-window__contact-info">
+                                  <p className="chat-window__contact-name">
+                                    {c?.name?.formatted_name ? c.name.formatted_name : "Contacto"}
+                                  </p>
+
+                                  {phone?.phone && (
+                                    <p className="chat-window__contact-phone">
+                                      {phone.phone}
+                                      {phone.type ? (
+                                        <span className="chat-window__contact-type"> ({phone.type})</span>
+                                      ) : null}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {!isContactMessage && m.attachments?.length ? (
                         <div className="chat-window__media">
                           {(m.attachments[0].mimeType?.startsWith("image/") ||
                             m.attachments[0].mimeType === "image/webp") && (
@@ -492,39 +457,13 @@ const getConversationStringDate = (sentAt: string) => {
                                   loading="lazy"
                                   onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
                                 />
-                                {/* <div
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => openImagePreview(m.attachments![0].mediaUrl!)}
-                                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openImagePreview(m.attachments![0].mediaUrl!)}
-                                aria-label="Abrir vista previa"
-                              >
-                                <ImageMagnifier
-                                  src={m.attachments[0].mediaUrl}
-                                  alt={m.attachments[0].fileName || "Imagen"}
-                                  className="chat-window__image"
-                                  zoom={2.5}
-                                  lensSize={180}
-                                  rounded
-                                  showLensIcon
-                                  wheelZoom
-                                  ctrlKeyOnly={false}
-                                  zoomStep={0.25}
-                                  minZoom={1}
-                                  maxZoom={6}
-                                />
-                              </div> */}
                               </div>
                             </div>
                           )}
 
                           {m.attachments[0].mimeType?.startsWith("video/") && (
                             <div className="chat-window__media-video">
-                              <video
-                                controls
-                                className="chat-window__video"
-                                src={m.attachments[0].mediaUrl}
-                              >
+                              <video controls className="chat-window__video" src={m.attachments[0].mediaUrl}>
                                 Tu navegador no soporta el elemento video.
                               </video>
                             </div>
@@ -538,11 +477,7 @@ const getConversationStringDate = (sentAt: string) => {
                                   <div className="chat-window__audio-name">
                                     {m.attachments[0].fileName || "Audio"}
                                   </div>
-                                  <audio
-                                    controls
-                                    className="chat-window__audio-player"
-                                    src={m.attachments[0].mediaUrl}
-                                  >
+                                  <audio controls className="chat-window__audio-player" src={m.attachments[0].mediaUrl}>
                                     Tu navegador no soporta el elemento audio.
                                   </audio>
                                 </div>
@@ -582,12 +517,13 @@ const getConversationStringDate = (sentAt: string) => {
                             </div>
                           )}
                         </div>
-                      ) : hasText(m) && (
-                         <div className="chat-window__message-text">
-                          {renderMessageContent(String(m.content ?? ""), searchTerm)}
-                        </div>
-                      )
-                      }
+                      ) : (
+                        hasText(m) && (
+                          <div className="chat-window__message-text">
+                            {renderMessageContent(String(m.content ?? ""), searchTerm)}
+                          </div>
+                        )
+                      )}
                     </div>
 
                     <div className="chat-window__message-info">
@@ -596,34 +532,22 @@ const getConversationStringDate = (sentAt: string) => {
                     </div>
                   </div>
                 </div>
-
               </div>
-
             </React.Fragment>
           );
         })}
-        
-        <div ref={bottomRef} className="butttonRef" style={{ height: 1 }}/>
 
-              {showScrollButton && (
-              <button
-                className="chat-window__scroll-button"
-                onClick={scrollToBottom}
-                title="Bajar al último mensaje"
-              >
-                <FaArrowDown className="chat-window__scroll-buttonIcon" />
-              </button>
-            )}
+        <div ref={bottomRef} className="butttonRef" style={{ height: 1 }} />
+
+        {showScrollButton && (
+          <button className="chat-window__scroll-button" onClick={scrollToBottom} title="Bajar al último mensaje">
+            <FaArrowDown className="chat-window__scroll-buttonIcon" />
+          </button>
+        )}
       </div>
-      
 
       <div className="chat-window__composer" ref={composerRef}>
-
-        <label
-          htmlFor="file-upload"
-          className="chat-window__composer-attachment"
-          aria-label="Adjuntar archivo"
-        >
+        <label htmlFor="file-upload" className="chat-window__composer-attachment" aria-label="Adjuntar archivo">
           <Paperclip size={20} />
         </label>
 
@@ -633,7 +557,7 @@ const getConversationStringDate = (sentAt: string) => {
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
-          disabled={!conversationId || sending || conversationStatus == "Closed"}
+          disabled={!conversationId || sending || conversationStatus === "Closed" || isRecording}
         />
 
         {file && (
@@ -652,9 +576,7 @@ const getConversationStringDate = (sentAt: string) => {
         <div className="chat-window__composer-input-container">
           {replyTo && (
             <div className="chat-window__reply-pill">
-              <div className="chat-window__reply-pill-text">
-                Respondiendo a {replyTo.author}
-              </div>
+              <div className="chat-window__reply-pill-text">Respondiendo a {replyTo.author}</div>
               <button
                 type="button"
                 onClick={() => scrollToMessage((replyTo as any)?.messageId)}
@@ -663,26 +585,29 @@ const getConversationStringDate = (sentAt: string) => {
               >
                 {replyTo.preview}
               </button>
-              <button onClick={cancelReply} className="chat-window__reply-pill-close">✕</button>
+              <button onClick={cancelReply} className="chat-window__reply-pill-close">
+                ✕
+              </button>
             </div>
           )}
 
           <div className="chat-window__composer-input-container__divisor">
             <div
-            className="custom_messages__container"
-            ref={smsBtnRef}
-            onClick={() => setFlyoutOpen(true)}
-            title="Mensajes personalizados"
-          >
-            <SmsIcon className="custom_messages__icon" />
-          </div>
+              className="custom_messages__container"
+              ref={smsBtnRef}
+              onClick={() => setFlyoutOpen(true)}
+              title="Mensajes personalizados"
+            >
+              <SmsIcon className="custom_messages__icon" />
+            </div>
 
             <textarea
               ref={textAreaRef}
               className="chat-window__composer-input"
-              placeholder="Escribe un mensaje…"
+              placeholder={isRecording ? "Grabando..." : "Escribe un mensaje…"}
               value={text}
               autoFocus
+              disabled={isRecording}
               onChange={(e) => {
                 setSelectedOption(null);
                 setText(e.target.value);
@@ -694,35 +619,89 @@ const getConversationStringDate = (sentAt: string) => {
           </div>
 
           {flyoutOpen && (
-              <div className="cmf-layer">
-                <div className="cmf-backdrop" onClick={() => setFlyoutOpen(false)} />
-                <CustomMessagesFlyout
-                  anchorRect={null}         // <- si no lo necesitas, null
-                  open={flyoutOpen}
-                  onClose={() => setFlyoutOpen(false)}
-                  items={customMessages}
-                  loading={loading}
-                  error={error}
-                  onCreate={create}
-                  onUpdate={update}
-                  onToggle={toggleSystemParam}
-                  onInsertToComposer={handleInsertToComposer}
-                  onSendNow={handleSendNow}
-                />
-              </div>
-            )}
-
+            <div className="cmf-layer">
+              <div className="cmf-backdrop" onClick={() => setFlyoutOpen(false)} />
+              <CustomMessagesFlyout
+                anchorRect={null}
+                open={flyoutOpen}
+                onClose={() => setFlyoutOpen(false)}
+                items={customMessages}
+                loading={loading}
+                error={error}
+                onCreate={create}
+                onUpdate={update}
+                onToggle={toggleSystemParam}
+                onInsertToComposer={handleInsertToComposer}
+                onSendNow={handleSendNow}
+              />
+            </div>
+          )}
         </div>
 
+          <div className="chat-window__composer-audio">
+            <div className="chat-window__audio-timer">{hasAudioToSend ? secondsToTime(recordingTime) : ""}</div>
+
+            {!isRecording && !hasAudioToSend && (
+              <button
+                type="button"
+                className="chat-window__audio-btn"
+                onClick={onStartRecord}
+                disabled={!canType}
+                title="Grabar audio"
+              >
+                <Mic size={24} className="chat-window__audio-icons"/>
+              </button>
+            )}
+
+            {isRecording && (
+              <button
+                type="button"
+                className="chat-window__audio-btn chat-window__audio-btn--stop"
+                onClick={onStopRecord}
+                disabled={!canType}
+                title="Detener"
+              >
+                <Square size={18} />
+              </button>
+            )}
+
+            {!isRecording && hasAudioToSend && (
+              <>
+                {/* <button
+                  type="button"
+                  className="chat-window__audio-btn"
+                  onClick={onResumeRecord}
+                  disabled={!canType}
+                  title="Reanudar"
+                >
+                  <Play size={18} />
+                </button> */}
+
+                <button
+                  type="button"
+                  className="chat-window__audio-btn chat-window__audio-btn--send"
+                  onClick={onSendRecord}
+                  disabled={!canType}
+                  title="Enviar audio"
+                >
+                  <Check size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  className="chat-window__audio-btn chat-window__audio-btn--trash"
+                  onClick={onClearRecord}
+                  title="Eliminar audio"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
+          </div>
         <button
           className="chat-window__composer-send"
           onClick={handleSend}
-          disabled={
-            !conversationId ||
-            sending ||
-            (!text.trim() && !file) ||
-            conversationStatus == "Closed"
-          }
+          disabled={!conversationId || sending || (!text.trim() && !file) || conversationStatus === "Closed" || isRecording}
           aria-label="Enviar mensaje"
         >
           <Send size={18} />
@@ -734,44 +713,6 @@ const getConversationStringDate = (sentAt: string) => {
           <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
         </div>
       )}
-
-      {/* {visibleState.quickMenuOpen && (
-        <div
-          ref={popoverRef}
-          className="chat-window__quick-popover"
-          style={{ top: visibleState.quickMenuPos.y, left: visibleState.quickMenuPos.x }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              if (visibleState.quickMenuMsg) beginReply(visibleState.quickMenuMsg);
-              (textAreaRef as React.MutableRefObject<HTMLTextAreaElement | null>)?.current?.focus();
-            }}
-            className="chat-window__quick-popover-btn"
-          >
-            ↩️ Responder
-          </button>
-
-          {quickOptions.length > 0 && (
-            <>
-              <div className="chat-window__quick-popover-divider" />
-              <div className="chat-window__quick-popover-title">Respuestas rápidas</div>
-              <div className="chat-window__quick-popover-list">
-                {quickOptions.map((opt, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => sendQuick(opt)}
-                    className="chat-window__quick-popover-btn"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )} */}
     </div>
   );
 };

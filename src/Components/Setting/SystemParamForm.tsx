@@ -36,7 +36,11 @@ export default function SystemParamModal({
   onClose,
   onSubmit,
 }: SystemParamModalProps) {
-  const { form, errors, isView, handleChange, inputRef, handleSelect, handleCheckbox, handleSubmit } =
+  const { form, errors, isView, handleChange, 
+    inputRef, handleSelect,
+     handleCheckbox, handleSubmit,
+     loading
+    } =
     useSystemParamForm({ mode, data: data || null, onSubmit })
 
   const parseKeywords = (raw?: string): string[] => {
@@ -62,7 +66,7 @@ export default function SystemParamModal({
     const k = keywordInput.trim()
     if (!k) return
 
-    if(keywordInput.length > 20 && data?.name !== "OpcionesRapidas"){
+    if(keywordInput.length > 24 && data?.name !== "OpcionesRapidas"){
       toast.warn("Cada palabra clave no debe exceder los 20 caracteres.")
       return
     }
@@ -267,7 +271,7 @@ export default function SystemParamModal({
             </Button>
             {!isView && (
               <Button variant="primary" type="submit" className="sp-modal__btn sp-modal__btn--confirm">
-                {mode === 'create' ? 'Crear' : 'Guardar'}
+                {loading ? "Cargando..." : mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}
           </footer>

@@ -7,6 +7,7 @@ export type MessageType =
   | 'Document'
   | 'Interactive'
   | 'Bot'
+  | 'Contact'
 
 export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed'
 export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete'
@@ -59,7 +60,7 @@ export interface ConversationDto {
   ratingSubmittedAt: string | null;
   ratingReceivedAt: string | null;
   SystemDefinedCompanyName?: string;
-  isHalted?: boolean;
+  isHalted?: boolean; 
 }
 
 export interface UpdateConversationRequest {
@@ -103,6 +104,23 @@ export interface MessageDto {
   messageSourceId?: number | null
   messageSourceName?: string | null
   messageSourceColor?: string | null
+
+  //contacto
+  contact: WhatsAppContact[];
+}
+
+export interface WhatsAppContact {
+  name?: WhatsAppContactName;
+  phones?: WhatsAppContactPhone[];
+  birthday?: string;
+}
+export interface WhatsAppContactName {
+  formatted_name: string;
+  first_name?: string;
+}
+export interface WhatsAppContactPhone {
+  phone?: string;
+  type?: string;
 }
 
 

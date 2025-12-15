@@ -37,6 +37,7 @@ export default function WorkShiftModal({
     handleDate,
     handleCheckbox,
     handleSubmit,
+    loading
   } = useWorkShiftForm({ mode, data, onSubmit })
 
   // Map weekday indices to names
@@ -284,7 +285,7 @@ export default function WorkShiftModal({
                 type="submit"
                 className="ws-modal__btn ws-modal__btn--confirm"
               >
-                {mode === 'create' ? 'Crear' : 'Guardar'}
+                {loading ? "Cargando..." : mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}
           </footer>

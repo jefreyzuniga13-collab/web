@@ -48,7 +48,6 @@ export const InboxList: React.FC<Props> = ({
     return () => clearInterval(interval)
   }, [])
 
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {

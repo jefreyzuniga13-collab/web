@@ -30,6 +30,7 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
   const isView = mode === 'view'
   const [form, setForm] = useState<WorkShiftFormValues>(initialForm)
   const [errors, setErrors] = useState<Errors>({})
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Cargar datos iniciales según modo
   useEffect(() => {
@@ -98,11 +99,13 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
       isActive: form.isActive,
     }
 
+    setLoading(true)
     onSubmit(payload)
     if (mode === 'create') {
       setForm(initialForm)
       setErrors({})
     }
+    setLoading(false)
   }
 
   return {
@@ -114,5 +117,6 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
     handleDate,
     handleCheckbox,
     handleSubmit,
+    loading,
   }
 }

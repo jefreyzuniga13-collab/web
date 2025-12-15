@@ -30,6 +30,7 @@ import type { UserEcommerceDto } from "@/Interfaces/Ecommerce/UserEcommerceInter
 import type { SendLinkRequestDto } from "@/Interfaces/Cart/SendLinkInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { UserSessionService } from '@/Services/auth/UserSessionService'
+import type { ContactLogInterface } from "@/Interfaces/Contact/ContactInterface"
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -45,16 +46,17 @@ const buildRowsFromCart = (cart: CarDto): any[][] => {
   const rows: any[][] = []
   cart.listDetalle.forEach((d: ListDetalleCarrito) => {
     const opciones = d.listOpciones?.map(o => o.descripcionOp).join(", ") ?? ""
-    const descripcion = d.descripcion ?? ""
-    const imagenLine = d.imagen ? `Imagen: ${d.imagen}` : ""
-    const productoCell = [descripcion, imagenLine].filter(Boolean).join("\n")
+    const descripcion = d.descripcion.trim() ?? ""
+    // const imagenLine = d.imagen ? `Imagen: ${d.imagen}` : ""
+    // const productoCell = [descripcion, imagenLine].filter(Boolean).join("\n")
+    const productoCell = [descripcion].filter(Boolean).join("\n")
 
     rows.push([productoCell, d.cantidad, d.precioV.toFixed(2), d.totalMenu.toFixed(2), opciones])
   })
   return rows
 }
 
-const generateCartPdfFile = (cart: CarDto): File => {
+const generateCartPdfFile = (cart: CarDto, contact: ContactLogInterface): File => {
   const doc = new jsPDF()
 
   const date = new Date()
@@ -68,15 +70,16 @@ const generateCartPdfFile = (cart: CarDto): File => {
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
   doc.text("Resumen de carrito", marginX, marginY + 5)
-
+  
   doc.setFontSize(10)
+  doc.text(`A nombre de: ${contact.fullName != null ? contact.waName : contact.fullName}`, marginX, marginY + 15)
   doc.setFont("helvetica", "normal")
-  doc.text(`Fecha: ${time}`, marginX, marginY + 14)
+  doc.text(`Fecha: ${time}`, marginX, marginY + 25)
 
   const body = buildRowsFromCart(cart)
 
   autoTable(doc, {
-    startY: marginY + 20,
+    startY: marginY + 30,
     head: [["Producto", "Cant.", "Precio", "Total", "Más detalles"]],
     body,
     margin: { left: marginX, right: marginX },
@@ -84,16 +87,16 @@ const generateCartPdfFile = (cart: CarDto): File => {
     headStyles: { fillColor: [49, 86, 168], textColor: 255, fontStyle: "bold" },
     alternateRowStyles: { fillColor: [249, 250, 251] },
     columnStyles: {
-      0: { cellWidth: 90 },
-      1: { halign: "center", cellWidth: 15 },
-      2: { halign: "right", cellWidth: 22 },
-      3: { halign: "right", cellWidth: 24 },
-      4: { cellWidth: 40 }
+      0: { cellWidth: 30 },
+      1: { halign: "left", cellWidth: 15 },
+      2: { halign: "left", cellWidth: 22 },
+      3: { halign: "left", cellWidth: 24 },
+      4: { cellWidth: 80 }
     }
   })
 
-  let y = (doc as any).lastAutoTable?.finalY ?? marginY + 30
-  if (y < marginY + 30) y = marginY + 30
+  let y = (doc as any).lastAutoTable?.finalY ?? marginY + 40
+  if (y < marginY + 30) y = marginY + 40
   y += 10
 
   const boxWidth = 80
@@ -195,7 +198,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     fetchByContactId
   } = useLogCart();
 
-  const { UpdateEcommerceUserAsync, 
+  const { 
+    UpdateEcommerceUserAsync, 
     getById } = useContact()
 
   const { CreateAsync } = useUserEcommerce()
@@ -314,7 +318,15 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const handleSendCartPdf = async () => {
     if (!cart || sending) return
-    const file = generateCartPdfFile(cart)
+
+    const contact = await getById(contactId)
+
+    if (!contact) {
+      toast.error("No se pudo obtener el contacto")
+      return
+    }
+
+    const file = generateCartPdfFile(cart, contact)
     setFile(file)
     setText("Resumen de carrito")
     await handleSend()

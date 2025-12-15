@@ -47,7 +47,9 @@ export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date |
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { isRecording, audioBlob, recordingTime, startRecording, stopRecording, clearRecording } = useAudioRecorder()
+  const { isRecording, audioBlob, 
+    recordingTime, startRecording, 
+    stopRecording, clearRecording } = useAudioRecorder()
 
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [quickMenuPos, setQuickMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -126,21 +128,34 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
   }, [args.selectedParam])
 
   const handleSendAudio = async () => {
-    if (!conversationId || sending || !audioBlob) return
-    setSending(true)
-    try {
-      const mime = audioBlob.type || "audio/webm"
-      const ext = mime.includes("ogg") ? "ogg" : mime.includes("webm") ? "webm" : mime.includes("mpeg") ? "mp3" : mime.includes("mp4") || mime.includes("aac") ? "m4a" : "bin"
-      const audioFile = new File([audioBlob], `grabacion.${ext}`, { type: mime })
-      await sendMedia(conversationId, audioFile, "")
-      clearRecording()
-    } finally {
-      setSending(false)
+      if (!conversationId || sending || !audioBlob) return
+      setSending(true)
+
+      try {
+        const mime = audioBlob.type || ""
+
+        if (mime.includes("audio/webm")) {
+          alert("El audio grabado no es compatible con WhatsApp. Se requiere conversión a OGG/OPUS en el servidor.")
+          return
+        }
+
+        const ext =
+          mime.includes("ogg") ? "ogg" :
+          mime.includes("mpeg") ? "mp3" :
+          (mime.includes("mp4") || mime.includes("aac")) ? "m4a" :
+          "bin"
+
+        const audioFile = new File([audioBlob], `grabacion.${ext}`, { type: mime })
+        await sendMedia(conversationId, audioFile, "")
+        clearRecording()
+      } finally {
+        setSending(false)
+      }
     }
-  }
 
   const visibleMessages = useMemo(
-    () => messages.filter((m) => hasMedia(m) || hasText(m) || m.messageType === "Interactive"),
+    () => messages.filter((m) => hasMedia(m) || hasText(m) || 
+    m.messageType === "Interactive" || m.messageType === "Contact"),
     [messages]
   )
 
@@ -471,9 +486,11 @@ useEffect(() => {
   const matchIds = useMemo(() => {
   const term = searchTerm.toLowerCase();
   if (!term) return [];
+
   return visibleMessages
     .filter(m => hasText(m) && (m.content ?? "").toLowerCase().includes(term))
     .map(m => m.messageId);
+
 }, [visibleMessages, searchTerm]);
 
 const [matchIndex, setMatchIndex] = useState(0);
@@ -503,6 +520,19 @@ const gotoMatch = (dir: 1 | -1) => {
         : <React.Fragment key={i}>{part}</React.Fragment>
     )
   }
+
+  function secondsToTime(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const paddedHours = String(hours).padStart(2, '0');
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    const paddedSeconds = String(seconds).padStart(2, '0');
+
+    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+  }
+
 
   return {
     setConversationId,
@@ -535,6 +565,7 @@ const gotoMatch = (dir: 1 | -1) => {
     recordingTime,
     startRecording,
     stopRecording,
+    secondsToTime,
     clearRecording,
     handleSendAudio,
     visibleMessages,
