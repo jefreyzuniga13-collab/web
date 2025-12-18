@@ -75,5 +75,14 @@ export const nameTranslations: Record<NameTranslation, string> = {
   MaximoMediaPorMensaje: "Mensaje cuando se supera el máximo de archivos por mensaje",
   PesoMediaMbMaximoMensaje: "Mensaje cuando el archivo supera el tamaño máximo permitido",
   MensajeLinkCarrito: "MensajeLinkCarrito",
-  TiempoLinkTemporal: "TiempoLinkTemporal"
+  MensajeTicketCreado: "MensajeTicketCreado",
+  TiempoLinkTemporal: "TiempoLinkTemporal",
+  CartMessageHeader: "CartMessageHeader",
+  CartMessageFooter: "CartMessageFooter",
+  ConversationCartValues:"ConversationCartValues",
+  MensajeRechazoCarrito: "MensajeRechazoCarrito",
+  MensajeRechazoCarritoNoAplica: "MensajeRechazoCarritoNoAplica",
+  MensajeConfirmarCarrito: "MensajeConfirmarCarrito",
+  MensajeReaudarCarrito: "MensajeReaudarCarrito",
+  MensajeCarritoEnProceso: "MensajeCarritoEnProceso",
 };

@@ -9,18 +9,11 @@ import {
   Mic,
   Square,
   Trash2,
-  // Play,
   Check,
 } from "lucide-react";
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
 import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface";
-import {
-  format,
-  isToday,
-  isYesterday,
-  parseISO,
-  differenceInCalendarDays,
-} from "date-fns";
+import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";
 import SmsIcon from "@mui/icons-material/Sms";
 import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
@@ -107,6 +100,8 @@ export const ChatWindow: React.FC<Props> = ({
     matchIndex,
     gotoMatch,
     renderMessageContent,
+
+    //audio
     isRecording,
     clearRecording,
     handleSendAudio,
@@ -114,6 +109,7 @@ export const ChatWindow: React.FC<Props> = ({
     startRecording,
     stopRecording,
     secondsToTime,
+
   } = useChatWindow(
     {
       conversationId,
@@ -139,6 +135,19 @@ export const ChatWindow: React.FC<Props> = ({
     };
   }, [conversationId, setConversationId, setUserId, userId]);
 
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+  const getConversationStringDate = (sentAt: string) => {
+    const fecha = parseISO(sentAt);
+    if (isToday(fecha)) return "Hoy";
+    if (isYesterday(fecha)) return "Ayer";
+
+    const diff = differenceInCalendarDays(new Date(), fecha);
+    if (diff >= 2 && diff < 7) return cap(format(fecha, "EEEE", { locale: es }));
+
+    return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
+  };
+
   const computeStickyDate = React.useCallback(() => {
     const root = messagesContainerRef.current;
     if (!root) return;
@@ -154,7 +163,6 @@ export const ChatWindow: React.FC<Props> = ({
       else break;
     }
     if (!current && entries.length) current = entries[0][0];
-
     setStickyDate(current);
   }, []);
 
@@ -163,7 +171,6 @@ export const ChatWindow: React.FC<Props> = ({
     if (!root) return;
     const onScroll = () => computeStickyDate();
     root.addEventListener("scroll", onScroll, { passive: true });
-
     requestAnimationFrame(computeStickyDate);
     return () => root.removeEventListener("scroll", onScroll);
   }, [computeStickyDate]);
@@ -251,27 +258,56 @@ export const ChatWindow: React.FC<Props> = ({
     setShowScrollButton(false);
   };
 
-  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-
-  const getConversationStringDate = (sentAt: string) => {
-    const fecha = parseISO(sentAt);
-
-    if (isToday(fecha)) return "Hoy";
-    if (isYesterday(fecha)) return "Ayer";
-
-    const diff = differenceInCalendarDays(new Date(), fecha);
-
-    if (diff >= 2 && diff < 7) {
-      return cap(format(fecha, "EEEE", { locale: es }));
-    }
-
-    return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
-  };
-
   const handleInsertToComposer = (txt: string) => {
     const glue = text.trim().length ? (text.endsWith(" ") ? "" : " ") : "";
     setText(text + glue + txt);
     textAreaRef.current?.focus();
+  };
+
+  const getReplyAuthor = (rm: any) => {
+    if (!rm) return "Mensaje";
+    return rm.senderContactId ? rm.senderContactName || "Cliente" : rm.senderUserName || "Sistema";
+  };
+
+  const getReplyPreview = (rm: any) => {
+    if (!rm) return "";
+    const att = rm.attachments?.[0];
+    const txt = String(rm.content ?? "").trim();
+
+    if (att) {
+      const mime = String(att.mimeType ?? "");
+      if (mime.startsWith("image/") || mime === "image/webp") return att.fileName || "Imagen";
+      if (mime.startsWith("video/")) return att.fileName || "Video";
+      if (mime.startsWith("audio/")) return att.fileName || "Audio";
+      return att.fileName || att.mimeType || "Adjunto";
+    }
+
+    if (!txt) return "";
+    return txt.length > 90 ? txt.slice(0, 90) + "…" : txt;
+  };
+
+  const getReplyIcon = (rm: any) => {
+    const att = rm?.attachments?.[0];
+    if (!att) return null;
+    const mime = String(att.mimeType ?? "");
+    if (mime.startsWith("image/") || mime === "image/webp") return "📷";
+    if (mime.startsWith("video/")) return "🎬";
+    if (mime.startsWith("audio/")) return "🎵";
+    return "📎";
+  };
+
+  const getReplyThumb = (rm: any) => {
+    const att = rm?.attachments?.[0];
+    if (!att) return null;
+    const mime = String(att.mimeType ?? "");
+    if (mime.startsWith("image/") || mime === "image/webp") return att.mediaUrl;
+    return null;
+  };
+
+  const onJumpToReplied = (m: any) => {
+    const id = m?.repliedMessageId ?? m?.repliedMessage?.messageId;
+    if (!id) return;
+    scrollToMessage(Number(id));
   };
 
   const showEmpty = !conversationId;
@@ -288,6 +324,7 @@ export const ChatWindow: React.FC<Props> = ({
     );
   }
 
+
   const canType = !!conversationId && !sending && conversationStatus !== "Closed";
   const hasAudioToSend = Number(recordingTime ?? 0) > 0;
 
@@ -300,11 +337,6 @@ export const ChatWindow: React.FC<Props> = ({
     if (!canType) return;
     await stopRecording();
   };
-
-  // const onResumeRecord = async () => {
-  //   if (!canType) return;
-  //   await resumeRecording();
-  // };
 
   const onClearRecord = () => {
     clearRecording();
@@ -360,6 +392,8 @@ export const ChatWindow: React.FC<Props> = ({
           const hasContacts = Array.isArray((m as any).contact) && (m as any).contact.length > 0;
           const isContactMessage = m.messageType === "Contact" || hasContacts;
 
+          const rm = (m as any).repliedMessage;
+
           return (
             <React.Fragment key={m.messageId}>
               {showDivider && (
@@ -405,21 +439,41 @@ export const ChatWindow: React.FC<Props> = ({
                         }
                       : { onDoubleClick: focusTextarea })}
                     style={
-                      m.messageSourceId === 1
-                        ? { backgroundColor: m.messageSourceColor ?? "#fff", color: "#fff" }
-                        : undefined
+                      m.messageSourceId === 1 ? { backgroundColor: m.messageSourceColor ?? "#fff", color: "#fff" } : undefined
                     }
                   >
                     <div className="chat-window__message-content">
+                      {rm && (
+                        <button
+                          type="button"
+                          className="chat-window__reply-preview"
+                          onClick={() => onJumpToReplied(m)}
+                          title="Ir al mensaje citado"
+                        >
+                          <div className="chat-window__reply-author">{getReplyAuthor(rm)}</div>
+
+                          <div className="chat-window__reply-row">
+                            {getReplyThumb(rm) ? (
+                              <img
+                                src={getReplyThumb(rm) as string}
+                                alt="thumb"
+                                className="chat-window__reply-thumb-img"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className="chat-window__reply-ico">{getReplyIcon(rm) ?? ""}</span>
+                            )}
+
+                            <span className="chat-window__reply-text">{getReplyPreview(rm)}</span>
+                          </div>
+                        </button>
+                      )}
+
                       {isContactMessage && (
                         <div className="chat-window__contact-list">
                           {(m as any).contact.map((c: any, idx: number) => {
                             const phone = c?.phones?.[0];
-                            const key =
-                              phone?.wa_id ||
-                              phone?.phone ||
-                              c?.name?.formatted_name ||
-                              `${m.messageId}-${idx}`;
+                            const key = phone?.wa_id || phone?.phone || c?.name?.formatted_name || `${m.messageId}-${idx}`;
 
                             return (
                               <div key={key} className="chat-window__media chat-window__contact-card">
@@ -432,9 +486,7 @@ export const ChatWindow: React.FC<Props> = ({
                                   {phone?.phone && (
                                     <p className="chat-window__contact-phone">
                                       {phone.phone}
-                                      {phone.type ? (
-                                        <span className="chat-window__contact-type"> ({phone.type})</span>
-                                      ) : null}
+                                      {phone.type ? <span className="chat-window__contact-type"> ({phone.type})</span> : null}
                                     </p>
                                   )}
                                 </div>
@@ -446,8 +498,7 @@ export const ChatWindow: React.FC<Props> = ({
 
                       {!isContactMessage && m.attachments?.length ? (
                         <div className="chat-window__media">
-                          {(m.attachments[0].mimeType?.startsWith("image/") ||
-                            m.attachments[0].mimeType === "image/webp") && (
+                          {(m.attachments[0].mimeType?.startsWith("image/") || m.attachments[0].mimeType === "image/webp") && (
                             <div className="chat-window__media-image">
                               <div className="chat-window__image-container">
                                 <img
@@ -474,9 +525,7 @@ export const ChatWindow: React.FC<Props> = ({
                               <div className="chat-window__audio-container">
                                 <div className="chat-window__audio-icon">🎵</div>
                                 <div className="chat-window__audio-info">
-                                  <div className="chat-window__audio-name">
-                                    {m.attachments[0].fileName || "Audio"}
-                                  </div>
+                                  <div className="chat-window__audio-name">{m.attachments[0].fileName || "Audio"}</div>
                                   <audio controls className="chat-window__audio-player" src={m.attachments[0].mediaUrl}>
                                     Tu navegador no soporta el elemento audio.
                                   </audio>
@@ -497,12 +546,8 @@ export const ChatWindow: React.FC<Props> = ({
                                   {getFileIcon(m.attachments[0].mimeType || "")}
                                 </div>
                                 <div className="chat-window__document-info">
-                                  <div className="chat-window__document-name">
-                                    {m.attachments[0].fileName || "Documento"}
-                                  </div>
-                                  <div className="chat-window__document-size">
-                                    {m.attachments[0].mimeType || "Archivo"}
-                                  </div>
+                                  <div className="chat-window__document-name">{m.attachments[0].fileName || "Documento"}</div>
+                                  <div className="chat-window__document-size">{m.attachments[0].mimeType || "Archivo"}</div>
                                 </div>
                                 <div className="chat-window__document-download">
                                   <Download size={16} />
@@ -563,11 +608,7 @@ export const ChatWindow: React.FC<Props> = ({
         {file && (
           <div className="chat-window__composer-file-preview">
             <span className="chat-window__composer-file-name">{file.name}</span>
-            <button
-              className="chat-window__composer-file-remove"
-              onClick={() => setFile(null)}
-              aria-label="Eliminar archivo"
-            >
+            <button className="chat-window__composer-file-remove" onClick={() => setFile(null)} aria-label="Eliminar archivo">
               ×
             </button>
           </div>
@@ -638,66 +679,57 @@ export const ChatWindow: React.FC<Props> = ({
           )}
         </div>
 
-          <div className="chat-window__composer-audio">
-            <div className="chat-window__audio-timer">{hasAudioToSend ? secondsToTime(recordingTime) : ""}</div>
+        <div className="chat-window__composer-audio">
+          <div className="chat-window__audio-timer">{hasAudioToSend ? secondsToTime(recordingTime) : ""}</div>
 
-            {!isRecording && !hasAudioToSend && (
+          {!isRecording && !hasAudioToSend && (
+            <button
+              type="button"
+              className="chat-window__audio-btn"
+              onClick={onStartRecord}
+              disabled={!canType}
+              title="Grabar audio"
+            >
+              <Mic size={24} className="chat-window__audio-icons" />
+            </button>
+          )}
+
+          {isRecording && (
+            <button
+              type="button"
+              className="chat-window__audio-btn chat-window__audio-btn--stop"
+              onClick={onStopRecord}
+              disabled={!canType}
+              title="Detener"
+            >
+              <Square size={18} />
+            </button>
+          )}
+
+          {!isRecording && hasAudioToSend && (
+            <>
               <button
                 type="button"
-                className="chat-window__audio-btn"
-                onClick={onStartRecord}
+                className="chat-window__audio-btn chat-window__audio-btn--send"
+                onClick={onSendRecord}
                 disabled={!canType}
-                title="Grabar audio"
+                title="Enviar audio"
               >
-                <Mic size={24} className="chat-window__audio-icons"/>
+                <Check size={18} />
               </button>
-            )}
 
-            {isRecording && (
               <button
                 type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--stop"
-                onClick={onStopRecord}
-                disabled={!canType}
-                title="Detener"
+                className="chat-window__audio-btn chat-window__audio-btn--trash"
+                onClick={onClearRecord}
+                title="Eliminar audio"
               >
-                <Square size={18} />
+                <Trash2 size={18} />
               </button>
-            )}
+            </>
+          )}
+        </div>
 
-            {!isRecording && hasAudioToSend && (
-              <>
-                {/* <button
-                  type="button"
-                  className="chat-window__audio-btn"
-                  onClick={onResumeRecord}
-                  disabled={!canType}
-                  title="Reanudar"
-                >
-                  <Play size={18} />
-                </button> */}
-
-                <button
-                  type="button"
-                  className="chat-window__audio-btn chat-window__audio-btn--send"
-                  onClick={onSendRecord}
-                  disabled={!canType}
-                  title="Enviar audio"
-                >
-                  <Check size={18} />
-                </button>
-
-                <button
-                  type="button"
-                  className="chat-window__audio-btn chat-window__audio-btn--trash"
-                  onClick={onClearRecord}
-                  title="Eliminar audio"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </>
-            )}
-          </div>
         <button
           className="chat-window__composer-send"
           onClick={handleSend}

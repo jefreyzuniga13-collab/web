@@ -127,31 +127,32 @@ useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.high
     return []
   }, [args.selectedParam])
 
-  const handleSendAudio = async () => {
-      if (!conversationId || sending || !audioBlob) return
-      setSending(true)
 
-      try {
-        const mime = audioBlob.type || ""
+    const handleSendAudio = async () => {
+      if (!conversationId || sending || !audioBlob) return;
 
-        if (mime.includes("audio/webm")) {
-          alert("El audio grabado no es compatible con WhatsApp. Se requiere conversión a OGG/OPUS en el servidor.")
-          return
-        }
-
-        const ext =
-          mime.includes("ogg") ? "ogg" :
-          mime.includes("mpeg") ? "mp3" :
-          (mime.includes("mp4") || mime.includes("aac")) ? "m4a" :
-          "bin"
-
-        const audioFile = new File([audioBlob], `grabacion.${ext}`, { type: mime })
-        await sendMedia(conversationId, audioFile, "")
-        clearRecording()
-      } finally {
-        setSending(false)
+      //Validar tamaño máximo permitido por Meta
+      if (audioBlob.size > 16 * 1024 * 1024) {
+        toast.error("El audio supera el tamaño máximo permitido (16 MB).");
+        return;
       }
-    }
+
+      setSending(true);
+      try {
+        const fileName = `audio_${Date.now()}.mp3`;
+        const audioFile = new File([audioBlob], fileName, { type: "audio/mpeg" });
+
+        // 3er parámetro es string (caption/nota). Para audio va vacío.
+        await sendMedia(conversationId, audioFile, "");
+
+        clearRecording();
+      } catch (e) {
+        console.error(e);
+        toast.error("No se pudo enviar el audio.");
+      } finally {
+        setSending(false);
+      }
+    };
 
   const visibleMessages = useMemo(
     () => messages.filter((m) => hasMedia(m) || hasText(m) || 
@@ -245,7 +246,7 @@ useEffect(() => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: "#1a73e8", textDecoration: "underline" }}
+          style={{ color: "#8595f0ff", textDecoration: "underline" }}
         >
           {part}
         </a>
@@ -560,6 +561,8 @@ const gotoMatch = (dir: 1 | -1) => {
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
+
+    //audio
     isRecording,
     audioBlob,
     recordingTime,
@@ -568,6 +571,8 @@ const gotoMatch = (dir: 1 | -1) => {
     secondsToTime,
     clearRecording,
     handleSendAudio,
+
+
     visibleMessages,
     hasMedia,
     hasText,

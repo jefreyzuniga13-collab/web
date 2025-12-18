@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaRegBuilding } from "react-icons/fa";
 import { IoChatboxEllipsesOutline } from "react-icons/io5";
 import { RiTimelineView } from "react-icons/ri";
@@ -27,6 +27,15 @@ const DetailPanelHeaderTabs: React.FC<DetailPanelHeaderTabsProps> = ({
   onSelectCurrentConversation,
 }) => {
   const cartItemsCount = useAppSelector(selectCartItemsCount);
+  const [animate, setAnimate] = useState(false)
+
+  useEffect(() => {
+    if (cartItemsCount > 0) {
+      setAnimate(true)
+      const t = setTimeout(() => setAnimate(false), 400)
+      return () => clearTimeout(t)
+    }
+  }, [cartItemsCount])
 
   return (
     <ul className="detail-panel__header">
@@ -116,11 +125,14 @@ const DetailPanelHeaderTabs: React.FC<DetailPanelHeaderTabsProps> = ({
           <TbShoppingCartSearch size={18} className="detailPanel-optionBtn__icon" />
 
 
-          {cartItemsCount > 0 && (
-            <span className="detailPanel__cartItemsCount">
+         {cartItemsCount > 0 && (
+            <span
+              className={`detailPanel__cartItemsCount ${animate ? "explode" : ""}`}
+            >
               {cartItemsCount > 99 ? "99+" : cartItemsCount}
             </span>
           )}
+
         </button>
       </li>
     </ul>

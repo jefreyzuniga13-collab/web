@@ -85,7 +85,7 @@ const useLogCart = (logCartId?: number) => {
       const payload = { ...values }
       const newItem = await logCartService.createAsync(payload)
       setData(prev => [...prev, newItem])
-      toast.success("Log de carrito creado correctamente")
+      // toast.success("Log de carrito creado correctamente")
       return newItem
     } catch (err: any) {
       setError(err)
@@ -105,7 +105,7 @@ const useLogCart = (logCartId?: number) => {
         const updatedItem = await logCartService.updateAsync(id, payload)
         setData(prev => prev.map(item => (item.id === id ? updatedItem : item)))
         setSelectedData(updatedItem)
-        toast.success("Log de carrito actualizado correctamente")
+        // toast.success("Log de carrito actualizado correctamente")
         return updatedItem
       } catch (err: any) {
         setError(err)
@@ -127,7 +127,7 @@ const useLogCart = (logCartId?: number) => {
       if (selectedData && selectedData.id === id) {
         setSelectedData(updated)
       }
-      toast.success("Estado del log de carrito actualizado")
+      // toast.success("Estado del log de carrito actualizado")
       return updated
     } catch (err: any) {
       setError(err)
@@ -149,7 +149,7 @@ const useLogCart = (logCartId?: number) => {
       if (selectedData && selectedData.id === id) {
         setSelectedData(updated)
       }
-      toast.success("Estado del log de carrito actualizado")
+      // toast.success("Estado del log de carrito actualizado")
       return updated
     } catch (err: any) {
       setError(err)

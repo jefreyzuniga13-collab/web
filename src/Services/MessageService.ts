@@ -1,5 +1,5 @@
 import api from '@/Utils/ApiConfig';
-import type { MessageDto, SentMessage } from '@/Interfaces/Chat/ChatInterfaces';
+import type { MessageDto, SendInteractiveMessajeRequestDto, SentMessage } from '@/Interfaces/Chat/ChatInterfaces';
 import { toZonedTime, format } from "date-fns-tz";
 
 export function getMessages(conversationId: number,
@@ -42,6 +42,13 @@ export function sendText(message: SentMessage) {
       externalId: message.externalId,
       repliedParentMessageId: message.repliedParentMessageId
     }
+  );
+}
+
+
+export function sendInterctiveMessage(req: SendInteractiveMessajeRequestDto) {
+  return api.post<{ data: MessageDto }>(
+    `/WhatsappWebhook/sendInterctiveMessage`, req
   );
 }
 

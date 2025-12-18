@@ -1,6 +1,6 @@
 import "@/Styles/Chat/DetailPanel/ProductTab.css"
 import Input from "@/Components/Common/Input"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useCategoryPCG } from "@/Hooks/useCategoryPCG"
 import { useProductPCG } from "@/Hooks/useProductPCG"
 import { CategoryTab } from "@/Components/Chat/DetailPanel/CategoryTab"
@@ -15,19 +15,27 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import { addProductToCarAsync, selectCartLoading } from "@/Context/Slices/Cart/cartSlice"
+
 interface Props {
   conversationId: number
   contactId: number
 }
 
-export const ProductTab = ({ conversationId, contactId}: Props) => {
+export const ProductTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const [selectedCategory, setselectedCategory] = useState<string | null>(null)
   const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null)
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1)
 
   const { GetAll, categoryPcg, error, loading } = useCategoryPCG()
-  const { productPcg, GetByCategory, loadingProductPcg, error: errProducts } = useProductPCG()
+  const {
+    productPcg,
+    GetByCategory,
+    GetAll: GetProductByDescription,
+    loadingProductPcg,
+    error: errProducts,
+  } = useProductPCG()
+
   const { create: createLogCart, fetchByContactId } = useLogCart()
 
   const dispatch = useDispatch<AppDispatch>()
@@ -43,6 +51,20 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
     setDetailProduct(null)
     setSimpleQuantity(1)
   }, [GetByCategory, selectedCategory])
+
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search])
+
+  const filteredCategories = useMemo(() => {
+    if (normalizedSearch === "") return categoryPcg
+    return categoryPcg.filter(c => (c.grupo || "").toLowerCase().includes(normalizedSearch))
+  }, [categoryPcg, normalizedSearch])
+
+  const filteredProducts = useMemo(() => {
+    if (normalizedSearch === "") return productPcg
+    return productPcg.filter(p =>
+      `${p.codProducto ?? ""} ${p.descripcion ?? ""}`.toLowerCase().includes(normalizedSearch)
+    )
+  }, [productPcg, normalizedSearch])
 
   const handleOpenDetail = (prod: ProductoPCGInterface) => {
     if (detailProduct?.id === prod.id) {
@@ -61,11 +83,24 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
 
   const handleChangeSimpleQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value)
-    if (Number.isNaN(value) || value <= 0) {
-      setSimpleQuantity(1)
-    } else {
-      setSimpleQuantity(value)
-    }
+    if (Number.isNaN(value) || value <= 0) setSimpleQuantity(1)
+    else setSimpleQuantity(value)
+  }
+
+  const resetToCategories = () => {
+    setSearch("")
+    setselectedCategory(null)
+    setDetailProduct(null)
+    setSimpleQuantity(1)
+  }
+
+  const handleSearchEnter = async (q: string) => {
+    const term = (q || "").trim()
+    if (!term) return
+    setselectedCategory(null)
+    setDetailProduct(null)
+    setSimpleQuantity(1)
+    await GetProductByDescription(term)
   }
 
   const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
@@ -91,32 +126,30 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
       unico: "",
       noPedido: 0,
       imagen: productDetail.imagen,
-      listOpciones: []
+      listOpciones: [],
     }
 
     const existingLog = await fetchByContactId(contactId)
 
     let carrito: CarDto
 
-    if (existingLog) {
+    if (existingLog?.orderId) {
       carrito = {
-        // idUsuario:  existingLog.orderId,
         fecha: new Date().toISOString(),
         total: totalMenu,
         noPedido: existingLog.orderId,
         tipoServicio: 8,
-        listDetalle: [detalle]
+        listDetalle: [detalle],
       }
 
       await dispatch(addProductToCarAsync(carrito)).unwrap()
     } else {
       carrito = {
-        // idUsuario: contactId,
         noPedido: 0,
         tipoServicio: 8,
         fecha: new Date().toISOString(),
         total: totalMenu,
-        listDetalle: [detalle]
+        listDetalle: [detalle],
       }
 
       const cartCreated = await dispatch(addProductToCarAsync(carrito)).unwrap()
@@ -127,7 +160,7 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
         orderId,
         contactId,
         conversationId,
-        statusId: 1
+        statusId: 1,
       }
 
       await createLogCart(logOrderRequest)
@@ -138,19 +171,8 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
     setDetailProduct(null)
   }
 
-  const normalizedSearch = search.trim().toLowerCase()
-
-  const filteredCategories =
-    normalizedSearch === ""
-      ? categoryPcg
-      : categoryPcg.filter(c => c.grupo.toLowerCase().includes(normalizedSearch))
-
-  const filteredProducts =
-    normalizedSearch === ""
-      ? productPcg
-      : productPcg.filter(p =>
-          `${p.codProducto} ${p.descripcion}`.toLowerCase().includes(normalizedSearch)
-        )
+  const showCategories = !selectedCategory && normalizedSearch === ""
+  const showProducts = !!selectedCategory || normalizedSearch !== ""
 
   if (loading) {
     return (
@@ -174,13 +196,10 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
         <header className="productTab-product__header">
           <h5>Detalle de producto</h5>
           <div className="productTab-icon__container">
-            <IoArrowBackCircleSharp
-              fontSize={24}
-              className="productTab-icon"
-              onClick={handleBackToList}
-            />
+            <IoArrowBackCircleSharp fontSize={24} className="productTab-icon" onClick={handleBackToList} />
           </div>
         </header>
+
         <DetailPCGProduct
           detail={detailProduct}
           contactId={contactId}
@@ -195,19 +214,9 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
   return (
     <section className="productTab-card">
       <header className="productTab-product__header">
-        <h5 className="productTab-content-header__title">
-          {selectedCategory === null ? "Categorias" : "Productos"}
-        </h5>
+        <h5 className="productTab-content-header__title">{selectedCategory === null ? "Categorias" : "Productos"}</h5>
         <div className="productTab-icon__container">
-          <IoArrowBackCircleSharp
-            fontSize={24}
-            className="productTab-icon"
-            onClick={() => {
-              setselectedCategory(null)
-              setDetailProduct(null)
-              setSimpleQuantity(1)
-            }}
-          />
+          <IoArrowBackCircleSharp fontSize={24} className="productTab-icon" onClick={resetToCategories} />
         </div>
       </header>
 
@@ -219,22 +228,21 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
           max={500}
           placeholder="Buscar categoria o producto"
           onChange={e => setSearch(e.target.value)}
+          onKeyDown={async e => {
+            if (e.key === "Enter") await handleSearchEnter(search)
+          }}
         />
       </section>
 
-      {!selectedCategory && (
+      {showCategories && (
         <div className="productTab-category__container">
           {filteredCategories.map(e => (
-            <CategoryTab
-              cat={e}
-              key={e.id}
-              setselectedCategory={setselectedCategory}
-            />
+            <CategoryTab cat={e} key={e.id} setselectedCategory={setselectedCategory} />
           ))}
         </div>
       )}
 
-      {selectedCategory && (
+      {showProducts && (
         <div className="productTab-productPCG__container">
           {loadingProductPcg ? (
             <span>Cargando...</span>
@@ -264,11 +272,7 @@ export const ProductTab = ({ conversationId, contactId}: Props) => {
                     </div>
                   )}
 
-                <ProductPCGTab
-                  prod={e}
-                  conversationId={conversationId}
-                  onClick={handleOpenDetail}
-                />
+                <ProductPCGTab prod={e} conversationId={conversationId} onClick={handleOpenDetail} />
               </div>
             ))
           )}

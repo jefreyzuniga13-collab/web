@@ -77,7 +77,16 @@ export type NameTranslation =
   | 'MaximoMediaPorMensaje'
   | 'PesoMediaMbMaximoMensaje'
   | 'MensajeLinkCarrito'
-  | 'TiempoLinkTemporal';
+  | 'TiempoLinkTemporal'
+  | "CartMessageHeader"
+  | "CartMessageFooter"
+  | "ConversationCartValues"
+  | "MensajeRechazoCarrito"
+  | "MensajeRechazoCarritoNoAplica"
+  | "MensajeConfirmarCarrito"
+  | "MensajeReaudarCarrito"
+  | "MensajeCarritoEnProceso"
+  | "MensajeTicketCreado";
 
   export type TypeTranslation =
   | 'Prompts'

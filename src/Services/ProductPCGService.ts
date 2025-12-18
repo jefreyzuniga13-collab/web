@@ -20,9 +20,13 @@ function formatError(error: unknown): Error {
 }
 
 class ProductPCGServ {
-    async getAll(): Promise<ProductoPCGInterface[]> {
+    async getAll(descripcion?: string): Promise<ProductoPCGInterface[]> {
         try {
-            const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>('Catalogos/ListaProducto');
+            const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>('Catalogos/ListaProducto', {
+                params:{
+                    descripcion
+                }
+            });
             return data.data;
         } catch (error) {
             throw formatError(error)

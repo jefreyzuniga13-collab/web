@@ -11,6 +11,13 @@ class CartSer {
     return data;
   }
 
+    async GetMessageLink(req: SendLinkRequestDto): Promise<ApiResponse<string>> {
+      const { data } = await api.post<ApiResponse<string>>(
+        `/Cart/getCartLink`, req
+      );
+      return data;
+    }
+
    async sendOrderMessage(
     req: SendOrderMessage
   ): Promise<ApiResponse<boolean>> {

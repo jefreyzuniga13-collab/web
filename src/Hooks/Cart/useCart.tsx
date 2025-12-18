@@ -28,10 +28,30 @@ export const useCart = () => {
         }
     }
 
+    const GetMessageLink = async(req: SendLinkRequestDto)=>{
+        setLoading(true)
+        setError(null)
+        try{
+            const data = await CartService.GetMessageLink(req);
+            if(data.success){
+                // toast.success(data.message);
+                return data.data
+            }else{
+                toast.error(data.message)
+            }
+        }catch(err: any){
+            setError(err)
+            console.error("Error. Company request.")
+        }finally{
+            setLoading(false)
+        }
+    }
+
   return {
+      cart,
+      GetMessageLink,
+      SendMessageLink,
     error,
     loading,
-    SendMessageLink,
-    cart
   }
 }

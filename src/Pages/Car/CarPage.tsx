@@ -98,14 +98,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   {carPCG?.flatMap((group) =>
                     group.listDetalle?.map((item) => {
                       const options = item.listOpciones ?? [];
-                      // const quantity =
-                      //   options.length > 0
-                      //     ? options.reduce(
-                      //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                      //         (sum, opt) => sum + (item.cantidad ?? 0),
-                      //         0
-                      //       )
-                      //     : 1;
                       const rowTotal =
                         options.length > 0
                           ? options.reduce(

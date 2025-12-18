@@ -5,8 +5,8 @@ import type {InvoiceOrderRequestDto,
 
 
 class InvoiceOrderServ{
-    async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<InvoiceOrderRequestDto>>{
-        const {data} = await apiPCG.post<ApiPCGResponse<InvoiceOrderRequestDto>>(`OrdenFactura/AgregaOrdenFact`, req)
+    async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<number>>{
+        const {data} = await apiPCG.post<ApiPCGResponse<number>>(`OrdenFactura/AgregaOrdenFact`, req)
 
         return data;
     }

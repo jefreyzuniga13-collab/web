@@ -197,11 +197,13 @@
 .cancelPanel-btn{
     font-size: var(--font-size-sm);
     margin: 0;
+    /* flex: 1; */
+    padding: 4px 6px;
     transition: all ease-out .3s;
 }
 
 .cancelPanel-btn{
-    margin-top: var(--space-lg);
+    /* margin-top: var(--space-lg); */
     background-color: var(--color-destructive);
     color: var(--text-white);
 }
@@ -211,17 +213,27 @@
 }
 .carPanel-btn{
     background-color: var(--color-secondary);
+    color: var(--bg-primary);
+     border: solid 1px var();
+    font-weight: var(--font-weight-bold);
+    background-color: transparent;
+    color: var(--color-secondary);
+    font-size: 16px;
+    border: 1px solid var(--color-secondary);
+    /* flex: 0; */
 }
+
 .payment-btn{
-    background-color: var(--grayColor);
+    background-color: var(--color-gray-700);
 }
+
 .cartPanel-loadingCartContiner,
 .cartPanel-errorContiner{
-
     display: flex;
     justify-content: center;
     align-items:center;
 }
+
 .cartPanel-loadingCartText,
 .cartPanel-errorText{
     font-size: var(--font-size-xs);

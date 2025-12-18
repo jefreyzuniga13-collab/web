@@ -1,6 +1,6 @@
 .productPCG-row{
     display: grid;
-    grid-template-columns: .1fr .5fr 1fr;
+    grid-template-columns: .1fr 1fr;
     gap: 4px;
     width: 100%;
     max-height: 50px;
@@ -11,6 +11,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     position: relative;
+}
+.product-rowContent{
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 2px;
+    flex-direction: column;
 }
 .product-row__description{
     font-size: var(--font-size-xs);
@@ -57,6 +65,7 @@
 
 .product-row__btn{
     display: none;
+    background-color: var(--color-gray-800);
 }
 
 .productPCG-row:hover .product-row__btn{
@@ -67,6 +76,8 @@
     right: 0;
     /* bottom: 0; */
     max-width: fit-content;
+    opacity: .9;
+    background-color: var(--color-gray-800);
 }
 .product-row__iconBtn{
     color: var(--color-gray-100);

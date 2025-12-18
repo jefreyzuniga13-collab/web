@@ -11,7 +11,7 @@ const ProtectedCartRoute = () => {
   const [status, setStatus] = useState<Status>("loading");
   const [payload, setPayload] = useState<TempLinkResolveResponseDto | null>(null);
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("tempToken"); // o "token"
+  const token = searchParams.get("paynow");
 
   useEffect(() => {
     const validate = async () => {

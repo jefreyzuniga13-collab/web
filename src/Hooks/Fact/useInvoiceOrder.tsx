@@ -4,6 +4,7 @@ import { InvoiceOrderService } from '@/Services/Fact/InvoiceOrderService';
 import { toast } from 'react-toastify';
 
 const useInvoiceOrder = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [invoiceOrders, setInvoiceOrders] = useState<InvoiceOrderRequestDto | null>(null)
   const [invoiceOrder, setInvoiceOrder] = useState<InvoiceOrderInterface | null>(null);
   const [nearestBranch, setNearestBranch] = useState<NearestBranchResponseDto | null>(null);
@@ -21,8 +22,9 @@ const useInvoiceOrder = () => {
         const res = await InvoiceOrderService.Create(req);
 
         if(res.success){
-            setInvoiceOrders(res.data);
-            return res.success;
+            // setInvoiceOrders(res.data);
+            setLoading(false)
+            return res;
             // toast.success(res.message);
         }else{
             toast.error(res.message);
@@ -66,8 +68,6 @@ const useInvoiceOrder = () => {
         const data = await InvoiceOrderService.GetNearestBranch(req);
 
         if(data.success){
-
-            console.log("Data de GetNearestBranchAsync", data.data)
             setNearestBranch(data.data)
             // toast.success(data.message)
             return data.data

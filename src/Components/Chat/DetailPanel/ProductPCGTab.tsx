@@ -71,13 +71,12 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
       if (!caption) return
 
       if (prod.imagen) {
-        const response = await axios.get(prod.imagen)
-
-        const blob = await response.data.blob()
-        const mime = blob.type || "image/jpeg"
-        const ext = mime.split("/")[1] || "jpg"
-        const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })
-        await sendMedia(conversationId, file, caption)
+          const response = await axios.get('https://crmpcg.com/clients/delipollo/img/categorias/00000005.png', { responseType: "blob" })
+          const blob = response.data as Blob
+          const mime = blob.type || "image/png"
+          const ext = mime.split("/")[1] || "png"
+          const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })
+          await sendMedia(conversationId, file, caption)
       } else {
         await sendText({
           conversationId,
@@ -85,7 +84,7 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
           content: caption,
           messageType: "Text",
           repliedParentMessageId: null
-        }
+          }
         )
       }
     } finally {
@@ -102,8 +101,8 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
           className="product-image"
         />
       </div>
-
-      <span className="product-row__description">
+      <div className="product-rowContent">
+              <span className="product-row__description">
         <Tooltip title={prod.descripcion}>
           <span>{prod.descripcion ?? ""}</span>
         </Tooltip>
@@ -114,10 +113,11 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
           <span className="product-row__price__value">{prod.contenido ?? ""}</span>
         </Tooltip>
       </span>
+      </div>
 
       <Button
+        variant="tertiary"
         className="product-row__btn"
-        variant="primary"
         disabled={sending}
         onClick={handleSendProductMessage}
       >

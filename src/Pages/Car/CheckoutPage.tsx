@@ -22,7 +22,6 @@ import {
   selectCarPCG,
   getProductFromCarAsync,
 } from "@/Context/Slices/Cart/cartSlice";
-
 import {
   useDispatch,
   useSelector,
@@ -31,6 +30,7 @@ import {
 import type { AppDispatch, RootState } from "@/Context";
 import { UserSessionService } from "@/Services/auth/UserSessionService";
 import useLogCart from "@/Hooks/Crm/useLogCard";
+
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -86,7 +86,6 @@ const CheckoutPage: React.FC = () => {
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
   const [userFullName, setUserFullName] = useState<string>("");
-  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
     if (!payload) {
@@ -102,7 +101,7 @@ const CheckoutPage: React.FC = () => {
     setEcommerceUserId(payload.ecommerceUserId);
     setOrderId(payload.orderId);
     setUserFullName(payload.fullName);
-    setUserEmail(payload.email);
+    // setUserEmail(payload.email);
   }, [payload, navigate]);
 
   const [step, setStep] = useState<CheckoutStep>("currency");
@@ -172,16 +171,15 @@ const CheckoutPage: React.FC = () => {
   }, [orderId, ecommerceUserId, dispatch, GetCurrencyAsync, GetAsync, payload]);
 
   useEffect(() => {
-    if (userFullName || userEmail) {
+    if (userFullName) {
       const parts = userFullName.split(" ");
       setBillingForm(prev => ({
         ...prev,
         firstName: parts[0] ?? "",
         lastName: parts.slice(1).join(" ") ?? "",
-        email: userEmail ?? "",
       }));
     }
-  }, [userFullName, userEmail]);
+  }, [userFullName]);
 
   const addressList = useMemo(
     () =>
@@ -482,12 +480,12 @@ const CheckoutPage: React.FC = () => {
       const res = await createInvoiceAsync(invoiceReq);
 
       // Si crear orden factura, esta bien, se procede a revokar el token, y cambiar el estado de logcart
-      if(res){
+      if(res?.success){
       if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) 
         {
           const orderMessage: SendOrderMessage = {
             conversationId: payload.conversationId,
-            orderId: payload.orderId,
+            orderId: res.data,
             userId: payload.userId,
           };
 
@@ -928,6 +926,7 @@ const CheckoutPage: React.FC = () => {
                 <div className="checkout-actionBtn">
                   <button
                     type="button"
+                    disabled={invoiceLoading}
                     className="checkout-paybtn__back"
                     onClick={() => setStep("location")}
                   >

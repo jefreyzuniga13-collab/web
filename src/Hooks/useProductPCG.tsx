@@ -11,12 +11,12 @@ export function useProductPCG(){
     const [loadingProductPcg, setLoadingProductPcg] = useState<boolean>(false)
     const [error, setError] = useState<Error | null>(null)
 
-    const GetAll = useCallback(async () =>{
+    const GetAll = useCallback(async (descripcion: string) =>{
     setLoadingProductPcg(true);
     setError(null)
 
     try{
-        const item = await ProductPCGService.getAll();
+        const item = await ProductPCGService.getAll(descripcion);
         setProductPcg(item)
     }catch(err: any){
         setError(err)

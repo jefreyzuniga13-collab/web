@@ -431,6 +431,8 @@ const DetailPCGProduct = ({
     setDetailProduct(null)
   }
 
+  console.log(detail.imagen)
+  
   return (
     <div className="detail-product__container">
       <section className="detail-product__section">

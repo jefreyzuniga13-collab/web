@@ -109,6 +109,13 @@ export interface MessageDto {
   contact: WhatsAppContact[];
 }
 
+
+export interface SendInteractiveMessajeRequestDto{
+  conversationId: number;
+  contactId: number;
+  body: string;
+}
+
 export interface WhatsAppContact {
   name?: WhatsAppContactName;
   phones?: WhatsAppContactPhone[];

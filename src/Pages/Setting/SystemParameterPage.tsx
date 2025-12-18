@@ -44,22 +44,29 @@ export default function SystemParamsPage() {
   } = useSystemParams()
 
   const columns: Column<SystemParamResponseDto>[] = useMemo(() => [
-     {
-        id: "name",
-        label: "Nombre",
-        minWidth: 100,
-        render: (row) => nameTranslations[row.name as NameTranslation],
-      },
-    { id: 'type', label: 'Tipo', minWidth: 100,
+    {
+      id: "name",
+      label: "Nombre",
+      minWidth: 80,
+      render: (row) => nameTranslations[row.name as NameTranslation],
+    },
+    {
+      id: "description",
+      label: "Descripción",
+      minWidth: 150,
+      render: (row) => nameTranslations[row.name as NameTranslation],
+    },
+    {
+      id: 'type', label: 'Tipo', minWidth: 100,
       render: (row) => typeTranslations[row.type as TypeTranslation]
-     },
+    },
     {
       id: 'value',
       label: 'Valor',
-      minWidth: 200,
+      minWidth: 250,
       render: row => (
         <span title={row.value} className={row.value == "true" ? 'status status--active' : ''}>
-          {row.value!= null ? row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value : "---"}
+          {row.value != null ? row.value.length > 50 ? `${row.value.slice(0, 50)}...` : row.value : "---"}
         </span>
       ),
     },
@@ -124,7 +131,7 @@ export default function SystemParamsPage() {
           onChange={(e) => setGlobalFilter(e.target.value)}
           className='table-contaner__search-filter'
         />
-      </div> 
+      </div>
       <CustomTable<SystemParamResponseDto>
         columns={columns}
         rows={systemParams}

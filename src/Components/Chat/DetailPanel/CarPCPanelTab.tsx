@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Input from "@/Components/Common/Input"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import EmptyCard from "@/assets/emptycard.webp"
@@ -20,7 +20,9 @@ import {
   updateCarAsync,
   selectCartItemsCount
 } from "@/Context/Slices/Cart/cartSlice"
-
+import { format } from 'date-fns';
+import { FaFilePdf } from "react-icons/fa";
+import { IoIosChatboxes } from "react-icons/io";
 
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
@@ -31,6 +33,10 @@ import type { SendLinkRequestDto } from "@/Interfaces/Cart/SendLinkInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { UserSessionService } from '@/Services/auth/UserSessionService'
 import type { ContactLogInterface } from "@/Interfaces/Contact/ContactInterface"
+import { sendInterctiveMessage } from "@/Services/MessageService"
+import type { SendInteractiveMessajeRequestDto } from "@/Interfaces/Chat/ChatInterfaces"
+import { MdOutlineCancelScheduleSend } from "react-icons/md";
+import { IoSend } from "react-icons/io5";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -69,10 +75,10 @@ const generateCartPdfFile = (cart: CarDto, contact: ContactLogInterface): File =
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
-  doc.text("Resumen de carrito", marginX, marginY + 5)
-  
+  doc.text(`Resumen de N.º Pedido ${cart.noPedido}`, marginX, marginY + 5)
+
   doc.setFontSize(10)
-  doc.text(`A nombre de: ${contact.fullName != null ? contact.waName : contact.fullName}`, marginX, marginY + 15)
+  doc.text(`A nombre de: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 15)
   doc.setFont("helvetica", "normal")
   doc.text(`Fecha: ${time}`, marginX, marginY + 25)
 
@@ -143,7 +149,7 @@ const generateCartPdfFile = (cart: CarDto, contact: ContactLogInterface): File =
   doc.text(`C$ ${total}`, valueX, lineY, { align: "right" })
 
   const blob = doc.output("blob")
-  return new File([blob], `carrito.pdf`, { type: "application/pdf" }) 
+  return new File([blob], `N.º Pedido ${cart.noPedido} - ${contact.fullName ?? contact.waName}`, { type: "application/pdf" })
 }
 
 const generateRandomString = () => {
@@ -178,10 +184,11 @@ const generateRandomString = () => {
   return result
 }
 
-
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const [orderId, setOrderId] = useState<number | null>(null)
+  const [cancelLoading, setCancelLoading] = useState<boolean>(false)
+  const [sendChatoading, setSendChatoading] = useState<boolean>(false)
 
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
@@ -189,7 +196,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const error = useAppSelector(selectCartError)
   const cartItemsCount = useAppSelector(selectCartItemsCount)
 
-  const { SendMessageLink,
+  const {
+    SendMessageLink,
+    GetMessageLink,
     error: errorCart,
     loading: loadingCart } = useCart()
 
@@ -198,43 +207,57 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     fetchByContactId
   } = useLogCart();
 
-  const { 
-    UpdateEcommerceUserAsync, 
+  const {
+    UpdateEcommerceUserAsync,
     getById } = useContact()
 
   const { CreateAsync } = useUserEcommerce()
 
-  const { setFile, setText, handleSend, sending } = useChatWindow({ conversationId })
+  const {
+    setFile,
+    setText,
+    handleSend,
+    sending
+  } = useChatWindow({ conversationId })
+
+  const reqRef = useRef(0);
 
   useEffect(() => {
-    const loadCart = async () => {
-      const log = await fetchByContactId(contactId)
+    if (!contactId || !conversationId) return;
 
-      if (log) {
-        setOrderId(log.orderId)
+    const myReq = ++reqRef.current;
+
+    const loadCart = async () => {
+
+      const log = await fetchByContactId(contactId);
+
+      // si ya hubo otra ejecución más nueva, ignorar esta
+      if (myReq !== reqRef.current) return;
+
+      if (log?.orderId && log.orderId > 0) {
+        setOrderId(log.orderId);
+
         await dispatch(
-          getProductFromCarAsync({ codCliente: 0, noPedido: log.orderId! })
-        ).unwrap()
+          getProductFromCarAsync({ codCliente: 0, noPedido: log.orderId })
+        ).unwrap();
       } else {
-        setOrderId(null)
+        setOrderId(null);
+
         await dispatch(
           getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
-        ).unwrap()
-        // o un clearCart() si lo tienes
+        ).unwrap();
       }
-    }
+    };
 
-    if (contactId && conversationId) {
-      void loadCart()
-    }
-  }, [contactId, conversationId, dispatch, fetchByContactId])
+    void loadCart();
+  }, [contactId, conversationId, dispatch]);
+
 
   useEffect(() => {
     if (error) {
       toast.error(error)
     }
   }, [error])
-
 
   const handleRemoveItem = async (
     idUsuario: number,
@@ -332,15 +355,65 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     await handleSend()
   }
 
+  const formatCurrencyNIO = (value?: number | null) => {
+    const n = Number(value ?? 0)
+    return `C$ ${n.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  const buildCartChatMessage = (cart: CarDto, opts?: {
+    orderId?: number | null;
+    //  payLink?: string | null; 
+    deliveryDate?: string | null
+  }) => {
+    const lines: string[] = []
+
+    // Encabezado
+    lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
+    lines.push("")
+    lines.push("🛒 Artículos:")
+    lines.push("")
+
+    // Detalles
+    cart.listDetalle?.forEach((d) => {
+      const qty = d.cantidad ?? 0
+      const title = (d.descripcion ?? "").trim()
+      if (!title) return
+
+      lines.push(`*${title}* - ${qty}`)
+
+      // opciones/modificadores debajo, estilo indentado
+      const opciones = d.listOpciones?.map(o => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim()).filter(Boolean) ?? []
+      opciones.forEach(op => lines.push(`   ${op}`))
+
+      lines.push("") // espacio entre productos
+    })
+
+    // Totales
+    const total = cart.total ?? 0
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+
+
+    if (opts?.deliveryDate) {
+      lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
+    }
+    // if (opts?.payLink) {
+    //   lines.push(`🔗 Link de pago: ${opts.payLink}`)
+    // }
+
+    return lines.join("\n").trim()
+  }
+
   const Cancel = async () => {
     if (cart == null) return
 
+    setCancelLoading(true)
     const res = await UserSessionService.revokeCartTempLink(orderId!)
 
     if (res.success) toast.success(res.message)
+      setCancelLoading(false)
   }
 
-  const handleSendLink = async () => {
+  const handleSendLink = async (returnLink: boolean = false) => {
     const contact = await getById(contactId)
 
     if (!contact) {
@@ -348,6 +421,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       return
     }
 
+    setSendChatoading(true)
     const date = new Date()
     const day = date.getDate()
     const month = date.getMonth() + 1
@@ -384,9 +458,36 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       contactId: contactId
     }
 
-    await SendMessageLink(sendLinkRequest)
+    if (returnLink) {
+      setSendChatoading(false)
+      return GetMessageLink(sendLinkRequest)
+    }
+    else await SendMessageLink(sendLinkRequest)
+  setSendChatoading(false)
   }
 
+  const handleSendCartChat = async () => {
+    if (!cart || sending) return
+    // const existingLog = await fetchByContactId(contactId)
+    // const payLink = existingLog?.paymentLink ?? null
+    // const link = await handleSendLink(true);
+
+    const msg = buildCartChatMessage(cart, {
+      orderId: orderId,
+      // payLink: link,
+      deliveryDate: format(cart.fecha, 'dd/MM/yyyy'),
+    })
+
+    if (!msg) return
+    const req: SendInteractiveMessajeRequestDto = {
+      conversationId: conversationId,
+      contactId: contactId,
+      body: msg
+    }
+    await sendInterctiveMessage(req)
+  }
+
+  //pero si es asi, 
   return (
     <div className="carPCPanel-container">
       <header className="carPCPanel-header">
@@ -399,7 +500,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           onChange={e => setSearch(e.target.value)}
         />
       </header>
-
 
       <section className="carPCPanel-content">
         {filteredDetails.map(({ detail }, index) => (
@@ -475,25 +575,42 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             </div>
 
             <div className="productTab-footer__payment">
-              <Button className="carPanel-btn"
+               <Button className="carPanel-btn"
                 disabled={sending}
                 onClick={handleSendCartPdf}>
                 {
-                  sending ? <p className="btn_text">Cargando...</p> : <p className="btn_text">Enviar carrito (PDF)</p>
+                  sending ? <p className="btn_text">Cargando...</p> : <p className="btn_text"><FaFilePdf fontSize={16}/></p>
+                }
+              </Button>
+
+              <Button className="carPanel-btn"
+                disabled={sendChatoading}
+                onClick={handleSendCartChat}>
+                {/* {
+                  sending ? <p className="btn_text">Enviando...</p> : <p className="btn_text">Enviar carrito (Chat)</p>
+                } */}
+                {
+                  sendChatoading ? <p className="btn_text">Cargando...</p> : <p className="btn_text"> <IoIosChatboxes fontSize={16}/></p>
+                } 
+              </Button>
+              
+              
+              <Button className="cancelPanel-btn"
+               disabled={loadingCart || sending}
+                onClick={Cancel}>
+                                  {
+                  cancelLoading ? <p className="btn_text">Cargando...</p> : <p className="btn_text"> <MdOutlineCancelScheduleSend fontSize={16}/></p>
                 }
               </Button>
 
               <Button className="payment-btn"
-                disabled={loadingCart}
-                onClick={handleSendLink}>
+                disabled={loadingCart || sending}
+                onClick={async () => {
+                  await handleSendLink(false)
+                }}>
                 {
-                  loadingCart ? <p className="btn_text">Cargando...</p> : <p className="btn_text"> Procesar pago (Link)</p>
+                  loadingCart ? <p className="btn_text">Cargando...</p> : <p className="btn_text"><IoSend fontSize={16}/></p>
                 }
-              </Button>
-
-              <Button className="cancelPanel-btn"
-                onClick={Cancel}>
-                Cancelar envio
               </Button>
             </div>
           </>
@@ -503,4 +620,4 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   )
 }
 
-export default CarPCPanelTab
+export default CarPCPanelTab;
