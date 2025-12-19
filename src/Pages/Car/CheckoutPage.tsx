@@ -316,200 +316,390 @@ const CheckoutPage: React.FC = () => {
     setStep("paymentMethod");
   };
 
+  // const handlePayNow = async () => {
+  //   if (!carPCG || carPCG.length === 0) {
+  //     toast.error("El carrito está vacío.");
+  //     return;
+  //   }
+  //   if (!selectedCurrency) {
+  //     toast.error("Debe seleccionar un método de pago.");
+  //     return;
+  //   }
+    
+
+  //   if (!validateBillingForm()) return;
+  //   if (!validateLocation()) return;
+
+  //   if (method === "card" && !validateCardForm()) return;
+  //     const cart = carPCG[0];
+  //     const total = cart.total ?? 0;
+
+  //     if (method === "cash") {
+
+  //       if (cashAmount <= 0) {
+  //         return toastError("El monto en efectivo debe ser mayor a 0.");
+  //       }
+
+  //       if (tip > cashAmount) {
+  //         return toastError("La propina no puede ser mayor al monto ingresado.");
+  //       }
+
+  //       const disponible = cashAmount - tip;
+
+  //       if (disponible < total) {
+  //         return toastError(
+  //           `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+  //         );
+  //       }
+  //     }
+
+
+  //   let finalLocation: ClientLocationDto | null = null;
+  //   let coords: Coords;
+
+  //   if (locationMode === "existing") {
+  //     const addr = selectedAddress ?? addressList[0];
+  //     if (!addr) {
+  //       toast.error("No hay dirección seleccionada.");
+  //       return;
+  //     }
+
+  //     finalLocation = {
+  //       idDireccion: addr.idDireccion,
+  //       nombre: addr.nombre,
+  //       referencia: addr.referencia,
+  //       descripcion: addr.descripcion,
+  //       latitud: addr.latitud,
+  //       longitud: addr.longitud,
+  //       idUsuario: ecommerceUserId,
+  //     };
+
+  //     coords = { latitud: addr.latitud, longitud: addr.longitud };
+  //   } else {
+  //     if (!selectedCoords) {
+  //       toast.error("Debes seleccionar la ubicación.");
+  //       return;
+  //     }
+  //     coords = selectedCoords;
+
+  //     const locationPayload: ClientLocationDto = {
+  //       idDireccion: 0,
+  //       nombre: billingForm.addressName || billingForm.address,
+  //       referencia: `${billingForm.city}, ${billingForm.country}`,
+  //       descripcion: billingForm.address,
+  //       latitud: coords.latitud,
+  //       longitud: coords.longitud,
+  //       idUsuario: ecommerceUserId,
+  //     };
+
+  //     const newLocation = await createLocationAsync(locationPayload);
+
+  //     if (!newLocation) {
+  //       toast.error("No fue posible guardar la nueva dirección.");
+  //       return;
+  //     }
+
+  //     finalLocation = newLocation;
+  //   }
+
+  //   if (!finalLocation) {
+  //     toast.error("No se pudo determinar la dirección final.");
+  //     return;
+  //   }
+
+  //   //Obtener secursal mas cernada antes, de crear una direccion, por que si no encuentra socursal cercanda
+  //   //puede crear muchas direcciones
+  //   // const branchReq: NearestBranchRequestDto = {
+  //   //   latitud: finalLocation.latitud,
+  //   //   longitud: finalLocation.longitud,
+  //   // };
+
+  //   // const branchResp = await GetNearestBranchAsync(branchReq);
+
+  //   // const nearest =
+  //   //   Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
+
+  //   // if (!nearest) {
+  //   //   toast.error("No hay sucursal cercana disponible.");
+  //   //   return;
+  //   // }
+
+  //   const lat1 = Number(finalLocation.latitud);
+  //   const lon1 = Number(finalLocation.longitud);
+  //   const lat2 = Number(nearest.latitud);
+  //   const lon2 = Number(nearest.longitud);
+
+  //   if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
+  //     toast.error("Coordenadas inválidas para calcular la distancia.");
+  //     return;
+  //   }
+
+  //   const km = calculateDistance(lat1, lon1, lat2, lon2);
+
+  //   const transporte = await GetTransportationCostAsync(km);
+
+  //   const change =
+  //     method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
+
+  //     const invoiceReq: InvoiceOrderRequestDto = {
+  //         idUsuario: ecommerceUserId.toString(),
+  //         nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
+  //         registroMaquina: `CRM ${ecommerceUserId}`,
+  //         noIdentificacion: "",
+  //         observaciones: "",
+  //         noPedido: Number(orderId),
+
+  //         transporte: Number(transporte ?? 0),
+  //         propina: method === "cash" ? Number(tip) : 0,
+  //         tipoServicio: 8,
+  //         idEstado: 15,
+  //         codSucursal: String(nearest.codSucursal),
+
+  //         direcciones: {
+  //           idDireccion: Number(finalLocation.idDireccion),
+  //           nombre: String(finalLocation.nombre),
+  //           referencia: String(finalLocation.referencia),
+  //           descripcion: String(finalLocation.descripcion).trim(),
+  //           latitud: Number(finalLocation.latitud),
+  //           longitud: Number(finalLocation.longitud),
+  //         },
+
+  //         detPago: {
+  //           codPago: Number(selectedCurrency.codPago),
+  //           monto: Number(total),
+  //           codBanco: String(selectedCurrency.codigo_Banco).trim(),
+  //           montoC: Number(total),
+  //           cambio: Number(change),
+  //           valor_Pagar: Number(total),
+  //           nomsol: String(selectedCurrency.descripcion_Pago).trim(),
+  //           registro_maquina: `CRM ${ecommerceUserId}`,
+  //           codPagoNew: Number(selectedCurrency.codExterno),
+  //         },
+  //       };
+
+
+  //   try {
+  //     const res = await createInvoiceAsync(invoiceReq);
+
+  //     // Si crear orden factura, esta bien, se procede a revokar el token, y cambiar el estado de logcart
+  //     if(res?.success){
+  //     if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) 
+  //       {
+  //         const orderMessage: SendOrderMessage = {
+  //           conversationId: payload.conversationId,
+  //           orderId: res.data,
+  //           userId: payload.userId,
+  //         };
+
+  //         await CartService.sendOrderMessage(orderMessage);
+  //         const existingLog = await fetchByContactId(payload.contactId)
+        
+
+  //         await UpdatedStatus(existingLog!.id, 3)
+
+  //         // Al final, se revoca
+  //         await UserSessionService.revokeCartTempLink(orderId);
+
+  //         //Refrescar el carrito de ese pedida, en toda la app, para refrecar componente de carrito a los usuarios.
+  //         await dispatch(
+  //           getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
+  //         ).unwrap()
+
+  //       }
+  //     }
+
+  //     navigate("/successOrder", { replace: true });
+  //   } catch (err: any) {
+  //     toast.error(err.message ?? "Error procesando pago");
+  //   }
+  // };
+
   const handlePayNow = async () => {
     if (!carPCG || carPCG.length === 0) {
       toast.error("El carrito está vacío.");
       return;
     }
+
     if (!selectedCurrency) {
       toast.error("Debe seleccionar un método de pago.");
       return;
     }
-    
 
     if (!validateBillingForm()) return;
     if (!validateLocation()) return;
 
     if (method === "card" && !validateCardForm()) return;
-      const cart = carPCG[0];
-      const total = cart.total ?? 0;
 
-      if (method === "cash") {
+    const cart = carPCG[0];
+    const total = cart.total ?? 0;
 
-        if (cashAmount <= 0) {
-          return toastError("El monto en efectivo debe ser mayor a 0.");
-        }
+    if (method === "cash") {
+      if (cashAmount <= 0) return toastError("El monto en efectivo debe ser mayor a 0.");
+      if (tip > cashAmount) return toastError("La propina no puede ser mayor al monto ingresado.");
 
-        if (tip > cashAmount) {
-          return toastError("La propina no puede ser mayor al monto ingresado.");
-        }
-
-        const disponible = cashAmount - tip;
-
-        if (disponible < total) {
-          return toastError(
-            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
-          );
-        }
+      const disponible = cashAmount - tip;
+      if (disponible < total) {
+        return toastError(
+          `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+        );
       }
-
-
-    let finalLocation: ClientLocationDto | null = null;
-    let coords: Coords;
-
-    if (locationMode === "existing") {
-      const addr = selectedAddress ?? addressList[0];
-      if (!addr) {
-        toast.error("No hay dirección seleccionada.");
-        return;
-      }
-
-      finalLocation = {
-        idDireccion: addr.idDireccion,
-        nombre: addr.nombre,
-        referencia: addr.referencia,
-        descripcion: addr.descripcion,
-        latitud: addr.latitud,
-        longitud: addr.longitud,
-        idUsuario: ecommerceUserId,
-      };
-
-      coords = { latitud: addr.latitud, longitud: addr.longitud };
-    } else {
-      if (!selectedCoords) {
-        toast.error("Debes seleccionar la ubicación.");
-        return;
-      }
-      coords = selectedCoords;
-
-      const locationPayload: ClientLocationDto = {
-        idDireccion: 0,
-        nombre: billingForm.addressName || billingForm.address,
-        referencia: `${billingForm.city}, ${billingForm.country}`,
-        descripcion: billingForm.address,
-        latitud: coords.latitud,
-        longitud: coords.longitud,
-        idUsuario: ecommerceUserId,
-      };
-
-      const newLocation = await createLocationAsync(locationPayload);
-
-      if (!newLocation) {
-        toast.error("No fue posible guardar la nueva dirección.");
-        return;
-      }
-
-      finalLocation = newLocation;
     }
 
-    if (!finalLocation) {
-      toast.error("No se pudo determinar la dirección final.");
+  // Primero sacor coords SIN crear dirección
+  let coords: Coords;
+
+  if (locationMode === "existing") {
+    const addr = selectedAddress ?? addressList[0];
+    if (!addr) {
+      toast.error("No hay dirección seleccionada.");
+      return;
+    }
+    coords = { latitud: addr.latitud, longitud: addr.longitud };
+  } else {
+    if (!selectedCoords) {
+      toast.error("Debes seleccionar la ubicación.");
+      return;
+    }
+    coords = selectedCoords;
+  }
+
+  // Buscar sucursal cercana antes de crear la dirección (si es nueva)
+  const branchReq: NearestBranchRequestDto = {
+    latitud: coords.latitud,
+    longitud: coords.longitud,
+  };
+
+  const branchResp = await GetNearestBranchAsync(branchReq);
+  const nearest =
+    Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
+
+  if (!nearest) {
+    toast.error("No hay sucursal cercana disponible.");
+    return;
+  }
+
+  //  Ahora sí determino finalLocation (crear dirección solo si ya hay sucursal)
+  let finalLocation: ClientLocationDto | null = null;
+
+  if (locationMode === "existing") {
+    const addr = selectedAddress ?? addressList[0];
+    if (!addr) {
+      toast.error("No hay dirección seleccionada.");
       return;
     }
 
-    const branchReq: NearestBranchRequestDto = {
-      latitud: finalLocation.latitud,
-      longitud: finalLocation.longitud,
+    finalLocation = {
+      idDireccion: addr.idDireccion,
+      nombre: addr.nombre,
+      referencia: addr.referencia,
+      descripcion: addr.descripcion,
+      latitud: addr.latitud,
+      longitud: addr.longitud,
+      idUsuario: ecommerceUserId,
+    };
+  } else {
+    const locationPayload: ClientLocationDto = {
+      idDireccion: 0,
+      nombre: billingForm.addressName || billingForm.address,
+      referencia: `${billingForm.city}, ${billingForm.country}`,
+      descripcion: billingForm.address,
+      latitud: coords.latitud,
+      longitud: coords.longitud,
+      idUsuario: ecommerceUserId,
     };
 
-    const branchResp = await GetNearestBranchAsync(branchReq);
-
-    const nearest =
-      Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
-
-    if (!nearest) {
-      toast.error("No hay sucursal cercana disponible.");
+    const newLocation = await createLocationAsync(locationPayload);
+    if (!newLocation) {
+      toast.error("No fue posible guardar la nueva dirección.");
       return;
     }
+    finalLocation = newLocation;
+  }
 
-    const lat1 = Number(finalLocation.latitud);
-    const lon1 = Number(finalLocation.longitud);
-    const lat2 = Number(nearest.latitud);
-    const lon2 = Number(nearest.longitud);
+  if (!finalLocation) {
+    toast.error("No se pudo determinar la dirección final.");
+    return;
+  }
 
-    if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
-      toast.error("Coordenadas inválidas para calcular la distancia.");
-      return;
-    }
+  // Distancia + transporte
+  const lat1 = Number(finalLocation.latitud);
+  const lon1 = Number(finalLocation.longitud);
+  const lat2 = Number(nearest.latitud);
+  const lon2 = Number(nearest.longitud);
 
-    const km = calculateDistance(lat1, lon1, lat2, lon2);
+  if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
+    toast.error("Coordenadas inválidas para calcular la distancia.");
+    return;
+  }
 
-    const transporte = await GetTransportationCostAsync(km);
+  const km = calculateDistance(lat1, lon1, lat2, lon2);
+  const transporte = await GetTransportationCostAsync(km);
 
-    const change =
-      method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
+  const change = method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
 
-      const invoiceReq: InvoiceOrderRequestDto = {
-          idUsuario: ecommerceUserId.toString(),
-          nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
-          registroMaquina: `CRM ${ecommerceUserId}`,
-          noIdentificacion: "",
-          observaciones: "",
-          noPedido: Number(orderId),
+  const invoiceReq: InvoiceOrderRequestDto = {
+    idUsuario: ecommerceUserId.toString(),
+    nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
+    registroMaquina: `CRM ${ecommerceUserId}`,
+    noIdentificacion: "",
+    observaciones: "",
+    noPedido: Number(orderId),
 
-          transporte: Number(transporte ?? 0),
-          propina: method === "cash" ? Number(tip) : 0,
-          tipoServicio: 8,
-          idEstado: 15,
-          codSucursal: String(nearest.codSucursal),
+    transporte: Number(transporte ?? 0),
+    propina: method === "cash" ? Number(tip) : 0,
+    tipoServicio: 8,
+    idEstado: 15,
+    codSucursal: String(nearest.codSucursal),
 
-          direcciones: {
-            idDireccion: Number(finalLocation.idDireccion),
-            nombre: String(finalLocation.nombre),
-            referencia: String(finalLocation.referencia),
-            descripcion: String(finalLocation.descripcion).trim(),
-            latitud: Number(finalLocation.latitud),
-            longitud: Number(finalLocation.longitud),
-          },
+    direcciones: {
+      idDireccion: Number(finalLocation.idDireccion),
+      nombre: String(finalLocation.nombre),
+      referencia: String(finalLocation.referencia),
+      descripcion: String(finalLocation.descripcion).trim(),
+      latitud: Number(finalLocation.latitud),
+      longitud: Number(finalLocation.longitud),
+    },
 
-          detPago: {
-            codPago: Number(selectedCurrency.codPago),
-            monto: Number(total),
-            codBanco: String(selectedCurrency.codigo_Banco).trim(),
-            montoC: Number(total),
-            cambio: Number(change),
-            valor_Pagar: Number(total),
-            nomsol: String(selectedCurrency.descripcion_Pago).trim(),
-            registro_maquina: `CRM ${ecommerceUserId}`,
-            codPagoNew: Number(selectedCurrency.codExterno),
-          },
+    detPago: {
+      codPago: Number(selectedCurrency.codPago),
+      monto: Number(total),
+      codBanco: String(selectedCurrency.codigo_Banco).trim(),
+      montoC: Number(total),
+      cambio: Number(change),
+      valor_Pagar: Number(total),
+      nomsol: String(selectedCurrency.descripcion_Pago).trim(),
+      registro_maquina: `CRM ${ecommerceUserId}`,
+      codPagoNew: Number(selectedCurrency.codExterno),
+    },
+  };
+
+  try {
+    const res = await createInvoiceAsync(invoiceReq);
+
+    if (res?.success) {
+      if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) {
+        const orderMessage: SendOrderMessage = {
+          conversationId: payload.conversationId,
+          orderId: res.data,
+          userId: payload.userId,
         };
 
+        await CartService.sendOrderMessage(orderMessage);
+        const existingLog = await fetchByContactId(payload.contactId);
 
-    try {
-      const res = await createInvoiceAsync(invoiceReq);
+        await UpdatedStatus(existingLog!.id, 3);
+        await UserSessionService.revokeCartTempLink(orderId);
 
-      // Si crear orden factura, esta bien, se procede a revokar el token, y cambiar el estado de logcart
-      if(res?.success){
-      if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) 
-        {
-          const orderMessage: SendOrderMessage = {
-            conversationId: payload.conversationId,
-            orderId: res.data,
-            userId: payload.userId,
-          };
-
-          await CartService.sendOrderMessage(orderMessage);
-          const existingLog = await fetchByContactId(payload.contactId)
-        
-
-          await UpdatedStatus(existingLog!.id, 3)
-
-          // Al final, se revoca
-          await UserSessionService.revokeCartTempLink(orderId);
-
-          //Refrescar el carrito de ese pedida, en toda la app, para refrecar componente de carrito a los usuarios.
-          await dispatch(
-            getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
-          ).unwrap()
-
-        }
+        await dispatch(
+          getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
+        ).unwrap();
       }
-
-      navigate("/successOrder", { replace: true });
-    } catch (err: any) {
-      toast.error(err.message ?? "Error procesando pago");
     }
+
+    navigate("/successOrder", { replace: true });
+  } catch (err: any) {
+    toast.error(err.message ?? "Error procesando pago");
+  }
   };
 
   return (

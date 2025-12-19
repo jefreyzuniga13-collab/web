@@ -9,10 +9,10 @@ export default function SuccessRequest() {
         className="success-image"
       />
 
-      <h1 className="success-title">Orden creada con éxito</h1>
+      <h1 className="success-title">Pedido creada con éxito</h1>
 
       <p className="success-description">
-        Tu orden ha sido registrada correctamente. Gracias por tu preferencia.
+        Tu pedido ha sido registrado correctamente. Gracias por tu preferencia.
       </p>
     </div>
   );
