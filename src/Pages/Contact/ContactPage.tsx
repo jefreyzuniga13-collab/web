@@ -5,8 +5,8 @@ import IconButton from "@mui/material/IconButton";
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+// import CheckBoxIcon from '@mui/icons-material/CheckBox';
+// import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import { useMemo } from "react";
 import EditIcon from '@mui/icons-material/Edit';
 import Button from "@/Components/Common/Button";
@@ -140,13 +140,13 @@ export default function ContactPage() {
               <ToggleOffIcon fontSize="medium" />
             )}
           </IconButton>
-          <IconButton size="medium" onClick={() => verify(row.phone)}>
+          {/* <IconButton size="medium" onClick={() => verify(row.phone)}>
             {row.isVerified ? (
               <CheckBoxIcon fontSize="medium" color="success" />
             ) : (
               <CheckBoxOutlineBlankIcon fontSize="medium" />
             )}
-          </IconButton>
+          </IconButton> */}
         </>
       )
     }

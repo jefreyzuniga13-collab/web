@@ -61,6 +61,7 @@ export interface ConversationDto {
   ratingReceivedAt: string | null;
   SystemDefinedCompanyName?: string;
   isHalted?: boolean; 
+  isItemsInCart?: boolean
 }
 
 export interface UpdateConversationRequest {
@@ -130,6 +131,12 @@ export interface WhatsAppContactPhone {
   type?: string;
 }
 
+export interface SendMediaFromUrlDto {
+  mediaUrl: string
+  caption?: string | null
+  externalId?: string | null
+  repliedParentMessageId?: number | null
+}
 
 export interface SentMessage {
   conversationId: number;

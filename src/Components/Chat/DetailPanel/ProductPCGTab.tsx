@@ -5,9 +5,11 @@ import noimageavailable from "@/assets/noimageavailable.webp"
 import Button from "@/Components/Common/Button"
 import { IoMdSend } from "react-icons/io"
 import { useProductPCG } from "@/Hooks/useProductPCG"
-import { sendMedia, sendText } from "@/Services/MessageService"
+import { 
+  // sendMedia, 
+  SendMediaECommerceFromUrlAsync, sendText } from "@/Services/MessageService"
 import "@/Styles/Chat/DetailPanel/ProductPCGTab.css"
-import axios from "axios"
+// import axios from "axios"
 
 interface Props {
   prod: ProductoPCGInterface
@@ -19,7 +21,7 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
   const { getProductModifiers } = useProductPCG()
   const [sending, setSending] = useState(false)
 
-    const authRaw = localStorage.getItem("auth") || "{}";
+  const authRaw = localStorage.getItem("auth") || "{}";
   const { userId } = JSON.parse(authRaw);
 
   const handleClick = () => {
@@ -70,14 +72,29 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
       const caption = `${parts.join("\n")}${modifiersMsg}`.trim()
       if (!caption) return
 
+
+
+      // if (prod.imagen) {
+      //     const response = await axios
+      //     .get(prod.imagen, { responseType: "blob" })
+      //     const blob = response.data as Blob
+          
+      //     const mime = blob.type || "image/png"
+      //     const ext = mime.split("/")[1] || "png"
+      //     const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })
+      //     await sendMedia(conversationId, file, caption)
+      // } 
+      
+      
       if (prod.imagen) {
-          const response = await axios.get('https://crmpcg.com/clients/delipollo/img/categorias/00000005.png', { responseType: "blob" })
-          const blob = response.data as Blob
-          const mime = blob.type || "image/png"
-          const ext = mime.split("/")[1] || "png"
-          const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })
-          await sendMedia(conversationId, file, caption)
-      } else {
+          await SendMediaECommerceFromUrlAsync(conversationId, {
+            mediaUrl: prod.imagen,
+            caption,
+            externalId: null,
+            repliedParentMessageId: null
+          })
+        }
+      else {
         await sendText({
           conversationId,
           senderId: userId,
@@ -91,7 +108,7 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
       setSending(false)
     }
   }
-
+  
   return (
     <div className="productPCG-row" onClick={handleClick}>
       <div className="productPCG-row__image">

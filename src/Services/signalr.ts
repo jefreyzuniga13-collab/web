@@ -9,6 +9,9 @@ import type {
 import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
 import {formatDateTimeNI } from "@/Utils/niDate";
+import { store } from "@/Context";
+import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
+import { clearCart } from "@/Context/Slices/Cart/cartSlice";
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??
@@ -91,6 +94,59 @@ export async function createHubConnection(token: string) {
       window.dispatchEvent(new CustomEvent('SupportRequested', { detail: payload }))
     }
   )
+
+  // CART (GLOBAL)
+notificationsConnection.on(
+  "cart:updated",
+  async (payload: { contactId: number; orderId: number }) => {
+
+    // Marca rápido (optimista)
+    store.dispatch(setContactCartBadge({
+      contactId: payload.contactId,
+      hasCart: true,
+      count: store.getState().cartBadge.byContactId?.[payload.contactId]?.count ?? 0
+    }));
+
+    const state = store.getState();
+    const activeContactId = state.cart.activeContactId;
+
+    // emitur evento
+    if (activeContactId === payload.contactId) {
+      window.dispatchEvent(
+        new CustomEvent("CartReloadForActiveContact", {
+          detail: payload
+        })
+      );
+    }
+  }
+);
+
+notificationsConnection.on(
+  "cart:cleared",
+  (payload: { contactId: number; orderId: number; conversationId: number }) => {
+    try {
+      //  Actualizar el badge de ESE contacto
+      store.dispatch(
+        setContactCartBadge({
+          contactId: payload.contactId,
+          hasCart: false,
+          count: 0
+        })
+      );
+
+      // 2) Si el carrito visible corresponde a ese contacto, límpialo
+      const state = store.getState();
+      const activeContactId = state.cart?.activeContactId ?? null;
+
+      if (activeContactId === payload.contactId) {
+        store.dispatch(clearCart());
+      }
+
+    } catch (err) {
+      console.error("[cart:cleared] Error procesando evento", err);
+    }
+  }
+);
 
   notificationsConnection.on(
     'ConversationAssigned',

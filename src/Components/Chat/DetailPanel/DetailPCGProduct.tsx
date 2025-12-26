@@ -11,6 +11,7 @@ import "@/Styles/Chat/DetailPanel/DetailProduct.css"
 import noimageavailable from "@/assets/noimageavailable.webp"
 import {
   addProductToCarAsync,
+  getProductFromCarAsync,
   selectCartLoading
 } from "@/Context/Slices/Cart/cartSlice"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
@@ -18,6 +19,7 @@ import type { RootState, AppDispatch } from "@/Context"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { LogCartRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import { toast } from "react-toastify"
+import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -370,68 +372,100 @@ const DetailPCGProduct = ({
     return carDto
   }
 
-  const handleAddToCart = async () => {
-    if (cantidad <= 0) {
-      toast.warning("La cantidad debe ser al menos 1.")
+const handleAddToCart = async () => {
+  // Validar cantidad
+  if (cantidad <= 0) {
+    toast.warning("La cantidad debe ser al menos 1.")
+    return
+  }
+
+  // Validar modificadores requeridos
+  if (productModifiers && productModifiers.length > 0) {
+    let firstError: string | null = null
+
+    for (const mod of productModifiers) {
+      if (mod.esRequerido !== "S") continue
+
+      const key = String(mod.codModificador)
+      const sel = selectedOptions[key] ?? []
+
+      if (!mod.esMultipleSeleccion) {
+        if (sel.length !== 1) {
+          firstError = `Seleccione una opción en "${mod.descripcionMod}".`
+          break
+        }
+      } else {
+        if (sel.length === 0) {
+          firstError = `Seleccione al menos una opción en "${mod.descripcionMod}".`
+          break
+        }
+      }
+    }
+
+    if (firstError) {
+      toast.warning(firstError)
+      return
+    }
+  }
+
+  // Construir request
+  const req = buildCartRequest()
+
+  // Recalcular badge desde el carrito real
+  const refreshBadge = async (noPedido: number) => {
+    const updated = await dispatch(
+      getProductFromCarAsync({ codCliente: 0, noPedido })
+    ).unwrap()
+
+    const arr = Array.isArray(updated) ? updated : []
+    // const count = arr[0]?.listDetalle?.length ?? 0
+    const count =
+         arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
+    dispatch(
+      setContactCartBadge({
+        contactId,
+        hasCart: count > 0,
+        count
+      })
+    )
+  }
+
+  // Resolver pedido (existente o nuevo)
+  const existingLog = await fetchByContactId(contactId)
+
+  if (existingLog?.orderId && existingLog.orderId > 0) {
+    req.noPedido = existingLog.orderId
+
+    await dispatch(addProductToCarAsync(req)).unwrap()
+    await refreshBadge(existingLog.orderId)
+  } else {
+    const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
+    const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
+    const orderId = first?.noPedido
+
+    // Validar noPedido generado
+    if (!orderId || Number.isNaN(Number(orderId)) || Number(orderId) <= 0) {
+      toast.error("No se pudo obtener el número de pedido.")
       return
     }
 
-    if (productModifiers && productModifiers.length > 0) {
-      let firstError: string | null = null
-
-      for (const mod of productModifiers) {
-        if (mod.esRequerido !== "S") continue
-
-        const key = String(mod.codModificador)
-        const sel = selectedOptions[key] ?? []
-
-        if (!mod.esMultipleSeleccion) {
-          if (sel.length !== 1) {
-            firstError = `Seleccione una opción en "${mod.descripcionMod}".`
-            break
-          }
-        } else {
-          if (sel.length === 0) {
-            firstError = `Seleccione al menos una opción en "${mod.descripcionMod}".`
-            break
-          }
-        }
-      }
-
-      if (firstError) {
-        toast.warning(firstError)
-        return
-      }
+    const logOrderRequest: LogCartRequestDto = {
+      orderId: Number(orderId),
+      contactId,
+      conversationId,
+      statusId: 1
     }
 
-    const req = buildCartRequest()
-    const existingLog = await fetchByContactId(contactId)
-
-    if (existingLog) {
-      // req.idUsuario = existingLog.orderId
-      req.noPedido = existingLog.orderId
-      await dispatch(addProductToCarAsync(req)).unwrap()
-    } else {
-      const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
-      const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-      const orderId = first?.noPedido
-
-      const logOrderRequest: LogCartRequestDto = {
-        orderId,
-        contactId,
-        conversationId,
-        statusId: 1
-      }
-
-      await createLogCart(logOrderRequest)
-    }
-
-    setCantidad(1)
-    setselectedCategory(null)
-    setDetailProduct(null)
+    await createLogCart(logOrderRequest)
+    await refreshBadge(Number(orderId))
   }
 
-  console.log(detail.imagen)
+  // Restablecer estado de UI
+  setCantidad(1)
+  setselectedCategory(null)
+  setDetailProduct(null)
+}
+
   
   return (
     <div className="detail-product__container">

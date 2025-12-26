@@ -20,13 +20,13 @@ const setTabFromParam = (p: unknown): OptionMenu => {
 
   if (typeof p === "string") {
     const s = p.toLowerCase();
-    if (s.includes("contact")) return 2;
-    if (s.includes("client") || s.includes("cliente")) return 1;
-    if (s.includes("history") || s.includes("historial")) return 3;
+    if (s.includes("contact")) return 3;
+    // if (s.includes("client") || s.includes("cliente")) return 1;
+    // if (s.includes("history") || s.includes("historial")) return 3;
     if (s.includes("conv") || s.includes("convers")) return 4;
     if (s.includes("quick") || s.includes("rápido")) return 5;
-    if (s.includes("prod") || s.includes("product")) return 6;
-    if (s.includes("cart") || s.includes("cart")) return 7;
+    if (s.includes("prod") || s.includes("product")) return 1;
+    if (s.includes("cart") || s.includes("cart")) return 2;
   }
 
   return 1;

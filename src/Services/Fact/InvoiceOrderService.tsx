@@ -1,13 +1,25 @@
 import {apiPCG} from '@/Utils/ApiConfig'
 import type {ApiPCGResponse} from '@/Interfaces/GlobalPCGInterface'
 import type {InvoiceOrderRequestDto, 
-    InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto} from '@/Interfaces/Fact/InvoiceOrderInterface'
+    InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto,
+    PrintOrdenFactInterfaceRaw} from '@/Interfaces/Fact/InvoiceOrderInterface'
 
 
 class InvoiceOrderServ{
-    async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<number>>{
-        const {data} = await apiPCG.post<ApiPCGResponse<number>>(`OrdenFactura/AgregaOrdenFact`, req)
+    async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<string>>{
+        const {data} = await apiPCG.post<ApiPCGResponse<string>>(`OrdenFactura/AgregaOrdenFact`, req)
 
+        return data;
+    } 
+
+    async PrintDetFac(noFactura: string): Promise<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>(`OrdenFactura/ImprimeOrdenFactura`, 
+            {
+                params:{
+                    noFactura
+                }
+            }
+        )
         return data;
     }
 

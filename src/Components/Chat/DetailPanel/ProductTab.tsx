@@ -15,6 +15,8 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import { addProductToCarAsync, selectCartLoading } from "@/Context/Slices/Cart/cartSlice"
+import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
+
 
 interface Props {
   conversationId: number
@@ -103,73 +105,84 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
     await GetProductByDescription(term)
   }
 
-  const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
-    if (simpleQuantity <= 0) return
+const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
+  if (simpleQuantity <= 0) return
 
-    const precioV = productDetail.precio
-    const totalMenu = precioV * simpleQuantity
+  const precioV = productDetail.precio
+  const totalMenu = precioV * simpleQuantity
 
-    const detalle: ListDetalleCarrito = {
-      tipoComponente: "P",
-      indice: 1,
-      codTipoModificador: "0000",
-      codModificador: "00000",
-      codGrupo: productDetail.codCategoria,
-      codProducto: productDetail.codProducto,
-      codOpcion: "00000",
-      descripcion: productDetail.descripcion,
-      cantidad: simpleQuantity,
-      precioV,
-      totalMenu,
-      codUm: productDetail.codUm,
-      observaciones: "",
-      unico: "",
-      noPedido: 0,
-      imagen: productDetail.imagen,
-      listOpciones: [],
-    }
-
-    const existingLog = await fetchByContactId(contactId)
-
-    let carrito: CarDto
-
-    if (existingLog?.orderId) {
-      carrito = {
-        fecha: new Date().toISOString(),
-        total: totalMenu,
-        noPedido: existingLog.orderId,
-        tipoServicio: 8,
-        listDetalle: [detalle],
-      }
-
-      await dispatch(addProductToCarAsync(carrito)).unwrap()
-    } else {
-      carrito = {
-        noPedido: 0,
-        tipoServicio: 8,
-        fecha: new Date().toISOString(),
-        total: totalMenu,
-        listDetalle: [detalle],
-      }
-
-      const cartCreated = await dispatch(addProductToCarAsync(carrito)).unwrap()
-      const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-      const orderId = first?.noPedido
-
-      const logOrderRequest: LogCartRequestDto = {
-        orderId,
-        contactId,
-        conversationId,
-        statusId: 1,
-      }
-
-      await createLogCart(logOrderRequest)
-    }
-
-    setSimpleQuantity(1)
-    setselectedCategory(null)
-    setDetailProduct(null)
+  const detalle: ListDetalleCarrito = {
+    tipoComponente: "P",
+    indice: 1,
+    codTipoModificador: "0000",
+    codModificador: "00000",
+    codGrupo: productDetail.codCategoria,
+    codProducto: productDetail.codProducto,
+    codOpcion: "00000",
+    descripcion: productDetail.descripcion,
+    cantidad: simpleQuantity,
+    precioV,
+    totalMenu,
+    codUm: productDetail.codUm,
+    observaciones: "",
+    unico: "",
+    noPedido: 0,
+    imagen: productDetail.imagen,
+    listOpciones: [],
   }
+
+  const existingLog = await fetchByContactId(contactId)
+
+  const carritoBase: CarDto = {
+    noPedido: existingLog?.orderId ?? 0,
+    tipoServicio: 8,
+    fecha: new Date().toISOString(),
+    total: totalMenu,
+    listDetalle: [detalle],
+  }
+
+  // Si no existía log/orderId, creas el log después, pero igual el addProduct te devuelve el carrito creado
+  const cartUpdated = await dispatch(addProductToCarAsync(carritoBase)).unwrap()
+
+  // Si acabas de crear el carrito (no había log), crea el log con el orderId retornado
+  if (!existingLog?.orderId) {
+  const first = Array.isArray(cartUpdated) ? cartUpdated[0] : null
+  const orderId = Number(first?.noPedido ?? 0)
+
+  if (!orderId || Number.isNaN(orderId) || orderId <= 0) {
+    throw new Error("No se pudo obtener el noPedido para crear el LogCart.")
+  }
+
+  const logOrderRequest: LogCartRequestDto = {
+    orderId,          // <- ahora es number seguro
+    contactId,
+    conversationId,
+    statusId: 1,
+  }
+
+  await createLogCart(logOrderRequest)
+}
+
+
+  // Calcular count real desde el carrito retornado
+  const cartsArr = Array.isArray(cartUpdated) ? cartUpdated : []
+  const firstCart = cartsArr[0]
+  const count =
+    firstCart?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
+
+  dispatch(
+    setContactCartBadge({
+      contactId,
+      hasCart: count > 0,
+      count,
+    })
+  )
+
+  setSimpleQuantity(1)
+  setselectedCategory(null)
+  setDetailProduct(null)
+}
+
 
   const showCategories = !selectedCategory && normalizedSearch === ""
   const showProducts = !!selectedCategory || normalizedSearch !== ""

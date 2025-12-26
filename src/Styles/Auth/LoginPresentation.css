@@ -8,12 +8,16 @@
   min-height: 100vh;
   font-size: var(--font-size-base);
   padding: 2.4rem 1.6rem 1.6rem;
-  background-image: url("../../assets/fondo_contenedor.jpg");
+  background-image: url("https://old.innoviti.com/wp-content/uploads/2022/08/POS-System.jpg");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
 }
 
+/* https://old.innoviti.com/wp-content/uploads/2022/08/POS-System.jpg
+
+https://www.tsiservice.com/wp-content/uploads/2022/05/TSI-POS-Systems-header-1000x500.jpeg
+*/
 .derechos {
   color: var(--text-white);
 }

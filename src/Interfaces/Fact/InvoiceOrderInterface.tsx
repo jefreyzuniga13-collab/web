@@ -45,7 +45,6 @@ export interface InvoiceOrderInterface{
     estado: string;
     cantidadProductos: number;
     descSucursal: string
-
 }
 
 //divisas
@@ -75,4 +74,46 @@ export interface SendOrderMessage{
   conversationId: number;
   orderId: number;
   userId: number;
+}
+
+
+//ImprimeOrdenFactura
+export interface PrintOrdenFactInterfaceRaw {
+  DatosGenerales: {
+    NoFactura: string
+    FechaFactura: string
+    Nombrede: string
+  }
+  DatosDireccion: {
+    Nombre: string
+    Descripcion: string
+    Referencia: string
+  }
+  Carrito: Array<{
+    Codigo: string
+    Descripcion: string
+    Imagen: string
+    UnidadMedida: string
+    Precio: number
+    TotalMenu: number
+    Opciones: Array<{
+      Codigo: string
+      Descripcion: string
+      Cantidad: number
+      UnidadMedida: string
+      Precio: number
+      TotalMenu: number
+    }> | null
+  }>
+  DetallePago: {
+    Valor_Pagar: number
+    SubTotal: number
+    Descuento: number
+    Iva: number
+    TotalPago: number
+    MetodoPago: string
+    Monto: number
+    Propina: number
+    Transporte: number
+  }
 }

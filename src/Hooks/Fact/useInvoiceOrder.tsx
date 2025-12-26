@@ -1,5 +1,7 @@
 import {useCallback, useState} from 'react'
-import type { Currencyto, InvoiceOrderInterface, InvoiceOrderRequestDto, NearestBranchRequestDto, NearestBranchResponseDto } from "@/Interfaces/Fact/InvoiceOrderInterface"
+import type { Currencyto, InvoiceOrderInterface, InvoiceOrderRequestDto, 
+    NearestBranchRequestDto, NearestBranchResponseDto, 
+    PrintOrdenFactInterfaceRaw } from "@/Interfaces/Fact/InvoiceOrderInterface"
 import { InvoiceOrderService } from '@/Services/Fact/InvoiceOrderService';
 import { toast } from 'react-toastify';
 
@@ -10,12 +12,13 @@ const useInvoiceOrder = () => {
   const [nearestBranch, setNearestBranch] = useState<NearestBranchResponseDto | null>(null);
   const[transportationCost, setTransportationCost] = useState<number>(0)
   const [currency, setCurrency] = useState<Currencyto[] | []>([])
-
+  const [printOrdenFac, setPrintOrdenFac] = useState<PrintOrdenFactInterfaceRaw | null>(null)
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingInvoice, setLoadingInvoice] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const CreateAsync = useCallback(async(req: InvoiceOrderRequestDto)=>{
-    setLoading(false)
+    setLoadingInvoice(false)
     setError(null)
 
     try{
@@ -23,7 +26,7 @@ const useInvoiceOrder = () => {
 
         if(res.success){
             // setInvoiceOrders(res.data);
-            setLoading(false)
+            setLoadingInvoice(false)
             return res;
             // toast.success(res.message);
         }else{
@@ -34,14 +37,13 @@ const useInvoiceOrder = () => {
     }catch(err: any){
         setError(err)
     }finally{
-        setLoading(false)
+        setLoadingInvoice(false)
     }
   }, [])
   
   const GetLastestAsync = useCallback(async(req: number)=>{
     setLoading(false);
     setError(null)
-
     try{
         const res = await InvoiceOrderService.GetLastest(req);
 
@@ -58,10 +60,33 @@ const useInvoiceOrder = () => {
         setLoading(false)
     }
   },[])
+
+
+  const PrintDetFacAsync = useCallback(async(req: string)=>{
+    setLoading(false);
+    setError(null)
+    try{
+        const res = await InvoiceOrderService.PrintDetFac(req);
+
+        if(res.success){
+            setLoading(false)
+            setPrintOrdenFac(res.data)
+            return res.data
+            // toast.success(res.message)
+        }else{
+            toast.error(res.message)
+        }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }catch(err: any){
+        setError(err)
+    }finally{
+        setLoading(false)
+    }
+  },[])
   
 
   const GetNearestBranchAsync = useCallback(async(req: NearestBranchRequestDto)=>{
-    setLoading(false)
+    setLoading(true)
     setError(null)
 
     try{
@@ -70,6 +95,7 @@ const useInvoiceOrder = () => {
         if(data.success){
             setNearestBranch(data.data)
             // toast.success(data.message)
+            setLoading(false)
             return data.data
         }else{
             toast.error(data.message);
@@ -85,7 +111,7 @@ const useInvoiceOrder = () => {
   }, [])
 
   const GetTransportationCostAsync = useCallback(async (req: number)=>{
-    setLoading(false)
+    setLoading(true)
     setError(null)
 
     try{
@@ -94,6 +120,7 @@ const useInvoiceOrder = () => {
         if(res.success){
             setTransportationCost(res.data)
             // toast.success(res.success)
+            setLoading(false)
             return res.data
         }else{
             toast.error(res.message)
@@ -108,7 +135,7 @@ const useInvoiceOrder = () => {
 
 
     const GetCurrencyAsync = useCallback(async()=>{
-        setLoading(false)
+        setLoading(true)
         setError(null)
 
         try {
@@ -140,7 +167,11 @@ const useInvoiceOrder = () => {
     GetLastestAsync,
     GetNearestBranchAsync,
     GetTransportationCostAsync,
-    GetCurrencyAsync
+    GetCurrencyAsync,
+    PrintDetFacAsync,
+    printOrdenFac,
+    setPrintOrdenFac,
+    loadingInvoice
   }
 }
 

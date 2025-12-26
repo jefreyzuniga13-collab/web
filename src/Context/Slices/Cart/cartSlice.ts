@@ -12,13 +12,16 @@ export interface CartState {
   listDetail: ListDetalleCarrito[];
   loading: boolean;
   error: string | null;
+  activeContactId: number | null;
 }
+
 
 const initialState: CartState = {
   carPCG: [],
   listDetail: [],
   loading: false,
   error: null,
+  activeContactId: null,
 };
 
 export const addProductToCarAsync = createAsyncThunk<
@@ -119,6 +122,10 @@ export const cartSlice = createSlice({
       state.listDetail = action.payload;
     },
 
+    setActiveContactId(state, action: PayloadAction<number | null>) {
+    state.activeContactId = action.payload;
+  },
+
     clearCart(state) {
       state.carPCG = [];
       state.listDetail = [];
@@ -188,7 +195,7 @@ export const cartSlice = createSlice({
   },
 });
 
-export const { setListDetail, clearCart } = cartSlice.actions;
+export const { setListDetail, clearCart, setActiveContactId } = cartSlice.actions;
 export default cartSlice.reducer;
 
 export const selectCartState = (state: RootState): CartState => state.cart;
@@ -202,21 +209,13 @@ export const selectCartLoading = (state: RootState): boolean =>
 export const selectCartError = (state: RootState): string | null =>
   selectCartState(state).error;
 
-// export const selectCartItemsCount = (state: RootState): number => {
-//   const { carPCG } = selectCartState(state);
-//   if (!carPCG || carPCG.length === 0) return 0;
-
-//   return carPCG.reduce((acc, cart) => {
-//     const count =
-//       cart.listDetalle?.reduce((sum, d) => sum + d.cantidad, 0) ?? 0;
-//     return acc + count;
-//   }, 0);
-// };
+export const selectActiveContactId = (state: RootState): number | null =>
+  state.cart.activeContactId;
 
 export const selectCartItemsCount = (state: RootState): number => {
   const { carPCG } = selectCartState(state)
 
-  // Aseguramos que sea SIEMPRE un array
+  // Asegurar que sea SIEMPRE un array
   if (!Array.isArray(carPCG) || carPCG.length === 0) return 0
 
   return carPCG.reduce((acc, cart) => {

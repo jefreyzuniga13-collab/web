@@ -1,11 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { MessageSquareOff } from 'lucide-react'
-import '@/Styles/Chat/InboxList.css'
-import { format } from 'date-fns'
-import { markConversationRead } from '@/Services/ConversationService'
-import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import type { PaginationInfo } from '@/Interfaces/GlobalInterface'
-import CustomLoader from '@/Components/Common/CustomLoader'
+import React, { useEffect, useState, useRef } from "react"
+import { MessageSquareOff } from "lucide-react"
+import "@/Styles/Chat/InboxList.css"
+import { format } from "date-fns"
+import { markConversationRead } from "@/Services/ConversationService"
+import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces"
+import type { PaginationInfo } from "@/Interfaces/GlobalInterface"
+import CustomLoader from "@/Components/Common/CustomLoader"
+import { selectCartBadgeByContactId } from "@/Context/Slices/Cart/cartBadgeSlice"
+import { useSelector } from "react-redux"
+import { FaCartFlatbedSuitcase } from "react-icons/fa6"
+
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
@@ -34,14 +38,14 @@ export const InboxList: React.FC<Props> = ({
   pagination,
   onPageChange
 }) => {
-
   const loaderRef = useRef<HTMLLIElement>(null)
 
   const [now, setNow] = useState(Date.now())
-  const { userId } = JSON.parse(localStorage.getItem('auth') || '{}') as {
+  const { userId } = JSON.parse(localStorage.getItem("auth") || "{}") as {
     userId: number
   }
 
+  const badgeMap = useSelector(selectCartBadgeByContactId)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -59,7 +63,7 @@ export const InboxList: React.FC<Props> = ({
           onPageChange(page + 1)
         }
       },
-      { root: null, rootMargin: '0px', threshold: 1.0 }
+      { root: null, rootMargin: "0px", threshold: 1.0 }
     )
     if (loaderRef.current) observer.observe(loaderRef.current)
 
@@ -67,11 +71,11 @@ export const InboxList: React.FC<Props> = ({
   }, [loading, onPageChange, page, pagination.totalPages])
 
   const formatTime = (iso?: string) => {
-    if (!iso) return ''
+    if (!iso) return ""
     try {
-      return format(new Date(iso), 'HH:mm')
+      return format(new Date(iso), "HH:mm")
     } catch {
-      return ''
+      return ""
     }
   }
 
@@ -80,7 +84,7 @@ export const InboxList: React.FC<Props> = ({
       onSelect(null)
     } else {
       onSelect(id)
-      void markConversationRead(id) 
+      void markConversationRead(id)
     }
   }
 
@@ -109,14 +113,14 @@ export const InboxList: React.FC<Props> = ({
         const isSelected = c.conversationId === selectedId
         const statusClass = c.status.toLowerCase()
         const statusTextMap: Record<string, string> = {
-          bot: 'Bot',
-          waiting: 'Pendiente',
-          human: 'Asignado',
-          closed: 'Cerrado',
-          incomplete: 'Incompleta',
+          bot: "Bot",
+          waiting: "Pendiente",
+          human: "Asignado",
+          closed: "Cerrado",
+          incomplete: "Incompleta",
           paused: "Pausada"
         }
-        
+
         const statusText = statusTextMap[c.status.toLowerCase()] || c.status
 
         const unread =
@@ -125,9 +129,10 @@ export const InboxList: React.FC<Props> = ({
             : userId === c.assignedByUserId
               ? c.unreadForAssigner ?? 0
               : 0
+
         const hasUnread = unread > 0
 
-        let timeSinceRequest = ''
+        let timeSinceRequest = ""
         if (!c.assignedAt && c.requestedAgentAt) {
           timeSinceRequest = formatDuration(
             now - new Date(c.requestedAgentAt).getTime()
@@ -140,6 +145,14 @@ export const InboxList: React.FC<Props> = ({
           previewText += ` · Desde solicitud: ${timeSinceRequest}`
         }
 
+        const contactId = c.clientContactId ?? 0
+        const badge = contactId > 0 ? badgeMap?.[contactId] : undefined
+
+        const hasCart =
+          contactId > 0
+            ? (badge?.hasCart ?? c.isItemsInCart)
+            : c.isItemsInCart
+
         return (
           <li
             key={c.conversationId}
@@ -147,38 +160,41 @@ export const InboxList: React.FC<Props> = ({
             tabIndex={0}
             aria-pressed={isSelected}
             onClick={() => handleSelect(c.conversationId)}
-            onKeyDown={e =>
-              e.key === 'Enter' && handleSelect(c.conversationId)
-            }
-            className={`inbox-list__item${isSelected ? ' inbox-list__item--selected' : ''
-              }`}>
+            onKeyDown={e => e.key === "Enter" && handleSelect(c.conversationId)}
+            className={`inbox-list__item${isSelected ? " inbox-list__item--selected" : ""}`}
+          >
             <div className="inbox-list__top">
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
                   <span className="inbox-list__name">
-                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName : ''}
-                    <span className="">
-                      {c.clientContactId != null ? " (" + c.clientContactName + ")" : ''}
+                    {hasCart && (
+                      <span className="inbox-list__isItemsInCart">
+                        <FaCartFlatbedSuitcase fontSize={16} />
+                      </span>
+                    )}
+                    {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName : ""}
+                    <span>
+                      {c.clientContactId != null ? ` (${c.clientContactName})` : ""}
                     </span>
                   </span>
                 </div>
+
                 {c.assignedAgentName && (
                   <div className="inbox-list__agent">
                     Agente: <strong>{c.assignedAgentName}</strong>
                   </div>
                 )}
+
                 <span className="inbox-list__preview">{previewText}</span>
               </div>
 
               <div className="inbox-list__bottom">
-                <div className='inbox-list__bottom_text'>
-                  <span
-                    className={`inbox-list__status inbox-list__status--${statusClass}`}
-                  >
+                <div className="inbox-list__bottom_text">
+                  <span className={`inbox-list__status inbox-list__status--${statusClass}`}>
                     {statusText}
                   </span>
-
                 </div>
+
                 {hasUnread && (
                   <span className="inbox-list__unread-badge">{unread}</span>
                 )}
@@ -187,9 +203,9 @@ export const InboxList: React.FC<Props> = ({
           </li>
         )
       })}
-      {loading && (
-        <CustomLoader/>
-      )}
+
+      {loading && <CustomLoader />}
+
       <li ref={loaderRef} />
     </ul>
   )

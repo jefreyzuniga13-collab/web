@@ -12,6 +12,8 @@ import { Sticker } from "lucide-react";
 import { useConversations } from "@/Hooks/useConversations";
 import TicketModal from "@/Components/Chat/TicketModal";
 import useContact from "@/Hooks/Contact/useContact";
+import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
+
 import {
   // selectCartError,
   // selectCartLoading,
@@ -97,32 +99,42 @@ const SupportPage: React.FC = () => {
   }, []);
 
 
-    useEffect(() => {
-      // Si no hay conversación o no hay contacto -> limpiar carrito
-      if (!convId || !contact?.id) {
-        void dispatch(
-          getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
-        );
-        setTicketOpen(false);
-        return;
-      }
+useEffect(() => {
+  if (!convId) {
+    void dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: 0 }))
+    return
+  }
 
-      const loadCart = async () => {
-        const log = await fetchByContactId(contact.id);
-        if (log) {
-          await dispatch(
-            getProductFromCarAsync({ codCliente: 0, noPedido: log.orderId })
-          ).unwrap();
-        } 
-        else {
-          await dispatch(
-            getProductFromCarAsync({ codCliente: 0, noPedido: 0 })
-          ).unwrap();
-        }
-      };
+  if (!contact?.id) return
 
-      void loadCart();
-    }, [convId, contact?.id, dispatch, fetchByContactId]);
+  let cancelled = false
+
+  const loadCart = async () => {
+    const log = await fetchByContactId(contact.id)
+    if (cancelled) return
+
+    const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
+
+    const cart = await dispatch(
+      getProductFromCarAsync({ codCliente: 0, noPedido })
+    ).unwrap()
+
+    if (cancelled) return
+
+    const arr = Array.isArray(cart) ? cart : []
+    // const count = arr[0]?.listDetalle?.length ?? 0
+    const count =
+       arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
+
+    dispatch(setContactCartBadge({ contactId: contact.id, hasCart: count > 0, count }))
+  }
+
+  void loadCart()
+
+  return () => {
+    cancelled = true
+  }
+}, [convId, contact?.id, dispatch, fetchByContactId])
 
 
   return (

@@ -103,6 +103,11 @@
   align-items: center;
 }
 
+.inbox-list__isItemsInCart{
+  color: var(--greenColor);
+  font-size: var(--font-size-sm);
+}
+
 .inbox-list__name,
 .inbox-list__client_name {
   font-weight: var(--font-weight-medium);

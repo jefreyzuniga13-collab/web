@@ -8,6 +8,7 @@ import popupReducer from '@/Context/Slices/popupSlice'
 import assignModalReducer from '@/Context/Slices/assignModalSlice'
 import activeSesionModalReducer from '@/Context/Slices/activeSesionModalSlice'
 import cartReducer from '@/Context/Slices/Cart/cartSlice'
+import cartBadgeReducer from '@/Context/Slices/Cart/cartBadgeSlice'
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     assignModal: assignModalReducer,
     activeSesionModal: activeSesionModalReducer,
     cart: cartReducer,
+    cartBadge: cartBadgeReducer
   }
 })
 

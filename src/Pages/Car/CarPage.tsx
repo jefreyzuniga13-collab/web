@@ -90,7 +90,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                       Cantidad
                     </th>
                     <th className="cart-table__cell cart-table__cell--total">
-                      Total
+                      Contenido
                     </th>
                   </tr>
                 </thead>
@@ -98,14 +98,14 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   {carPCG?.flatMap((group) =>
                     group.listDetalle?.map((item) => {
                       const options = item.listOpciones ?? [];
-                      const rowTotal =
-                        options.length > 0
-                          ? options.reduce(
-                              (sum, opt) => sum + (opt.totalMenu ?? 0),
-                              0
-                            )
-                          : item.precioV ?? 0;
 
+                      // const rowTotal =
+                      //   options.length > 0
+                      //     ? options.reduce(
+                      //         (sum, opt) => sum + (opt.totalMenu ?? 0),
+                      //         0
+                      //       )
+                      //     : item.precioV ?? 0;
                       return (
                         <tr
                           className="cart-table__row"
@@ -157,13 +157,21 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                             </div>
                           </td>
 
-                          <td className="cart-table__cell cart-table__cell--total">
+                          {/* <td className="cart-table__cell cart-table__cell--total">
                             {rowTotal.toLocaleString("es-NI", {
                               style: "currency",
                               currency: "NIO",
                               maximumFractionDigits: 2,
                             })}
-                          </td>
+                          </td> */}
+
+                          {/* <td className="cart-table__cell cart-table__cell--total">
+                            {rowTotal.toLocaleString("es-NI", {
+                              style: "currency",
+                              currency: "NIO",
+                              maximumFractionDigits: 2,
+                            })}
+                          </td> */}
                         </tr>
                       );
                     }) ?? []
@@ -203,7 +211,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
             </div>
             
             <div className="cart-totals__row cart-totals__row--total">
-              <span className="cart-totals__label">Total</span>
+              <span className="cart-totals__label">Total (Sin envío)</span>
               <span className="cart-totals__value cart-totals__value--strong">
                 {firstSummaryItem
                   ? firstSummaryItem.total?.toLocaleString(

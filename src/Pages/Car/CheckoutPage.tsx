@@ -12,9 +12,9 @@ import type {
   InvoiceOrderRequestDto,
   NearestBranchRequestDto,
   Currencyto,
-  SendOrderMessage
+  // SendOrderMessage
 } from "@/Interfaces/Fact/InvoiceOrderInterface";
-import { CartService } from "@/Services/Cart/CartService";
+// import { CartService } from "@/Services/Cart/CartService";
 import { toast } from "react-toastify";
 import "@/Styles/Cart/CheckoutPage.css";
 import * as turf from "@turf/turf";
@@ -30,7 +30,10 @@ import {
 import type { AppDispatch, RootState } from "@/Context";
 import { UserSessionService } from "@/Services/auth/UserSessionService";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-
+import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
+import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
+// import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
+import { sendMediaEcommerce } from "@/Services/MessageService";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -71,6 +74,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  // const [loadingInvoice, setLoadingInvoice] = useState(false)
 
   const payload = location.state?.payload as {
     fullName: string;
@@ -142,14 +146,12 @@ const CheckoutPage: React.FC = () => {
     GetTransportationCostAsync,
     GetNearestBranchAsync,
     loading: invoiceLoading,
+    PrintDetFacAsync,
+    loadingInvoice
   } = useInvoiceOrder();
 
 
-  const { fetchByContactId } = useLogCart()
-
-    const {
-      UpdatedStatus,
-    } = useLogCart();
+  const { fetchByContactId, UpdatedStatus } = useLogCart()
 
   const {
     CreateAsync: createLocationAsync,
@@ -159,16 +161,31 @@ const CheckoutPage: React.FC = () => {
   } = useClientLocation();
 
   useEffect(() => {
+    if (!orderId || !ecommerceUserId || !payload?.orderId) return;
+
+    let cancelled = false;
+
     const loadCart = async () => {
-      await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })).unwrap;
-      GetCurrencyAsync();
-      GetAsync(ecommerceUserId);
+      try {
+        if (!payload?.orderId) return;
+        await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId })).unwrap();
+        if (cancelled) return;
+
+        await GetCurrencyAsync();
+        if (cancelled) return;
+
+        await GetAsync(ecommerceUserId);
+      } catch {
+        // toast.error("No fue posible cargar datos del checkout.")
+      }
     };
 
-    if (!orderId || !ecommerceUserId) return;
+    void loadCart();
 
-    loadCart();
-  }, [orderId, ecommerceUserId, dispatch, GetCurrencyAsync, GetAsync, payload]);
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, ecommerceUserId, dispatch, GetCurrencyAsync, GetAsync, payload?.orderId]);
 
   useEffect(() => {
     if (userFullName) {
@@ -186,8 +203,8 @@ const CheckoutPage: React.FC = () => {
       Array.isArray(clientLocation)
         ? clientLocation
         : clientLocation
-        ? [clientLocation]
-        : [],
+          ? [clientLocation]
+          : [],
     [clientLocation]
   );
 
@@ -287,10 +304,44 @@ const CheckoutPage: React.FC = () => {
     setBillingForm(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setCardForm(prev => ({ ...prev, [id]: value }));
-  };
+  const onlyDigits = (s: string) => s.replace(/\D/g, "")
+
+  const formatCardNumber = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 19) // hasta 19 (algunas tarjetas)
+    return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim()
+  }
+
+  const formatExpiry = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 4) // MMYY
+    if (digits.length <= 2) return digits
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  }
+
+  const formatCvc = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 4) // 3 o 4
+    return digits
+  }
+
+  const onCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardForm(p => ({ ...p, cardNumber: formatCardNumber(e.target.value) }))
+  }
+
+  const onExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardForm(p => ({ ...p, expiry: formatExpiry(e.target.value) }))
+  }
+
+  const onCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardForm(p => ({ ...p, cvc: formatCvc(e.target.value) }))
+  }
+
+  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardForm(p => ({ ...p, nameOnCard: e.target.value }))
+  }
+
+  // const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { id, value } = e.target;
+  //   setCardForm(prev => ({ ...prev, [id]: value }));
+  // };
 
   const handleCoordsChange = (coords: Coords) => setSelectedCoords(coords);
 
@@ -316,203 +367,6 @@ const CheckoutPage: React.FC = () => {
     setStep("paymentMethod");
   };
 
-  // const handlePayNow = async () => {
-  //   if (!carPCG || carPCG.length === 0) {
-  //     toast.error("El carrito está vacío.");
-  //     return;
-  //   }
-  //   if (!selectedCurrency) {
-  //     toast.error("Debe seleccionar un método de pago.");
-  //     return;
-  //   }
-    
-
-  //   if (!validateBillingForm()) return;
-  //   if (!validateLocation()) return;
-
-  //   if (method === "card" && !validateCardForm()) return;
-  //     const cart = carPCG[0];
-  //     const total = cart.total ?? 0;
-
-  //     if (method === "cash") {
-
-  //       if (cashAmount <= 0) {
-  //         return toastError("El monto en efectivo debe ser mayor a 0.");
-  //       }
-
-  //       if (tip > cashAmount) {
-  //         return toastError("La propina no puede ser mayor al monto ingresado.");
-  //       }
-
-  //       const disponible = cashAmount - tip;
-
-  //       if (disponible < total) {
-  //         return toastError(
-  //           `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
-  //         );
-  //       }
-  //     }
-
-
-  //   let finalLocation: ClientLocationDto | null = null;
-  //   let coords: Coords;
-
-  //   if (locationMode === "existing") {
-  //     const addr = selectedAddress ?? addressList[0];
-  //     if (!addr) {
-  //       toast.error("No hay dirección seleccionada.");
-  //       return;
-  //     }
-
-  //     finalLocation = {
-  //       idDireccion: addr.idDireccion,
-  //       nombre: addr.nombre,
-  //       referencia: addr.referencia,
-  //       descripcion: addr.descripcion,
-  //       latitud: addr.latitud,
-  //       longitud: addr.longitud,
-  //       idUsuario: ecommerceUserId,
-  //     };
-
-  //     coords = { latitud: addr.latitud, longitud: addr.longitud };
-  //   } else {
-  //     if (!selectedCoords) {
-  //       toast.error("Debes seleccionar la ubicación.");
-  //       return;
-  //     }
-  //     coords = selectedCoords;
-
-  //     const locationPayload: ClientLocationDto = {
-  //       idDireccion: 0,
-  //       nombre: billingForm.addressName || billingForm.address,
-  //       referencia: `${billingForm.city}, ${billingForm.country}`,
-  //       descripcion: billingForm.address,
-  //       latitud: coords.latitud,
-  //       longitud: coords.longitud,
-  //       idUsuario: ecommerceUserId,
-  //     };
-
-  //     const newLocation = await createLocationAsync(locationPayload);
-
-  //     if (!newLocation) {
-  //       toast.error("No fue posible guardar la nueva dirección.");
-  //       return;
-  //     }
-
-  //     finalLocation = newLocation;
-  //   }
-
-  //   if (!finalLocation) {
-  //     toast.error("No se pudo determinar la dirección final.");
-  //     return;
-  //   }
-
-  //   //Obtener secursal mas cernada antes, de crear una direccion, por que si no encuentra socursal cercanda
-  //   //puede crear muchas direcciones
-  //   // const branchReq: NearestBranchRequestDto = {
-  //   //   latitud: finalLocation.latitud,
-  //   //   longitud: finalLocation.longitud,
-  //   // };
-
-  //   // const branchResp = await GetNearestBranchAsync(branchReq);
-
-  //   // const nearest =
-  //   //   Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
-
-  //   // if (!nearest) {
-  //   //   toast.error("No hay sucursal cercana disponible.");
-  //   //   return;
-  //   // }
-
-  //   const lat1 = Number(finalLocation.latitud);
-  //   const lon1 = Number(finalLocation.longitud);
-  //   const lat2 = Number(nearest.latitud);
-  //   const lon2 = Number(nearest.longitud);
-
-  //   if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
-  //     toast.error("Coordenadas inválidas para calcular la distancia.");
-  //     return;
-  //   }
-
-  //   const km = calculateDistance(lat1, lon1, lat2, lon2);
-
-  //   const transporte = await GetTransportationCostAsync(km);
-
-  //   const change =
-  //     method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
-
-  //     const invoiceReq: InvoiceOrderRequestDto = {
-  //         idUsuario: ecommerceUserId.toString(),
-  //         nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
-  //         registroMaquina: `CRM ${ecommerceUserId}`,
-  //         noIdentificacion: "",
-  //         observaciones: "",
-  //         noPedido: Number(orderId),
-
-  //         transporte: Number(transporte ?? 0),
-  //         propina: method === "cash" ? Number(tip) : 0,
-  //         tipoServicio: 8,
-  //         idEstado: 15,
-  //         codSucursal: String(nearest.codSucursal),
-
-  //         direcciones: {
-  //           idDireccion: Number(finalLocation.idDireccion),
-  //           nombre: String(finalLocation.nombre),
-  //           referencia: String(finalLocation.referencia),
-  //           descripcion: String(finalLocation.descripcion).trim(),
-  //           latitud: Number(finalLocation.latitud),
-  //           longitud: Number(finalLocation.longitud),
-  //         },
-
-  //         detPago: {
-  //           codPago: Number(selectedCurrency.codPago),
-  //           monto: Number(total),
-  //           codBanco: String(selectedCurrency.codigo_Banco).trim(),
-  //           montoC: Number(total),
-  //           cambio: Number(change),
-  //           valor_Pagar: Number(total),
-  //           nomsol: String(selectedCurrency.descripcion_Pago).trim(),
-  //           registro_maquina: `CRM ${ecommerceUserId}`,
-  //           codPagoNew: Number(selectedCurrency.codExterno),
-  //         },
-  //       };
-
-
-  //   try {
-  //     const res = await createInvoiceAsync(invoiceReq);
-
-  //     // Si crear orden factura, esta bien, se procede a revokar el token, y cambiar el estado de logcart
-  //     if(res?.success){
-  //     if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) 
-  //       {
-  //         const orderMessage: SendOrderMessage = {
-  //           conversationId: payload.conversationId,
-  //           orderId: res.data,
-  //           userId: payload.userId,
-  //         };
-
-  //         await CartService.sendOrderMessage(orderMessage);
-  //         const existingLog = await fetchByContactId(payload.contactId)
-        
-
-  //         await UpdatedStatus(existingLog!.id, 3)
-
-  //         // Al final, se revoca
-  //         await UserSessionService.revokeCartTempLink(orderId);
-
-  //         //Refrescar el carrito de ese pedida, en toda la app, para refrecar componente de carrito a los usuarios.
-  //         await dispatch(
-  //           getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
-  //         ).unwrap()
-
-  //       }
-  //     }
-
-  //     navigate("/successOrder", { replace: true });
-  //   } catch (err: any) {
-  //     toast.error(err.message ?? "Error procesando pago");
-  //   }
-  // };
 
   const handlePayNow = async () => {
     if (!carPCG || carPCG.length === 0) {
@@ -545,161 +399,192 @@ const CheckoutPage: React.FC = () => {
       }
     }
 
-  // Primero sacor coords SIN crear dirección
-  let coords: Coords;
+    // Primero sacor coords SIN crear dirección
+    let coords: Coords;
 
-  if (locationMode === "existing") {
-    const addr = selectedAddress ?? addressList[0];
-    if (!addr) {
-      toast.error("No hay dirección seleccionada.");
-      return;
-    }
-    coords = { latitud: addr.latitud, longitud: addr.longitud };
-  } else {
-    if (!selectedCoords) {
-      toast.error("Debes seleccionar la ubicación.");
-      return;
-    }
-    coords = selectedCoords;
-  }
-
-  // Buscar sucursal cercana antes de crear la dirección (si es nueva)
-  const branchReq: NearestBranchRequestDto = {
-    latitud: coords.latitud,
-    longitud: coords.longitud,
-  };
-
-  const branchResp = await GetNearestBranchAsync(branchReq);
-  const nearest =
-    Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
-
-  if (!nearest) {
-    toast.error("No hay sucursal cercana disponible.");
-    return;
-  }
-
-  //  Ahora sí determino finalLocation (crear dirección solo si ya hay sucursal)
-  let finalLocation: ClientLocationDto | null = null;
-
-  if (locationMode === "existing") {
-    const addr = selectedAddress ?? addressList[0];
-    if (!addr) {
-      toast.error("No hay dirección seleccionada.");
-      return;
+    if (locationMode === "existing") {
+      const addr = selectedAddress ?? addressList[0];
+      if (!addr) {
+        toast.error("No hay dirección seleccionada.");
+        return;
+      }
+      coords = { latitud: addr.latitud, longitud: addr.longitud };
+    } else {
+      if (!selectedCoords) {
+        toast.error("Debes seleccionar la ubicación.");
+        return;
+      }
+      coords = selectedCoords;
     }
 
-    finalLocation = {
-      idDireccion: addr.idDireccion,
-      nombre: addr.nombre,
-      referencia: addr.referencia,
-      descripcion: addr.descripcion,
-      latitud: addr.latitud,
-      longitud: addr.longitud,
-      idUsuario: ecommerceUserId,
-    };
-  } else {
-    const locationPayload: ClientLocationDto = {
-      idDireccion: 0,
-      nombre: billingForm.addressName || billingForm.address,
-      referencia: `${billingForm.city}, ${billingForm.country}`,
-      descripcion: billingForm.address,
+    // Buscar sucursal cercana antes de crear la dirección (si es nueva)
+    const branchReq: NearestBranchRequestDto = {
       latitud: coords.latitud,
       longitud: coords.longitud,
-      idUsuario: ecommerceUserId,
     };
 
-    const newLocation = await createLocationAsync(locationPayload);
-    if (!newLocation) {
-      toast.error("No fue posible guardar la nueva dirección.");
+    const branchResp = await GetNearestBranchAsync(branchReq);
+    const nearest =
+      Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
+
+    if (!nearest) {
+      toast.error("No hay sucursal cercana disponible.");
       return;
     }
-    finalLocation = newLocation;
-  }
 
-  if (!finalLocation) {
-    toast.error("No se pudo determinar la dirección final.");
-    return;
-  }
+    //  Ahora sí determino finalLocation (crear dirección solo si ya hay sucursal)
+    let finalLocation: ClientLocationDto | null = null;
 
-  // Distancia + transporte
-  const lat1 = Number(finalLocation.latitud);
-  const lon1 = Number(finalLocation.longitud);
-  const lat2 = Number(nearest.latitud);
-  const lon2 = Number(nearest.longitud);
-
-  if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
-    toast.error("Coordenadas inválidas para calcular la distancia.");
-    return;
-  }
-
-  const km = calculateDistance(lat1, lon1, lat2, lon2);
-  const transporte = await GetTransportationCostAsync(km);
-
-  const change = method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
-
-  const invoiceReq: InvoiceOrderRequestDto = {
-    idUsuario: ecommerceUserId.toString(),
-    nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
-    registroMaquina: `CRM ${ecommerceUserId}`,
-    noIdentificacion: "",
-    observaciones: "",
-    noPedido: Number(orderId),
-
-    transporte: Number(transporte ?? 0),
-    propina: method === "cash" ? Number(tip) : 0,
-    tipoServicio: 8,
-    idEstado: 15,
-    codSucursal: String(nearest.codSucursal),
-
-    direcciones: {
-      idDireccion: Number(finalLocation.idDireccion),
-      nombre: String(finalLocation.nombre),
-      referencia: String(finalLocation.referencia),
-      descripcion: String(finalLocation.descripcion).trim(),
-      latitud: Number(finalLocation.latitud),
-      longitud: Number(finalLocation.longitud),
-    },
-
-    detPago: {
-      codPago: Number(selectedCurrency.codPago),
-      monto: Number(total),
-      codBanco: String(selectedCurrency.codigo_Banco).trim(),
-      montoC: Number(total),
-      cambio: Number(change),
-      valor_Pagar: Number(total),
-      nomsol: String(selectedCurrency.descripcion_Pago).trim(),
-      registro_maquina: `CRM ${ecommerceUserId}`,
-      codPagoNew: Number(selectedCurrency.codExterno),
-    },
-  };
-
-  try {
-    const res = await createInvoiceAsync(invoiceReq);
-
-    if (res?.success) {
-      if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) {
-        const orderMessage: SendOrderMessage = {
-          conversationId: payload.conversationId,
-          orderId: res.data,
-          userId: payload.userId,
-        };
-
-        await CartService.sendOrderMessage(orderMessage);
-        const existingLog = await fetchByContactId(payload.contactId);
-
-        await UpdatedStatus(existingLog!.id, 3);
-        await UserSessionService.revokeCartTempLink(orderId);
-
-        await dispatch(
-          getProductFromCarAsync({ codCliente: 0, noPedido: payload!.orderId! })
-        ).unwrap();
+    if (locationMode === "existing") {
+      const addr = selectedAddress ?? addressList[0];
+      if (!addr) {
+        toast.error("No hay dirección seleccionada.");
+        return;
       }
+
+      finalLocation = {
+        idDireccion: addr.idDireccion,
+        nombre: addr.nombre,
+        referencia: addr.referencia,
+        descripcion: addr.descripcion,
+        latitud: addr.latitud,
+        longitud: addr.longitud,
+        idUsuario: ecommerceUserId,
+      };
+    } else {
+      const locationPayload: ClientLocationDto = {
+        idDireccion: 0,
+        nombre: billingForm.addressName || billingForm.address,
+        referencia: `${billingForm.city}, ${billingForm.country}`,
+        descripcion: billingForm.address,
+        latitud: coords.latitud,
+        longitud: coords.longitud,
+        idUsuario: ecommerceUserId,
+      };
+
+      const newLocation = await createLocationAsync(locationPayload);
+      if (!newLocation) {
+        toast.error("No fue posible guardar la nueva dirección.");
+        return;
+      }
+      finalLocation = newLocation;
     }
 
-    navigate("/successOrder", { replace: true });
-  } catch (err: any) {
-    toast.error(err.message ?? "Error procesando pago");
-  }
+    if (!finalLocation) {
+      toast.error("No se pudo determinar la dirección final.");
+      return;
+    }
+
+    // Distancia + transporte
+    const lat1 = Number(finalLocation.latitud);
+    const lon1 = Number(finalLocation.longitud);
+    const lat2 = Number(nearest.latitud);
+    const lon2 = Number(nearest.longitud);
+
+    if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
+      toast.error("Coordenadas inválidas para calcular la distancia.");
+      return;
+    }
+
+    const km = calculateDistance(lat1, lon1, lat2, lon2);
+    const transporte = await GetTransportationCostAsync(km);
+
+    const change = method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
+
+    const invoiceReq: InvoiceOrderRequestDto = {
+      idUsuario: ecommerceUserId.toString(),
+      nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
+      registroMaquina: `CRM ${ecommerceUserId}`,
+      noIdentificacion: "",
+      observaciones: "",
+      noPedido: Number(orderId),
+
+      transporte: Number(transporte ?? 0),
+      propina: method === "cash" ? Number(tip) : 0,
+      tipoServicio: 8,
+      idEstado: 15,
+      codSucursal: String(nearest.codSucursal),
+
+      direcciones: {
+        idDireccion: Number(finalLocation.idDireccion),
+        nombre: String(finalLocation.nombre),
+        referencia: String(finalLocation.referencia),
+        descripcion: String(finalLocation.descripcion).trim(),
+        latitud: Number(finalLocation.latitud),
+        longitud: Number(finalLocation.longitud),
+      },
+
+      detPago: {
+        monto: Number(total),
+        codBanco: String(selectedCurrency.codigo_Banco).trim(),
+        montoC: Number(total),
+        cambio: Number(change),
+        valor_Pagar: Number(total),
+        nomsol: String(selectedCurrency.descripcion_Pago).trim(),
+        registro_maquina: `CRM ${ecommerceUserId}`,
+        codPago: Number(selectedCurrency.codExterno),
+        codPagoNew: Number(selectedCurrency.codPago),
+      },
+    };
+
+    try {
+      const res = await createInvoiceAsync(invoiceReq);
+
+      console.log("1")
+      if (res?.success) {
+        if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) {
+
+          const existingLog = await fetchByContactId(payload.contactId);
+
+          ///Actualizar el logcart, a estado completado.
+          //logCart: Igual al numero de pedido.
+          await UpdatedStatus(existingLog!.id, 3);
+          await UserSessionService.revokeCartTempLink(orderId);
+
+          //limpiar el carrito, y pantallas donde se usen.
+          dispatch(setContactCartBadge({ contactId: payload.contactId, hasCart: false, count: 0 }))
+
+          //datos recuperados correcto
+          const resPrintPDF = await PrintDetFacAsync(res.data);
+
+
+          if (resPrintPDF) {
+            const pdfBlob = generateOrdeFacPDFFile(resPrintPDF); // ya devuelve Blob
+
+            if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+              throw new Error("El PDF generado está vacío o inválido.");
+            }
+            // (Opcional) validar cabecera real del PDF: debe iniciar con %PDF-
+            const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
+            const magic = String.fromCharCode(...head);
+            if (magic !== "%PDF-") {
+              throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
+            }
+
+            // const noFactura = String(resPrintPDF.datosGenerales.noFactura ?? "").trim();
+            // const fileName = `Factura-${noFactura || "SN"}.pdf`;
+
+            const noFactura = String(resPrintPDF.DatosGenerales?.NoFactura ?? "").trim();
+            const fileName = `Factura-${noFactura || "SN"}.pdf`;
+
+
+            // usa el type real del blob si viene, si no lo fuerzas
+            const mime = pdfBlob.type || "application/pdf";
+            const file = new File([pdfBlob], fileName, { type: mime });
+
+            await sendMediaEcommerce(payload.conversationId, file, "");
+          }
+
+        }
+
+        navigate("/successOrder", { replace: true });
+      }
+    } catch (err: any) {
+      console.log(err)
+      toast.error(err.message ?? "Error procesando pago");
+      await UserSessionService.revokeCartTempLink(orderId);
+      navigate("/unauthorized", { replace: true });
+    }
   };
 
   return (
@@ -757,6 +642,7 @@ const CheckoutPage: React.FC = () => {
                     type="button"
                     className="checkout-paybtn__back"
                     onClick={goToCart}
+                    disabled={invoiceLoading}
                   >
                     Regresar
                   </button>
@@ -764,8 +650,9 @@ const CheckoutPage: React.FC = () => {
                     type="button"
                     className="checkout-paybtn"
                     onClick={handleGoToLocation}
+                    disabled={invoiceLoading}
                   >
-                    Continuar
+                    {invoiceLoading ? "Cargando" : " Continuar"}
                   </button>
                 </div>
               </div>
@@ -773,95 +660,95 @@ const CheckoutPage: React.FC = () => {
 
             {step === "location" && (
               <div className="checkout-section checkout-section__location">
-                 <div className="checkout-location__container">
-              <h2 className="checkout-section__title">
-                  Selecciona la ubicación y tus datos
-                </h2>
+                <div className="checkout-location__container">
+                  <h2 className="checkout-section__title">
+                    Selecciona la ubicación y tus datos
+                  </h2>
 
-                <div className="checkout-location-mode">
-                  {addressList.length > 0 ? (
-                    <>
-                      <label className="checkout-location-option">
-                        <input
-                          type="radio"
-                          name="locationMode"
-                          value="existing"
-                          checked={locationMode === "existing"}
-                          onChange={() => setLocationMode("existing")}
-                        />
-                        Usar una dirección guardada
-                      </label>
-                      <label className="checkout-location-option">
-                        <input
-                          type="radio"
-                          name="locationMode"
-                          value="new"
-                          checked={locationMode === "new"}
-                          onChange={() => {
-                            setLocationMode("new");
-                            setSelectedAddressId(null);
+                  <div className="checkout-location-mode">
+                    {addressList.length > 0 ? (
+                      <>
+                        <label className="checkout-location-option">
+                          <input
+                            type="radio"
+                            name="locationMode"
+                            value="existing"
+                            checked={locationMode === "existing"}
+                            onChange={() => setLocationMode("existing")}
+                          />
+                          Usar una dirección guardada
+                        </label>
+                        <label className="checkout-location-option">
+                          <input
+                            type="radio"
+                            name="locationMode"
+                            value="new"
+                            checked={locationMode === "new"}
+                            onChange={() => {
+                              setLocationMode("new");
+                              setSelectedAddressId(null);
+                            }}
+                          />
+                          Usar nueva dirección en el mapa
+                        </label>
+                      </>
+                    ) : (
+                      <p>No tienes direcciones guardadas. Selecciona una ubicación en el mapa.</p>
+                    )}
+                  </div>
+
+                  {locationMode === "existing" && addressList.length > 0 && (
+                    <div className="checkout-address-list">
+                      {addressList.map(addr => (
+                        <button
+                          key={addr.idDireccion}
+                          type="button"
+                          className={
+                            selectedAddressId === addr.idDireccion
+                              ? "checkout-address checkout-address--active"
+                              : "checkout-address"
+                          }
+                          onClick={() => {
+                            setSelectedAddressId(addr.idDireccion);
+                            setSelectedCoords({
+                              latitud: addr.latitud,
+                              longitud: addr.longitud,
+                            });
+                            setBillingForm(prev => ({
+                              ...prev,
+                              address: addr.descripcion ?? prev.address,
+                            }));
                           }}
-                        />
-                        Usar nueva dirección en el mapa
-                      </label>
-                    </>
-                  ) : (
-                    <p>No tienes direcciones guardadas. Selecciona una ubicación en el mapa.</p>
+                        >
+                          <span className="checkout-address__name">{addr.nombre}</span>
+                          <span className="checkout-address__description">
+                            {addr.descripcion}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </div>
 
-                {locationMode === "existing" && addressList.length > 0 && (
-                  <div className="checkout-address-list">
-                    {addressList.map(addr => (
-                      <button
-                        key={addr.idDireccion}
-                        type="button"
-                        className={
-                          selectedAddressId === addr.idDireccion
-                            ? "checkout-address checkout-address--active"
-                            : "checkout-address"
-                        }
-                        onClick={() => {
-                          setSelectedAddressId(addr.idDireccion);
-                          setSelectedCoords({
-                            latitud: addr.latitud,
-                            longitud: addr.longitud,
-                          });
-                          setBillingForm(prev => ({
-                            ...prev,
-                            address: addr.descripcion ?? prev.address,
-                          }));
-                        }}
-                      >
-                        <span className="checkout-address__name">{addr.nombre}</span>
-                        <span className="checkout-address__description">
-                          {addr.descripcion}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {locationMode === "existing" && selectedAddress && (
+                    <div className="checkout-current-location">
+                      <p>
+                        <strong>Dirección seleccionada:</strong>
+                      </p>
+                      <p>{selectedAddress.descripcion}</p>
+                    </div>
+                  )}
 
-                {locationMode === "existing" && selectedAddress && (
-                  <div className="checkout-current-location">
-                    <p>
-                      <strong>Dirección seleccionada:</strong>
-                    </p>
-                    <p>{selectedAddress.descripcion}</p>
-                  </div>
-                )}
-
-                {locationMode === "new" && (
-                  <>
-                    <MapPicker
-                      value={selectedCoords}
-                      onChange={handleCoordsChange}
-                    />
-                    <p className="checkout-location__hint">
-                      Haz clic en el mapa para marcar el lugar de entrega.
-                    </p>
-                  </>
-                )}
+                  {locationMode === "new" && (
+                    <>
+                      <MapPicker
+                        value={selectedCoords}
+                        onChange={handleCoordsChange}
+                      />
+                      <p className="checkout-location__hint">
+                        Haz clic en el mapa para marcar el lugar de entrega.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="checkout-grid">
@@ -988,70 +875,64 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <form
-                      className="checkout-cardform"
-                      onSubmit={e => e.preventDefault()}
-                    >
+                    <form className="checkout-cardform" onSubmit={e => e.preventDefault()}>
                       <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="cardNumber">
-                          Número de tarjeta
-                        </label>
+                        <label className="checkout-label" htmlFor="cardNumber">Número de tarjeta</label>
                         <input
                           id="cardNumber"
                           type="text"
                           inputMode="numeric"
+                          autoComplete="cc-number"
                           className="checkout-input"
                           placeholder="1234 5678 9012 3456"
                           value={cardForm.cardNumber}
-                          onChange={handleCardChange}
+                          onChange={onCardNumberChange}
                         />
                       </div>
 
                       <div className="checkout-cardform__row">
                         <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="expiry">
-                            Expiración
-                          </label>
+                          <label className="checkout-label" htmlFor="expiry">Expiración</label>
                           <input
                             id="expiry"
                             type="text"
                             inputMode="numeric"
+                            autoComplete="cc-exp"
                             className="checkout-input"
                             placeholder="MM/AA"
                             value={cardForm.expiry}
-                            onChange={handleCardChange}
+                            onChange={onExpiryChange}
                           />
                         </div>
 
                         <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="cvc">
-                            CVC
-                          </label>
+                          <label className="checkout-label" htmlFor="cvc">CVC</label>
                           <input
                             id="cvc"
                             type="text"
                             inputMode="numeric"
+                            autoComplete="cc-csc"
                             className="checkout-input"
                             placeholder="CVC"
                             value={cardForm.cvc}
-                            onChange={handleCardChange}
+                            onChange={onCvcChange}
                           />
                         </div>
                       </div>
 
                       <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="nameOnCard">
-                          Nombre en tarjeta
-                        </label>
+                        <label className="checkout-label" htmlFor="nameOnCard">Nombre en tarjeta</label>
                         <input
                           id="nameOnCard"
                           type="text"
+                          autoComplete="cc-name"
                           className="checkout-input"
                           value={cardForm.nameOnCard}
-                          onChange={handleCardChange}
+                          onChange={onNameChange}
                         />
                       </div>
                     </form>
+
                   </>
                 )}
 
@@ -1116,20 +997,21 @@ const CheckoutPage: React.FC = () => {
                 <div className="checkout-actionBtn">
                   <button
                     type="button"
-                    disabled={invoiceLoading}
+                    disabled={loadingInvoice}
                     className="checkout-paybtn__back"
                     onClick={() => setStep("location")}
                   >
                     Regresar
                   </button>
 
+
                   <button
                     type="button"
                     className="checkout-paybtn"
                     onClick={handlePayNow}
-                    disabled={invoiceLoading}
+                    disabled={loadingInvoice}
                   >
-                    {invoiceLoading ? "Procesando..." : "Pagar ahora"}
+                    {loadingInvoice ? "Procesando..." : "Pagar ahora"}
                   </button>
                 </div>
               </div>
