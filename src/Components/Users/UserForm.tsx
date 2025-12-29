@@ -43,6 +43,7 @@ export default function UserForm({
     isActive: true,
     roleIds: [] as number[],
     sendWelcomeEmail: false,
+    incognitoMode: false
   })
 
 
@@ -63,6 +64,7 @@ export default function UserForm({
       imageUrl: initialData.imageUrl || '',
       roleIds: initialData.roles.map(r => r.roleId),
       sendWelcomeEmail: false,
+      incognitoMode: initialData.incognitoMode
     });
   }
 }, [initialData]);
@@ -124,11 +126,11 @@ export default function UserForm({
     payload.append('identifier', formData.identifier)
     payload.append('isActive', String(formData.isActive))
     payload.append('sendWelcomeEmail', String(formData.sendWelcomeEmail))
+    payload.append('incognitoMode', String(formData.incognitoMode))
     formData.roleIds.forEach(id => payload.append('roleIds', String(id)))
     if (selectedFile) payload.append('imageFile', selectedFile)
     onSubmit(payload)
   }
-
 
    const handleUploadOnlyImage = async () => {
     if (!initialData?.userId) {
@@ -315,6 +317,19 @@ export default function UserForm({
                 Usuario activo
               </label>
             )}
+
+            {/* Modo incognito. false, no se envia en en los mensajes al cliente el nombre */}
+              <label>
+                <input
+                  type="checkbox"
+                  name="incognitoMode"
+                  checked={formData.incognitoMode}
+                  onChange={handleCheckboxChange}
+                  disabled={isViewing}
+                />
+                Modo Incognito
+              </label>
+
             <label>
               <input
                 type="checkbox"

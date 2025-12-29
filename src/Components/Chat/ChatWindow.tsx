@@ -266,7 +266,7 @@ export const ChatWindow: React.FC<Props> = ({
 
   const getReplyAuthor = (rm: any) => {
     if (!rm) return "Mensaje";
-    return rm.senderContactId ? rm.senderContactName || "Cliente" : rm.senderUserName || "Sistema";
+    return rm.senderContactId ? rm.senderContactName || "Cliente" : !rm.incognitoMode ? rm.senderUserName || ""  : "";
   };
 
   const getReplyPreview = (rm: any) => {
@@ -424,7 +424,7 @@ export const ChatWindow: React.FC<Props> = ({
                 >
                   {showSender && !isCurrentUser && (
                     <div className="chat-window__message-sender">
-                      {m.senderContactId ? m.senderContactName || "Cliente" : m.senderUserName || "Sistema"}
+                      {m.senderContactId ? m.senderContactName || "Cliente" : !m.incognitoMode ? m.senderUserName || ""  : ""}
                     </div>
                   )}
 

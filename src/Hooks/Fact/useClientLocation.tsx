@@ -52,6 +52,28 @@ export const useClientLocation = () =>{
             setLoading(false)
         }
     }, [])
+
+
+    const GetTransCostAsync = useCallback(async (req: number)=>{
+        setLoading(false)
+        setError(null)
+
+        try{
+            const res = await ClientLocationService.GetTranspCost(req);
+            if(res.success){
+                return res;
+                // setClientLocation(res.data)
+                // toast.success(res.message)
+            }else{
+                toast.error(res.message)
+            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }catch(err: any){
+            setError(err)
+        }finally{
+            setLoading(false)
+        }
+    }, [])
     
     return{
         clientLocation,
@@ -59,6 +81,7 @@ export const useClientLocation = () =>{
         loading,
         error,
         CreateAsync,
-        GetAsync
+        GetAsync,
+        GetTransCostAsync
     }
 }

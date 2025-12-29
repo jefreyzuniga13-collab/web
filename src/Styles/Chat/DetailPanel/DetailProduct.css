@@ -84,10 +84,10 @@
 
 .detail-product__actions{
     display: flex;
-    gap: 4px;
-    justify-content: start;
+    gap: 8px;
+    justify-content: right;
     align-items: start;
-    flex: 1;
+    flex: .5;
     max-height: fit-content;
 }
 
@@ -144,9 +144,17 @@
     display: flex;
     gap: 12px;
     padding: 10px 15px;
+    margin: 0 ;
 }
+
 .button-text{
     font-size: var(--font-size-sm);
+}
+
+.button-sendProductDetailt{
+    background-color: var(--color-gray-700);
+    color: var(--color-gray-800);
+    margin: 0;
 }
 .productTab-buyButton:hover{
     cursor: pointer;

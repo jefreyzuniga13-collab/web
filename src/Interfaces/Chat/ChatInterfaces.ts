@@ -81,6 +81,7 @@ export interface MessageDto {
   senderContactId?: number;
   senderContactName?: string;
   senderClientName?: string;
+  incognitoMode?: boolean;
   isIncoming: boolean;
   content?: string;
   externalId: string;

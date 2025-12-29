@@ -211,7 +211,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
             </div>
             
             <div className="cart-totals__row cart-totals__row--total">
-              <span className="cart-totals__label">Total (Sin envío)</span>
+              <span className="cart-totals__label">Total (Más Envío)</span>
               <span className="cart-totals__value cart-totals__value--strong">
                 {firstSummaryItem
                   ? firstSummaryItem.total?.toLocaleString(

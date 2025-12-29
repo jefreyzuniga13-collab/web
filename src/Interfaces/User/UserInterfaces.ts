@@ -13,6 +13,7 @@ export interface User {
   clientType: string | null;
   lastOnline: string | null;
   isOnline: boolean;
+  incognitoMode: boolean
   roles: Role[];
 }
 
@@ -49,6 +50,7 @@ export interface CreateUserRequest {
   roleIds: number[];
   imageUrl?: string;
   sendWelcomeEmail?: boolean;
+  incognitoMode?: boolean
 }
 
 export interface UpdateUserRequest {
@@ -61,6 +63,7 @@ export interface UpdateUserRequest {
   newPassword?: string;
   imageUrl?: string;
   roleIds: number[];
+  incognitoMode?: boolean
 }
 
 export interface UserHistoryItem {

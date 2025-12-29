@@ -17,6 +17,7 @@ export const useUserEcommerce = () =>{
 
             if(res.success){
                 setUserEcommerce(res.data)
+                return res.data;
                 // toast.success(res.message);
             }else{
                 toast.error(res.message);

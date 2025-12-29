@@ -9,6 +9,8 @@ import {
   // sendMedia, 
   SendMediaECommerceFromUrlAsync, sendText } from "@/Services/MessageService"
 import "@/Styles/Chat/DetailPanel/ProductPCGTab.css"
+import { toast } from "react-toastify"
+import { AiOutlineLoading3Quarters } from "react-icons/ai"
 // import axios from "axios"
 
 interface Props {
@@ -34,18 +36,29 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
     
     mods.forEach((mod) => {
       const required = mod.esRequerido === "S" ? " (requerido)" : ""
-      const multiple = mod.esMultipleSeleccion === "S" ? " (múltiple)" : ""
-      const header = `\n${mod.descripcionMod}${required}${multiple}:`
+      // const multiple = mod.esMultipleSeleccion === "S" ? " (múltiple)" : ""
+      const header = `\n${mod.descripcionMod}${required}$:`
+      // {multiple}:`
       const opciones = mod.listOpciones
         .map((op) => {
           const precio = op.precioVenta > 0 ? ` - ${op.precioVenta.toFixed(2)}` : ""
           return `• ${op.descripcionOp}${precio}`
         })
         .join("\n")
-      lines.push(`${header}\n${opciones}`)
+
+
+        const optionMessage = `${header}\n${opciones}`;
+            
+            if(optionMessage.length <= 1024){
+                   lines.push(optionMessage)
+            }
     })
 
-    if (!lines.length) return ""
+   if (!lines.length){
+         toast.warn("El texto permitido para la imagen es de 1024 caractares");
+          return ""
+    }
+       
     return `\n\nOpciones:\n${lines.join("\n")}`
   }
 
@@ -71,20 +84,6 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
 
       const caption = `${parts.join("\n")}${modifiersMsg}`.trim()
       if (!caption) return
-
-
-
-      // if (prod.imagen) {
-      //     const response = await axios
-      //     .get(prod.imagen, { responseType: "blob" })
-      //     const blob = response.data as Blob
-          
-      //     const mime = blob.type || "image/png"
-      //     const ext = mime.split("/")[1] || "png"
-      //     const file = new File([blob], `producto-${prod.id}.${ext}`, { type: mime })
-      //     await sendMedia(conversationId, file, caption)
-      // } 
-      
       
       if (prod.imagen) {
           await SendMediaECommerceFromUrlAsync(conversationId, {
@@ -138,7 +137,7 @@ export const ProductPCGTab = ({ prod, onClick, conversationId }: Props) => {
         disabled={sending}
         onClick={handleSendProductMessage}
       >
-        <IoMdSend fontSize={12} className="product-row__iconBtn" />
+        {sending ? <AiOutlineLoading3Quarters fontSize={12}  className="product-row__iconBtn" /> :         <IoMdSend fontSize={12} className="product-row__iconBtn" />}
       </Button>
     </div>
   )

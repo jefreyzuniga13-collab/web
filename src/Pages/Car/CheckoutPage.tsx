@@ -11,28 +11,18 @@ import type { ClientLocationDto } from "@/Interfaces/Fact/ClientLocationInterfac
 import type {
   InvoiceOrderRequestDto,
   NearestBranchRequestDto,
-  Currencyto,
-  // SendOrderMessage
+  Currencyto
 } from "@/Interfaces/Fact/InvoiceOrderInterface";
-// import { CartService } from "@/Services/Cart/CartService";
 import { toast } from "react-toastify";
 import "@/Styles/Cart/CheckoutPage.css";
 import * as turf from "@turf/turf";
-import {
-  selectCarPCG,
-  getProductFromCarAsync,
-} from "@/Context/Slices/Cart/cartSlice";
-import {
-  useDispatch,
-  useSelector,
-  type TypedUseSelectorHook,
-} from "react-redux";
+import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Cart/cartSlice";
+import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import type { AppDispatch, RootState } from "@/Context";
 import { UserSessionService } from "@/Services/auth/UserSessionService";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
 import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
-// import { useChatWindow } from "@/Hooks/Chat/useChatWindow";
 import { sendMediaEcommerce } from "@/Services/MessageService";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
@@ -74,18 +64,19 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  // const [loadingInvoice, setLoadingInvoice] = useState(false)
 
-  const payload = location.state?.payload as {
-    fullName: string;
-    email: string;
-    ecommerceUserId: number;
-    expiresAtUtc: string;
-    orderId: number;
-    conversationId: number;
-    contactId: number;
-    userId: number;
-  } | undefined;
+  const payload = location.state?.payload as
+    | {
+        fullName: string;
+        email: string;
+        ecommerceUserId: number;
+        expiresAtUtc: string;
+        orderId: number;
+        conversationId: number;
+        contactId: number;
+        userId: number;
+      }
+    | undefined;
 
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
@@ -105,10 +96,9 @@ const CheckoutPage: React.FC = () => {
     setEcommerceUserId(payload.ecommerceUserId);
     setOrderId(payload.orderId);
     setUserFullName(payload.fullName);
-    // setUserEmail(payload.email);
   }, [payload, navigate]);
 
-  const [step, setStep] = useState<CheckoutStep>("currency");
+  const [step, setStep] = useState<CheckoutStep>("location");
   const [method, setMethod] = useState<PaymentMethod>("card");
 
   const [billingForm, setBillingForm] = useState<BillingFormState>({
@@ -118,23 +108,30 @@ const CheckoutPage: React.FC = () => {
     country: "NI",
     city: "",
     address: "",
-    addressName: "",
+    addressName: ""
   });
 
   const [cardForm, setCardForm] = useState<CardFormState>({
     cardNumber: "",
     expiry: "",
     cvc: "",
-    nameOnCard: "",
+    nameOnCard: ""
   });
 
   const [selectedCoords, setSelectedCoords] = useState<Coords | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(null);
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [tip, setTip] = useState<number>(0);
-
   const [locationMode, setLocationMode] = useState<LocationMode>("new");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+
+  const [transpCost, setTranspCost] = useState<number>(0);
+  const [nearestBranch, setNearestBranch] = useState<any | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number>(0);
+  const [lastCoordsKey, setLastCoordsKey] = useState<string>("");
+
+  const [payNowLock, setPayNowLock] = useState<boolean>(false);
+  const [payNowCooldown, setPayNowCooldown] = useState<number>(0);
 
   const dispatch = useAppDispatch();
   const carPCG = useAppSelector(selectCarPCG);
@@ -146,19 +143,12 @@ const CheckoutPage: React.FC = () => {
     GetTransportationCostAsync,
     GetNearestBranchAsync,
     loading: invoiceLoading,
-    PrintDetFacAsync,
-    loadingInvoice
+    PrintDetFacAsync
   } = useInvoiceOrder();
 
+  const { fetchByContactId, UpdatedStatus } = useLogCart();
 
-  const { fetchByContactId, UpdatedStatus } = useLogCart()
-
-  const {
-    CreateAsync: createLocationAsync,
-    GetAsync,
-    clientLocation,
-    // loading: locationLoading,
-  } = useClientLocation();
+  const { CreateAsync: createLocationAsync, GetAsync, clientLocation } = useClientLocation();
 
   useEffect(() => {
     if (!orderId || !ecommerceUserId || !payload?.orderId) return;
@@ -168,6 +158,7 @@ const CheckoutPage: React.FC = () => {
     const loadCart = async () => {
       try {
         if (!payload?.orderId) return;
+
         await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId })).unwrap();
         if (cancelled) return;
 
@@ -176,7 +167,7 @@ const CheckoutPage: React.FC = () => {
 
         await GetAsync(ecommerceUserId);
       } catch {
-        // toast.error("No fue posible cargar datos del checkout.")
+        //
       }
     };
 
@@ -193,18 +184,13 @@ const CheckoutPage: React.FC = () => {
       setBillingForm(prev => ({
         ...prev,
         firstName: parts[0] ?? "",
-        lastName: parts.slice(1).join(" ") ?? "",
+        lastName: parts.slice(1).join(" ") ?? ""
       }));
     }
   }, [userFullName]);
 
   const addressList = useMemo(
-    () =>
-      Array.isArray(clientLocation)
-        ? clientLocation
-        : clientLocation
-          ? [clientLocation]
-          : [],
+    () => (Array.isArray(clientLocation) ? clientLocation : clientLocation ? [clientLocation] : []),
     [clientLocation]
   );
 
@@ -223,7 +209,7 @@ const CheckoutPage: React.FC = () => {
       setSelectedCoords({ latitud: first.latitud, longitud: first.longitud });
       setBillingForm(prev => ({
         ...prev,
-        address: first.descripcion ?? prev.address,
+        address: first.descripcion ?? prev.address
       }));
     } else if (addressList.length === 0 && locationMode === "existing") {
       setLocationMode("new");
@@ -244,33 +230,48 @@ const CheckoutPage: React.FC = () => {
       setBillingForm(prev => ({
         ...prev,
         country: data.address?.country ?? prev.country,
-        city:
-          data.address?.city ??
-          data.address?.town ??
-          data.address?.village ??
-          prev.city,
-        address: data.display_name ?? prev.address,
+        city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
+        address: data.display_name ?? prev.address
       }));
     };
 
-    fetchAddress();
+    void fetchAddress();
   }, [selectedCoords, locationMode]);
 
-  // const isSubmitting = invoiceLoading || locationLoading;
+  useEffect(() => {
+    if (locationMode === "new") {
+      setSelectedAddressId(null);
+      setNearestBranch(null);
+      setDistanceKm(0);
+      setTranspCost(0);
+      setLastCoordsKey("");
+    } else {
+      setSelectedCoords(null);
+      setNearestBranch(null);
+      setDistanceKm(0);
+      setTranspCost(0);
+      setLastCoordsKey("");
+    }
+  }, [locationMode]);
 
-  const goToCart = () => navigate("/cart");
+  useEffect(() => {
+    if (payNowCooldown <= 0) return;
+
+    const t = window.setInterval(() => {
+      setPayNowCooldown(s => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+
+    return () => window.clearInterval(t);
+  }, [payNowCooldown]);
 
   const toastError = (msg: string) => {
-    toast.error(msg)
+    toast.error(msg);
     return false;
   };
 
   const validateBillingForm = () => {
     if (!billingForm.firstName.trim()) return toastError("El nombre es obligatorio.");
     if (!billingForm.lastName.trim()) return toastError("Los apellidos son obligatorios.");
-    // if (!billingForm.email.trim()) return toastError("El correo es obligatorio.");
-    // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingForm.email.trim()))
-    //   return toastError("Correo electrónico inválido.");
     if (!billingForm.city.trim()) return toastError("La ciudad es obligatoria.");
     if (!billingForm.address.trim()) return toastError("La dirección es obligatoria.");
     if (locationMode === "new" && !billingForm.addressName.trim())
@@ -284,8 +285,7 @@ const CheckoutPage: React.FC = () => {
       return toastError("Número de tarjeta inválido.");
     if (!/^\d{2}\/\d{2}$/.test(cardForm.expiry.trim()))
       return toastError("Formato expiración MM/AA inválido.");
-    if (!/^\d{3,4}$/.test(cardForm.cvc.trim()))
-      return toastError("CVC inválido.");
+    if (!/^\d{3,4}$/.test(cardForm.cvc.trim())) return toastError("CVC inválido.");
     if (!cardForm.nameOnCard.trim()) return toastError("Nombre en tarjeta obligatorio.");
     return true;
   };
@@ -304,44 +304,39 @@ const CheckoutPage: React.FC = () => {
     setBillingForm(prev => ({ ...prev, [id]: value }));
   };
 
-  const onlyDigits = (s: string) => s.replace(/\D/g, "")
+  const onlyDigits = (s: string) => s.replace(/\D/g, "");
 
   const formatCardNumber = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 19) // hasta 19 (algunas tarjetas)
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim()
-  }
+    const digits = onlyDigits(value).slice(0, 19);
+    return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+  };
 
   const formatExpiry = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 4) // MMYY
-    if (digits.length <= 2) return digits
-    return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  }
+    const digits = onlyDigits(value).slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  };
 
   const formatCvc = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 4) // 3 o 4
-    return digits
-  }
+    const digits = onlyDigits(value).slice(0, 4);
+    return digits;
+  };
 
   const onCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm(p => ({ ...p, cardNumber: formatCardNumber(e.target.value) }))
-  }
+    setCardForm(p => ({ ...p, cardNumber: formatCardNumber(e.target.value) }));
+  };
 
   const onExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm(p => ({ ...p, expiry: formatExpiry(e.target.value) }))
-  }
+    setCardForm(p => ({ ...p, expiry: formatExpiry(e.target.value) }));
+  };
 
   const onCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm(p => ({ ...p, cvc: formatCvc(e.target.value) }))
-  }
+    setCardForm(p => ({ ...p, cvc: formatCvc(e.target.value) }));
+  };
 
   const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm(p => ({ ...p, nameOnCard: e.target.value }))
-  }
-
-  // const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { id, value } = e.target;
-  //   setCardForm(prev => ({ ...prev, [id]: value }));
-  // };
+    setCardForm(p => ({ ...p, nameOnCard: e.target.value }));
+  };
 
   const handleCoordsChange = (coords: Coords) => setSelectedCoords(coords);
 
@@ -353,12 +348,68 @@ const CheckoutPage: React.FC = () => {
     setMethod(isCash ? "cash" : "card");
   };
 
-  const handleGoToLocation = () => {
-    if (!selectedCurrency) {
-      toast.error("Seleccione método de pago.");
-      return;
+  const getCoordsForFlow = (): Coords | null => {
+    if (locationMode === "existing") {
+      const addr = selectedAddress ?? addressList[0];
+      if (!addr) return null;
+      return { latitud: Number(addr.latitud), longitud: Number(addr.longitud) };
     }
-    setStep("location");
+    if (!selectedCoords) return null;
+    return { latitud: Number(selectedCoords.latitud), longitud: Number(selectedCoords.longitud) };
+  };
+
+  const coordsKey = (c: Coords) =>
+    `${Number(c.latitud).toFixed(6)}|${Number(c.longitud).toFixed(6)}`;
+
+  const computeTransportPreview = async (coords: Coords) => {
+    const key = coordsKey(coords);
+
+    if (key === lastCoordsKey && nearestBranch && transpCost >= 0) {
+      return { nearest: nearestBranch, cost: transpCost, km: distanceKm };
+    }
+
+    const branchReq: NearestBranchRequestDto = {
+      latitud: coords.latitud,
+      longitud: coords.longitud
+    };
+
+    const branchResp = await GetNearestBranchAsync(branchReq);
+    const nearest = Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
+
+    if (!nearest) return null;
+
+    const lat1 = Number(coords.latitud);
+    const lon1 = Number(coords.longitud);
+    const lat2 = Number(nearest.latitud);
+    const lon2 = Number(nearest.longitud);
+
+    if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) return null;
+
+    const km = calculateDistance(lat1, lon1, lat2, lon2);
+    const cost = await GetTransportationCostAsync(km);
+
+    setNearestBranch(nearest);
+    setDistanceKm(km);
+    setTranspCost(Number(cost ?? 0));
+    setLastCoordsKey(key);
+
+    return { nearest, cost: Number(cost ?? 0), km };
+  };
+
+  const handleGoToCurrency = async () => {
+    if (!validateLocation()) return;
+        if (!validateBillingForm()) return;
+
+    const coords = getCoordsForFlow();
+    if (!coords) return toastError("Debes seleccionar la ubicación.");
+
+    try {
+      const preview = await computeTransportPreview(coords);
+      if (!preview) return toastError("No fue posible calcular el costo de transporte.");
+      setStep("currency");
+    } catch {
+      toastError("No fue posible calcular el costo de transporte.");
+    }
   };
 
   const handleGoToPayment = () => {
@@ -367,225 +418,169 @@ const CheckoutPage: React.FC = () => {
     setStep("paymentMethod");
   };
 
-
   const handlePayNow = async () => {
-    if (!carPCG || carPCG.length === 0) {
-      toast.error("El carrito está vacío.");
-      return;
-    }
+    if (payNowLock || payNowCooldown > 0) return;
 
-    if (!selectedCurrency) {
-      toast.error("Debe seleccionar un método de pago.");
-      return;
-    }
-
-    if (!validateBillingForm()) return;
-    if (!validateLocation()) return;
-
-    if (method === "card" && !validateCardForm()) return;
-
-    const cart = carPCG[0];
-    const total = cart.total ?? 0;
-
-    if (method === "cash") {
-      if (cashAmount <= 0) return toastError("El monto en efectivo debe ser mayor a 0.");
-      if (tip > cashAmount) return toastError("La propina no puede ser mayor al monto ingresado.");
-
-      const disponible = cashAmount - tip;
-      if (disponible < total) {
-        return toastError(
-          `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
-        );
-      }
-    }
-
-    // Primero sacor coords SIN crear dirección
-    let coords: Coords;
-
-    if (locationMode === "existing") {
-      const addr = selectedAddress ?? addressList[0];
-      if (!addr) {
-        toast.error("No hay dirección seleccionada.");
-        return;
-      }
-      coords = { latitud: addr.latitud, longitud: addr.longitud };
-    } else {
-      if (!selectedCoords) {
-        toast.error("Debes seleccionar la ubicación.");
-        return;
-      }
-      coords = selectedCoords;
-    }
-
-    // Buscar sucursal cercana antes de crear la dirección (si es nueva)
-    const branchReq: NearestBranchRequestDto = {
-      latitud: coords.latitud,
-      longitud: coords.longitud,
-    };
-
-    const branchResp = await GetNearestBranchAsync(branchReq);
-    const nearest =
-      Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
-
-    if (!nearest) {
-      toast.error("No hay sucursal cercana disponible.");
-      return;
-    }
-
-    //  Ahora sí determino finalLocation (crear dirección solo si ya hay sucursal)
-    let finalLocation: ClientLocationDto | null = null;
-
-    if (locationMode === "existing") {
-      const addr = selectedAddress ?? addressList[0];
-      if (!addr) {
-        toast.error("No hay dirección seleccionada.");
-        return;
-      }
-
-      finalLocation = {
-        idDireccion: addr.idDireccion,
-        nombre: addr.nombre,
-        referencia: addr.referencia,
-        descripcion: addr.descripcion,
-        latitud: addr.latitud,
-        longitud: addr.longitud,
-        idUsuario: ecommerceUserId,
-      };
-    } else {
-      const locationPayload: ClientLocationDto = {
-        idDireccion: 0,
-        nombre: billingForm.addressName || billingForm.address,
-        referencia: `${billingForm.city}, ${billingForm.country}`,
-        descripcion: billingForm.address,
-        latitud: coords.latitud,
-        longitud: coords.longitud,
-        idUsuario: ecommerceUserId,
-      };
-
-      const newLocation = await createLocationAsync(locationPayload);
-      if (!newLocation) {
-        toast.error("No fue posible guardar la nueva dirección.");
-        return;
-      }
-      finalLocation = newLocation;
-    }
-
-    if (!finalLocation) {
-      toast.error("No se pudo determinar la dirección final.");
-      return;
-    }
-
-    // Distancia + transporte
-    const lat1 = Number(finalLocation.latitud);
-    const lon1 = Number(finalLocation.longitud);
-    const lat2 = Number(nearest.latitud);
-    const lon2 = Number(nearest.longitud);
-
-    if ([lat1, lon1, lat2, lon2].some(v => Number.isNaN(v))) {
-      toast.error("Coordenadas inválidas para calcular la distancia.");
-      return;
-    }
-
-    const km = calculateDistance(lat1, lon1, lat2, lon2);
-    const transporte = await GetTransportationCostAsync(km);
-
-    const change = method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
-
-    const invoiceReq: InvoiceOrderRequestDto = {
-      idUsuario: ecommerceUserId.toString(),
-      nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
-      registroMaquina: `CRM ${ecommerceUserId}`,
-      noIdentificacion: "",
-      observaciones: "",
-      noPedido: Number(orderId),
-
-      transporte: Number(transporte ?? 0),
-      propina: method === "cash" ? Number(tip) : 0,
-      tipoServicio: 8,
-      idEstado: 15,
-      codSucursal: String(nearest.codSucursal),
-
-      direcciones: {
-        idDireccion: Number(finalLocation.idDireccion),
-        nombre: String(finalLocation.nombre),
-        referencia: String(finalLocation.referencia),
-        descripcion: String(finalLocation.descripcion).trim(),
-        latitud: Number(finalLocation.latitud),
-        longitud: Number(finalLocation.longitud),
-      },
-
-      detPago: {
-        monto: Number(total),
-        codBanco: String(selectedCurrency.codigo_Banco).trim(),
-        montoC: Number(total),
-        cambio: Number(change),
-        valor_Pagar: Number(total),
-        nomsol: String(selectedCurrency.descripcion_Pago).trim(),
-        registro_maquina: `CRM ${ecommerceUserId}`,
-        codPago: Number(selectedCurrency.codExterno),
-        codPagoNew: Number(selectedCurrency.codPago),
-      },
-    };
+    setPayNowLock(true);
+    setPayNowCooldown(5);
 
     try {
+      if (!carPCG || carPCG.length === 0) return void toastError("El carrito está vacío.");
+      if (!selectedCurrency) return void toastError("Debe seleccionar un método de pago.");
+      if (!validateBillingForm()) return;
+      if (!validateLocation()) return;
+      if (method === "card" && !validateCardForm()) return;
+
+      const cart = carPCG[0];
+      const total = cart.total ?? 0;
+
+      if (method === "cash") {
+        if (cashAmount <= 0) return void toastError("El monto en efectivo debe ser mayor a 0.");
+        if (tip > cashAmount) return void toastError("La propina no puede ser mayor al monto ingresado.");
+
+        const disponible = cashAmount - tip;
+        if (disponible < total) {
+          return void toastError(
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+          );
+        }
+      }
+
+      const coords = getCoordsForFlow();
+      if (!coords) return void toastError("Debes seleccionar la ubicación.");
+
+      const preview = await computeTransportPreview(coords);
+      if (!preview?.nearest) return void toastError("No hay sucursal cercana disponible.");
+
+      const nearest = preview.nearest;
+      const transporte = Number(preview.cost ?? 0);
+
+      let finalLocation: ClientLocationDto | null = null;
+
+      if (locationMode === "existing") {
+        const addr = selectedAddress ?? addressList[0];
+        if (!addr) return void toastError("No hay dirección seleccionada.");
+
+        finalLocation = {
+          idDireccion: addr.idDireccion,
+          nombre: addr.nombre,
+          referencia: addr.referencia,
+          descripcion: addr.descripcion,
+          latitud: addr.latitud,
+          longitud: addr.longitud,
+          idUsuario: ecommerceUserId
+        };
+      } else {
+        const locationPayload: ClientLocationDto = {
+          idDireccion: 0,
+          nombre: billingForm.addressName || billingForm.address,
+          referencia: `${billingForm.city}, ${billingForm.country}`,
+          descripcion: billingForm.address,
+          latitud: coords.latitud,
+          longitud: coords.longitud,
+          idUsuario: ecommerceUserId
+        };
+
+        const newLocation = await createLocationAsync(locationPayload);
+        if (!newLocation) return void toastError("No fue posible guardar la nueva dirección.");
+        finalLocation = newLocation;
+      }
+
+      if (!finalLocation) return void toastError("No se pudo determinar la dirección final.");
+
+      const change = method === "cash" ? Math.max(cashAmount - total - tip, 0) : 0;
+
+      const invoiceReq: InvoiceOrderRequestDto = {
+        idUsuario: ecommerceUserId.toString(),
+        nombrede: `${billingForm.firstName} ${billingForm.lastName}`,
+        registroMaquina: `CRM ${ecommerceUserId}`,
+        noIdentificacion: "",
+        observaciones: "",
+        noPedido: Number(orderId),
+
+        transporte: Number(transporte ?? 0),
+        propina: method === "cash" ? Number(tip) : 0,
+        tipoServicio: 8,
+        idEstado: 15,
+        codSucursal: String(nearest.codSucursal),
+
+        direcciones: {
+          idDireccion: Number(finalLocation.idDireccion),
+          nombre: String(finalLocation.nombre),
+          referencia: String(finalLocation.referencia),
+          descripcion: String(finalLocation.descripcion).trim(),
+          latitud: Number(finalLocation.latitud),
+          longitud: Number(finalLocation.longitud)
+        },
+
+        detPago: {
+          monto: Number(total + transpCost + tip),
+          codBanco: String(selectedCurrency.codigo_Banco).trim(),
+          montoC: Number(total + transpCost + tip),
+          cambio: Number(change),
+          valor_Pagar: Number(total + transpCost + tip),
+          nomsol: String(selectedCurrency.descripcion_Pago).trim(),
+          registro_maquina: `CRM ${ecommerceUserId}`,
+          codPago: Number(selectedCurrency.codExterno),
+          codPagoNew: Number(selectedCurrency.codPago)
+        }
+      };
+
       const res = await createInvoiceAsync(invoiceReq);
 
-      console.log("1")
       if (res?.success) {
-        if (payload != null && payload.conversationId > 0 && payload.orderId > 0 && payload.contactId > 0) {
-
+        if (
+          payload != null &&
+          payload.conversationId > 0 &&
+          payload.orderId > 0 &&
+          payload.contactId > 0
+        ) {
           const existingLog = await fetchByContactId(payload.contactId);
 
-          ///Actualizar el logcart, a estado completado.
-          //logCart: Igual al numero de pedido.
           await UpdatedStatus(existingLog!.id, 3);
           await UserSessionService.revokeCartTempLink(orderId);
 
-          //limpiar el carrito, y pantallas donde se usen.
-          dispatch(setContactCartBadge({ contactId: payload.contactId, hasCart: false, count: 0 }))
+          dispatch(setContactCartBadge({ contactId: payload.contactId, hasCart: false, count: 0 }));
 
-          //datos recuperados correcto
           const resPrintPDF = await PrintDetFacAsync(res.data);
 
-
           if (resPrintPDF) {
-            const pdfBlob = generateOrdeFacPDFFile(resPrintPDF); // ya devuelve Blob
+            const pdfBlob = generateOrdeFacPDFFile(resPrintPDF);
 
             if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
               throw new Error("El PDF generado está vacío o inválido.");
             }
-            // (Opcional) validar cabecera real del PDF: debe iniciar con %PDF-
+
             const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
             const magic = String.fromCharCode(...head);
             if (magic !== "%PDF-") {
               throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
             }
 
-            // const noFactura = String(resPrintPDF.datosGenerales.noFactura ?? "").trim();
-            // const fileName = `Factura-${noFactura || "SN"}.pdf`;
-
             const noFactura = String(resPrintPDF.DatosGenerales?.NoFactura ?? "").trim();
             const fileName = `Factura-${noFactura || "SN"}.pdf`;
 
-
-            // usa el type real del blob si viene, si no lo fuerzas
             const mime = pdfBlob.type || "application/pdf";
             const file = new File([pdfBlob], fileName, { type: mime });
 
             await sendMediaEcommerce(payload.conversationId, file, "");
           }
-
         }
 
         navigate("/successOrder", { replace: true });
       }
     } catch (err: any) {
-      console.log(err)
       toast.error(err.message ?? "Error procesando pago");
       await UserSessionService.revokeCartTempLink(orderId);
       navigate("/unauthorized", { replace: true });
+    } finally {
+      window.setTimeout(() => {
+        setPayNowLock(false);
+      }, 500);
     }
   };
+
+  const payNowDisabled = payNowLock || payNowCooldown > 0;
 
   return (
     <section className="checkout-page">
@@ -594,76 +589,10 @@ const CheckoutPage: React.FC = () => {
 
         <div className="checkout-main">
           <div className="checkout-left">
-            {step === "currency" && (
-              <div className="checkout-section">
-                <h2 className="checkout-section__title">
-                  Selecciona cómo deseas pagar
-                </h2>
-
-                <div className="checkout-methods-list">
-                  {currency.map(item => (
-                    <button
-                      key={item.codPago}
-                      type="button"
-                      className={
-                        selectedCurrency?.codPago === item.codPago
-                          ? "checkout-method checkout-method--active"
-                          : "checkout-method"
-                      }
-                      onClick={() => handleSelectCurrency(item)}
-                    >
-                      <div className="checkout-method__left">
-                        <span className="checkout-radio">
-                          <span
-                            className={
-                              selectedCurrency?.codPago === item.codPago
-                                ? "checkout-radio__dot checkout-radio__dot--active"
-                                : "checkout-radio__dot"
-                            }
-                          />
-                        </span>
-                        <span className="checkout-method__label">
-                          {item.descripcion_Pago}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {selectedCurrency && (
-                  <div className="checkout-selected-currency">
-                    <p>Método seleccionado:</p>
-                    <strong>{selectedCurrency.descripcion_Pago}</strong>
-                  </div>
-                )}
-
-                <div className="checkout-actionBtn">
-                  <button
-                    type="button"
-                    className="checkout-paybtn__back"
-                    onClick={goToCart}
-                    disabled={invoiceLoading}
-                  >
-                    Regresar
-                  </button>
-                  <button
-                    type="button"
-                    className="checkout-paybtn"
-                    onClick={handleGoToLocation}
-                    disabled={invoiceLoading}
-                  >
-                    {invoiceLoading ? "Cargando" : " Continuar"}
-                  </button>
-                </div>
-              </div>
-            )}
-
             {step === "location" && (
               <div className="checkout-section checkout-section__location">
                 <div className="checkout-location__container">
-                  <h2 className="checkout-section__title">
-                    Selecciona la ubicación y tus datos
-                  </h2>
+                  <h2 className="checkout-section__title">Selecciona la ubicación y tus datos</h2>
 
                   <div className="checkout-location-mode">
                     {addressList.length > 0 ? (
@@ -710,20 +639,15 @@ const CheckoutPage: React.FC = () => {
                           }
                           onClick={() => {
                             setSelectedAddressId(addr.idDireccion);
-                            setSelectedCoords({
-                              latitud: addr.latitud,
-                              longitud: addr.longitud,
-                            });
+                            setSelectedCoords({ latitud: addr.latitud, longitud: addr.longitud });
                             setBillingForm(prev => ({
                               ...prev,
-                              address: addr.descripcion ?? prev.address,
+                              address: addr.descripcion ?? prev.address
                             }));
                           }}
                         >
                           <span className="checkout-address__name">{addr.nombre}</span>
-                          <span className="checkout-address__description">
-                            {addr.descripcion}
-                          </span>
+                          <span className="checkout-address__description">{addr.descripcion}</span>
                         </button>
                       ))}
                     </div>
@@ -740,10 +664,7 @@ const CheckoutPage: React.FC = () => {
 
                   {locationMode === "new" && (
                     <>
-                      <MapPicker
-                        value={selectedCoords}
-                        onChange={handleCoordsChange}
-                      />
+                      <MapPicker value={selectedCoords} onChange={handleCoordsChange} />
                       <p className="checkout-location__hint">
                         Haz clic en el mapa para marcar el lugar de entrega.
                       </p>
@@ -834,10 +755,58 @@ const CheckoutPage: React.FC = () => {
                 </div>
 
                 <div className="checkout-actionBtn">
+                  <button type="button" className="checkout-paybtn" onClick={handleGoToCurrency}>
+                    Continuar a pago
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === "currency" && (
+              <div className="checkout-methods-list">
+                <h2 className="checkout-section__title">Selecciona cómo deseas pagar</h2>
+
+                <div className="checkout-methods-list">
+                  {currency.map(item => (
+                    <button
+                      key={item.codPago}
+                      type="button"
+                      className={
+                        selectedCurrency?.codPago === item.codPago
+                          ? "checkout-method checkout-method--active"
+                          : "checkout-method"
+                      }
+                      onClick={() => handleSelectCurrency(item)}
+                    >
+                      <div className="checkout-method__left">
+                        <span className="checkout-radio">
+                          <span
+                            className={
+                              selectedCurrency?.codPago === item.codPago
+                                ? "checkout-radio__dot checkout-radio__dot--active"
+                                : "checkout-radio__dot"
+                            }
+                          />
+                        </span>
+                        <span className="checkout-method__label">{item.descripcion_Pago}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedCurrency && (
+                  <div className="checkout-selected-currency">
+                    <p>Método seleccionado:</p>
+                    <strong>{selectedCurrency.descripcion_Pago}</strong>
+                  </div>
+                )}
+
+                <div className="checkout-actionBtn">
                   <button
                     type="button"
                     className="checkout-paybtn__back"
-                    onClick={() => setStep("currency")}
+                    onClick={() => setStep("location")}
+                    disabled={invoiceLoading}
                   >
                     Regresar
                   </button>
@@ -845,8 +814,9 @@ const CheckoutPage: React.FC = () => {
                     type="button"
                     className="checkout-paybtn"
                     onClick={handleGoToPayment}
+                    disabled={invoiceLoading}
                   >
-                    Continuar a pago
+                    {invoiceLoading ? "Cargando" : " Continuar"}
                   </button>
                 </div>
               </div>
@@ -876,8 +846,15 @@ const CheckoutPage: React.FC = () => {
                     </div>
 
                     <form className="checkout-cardform" onSubmit={e => e.preventDefault()}>
+                      <p>
+                        Costo de transporte C$ {Number(transpCost ?? 0)}
+                        {distanceKm > 0 ? ` (${distanceKm.toFixed(2)} km)` : ""}
+                      </p>
+
                       <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="cardNumber">Número de tarjeta</label>
+                        <label className="checkout-label" htmlFor="cardNumber">
+                          Número de tarjeta
+                        </label>
                         <input
                           id="cardNumber"
                           type="text"
@@ -892,7 +869,9 @@ const CheckoutPage: React.FC = () => {
 
                       <div className="checkout-cardform__row">
                         <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="expiry">Expiración</label>
+                          <label className="checkout-label" htmlFor="expiry">
+                            Expiración
+                          </label>
                           <input
                             id="expiry"
                             type="text"
@@ -906,7 +885,9 @@ const CheckoutPage: React.FC = () => {
                         </div>
 
                         <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="cvc">CVC</label>
+                          <label className="checkout-label" htmlFor="cvc">
+                            CVC
+                          </label>
                           <input
                             id="cvc"
                             type="text"
@@ -921,7 +902,9 @@ const CheckoutPage: React.FC = () => {
                       </div>
 
                       <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="nameOnCard">Nombre en tarjeta</label>
+                        <label className="checkout-label" htmlFor="nameOnCard">
+                          Nombre en tarjeta
+                        </label>
                         <input
                           id="nameOnCard"
                           type="text"
@@ -932,7 +915,6 @@ const CheckoutPage: React.FC = () => {
                         />
                       </div>
                     </form>
-
                   </>
                 )}
 
@@ -985,11 +967,15 @@ const CheckoutPage: React.FC = () => {
                       </p>
 
                       <p className="checkout-summary__content">
+                        Transporte: <span>{transpCost}</span>
+                      </p>
+                      <p className="checkout-summary__content">
                         Total:
                         <span className="checkout-summary__content__total">
-                          C${carPCG[0].total}
+                          C$
+                          {(Number(carPCG[0].total ?? 0) + Number(transpCost ?? 0) + Number(tip ?? 0)).toFixed(2)}
                         </span>
-                      </p>
+                      </p>  
                     </div>
                   </aside>
                 )}
@@ -997,21 +983,21 @@ const CheckoutPage: React.FC = () => {
                 <div className="checkout-actionBtn">
                   <button
                     type="button"
-                    disabled={loadingInvoice}
+                    disabled={payNowDisabled || payNowLock}
                     className="checkout-paybtn__back"
-                    onClick={() => setStep("location")}
+                    onClick={() => setStep("currency")}
                   >
                     Regresar
                   </button>
-
 
                   <button
                     type="button"
                     className="checkout-paybtn"
                     onClick={handlePayNow}
-                    disabled={loadingInvoice}
+                    disabled={payNowDisabled || payNowLock}
                   >
-                    {loadingInvoice ? "Procesando..." : "Pagar ahora"}
+                    {/* {payNowLock ? "Procesando..." : payNowCooldown > 0 ? `Espera ${payNowCooldown}s` : "Pagar ahora"} */}
+                     {payNowDisabled ? "Procesando..."  : "Pagar ahora"}
                   </button>
                 </div>
               </div>

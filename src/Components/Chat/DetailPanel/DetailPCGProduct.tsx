@@ -20,6 +20,10 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { LogCartRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import { toast } from "react-toastify"
 import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
+import { SendMediaECommerceFromUrlAsync, sendText } from "@/Services/MessageService"
+import { IoMdSend } from "react-icons/io"
+import Button from "@/Components/Common/Button"
+import { AiOutlineLoading3Quarters } from "react-icons/ai"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -45,9 +49,14 @@ const DetailPCGProduct = ({
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({})
   const [optionQuantities, setOptionQuantities] = useState<Record<string, number>>({})
   const { productModifiers, getProductModifiers } = useProductPCG()
+  const [sending, setSending] = useState<boolean>(false)
   const dispatch = useAppDispatch()
   const loading = useAppSelector(selectCartLoading)
   const { create: createLogCart, fetchByContactId } = useLogCart()
+
+
+  const authRaw = localStorage.getItem("auth") || "{}";
+  const { userId } = JSON.parse(authRaw);
 
   useEffect(() => {
     if (!detail?.codProducto) return
@@ -372,101 +381,183 @@ const DetailPCGProduct = ({
     return carDto
   }
 
-const handleAddToCart = async () => {
-  // Validar cantidad
-  if (cantidad <= 0) {
-    toast.warning("La cantidad debe ser al menos 1.")
-    return
-  }
+  const handleAddToCart = async () => {
+    // Validar cantidad
+    if (cantidad <= 0) {
+      toast.warning("La cantidad debe ser al menos 1.")
+      return
+    }
 
-  // Validar modificadores requeridos
-  if (productModifiers && productModifiers.length > 0) {
-    let firstError: string | null = null
+    // Validar modificadores requeridos
+    if (productModifiers && productModifiers.length > 0) {
+      let firstError: string | null = null
 
-    for (const mod of productModifiers) {
-      if (mod.esRequerido !== "S") continue
+      for (const mod of productModifiers) {
+        if (mod.esRequerido !== "S") continue
 
-      const key = String(mod.codModificador)
-      const sel = selectedOptions[key] ?? []
+        const key = String(mod.codModificador)
+        const sel = selectedOptions[key] ?? []
 
-      if (!mod.esMultipleSeleccion) {
-        if (sel.length !== 1) {
-          firstError = `Seleccione una opción en "${mod.descripcionMod}".`
-          break
+        if (!mod.esMultipleSeleccion) {
+          if (sel.length !== 1) {
+            firstError = `Seleccione una opción en "${mod.descripcionMod}".`
+            break
+          }
+        } else {
+          if (sel.length === 0) {
+            firstError = `Seleccione al menos una opción en "${mod.descripcionMod}".`
+            break
+          }
         }
-      } else {
-        if (sel.length === 0) {
-          firstError = `Seleccione al menos una opción en "${mod.descripcionMod}".`
-          break
-        }
+      }
+
+      if (firstError) {
+        toast.warning(firstError)
+        return
       }
     }
 
-    if (firstError) {
-      toast.warning(firstError)
-      return
+    // Construir request
+    const req = buildCartRequest()
+
+    // Recalcular badge desde el carrito real
+    const refreshBadge = async (noPedido: number) => {
+      const updated = await dispatch(
+        getProductFromCarAsync({ codCliente: 0, noPedido })
+      ).unwrap()
+
+      const arr = Array.isArray(updated) ? updated : []
+      // const count = arr[0]?.listDetalle?.length ?? 0
+      const count =
+        arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
+      dispatch(
+        setContactCartBadge({
+          contactId,
+          hasCart: count > 0,
+          count
+        })
+      )
     }
-  }
 
-  // Construir request
-  const req = buildCartRequest()
+    // Resolver pedido (existente o nuevo)
+    const existingLog = await fetchByContactId(contactId)
 
-  // Recalcular badge desde el carrito real
-  const refreshBadge = async (noPedido: number) => {
-    const updated = await dispatch(
-      getProductFromCarAsync({ codCliente: 0, noPedido })
-    ).unwrap()
+    if (existingLog?.orderId && existingLog.orderId > 0) {
+      req.noPedido = existingLog.orderId
 
-    const arr = Array.isArray(updated) ? updated : []
-    // const count = arr[0]?.listDetalle?.length ?? 0
-    const count =
-         arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
-    dispatch(
-      setContactCartBadge({
+      await dispatch(addProductToCarAsync(req)).unwrap()
+      await refreshBadge(existingLog.orderId)
+    } else {
+      const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
+      const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
+      const orderId = first?.noPedido
+
+      // Validar noPedido generado
+      if (!orderId || Number.isNaN(Number(orderId)) || Number(orderId) <= 0) {
+        toast.error("No se pudo obtener el número de pedido.")
+        return
+      }
+
+      const logOrderRequest: LogCartRequestDto = {
+        orderId: Number(orderId),
         contactId,
-        hasCart: count > 0,
-        count
+        conversationId,
+        statusId: 1
+      }
+
+      await createLogCart(logOrderRequest)
+      await refreshBadge(Number(orderId))
+    }
+
+    // Restablecer estado de UI
+    setCantidad(1)
+    setselectedCategory(null)
+    setDetailProduct(null)
+  }
+
+  // Solo enviar los modificadores, que estan seleccionados
+  //API de WhatsApp Cloud, el límite para el caption (texto descriptivo) en mensajes multimedia es de hasta 1024 caracteres.
+  const buildModifiersMessage = (mods: ProductoModificadorPCGInterface[] | null) => {
+    if (!mods || mods.length === 0) return ""
+    const lines: string[] = []
+
+    mods.forEach((mod) => {
+       mod.listOpciones.forEach((op)=>{
+
+        if(isOptionSelected(mod, op.codOpcion)){
+        // const required = mod.esRequerido === "S" ? " (requerido)" : ""
+        // const multiple = mod.esMultipleSeleccion === "S" ? " (múltiple)" : ""
+        const header = `\n${mod.descripcionMod}`
+        // ${required}${multiple}:`
+    
+            const precio = op.precioVenta > 0 ? ` - C$ ${op.precioVenta.toFixed(2)}` : " - Precio Incluido"
+            const option  = `• ${op.descripcionOp}${precio}`
+
+            const optionMessage = `${header}\n${option}`;
+
+            if(optionMessage.length <= 1024){
+                   lines.push(optionMessage)
+            }
+        }
       })
-    )
+    })
+
+
+
+    if (!lines.length){
+      toast.warn("El texto permitido para la imagen es de 1024 caractares");
+       return ""
+    }
+    return `\n\n*Opciones:*\n${lines.join("\n")}`
   }
 
-  // Resolver pedido (existente o nuevo)
-  const existingLog = await fetchByContactId(contactId)
+  const handleSendProductMessage = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (sending) return
+    if (!conversationId || !userId) return
 
-  if (existingLog?.orderId && existingLog.orderId > 0) {
-    req.noPedido = existingLog.orderId
+    setSending(true)
+    try {
+      const parts: string[] = []
 
-    await dispatch(addProductToCarAsync(req)).unwrap()
-    await refreshBadge(existingLog.orderId)
-  } else {
-    const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
-    const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-    const orderId = first?.noPedido
+      if (detail.descripcion) parts.push(`*Producto:* ${detail.descripcion}`)
+      if (detail.contenido) parts.push(`*Contenido:* ${detail.contenido}`)
+      if (detail.precio && detail.precio > 0) parts.push(`*Precio:* ${detail.precio.toFixed(2)}`)
 
-    // Validar noPedido generado
-    if (!orderId || Number.isNaN(Number(orderId)) || Number(orderId) <= 0) {
-      toast.error("No se pudo obtener el número de pedido.")
-      return
+      let modifiersMsg = ""
+      if (detail.tieneOpcion) {
+        // const mods = (await getProductModifiers(detail.codProducto)) as unknown as ProductoModificadorPCGInterface[] | null
+
+        modifiersMsg = buildModifiersMessage(productModifiers)
+      }
+
+      const caption = `${parts.join("\n")}${modifiersMsg}`.trim()
+      if (!caption) return
+
+      if (detail.imagen) {
+        await SendMediaECommerceFromUrlAsync(conversationId, {
+          mediaUrl: detail.imagen,
+          caption,
+          externalId: null,
+          repliedParentMessageId: null
+        })
+      }
+      else {
+        await sendText({
+          conversationId,
+          senderId: userId,
+          content: caption,
+          messageType: "Text",
+          repliedParentMessageId: null
+        }
+        )
+      }
+    } finally {
+      setSending(false)
     }
-
-    const logOrderRequest: LogCartRequestDto = {
-      orderId: Number(orderId),
-      contactId,
-      conversationId,
-      statusId: 1
-    }
-
-    await createLogCart(logOrderRequest)
-    await refreshBadge(Number(orderId))
   }
 
-  // Restablecer estado de UI
-  setCantidad(1)
-  setselectedCategory(null)
-  setDetailProduct(null)
-}
-
-  
   return (
     <div className="detail-product__container">
       <section className="detail-product__section">
@@ -493,6 +584,7 @@ const handleAddToCart = async () => {
                 <div className="product-modifiers__product" key={index}>
                   <p className="product-modifiers__product__title">{mod.descripcionMod}</p>
                   <div className="product-modifiers__option__container">
+                    
                     {mod.listOpciones.map((op: listaOpciones, idx: number) => {
                       const selected = isOptionSelected(mod, op.codOpcion)
                       const currentQty = optionQuantities[op.codOpcion] ?? 1
@@ -504,7 +596,9 @@ const handleAddToCart = async () => {
                             className="product-modifiers__checkout"
                             id={String(op.codOpcion)}
                             checked={selected}
-                            onChange={() => handleToggleOption(mod, op.codOpcion)}
+                            name="selected_options"
+                            onChange={() => handleToggleOption(mod, 
+                              op.codOpcion)}
                           />
                           <label
                             htmlFor={String(op.codOpcion)}
@@ -556,6 +650,14 @@ const handleAddToCart = async () => {
       </div>
 
       <footer className="detail-product__actions">
+
+        {total > 0 && (
+          <p className="productDetail-total">
+            Total:
+            <span className="productDetail-total__value">C$ {total.toFixed(2)}</span>
+          </p>
+        )}
+
         <input
           type="number"
           className="detail-product__inputNumber"
@@ -564,6 +666,14 @@ const handleAddToCart = async () => {
           value={cantidad}
           onChange={handleQuantityChange}
         />
+          <Button
+            className="button-sendProductDetailt"
+            disabled={sending}
+            onClick={handleSendProductMessage}
+          >
+           {sending ? <AiOutlineLoading3Quarters fontSize={18} className="product-row__iconBtn" /> : 
+            <IoMdSend fontSize={18} className="product-row__iconBtn" />}
+          </Button>
         <button
           type="button"
           className="productTab-buyButton"
@@ -571,23 +681,19 @@ const handleAddToCart = async () => {
           disabled={loading || cantidad <= 0}
         >
           {loading ? (
-            <p className="button-text">Cargando</p>
+            <AiOutlineLoading3Quarters fontSize={18} />
           ) : (
             <>
-              <span className="button-text">Agregar</span>
-              <FaShoppingCart fontSize={16} />
+              <FaShoppingCart fontSize={18} />
             </>
           )}
+
         </button>
-        {total > 0 && (
-          <p className="productDetail-total">
-            Total:
-            <span className="productDetail-total__value">C$ {total.toFixed(2)}</span>
-          </p>
-        )}
       </footer>
     </div>
   )
 }
 
 export default DetailPCGProduct
+
+// Al llamar a handleSendProductMessage, se delseccionana las opcion por que es?

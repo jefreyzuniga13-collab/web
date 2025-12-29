@@ -204,7 +204,7 @@
 
 .cancelPanel-btn{
     /* margin-top: var(--space-lg); */
-    background-color: var(--color-destructive);
+    background-color: var(--color-destructive) !important;
     color: var(--text-white);
 }
 
@@ -212,7 +212,7 @@
     opacity: 0.6;
 }
 .carPanel-btn{
-    background-color: var(--color-secondary);
+    background-color: var(--color-secondary) !important ;
     color: var(--bg-primary);
      border: solid 1px var();
     font-weight: var(--font-weight-bold);
@@ -220,7 +220,6 @@
     color: var(--color-secondary);
     font-size: 16px;
     border: 1px solid var(--color-secondary);
-    /* flex: 0; */
 }
 
 .payment-btn{

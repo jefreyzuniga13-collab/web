@@ -36,6 +36,7 @@ import { MdOutlineCancelScheduleSend } from "react-icons/md";
 import { IoSend } from "react-icons/io5";
 import {selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
+import { AiOutlineLoading3Quarters } from "react-icons/ai"
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -322,7 +323,7 @@ const ensureEcommerceRef = useRef<
 
     // Totales
     const total = cart.total ?? 0
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)} | Más Envío`)
 
 
     if (opts?.deliveryDate) {
@@ -388,9 +389,9 @@ const ensureEcommerceUser = async (): Promise<{
         clave: generateRandomString(),
         fechaNacimiento: `${day}/${month}/${year}`,
       };
-
       const res = await CreateAsync(createUserEcommerce);
       const ecommerceUserId = Number(res);
+    
 
       if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
         toast.error("No se pudo crear el usuario ecommerce");
@@ -571,21 +572,23 @@ const handleSendCartChat = async () => {
 
             <div className="productTab-footer__payment">
               <Button 
-              className="carPanel-btn"
+                className="carPanel-btn"
                 disabled={sending}
                 onClick={handleSendCartPdf}>
                 {
-                  sending ? <p className="btn_text">Cargando...</p> :
+                  sending ? <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p> :
                     <p className="btn_text"><FaFilePdf fontSize={16} /></p>
                 }
               </Button>
 
               <Button 
-              className="carPanel-btn"
-                disabled={sendChatoading}
+                className="carPanel-btn"
+                disabled={sendChatoading || sending}
                 onClick={handleSendCartChat}>
                 {
-                  sendChatoading ? <p className="btn_text">Cargando...</p> : <p className="btn_text"> <IoIosChatboxes fontSize={16} /></p>
+                  sendChatoading ? 
+                  <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p>
+                   : <p className="btn_text"> <IoIosChatboxes fontSize={16} /></p>
                 }
               </Button>
 
@@ -594,7 +597,7 @@ const handleSendCartChat = async () => {
                 disabled={loadingCart || sending}
                 onClick={Cancel}>
                 {
-                  cancelLoading ? <p className="btn_text">Cargando...</p> : <p className="btn_text"> <MdOutlineCancelScheduleSend fontSize={16} /></p>
+                  cancelLoading ? <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p> : <p className="btn_text"> <MdOutlineCancelScheduleSend fontSize={16} /></p>
                 }
               </Button>
 
@@ -605,7 +608,7 @@ const handleSendCartChat = async () => {
                   await handleSendLink(false)
                 }}>
                 {
-                  loadingCart ? <p className="btn_text">Cargando...</p> : <p className="btn_text"><IoSend fontSize={16} /></p>
+                  loadingCart ? <p className="btn_text"><AiOutlineLoading3Quarters fontSize={16} /></p> : <p className="btn_text"><IoSend fontSize={16} /></p>
                 }
               </Button>
             </div>

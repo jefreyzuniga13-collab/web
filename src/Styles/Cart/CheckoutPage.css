@@ -236,6 +236,11 @@
   background-color: var(--bg-primary);
 }
 
+.checkout-methods-lis{
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
 .checkout-method--active {
   border-color: var(--color-primary, #6d28d9);
   background-color: var(--bg-primary);

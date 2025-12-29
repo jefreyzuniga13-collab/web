@@ -63,6 +63,7 @@ export function useProductPCG(){
     try{
         const item = await ProductPCGService.getProductModifiers(codProducto);
         setProductModifiers(item)
+        return item;
     }catch(err: any){
         setError(err)
 

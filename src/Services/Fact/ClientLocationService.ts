@@ -15,6 +15,11 @@ class ClientLocationServ {
         (`Direcciones/ListaDirecciones/${req}`);
         return data;
     }
+    async GetTranspCost(req: number): Promise<ApiPCGResponse<number>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<number>>
+        (`Catalogos/Transporte/${req}`);
+        return data;
+    }
 }
 
 export const ClientLocationService = new ClientLocationServ();
