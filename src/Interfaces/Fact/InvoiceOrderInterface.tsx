@@ -117,3 +117,26 @@ export interface PrintOrdenFactInterfaceRaw {
     Transporte: number
   }
 }
+
+
+//Checkout
+
+export type CheckoutStep = "currency" | "location" | "paymentMethod";
+export type PaymentMethod = "card" | "cash";
+
+export interface BillingFormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  country: string;
+  city: string;
+  address: string;
+  addressName: string;
+}
+
+export interface CardFormState {
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+  nameOnCard: string;
+}

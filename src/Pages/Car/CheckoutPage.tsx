@@ -7,11 +7,15 @@ import MasterCardLogo from "@/assets/masterCardLogo.png";
 import useInvoiceOrder from "@/Hooks/Fact/useInvoiceOrder";
 import MapPicker from "@/Components/Common/MapPicker";
 import { useClientLocation } from "@/Hooks/Fact/useClientLocation";
-import type { ClientLocationDto } from "@/Interfaces/Fact/ClientLocationInterface";
+import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Fact/ClientLocationInterface";
 import type {
   InvoiceOrderRequestDto,
   NearestBranchRequestDto,
-  Currencyto
+  Currencyto,
+  CheckoutStep,
+  PaymentMethod,
+  BillingFormState,
+  CardFormState
 } from "@/Interfaces/Fact/InvoiceOrderInterface";
 import { toast } from "react-toastify";
 import "@/Styles/Cart/CheckoutPage.css";
@@ -24,36 +28,11 @@ import useLogCart from "@/Hooks/Crm/useLogCard";
 import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
 import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
 import { sendMediaEcommerce } from "@/Services/MessageService";
+import { formatCardNumber, formatCvc, formatExpiry, validateBillingForm, validateCardForm, validateLocation } from "@/Utils/validation";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-type CheckoutStep = "currency" | "location" | "paymentMethod";
-type PaymentMethod = "card" | "cash";
-
-interface BillingFormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  country: string;
-  city: string;
-  address: string;
-  addressName: string;
-}
-
-interface CardFormState {
-  cardNumber: string;
-  expiry: string;
-  cvc: string;
-  nameOnCard: string;
-}
-
-interface Coords {
-  latitud: number;
-  longitud: number;
-}
-
-type LocationMode = "existing" | "new";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const from = turf.point([lon1, lat1]);
@@ -269,57 +248,9 @@ const CheckoutPage: React.FC = () => {
     return false;
   };
 
-  const validateBillingForm = () => {
-    if (!billingForm.firstName.trim()) return toastError("El nombre es obligatorio.");
-    if (!billingForm.lastName.trim()) return toastError("Los apellidos son obligatorios.");
-    if (!billingForm.city.trim()) return toastError("La ciudad es obligatoria.");
-    if (!billingForm.address.trim()) return toastError("La dirección es obligatoria.");
-    if (locationMode === "new" && !billingForm.addressName.trim())
-      return toastError("El nombre de la dirección es obligatorio.");
-    return true;
-  };
-
-  const validateCardForm = () => {
-    if (!cardForm.cardNumber.trim()) return toastError("Número de tarjeta obligatorio.");
-    if (!/^\d{13,19}$/.test(cardForm.cardNumber.replace(/\s+/g, "")))
-      return toastError("Número de tarjeta inválido.");
-    if (!/^\d{2}\/\d{2}$/.test(cardForm.expiry.trim()))
-      return toastError("Formato expiración MM/AA inválido.");
-    if (!/^\d{3,4}$/.test(cardForm.cvc.trim())) return toastError("CVC inválido.");
-    if (!cardForm.nameOnCard.trim()) return toastError("Nombre en tarjeta obligatorio.");
-    return true;
-  };
-
-  const validateLocation = () => {
-    if (locationMode === "existing") {
-      if (!selectedAddressId) return toastError("Selecciona una dirección de entrega.");
-      return true;
-    }
-    if (!selectedCoords) return toastError("Debes seleccionar la ubicación.");
-    return true;
-  };
-
   const handleBillingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setBillingForm(prev => ({ ...prev, [id]: value }));
-  };
-
-  const onlyDigits = (s: string) => s.replace(/\D/g, "");
-
-  const formatCardNumber = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 19);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-  };
-
-  const formatExpiry = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 4);
-    if (digits.length <= 2) return digits;
-    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  };
-
-  const formatCvc = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 4);
-    return digits;
   };
 
   const onCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -397,8 +328,8 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleGoToCurrency = async () => {
-    if (!validateLocation()) return;
-        if (!validateBillingForm()) return;
+    if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
+        if (!validateBillingForm(billingForm, locationMode)) return;
 
     const coords = getCoordsForFlow();
     if (!coords) return toastError("Debes seleccionar la ubicación.");
@@ -413,8 +344,8 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleGoToPayment = () => {
-    if (!validateLocation()) return;
-    if (!validateBillingForm()) return;
+    if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
+    if (!validateBillingForm(billingForm, locationMode)) return;
     setStep("paymentMethod");
   };
 
@@ -427,9 +358,9 @@ const CheckoutPage: React.FC = () => {
     try {
       if (!carPCG || carPCG.length === 0) return void toastError("El carrito está vacío.");
       if (!selectedCurrency) return void toastError("Debe seleccionar un método de pago.");
-      if (!validateBillingForm()) return;
-      if (!validateLocation()) return;
-      if (method === "card" && !validateCardForm()) return;
+      if (!validateBillingForm(billingForm, locationMode)) return;
+      if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
+      if (method === "card" && !validateCardForm(cardForm)) return;
 
       const cart = carPCG[0];
       const total = cart.total ?? 0;

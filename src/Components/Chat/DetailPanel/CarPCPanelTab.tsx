@@ -37,6 +37,8 @@ import { IoSend } from "react-icons/io5";
 import {selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
+import { generateRandomString } from "@/Utils/generateRandomString"
+import { formatCurrencyNIO } from "@/Utils/formatCurrencyNIO"
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -46,40 +48,6 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 interface Props {
   conversationId: number
   contactId: number
-}
-
-
-
-const generateRandomString = () => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  const numberChars = "0123456789"
-  let result = ""
-  let hasUppercase = false
-  let hasNumber = false
-
-  for (let i = 0; i < 10; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length)
-    const char = characters[randomIndex]
-    result += char
-    if (uppercaseChars.includes(char)) hasUppercase = true
-    if (numberChars.includes(char)) hasNumber = true
-  }
-
-  if (!hasUppercase) {
-    result =
-      result.substring(0, Math.floor(Math.random() * 6)) +
-      uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)] +
-      result.substring(Math.floor(Math.random() * 6) + 1)
-  }
-  if (!hasNumber) {
-    result =
-      result.substring(0, Math.floor(Math.random() * 6)) +
-      numberChars[Math.floor(Math.random() * numberChars.length)] +
-      result.substring(Math.floor(Math.random() * 6) + 1)
-  }
-
-  return result
 }
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
@@ -237,7 +205,6 @@ const ensureEcommerceRef = useRef<
     return result
   }, [carPCG, hasItems, search])
 
-
   if (loading) return <span>Cargando...</span>
   if (loadingCart)
     return (
@@ -286,11 +253,6 @@ const ensureEcommerceRef = useRef<
     setFile(file)
     setText("Resumen de carrito")
     await handleSend()
-  }
-
-  const formatCurrencyNIO = (value?: number | null) => {
-    const n = Number(value ?? 0)
-    return `C$ ${n.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   const buildCartChatMessage = (cart: CarDto, opts?: {
@@ -348,141 +310,138 @@ const ensureEcommerceRef = useRef<
   }
 
 
-const ensureEcommerceUser = async (): Promise<{
-  ecommerceUserId: number;
-  contact: ContactLogInterface | null;
-}> =>
-   {
-  // Evita que se ejecute dos veces al mismo tiempo (doble click / render / race)
-  if (ensureEcommerceRef.current) return ensureEcommerceRef.current;
+  const ensureEcommerceUser = async (): Promise<{
+    ecommerceUserId: number;
+    contact: ContactLogInterface | null;
+  }> =>
+    {
+    // Evita que se ejecute dos veces al mismo tiempo (doble click / render / race)
+    if (ensureEcommerceRef.current) return ensureEcommerceRef.current;
 
-  ensureEcommerceRef.current = (async () => {
-    try {
-      const contact = await getById(contactId);
+    ensureEcommerceRef.current = (async () => {
+      try {
+        const contact = await getById(contactId);
 
-      if (!contact) {
-        toast.error("No se pudo obtener el contacto");
+        if (!contact) {
+          toast.error("No se pudo obtener el contacto");
+          return { ecommerceUserId: 0, contact: null };
+        }
+
+        const existingId = Number(contact.ecommerceUserId ?? 0);
+        if (existingId > 0) {
+          return { ecommerceUserId: existingId, contact };
+        }
+
+        // Crear usuario ecommerce
+        const date = new Date();
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear() - 20;
+
+        const phone = (contact.phone ?? "").replace(/^505/, "").trim();
+
+        const createUserEcommerce: UserEcommerceDto = {
+          nombres: (contact.fullName ?? "").trim(),
+          apellidos: (contact.fullName ?? "").trim(),
+          codReferencia: "",
+          idUsuario: 0,
+          correo: (contact.email ?? "").trim(),
+          telefono: phone,
+          tokenReferencia: "",
+          clave: generateRandomString(),
+          fechaNacimiento: `${day}/${month}/${year}`,
+        };
+        const res = await CreateAsync(createUserEcommerce);
+        const ecommerceUserId = Number(res);
+      
+
+        if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
+          toast.error("No se pudo crear el usuario ecommerce");
+          return { ecommerceUserId: 0, contact };
+        }
+
+        await UpdateEcommerceUserAsync(contactId, ecommerceUserId);
+
+        // Devuelve el contacto actualizado sin re-consultar
+        const updatedContact = { ...contact, ecommerceUserId };
+        return { ecommerceUserId, contact: updatedContact };
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ??
+          err?.message ??
+          "Error inesperado al asegurar usuario ecommerce";
+
+        toast.error(msg);
         return { ecommerceUserId: 0, contact: null };
       }
+    })();
 
-      const existingId = Number(contact.ecommerceUserId ?? 0);
-      if (existingId > 0) {
-        return { ecommerceUserId: existingId, contact };
-      }
-
-      // Crear usuario ecommerce
-      const date = new Date();
-      const day = date.getDate();
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear() - 20;
-
-      const phone = (contact.phone ?? "").replace(/^505/, "").trim();
-
-      const createUserEcommerce: UserEcommerceDto = {
-        nombres: (contact.fullName ?? "").trim(),
-        apellidos: (contact.fullName ?? "").trim(),
-        codReferencia: "",
-        idUsuario: 0,
-        correo: (contact.email ?? "").trim(),
-        telefono: phone,
-        tokenReferencia: "",
-        clave: generateRandomString(),
-        fechaNacimiento: `${day}/${month}/${year}`,
-      };
-      const res = await CreateAsync(createUserEcommerce);
-      const ecommerceUserId = Number(res);
-    
-
-      if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
-        toast.error("No se pudo crear el usuario ecommerce");
-        return { ecommerceUserId: 0, contact };
-      }
-
-      await UpdateEcommerceUserAsync(contactId, ecommerceUserId);
-
-      // Devuelve el contacto actualizado sin re-consultar
-      const updatedContact = { ...contact, ecommerceUserId };
-      return { ecommerceUserId, contact: updatedContact };
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.message ??
-        "Error inesperado al asegurar usuario ecommerce";
-
-      toast.error(msg);
-      return { ecommerceUserId: 0, contact: null };
+    try {
+      return await ensureEcommerceRef.current;
+    } finally {
+      // Importante: liberar el lock aunque haya error
+      ensureEcommerceRef.current = null;
     }
-  })();
-
-  try {
-    return await ensureEcommerceRef.current;
-  } finally {
-    // Importante: liberar el lock aunque haya error
-    ensureEcommerceRef.current = null;
-  }
-};
-
-
-const handleSendLink = async (returnLink: boolean = false) => {
-  setSendChatoading(true);
-
-  const { ecommerceUserId, contact } = await ensureEcommerceUser();
-  if (!ecommerceUserId || !contact) {
-    setSendChatoading(false);
-    return;
-  }
-
-  const existingLog = await fetchByContactId(contactId);
-  const orderIdToSend = existingLog?.orderId ?? 0;
-
-  if (!orderIdToSend) {
-    toast.error("No hay pedido asociado a este contacto.");
-    setSendChatoading(false);
-    return;
-  }
-
-  const sendLinkRequest: SendLinkRequestDto = {
-    conversationId,
-    orderId: orderIdToSend,
-    ecommerceUserId,
-    email: contact.email ?? "",
-    fullName: contact.fullName ?? "",
-    contactId,
   };
 
-  if (returnLink) {
+  const handleSendLink = async (returnLink: boolean = false) => {
+    setSendChatoading(true);
+
+    const { ecommerceUserId, contact } = await ensureEcommerceUser();
+    if (!ecommerceUserId || !contact) {
+      setSendChatoading(false);
+      return;
+    }
+
+    const existingLog = await fetchByContactId(contactId);
+    const orderIdToSend = existingLog?.orderId ?? 0;
+
+    if (!orderIdToSend) {
+      toast.error("No hay pedido asociado a este contacto.");
+      setSendChatoading(false);
+      return;
+    }
+
+    const sendLinkRequest: SendLinkRequestDto = {
+      conversationId,
+      orderId: orderIdToSend,
+      ecommerceUserId,
+      email: contact.email ?? "",
+      fullName: contact.fullName ?? "",
+      contactId,
+    };
+
+    if (returnLink) {
+      setSendChatoading(false);
+      return GetMessageLink(sendLinkRequest);
+    }
+
+    await SendMessageLink(sendLinkRequest);
     setSendChatoading(false);
-    return GetMessageLink(sendLinkRequest);
-  }
-
-  await SendMessageLink(sendLinkRequest);
-  setSendChatoading(false);
-};
-
-
-
-const handleSendCartChat = async () => {
-  if (!cart || sending) return;
-
-  const { ecommerceUserId } = await ensureEcommerceUser();
-  if (!ecommerceUserId) return;
-
-  const msg = buildCartChatMessage(cart, {
-    orderId,
-    deliveryDate: format(cart.fecha, "dd/MM/yyyy"),
-  });
-
-  if (!msg) return;
-
-  const req: SendInteractiveMessajeRequestDto = {
-    conversationId,
-    contactId,
-    body: msg,
   };
 
-  await sendInterctiveMessage(req);
-};
 
+  const handleSendCartChat = async () => {
+    if (!cart || sending) return;
+
+    const { ecommerceUserId } = await ensureEcommerceUser();
+    if (!ecommerceUserId) return;
+
+    const msg = buildCartChatMessage(cart, {
+      orderId,
+      deliveryDate: format(cart.fecha, "dd/MM/yyyy"),
+    });
+
+    if (!msg) return;
+
+    const req: SendInteractiveMessajeRequestDto = {
+      conversationId,
+      contactId,
+      body: msg,
+    };
+
+    await sendInterctiveMessage(req);
+  };
 
   return (
     <div className="carPCPanel-container">

@@ -11,7 +11,6 @@ import {
 import "@/Styles/Chat/DetailPanel/ProductPCGTab.css"
 import { toast } from "react-toastify"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-// import axios from "axios"
 
 interface Props {
   prod: ProductoPCGInterface

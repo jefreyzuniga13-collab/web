@@ -7,3 +7,11 @@ export interface ClientLocationDto{
     longitud: number;
     idUsuario: number;
 }
+
+
+export interface Coords {
+  latitud: number;
+  longitud: number;
+}
+
+export type LocationMode = "existing" | "new";

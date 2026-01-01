@@ -17,7 +17,6 @@ import type { RootState, AppDispatch } from "@/Context"
 import { addProductToCarAsync, selectCartLoading } from "@/Context/Slices/Cart/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
 
-
 interface Props {
   conversationId: number
   contactId: number
@@ -182,7 +181,6 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
   setselectedCategory(null)
   setDetailProduct(null)
 }
-
 
   const showCategories = !selectedCategory && normalizedSearch === ""
   const showProducts = !!selectedCategory || normalizedSearch !== ""
