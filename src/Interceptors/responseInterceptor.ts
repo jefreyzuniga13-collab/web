@@ -1,7 +1,7 @@
 import api from "@/Utils/ApiConfig";
 import { store } from "@/Context/index";
-import { refreshTokenThunk } from "@/Context/Slices/authSlice";
-import { openReLoginModal } from "@/Context/Slices/uiSlice";
+import { refreshTokenThunk } from "@/Context/Slices/Auth/authSlice";
+import { openReLoginModal } from "@/Context/Slices/Chat/uiSlice";
 
 export function setupResponseInterceptor() {
   api.interceptors.response.use(

@@ -1,13 +1,13 @@
 import { type ReactNode, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Navigate, useLocation } from 'react-router-dom'
-import { setCredentials } from '@/Context/Slices/authSlice'
+import { setCredentials } from '@/Context/Slices/Auth/authSlice'
 import type { RootState } from '@/Context/index'
-import { SupportRequestedPopup } from "@/Components/Common/Hub/SupportRequestedPopup";
-import { ConversationAssignedPopup } from "@/Components/Common/Hub/ConversationAssignedPopup";
-import { AssignmentResponsePopup } from "@/Components/Common/Hub/AssignmentResponsePopup";
-import { AssignmentForcedPopup } from "@/Components/Common/Hub/AssignmentForcedPopup";
-import ContactValidatorHub from "@/Components/Common/Hub/ContactValidatorHub";
+import { SupportRequestedPopup } from "@/Components/Hub/SupportRequestedPopup";
+import { ConversationAssignedPopup } from "@/Components/Hub/ConversationAssignedPopup";
+import { AssignmentResponsePopup } from "@/Components/Hub/AssignmentResponsePopup";
+import { AssignmentForcedPopup } from "@/Components/Hub/AssignmentForcedPopup";
+import ContactValidatorHub from "@/Components/Hub/ContactValidatorHub";
 import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
 import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
 import type { TemplateCategoryRequestDto, TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
-import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import type { PagedResponse } from '@/Interfaces/Common/GlobalInterface'
 import api from '@/Utils/ApiConfig'
 import type { AxiosError } from 'axios'
 

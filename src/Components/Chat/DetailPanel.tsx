@@ -3,11 +3,11 @@ import DetailPanelHeaderTabs from "@/Components/Chat/DetailPanel/DetailPanelHead
 import DetailPanelCurrentConversationTab from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
 import DetailPanelOptionsContact from "@/Components/Chat/DetailPanelOptionsContact";
 import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
-import {ProductTab} from '@/Components/Chat/DetailPanel/ProductTab'
-import CarPCPanelTab from "@/Components/Chat/DetailPanel/CarPCPanelTab";
+import {ProductTab} from '@/Components/ECommerce/ProductTab'
+import CarPCPanelTab from "@/Components/ECommerce/CarPCPanelTab";
 import "@/Styles/Chat/DetailPanel.css";
-import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
-import { getProductFromCarAsync } from "@/Context/Slices/Cart/cartSlice";
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/Context";

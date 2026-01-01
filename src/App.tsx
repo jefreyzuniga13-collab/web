@@ -5,15 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
-import { useOnline } from "@/Hooks/useOnline";
+import { useOnline } from "@/Hooks/Auth/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { useDispatch } from "react-redux";
-import { enqueuePopup } from "@/Context/Slices/popupSlice";
+import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "@/Utils/materialTheme";
 import "@/App.css";
-import "@/i18n";
 import "react-toastify/dist/ReactToastify.css";
 import type { AuthData } from "@/Interfaces/Auth/AuthInterface";
 
@@ -143,7 +142,7 @@ export default function App() {
       if (e.data?.type === "NAVIGATE" && e.data?.url) {
         const url = String(e.data.url);
         if (isExternalUrl(url)) {
-          // >>> FIX PRINCIPAL: abrir externas con window.open
+          //  abrir externas con window.open
           window.open(sanitizeExternalUrl(url), "_blank", "noopener,noreferrer");
         } else {
           navigate(url);
@@ -173,10 +172,6 @@ export default function App() {
     // eslint-disable-next-line no-empty
     } catch {}
   }, [lastEvent]);
-
-  // if (!accessToken) {
-  //   return <AppRouter />;
-  // }
 
   return (
      <ThemeProvider theme={theme}>

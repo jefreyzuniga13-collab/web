@@ -2,7 +2,7 @@ import type { WaTemplateResponseDto } from "@/Interfaces/Wh/TemplateInterface";
 import { WaTemplateService } from "@/Services/Wa/WaTemplateService";
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from 'xlsx'
-import useContact from '@/Hooks/Contact/useContact'
+import useContact from '@/Hooks/Auth/useContact'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type HeaderKind = "NONE" | "TEXT";

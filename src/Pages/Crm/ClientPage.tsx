@@ -4,9 +4,9 @@ import type { Column } from "@/Interfaces/Common/CustomTable"
 import CustomTable from "@/Components/Common/CustomTable"
 import IconButton from "@mui/material/IconButton"
 import { EditIcon } from "lucide-react"
-import "@/Styles/Setting/OpeningHourPage.css"
-import "@/Styles/Setting/WorkShiftPage.css"
-import '@/Styles/Setting/SystemParamsPage.css'
+import "@/Styles/Crm/OpeningHourPage.css"
+import "@/Styles/Crm/WorkShiftPage.css"
+import '@/Styles/Crm/SystemParamsPage.css'
 import { TextField } from "@mui/material"
 import type { ClientProcResponse } from "@/Interfaces/Crm/ClientInterface"
 import {useNavigate} from 'react-router-dom'

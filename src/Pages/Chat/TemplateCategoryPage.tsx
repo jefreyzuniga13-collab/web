@@ -10,10 +10,10 @@ import TemplateCategoryModal from '@/Components/Chat/TemplateCategoryModal'
 import { useTemplateCategory } from '@/Hooks/Chat/useTemplateCategory'
 import type { TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import '@/Styles/Setting/SystemParamsPage.css'
+import '@/Styles/Crm/SystemParamsPage.css'
 import { TextField } from '@mui/material'
 import {templateCategoryTranslations} from '@/Utils/Translation/categoryTemplateTranslation'
-import type { TemplateCategoryTranslation } from '@/Interfaces/GlobalInterface'
+import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
 export default function SystemParamsPage() {
   const {
     templateCategories,

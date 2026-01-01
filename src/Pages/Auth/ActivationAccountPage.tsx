@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import '@/Styles/Auth/ActivationAccountPresentation.css'
 import useVerifyEmailFlow from '@/Hooks/Auth/useVerifyEmailFlow'
 
 export default function ActivationAccountPresentation() {
-  const { t } = useTranslation()
   const { loading, done } = useVerifyEmailFlow()
 
   return (
@@ -12,26 +10,28 @@ export default function ActivationAccountPresentation() {
       <img
         src="https://i.ibb.co/KjdZCt31/verify.png"
         className="activationAccount-image"
-        alt={t('activationAccount.title')}
+        alt="Verificación de cuenta"
       />
+
       <h1 className="activationAccount-title">
         {done
-          ? t('activationAccount.titleSuccess')
+          ? 'Cuenta activada correctamente'
           : loading
-          ? t('activationAccount.titleLoading')
-          : t('activationAccount.title')}
+          ? 'Activando cuenta'
+          : 'Activación de cuenta'}
       </h1>
+
       <p className="activationAccount-description">
         {done
-          ? t('activationAccount.descriptionSuccess')
+          ? 'Tu cuenta ha sido activada con éxito. Ya puedes iniciar sesión.'
           : loading
-          ? t('activationAccount.descriptionLoading')
-          : t('activationAccount.description')}
+          ? 'Estamos verificando tu cuenta. Por favor espera un momento.'
+          : 'Estamos validando la información de tu cuenta.'}
       </p>
 
       {done && (
         <Link to="/login" replace className="activationAccount-button">
-          {t('activationAccount.button')}
+          Ir al inicio de sesión
         </Link>
       )}
     </div>

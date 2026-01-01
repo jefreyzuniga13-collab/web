@@ -1,13 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { authService } from '@/Services/AuthService'
-import {
-  setCredentials,
-  logout as clearAuth
-} from '@/Context/Slices/authSlice'
+import { authService } from '@/Services/auth/AuthService'
+import { setCredentials, logout as clearAuth } from '@/Context/Slices/Auth/authSlice'
 
 import type {
   LoginRequest,
@@ -19,7 +15,6 @@ import type {
 } from '@/Interfaces/Auth/AuthInterface'
 
 export function useAuth() {
-  const { t } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const isMounted = useRef(true)
@@ -37,24 +32,25 @@ export function useAuth() {
       fn: (payload: P) => Promise<R>,
       payload: P,
       opts: {
-        successKey?: string
-        errorKey?: string
+        successMessage?: string
+        errorMessage?: string
         onSuccess?: (data: R) => void
       } = {}
     ): Promise<R> => {
       setLoading(true)
       setError(null)
+
       try {
         const data = await fn(payload)
         opts.onSuccess?.(data)
-        if (opts.successKey) toast.success(t(opts.successKey))
+        if (opts.successMessage) toast.success(opts.successMessage)
         return data
       } catch (err: unknown) {
-        const msg = err instanceof Error
-          ? err.message
-          : opts.errorKey
-            ? t(opts.errorKey)
-            : t('login.notifications.loginFailed')
+        const msg =
+          err instanceof Error
+            ? err.message
+            : opts.errorMessage ?? 'No se pudo completar la operación. Intenta nuevamente.'
+
         setError(msg)
         toast.error(msg)
         throw err
@@ -62,7 +58,7 @@ export function useAuth() {
         if (isMounted.current) setLoading(false)
       }
     },
-    [t]
+    []
   )
 
   const login = useCallback(
@@ -70,11 +66,11 @@ export function useAuth() {
       call(authService.loginAsync, creds, {
         onSuccess: (data: AuthData) => {
           dispatch(setCredentials(data))
-          navigate('/chat', {replace: true})
-          navigate(0);
+          navigate('/chat', { replace: true })
+          navigate(0)
         },
-        successKey: 'login.notifications.loginSuccess',
-        errorKey: 'login.errors.loginFailed'
+        successMessage: 'Inicio de sesión exitoso.',
+        errorMessage: 'No se pudo iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.'
       }),
     [call, dispatch, navigate]
   )
@@ -85,8 +81,8 @@ export function useAuth() {
         onSuccess: () => {
           navigate('/check-email', { replace: true })
         },
-        successKey: 'register.notifications.sentEmail',
-        errorKey:   'register.errors.registrationFail'
+        successMessage: 'Te enviamos un correo para verificar tu cuenta.',
+        errorMessage: 'No se pudo completar el registro. Intenta nuevamente.'
       }),
     [call, navigate]
   )
@@ -97,8 +93,8 @@ export function useAuth() {
         onSuccess: () => {
           navigate('/check-email', { replace: true })
         },
-        successKey: 'login.notifications.resetRequest',
-        errorKey: 'login.errors.loginFailed'
+        successMessage: 'Te enviamos un correo para restablecer tu contraseña.',
+        errorMessage: 'No se pudo procesar la solicitud. Intenta nuevamente.'
       }),
     [call, navigate]
   )
@@ -106,28 +102,20 @@ export function useAuth() {
   const resetPasswordAsync = useCallback(
     (creds: ResetPasswordRequest) =>
       call(authService.resetPasswordAsync, creds, {
-        successKey: 'login.notifications.resetSuccess',
-        errorKey: 'login.errors.loginFailed'
+        successMessage: 'Contraseña restablecida correctamente.',
+        errorMessage: 'No se pudo restablecer la contraseña. Verifica el enlace e inténtalo nuevamente.'
       }),
     [call]
   )
 
-    const verifyEmail = useCallback(
-      (creds: VerifyEmailRequest) =>
-        call(authService.verifyEmailAsync, creds, {
-          successKey: 'activationAccount.notifications.success',
-          errorKey: 'activationAccount.errors.invalidToken'
-        }),
-      [call]
-    )
-
-
-  // const logout = useCallback(() => {
-  //   dispatch(clearAuth())
-  //   toast.info(t('login.notifications.logout'))
-  //   navigate('/login')
-
-  // }, [dispatch, navigate, t])
+  const verifyEmail = useCallback(
+    (creds: VerifyEmailRequest) =>
+      call(authService.verifyEmailAsync, creds, {
+        successMessage: 'Cuenta activada correctamente.',
+        errorMessage: 'El enlace de activación no es válido o ya expiró.'
+      }),
+    [call]
+  )
 
   const logout = useCallback(async () => {
     const authRaw = localStorage.getItem('auth')
@@ -137,20 +125,18 @@ export function useAuth() {
     try {
       if (uid) {
         const res = await authService.logoutAsync(Number(uid))
-        toast.success(res?.message ?? 'Sesión cerrada')
+        toast.success(res?.message ?? 'Sesión cerrada.')
       } else {
-        toast.success('Sesión cerrada')
+        toast.success('Sesión cerrada.')
       }
     } catch {
-      toast.error('Error al cerrar sesión')
+      toast.error('Error al cerrar sesión.')
     }
 
     dispatch(clearAuth())
     localStorage.removeItem('auth')
     navigate('/login', { replace: true })
   }, [dispatch, navigate])
-
-
 
   return {
     login,

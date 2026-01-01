@@ -1,6 +1,6 @@
 import api from "@/Utils/ApiConfig";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-import type { PagedResponse } from "@/Interfaces/GlobalInterface";
+import type { PagedResponse } from "@/Interfaces/Common/GlobalInterface";
 import type {
   UserSessionRequestDto,
   UserSessionResponseDto,

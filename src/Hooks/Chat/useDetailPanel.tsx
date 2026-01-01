@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, } from "react";
-import useContact from "@/Hooks/Contact/useContact";
+import useContact from "@/Hooks/Auth/useContact";
 import { formatNiPhone, displayOrDash, formatDate } from "@/Utils/formatters";
 import { useDetailTabs } from "@/Hooks/Chat/DetailPanel/useDetailTabs";
 import { useQuickReplies } from "@/Hooks/Chat/DetailPanel/useQuickReplies";

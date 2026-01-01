@@ -4,7 +4,7 @@ import {
   getConversation,
   getConversationToneAsync,
   updateTag,
-} from "@/Services/ConversationService";
+} from "@/Services/chat/ConversationService";
 import React, { useEffect, useState, useCallback } from "react";
 
 export function useContactDetail(conversationId: number) {

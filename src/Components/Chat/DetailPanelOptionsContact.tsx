@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ShowInformationExpanded from '@/Components/Chat/ShowInformationExpanded';
-import type { ContactLogInterface } from '@/Interfaces/Contact/ContactInterface';
+import type { ContactLogInterface } from '@/Interfaces/Auth/ContactInterface';
 import { Check, X } from 'lucide-react'
 import React, { useState } from 'react'
 import { FaCalendarAlt, FaPhone, FaRegClock, 

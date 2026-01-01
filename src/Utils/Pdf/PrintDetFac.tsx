@@ -1,4 +1,4 @@
-import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Fact/InvoiceOrderInterface";
+import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 

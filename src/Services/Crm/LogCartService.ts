@@ -1,5 +1,5 @@
 import api from "@/Utils/ApiConfig"
-import type { ApiResponse } from "@/Interfaces/User/UserInterfaces"
+import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces"
 import type { LogCartRequestDto, LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 
 class LogCartService {

@@ -1,4 +1,4 @@
-import type { ContactLogInterface } from "@/Interfaces/Contact/ContactInterface"
+import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"

@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef, useState } from 'react'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import { Label } from '@/Components/Common/Label'
 import Select from '@/Components/Common/Select'
 import { Textarea } from '@/Components/Common/Textarea'
-import '@/Styles/Setting/SystemParamForm.css'
+import '@/Styles/Crm/SystemParamForm.css'
 
 import type { WaTemplateRequestDto, WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
 import { useWaTemplateForm, type FormMode } from '@/Hooks/Wh/useWaTemplateForm'

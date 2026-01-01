@@ -1,7 +1,7 @@
 //validaciones 
 
-import type { Coords, LocationMode } from "@/Interfaces/Fact/ClientLocationInterface";
-import type { BillingFormState, CardFormState } from "@/Interfaces/Fact/InvoiceOrderInterface";
+import type { Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import type { BillingFormState, CardFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { toast } from "react-toastify";
 
 export const onlyDigits = (s: string) => s.replace(/\D/g, "");

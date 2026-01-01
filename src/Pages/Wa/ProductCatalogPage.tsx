@@ -10,7 +10,7 @@ import ProductCatalogFormModal from '@/Components/Wh/ProductCatalogFormModal'
 import { useProductCatalog } from '@/Hooks/Wh/useProductCatalog'
 import type { ProductCatalogResponse } from '@/Interfaces/Wh/ProductCatalogInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import '@/Styles/Setting/SystemParamsPage.css'
+import '@/Styles/Crm/SystemParamsPage.css'
 import { TextField } from '@mui/material'
 
 

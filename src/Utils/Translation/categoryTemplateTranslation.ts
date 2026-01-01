@@ -1,4 +1,4 @@
-import type { TemplateCategoryTranslation } from "@/Interfaces/GlobalInterface";
+import type { TemplateCategoryTranslation } from "@/Interfaces/Common/GlobalInterface";
 
 export const templateCategoryTranslations: Record<TemplateCategoryTranslation, string> = {
     Utility: "Utilidad",

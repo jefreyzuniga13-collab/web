@@ -1,8 +1,8 @@
 
 import React from 'react'
 import type { AgentDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { useUserPresence } from '@/Hooks/useUserPresence'
-import { useAssignedCount } from '@/Hooks/useAssignedCount'
+import { useUserPresence } from '@/Hooks/Auth/useUserPresence'
+import { useAssignedCount } from '@/Hooks/Chat/useAssignedCount'
 
 interface AgentCardProps {
   agent: AgentDto

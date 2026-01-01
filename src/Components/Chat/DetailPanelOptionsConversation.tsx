@@ -2,7 +2,7 @@ import { Check, Edit, Tag, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react'
 import { FaWhatsapp } from 'react-icons/fa';
 import { IoIosOptions } from 'react-icons/io';
-import { SetHaltedConversation } from '@/Services/ConversationService';
+import { SetHaltedConversation } from '@/Services/chat/ConversationService';
 import { useContactDetail } from '@/Hooks/Chat/useContactDetail';
 
 interface Props {

@@ -1,14 +1,14 @@
 import  { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { AgentDto, ConversationDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
-import { getAgents } from '@/Services/AgentService'
-import { assignAgent, closeConversation as apiCloseConversation } from '@/Services/ConversationService'
-import { useUserPresence } from '@/Hooks/useUserPresence'
+import { getAgents } from '@/Services/auth/AgentService'
+import { assignAgent, closeConversation as apiCloseConversation } from '@/Services/chat/ConversationService'
+import { useUserPresence } from '@/Hooks/Auth/useUserPresence'
 import { toast } from 'react-toastify'
 import '@/styles/Chat/AssignModal.css'
 import type { RootState, AppDispatch } from '@/Context/index'
 
-import { closeAssignModal } from '@/Context/Slices/assignModalSlice'
+import { closeAssignModal } from '@/Context/Slices/Chat/assignModalSlice'
 interface AssignModalHook {
   isDropdownOpen: boolean
   statusOptions: { value: ConversationStatus; label: string; color: string }[]

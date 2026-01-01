@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
-import { useTranslation } from 'react-i18next'
 import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
 import Button from '@/Components/Common/Button'
 import '@/Styles/Auth/RegisterPresentation.css'
 import useRegisterForm from '@/Hooks/Auth/useRegisterForm'
+
 export default function RegisterPresentation() {
-  const { t } = useTranslation()
   const {
     formik,
     companies,
@@ -23,51 +22,60 @@ export default function RegisterPresentation() {
     <div className={`register ${loading ? 'register--loading' : ''}`}>
       <div className="register__container">
         <aside className="register__info-panel">
-          <h1 className="register__title">{t('register.title')}</h1>
-          <p className="register__description">{t('register.description')}</p>
+          <h1 className="register__title">Crear cuenta</h1>
+          <p className="register__description">
+            Completa el formulario para crear tu cuenta y comenzar a usar la plataforma.
+          </p>
           <ul className="register__steps">
-            {['1', '2', '3', '4'].map(step => (
-              <li key={step} className="register__steps-item">{t(`register.steps.${step}`)}</li>
+            {[
+              'Ingresa tu información personal',
+              'Selecciona tu empresa',
+              'Crea una contraseña segura',
+              'Confirma y finaliza el registro'
+            ].map((step, index) => (
+              <li key={index} className="register__steps-item">{step}</li>
             ))}
           </ul>
           <img 
             src="https://i.ibb.co/F26HCTK/singup.png" 
-            alt="singup" 
+            alt="Registro de usuario" 
             className="register__image"
           />
         </aside>
 
-        <section className={`register__form-section ${(formError || fetchError) ? 'register__form-section--error' : ''}`}>
+        <section
+          className={`register__form-section ${(formError || fetchError) ? 'register__form-section--error' : ''}`}
+        >
           {(formError || fetchError) && (
             <div className="register__error">{formError || fetchError}</div>
           )}
 
           <form onSubmit={formik.handleSubmit} className="register__form-grid" noValidate>
             <div className="register__field-group">
-              <label htmlFor="fullName" className="register__label">{t('register.fullNameLabel')}</label>
+              <label htmlFor="fullName" className="register__label">Nombre completo</label>
               <Input
                 id="fullName"
                 name="fullName"
-                placeholder={t('register.fullNameExample')}
+                placeholder="Ej. Juan Pérez"
                 value={formik.values.fullName}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.fullName ? formik.errors.fullName : undefined}
               />
 
-              <label htmlFor="email" className="register__label">{t('register.emailLabel')}</label>
+              <label htmlFor="email" className="register__label">Correo electrónico</label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder={t('register.emailExample')}
+                placeholder="correo@ejemplo.com"
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.email ? formik.errors.email : undefined}
               />
 
-              <label htmlFor="companyId" className="register__label">{t('register.companyNameLabel')}</label>
+              <label htmlFor="companyId" className="register__label">Empresa</label>
               <Select
                 id="companyId"
                 name="companyId"
@@ -76,14 +84,14 @@ export default function RegisterPresentation() {
                 onChange={e => formik.setFieldValue('companyId', Number(e.target.value))}
                 onBlur={() => formik.setFieldTouched('companyId', true)}
                 error={formik.touched.companyId ? formik.errors.companyId : undefined}
-                placeholder={t('register.companyNameExample')}
+                placeholder="Selecciona una empresa"
               />
 
-              <label htmlFor="phone" className="register__label">{t('register.phoneLabel')}</label>
+              <label htmlFor="phone" className="register__label">Teléfono</label>
               <Input
                 id="phone"
                 name="phone"
-                placeholder={t('register.phoneExample')}
+                placeholder="Ej. 8888-8888"
                 value={formik.values.phone}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -92,23 +100,23 @@ export default function RegisterPresentation() {
             </div>
 
             <div className="register__field-group">
-              <label htmlFor="identifier" className="register__label">{t('register.identifierLabel')}</label>
+              <label htmlFor="identifier" className="register__label">Identificador</label>
               <Input
                 id="identifier"
                 name="identifier"
-                placeholder={t('register.identifierPlaceholder')}
+                placeholder="Ej. 001234"
                 value={formik.values.identifier}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.identifier ? formik.errors.identifier : undefined}
               />
 
-              <label htmlFor="password" className="register__label">{t('register.passwordLabel')}</label>
+              <label htmlFor="password" className="register__label">Contraseña</label>
               <Input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder={t('register.passwordExample')}
+                placeholder="Mínimo 8 caracteres"
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -125,15 +133,13 @@ export default function RegisterPresentation() {
                 disabled={!canSubmit || loading}
                 className="register__submit-button"
               >
-                {loading
-                  ? `${t('register.submitting')}…`
-                  : t('register.submit')}
+                {loading ? 'Registrando…' : 'Crear cuenta'}
               </Button>
 
               <p className="register__login-text">
-                {t('register.alreadyHaveAccount')}{' '}
+                ¿Ya tienes una cuenta?{' '}
                 <Link to="/" className="register__login-link">
-                  {t('register.backToLogin')}
+                  Inicia sesión
                 </Link>
               </p>
             </div>

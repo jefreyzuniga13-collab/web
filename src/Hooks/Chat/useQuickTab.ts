@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSystemParams } from '@/Hooks/Setting/useSystemParams'
+import { useSystemParams } from '@/Hooks/Crm/useSystemParams'
 
 const parseQuickOptions = (selectedParam: unknown): string[] => {
   const p: any = selectedParam

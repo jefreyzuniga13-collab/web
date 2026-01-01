@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import type {
   CustomMessageResponseDto,
   CustomMessageRequestDto,
-} from "@/Interfaces/Setting/CustomMessageInterface";
+} from "@/Interfaces/Crm/CustomMessageInterface";
 
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import SendIcon from "@mui/icons-material/Send";

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { IoChatboxSharp } from 'react-icons/io5'
-import { respondAssignment } from '@/Services/ConversationService'
+import { respondAssignment } from '@/Services/chat/ConversationService'
 
 interface AssignedModalProps {
   conversationId: number

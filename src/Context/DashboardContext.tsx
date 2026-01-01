@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, type ReactNode, useState, useEffect } from 'react';
-import { dashboardService } from '@/Services/DashboardService';
+import { dashboardService } from '@/Services/Crm/DashboardService';
 import type { DateCountItem, MessagesSentReceived } from '@/Interfaces/Dashboard/DashboardInterfaces';
 
 interface DashboardContextType {

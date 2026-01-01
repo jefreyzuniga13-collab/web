@@ -1,5 +1,5 @@
 import type {UserEcommerceDto} from '@/Interfaces/Ecommerce/UserEcommerceInterface'
-import type {ApiPCGResponse} from '@/Interfaces/GlobalPCGInterface'
+import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import {apiPCG} from '@/Utils/ApiConfig'
 
 class UserEcommerceServ {

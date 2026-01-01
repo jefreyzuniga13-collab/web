@@ -1,6 +1,6 @@
 import {
   getHistoryByContact as getConversationHistory,
-} from "@/Services/ConversationService";
+} from "@/Services/chat/ConversationService";
 import type { ConversationHistoryDto, MessageWithAttachmentsDto } from "@/Interfaces/Chat/ChatInterfaces";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 

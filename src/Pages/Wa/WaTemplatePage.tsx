@@ -7,11 +7,11 @@ import WaTemplateForm from '@/Components/Wh/WaTemplateForm'
 import { useWaTemplate } from '@/Hooks/Wh/useWaTemplate'
 import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import '@/Styles/Setting/SystemParamsPage.css'
+import '@/Styles/Crm/SystemParamsPage.css'
 import SendIcon from '@mui/icons-material/Send';
 import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
 import { TextField } from '@mui/material'
-import type { TemplateCategoryTranslation } from '@/Interfaces/GlobalInterface'
+import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
 import { templateCategoryTranslations } from '@/Utils/Translation/categoryTemplateTranslation'
 
 export default function WaTemplatesPage() {

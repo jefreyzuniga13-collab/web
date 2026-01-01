@@ -13,7 +13,7 @@ import { TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@m
 import Button from '@/Components/Common/Button';
 
 import { format, parseISO } from "date-fns";
-import "@/Styles/Setting/WorkShiftPage.css";
+import "@/Styles/Crm/WorkShiftPage.css";
 
 function formatDate(value?: string | null) {
   if (!value) return "-";

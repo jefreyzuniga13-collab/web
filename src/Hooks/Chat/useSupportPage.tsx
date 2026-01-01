@@ -5,10 +5,10 @@ import {
   getConversation,
   closeConversation,
   SetHaltedConversation
-} from "@/Services/ConversationService";
+} from "@/Services/chat/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
-import { openAssignModal } from "@/Context/Slices/assignModalSlice";
-import { useSystemParams } from "@/Hooks/Setting/useSystemParams";
+import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
+import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
 import type { AuthStorage, JwtPayload } from "@/Interfaces/Auth/AuthInterface";
 type FilterOption = { label: string; value: string; content: string };
 

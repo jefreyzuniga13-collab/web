@@ -1,19 +1,17 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/Hooks/Auth/useAuth";
 import type { AuthData, LoginRequest } from "@/Interfaces/Auth/AuthInterface";
 import type { AppDispatch } from "@/Context";
 import { useDispatch } from "react-redux";
-import { closeActiveSesionModal } from "@/Context/Slices/activeSesionModalSlice";
+import { closeActiveSesionModal } from "@/Context/Slices/Chat/activeSesionModalSlice";
 
 interface LoginFormValues extends LoginRequest {
   remember: boolean;
 }
 
 export default function useLoginForm() {
-  const { t } = useTranslation();
   const { login, loading } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
   const authRaw = localStorage.getItem('auth') ?? '{}';
@@ -26,14 +24,14 @@ export default function useLoginForm() {
     Yup.object<LoginFormValues>({
       email: Yup.string()
         .trim()
-        .email(t("login.errors.invalidEmail"))
-        .required(t("login.errors.required", { field: t("login.emailLabel") })),
+        .email("Ingresa un correo electrónico válido.")
+        .required("El correo electrónico es obligatorio."),
       password: Yup.string()
-        .min(8, t("login.errors.passwordMin", { min: 8 }))
-        .required(t("login.errors.required", { field: t("login.passwordLabel") })),
+        .min(8, "La contraseña debe tener al menos 8 caracteres.")
+        .required("La contraseña es obligatoria."),
       remember: Yup.boolean(),
     }),
-  [t]);
+  []);
 
   const formik = useFormik<LoginFormValues>({
     initialValues: { email: "", password: "", remember: false },
@@ -50,10 +48,12 @@ export default function useLoginForm() {
         }
 
         await login({ email: values.email, password: values.password });
-        
         dispatch(closeActiveSesionModal());
       } catch (err) {
-        const msg = err instanceof Error ? err.message : t("login.errors.loginFailed");
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "No se pudo iniciar sesión. Verifica tus credenciales.";
         setStatus(msg);
       } finally {
         setSubmitting(false);
@@ -76,14 +76,14 @@ export default function useLoginForm() {
 
   useEffect(() => {
     localStorage.removeItem('dashboardFilters');
-  }, [])
-  
+  }, []);
 
   return {
     formik,
     loading,
     showPassword: formik.values.remember,
-    toggleShowPassword: () => formik.setFieldValue('remember', !formik.values.remember),
+    toggleShowPassword: () =>
+      formik.setFieldValue('remember', !formik.values.remember),
     canSubmit: formik.isValid && formik.dirty && !loading,
     formError: formik.status as string | undefined,
     showModal,

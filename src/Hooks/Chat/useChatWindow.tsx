@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
-import { DownloadMedia, sendMedia, sendText } from "@/Services/MessageService"
+import { DownloadMedia, sendMedia, sendText } from "@/Services/chat/MessageService"
 import { Check, CheckCheck } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
-import useMessages from "@/Hooks/useMessages"
+import useMessages from "@/Hooks/Chat/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder"
 import { toast } from "react-toastify"
 import React from "react"

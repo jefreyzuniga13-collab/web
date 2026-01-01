@@ -1,0 +1,175 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { User } from "@/Interfaces/Auth/UserInterfaces";
+
+export type RecurrenceType = 'Weekly' | 'AnnualHoliday' | 'OneTimeHoliday';
+
+export type NameTranslation =
+  | 'WelcomeBot'
+  | 'AskFullName'
+  | 'AskIdCard'
+  | 'InvalidIdFormat'
+  | 'DataComplete'
+  | 'InactivityWarning'
+  | 'InactivityClosed'
+  | 'SupportRequestReceived'
+  | 'WaitWarningCloseTime'
+  | 'Keywords'
+  | 'InactivityWarningThresholdMesssage'
+  | 'InactivityWarningThresholdTime'
+  | 'WaitWarningCloseMesssage'
+  | 'BotGreetings'
+  | 'AskCompanyName'
+  | 'InvalidPasswordFormat'
+  | 'InvalidResidenceCardFormat'
+  | 'RequestIdType'
+  | 'ContactComplete'
+  | 'OutOfBotContext'
+  | 'RequestUnderReviewMessage'
+  | 'RequestUnderReviewTime'
+  | 'UnclosedConversationMessage'
+  | 'UnclosedConversationTime'
+  | "UseMultimediaContext"
+  | "ClientCriticalStateTime"
+  | "AgentMaxConversationLimit"
+  | "ConversationRatingMessageHeader"
+  | "ConversationRatingMessageBody"
+  | "ConversationRatingMessageFooter"
+  | "ConversationRatingValues"
+  | "RatingMessageHeader"
+  | "RatingMessageBody"
+  | "RatingMessageFooter"
+  | "IsGeneralRatingActive"
+  | "RatingReceivedAtAtMessage"
+  | "SurveyRequestReceivedAtMessage"
+  | "RequestUnderReviewContactResponseMessage"
+  | "PreviewAgentWarningMessage"
+  | "PreviewAgentWarningMessageTime"
+  | "AssignedAgentMesage"
+  | "PendingRegistration"
+  | "AssignedConversacionMessage"
+  | "ConversationInProgressMessage"
+  | "EnableChatBotOption"
+  | "HelpDeskMessage"
+  | "SupportManagementMessage"
+  | "ProductQuoteMessage"
+  | "AdministrativeChannelMessage"
+  | "OpeningHourMessage"
+  | "SeleccionSoporteMessage"
+  | "HorariodeAtencionDisponible"
+  | "OpcionesRapidas"
+  | "SaludoActivo"
+  | "EncabezadoSalud"
+  | "CuerpoSaludo"
+  | "PieSaludo"
+  | "OpcionesSaludo"
+  | "TextoBotonSaludo"
+  | "TituloSeccionSaludo"
+  | "EncabezadoSaludo"
+  | "TiempoDisponibleAbrirConversación"
+  | "TiempoListarConversaciones"
+  | "GlobalInactivityCloseHours"
+   | 'MaxMediaPerMessage'
+  | 'MaxImageMB'
+  | 'MaxVideoMB'
+  | 'MaxAudioMB'
+  | 'MaxStickerMB'
+  | 'MaxDocumentMB'
+  | 'MaximoMediaPorMensaje'
+  | 'PesoMediaMbMaximoMensaje'
+  | 'MensajeLinkCarrito'
+  | 'TiempoLinkTemporal'
+  | "CartMessageHeader"
+  | "CartMessageFooter"
+  | "ConversationCartValues"
+  | "MensajeRechazoCarrito"
+  | "MensajeRechazoCarritoNoAplica"
+  | "MensajeConfirmarCarrito"
+  | "MensajeReaudarCarrito"
+  | "MensajeCarritoEnProceso"
+  | "MensajeTicketCreado";
+
+  export type TypeTranslation =
+  | 'Prompts'
+  | 'Temp'
+  | 'Keywords'
+  | 'Conditional'
+
+export interface Column<T> {
+  id: Extract<keyof T, string> | 'actions';
+  label: string;
+  minWidth?: number;
+  align?: 'left' | 'right' | 'center';
+  format?: (v: any) => string;
+  render?: (row: T) => React.ReactNode;
+}
+
+export interface DayMonth {
+  day: number;
+  month: number;
+}
+
+export interface OpeningHourInterface {
+  id: number;
+  name: string;
+  description?: string;
+  recurrence: RecurrenceType;
+  daysOfWeek?: string[];
+  isWorkShift? : boolean;
+  holidayDate?: DayMonth | null;
+  //specificDate?: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  isHolidayMoved?: boolean | null;
+  holidayMovedFrom?: string | null;
+  holidayMoveTo?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string | null;
+  createdById?: number;
+  updatedById?: number;
+  createdBy?: User;
+  updatedBy?: User;
+}
+
+/**
+ * Payload que envía el formulario (sin metadatos ni IDs).
+ */
+export type OpeningHourFormValues = {
+  name: string;
+  description?: string;
+  recurrence: RecurrenceType;
+  daysOfWeek?: string[] | null;
+  isWorkShift? : boolean;
+  holidayDate?: DayMonth | null;
+  //specificDate?: Date | string | null;
+  startTime: string | null;
+  endTime: string | null;
+  effectiveFrom?: Date | string | null;
+  effectiveTo?: Date | string | null;
+  isHolidayMoved?: boolean | null;
+  holidayMovedFrom?: Date | null;
+  holidayMoveTo?: Date | null;
+  isActive: boolean;
+};
+
+export type OpeningHourFormState = {
+  name: string;
+  description?: string;
+  recurrence: RecurrenceType;
+  daysOfWeek: string[];
+  isWorkShift? : boolean;
+  holidayDate: Date | null;
+  //specificDate: Date | null;
+  startTime: Date | null;
+  endTime: Date | null;
+  effectiveFrom: Date | null;
+  effectiveTo: Date | null;
+  isHolidayMoved?: boolean | null;
+  holidayMovedFrom?: Date | null;
+  holidayMoveTo?: Date | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};

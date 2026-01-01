@@ -8,8 +8,8 @@ import type {
   TemplateCategoryRequestDto,
   TemplateCategoryResponseDto,
 } from "@/Interfaces/Chat/TemplateCategoryInterfaces";
-import "@/Styles/Setting/SystemParamForm.css";
-import "@/Styles/Setting/WorkShiftModal.css";
+import "@/Styles/Crm/SystemParamForm.css";
+import "@/Styles/Crm/WorkShiftModal.css";
 import TextField from "@mui/material/TextField";
 
 interface TemplateCategoryProps {

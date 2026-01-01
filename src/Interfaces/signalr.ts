@@ -6,7 +6,7 @@ import type {
   ConversationDto,
   NotificationDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
-import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
+import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
 
 

@@ -6,12 +6,12 @@ import type {
   ConversationDto,
   NotificationDto,
 } from '@/Interfaces/Chat/ChatInterfaces'
-import type { ContactLog } from '@/Interfaces/User/UserInterfaces'
+import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
 import {formatDateTimeNI } from "@/Utils/niDate";
 import { store } from "@/Context";
-import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice";
-import { clearCart } from "@/Context/Slices/Cart/cartSlice";
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import { clearCart } from "@/Context/Slices/Ecommerce/cartSlice";
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ??

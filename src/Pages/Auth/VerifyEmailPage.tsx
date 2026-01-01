@@ -1,23 +1,19 @@
-//import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import '@/Styles/Auth/SentEmail.css'
-const VerifyEmailPresentation = () => {
-  const { t } = useTranslation();
 
+const VerifyEmailPresentation = () => {
   return (
     <div className="verifyEmail-container">
       <img
         src="https://i.ibb.co/q3Y4q7mT/verify-email.webp"
-        alt={t("verifyEmail.title")}
-        className='verifyEmail-image'
+        alt="Verificación de correo electrónico"
+        className="verifyEmail-image"
       />
 
-      <h1 className="verifyEmail-title">{t("verifyEmail.title")}</h1>
-      <p className="verifyEmail-description">{t("verifyEmail.description")}</p>
-
-      {/* <Link to="/login" replace className="verifyEmail-button">
-        {t("verifyEmail.button")}
-      </Link> */}
+      <h1 className="verifyEmail-title">Verifica tu correo electrónico</h1>
+      <p className="verifyEmail-description">
+        Hemos enviado un enlace de verificación a tu correo electrónico.  
+        Por favor revisa tu bandeja de entrada y sigue las instrucciones para activar tu cuenta.
+      </p>
     </div>
   );
 };

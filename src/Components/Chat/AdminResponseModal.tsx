@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { forceAssign } from '@/Services/ConversationService'
+import { forceAssign } from '@/Services/chat/ConversationService'
 
 interface AdminResponseModalProps {
   conversationId: number

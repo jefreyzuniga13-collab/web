@@ -77,7 +77,7 @@
 
 .login__forgot-link{
   font-size:var(--font-size-sm);
-  color:var(--text-white);
+  color:var(--color-primary);
   text-decoration:none;
   font-weight:var(--font-weight-medium);
   transition:all var(--transition-normal) var(--transition-ease);

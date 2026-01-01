@@ -3,8 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import type {
   CustomMessageRequestDto,
   CustomMessageResponseDto,
-} from '@/Interfaces/Setting/CustomMessageInterface'
-import { CustomMessageServices } from '@/Services/Setting/CustomMessageServices'
+} from '@/Interfaces/Crm/CustomMessageInterface'
+import { CustomMessageServices } from '@/Services/chat/CustomMessageServices'
 
 export function useCustomMessage(autoLoad = true) {
   const [customMessages, setCustomMessages] = useState<CustomMessageResponseDto[]>([])

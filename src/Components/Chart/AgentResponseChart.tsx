@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { ResponseAgentAverageClienteDataResponseDto, FilterForm } from '@/Interfaces/Dashboard/DashboardInterfaces';
 import { BarChart } from '@mui/x-charts/BarChart';
-import { ConversationService } from '@/Services/ConversationService';
+import { ConversationService } from '@/Services/chat/ConversationService';
 import { formatoNicaragua } from '@/Utils/LocalDateFormat';
 import '@/Styles/Dashboard/CustomBarChart.css';
 
-import { useUsers } from '@/Hooks/User/useUsers';
+import { useUsers } from '@/Hooks/Auth/useUsers';
 
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem('dashboardFilters');

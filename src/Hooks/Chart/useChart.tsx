@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from "react";
 import { formatoNicaragua } from "@/Utils/LocalDateFormat";
-import { ConversationService } from "@/Services/ConversationService";
-import { SystemParamService } from "@/Services/SystemParamService";
+import { ConversationService } from "@/Services/chat/ConversationService";
+import { SystemParamService } from "@/Services/Crm/SystemParamService";
 import type {
   ConversationStatusCountResponseDto,
   AverageAssignmentTimeResponseDto,

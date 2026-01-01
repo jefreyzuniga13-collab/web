@@ -1,23 +1,31 @@
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+// import { Link } from 'react-router-dom'
 import '@/Styles/Common/Unauthorized.css'
 
 export default function Unauthorized() {
-  const { t } = useTranslation()
   return (
     <div className="unauthorized-container">
       <img
         src="https://i.ibb.co/ksPRdqdx/forbidden.png"
-        alt={t('unauthorized.title')}
+        alt="Acceso no autorizado"
         className="unauthorized-image"
       />
-      <h1 className="unauthorized-title">{t('unauthorized.title')}</h1>
+
+      <h1 className="unauthorized-title">
+        Acceso no autorizado
+      </h1>
+
       <p className="unauthorized-description">
-        {t('unauthorized.description')}
+        No tienes permisos para acceder a esta sección.
+        Si crees que se trata de un error, contacta al administrador del sistema.
       </p>
-      <Link to="/dashboard" replace className="unauthorized-button">
-        {t('unauthorized.button')}
-      </Link>
+
+      {/* <Link
+        to="/dashboard"
+        replace
+        className="unauthorized-button"
+      >
+        Volver al inicio
+      </Link> */}
     </div>
   )
 }

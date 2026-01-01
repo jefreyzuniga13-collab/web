@@ -3,8 +3,8 @@ import TimePickerField from "@/Components/Common/TimePickerField";
 import useDashboardFilterModal from "@/Hooks/Chart/useDashboardFilterModal";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { useUsers } from "@/Hooks/User/useUsers";
-import useContact from "@/Hooks/Contact/useContact";
+import { useUsers } from "@/Hooks/Auth/useUsers";
+import useContact from "@/Hooks/Auth/useContact";
 import CustomAutocomplete from "@/Components/Common/CustomAutocomplete";
 import Button from "../Common/Button";
 import "@/Styles/Dashboard/DashboardFilterModal.css";
@@ -14,7 +14,7 @@ import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { parseISO, parse } from "date-fns";
 import { format } from "date-fns-tz";
 import { useEffect } from "react";
-import { useInnova } from "@/Hooks/useInnova";
+import { useInnova } from "@/Hooks/Crm/useInnova";
 import type { Dayjs } from "dayjs";
 
 interface Props {

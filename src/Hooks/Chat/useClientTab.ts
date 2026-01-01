@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useClient from '@/Hooks/Crm/useClient'
-import useContact from '@/Hooks/Contact/useContact'
+import useContact from '@/Hooks/Auth/useContact'
 import { useCatCredential } from '@/Hooks/Crm/useCatCredential'
 import { useOutsourcedSystems } from '@/Hooks/Crm/useOutsourcedSystems'
 import type {
@@ -15,7 +15,7 @@ import type {
   OutsourcedDeviceResponseDTO,
   OutsourcedSystemsResponseDTO,
 } from '@/Interfaces/Crm/ClientInterface'
-import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import type { PagedResponse } from '@/Interfaces/Common/GlobalInterface'
 import type { CatCredencialResponseDto } from '@/Interfaces/Crm/CatCredential'
 
 export const useClientTab = (clienteCodigo?: string | number | null) => {

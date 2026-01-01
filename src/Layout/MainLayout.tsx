@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Navbar from '@/Components/Menu/Menu';
+import Navbar from '@/Components/Auth/Menu';
 import { AssignModal } from '@/Components/Chat/AssignModal';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 

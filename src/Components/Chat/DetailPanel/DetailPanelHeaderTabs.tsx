@@ -6,7 +6,7 @@ import { LuChartBarStacked } from "react-icons/lu"
 import type { OptionMenu } from "@/Hooks/Chat/DetailPanel/useDetailTabs"
 import type { RootState } from "@/Context"
 import { useSelector, type TypedUseSelectorHook } from "react-redux"
-import { selectCartBadgeByContactId } from "@/Context/Slices/Cart/cartBadgeSlice"
+import { selectCartBadgeByContactId } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 

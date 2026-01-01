@@ -9,16 +9,16 @@ import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
 import { Sticker } from "lucide-react";
-import { useConversations } from "@/Hooks/useConversations";
-import TicketModal from "@/Components/Chat/TicketModal";
-import useContact from "@/Hooks/Contact/useContact";
-import { setContactCartBadge } from "@/Context/Slices/Cart/cartBadgeSlice"
+import { useConversations } from "@/Hooks/Chat/useConversations";
+import TicketModal from "@/Components/Crm/TicketModal";
+import useContact from "@/Hooks/Auth/useContact";
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 
 import {
   // selectCartError,
   // selectCartLoading,
   getProductFromCarAsync,
-} from "@/Context/Slices/Cart/cartSlice"
+} from "@/Context/Slices/Ecommerce/cartSlice"
 import { useDispatch } from "react-redux"
 import type { AppDispatch } from "@/Context";
 import useLogCart from "@/Hooks/Crm/useLogCard";

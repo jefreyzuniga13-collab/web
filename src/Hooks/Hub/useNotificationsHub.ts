@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
 import { notificationsConnection } from '@/Services/signalr'
-import type { ContactLog } from '@/Interfaces/User/UserInterfaces';
+import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces';
 import { notificationSound } from '@/Utils/sound';
 
 type SupportRequestedPayload = { conversationId: number; requestedAt: string; clientContactName: string; systemDefinedCompanyName: string;  }

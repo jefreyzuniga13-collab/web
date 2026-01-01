@@ -1,13 +1,10 @@
-
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useTranslation } from "react-i18next";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import "@/Styles/Auth/LoginPresentation.css";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-// import logopcg from '@/assets/pcgroup.png'
 import addGroup from '@/assets/Add_Group_2025.png'
 import { FaFacebook } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa6";
@@ -15,7 +12,6 @@ import { FaInstagramSquare } from "react-icons/fa";
 import { FaTiktok } from "react-icons/fa";
 
 export default function LoginPresentation() {
-  const { t } = useTranslation();
   const {
     formik,
     loading,
@@ -27,7 +23,6 @@ export default function LoginPresentation() {
     confirmLogin,
     cancelLogin
   } = useLoginForm();
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEnterKey = (event: any) => {
@@ -44,16 +39,20 @@ export default function LoginPresentation() {
         {formError && <div className="login__error">{formError}</div>}
 
         <div className="login__brand">
-          <img className="login__brand-image" src={addGroup} alt={t("login.imageAlt")} />
+          <img
+            className="login__brand-image"
+            src={addGroup}
+            alt="Imagen de inicio de sesión"
+          />
         </div>
 
         <form onSubmit={formik.handleSubmit} noValidate>
-          <label htmlFor="email" className="login__label">{t("login.emailLabel")}</label>
+          <label htmlFor="email" className="login__label">Correo electrónico</label>
           <Input
             id="email"
             name="email"
             type="email"
-            placeholder={t("login.emailPlaceholder")}
+            placeholder="Ingresa tu correo electrónico"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -62,12 +61,12 @@ export default function LoginPresentation() {
             error={formik.touched.email ? formik.errors.email : undefined}
           />
 
-          <label htmlFor="password" className="login__label">{t("login.passwordLabel")}</label>
+          <label htmlFor="password" className="login__label">Contraseña</label>
           <Input
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
-            placeholder={t("login.passwordPlaceholder")}
+            placeholder="Ingresa tu contraseña"
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -79,7 +78,7 @@ export default function LoginPresentation() {
 
           <div className="login__options">
             <Link to="/forgot-password" replace className="login__forgot-link">
-              {t("login.forgotPassword")}
+              ¿Olvidaste tu contraseña?
             </Link>
           </div>
 
@@ -90,7 +89,9 @@ export default function LoginPresentation() {
             className="login__submit-button"
             onKeyDown={handleEnterKey}
           >
-            <p className="login__submit-text">{loading ? `${t("login.submit")}…` : t("login.submit")}</p>
+            <p className="login__submit-text">
+              {loading ? "Iniciando sesión…" : "Iniciar sesión"}
+            </p>
           </Button>
         </form>
 
@@ -119,18 +120,35 @@ export default function LoginPresentation() {
       </section>
     </div>
 
-    <img className="login__image-footer" src="https://i.ibb.co/LXbMbMm2/logo.png" alt={t("login.imageAlt")} />
-    <p className="login__footer">©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span></p>
-    <p className="login__footer"><span className="login__footer-text">Add Group 2.0</span></p>
+    <img
+      className="login__image-footer"
+      src="https://i.ibb.co/LXbMbMm2/logo.png"
+      alt="Logo de la empresa"
+    />
 
-    {showModal && <ActivationSesionModal onAccept={confirmLogin} onCancel={cancelLogin} />}
+    <p className="login__footer">
+      ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
+    </p>
+
+    <p className="login__footer">
+      <span className="login__footer-text">Add Group 2.0</span>
+    </p>
+
+    {showModal && (
+      <ActivationSesionModal
+        onAccept={confirmLogin}
+        onCancel={cancelLogin}
+      />
+    )}
   </div>
 
   <aside className="login__banner" aria-label="Marketing banner">
     <div className="login__banner-shape" />
     <div className="login__banner-content">
       <div className="login__banner-top">
-        <h2 className="login__banner-title">¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!</h2>
+        <h2 className="login__banner-title">
+          ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
+        </h2>
         <p className="login__banner-subtitle">
           Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
         </p>
@@ -139,7 +157,7 @@ export default function LoginPresentation() {
       <div className="login__banner-card">
         <img
           src="https://i.ibb.co/9HBdj911/7015971.jpg"
-          alt="banner"
+          alt="Banner promocional"
           className="login__banner-image"
           loading="lazy"
         />
@@ -152,6 +170,5 @@ export default function LoginPresentation() {
     </div>
   </aside>
 </div>
-
   );
 }

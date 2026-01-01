@@ -1,105 +1,120 @@
-import { useTranslation } from "react-i18next";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
-import "@/Styles/Auth/ForgotPasswordPresentation.css";
-import {Link} from 'react-router-dom'
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
-import logopcg from '@/assets/pcgroup.png'
-import addGroup from '@/assets/Add_Group_2025.png'
+import { Link } from "react-router-dom";
 
+import "@/Styles/Auth/LoginPresentation.css";
+import "@/Styles/Auth/ForgotPasswordPresentation.css";
+
+import addGroup from "@/assets/Add_Group_2025.png";
 
 export default function ForgotPasswordPresentation() {
-  const { t } = useTranslation();
   const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
 
   return (
-    <div className={`forgot-password ${loading ? 'forgot-password--loading' : ''}`}>
-      <div className="forgot-password__container">
-        {/* <aside className="forgot-password__info-panel">
-          <h1 className="forgot-password__title">
-            {t("forgotPassword.title")}
-          </h1>
-          <p className="forgot-password__description">
-            {t("forgotPassword.description")}
-          </p>
-          <img
-            className="forgot-password__image"
-            src={`${logopcg}`}
-            alt={t("forgotPassword.imageAlt")}
-          />
-        </aside> */}
+    <div className="login-GeneralContainer">
+      <div className={`login ${loading ? "login--loading" : ""}`}>
+        <div className="login__container">
+          <section
+            className={`login__form-section ${
+              formError ? "login__form-section--error" : ""
+            }`}
+          >
+            {formError && <div className="login__error">{formError}</div>}
 
-        <section className={`forgot-password__form-section ${formError ? 'forgot-password__form-section--error' : ''}`}>
-          {/* <p className="forgot-password__subtitle">
-            {t("forgotPassword.subtitle")}
-          </p> */}
-          {formError && (
-            <div className="forgot-password__error">{formError}</div>
-          )}
+            <div className="login__brand">
+              <img
+                className="login__brand-image"
+                src={addGroup}
+                alt="Recuperar contraseña"
+              />
+            </div>
 
-                  <div className="image__container">
-            <img
-            className="login__image"
-            src={`${addGroup}`}
-            alt={t("login.imageAlt")}
-          />
-          </div>
+            <form onSubmit={formik.handleSubmit} noValidate>
+              <p className="forgotPassword-subtitle">
+                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+              </p>
 
-          <form onSubmit={formik.handleSubmit} noValidate>
+              <label htmlFor="email" className="login__label">
+                Correo electrónico
+              </label>
 
-             <p className="forgot-password__subtitle">
-            {t("forgotPassword.subtitle")}
-          </p>
-            <label
-              htmlFor="email"
-              className="forgot-password__label"
-            >
-              {t("forgotPassword.emailLabel")}
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder={t("forgotPassword.emailPlaceholder")}
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              autoFocus
-              error={
-                formik.touched.email ? formik.errors.email : undefined
-              }
-            />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Ingresa tu correo electrónico"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                autoFocus
+                error={formik.touched.email ? formik.errors.email : undefined}
+              />
 
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={!canSubmit || loading}
-              className="forgot-password__submit-button"
-            >
-              {loading
-                ? `${t("forgotPassword.submitting")}…`
-                : t("forgotPassword.handleSubmit")}
-            </Button>
-            <p className="forgot-password__back-link">
-              <Link to="/login"  className="forgot-password__link">
-                {t("forgotPassword.backToLogin")}
-              </Link>
-            </p>
-          </form>
-          
-        </section>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!canSubmit || loading}
+                className="login__submit-button"
+              >
+                <p className="login__submit-text">
+                  {loading ? "Enviando…" : "Enviar enlace"}
+                </p>
+              </Button>
 
-        
-      </div>
+              <p className="forgotPassword-back">
+                <Link to="/login" replace className="forgotPassword-link">
+                  Volver a iniciar sesión
+                </Link>
+              </p>
+            </form>
+          </section>
+        </div>
 
         <img
-            className="login__image-footer"
-            src={`${logopcg}`}
-            alt={t("login.imageAlt")}
-          />
-      <p className="login__footer">©<span className="derechos">2025 PC Group S.A. Todos los derechos reservados.</span></p>
-      <p className="login__footer"><span className="derechos">Add Group 2.0</span></p>
+          className="login__image-footer"
+          src="https://i.ibb.co/LXbMbMm2/logo.png"
+          alt="Logo de la empresa"
+        />
 
+        <p className="login__footer">
+          ©<span className="login__footer-text">
+            2025 PC Group S.A. Todos los derechos reservados.
+          </span>
+        </p>
+
+        <p className="login__footer">
+          <span className="login__footer-text">Add Group 2.0</span>
+        </p>
+      </div>
+
+      <aside className="login__banner" aria-label="Marketing banner">
+        <div className="login__banner-shape" />
+        <div className="login__banner-content">
+          <div className="login__banner-top">
+            <h2 className="login__banner-title">
+              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
+            </h2>
+            <p className="login__banner-subtitle">
+              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
+            </p>
+          </div>
+
+          <div className="login__banner-card">
+            <img
+              src="https://i.ibb.co/9HBdj911/7015971.jpg"
+              alt="Banner promocional"
+              className="login__banner-image"
+              loading="lazy"
+            />
+          </div>
+
+          <p className="login__banner-text">
+            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos,
+            construye relaciones que cierran negocios. Comienza hoy mismo a transformar tu proceso comercial.
+          </p>
+        </div>
+      </aside>
     </div>
   );
 }

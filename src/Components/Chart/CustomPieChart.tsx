@@ -6,13 +6,13 @@ import type {
   ConversationStatusCountResponseDto,
 } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import "@/Styles/Dashboard/CustomPieChart.css";
-import type { StateTranslation } from "@/Interfaces/GlobalInterface";
+import type { StateTranslation } from "@/Interfaces/Common/GlobalInterface";
 import { stateTranslations } from "@/Utils/Translation/stateTranslations";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import { useUsers } from "@/Hooks/User/useUsers";
+import { useUsers } from "@/Hooks/Auth/useUsers";
 import { useNavigate } from "react-router-dom";
 
 const COLORS = [

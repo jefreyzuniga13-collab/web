@@ -1,4 +1,4 @@
-import type { StateTranslation } from "@/Interfaces/GlobalInterface";
+import type { StateTranslation } from "@/Interfaces/Common/GlobalInterface";
 
 export const stateTranslations: Record<StateTranslation, string> = {
     Bot: "ChatBot",

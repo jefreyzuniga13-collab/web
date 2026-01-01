@@ -1,30 +1,24 @@
 import { useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/Hooks/Auth/useAuth";
 import type { ForgotPasswordRequest } from "@/Interfaces/Auth/AuthInterface";
 
 export default function useResetPasswordForm() {
-  const { t } = useTranslation();
   const { forgotPasswordAsync, loading } = useAuth();
 
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   const validationSchema = useMemo(
     () =>
       Yup.object<ForgotPasswordRequest>({
         email: Yup.string()
           .trim()
-          .email(t("forgotPassword.invalidEmail"))
-          .matches(emailRegex, 'Ingresa un correo electrónico válido')
-          .required(
-            t("forgotPassword.requiredEmail", {
-              field: t("forgotPassword.emailLabel"),
-            })
-          ),
+          .email("Ingresa un correo electrónico válido.")
+          .matches(emailRegex, "Ingresa un correo electrónico válido.")
+          .required("El correo electrónico es obligatorio."),
       }),
-    [t]
+    []
   );
 
   const formik = useFormik<ForgotPasswordRequest>({
@@ -40,7 +34,7 @@ export default function useResetPasswordForm() {
         const msg =
           err instanceof Error
             ? err.message
-            : t("forgotPassword.errors");
+            : "Ocurrió un error al solicitar el restablecimiento de contraseña.";
         setStatus(msg);
       } finally {
         setSubmitting(false);

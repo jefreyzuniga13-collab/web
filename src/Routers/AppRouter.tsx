@@ -5,9 +5,9 @@ import {RequireAuth} from '@/Layout/RequireAuth'
 import PublicRoute from '@/Layout/PublicRoute'
 import ClientPage from '@/Pages/Crm/ClientPage'
 import UserSessionPage from '@/Pages/Auth/UserSessionPage'
-import ProtectedCartRoute from '@/Pages/Car/ProtectedCartRoute'
-import CheckoutPage from '@/Pages/Car/CheckoutPage'
-import SuccessRequest from '@/Pages/SuccessRequest'
+import ProtectedCartRoute from '@/Pages/ECommerce/ProtectedCartRoute'
+import CheckoutPage from '@/Pages/ECommerce/CheckoutPage'
+import SuccessRequest from '@/Pages/ECommerce/SuccessRequest'
 import CustomLoader from '@/Components/Common/CustomLoader'
 
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
@@ -18,22 +18,22 @@ const ResetPassword        = lazy(() => import('@/Pages/Auth/ResetPasswordPage')
 const Activation           = lazy(() => import('@/Pages/Auth/ActivationAccountPage'))
 const Unauthorized         = lazy(() => import('@/Components/Common/Unauthorized'))
 const SupportPage          = lazy(() => import('@/Pages/Chat/SupportPage'))
-const UsersPage            = lazy(() => import('@/Pages/User/UsersPage'))
+const UsersPage            = lazy(() => import('@/Pages/Auth/UsersPage'))
 const DashboardPage        = lazy(() => import('@/Pages/Dashboard/DashboardPage'))
-const NotificationsPage    = lazy(() => import('@/Pages/Notification/NotificationsPage'))
-const NotFound             = lazy(() => import('@/Pages/NotFound'))
-const SystemParameterPage  = lazy(() => import('@/Pages/Setting/SystemParameterPage'))
-const ProfilePage          = lazy(() => import('@/Pages/Setting/ProfilePage'))
-const PrivacyPolicy        = lazy(() => import('@/Pages/Setting/PrivacyPolicyPage'))
-const VerifyNewContactPage = lazy(() => import('@/Pages/Setting/VerifyNewContactPage'))
-const OpeningHourPage      = lazy(() => import('@/Pages/Setting/OpeningHourPage'))
-const WorkShiftPage        = lazy(() => import('@/Pages/Setting/WorkShiftPage'))
-const ContactPage          = lazy(() => import('@/Pages/Contact/ContactPage'))
-const ConversationsPage    = lazy(() => import('@/Pages/Conversation/ConversationsPage'))
+const NotificationsPage    = lazy(() => import('@/Pages/Crm/NotificationsPage'))
+const NotFound             = lazy(() => import('@/Pages/Auth/NotFound'))
+const SystemParameterPage  = lazy(() => import('@/Pages/Crm/SystemParameterPage'))
+const ProfilePage          = lazy(() => import('@/Pages/Auth/ProfilePage'))
+const PrivacyPolicy        = lazy(() => import('@/Pages/Auth/PrivacyPolicyPage'))
+const VerifyNewContactPage = lazy(() => import('@/Pages/Auth/VerifyNewContactPage'))
+const OpeningHourPage      = lazy(() => import('@/Pages/Crm/OpeningHourPage'))
+const WorkShiftPage        = lazy(() => import('@/Pages/Crm/WorkShiftPage'))
+const ContactPage          = lazy(() => import('@/Pages/Auth/ContactPage'))
+const ConversationsPage    = lazy(() => import('@/Pages/Chat/ConversationsPage'))
 const TemplateCategoryPage    = lazy(() => import('@/Pages/Chat/TemplateCategoryPage'))
 const WaTemplatesPage    = lazy(() => import('@/Pages/Wa/WaTemplatePage'))
 const ProductCatalogPage    = lazy(() => import('@/Pages/Wa/ProductCatalogPage'))
-const DynamicParamPage  = lazy(() => import('@/Pages/Setting/DynamicParamPage'))
+const DynamicParamPage  = lazy(() => import('@/Pages/Crm/DynamicParamPage'))
 const ClientManagementPanel    = lazy(() => import('@/Pages/Crm/ClientManagementPanel'))
 
 export function AppRouter() {
@@ -57,9 +57,9 @@ export function AppRouter() {
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="reset-password"  element={<ResetPassword />} />
           <Route path="verify-account"  element={<Activation />} />
-          <Route path="privacy-policy"  element={<PrivacyPolicy />} />
-          {/* <Route path="privacy-policy"  element={<WorkOrderPage />} /> */}
         </Route>
+
+                  <Route path="privacy-policy"  element={<PrivacyPolicy />} />
 
          <Route path="unauthorized"    element={<Unauthorized />} />
 

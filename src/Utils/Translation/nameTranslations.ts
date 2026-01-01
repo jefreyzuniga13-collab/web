@@ -1,4 +1,4 @@
-import type { NameTranslation } from "@/Interfaces/Setting/OpeningHour";
+import type { NameTranslation } from "@/Interfaces/Crm/OpeningHour";
 
 export const nameTranslations: Record<NameTranslation, string> = {
   WelcomeBot: "Bienvenida ChatBot",

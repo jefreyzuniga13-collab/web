@@ -4,7 +4,7 @@ import type {
   OutsourcedSystemsResponseDTO,
   OutsourcedSystemsRequestDTO,
 } from '@/Interfaces/Crm/ClientInterface'
-import type { PagedResponse } from '@/Interfaces/GlobalInterface'
+import type { PagedResponse } from '@/Interfaces/Common/GlobalInterface'
 import api from '@/Utils/ApiConfig'
 import type { AxiosError } from 'axios'
 
