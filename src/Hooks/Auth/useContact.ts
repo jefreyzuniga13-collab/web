@@ -256,8 +256,8 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
   }, [])
 
   useEffect(() => {
-    fetchPage()
-  }, [fetchPage, globalFilter, page, pageSize])
+    fetchPage();
+  }, [fetchPage]);
 
   const handleSubmit = useCallback(
     (values: ContactFormValues) => {

@@ -8,7 +8,7 @@ import type {
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import "@/Styles/Ecommerce/DetailProduct.css"
-import noimageavailable from "@/assets/noimageavailable.webp"
+// import noimageavailable from "@/assets/noimageavailable.webp"
 import {
   addProductToCarAsync,
   getProductFromCarAsync,
@@ -20,10 +20,15 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { LogCartRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import { toast } from "react-toastify"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-import { SendMediaECommerceFromUrlAsync, sendText } from "@/Services/chat/MessageService"
+import { SendMediaECommerceFromUrlAsync, 
+  // sendText 
+} from "@/Services/chat/MessageService"
 import { IoMdSend } from "react-icons/io"
 import Button from "@/Components/Common/Button"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
+import type { SelectedInterface } from "./ProductTab"
+import aguamarina from '@/assets/aguamarina.png'
+import { MdInventory } from "react-icons/md"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -33,7 +38,7 @@ interface Props {
   contactId: number
   conversationId: number
   setDetailProduct: (detailP: ProductoPCGInterface | null) => void
-  setselectedCategory: (category: string | null) => void
+  setselectedCategory: (category: SelectedInterface | null) => void
 }
 
 const DetailPCGProduct = ({
@@ -53,6 +58,8 @@ const DetailPCGProduct = ({
   const dispatch = useAppDispatch()
   const loading = useAppSelector(selectCartLoading)
   const { create: createLogCart, fetchByContactId } = useLogCart()
+  const [ismaximize, setismaximize] = useState(false)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
 
 
   const authRaw = localStorage.getItem("auth") || "{}";
@@ -60,7 +67,9 @@ const DetailPCGProduct = ({
 
   useEffect(() => {
     if (!detail?.codProducto) return
-    getProductModifiers(detail.codProducto)
+    if(detail.tieneOpcion == false) return
+        getProductModifiers(detail.codProducto)
+    
   }, [detail?.codProducto, getProductModifiers])
 
   useEffect(() => {
@@ -535,45 +544,76 @@ const DetailPCGProduct = ({
       const caption = `${parts.join("\n")}${modifiersMsg}`.trim()
       if (!caption) return
 
-      if (detail.imagen) {
-        await SendMediaECommerceFromUrlAsync(conversationId, {
-          mediaUrl: detail.imagen,
-          caption,
-          externalId: null,
-          repliedParentMessageId: null
-        })
-      }
-      else {
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content: caption,
-          messageType: "Text",
-          repliedParentMessageId: null
-        }
-        )
-      }
+      // if (detail.imagen) {
+        const mediaUrl =
+                detail.imagen && detail.imagen.trim() !== ""
+                  ? detail.imagen
+                  : 'https://i.ibb.co/ccjvL5Nh/aguamarina.png'
+
+              await SendMediaECommerceFromUrlAsync(conversationId, {
+                mediaUrl,
+                caption,
+                externalId: null,
+                repliedParentMessageId: null
+              })
+
+        // await SendMediaECommerceFromUrlAsync(conversationId, {
+        //   mediaUrl: detail.imagen || aguamarina,
+        //   caption,
+        //   externalId: null,
+        //   repliedParentMessageId: null
+        // })
+      // }
+      // else {
+      //   await sendText({
+      //     conversationId,
+      //     senderId: userId,
+      //     content: caption,
+      //     messageType: "Text",
+      //     repliedParentMessageId: null
+      //   }
+      //   )
+      // }
     } finally {
       setSending(false)
     }
   }
 
+    const openImagePreview = (url: string) => {
+    setPreviewImageUrl(url)
+    setismaximize(true)
+  }
+
+  const closeImagePreview = () => {
+    setPreviewImageUrl(null)
+    setismaximize(false)
+  }
+
   return (
-    <div className="detail-product__container">
+  <>
+        <div className="detail-product__container">
       <section className="detail-product__section">
         <div className="detail-product__image">
           <img
-            src={detail.imagen != null ? detail.imagen : noimageavailable}
+            // src={detail.imagen != null ? detail.imagen : aguamarina}
+            src={detail.imagen || aguamarina}
             aria-label="product-image"
             className="detail-image"
+            onClick={() => openImagePreview(detail.imagen ?? "")}
           />
         </div>
 
         <div className="detail-product__content">
           <div className="detail-content__text">
-            <p className="detail-product__descriptions">{detail.descripcion}</p>
+            <p className="detail-product__descriptions">{detail.codProducto + " " + detail.descripcion}</p>
             <p className="detail-product__price">C$ {detail.precio}</p>
           </div>
+           <p className="detail-product__descriptions-marca">{detail.marca != null ? detail.marca : ""}</p>
+           <p className="detail-product__existencia">{detail.existencia > 0 ? 
+           <>
+           <MdInventory fontSize={12}/>
+           {detail.existencia}
+           </> : ""}</p>
           <p className="detail-product__content">{detail.contenido}</p>
         </div>
 
@@ -666,14 +706,6 @@ const DetailPCGProduct = ({
           value={cantidad}
           onChange={handleQuantityChange}
         />
-          <Button
-            className="button-sendProductDetailt"
-            disabled={sending}
-            onClick={handleSendProductMessage}
-          >
-           {sending ? <AiOutlineLoading3Quarters fontSize={18} className="product-row__iconBtn" /> : 
-            <IoMdSend fontSize={18} className="product-row__iconBtn" />}
-          </Button>
         <button
           type="button"
           className="productTab-buyButton"
@@ -689,8 +721,24 @@ const DetailPCGProduct = ({
           )}
 
         </button>
+
+        <Button
+            className="button-sendProductDetailt"
+            disabled={sending}
+            onClick={handleSendProductMessage}
+          >
+           {sending ? <AiOutlineLoading3Quarters fontSize={18} className="product-row__iconBtn" /> : 
+            <IoMdSend fontSize={18} className="product-row__iconBtn" />}
+          </Button>
       </footer>
+      
     </div>
+          {ismaximize && previewImageUrl && (
+        <div className="chat-window__image-preview-overlay" onClick={closeImagePreview}>
+          <img src={previewImageUrl} alt="Vista previa" className="chat-window__image-preview-full" />
+        </div>
+      )}
+  </>
   )
 }
 

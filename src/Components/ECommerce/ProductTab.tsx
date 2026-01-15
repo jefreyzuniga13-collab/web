@@ -1,4 +1,4 @@
-import "@/Styles/Ecommerce/ProductTab.css"
+// import "@/Styles/Ecommerce/ProductTab.css"
 import Input from "@/Components/Common/Input"
 import { useEffect, useMemo, useState } from "react"
 import { useCategoryPCG } from "@/Hooks/Crm/useCategoryPCG"
@@ -6,9 +6,9 @@ import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG"
 import { CategoryTab } from "@/Components/ECommerce/CategoryTab"
 import { ProductPCGTab } from "@/Components/ECommerce/ProductPCGTab"
 import DetailPCGProduct from "@/Components/ECommerce/DetailPCGProduct"
-import { IoArrowBackCircleSharp } from "react-icons/io5"
+// import { IoArrowBackCircleSharp } from "react-icons/io5"
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
-import { FaShoppingCart } from "react-icons/fa"
+// import { FaShoppingCart } from "react-icons/fa"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import type { LogCartRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
@@ -16,19 +16,31 @@ import { useDispatch, useSelector } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import { addProductToCarAsync, selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import "@/Styles/Ecommerce/ProductTab.css"
+import { TiArrowBack } from "react-icons/ti";
 
 interface Props {
   conversationId: number
   contactId: number
 }
 
+export interface SelectedInterface{
+  codGrupo?: string | null;
+  grupo?: string | null;
+}
 export const ProductTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
-  const [selectedCategory, setselectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setselectedCategory] = useState<SelectedInterface | null>(null)
   const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null)
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1)
 
-  const { GetAll, categoryPcg, error, loading } = useCategoryPCG()
+  const { 
+    GetAll, 
+    categoryPcg, 
+    error, 
+    loading 
+  } = useCategoryPCG()
+  
   const {
     productPcg,
     GetByCategory,
@@ -48,7 +60,8 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
 
   useEffect(() => {
     if (!selectedCategory) return
-    GetByCategory(selectedCategory)
+    // Todos traen el codGrupo
+    GetByCategory(selectedCategory.codGrupo!)
     setDetailProduct(null)
     setSimpleQuantity(1)
   }, [GetByCategory, selectedCategory])
@@ -68,6 +81,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
   }, [productPcg, normalizedSearch])
 
   const handleOpenDetail = (prod: ProductoPCGInterface) => {
+    
     if (detailProduct?.id === prod.id) {
       setDetailProduct(null)
       setSimpleQuantity(1)
@@ -201,14 +215,26 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
     return <div className="detailPanel-error">Error al cargar productos</div>
   }
 
-  if (detailProduct && detailProduct.tieneOpcion) {
+  if (detailProduct 
+    // && detailProduct.tieneOpcion
+  ) {
     return (
       <section className="productTab-card">
         <header className="productTab-product__header">
-          <h5>Detalle de producto</h5>
-          <div className="productTab-icon__container">
+        <h5
+          onClick={handleBackToList}
+          className="productTab-content-header__titleDetail"
+        >
+          <TiArrowBack fontSize={18}/>
+          {/* {`${selectedCategory?.grupo}\\${detailProduct.descripcion}`}\detalle */}
+          {selectedCategory?.grupo
+          ? `${selectedCategory.grupo}\\${detailProduct.descripcion}\\detalle`
+          : `${detailProduct.descripcion}\\detalle`}
+        </h5>
+
+          {/* <div className="productTab-icon__container">
             <IoArrowBackCircleSharp fontSize={24} className="productTab-icon" onClick={handleBackToList} />
-          </div>
+          </div> */}
         </header>
 
         <DetailPCGProduct
@@ -225,10 +251,30 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
   return (
     <section className="productTab-card">
       <header className="productTab-product__header">
-        <h5 className="productTab-content-header__title">{selectedCategory === null ? "Categorias" : "Productos"}</h5>
-        <div className="productTab-icon__container">
+       <h5 className="productTab-content-header__title">
+          {showCategories ? (
+            "Categorias"
+          ) : selectedCategory ? (
+            <span
+              className="productTab-content-header__titleCategory"
+              onClick={resetToCategories}
+            >
+              <TiArrowBack fontSize={18} />
+              {selectedCategory.grupo ?? ""}\productos
+            </span>
+          ) : (
+            <span
+              className="productTab-content-header__titleCategory"
+              onClick={resetToCategories}
+            >
+              <TiArrowBack fontSize={18} />
+              Productos
+            </span>
+          )}
+        </h5>
+        {/* <div className="productTab-icon__container">
           <IoArrowBackCircleSharp fontSize={24} className="productTab-icon" onClick={resetToCategories} />
-        </div>
+        </div> */}
       </header>
 
       <section className="productTab-clientHeaderActions">
@@ -260,9 +306,11 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
           ) : (
             filteredProducts.map(e => (
               <div key={e.codProducto} className="productTab-productRowWrapper">
-                {detailProduct &&
-                  !detailProduct.tieneOpcion &&
-                  detailProduct.codProducto === e.codProducto && (
+                {/* {detailProduct &&
+                  // !detailProduct.tieneOpcion &&
+                  // detailProduct.codProducto === e.codProducto 
+                  // && 
+                  (
                     <div className="productTab-simpleAddBar productTab-simpleAddBar--absolute">
                       <input
                         type="number"
@@ -281,9 +329,17 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
                         <FaShoppingCart fontSize={12} />
                       </button>
                     </div>
-                  )}
+                  )
+                  } */}
 
-                <ProductPCGTab prod={e} conversationId={conversationId} onClick={handleOpenDetail} />
+                <ProductPCGTab prod={e} 
+                conversationId={conversationId} 
+                onClick={handleOpenDetail} 
+                simpleQuantity={simpleQuantity}
+                handleChangeSimpleQuantity={handleChangeSimpleQuantity}
+                handleSimpleAdd= {handleSimpleAdd}
+                cartLoading={cartLoading}
+                />
               </div>
             ))
           )}

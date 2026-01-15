@@ -18,6 +18,8 @@ export interface ProductoPCGInterface{
     aplicaIva: string;
     imagen?: string; //enviar en mensaje, esto es una url
     tieneOpcion: boolean;// slo enviar  ifnromacion de modificar y opciones, solo es true caso contario no tiene
+    marca: string | null;
+    existencia: number;
 }
 
 export interface ProductoModificadorPCGInterface{

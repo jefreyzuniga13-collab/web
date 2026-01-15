@@ -521,7 +521,8 @@ const CheckoutPage: React.FC = () => {
         <div className="checkout-main">
           <div className="checkout-left">
             {step === "location" && (
-              <div className="checkout-section checkout-section__location">
+             
+             <div className="checkout-section checkout-section__location">
                 <div className="checkout-location__container">
                   <h2 className="checkout-section__title">Selecciona la ubicación y tus datos</h2>
 
@@ -596,12 +597,28 @@ const CheckoutPage: React.FC = () => {
                   {locationMode === "new" && (
                     <>
                       <MapPicker value={selectedCoords} onChange={handleCoordsChange} />
+                    </>
+                  )}
+                  
+                </div>
+
+                <div className="checkout-grid__container">
+                  {locationMode === "existing" && selectedAddress && (
+                    <div className="checkout-current-location">
+                      <p>
+                        <strong>Dirección seleccionada:</strong>
+                      </p>
+                      <p>{selectedAddress.descripcion}</p>
+                    </div>
+                  )}
+
+                  {locationMode === "new" && (
+                      <div className="checkout-current-location">
                       <p className="checkout-location__hint">
                         Haz clic en el mapa para marcar el lugar de entrega.
                       </p>
-                    </>
+                    </div>
                   )}
-                </div>
 
                 <div className="checkout-grid">
                   <div className="checkout-field">
@@ -683,15 +700,18 @@ const CheckoutPage: React.FC = () => {
                       />
                     </div>
                   )}
-                </div>
 
-                <div className="checkout-actionBtn">
+                                  {/* <div className="checkout-actionBtn"> */}
                   <button type="button" className="checkout-paybtn" onClick={handleGoToCurrency}>
                     Continuar a pago
                   </button>
+                {/* </div> */}
+
+                </div>
                 </div>
               </div>
-            )}
+           
+           )}
 
             {step === "currency" && (
               <div className="checkout-methods-list">

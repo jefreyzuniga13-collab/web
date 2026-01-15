@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import Input from "@/Components/Common/Input"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
-import EmptyCard from "@/assets/emptycard.webp"
+import EmptyCart from "@/assets/emptycard.webp"
 import { toast } from "react-toastify"
 import "@/Styles/Ecommerce/cardPCGTab.css"
 import Button from "@/Components/Common/Button"
@@ -219,7 +219,7 @@ const ensureEcommerceRef = useRef<
         <p className="cartPanel-errorText">{errorCart.message}</p>
       </div>
     )
-    
+
       const cart = carPCG?.[0];
       const detailsCount = cart?.listDetalle?.length ?? 0;
 
@@ -232,7 +232,7 @@ const ensureEcommerceRef = useRef<
               <h5 className="productTab-content-header__title">Carrito</h5>
             </header>
             <div className="carPCPanel-emptyContainer">
-              <img src={EmptyCard} alt="empty" className="cardPanel-emptyImage" />
+              <img src={EmptyCart} alt="empty" className="cardPanel-emptyImage" />
               <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
             </div>
           </div>
@@ -285,7 +285,7 @@ const ensureEcommerceRef = useRef<
 
     // Totales
     const total = cart.total ?? 0
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)} | Más Envío`)
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)} | *Más Envío*`)
 
 
     if (opts?.deliveryDate) {
@@ -341,8 +341,8 @@ const ensureEcommerceRef = useRef<
         const phone = (contact.phone ?? "").replace(/^505/, "").trim();
 
         const createUserEcommerce: UserEcommerceDto = {
-          nombres: (contact.fullName ?? "").trim(),
-          apellidos: (contact.fullName ?? "").trim(),
+          nombres: (contact.fullName ?? contact.waName ?? "").trim(),
+          apellidos: (contact.fullName ?? contact.waName ?? "").trim(),
           codReferencia: "",
           idUsuario: 0,
           correo: (contact.email ?? "").trim(),
@@ -351,6 +351,7 @@ const ensureEcommerceRef = useRef<
           clave: generateRandomString(),
           fechaNacimiento: `${day}/${month}/${year}`,
         };
+        
         const res = await CreateAsync(createUserEcommerce);
         const ecommerceUserId = Number(res);
       

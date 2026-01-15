@@ -34,6 +34,18 @@
 .productTab-content-header__title{
     margin: 0 !important;
 }
+
+.productTab-content-header__titleCategory{
+    /* color: var(--color-gray-900); */
+    font-size: var(--font-size-sm);
+    text-transform: capitalize;
+    cursor: pointer;
+      display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-wrap: wrap;
+    /* margin-left: var(--space-sm); */
+}
 .productTab-content-header__total{
     color: var(--greenColor) !important;
     font-weight: var(--font-weight-bold);

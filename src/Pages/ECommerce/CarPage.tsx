@@ -4,6 +4,7 @@ import noimageavailable from "@/assets/noimageavailable.webp";
 import { useNavigate } from "react-router-dom";
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
 import CustomLoader from '@/Components/Common/CustomLoader'
+import EmptyCart from "@/assets/emptycard.webp"
 
 import {
   selectCarPCG,
@@ -45,8 +46,9 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
       (c) => c.listDetalle && c.listDetalle.length > 0
     );
 
+    //Se navega, solo si el carrito tiene productos
   const goToCheckout = () => {
-    navigate("/checkout", { state: { payload } });
+    if(hasItems) navigate("/checkout", { state: { payload } });
   };
 
   if (loading) {
@@ -73,7 +75,9 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
         <h1 className="cart-page__title">Carrito de compra</h1>
       </header>
 
-      <section className="cart-page__content">
+      {hasItems ? (
+        <>
+          <section className="cart-page__content">
         <section className="cart-page__table-section" aria-label="Carrito">
           {hasItems ? (
             <>
@@ -229,12 +233,23 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
               type="button"
               className="cart-totals__button"
               onClick={goToCheckout}
+
+              // Si el carrito no tiene items, no se navega.
+              disabled={!hasItems}
             >
               <p className="cart-totals_text">Procesar Pago</p>
             </button>
           </div>
         </aside>
       </section>
+        </>
+      ): (
+        <section className="emptycart__container">
+          <img src={EmptyCart} className="emptycart__container-img" alt="carrito limpio" />
+          <h2 className="emptycart__container-title">Parece que tu carrito está vacío</h2>
+          <p className="emptycart__container-subtitle">Dale un vistazo a nuestras novedades y empieza a solicitar productos y llenar tu carrrito.</p>
+        </section>
+      )}
     </main>
   );
 };
