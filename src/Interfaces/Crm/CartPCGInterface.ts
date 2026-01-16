@@ -47,3 +47,117 @@ export interface ListOpciones{
     codTipoModificador: string;
     codModificador: string;
 }
+
+
+// Estandar
+//creat inteferaz
+
+export type TipoTrabajo = "INSERT" | "CANTIDAD";
+
+export interface DetalleFacturaTempoRequest {
+  // request.*
+  usuario: string;
+  maquina: string;
+  codproducto: string;
+  codprecio: string;
+  precio?: number | null; 
+  cantidadmovimiento?: number | null; 
+  medidamovimiento?: string | null; 
+  tipotrabajo: TipoTrabajo;
+  financiamiento?: number | null;
+  codvendedor?: string | null;
+  codcliente?: string | null;
+  producto?: string | null; 
+ 
+  // valores.*
+  sucursal: string;
+  bodega: string;
+  nofactura: string;
+  tipo: string;
+  tipodesc: string;
+  tasacambio: number;
+  descuento: number;
+
+  autorizado?: string | null; //"S" | "N" 
+  tabla: string;
+  vincularse?: string | null;
+  servicioventa: number;
+  facturaexonerada?: string | null; // "S"|"N"
+  lote?: string | null;
+  vencimiento?: string | null; 
+  vienedelabusqueda?: string | null; // "S"|"N"
+  observacion?: string | null;
+
+  iddescuentolineal?: number | null;
+  vienedebusquedaprioridadproducto?: string | null; // "S"|"N"
+  pol_Sumacant?: string | null; // "S"|"N"
+
+  // extra que no viene en request/valores directo
+  fecha: string; // en C# la envías como DbType.String
+}
+
+
+type YesNo = "S" | "N";
+export interface ApiResponseDetalleFacturaTempo {
+  success: boolean;
+  data: DetalleFacturaTempoData;
+  message: string;
+}
+
+export interface DetalleFacturaTempoData {
+  header: DetalleFacturaTempoHeader;
+  detalle: DetalleFacturaTempoItem[];
+}
+
+export interface DetalleFacturaTempoHeader {
+  msj: string;
+  cargaFila: YesNo
+  icono: string;
+  titulo: string;
+  permiso:  YesNo
+  opcionPermiso: number;
+  dato: string | number | boolean | null; // en tu ejemplo es null
+  cargaSuma:  YesNo
+  saldo: number;
+}
+
+export interface DetalleFacturaTempoItem {
+  numero: number | null;
+  codigo: string;
+  noParte: string;
+  barras: string;
+  referencia: string;
+  producto: string;
+  peso: number;
+  color: string;
+  talla: string;
+  observacion: string;
+  os: string;
+
+  saldo: string;      // "722.00 UND" (texto)
+  medida: string;     // "0103-001"
+  bonificacion: string;
+
+  cantidad: number;
+  vendedor: string;
+
+  lote: string;
+  vencimiento: string; // "1900-01-01T00:00:00" (ISO string)
+
+  precioSinIva: number;
+  precio: number;
+  precioDesc: number;
+
+  subTotal: number;
+  total: number;
+}
+
+//Obtener el numero de falote
+export interface FaloteRequestDto{
+    codSucursal : string;
+    documento: string;
+}
+export interface FaloteResponseDto{
+    consecutivo: number;
+    serie?: string
+}

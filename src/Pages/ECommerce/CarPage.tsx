@@ -33,7 +33,8 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
   useEffect(() => {
     if (payload) {
-      dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId! }));
+      console.log("El payload es", payload)
+      dispatch(getProductFromCarAsync({ codCliente: payload.contactId, noPedido: payload.orderId! }));
     }
   }, [dispatch, payload.contactId]);
 

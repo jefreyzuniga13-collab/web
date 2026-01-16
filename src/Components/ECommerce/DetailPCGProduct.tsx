@@ -6,11 +6,17 @@ import type {
   ProductoModificadorPCGInterface,
   ProductoPCGInterface
 } from "@/Interfaces/Chat/ProductPCGInterface"
-import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+import type { 
+  // CarDto, 
+  DetalleFacturaTempoRequest,
+  FaloteRequestDto, 
+  
+  // ListDetalleCarrito 
+} from "@/Interfaces/Crm/CartPCGInterface"
 import "@/Styles/Ecommerce/DetailProduct.css"
 // import noimageavailable from "@/assets/noimageavailable.webp"
 import {
-  addProductToCarAsync,
+  addProductTempoAsync,
   getProductFromCarAsync,
   selectCartLoading
 } from "@/Context/Slices/Ecommerce/cartSlice"
@@ -29,6 +35,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import type { SelectedInterface } from "./ProductTab"
 import aguamarina from '@/assets/aguamarina.png'
 import { MdInventory } from "react-icons/md"
+import { CartService } from "@/Services/Ecommerce/CarPCGService"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -317,87 +324,130 @@ const DetailPCGProduct = ({
     }))
   }
 
-  const buildCartRequest = (): CarDto => {
-    const items: ListDetalleCarrito[] = []
-    const basePrice = Number(detail.precio ?? 0)
-    const baseTotal = basePrice * cantidad
+  const buildCartRequest = (): DetalleFacturaTempoRequest => {
+    // const items: ListDetalleCarrito[] = []
+    // const basePrice = Number(detail.precio ?? 0)
+    // const baseTotal = basePrice * cantidad
 
-    const baseItem: ListDetalleCarrito = {
-      tipoComponente: "P",
-      indice: 1,
-      codTipoModificador: "0000",
-      codModificador: "00000",
-      codGrupo: detail.codCategoria,
-      codProducto: detail.codProducto,
-      codOpcion: "00000",
-      descripcion: detail.descripcion,
-      cantidad,
-      precioV: basePrice,
-      totalMenu: baseTotal,
-      codUm: detail.codUm,
-      observaciones: observacion,
-      unico: "",
-      noPedido: 0,
-      imagen: detail.imagen
-    }
+    // const baseItem: ListDetalleCarrito = {
+    //   tipoComponente: "P",
+    //   indice: 1,
+    //   codTipoModificador: "0000",
+    //   codModificador: "00000",
+    //   codGrupo: detail.codCategoria,
+    //   codProducto: detail.codProducto,
+    //   codOpcion: "00000",
+    //   descripcion: detail.descripcion,
+    //   cantidad,
+    //   precioV: basePrice,
+    //   totalMenu: baseTotal,
+    //   codUm: detail.codUm,
+    //   observaciones: observacion,
+    //   unico: "",
+    //   noPedido: 0,
+    //   imagen: detail.imagen
+    // }
 
-    items.push(baseItem)
+    // items.push(baseItem)
 
-    let index = 2
-    Object.entries(selectedOptions).forEach(([modifierId, optionIds]) => {
-      optionIds.forEach(id => {
-        const option = optionIndex.get(id)
-        if (!option) return
+    // let index = 2
+    // Object.entries(selectedOptions).forEach(([modifierId, optionIds]) => {
+    //   optionIds.forEach(id => {
+    //     const option = optionIndex.get(id)
+    //     if (!option) return
 
-        const precioV = Number(option.precioVenta)
-        const qtyPerItem = optionQuantities[id] ?? 1
-        const qtyTotal = qtyPerItem * cantidad
-        const totalMenu = precioV * qtyTotal
+    //     const precioV = Number(option.precioVenta)
+    //     const qtyPerItem = optionQuantities[id] ?? 1
+    //     const qtyTotal = qtyPerItem * cantidad
+    //     const totalMenu = precioV * qtyTotal
 
-        const optionItem: ListDetalleCarrito = {
-          tipoComponente: "O",
-          indice: index++,
-          codTipoModificador: option.codTipoModificador ?? "0000",
-          codModificador: option.codModificador ?? modifierId,
-          codGrupo: detail.codCategoria,
-          codProducto: detail.codProducto,
-          codOpcion: option.codOpcion,
-          descripcion: option.descripcionOp,
-          cantidad: qtyTotal,
-          precioV,
-          totalMenu,
-          codUm: option.codUm,
-          observaciones: observacion,
-          unico: "",
-          noPedido: 0,
-          imagen: detail.imagen
-        }
+    //     const optionItem: ListDetalleCarrito = {
+    //       tipoComponente: "O",
+    //       indice: index++,
+    //       codTipoModificador: option.codTipoModificador ?? "0000",
+    //       codModificador: option.codModificador ?? modifierId,
+    //       codGrupo: detail.codCategoria,
+    //       codProducto: detail.codProducto,
+    //       codOpcion: option.codOpcion,
+    //       descripcion: option.descripcionOp,
+    //       cantidad: qtyTotal,
+    //       precioV,
+    //       totalMenu,
+    //       codUm: option.codUm,
+    //       observaciones: observacion,
+    //       unico: "",
+    //       noPedido: 0,
+    //       imagen: detail.imagen
+    //     }
 
-        items.push(optionItem)
-      })
-    })
+    //     items.push(optionItem)
+    //   })
+    // })
+const baseItem: DetalleFacturaTempoRequest = {
+  sucursal: "06",
+  usuario: String(contactId),
+  maquina: `CRM-${contactId}`,
+  fecha: "20260116",
 
-    const totalCarrito = items.reduce((sum, item) => sum + item.totalMenu, 0)
+  codproducto: detail.codProducto.trim(),
+  codprecio: "01",
+  precio: detail.precio,
 
-    const carDto: CarDto = {
-      tipoServicio: 8,
-      noPedido: 0,
-      fecha: new Date().toISOString(),
-      total: totalCarrito,
-      listDetalle: items
-    }
+  bodega: "010",
+  cantidadmovimiento: cantidad,
+  medidamovimiento: "",
 
-    return carDto
+  nofactura: "00000000",
+  tipo: "1",
+  tipodesc: "N",
+  tipotrabajo: "INSERT",
+
+  tasacambio: 36.0,
+  financiamiento: 0,
+  descuento: 0,
+
+  codvendedor: "000",
+  codcliente: "00000",
+
+  autorizado: "N",
+  producto: detail.descripcion.trim(),
+
+  tabla: "det_factura_tempo",
+  vincularse: "N",
+  servicioventa: 1,
+  facturaexonerada: "N",
+
+  lote: "Sin Lote",
+  vencimiento: "20260116",
+
+  vienedelabusqueda: "N",
+  observacion,
+
+  iddescuentolineal: 0,
+  vienedebusquedaprioridadproducto: "S",
+  pol_Sumacant: "S",
+};
+
+    // const totalCarrito = items.reduce((sum, item) => sum + item.totalMenu, 0)
+
+    // const carDto: CarDto = {
+    //   tipoServicio: 8,
+    //   noPedido: 0,
+    //   fecha: new Date().toISOString(),
+    //   total: totalCarrito,
+    //   listDetalle: items
+    // }
+
+    // return carDto
+    return baseItem;
   }
 
   const handleAddToCart = async () => {
-    // Validar cantidad
     if (cantidad <= 0) {
       toast.warning("La cantidad debe ser al menos 1.")
       return
     }
 
-    // Validar modificadores requeridos
     if (productModifiers && productModifiers.length > 0) {
       let firstError: string | null = null
 
@@ -428,11 +478,13 @@ const DetailPCGProduct = ({
 
     // Construir request
     const req = buildCartRequest()
+    //aqui esta mal ya
 
+    console.log("Data a enviar", req)
     // Recalcular badge desde el carrito real
     const refreshBadge = async (noPedido: number) => {
       const updated = await dispatch(
-        getProductFromCarAsync({ codCliente: 0, noPedido })
+        getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })
       ).unwrap()
 
       const arr = Array.isArray(updated) ? updated : []
@@ -451,20 +503,48 @@ const DetailPCGProduct = ({
     // Resolver pedido (existente o nuevo)
     const existingLog = await fetchByContactId(contactId)
 
-    if (existingLog?.orderId && existingLog.orderId > 0) {
-      req.noPedido = existingLog.orderId
 
-      await dispatch(addProductToCarAsync(req)).unwrap()
+    console.log("existingLog", existingLog)
+    if (existingLog?.orderId && existingLog.orderId > 0) {
+      req.nofactura = existingLog.orderId.toString()
+
+      console.log("existingLog?.orderId", existingLog?.orderId)
+      // req.tipotrabajo = "CANTIDAD"
+      await dispatch(addProductTempoAsync(req)).unwrap()
       await refreshBadge(existingLog.orderId)
     } else {
-      const cartCreated = await dispatch(addProductToCarAsync(req)).unwrap()
-      const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
-      const orderId = first?.noPedido
 
+      //Aqui se agrega
+      const falote: FaloteRequestDto = {
+        codSucursal: '06',
+        documento: "GetConsecDoc"
+      }
+
+      const data = await CartService.GetConsecDocAsync(falote);
+
+      req.nofactura = data.data.consecutivo.toString().trim();
+      // const cartCreated = 
+      await dispatch(addProductTempoAsync(req)).unwrap()
+      
+      // const first = Array.isArray(cartCreated) ? cartCreated[0] : cartCreated
+      // const orderId = first?.noPedido
+
+    const tempo =  await dispatch(
+        getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido: Number(req.nofactura) })
+      ).unwrap()
+
+      console.log("Numero de pedido", tempo)
       // Validar noPedido generado
-      if (!orderId || Number.isNaN(Number(orderId)) || Number(orderId) <= 0) {
+      // if (!orderId || Number.isNaN(Number(orderId)) || Number(orderId) <= 0) {
+      //   toast.error("No se pudo obtener el número de pedido.")
+      //   return
+      // }
+
+      const orderId = Number(tempo[0].noPedido);
+
+      if(orderId <= 0){
         toast.error("No se pudo obtener el número de pedido.")
-        return
+         return
       }
 
       const logOrderRequest: LogCartRequestDto = {
@@ -476,7 +556,11 @@ const DetailPCGProduct = ({
 
       await createLogCart(logOrderRequest)
       await refreshBadge(Number(orderId))
+
+      console.log("Datos enviados", logOrderRequest)
     }
+
+    // 
 
     // Restablecer estado de UI
     setCantidad(1)
@@ -579,7 +663,7 @@ const DetailPCGProduct = ({
     }
   }
 
-    const openImagePreview = (url: string) => {
+  const openImagePreview = (url: string) => {
     setPreviewImageUrl(url)
     setismaximize(true)
   }
@@ -743,5 +827,3 @@ const DetailPCGProduct = ({
 }
 
 export default DetailPCGProduct
-
-// Al llamar a handleSendProductMessage, se delseccionana las opcion por que es?

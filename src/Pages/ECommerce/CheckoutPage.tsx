@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
-import { FaRegCreditCard } from "react-icons/fa";
+// import { FaRegCreditCard } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
-import VisaLogo from "@/assets/visaLogo.png";
-import MasterCardLogo from "@/assets/masterCardLogo.png";
+// import VisaLogo from "@/assets/visaLogo.png";
+// import MasterCardLogo from "@/assets/masterCardLogo.png";
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import MapPicker from "@/Components/Common/MapPicker";
 import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
@@ -29,6 +29,8 @@ import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
 import { sendMediaEcommerce } from "@/Services/chat/MessageService";
 import { formatCardNumber, formatCvc, formatExpiry, validateBillingForm, validateCardForm, validateLocation } from "@/Utils/validation";
+import { PaymentMethodComponent } from "@/Components/ECommerce/PaymentMethod";
+import { Currency } from "@/Components/ECommerce/Currency";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -101,6 +103,9 @@ const CheckoutPage: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(null);
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [tip, setTip] = useState<number>(0);
+    const [transferAmount, setTransferAmount] = useState<number>(0);
+  const [transfer, setTransfer] = useState<number>(0);
+
   const [locationMode, setLocationMode] = useState<LocationMode>("new");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
@@ -271,13 +276,44 @@ const CheckoutPage: React.FC = () => {
 
   const handleCoordsChange = (coords: Coords) => setSelectedCoords(coords);
 
+  // //tres metodos de pago, transfer, cash, card
+  // const handleSelectCurrency = (item: Currencyto) => {
+  //   setSelectedCurrency(item);
+  //   //efectivo, Transferencia. y PinPad Credomatic
+  //   const isCash =
+  //     item.descripcion_Pago.toLowerCase().includes("efectivo") ||
+  //     item.moneda_Fija.toLowerCase().includes("efectivo");
+
+  //   setMethod(isCash ? "cash" : "card");
+  // };
+
+  // tres métodos de pago: transfer, cash, card
+
+
+  const normalize = (v: string) => v.toLowerCase().trim();
+
   const handleSelectCurrency = (item: Currencyto) => {
-    setSelectedCurrency(item);
-    const isCash =
-      item.descripcion_Pago.toLowerCase().includes("efectivo") ||
-      item.moneda_Fija.toLowerCase().includes("efectivo");
-    setMethod(isCash ? "cash" : "card");
-  };
+  setSelectedCurrency(item);
+
+  const desc = normalize(item.descripcion_Pago);
+  const moneda = normalize(item.moneda_Fija);
+
+  let method: "cash" | "transfer" | "card" = "card";
+
+  if (desc.includes("efectivo") || moneda.includes("efectivo")) {
+    method = "cash";
+  } else if (
+    desc.includes("transfer") ||
+    desc.includes("transferencia") ||
+    moneda.includes("transfer")
+  ) 
+  {
+    method = "transfer";
+  }
+
+  setMethod(method);
+};
+
 
   const getCoordsForFlow = (): Coords | null => {
     if (locationMode === "existing") {
@@ -374,6 +410,20 @@ const CheckoutPage: React.FC = () => {
           return void toastError(
             `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
           );
+        }
+      }
+
+
+       if (method === "transfer") {
+        if (transferAmount <= 0) return void toastError("El monto en efectivo debe ser mayor a 0.");
+        //numero de referencia de la tarjeta
+        if (transfer > cashAmount) return void toastError("La propina no puede ser mayor al monto ingresado.");
+
+        const disponible = cashAmount - tip;
+        if (disponible < total) {
+          return void toastError(
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+          );  
         }
       }
 
@@ -714,244 +764,279 @@ const CheckoutPage: React.FC = () => {
            )}
 
             {step === "currency" && (
-              <div className="checkout-methods-list">
-                <h2 className="checkout-section__title">Selecciona cómo deseas pagar</h2>
 
-                <div className="checkout-methods-list">
-                  {currency.map(item => (
-                    <button
-                      key={item.codPago}
-                      type="button"
-                      className={
-                        selectedCurrency?.codPago === item.codPago
-                          ? "checkout-method checkout-method--active"
-                          : "checkout-method"
-                      }
-                      onClick={() => handleSelectCurrency(item)}
-                    >
-                      <div className="checkout-method__left">
-                        <span className="checkout-radio">
-                          <span
-                            className={
-                              selectedCurrency?.codPago === item.codPago
-                                ? "checkout-radio__dot checkout-radio__dot--active"
-                                : "checkout-radio__dot"
-                            }
-                          />
-                        </span>
-                        <span className="checkout-method__label">{item.descripcion_Pago}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <Currency
+                step={step}
+                currency={currency}
+                selectedCurrency={selectedCurrency}
+                handleSelectCurrency={handleSelectCurrency}
+                invoiceLoading={invoiceLoading}
+                setStep={setStep}
+                handleGoToPayment={handleGoToPayment}
+              />
+              // <div className="checkout-methods-list">
+              //   <h2 className="checkout-section__title">Selecciona cómo deseas pagar</h2>
 
-                {selectedCurrency && (
-                  <div className="checkout-selected-currency">
-                    <p>Método seleccionado:</p>
-                    <strong>{selectedCurrency.descripcion_Pago}</strong>
-                  </div>
-                )}
+              //   <div className="checkout-methods-list">
+              //     {currency.map(item => (
+              //       <button
+              //         key={item.codPago}
+              //         type="button"
+              //         className={
+              //           selectedCurrency?.codPago === item.codPago
+              //             ? "checkout-method checkout-method--active"
+              //             : "checkout-method"
+              //         }
+              //         onClick={() => handleSelectCurrency(item)}
+              //       >
+              //         <div className="checkout-method__left">
+              //           <span className="checkout-radio">
+              //             <span
+              //               className={
+              //                 selectedCurrency?.codPago === item.codPago
+              //                   ? "checkout-radio__dot checkout-radio__dot--active"
+              //                   : "checkout-radio__dot"
+              //               }
+              //             />
+              //           </span>
+              //           <span className="checkout-method__label">{item.descripcion_Pago}</span>
+              //         </div>
+              //       </button>
+              //     ))}
+              //   </div>
 
-                <div className="checkout-actionBtn">
-                  <button
-                    type="button"
-                    className="checkout-paybtn__back"
-                    onClick={() => setStep("location")}
-                    disabled={invoiceLoading}
-                  >
-                    Regresar
-                  </button>
-                  <button
-                    type="button"
-                    className="checkout-paybtn"
-                    onClick={handleGoToPayment}
-                    disabled={invoiceLoading}
-                  >
-                    {invoiceLoading ? "Cargando" : " Continuar"}
-                  </button>
-                </div>
-              </div>
+              //   {selectedCurrency && (
+              //     <div className="checkout-selected-currency">
+              //       <p>Método seleccionado:</p>
+              //       <strong>{selectedCurrency.descripcion_Pago}</strong>
+              //     </div>
+              //   )}
+
+              //   <div className="checkout-actionBtn">
+              //     <button
+              //       type="button"
+              //       className="checkout-paybtn__back"
+              //       onClick={() => setStep("location")}
+              //       disabled={invoiceLoading}
+              //     >
+              //       Regresar
+              //     </button>
+              //     <button
+              //       type="button"
+              //       className="checkout-paybtn"
+              //       onClick={handleGoToPayment}
+              //       disabled={invoiceLoading}
+              //     >
+              //       {invoiceLoading ? "Cargando" : " Continuar"}
+              //     </button>
+              //   </div>
+              // </div>
             )}
 
             {step === "paymentMethod" && (
-              <div className="checkout-section">
-                <h2 className="checkout-section__title">Método de pago</h2>
 
-                {method === "card" && (
-                  <>
-                    <div className="checkout-methods">
-                      <div className="checkout-method checkout-method--active">
-                        <div className="checkout-method__left">
-                          <span className="checkout-radio">
-                            <span className="checkout-radio__dot checkout-radio__dot--active" />
-                          </span>
-                          <FaRegCreditCard className="checkout-method__icon" />
-                          <span className="checkout-method__label">Tarjeta</span>
-                        </div>
+              <PaymentMethodComponent
+                step={step} 
+                setStep={setStep}
+                method={method}
+                distanceKm={distanceKm}
+                transpCost={transpCost}
+                cardForm={cardForm}
+                tip={tip}
+                setTip={setTip}
+                onExpiryChange={onExpiryChange}
+                onCardNumberChange={onCardNumberChange}
+                onCvcChange={onCvcChange}
+                onNameChange={onNameChange}
+                cashAmount={cashAmount}
+                setCashAmount={setCashAmount}
+                carPCG={carPCG}
+                payNowDisabled={payNowDisabled}
+                payNowLock={payNowLock}
+                handlePayNow={handlePayNow}
+                transferAmount={transferAmount}
+                setTransferAmount={setTransferAmount}
+                transfer={transfer}
+                setTransfer={setTransfer}
+              />
+              // <div className="checkout-section">
+              //   <h2 className="checkout-section__title">Método de pago</h2>
 
-                        <div className="checkout-method__brands">
-                          <img src={VisaLogo} className="checkout-card-brand" />
-                          <img src={MasterCardLogo} className="checkout-card-brand" />
-                        </div>
-                      </div>
-                    </div>
+              //   {method === "card" && (
+              //     <>
+              //       <div className="checkout-methods">
+              //         <div className="checkout-method checkout-method--active">
+              //           <div className="checkout-method__left">
+              //             <span className="checkout-radio">
+              //               <span className="checkout-radio__dot checkout-radio__dot--active" />
+              //             </span>
+              //             <FaRegCreditCard className="checkout-method__icon" />
+              //             <span className="checkout-method__label">Tarjeta</span>
+              //           </div>
 
-                    <form className="checkout-cardform" onSubmit={e => e.preventDefault()}>
-                      <p>
-                        Costo de transporte C$ {Number(transpCost ?? 0)}
-                        {distanceKm > 0 ? ` (${distanceKm.toFixed(2)} km)` : ""}
-                      </p>
+              //           <div className="checkout-method__brands">
+              //             <img src={VisaLogo} className="checkout-card-brand" />
+              //             <img src={MasterCardLogo} className="checkout-card-brand" />
+              //           </div>
+              //         </div>
+              //       </div>
 
-                      <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="cardNumber">
-                          Número de tarjeta
-                        </label>
-                        <input
-                          id="cardNumber"
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="cc-number"
-                          className="checkout-input"
-                          placeholder="1234 5678 9012 3456"
-                          value={cardForm.cardNumber}
-                          onChange={onCardNumberChange}
-                        />
-                      </div>
+              //       <form className="checkout-cardform" onSubmit={e => e.preventDefault()}>
+              //         <p>
+              //           Costo de transporte C$ {Number(transpCost ?? 0)}
+              //           {distanceKm > 0 ? ` (${distanceKm.toFixed(2)} km)` : ""}
+              //         </p>
 
-                      <div className="checkout-cardform__row">
-                        <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="expiry">
-                            Expiración
-                          </label>
-                          <input
-                            id="expiry"
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete="cc-exp"
-                            className="checkout-input"
-                            placeholder="MM/AA"
-                            value={cardForm.expiry}
-                            onChange={onExpiryChange}
-                          />
-                        </div>
+              //         <div className="checkout-field checkout-field--full">
+              //           <label className="checkout-label" htmlFor="cardNumber">
+              //             Número de tarjeta
+              //           </label>
+              //           <input
+              //             id="cardNumber"
+              //             type="text"
+              //             inputMode="numeric"
+              //             autoComplete="cc-number"
+              //             className="checkout-input"
+              //             placeholder="1234 5678 9012 3456"
+              //             value={cardForm.cardNumber}
+              //             onChange={onCardNumberChange}
+              //           />
+              //         </div>
 
-                        <div className="checkout-field">
-                          <label className="checkout-label" htmlFor="cvc">
-                            CVC
-                          </label>
-                          <input
-                            id="cvc"
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete="cc-csc"
-                            className="checkout-input"
-                            placeholder="CVC"
-                            value={cardForm.cvc}
-                            onChange={onCvcChange}
-                          />
-                        </div>
-                      </div>
+              //         <div className="checkout-cardform__row">
+              //           <div className="checkout-field">
+              //             <label className="checkout-label" htmlFor="expiry">
+              //               Expiración
+              //             </label>
+              //             <input
+              //               id="expiry"
+              //               type="text"
+              //               inputMode="numeric"
+              //               autoComplete="cc-exp"
+              //               className="checkout-input"
+              //               placeholder="MM/AA"
+              //               value={cardForm.expiry}
+              //               onChange={onExpiryChange}
+              //             />
+              //           </div>
 
-                      <div className="checkout-field checkout-field--full">
-                        <label className="checkout-label" htmlFor="nameOnCard">
-                          Nombre en tarjeta
-                        </label>
-                        <input
-                          id="nameOnCard"
-                          type="text"
-                          autoComplete="cc-name"
-                          className="checkout-input"
-                          value={cardForm.nameOnCard}
-                          onChange={onNameChange}
-                        />
-                      </div>
-                    </form>
-                  </>
-                )}
+              //           <div className="checkout-field">
+              //             <label className="checkout-label" htmlFor="cvc">
+              //               CVC
+              //             </label>
+              //             <input
+              //               id="cvc"
+              //               type="text"
+              //               inputMode="numeric"
+              //               autoComplete="cc-csc"
+              //               className="checkout-input"
+              //               placeholder="CVC"
+              //               value={cardForm.cvc}
+              //               onChange={onCvcChange}
+              //             />
+              //           </div>
+              //         </div>
 
-                {method === "cash" && (
-                  <div className="checkout-cash">
-                    <div className="checkout-field checkout-field--full">
-                      <label className="checkout-label" htmlFor="cashAmount">
-                        Monto con el que pagas
-                      </label>
-                      <input
-                        id="cashAmount"
-                        type="number"
-                        className="checkout-input"
-                        value={cashAmount}
-                        onChange={e => setCashAmount(Number(e.target.value))}
-                      />
-                    </div>
+              //         <div className="checkout-field checkout-field--full">
+              //           <label className="checkout-label" htmlFor="nameOnCard">
+              //             Nombre en tarjeta
+              //           </label>
+              //           <input
+              //             id="nameOnCard"
+              //             type="text"
+              //             autoComplete="cc-name"
+              //             className="checkout-input"
+              //             value={cardForm.nameOnCard}
+              //             onChange={onNameChange}
+              //           />
+              //         </div>
+              //       </form>
+              //     </>
+              //   )}
 
-                    <div className="checkout-field checkout-field--full">
-                      <label className="checkout-label" htmlFor="tip">
-                        Propina
-                      </label>
-                      <input
-                        id="tip"
-                        type="number"
-                        className="checkout-input"
-                        value={tip}
-                        onChange={e => setTip(Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                )}
+              //   {method === "cash" && (
+              //     <div className="checkout-cash">
+              //       <div className="checkout-field checkout-field--full">
+              //         <label className="checkout-label" htmlFor="cashAmount">
+              //           Monto con el que pagas
+              //         </label>
+              //         <input
+              //           id="cashAmount"
+              //           type="number"
+              //           className="checkout-input"
+              //           value={cashAmount}
+              //           onChange={e => setCashAmount(Number(e.target.value))}
+              //         />
+              //       </div>
 
-                {carPCG && carPCG.length > 0 && (
-                  <aside className="checkout-summary">
-                    <p className="checkout-summary__title">Resumen</p>
-                    <div className="checkout-summary__Cost_cost">
-                      <p className="checkout-summary__content">
-                        Subtotal: <span>{carPCG[0].subTotal}</span>
-                      </p>
+              //       <div className="checkout-field checkout-field--full">
+              //         <label className="checkout-label" htmlFor="tip">
+              //           Propina
+              //         </label>
+              //         <input
+              //           id="tip"
+              //           type="number"
+              //           className="checkout-input"
+              //           value={tip}
+              //           onChange={e => setTip(Number(e.target.value))}
+              //         />
+              //       </div>
+              //     </div>
+              //   )}
 
-                      {carPCG[0].descuento != null && carPCG[0].descuento > 0 && (
-                        <p className="checkout-summary__content">
-                          Descuento: <span>{carPCG[0].descuento}</span>
-                        </p>
-                      )}
+              //   {carPCG && carPCG.length > 0 && (
+              //     <aside className="checkout-summary">
+              //       <p className="checkout-summary__title">Resumen</p>
+              //       <div className="checkout-summary__Cost_cost">
+              //         <p className="checkout-summary__content">
+              //           Subtotal: <span>{carPCG[0].subTotal}</span>
+              //         </p>
 
-                      <p className="checkout-summary__content">
-                        IVA: <span>{carPCG[0].iva}</span>
-                      </p>
+              //         {carPCG[0].descuento != null && carPCG[0].descuento > 0 && (
+              //           <p className="checkout-summary__content">
+              //             Descuento: <span>{carPCG[0].descuento}</span>
+              //           </p>
+              //         )}
 
-                      <p className="checkout-summary__content">
-                        Transporte: <span>{transpCost}</span>
-                      </p>
-                      <p className="checkout-summary__content">
-                        Total:
-                        <span className="checkout-summary__content__total">
-                          C$
-                          {(Number(carPCG[0].total ?? 0) + Number(transpCost ?? 0) + Number(tip ?? 0)).toFixed(2)}
-                        </span>
-                      </p>  
-                    </div>
-                  </aside>
-                )}
+              //         <p className="checkout-summary__content">
+              //           IVA: <span>{carPCG[0].iva}</span>
+              //         </p>
 
-                <div className="checkout-actionBtn">
-                  <button
-                    type="button"
-                    disabled={payNowDisabled || payNowLock}
-                    className="checkout-paybtn__back"
-                    onClick={() => setStep("currency")}
-                  >
-                    Regresar
-                  </button>
+              //         <p className="checkout-summary__content">
+              //           Transporte: <span>{transpCost}</span>
+              //         </p>
+              //         <p className="checkout-summary__content">
+              //           Total:
+              //           <span className="checkout-summary__content__total">
+              //             C$
+              //             {(Number(carPCG[0].total ?? 0) + Number(transpCost ?? 0) + Number(tip ?? 0)).toFixed(2)}
+              //           </span>
+              //         </p>  
+              //       </div>
+              //     </aside>
+              //   )}
 
-                  <button
-                    type="button"
-                    className="checkout-paybtn"
-                    onClick={handlePayNow}
-                    disabled={payNowDisabled || payNowLock}
-                  >
-                    {/* {payNowLock ? "Procesando..." : payNowCooldown > 0 ? `Espera ${payNowCooldown}s` : "Pagar ahora"} */}
-                     {payNowDisabled ? "Procesando..."  : "Pagar ahora"}
-                  </button>
-                </div>
-              </div>
+              //   <div className="checkout-actionBtn">
+              //     <button
+              //       type="button"
+              //       disabled={payNowDisabled || payNowLock}
+              //       className="checkout-paybtn__back"
+              //       onClick={() => setStep("currency")}
+              //     >
+              //       Regresar
+              //     </button>
+
+              //     <button
+              //       type="button"
+              //       className="checkout-paybtn"
+              //       onClick={handlePayNow}
+              //       disabled={payNowDisabled || payNowLock}
+              //     >
+              //       {/* {payNowLock ? "Procesando..." : payNowCooldown > 0 ? `Espera ${payNowCooldown}s` : "Pagar ahora"} */}
+              //        {payNowDisabled ? "Procesando..."  : "Pagar ahora"}
+              //     </button>
+              //   </div>
+              // </div>
             )}
           </div>
         </div>

@@ -167,7 +167,7 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
   }
 
   const logOrderRequest: LogCartRequestDto = {
-    orderId,          // <- ahora es number seguro
+    orderId, 
     contactId,
     conversationId,
     statusId: 1,
@@ -175,7 +175,6 @@ const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
 
   await createLogCart(logOrderRequest)
 }
-
 
   // Calcular count real desde el carrito retornado
   const cartsArr = Array.isArray(cartUpdated) ? cartUpdated : []

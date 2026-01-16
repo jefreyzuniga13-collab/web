@@ -48,8 +48,9 @@ const DetailPanel: React.FC<Props> = ({
       const { contactId: cid, orderId } = e.detail ?? {};
       if (!cid || !orderId) return;
 
+      console.log("contactId de DetailPanel", contactId)
       const updated = await dispatch(
-        getProductFromCarAsync({ codCliente: 0, noPedido: orderId })
+        getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido: orderId })
       ).unwrap();
 
       const arr = Array.isArray(updated) ? updated : [];
@@ -69,7 +70,7 @@ const DetailPanel: React.FC<Props> = ({
     window.addEventListener("CartReloadForActiveContact", onReload);
     return () =>
       window.removeEventListener("CartReloadForActiveContact", onReload);
-  }, [dispatch]);
+  }, [contactId, dispatch]);
   
   return (
     <div

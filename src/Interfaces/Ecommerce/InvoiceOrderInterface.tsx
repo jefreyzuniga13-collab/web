@@ -122,7 +122,7 @@ export interface PrintOrdenFactInterfaceRaw {
 //Checkout
 
 export type CheckoutStep = "currency" | "location" | "paymentMethod";
-export type PaymentMethod = "card" | "cash";
+export type PaymentMethod = "card" | "cash" | "transfer";
 
 export interface BillingFormState {
   firstName: string;

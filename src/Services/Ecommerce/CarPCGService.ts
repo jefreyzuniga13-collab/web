@@ -1,5 +1,9 @@
 import type {
-    CarDto
+    CarDto,
+    DetalleFacturaTempoData,
+    DetalleFacturaTempoRequest,
+    FaloteRequestDto,
+    FaloteResponseDto
 } from '@/Interfaces/Crm/CartPCGInterface'
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import {apiPCG} from '@/Utils/ApiConfig'
@@ -24,6 +28,36 @@ class CartServ {
        }
     }
 
+    async GetConsecDocAsync(req: FaloteRequestDto):Promise<ApiPCGResponse<FaloteResponseDto>>{
+       try{
+         const {data} = await apiPCG.get<ApiPCGResponse<FaloteResponseDto>>( `CarritoCompra/obtenerConsecDoc/${req.codSucursal}/${req.documento}`);
+         return data;
+
+       }catch(error){
+        throw formatError(error)
+       }
+    }
+
+    async AddProductToTempo(req: DetalleFacturaTempoRequest): Promise<ApiPCGResponse<DetalleFacturaTempoData>>{
+       try{
+         const {data} = await apiPCG.post<ApiPCGResponse<DetalleFacturaTempoData>>( `CarritoCompra/InsertaDetalleFactura`, req);
+         return data;
+
+       }catch(error){
+        throw formatError(error)
+       }
+    }
+
+      async AddProductToPCGCar(req: DetalleFacturaTempoRequest): Promise<ApiPCGResponse<CarDto[]>>{
+       try{
+         const {data} = await apiPCG.post<ApiPCGResponse<CarDto[]>>( `CarritoCompra/AgregaCarrito`, req);
+         return data;
+
+       }catch(error){
+        throw formatError(error)
+       }
+    }
+
      async AddProductsToCar(req: CarDto[]): Promise<CarDto[]>{
        try{
          const {data} = await apiPCG.post<ApiPCGResponse<CarDto[]>>( `CarritoCompra/AgregaCarrito`, req);
@@ -37,7 +71,7 @@ class CartServ {
     async getProductFromCar(codCliente: number, noPedido: number): Promise<CarDto[]> {
       try {
         const { data } = await apiPCG.get<ApiPCGResponse<CarDto[]>>(
-          `CarritoCompra/OrdenEn/${codCliente}/${noPedido}`
+          `CarritoCompra/OrdenEn/${codCliente}/${noPedido.toString()}`
         )
 
         return data.data

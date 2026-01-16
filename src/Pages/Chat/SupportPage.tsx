@@ -101,7 +101,7 @@ const SupportPage: React.FC = () => {
 
 useEffect(() => {
   if (!convId) {
-    void dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: 0 }))
+    void dispatch(getProductFromCarAsync({ codCliente: contact?.id ?? 0, noPedido: 0 }))
     return
   }
 
@@ -116,7 +116,7 @@ useEffect(() => {
     const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
 
     const cart = await dispatch(
-      getProductFromCarAsync({ codCliente: 0, noPedido })
+      getProductFromCarAsync({ codCliente: contact.id, noPedido })
     ).unwrap()
 
     if (cancelled) return

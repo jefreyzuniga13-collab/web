@@ -91,7 +91,6 @@ const ensureEcommerceRef = useRef<
     sending
   } = useChatWindow({ conversationId })
 
-
   useEffect(() => {
   if (!contactId) return;
 
@@ -112,6 +111,7 @@ const ensureEcommerceRef = useRef<
         const myReq = ++reqRef.current;
 
         const loadCart = async () => {
+          //peticion se manda siempre el conactid bien
           const log = await fetchByContactId(contactId);
 
           // si ya hubo otra ejecución más nueva, ignorar esta
@@ -120,9 +120,16 @@ const ensureEcommerceRef = useRef<
           const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
           setOrderId(noPedido > 0 ? noPedido : null);
 
+          console.log("El log es", log);
+          console.log("No pedido es", noPedido);
+
+          console.log("COntacto es", contactId)
+          //varias veces se usa el getProductFromCarAsync, se envia el valor que es, y en otros no se enviar, solo 0
           const updated = await dispatch(
-            getProductFromCarAsync({ codCliente: 0, noPedido })
+            getProductFromCarAsync({ codCliente: contactId, noPedido })
           ).unwrap();
+
+          console.log("El carrito es")
 
           // Si ya hubo otra ejecución más nueva, ignorar esta
           if (myReq !== reqRef.current) return;
@@ -143,7 +150,7 @@ const ensureEcommerceRef = useRef<
         };
 
         void loadCart();
-      }, [contactId, conversationId, dispatch, fetchByContactId]);
+      }, [contactId]);
 
 
 
@@ -171,7 +178,7 @@ const ensureEcommerceRef = useRef<
       })
     ).unwrap()
 
-        const updated = await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido })).unwrap()
+        const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })).unwrap()
           const arr = Array.isArray(updated) ? updated : []
           const count = arr[0]?.listDetalle?.length ?? 0
           const empty = count === 0
