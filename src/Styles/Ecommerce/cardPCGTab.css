@@ -160,6 +160,45 @@
     text-align: right;
 }
 
+
+.productTab-content__inputContaner{
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    flex-wrap: wrap;
+        gap: var(--space-lg);
+}
+
+.productTab-content__inputs{
+    display: flex;
+    flex-direction: column;
+    justify-content: right;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    min-width: 100%;
+    margin: var(--space-xs) 0;
+}
+
+.productTab-content__input
+{
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.transportationCost__input{
+    width: 100%;
+    display: flex;
+    justify-content: end;
+}
+ .transportationCost
+{
+    max-width: 30%;
+    padding: var(--space-sm);
+    /* justify-items: right; */
+    align-self: right;
+}
+
 .productTab-content-footer{
     margin-top: var(--space-lg);
 }

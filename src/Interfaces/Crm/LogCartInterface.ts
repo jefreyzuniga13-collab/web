@@ -14,20 +14,21 @@ export interface LogCartResponseDto {
   updatedByName: string | null
   statusId: number
   statusName: string
+  branch: string;
 }
 
 export interface LogCartRequestDto {
   orderId: number
   contactId: number
-  // userId: number
   conversationId: number
   statusId: number
+  branch?: string;
 }
 
 export interface LogCartFormValues {
   orderId: number
   contactId: number
-  // userId: number
   conversationId: number
   statusId: number
+  branch?: string
 }

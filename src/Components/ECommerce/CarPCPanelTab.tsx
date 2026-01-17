@@ -34,7 +34,7 @@ import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import type { SendInteractiveMessajeRequestDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { MdOutlineCancelScheduleSend } from "react-icons/md";
 import { IoSend } from "react-icons/io5";
-import {selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
+import { selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { generateRandomString } from "@/Utils/generateRandomString"
@@ -64,8 +64,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const contactHasCart = badgeMap?.[contactId] ?? { hasCart: false, count: 0 }
 
   // Colócalo cerca de tus hooks dentro del componente:
-const ensureEcommerceRef = useRef<
-  Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> | null>(null);
+  const ensureEcommerceRef = useRef<
+    Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> | null>(null);
 
   const {
     SendMessageLink,
@@ -92,67 +92,65 @@ const ensureEcommerceRef = useRef<
   } = useChatWindow({ conversationId })
 
   useEffect(() => {
-  if (!contactId) return;
+    if (!contactId) return;
 
-  // Este panel representa ESTE contacto
-  dispatch(setActiveContactId(contactId));
+    // Este panel representa ESTE contacto
+    dispatch(setActiveContactId(contactId));
 
-  return () => {
-    // Cuando cambia de conversación o se desmonta
-    dispatch(setActiveContactId(null));
-  };
-}, [contactId, dispatch]);
+    return () => {
+      // Cuando cambia de conversación o se desmonta
+      dispatch(setActiveContactId(null));
+    };
+  }, [contactId, dispatch]);
 
   const reqRef = useRef(0);
 
-      useEffect(() => {
-        if (!contactId || !conversationId) return;
+  useEffect(() => {
+    if (!contactId || !conversationId) return;
 
-        const myReq = ++reqRef.current;
+    const myReq = ++reqRef.current;
 
-        const loadCart = async () => {
-          //peticion se manda siempre el conactid bien
-          const log = await fetchByContactId(contactId);
+    const loadCart = async () => {
+      //peticion se manda siempre el conactid bien
+      const log = await fetchByContactId(contactId);
 
-          // si ya hubo otra ejecución más nueva, ignorar esta
-          if (myReq !== reqRef.current) return;
+      // si ya hubo otra ejecución más nueva, ignorar esta
+      if (myReq !== reqRef.current) return;
 
-          const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
-          setOrderId(noPedido > 0 ? noPedido : null);
+      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
+      setOrderId(noPedido > 0 ? noPedido : null);
 
-          console.log("El log es", log);
-          console.log("No pedido es", noPedido);
+      console.log("El log es", log);
+      console.log("No pedido es", noPedido);
 
-          console.log("COntacto es", contactId)
-          //varias veces se usa el getProductFromCarAsync, se envia el valor que es, y en otros no se enviar, solo 0
-          const updated = await dispatch(
-            getProductFromCarAsync({ codCliente: contactId, noPedido })
-          ).unwrap();
+      console.log("COntacto es", contactId)
+      //varias veces se usa el getProductFromCarAsync, se envia el valor que es, y en otros no se enviar, solo 0
+      const updated = await dispatch(
+        getProductFromCarAsync({ codCliente: contactId, noPedido })
+      ).unwrap();
 
-          console.log("El carrito es")
+      console.log("El carrito es")
 
-          // Si ya hubo otra ejecución más nueva, ignorar esta
-          if (myReq !== reqRef.current) return;
+      // Si ya hubo otra ejecución más nueva, ignorar esta
+      if (myReq !== reqRef.current) return;
 
-          // Determinar si el carrito está vacío
-          const arr = Array.isArray(updated) ? updated : []
-          
-              const count =
-                 arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
-            
-              dispatch(
-                setContactCartBadge({
-                  contactId,
-                  hasCart: count > 0,
-                  count,
-                })
-              )
-        };
+      // Determinar si el carrito está vacío
+      const arr = Array.isArray(updated) ? updated : []
 
-        void loadCart();
-      }, [contactId]);
+      const count =
+        arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
 
+      dispatch(
+        setContactCartBadge({
+          contactId,
+          hasCart: count > 0,
+          count,
+        })
+      )
+    };
 
+    void loadCart();
+  }, [contactId]);
 
   useEffect(() => {
     if (error) {
@@ -178,21 +176,21 @@ const ensureEcommerceRef = useRef<
       })
     ).unwrap()
 
-        const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })).unwrap()
-          const arr = Array.isArray(updated) ? updated : []
-          const count = arr[0]?.listDetalle?.length ?? 0
-          const empty = count === 0
+    const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })).unwrap()
+    const arr = Array.isArray(updated) ? updated : []
+    const count = arr[0]?.listDetalle?.length ?? 0
+    const empty = count === 0
 
-          dispatch(setContactCartBadge({
-            contactId,
-            hasCart: !empty,
-            count
-          }))
+    dispatch(setContactCartBadge({
+      contactId,
+      hasCart: !empty,
+      count
+    }))
 
-        if (empty) {
-          const existingLog = await fetchByContactId(contactId)
-          if (existingLog?.id) await UpdatedStatus(existingLog.id, 3)
-        }
+    if (empty) {
+      const existingLog = await fetchByContactId(contactId)
+      if (existingLog?.id) await UpdatedStatus(existingLog.id, 3)
+    }
   }
 
 
@@ -227,24 +225,24 @@ const ensureEcommerceRef = useRef<
       </div>
     )
 
-      const cart = carPCG?.[0];
-      const detailsCount = cart?.listDetalle?.length ?? 0;
+  const cart = carPCG?.[0];
+  const detailsCount = cart?.listDetalle?.length ?? 0;
 
-      const showEmpty = !contactHasCart.hasCart || detailsCount === 0;
+  const showEmpty = !contactHasCart.hasCart || detailsCount === 0;
 
-      if (showEmpty) {
-        return (
-          <div className="carPCPanel-container">
-            <header className="carPCPanel-header">
-              <h5 className="productTab-content-header__title">Carrito</h5>
-            </header>
-            <div className="carPCPanel-emptyContainer">
-              <img src={EmptyCart} alt="empty" className="cardPanel-emptyImage" />
-              <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
-            </div>
-          </div>
-        );
-      }
+  if (showEmpty) {
+    return (
+      <div className="carPCPanel-container">
+        <header className="carPCPanel-header">
+          <h5 className="productTab-content-header__title">Carrito</h5>
+        </header>
+        <div className="carPCPanel-emptyContainer">
+          <img src={EmptyCart} alt="empty" className="cardPanel-emptyImage" />
+          <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSendCartPdf = async () => {
     if (!cart || sending) return
@@ -316,12 +314,10 @@ const ensureEcommerceRef = useRef<
     setCancelLoading(false)
   }
 
-
   const ensureEcommerceUser = async (): Promise<{
     ecommerceUserId: number;
     contact: ContactLogInterface | null;
-  }> =>
-    {
+  }> => {
     // Evita que se ejecute dos veces al mismo tiempo (doble click / render / race)
     if (ensureEcommerceRef.current) return ensureEcommerceRef.current;
 
@@ -358,10 +354,10 @@ const ensureEcommerceRef = useRef<
           clave: generateRandomString(),
           fechaNacimiento: `${day}/${month}/${year}`,
         };
-        
+
         const res = await CreateAsync(createUserEcommerce);
         const ecommerceUserId = Number(res);
-      
+
 
         if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
           toast.error("No se pudo crear el usuario ecommerce");
@@ -392,6 +388,7 @@ const ensureEcommerceRef = useRef<
     }
   };
 
+  
   const handleSendLink = async (returnLink: boolean = false) => {
     setSendChatoading(true);
 
@@ -427,7 +424,6 @@ const ensureEcommerceRef = useRef<
     await SendMessageLink(sendLinkRequest);
     setSendChatoading(false);
   };
-
 
   const handleSendCartChat = async () => {
     if (!cart || sending) return;
@@ -501,7 +497,21 @@ const ensureEcommerceRef = useRef<
 
         {contactHasCart && (
           <>
+
+          
             <div className="productTab-content-footer">
+
+
+
+              <div className="productTab-content__inputContaner">
+              <div className="productTab-content__inputs">
+                <textarea rows={5} name="descripcion"  id="descripcion"  className="productTab-content__input" placeholder="dirección"/>
+               <div className="transportationCost__input">
+                 <input type="number" min={1} name="shipment"  id="shipment" placeholder="C$ transporte " className="productTab-content__input transportationCost"/>
+               </div>
+              </div>
+            </div>
+
               {cart.subTotal != null && cart.subTotal > 0 && (
                 <div className="productTab-content__container">
                   <p className="productTab-content-footer__title">Subtotal:</p>
@@ -538,7 +548,7 @@ const ensureEcommerceRef = useRef<
             </div>
 
             <div className="productTab-footer__payment">
-              <Button 
+              <Button
                 className="carPanel-btn"
                 disabled={sending}
                 onClick={handleSendCartPdf}>
@@ -548,19 +558,19 @@ const ensureEcommerceRef = useRef<
                 }
               </Button>
 
-              <Button 
+              <Button
                 className="carPanel-btn"
                 disabled={sendChatoading || sending}
                 onClick={handleSendCartChat}>
                 {
-                  sendChatoading ? 
-                  <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p>
-                   : <p className="btn_text"> <IoIosChatboxes fontSize={16} /></p>
+                  sendChatoading ?
+                    <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p>
+                    : <p className="btn_text"> <IoIosChatboxes fontSize={16} /></p>
                 }
               </Button>
 
-              <Button 
-              className="cancelPanel-btn"
+              <Button
+                className="cancelPanel-btn"
                 disabled={loadingCart || sending}
                 onClick={Cancel}>
                 {
@@ -568,8 +578,8 @@ const ensureEcommerceRef = useRef<
                 }
               </Button>
 
-              <Button 
-              className="payment-btn"
+              <Button
+                className="payment-btn"
                 disabled={loadingCart || sending}
                 onClick={async () => {
                   await handleSendLink(false)

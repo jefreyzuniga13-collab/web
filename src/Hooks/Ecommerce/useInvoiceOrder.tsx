@@ -4,6 +4,7 @@ import type { Currencyto, InvoiceOrderInterface, InvoiceOrderRequestDto,
     PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 import { InvoiceOrderService } from '@/Services/Ecommerce/InvoiceOrderService';
 import { toast } from 'react-toastify';
+import type { FacturaTempo } from '@/Interfaces/Ecommerce/FacturaTempo';
 
 const useInvoiceOrder = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -32,6 +33,32 @@ const useInvoiceOrder = () => {
         }else{
             toast.error(res.message);
         }
+        
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }catch(err: any){
+        setError(err)
+    }finally{
+        setLoadingInvoice(false)
+    }
+  }, [])
+
+
+    const InsertaFacturaAsync = useCallback(async(req: FacturaTempo)=>{
+    setLoadingInvoice(false)
+    setError(null)
+
+    try{
+        // const res = 
+        await InvoiceOrderService.CreatePCG(req);
+
+        // if(res.success){
+            // setInvoiceOrders(res.data);
+            setLoadingInvoice(false)
+            // return res;
+            // toast.success(res.message);
+        // }else{
+        //     toast.error(res.message);
+        // }
         
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }catch(err: any){
@@ -171,7 +198,8 @@ const useInvoiceOrder = () => {
     PrintDetFacAsync,
     printOrdenFac,
     setPrintOrdenFac,
-    loadingInvoice
+    loadingInvoice,
+    InsertaFacturaAsync
   }
 }
 

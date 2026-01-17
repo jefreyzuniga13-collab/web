@@ -161,3 +161,62 @@ export interface FaloteResponseDto{
     consecutivo: number;
     serie?: string
 }
+
+
+// Datos del clientes
+export interface FacturaTempo {
+  noFactura: string;
+  serie: string;
+  tipo: string;
+  modo: string;
+  moneda: string;
+  aplicaIr: "S" | "N";
+  aplicaIMI: "S" | "N";
+  sucursal: string;
+  codCli: string;
+  nombreCliente: string;
+  codVendedor: string;
+  tasaCambio: number;
+  diasCredito: number;
+  usuario: string;
+  maquina: string;
+  exonerado: "S" | "N";
+  noProforma: string;
+  tipoIdentificacion: number;
+  identificaicon: string; // mantener el nombre tal cual viene
+  noOrden: string;
+  imprimir: string;
+  numero: number;
+  noApartado: string;
+  caja: string;
+  noReserva: string;
+  versionSistema: string;
+  codSubCli: number;
+  observacion: string;
+  verComoPreventa: "S" | "N";
+  tipoServicio: number;
+  agente: number;
+  fechaFactura: string; // yyyyMMdd
+  cajero: string;
+  subCliente: string;
+  numeroExoneracion: string;
+  noPreventa: string;
+  codEmpresa: string;
+  direccionCte: string;
+  telefonoCte: string;
+  tipoDocumentoLlamado: number;
+
+  detallePago: string;
+
+  clientePadre: string;
+  hayFormaPago: "S" | "N";
+  valorTransporte: number;
+  referencia: string;
+  aplicaPropina: "S" | "N";
+  etiqueta: string;
+  noConsignacion: string;
+  planPago: "S" | "N";
+  idPromocion: string;
+  codreferido: string;
+  correo: string;
+}

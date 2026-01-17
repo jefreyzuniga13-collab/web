@@ -3,11 +3,18 @@ import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import type {InvoiceOrderRequestDto, 
     InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto,
     PrintOrdenFactInterfaceRaw} from '@/Interfaces/Ecommerce/InvoiceOrderInterface'
-
+import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
 
 class InvoiceOrderServ{
     async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<string>>{
         const {data} = await apiPCG.post<ApiPCGResponse<string>>(`OrdenFactura/AgregaOrdenFact`, req)
+
+        return data;
+    } 
+
+
+async CreatePCG(req: FacturaTempo): Promise<ApiPCGResponse<string>>{
+        const {data} = await apiPCG.post<ApiPCGResponse<string>>(`CarritoCompra/InsertaFactura`, req)
 
         return data;
     } 

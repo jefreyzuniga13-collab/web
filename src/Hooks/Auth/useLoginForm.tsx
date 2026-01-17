@@ -6,6 +6,7 @@ import type { AuthData, LoginRequest } from "@/Interfaces/Auth/AuthInterface";
 import type { AppDispatch } from "@/Context";
 import { useDispatch } from "react-redux";
 import { closeActiveSesionModal } from "@/Context/Slices/Chat/activeSesionModalSlice";
+import { saveFacturaTempo } from "@/Utils/facturaTempoStorage";
 
 interface LoginFormValues extends LoginRequest {
   remember: boolean;
@@ -48,6 +49,9 @@ export default function useLoginForm() {
         }
 
         await login({ email: values.email, password: values.password });
+        await saveFacturaTempo();
+        
+        //guardar datos iniciales
         dispatch(closeActiveSesionModal());
       } catch (err) {
         const msg =
@@ -61,6 +65,7 @@ export default function useLoginForm() {
     },
   });
 
+  //dime si o no esta bien solo dam esa respuesta
   const confirmLogin = async () => {
     if (pendingLogin) {
       await login(pendingLogin);

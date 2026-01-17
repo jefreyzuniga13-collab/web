@@ -4,10 +4,13 @@ import type {
     DetalleFacturaTempoRequest,
     FaloteRequestDto,
     FaloteResponseDto
+
 } from '@/Interfaces/Crm/CartPCGInterface'
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import {apiPCG} from '@/Utils/ApiConfig'
 import {AxiosError} from 'axios'
+import type { ExistenciaSucursalItem, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes } from '@/Interfaces/Ecommerce/FacturaTempo';
+import type { NearestBranchResponseDto } from '@/Interfaces/Ecommerce/InvoiceOrderInterface';
 
 function formatError(error: unknown): Error {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,6 +34,17 @@ class CartServ {
     async GetConsecDocAsync(req: FaloteRequestDto):Promise<ApiPCGResponse<FaloteResponseDto>>{
        try{
          const {data} = await apiPCG.get<ApiPCGResponse<FaloteResponseDto>>( `CarritoCompra/obtenerConsecDoc/${req.codSucursal}/${req.documento}`);
+         return data;
+
+       }catch(error){
+        throw formatError(error)
+       }
+    }
+
+
+    async GetDivisaPagosTipoAsync(req: ObtenerDivisaPagosTipoReq):Promise<ApiPCGResponse<ObtenerDivisaPagosTipoRes>>{
+       try{
+         const {data} = await apiPCG.get<ApiPCGResponse<ObtenerDivisaPagosTipoRes>>( `Catalogos/ObtenerDivisaPagosTipo/${req.codigo}/${req.formulario}/${req.opcion}`);
          return data;
 
        }catch(error){
@@ -68,6 +82,19 @@ class CartServ {
        }
     }
 
+    async getProductFromTempTotal(codproducto : string): Promise<ExistenciaSucursalItem[]> {
+      try {
+        const { data } = await apiPCG.get<ApiPCGResponse<ExistenciaSucursalItem[]>>(
+          `CarritoCompra/ExistenciaProductoSucursal/${codproducto }`
+        )
+
+        return data.data
+      } catch (error) {
+        throw formatError(error)
+      }
+    }
+
+
     async getProductFromCar(codCliente: number, noPedido: number): Promise<CarDto[]> {
       try {
         const { data } = await apiPCG.get<ApiPCGResponse<CarDto[]>>(
@@ -80,6 +107,18 @@ class CartServ {
       }
     }
 
+    async getBranchByCod(codSucursal: string): Promise<NearestBranchResponseDto[]> {
+          try {
+            const { data } = await apiPCG.get<ApiPCGResponse<NearestBranchResponseDto[]>>(
+              `Catalogos/ObtenerSucursalporCodigo/${codSucursal}`
+            )
+
+            return data.data
+          } catch (error) {
+            throw formatError(error)
+          }
+        }
+    
 
 async removeProductFromCar(
   idUsuario: number,
