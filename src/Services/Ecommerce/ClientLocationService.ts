@@ -1,6 +1,6 @@
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import {apiPCG} from '@/Utils/ApiConfig'
-import type {ClientLocationDto} from '@/Interfaces/Ecommerce/ClientLocationInterface'
+import type {ClientLocation2Dto, ClientLocationDto} from '@/Interfaces/Ecommerce/ClientLocationInterface'
 
 class ClientLocationServ {
     async Create(req: ClientLocationDto): Promise<ApiPCGResponse<ClientLocationDto>>{
@@ -15,6 +15,13 @@ class ClientLocationServ {
         (`Direcciones/ListaDirecciones/${req}`);
         return data;
     }
+
+    async GetDirecctionByUserAndId(idUsuario : number, idDireccion : number): Promise<ApiPCGResponse<ClientLocation2Dto>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<ClientLocationDto>>
+        (`Direcciones/ListaDirecciones/${idUsuario}/${idDireccion}`);
+        return data;
+    }
+
     async GetTranspCost(req: number): Promise<ApiPCGResponse<number>>{
         const {data} = await apiPCG.get<ApiPCGResponse<number>>
         (`Catalogos/Transporte/${req}`);

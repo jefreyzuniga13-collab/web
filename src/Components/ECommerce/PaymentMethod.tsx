@@ -1,38 +1,58 @@
+import React from "react";
 import type {
   CardFormState,
   CheckoutStep,
   PaymentMethod,
-  // PaymentMethod
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { FaRegCreditCard } from "react-icons/fa";
 import VisaLogo from "@/assets/visaLogo.png";
 import MasterCardLogo from "@/assets/masterCardLogo.png";
+import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
 
 export interface Props {
   step: CheckoutStep;
   setStep: (step: CheckoutStep) => void;
   method: PaymentMethod;
+
   transpCost: number;
   distanceKm: number;
+
   cardForm: CardFormState;
+
   tip: number;
   setTip: (tip: number) => void;
+
   onCardNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExpiryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCvcChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+
   cashAmount: number;
   setCashAmount: (cashAmount: number) => void;
-  carPCG: CarDto[];
+
+  transferAmount: number;
+  setTransferAmount: (transferAmount: number) => void;
+
+  transfer: string;
+  setTransfer: (transfer: string) => void;
+
   payNowDisabled: boolean;
   payNowLock: boolean;
   handlePayNow: () => void;
-  transferAmount: number;
-  setTransferAmount: (transferAmount: number)=> void;
-  transfer: number;
-  setTransfer: (transfer: number)=> void;
+
+  divisaLoading: boolean;
+  divisaOpts: ObtenerDivisaPagosTipoRes[];
+  divisaSelected: ObtenerDivisaPagosTipoRes | null;
+  setDivisaSelected: (v: ObtenerDivisaPagosTipoRes | null) => void;
+
+  carPCG?: CarDto[];
 }
+
+function safeStr(v: unknown): string {
+  return String(v ?? "").trim();
+}
+
 export const PaymentMethodComponent = ({
   step,
   setStep,
@@ -48,21 +68,94 @@ export const PaymentMethodComponent = ({
   onNameChange,
   cashAmount,
   setCashAmount,
-  carPCG,
-  payNowDisabled,
-  payNowLock,
-  handlePayNow,
   transferAmount,
   setTransferAmount,
   transfer,
-  setTransfer
-}: // method
-Props) => {
+  setTransfer,
+  payNowDisabled,
+  payNowLock,
+  handlePayNow,
+  divisaLoading,
+  divisaOpts,
+  divisaSelected,
+  setDivisaSelected,
+  carPCG,
+}: Props) => {
+  const showDivisaSelect = method === "card" || method === "transfer";
+
+  const canPay =
+    !payNowDisabled &&
+    !payNowLock &&
+    (showDivisaSelect ? !!divisaSelected : true);
+
   return (
     <>
       {step === "paymentMethod" && (
         <div className="checkout-section">
           <h2 className="checkout-section__title">Método de pago</h2>
+
+          {showDivisaSelect && (
+            <div className="checkout-field checkout-field--full">
+              <label className="checkout-label" htmlFor="payType">
+                {method === "card"
+                  ? "Tipo de tarjeta / banco *"
+                  : "Tipo de transferencia / banco *"}
+              </label>
+
+              <select
+                id="payType"
+                className="checkout-input"
+                value={safeStr(divisaSelected?.codigo)}
+                onChange={(e) => {
+                  const code = safeStr(e.target.value);
+                  const found =
+                    divisaOpts.find((x) => safeStr(x.codigo) === code) ?? null;
+                  setDivisaSelected(found);
+                }}
+                disabled={divisaLoading}
+              >
+                <option value="">
+                  {divisaLoading ? "Cargando..." : "Seleccionar"}
+                </option>
+
+                {divisaOpts.map((x) => (
+                  <option key={`${x.codigo}-${x.codigoExterno}`} value={x.codigo}>
+                    {x.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {method === "cash" && (
+            <div className="checkout-cash">
+              <div className="checkout-field checkout-field--full">
+                <label className="checkout-label" htmlFor="cashAmount">
+                  Monto con el que pagas
+                </label>
+                <input
+                  id="cashAmount"
+                  type="number"
+                  className="checkout-input"
+                  value={cashAmount}
+                  onChange={(e) => setCashAmount(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="checkout-field checkout-field--full">
+                <label className="checkout-label" htmlFor="tip">
+                  Propina
+                </label>
+                <input
+                  id="tip"
+                  type="number"
+                  className="checkout-input"
+                  value={tip}
+                  onChange={(e) => setTip(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          )}
 
           {method === "card" && (
             <>
@@ -127,7 +220,7 @@ Props) => {
 
                   <div className="checkout-field">
                     <label className="checkout-label" htmlFor="cvc">
-                      CVC
+                      Último 4 números
                     </label>
                     <input
                       id="cvc"
@@ -135,7 +228,7 @@ Props) => {
                       inputMode="numeric"
                       autoComplete="cc-csc"
                       className="checkout-input"
-                      placeholder="CVC"
+                      placeholder="0000"
                       value={cardForm.cvc}
                       onChange={onCvcChange}
                     />
@@ -159,61 +252,31 @@ Props) => {
             </>
           )}
 
-          {method === "cash" && (
+          {method === "transfer" && (
             <div className="checkout-cash">
               <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="cashAmount">
-                  Monto con el que pagas
-                </label>
-                <input
-                  id="cashAmount"
-                  type="number"
-                  className="checkout-input"
-                  value={cashAmount}
-                  onChange={(e) => setCashAmount(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="tip">
-                  Propina
-                </label>
-                <input
-                  id="tip"
-                  type="number"
-                  className="checkout-input"
-                  value={tip}
-                  onChange={(e) => setTip(Number(e.target.value))}
-                />
-              </div>
-            </div>
-          )}
-
-          {method === 'transfer' &&(
-            <div className="checkout-cash">
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="cashAmount">
+                <label className="checkout-label" htmlFor="transferAmount">
                   Monto C$ *
                 </label>
                 <input
-                  id="cashAmount"
+                  id="transferAmount"
                   type="number"
                   className="checkout-input"
                   value={transferAmount}
-                  onChange={(e) =>   setTransferAmount(Number(e.target.value))}
+                  onChange={(e) => setTransferAmount(Number(e.target.value))}
                 />
               </div>
 
               <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="tip">
-                    Referencia *
+                <label className="checkout-label" htmlFor="transferRef">
+                  Referencia *
                 </label>
                 <input
-                  id="transfer"
-                  type="number"
+                  id="transferRef"
+                  type="text"
                   className="checkout-input"
                   value={transfer}
-                  onChange={(e) => setTransfer(Number(e.target.value))}
+                  onChange={(e) => setTransfer(e.target.value)}
                 />
               </div>
             </div>
@@ -240,6 +303,7 @@ Props) => {
                 <p className="checkout-summary__content">
                   Transporte: <span>{transpCost}</span>
                 </p>
+
                 <p className="checkout-summary__content">
                   Total:
                   <span className="checkout-summary__content__total">
@@ -269,9 +333,8 @@ Props) => {
               type="button"
               className="checkout-paybtn"
               onClick={handlePayNow}
-              disabled={payNowDisabled || payNowLock}
+              disabled={!canPay}
             >
-              {/* {payNowLock ? "Procesando..." : payNowCooldown > 0 ? `Espera ${payNowCooldown}s` : "Pagar ahora"} */}
               {payNowDisabled ? "Procesando..." : "Pagar ahora"}
             </button>
           </div>

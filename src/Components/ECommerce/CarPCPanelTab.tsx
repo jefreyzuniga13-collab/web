@@ -39,6 +39,8 @@ import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { generateRandomString } from "@/Utils/generateRandomString"
 import { formatCurrencyNIO } from "@/Utils/formatCurrencyNIO"
+import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
+import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -55,6 +57,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [orderId, setOrderId] = useState<number | null>(null)
   const [cancelLoading, setCancelLoading] = useState<boolean>(false)
   const [sendChatoading, setSendChatoading] = useState<boolean>(false)
+  const [addDescription, setAddDescription] = useState<string>("")
+  const [transCost, setTransCost] = useState<number>(0)
 
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
@@ -75,7 +79,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const {
     UpdatedStatus,
-    fetchByContactId
+    fetchByContactId,
+    update: updatedLogCart
   } = useLogCart();
 
   const {
@@ -416,6 +421,27 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       contactId,
     };
 
+
+    if(addDescription != null && addDescription.length > 0){
+            const req: ClientLocationDto ={
+            descripcion: addDescription,
+            nombre: addDescription,
+            referencia: addDescription,
+            idUsuario: ecommerceUserId,  
+      }
+
+      //Mandar a actualizar el log, es decir agregar la direccion que se guardar.
+      const address = await ClientLocationService.Create(req);
+      
+      //Indicar la direccion y el costo de envio
+      existingLog!.addressId = address.data.idDireccion;
+      existingLog!.transCost = transCost;
+      
+      updatedLogCart(existingLog!.id, existingLog!);
+    }
+
+
+
     if (returnLink) {
       setSendChatoading(false);
       return GetMessageLink(sendLinkRequest);
@@ -503,48 +529,55 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
 
 
+
+              {/*Guardar el costo, y le direccion, para el envio  */}
               <div className="productTab-content__inputContaner">
               <div className="productTab-content__inputs">
-                <textarea rows={5} name="descripcion"  id="descripcion"  className="productTab-content__input" placeholder="dirección"/>
+                <textarea rows={5} name="descripcion"  id="descripcion"  
+                className="productTab-content__input" placeholder="dirección"
+                onChange={(e)=> setAddDescription(e.target.value)}/>
                <div className="transportationCost__input">
-                 <input type="number" min={1} name="shipment"  id="shipment" placeholder="C$ transporte " className="productTab-content__input transportationCost"/>
+                 <input type="number" min={1} name="shipment"  
+                 id="shipment" placeholder="C$ transporte " 
+                 onChange={(e)=> setTransCost(Number(e.target.value))}
+                 className="productTab-content__input transportationCost"/>
                </div>
               </div>
             </div>
 
-              {cart.subTotal != null && cart.subTotal > 0 && (
+              {/* {cart.subTotal != null && cart.subTotal > 0 && (
                 <div className="productTab-content__container">
                   <p className="productTab-content-footer__title">Subtotal:</p>
                   <span className="productTab-content-footer__value">
                     C$ {cart.subTotal ?? ""}
                   </span>
                 </div>
-              )}
+              )} */}
 
-              {cart.descuento != null && cart.descuento > 0 && (
+              {/* {cart.descuento != null && cart.descuento > 0 && (
                 <div className="productTab-content__container">
                   <p className="productTab-content-footer__title">Descuento:</p>
                   <span className="productTab-content-footer__value">
                     C$ {cart.descuento ?? ""}
                   </span>
                 </div>
-              )}
+              )} */}
 
-              {cart.iva != null && cart.iva > 0 && (
+              {/* {cart.iva != null && cart.iva > 0 && (
                 <div className="productTab-content__container">
                   <p className="productTab-content-footer__title">IVA:</p>
                   <span className="productTab-content-footer__value">C$ {cart.iva ?? ""}</span>
                 </div>
-              )}
+              )} */}
 
-              {cart.total && cart.total > 0 && (
+              {/* {cart.total && cart.total > 0 && (
                 <div className="productTab-content__container">
                   <p className="productTab-content-footer__title">Total:</p>
                   <span className="productTab-content-footer__totalValue">
                     C$ {cart.total.toFixed(2)}
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div className="productTab-footer__payment">

@@ -1,10 +1,10 @@
 export interface ClientLocationDto{
-    idDireccion: number;
+    idDireccion?: number;
     nombre: string;
     referencia: string;
     descripcion: string;
-    latitud: number;
-    longitud: number;
+    latitud?: number;
+    longitud?: number;
     idUsuario: number;
 }
 
@@ -15,3 +15,51 @@ export interface Coords {
 }
 
 export type LocationMode = "existing" | "new";
+
+
+export interface ClientLocation2Dto{
+    idDireccion?: number;
+    nombre: string;
+    referencia: string;
+    descripcion: string;
+    latitud?: number;
+    longitud?: number;
+}
+
+
+export interface CalculationResultDto {
+  pasaSub: "S" | "N";
+  resulSub: number;
+
+  pasaDesc: "S" | "N";
+  resulDesc: number;
+
+  pasaIva: "S" | "N";
+  resulIva: number;
+}
+
+//req:
+
+export interface CalculationReqDto {
+  usuario: string
+  maquina: string
+  tasa: number
+  tabla: string
+  ir: string
+  imi: string
+  tipoServicio: string
+  valorTransporte: number
+  aplicaPropina: string
+  exonerada: string
+}
+
+export interface TotalesPantallaReqDTO {
+  usuario: string
+  maquina: string
+  sucursal: string
+  totalEnPantalla: number
+  tabla: string
+  descuentoPantalla: number
+  ivaPantalla: number
+  exonerado: string
+}

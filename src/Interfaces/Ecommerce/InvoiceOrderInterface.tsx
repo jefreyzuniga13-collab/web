@@ -49,7 +49,7 @@ export interface InvoiceOrderInterface{
 
 //divisas
 export interface Currencyto{
-    codPago: number;
+    codPago: string;
     descripcion_Pago: string;
     moneda_Fija: string;
     codExterno: string;

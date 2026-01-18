@@ -40,7 +40,7 @@ export interface FacturaTempo {
   telefonoCte: string;
   tipoDocumentoLlamado: number;
 
-  detallePago: string;
+  detallePago: PagoGenerico[] | null;
 
   clientePadre: string;
   hayFormaPago: "S" | "N";
@@ -53,6 +53,7 @@ export interface FacturaTempo {
   idPromocion: string;
   codreferido: string;
   correo: string;
+  retiraSucursal: string
 }
 
 
@@ -139,7 +140,7 @@ export interface PagoGenerico {
   concepto: string;          
   codPago: string;        
   tipoPago: string;           
-  aplicaCambio: boolean;      
+  aplicaCambio: string;      
   codPagoExterno: string;    
   banco: string;           
 
@@ -148,10 +149,12 @@ export interface PagoGenerico {
   montoA: number;
   cambio: number;
   tasaCambio: number;
-  fechaOVence: string;        
+  Fecha_o_Vence: string;        
   referencia: string;         
   numeroTransaccion: string;  
   cuentaContable?: string;
+  Dll: string;
+  Numero: string;
 
   ultDigito: string;  
   tarjeta: string;     

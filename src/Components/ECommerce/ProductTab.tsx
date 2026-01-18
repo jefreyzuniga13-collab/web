@@ -133,7 +133,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
       tasacambio: 36.0,
       financiamiento: 0,
       descuento: 0,
-      codvendedor: "000",
+      codvendedor: "004",
       codcliente: "00000",
       autorizado: "N",
       producto: productDetail.descripcion.trim(),

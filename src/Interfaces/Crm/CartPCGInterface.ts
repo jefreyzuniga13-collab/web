@@ -220,3 +220,17 @@ export interface FacturaTempo {
   codreferido: string;
   correo: string;
 }
+
+
+
+export interface InvoiceTotalsDto {
+  subTotal: number;
+  descuento: number;
+  subneto: number;
+  iva: number;
+  retenciones: number;
+  propina: number;
+  transporte: number;
+  total: number;
+  totaldolar: number;
+}

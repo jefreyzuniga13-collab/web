@@ -1,9 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import * as turf from "@turf/turf";
+import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
+
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
-import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import useLogCart from "@/Hooks/Crm/useLogCard";
+
+import type {
+  CalculationReqDto,
+  ClientLocationDto,
+  Coords,
+  LocationMode,
+  TotalesPantallaReqDTO,
+} from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type {
   NearestBranchRequestDto,
   Currencyto,
@@ -12,15 +25,21 @@ import type {
   BillingFormState,
   CardFormState,
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import { toast } from "react-toastify";
-import "@/Styles/Ecommerce/CheckoutPage.css";
-import * as turf from "@turf/turf";
+import type {
+  FacturaTempo,
+  PagoGenerico,
+  ObtenerDivisaPagosTipoReq,
+  ObtenerDivisaPagosTipoRes,
+} from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
+
 import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
-import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import type { AppDispatch, RootState } from "@/Context";
-import { UserSessionService } from "@/Services/auth/UserSessionService";
-import useLogCart from "@/Hooks/Crm/useLogCard";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+
+import { UserSessionService } from "@/Services/auth/UserSessionService";
+import { CartService } from "@/Services/Ecommerce/CarPCGService";
+
 import {
   formatCardNumber,
   formatCvc,
@@ -29,16 +48,13 @@ import {
   validateCardForm,
   validateLocation,
 } from "@/Utils/validation";
+import { loadFacturaTempo } from "@/Utils/facturaTempoStorage";
+
+import "@/Styles/Ecommerce/CheckoutPage.css";
+
 import { PaymentMethodComponent } from "@/Components/ECommerce/PaymentMethod";
 import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
-import type { FacturaTempo, 
-  // PagoEfectivo, PagoTarjeta, PagoTransferencia 
-} from "@/Interfaces/Ecommerce/FacturaTempo";
-import { loadFacturaTempo } from "@/Utils/facturaTempoStorage";
-import dayjs from "dayjs";
-import { CartService } from "@/Services/Ecommerce/CarPCGService";
-import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -56,27 +72,36 @@ type BranchLike = {
   longitud: number | string;
 };
 
+function round2(n: number): number {
+  return Math.round((Number(n ?? 0) + Number.EPSILON) * 100) / 100;
+}
+
+function safeStr(v: unknown): string {
+  return String(v ?? "").trim();
+}
+
+// function yn(v: unknown): "S" | "N" {
+//   const s = safeStr(v).toUpperCase();
+//   return s === "S" ? "S" : "N";
+// }
+
+type Payload = {
+  fullName: string;
+  email: string;
+  ecommerceUserId: number;
+  expiresAtUtc: string;
+  orderId: number;
+  conversationId: number;
+  contactId: number;
+  userId: number;
+};
+
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const payload = location.state?.payload as
-    | {
-        fullName: string;
-        email: string;
-        ecommerceUserId: number;
-        expiresAtUtc: string;
-        orderId: number;
-        conversationId: number;
-        contactId: number;
-        userId: number;
-      }
-    | undefined;
+  const payload = location.state?.payload as Payload | undefined;
 
-    //Cuando el seleccione la divisa,porse deve de consumir el  endpoiint de ObtenerDivisaPagosTipo, ya esta el metodo
-    //y el los formulaios de pogo por tarjeta arriba se deve de listar el array de ExistenciaSucursalItem, y ya en la reques de FacturaTempo
-    //ahi actualmenmte esta como string, pero eso va  cambiar al de tipo : 
-    //ademas el de tranferecnai, que actualmente no hay formulario, pero los inut que envian son
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
   const [userFullName, setUserFullName] = useState<string>("");
@@ -122,8 +147,9 @@ const CheckoutPage: React.FC = () => {
 
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [tip, setTip] = useState<number>(0);
+
   const [transferAmount, setTransferAmount] = useState<number>(0);
-  const [transfer, setTransfer] = useState<number>(0);
+  const [transferRef, setTransferRef] = useState<string>("");
 
   const [locationMode, setLocationMode] = useState<LocationMode>("new");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -137,6 +163,10 @@ const CheckoutPage: React.FC = () => {
 
   const [lockedBranchCode, setLockedBranchCode] = useState<string>("");
   const [lastPreviewKey, setLastPreviewKey] = useState<string>("");
+
+  const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([]);
+  const [divisaSelected, setDivisaSelected] = useState<ObtenerDivisaPagosTipoRes | null>(null);
+  const [divisaLoading, setDivisaLoading] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
   const carPCG = useAppSelector(selectCarPCG);
@@ -162,8 +192,7 @@ const CheckoutPage: React.FC = () => {
       try {
         const existingLog = await fetchByContactId(payload.contactId);
         if (cancelled) return;
-        console.log("La sucursal es:",existingLog?.branch.toString().trim() )
-        setLockedBranchCode(String(existingLog?.branch.toString().trim() ?? "").trim());
+        setLockedBranchCode(String(existingLog?.branch?.toString()?.trim?.() ?? "").trim());
       } catch {
         if (cancelled) return;
         setLockedBranchCode("");
@@ -178,7 +207,7 @@ const CheckoutPage: React.FC = () => {
   }, [payload?.contactId, fetchByContactId]);
 
   useEffect(() => {
-    if (!orderId || !ecommerceUserId || !payload?.orderId) return;
+    if (!orderId || !ecommerceUserId || !payload?.orderId || !payload?.contactId) return;
 
     let cancelled = false;
 
@@ -186,6 +215,13 @@ const CheckoutPage: React.FC = () => {
       try {
         await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId })).unwrap();
         if (cancelled) return;
+
+        const existingLog = await fetchByContactId(payload.contactId);
+        if (cancelled) return;
+
+        if (Number(existingLog?.addressId ?? 0) > 0) {
+          setStep("currency");
+        }
 
         await GetCurrencyAsync();
         if (cancelled) return;
@@ -201,7 +237,7 @@ const CheckoutPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [orderId, ecommerceUserId, dispatch, GetCurrencyAsync, GetAsync, payload?.orderId]);
+  }, [orderId, ecommerceUserId, payload?.orderId, payload?.contactId, dispatch, GetCurrencyAsync, GetAsync, fetchByContactId]);
 
   useEffect(() => {
     if (!userFullName) return;
@@ -275,6 +311,7 @@ const CheckoutPage: React.FC = () => {
     setDistanceKm(0);
     setTranspCost(0);
     setLastPreviewKey("");
+
     if (locationMode === "new") {
       setSelectedAddressId(null);
     } else {
@@ -320,21 +357,62 @@ const CheckoutPage: React.FC = () => {
 
   const normalize = (v: string) => v.toLowerCase().trim();
 
+  const resolveMethod = (item: Currencyto): "cash" | "transfer" | "card" => {
+    const desc = normalize(safeStr((item as any)?.descripcion_Pago));
+    const moneda = normalize(safeStr((item as any)?.moneda_Fija));
+    if (desc.includes("efectivo") || moneda.includes("efectivo")) return "cash";
+    if (desc.includes("transfer") || desc.includes("transferencia") || moneda.includes("transfer")) return "transfer";
+    return "card";
+  };
+
+  const getDivisaConfig = (m: "card" | "transfer"): ObtenerDivisaPagosTipoReq => {
+    return {
+      codigo: safeStr((selectedCurrency as any)?.codPago),
+      formulario: m === "card" ? "TC" : "TR",
+      opcion: "1",
+    };
+  };
+
+  const loadDivisaIfNeeded = async (m: "card" | "transfer") => {
+    setDivisaLoading(true);
+    try {
+      const req = getDivisaConfig(m);
+      const resp = await CartService.GetDivisaPagosTipoAsync(req);
+
+      const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
+      const fixed: ObtenerDivisaPagosTipoRes[] = list
+        .filter(Boolean)
+        .map((x: any) => ({
+          nombre: safeStr(x?.nombre),
+          codigo: safeStr(x?.codigo),
+          codigoExterno: safeStr(x?.codigoExterno),
+          tipo: safeStr(x?.tipo),
+          banco: safeStr(x?.banco),
+          aCambio: safeStr(x?.aCambio),
+        }))
+        .filter((x) => x.codigo || x.codigoExterno || x.nombre);
+
+      setDivisaOpts(fixed);
+      setDivisaSelected(fixed.length > 0 ? fixed[0] : null);
+    } catch {
+      setDivisaOpts([]);
+      setDivisaSelected(null);
+    } finally {
+      setDivisaLoading(false);
+    }
+  };
+
   const handleSelectCurrency = (item: Currencyto) => {
     setSelectedCurrency(item);
-
-    const desc = normalize(item.descripcion_Pago);
-    const moneda = normalize(item.moneda_Fija);
-
-    let next: "cash" | "transfer" | "card" = "card";
-
-    if (desc.includes("efectivo") || moneda.includes("efectivo")) {
-      next = "cash";
-    } else if (desc.includes("transfer") || desc.includes("transferencia") || moneda.includes("transfer")) {
-      next = "transfer";
-    }
-
+    const next = resolveMethod(item);
     setMethod(next);
+
+    setDivisaOpts([]);
+    setDivisaSelected(null);
+
+    if (next === "card" || next === "transfer") {
+      void loadDivisaIfNeeded(next);
+    }
   };
 
   const getCoordsForFlow = (): Coords | null => {
@@ -357,10 +435,6 @@ const CheckoutPage: React.FC = () => {
     const item = Array.isArray(res) ? (res[0] as any) : (res as any);
 
     const codSucursal = item?.codSucursal ?? item?.codsucursal ?? code;
-    console.log("code")
-    console.log("Res", res)
-    console.log("codSucursal")
-
     const latitud = item?.latitud;
     const longitud = item?.longitud;
 
@@ -435,6 +509,104 @@ const CheckoutPage: React.FC = () => {
     setStep("paymentMethod");
   };
 
+  const buildPagoGenerico = (invoiceReq: FacturaTempo, 
+    codSucursalFactura: string, TotalesPantallaReq: TotalesPantallaReqDTO): PagoGenerico => {
+    const moneda = safeStr(invoiceReq.moneda) || "1";
+    const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
+
+    const cart = carPCG?.[0];
+    const baseTotal = Number(cart?.total ?? 0);
+    const totalPagar = round2(baseTotal + Number(transpCost ?? 0) + Number(tip ?? 0));
+
+    const isCash = method === "cash";
+    const isCard = method === "card";
+    const isTransfer = method === "transfer";
+
+    const selected = divisaSelected;
+
+    const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
+    const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
+    const tipo = isCash ? "" : safeStr(selected?.tipo);
+    const banco = isCash ? safeStr((selectedCurrency as any)?.codigo_Banco) : safeStr(selected?.banco);
+    const codPagoExterno = isCash ? safeStr((selectedCurrency as any)?.codExterno) : safeStr(selected?.codigoExterno);
+    // const aplicaCambio = isCash ? "True" : yn(selected?.aCambio) === "S";
+
+    let monto = totalPagar;
+    let referencia = "";
+    let numeroTransaccion = "";
+    let fechaOVence = "";
+    let ultDigito = "";
+
+    if (isCash) {
+      monto = Number(cashAmount ?? 0);
+    }
+
+    if (isTransfer) {
+      monto = Number(transferAmount ?? 0);
+      referencia = safeStr(transferRef);
+      numeroTransaccion = safeStr(transferRef);
+      fechaOVence = dayjs().format("YYYY-MM-DD");
+    }
+
+    if (isCard) {
+      monto = totalPagar;
+      const cleanCard = safeStr(cardForm.cardNumber).replace(/\s+/g, "");
+      ultDigito = cleanCard.slice(-4);
+      fechaOVence = safeStr(cardForm.expiry);
+    }
+
+    const montoA = moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
+    // const montoP = totalPagar;
+    // const montoS = round2(totalPagar / (Number(tasaCambio || 1) || 1));
+
+    const tipoPago = isCash ? "" : safeStr(tipo) || (isCard ? "TC" : isTransfer ? "TR" : "");
+
+    return {
+      numPago: "1",
+      concepto: isCash
+        ? "Efectivo"
+        : isTransfer
+        ? descripcionPago || "Transferencia"
+        : `${descripcionPago || "Tarjeta"}${ultDigito ? ` (${ultDigito})` : ""}`,
+
+      codPago: codPago || "1",
+      tipoPago: tipoPago || "1",
+      aplicaCambio: "True",
+      codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
+      banco: banco || (isCash ? "00" : ""),
+
+      monto: Number(monto ?? 0),
+      moneda,
+      montoA: Number(montoA ?? 0),
+      cambio: Number(TotalesPantallaReq.totalEnPantalla - monto),
+      tasaCambio: Number(tasaCambio ?? 1),
+      Fecha_o_Vence: fechaOVence,
+      Dll: "",
+      Numero: "",
+      referencia,
+      numeroTransaccion,
+      cuentaContable: "",
+
+      ultDigito,
+      tarjeta: "",
+      tarjetahabiente: isCard ? safeStr(cardForm.nameOnCard) : "",
+      autorizacion: "",
+      termId: "",
+      afiliado: "",
+
+      montoP: TotalesPantallaReq.totalEnPantalla,
+      montoS: TotalesPantallaReq.totalEnPantalla / 36.6243,
+
+      indice: "0",
+      codClienteCrd: "00000",
+      facturaPinpad: "",
+      codEmpresa: safeStr((invoiceReq as any)?.codEmpresa) || "01",
+      codSucursal: codSucursalFactura,
+      montoFirma: "0",
+      sobrante: "0",
+    };
+  };
+
   const handlePayNow = async () => {
     if (payNowLock || payNowCooldown > 0) return;
 
@@ -449,12 +621,11 @@ const CheckoutPage: React.FC = () => {
       if (method === "card" && !validateCardForm(cardForm)) return;
 
       const cart = carPCG[0];
-      const total = cart.total ?? 0;
+      const total = Number(cart.total ?? 0);
 
       if (method === "cash") {
         if (cashAmount <= 0) return void toastError("El monto en efectivo debe ser mayor a 0.");
         if (tip > cashAmount) return void toastError("La propina no puede ser mayor al monto ingresado.");
-
         const disponible = cashAmount - tip;
         if (disponible < total) {
           return void toastError(`Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`);
@@ -463,12 +634,15 @@ const CheckoutPage: React.FC = () => {
 
       if (method === "transfer") {
         if (transferAmount <= 0) return void toastError("El monto debe ser mayor a 0.");
-        if (transfer > transferAmount) return void toastError("La referencia no puede ser mayor al monto ingresado.");
-
+        if (!safeStr(transferRef)) return void toastError("La referencia es requerida.");
         const disponible = transferAmount - tip;
         if (disponible < total) {
           return void toastError(`Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`);
         }
+      }
+
+      if ((method === "card" || method === "transfer") && !divisaSelected) {
+        return void toastError("Debe seleccionar el banco / forma de pago.");
       }
 
       const coords = getCoordsForFlow();
@@ -518,15 +692,40 @@ const CheckoutPage: React.FC = () => {
       const codSucursalFactura = String(nearest.codSucursal ?? nearest.codsucursal ?? "").trim();
       if (!codSucursalFactura) return void toastError("No fue posible determinar la sucursal de factura.");
 
-      const falote: FaloteRequestDto = {
-        codSucursal: codSucursalFactura,
-        documento: "OrdenFactura",
-      };
-
+      const falote: FaloteRequestDto = { codSucursal: codSucursalFactura, documento: "OrdenFactura" };
       const dataconse = await CartService.GetConsecDocAsync(falote);
 
-      const invoiceReq: FacturaTempo = {
+
+      const calculationReqDto: CalculationReqDto ={
+        maquina: `CRM-${payload?.contactId}`,
+        usuario: `${payload?.contactId}`,
+        aplicaPropina: 'N',
+        exonerada: 'N',
+        imi: 'N',
+        ir: 'N',
+        tabla: 'det_factura_tempo',
+        tasa: 36.6243,
+        tipoServicio: "8",
+        valorTransporte: transferAmount,
+      }
+
+      const VspConsolidadoFacturaRes = await CartService.VspConsolidadoFactura(calculationReqDto);
+
+
+      const TotalesPantallaReq: TotalesPantallaReqDTO ={
+        descuentoPantalla: 0,
+        exonerado: 'N',
+        ivaPantalla: VspConsolidadoFacturaRes.data[0].iva,
+        maquina: `CRM-${payload?.contactId}`,
+        sucursal: '',
+        tabla: 'det_factura_tempo',
+        totalEnPantalla: VspConsolidadoFacturaRes.data[0].total,
+        usuario: payload!.contactId.toString()
+      }
+      
+      const invoiceReqBase: FacturaTempo = {
         ...facturaBase,
+        
         codCli: "00000",
         nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`,
         clientePadre: `${billingForm.firstName} ${billingForm.lastName}`,
@@ -534,88 +733,27 @@ const CheckoutPage: React.FC = () => {
         usuario: String(payload?.contactId),
         maquina: `CRM-${payload?.contactId}`,
         fechaFactura: dayjs().format("YYYYMMDD"),
+        tasaCambio:  36.6243,
         sucursal: codSucursalFactura,
-        numero: Number(dataconse.data.consecutivo),
+        numero: Number(dataconse?.data?.consecutivo ?? 0),
         idPromocion: String(orderId),
         noOrden: String(orderId),
         referencia: String(finalLocation.referencia ?? ""),
         valorTransporte: Number(transporte ?? 0),
+        retiraSucursal: 'S',
+        hayFormaPago: "S"
       };
 
+      const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura,TotalesPantallaReq);
+      const detallePago: PagoGenerico[] = [pagoGenerico];
 
-      // methodDependiendo del  method, se deve de agreagr l pagom en efectivo, tarjeta o bien transferencia
-      // eso va en invoiceReq, dentro del detallePago, lo que se envia,
-    //aqui se deven de llenar los campos
-    //falta formulario y validacion de tranfeencia, que deve de llenar el select arriba y luego la referencia y el monto.
-      // const pagoEfectivo: PagoEfectivo = {
-      //   concepto: "",
-      //   codPago: "",
-      //   tipoPago: "",
-      //   aplicaCambio: true,
-      //   codPagoExterno: "",
-      //   banco: "",
-      // };
+      const invoiceReqFinal: FacturaTempo = {
+        ...invoiceReqBase,
+        detallePago
+        // detallePago: JSON.stringify(pagos),
+      } as FacturaTempo;
 
-
-      // const pagoTarjeta: PagoTarjeta = {
-      //   concepto: "",
-      //   codPago: "",
-      //   tipoPago: "TC",
-      //   aplicaCambio: false,
-      //   codPagoExterno: "",
-      //   banco: "",
-      //   fechaOVence: "",
-      //   ultDigito: ""
-      // };
-
-      // const pagoTransferencia: PagoTransferencia = {
-      //     numPago: "",
-      //     concepto: "concepto",
-      //     codPago: "3",
-      //     tipoPago: "TR",
-      //     aplicaCambio: false,
-      //     codPagoExterno: "BAC_TR",
-      //     banco: "BAC",
-
-      //     monto: 1500,
-      //     moneda: "1",
-      //     montoA: 1500,
-      //     cambio: 36.5,
-      //     tasaCambio: 36.5,
-
-      //     fechaOVence: "2026-01-17",
-      //     referencia: "TRX-889922",
-      //     numeroTransaccion: "889922",
-      //     cuentaContable: "",
-
-      //     ultDigito: "",
-      //     tarjeta: "",
-      //     tarjetahabiente: "",
-      //     autorizacion: "",
-      //     termId: "",
-      //     afiliado: "",
-
-      //     montoP: 1500,
-      //     montoS: 41.10,
-
-      //     indice: "0",
-      //     codClienteCrd: "00000",
-      //     facturaPinpad: "",
-      //     codEmpresa: "01",
-      //     codSucursal: "01",
-      //     montoFirma: "0",
-      //     sobrante: "0"
-      //   };
-
-      //   //Este es el pago generico. Depende de la forma de pago que selecione el usuario si es efectivo, tarjeta o tranferencia
-      //   //cuando es efectivo, basta con seleccionar, pero cuando es tarjeta o tranferencia se recupera con el get los de
-      //   const pagoGenerico: PagoGenerico={
-
-      //   }
-
-
-
-      await InsertaFacturaAsync(invoiceReq);
+      await InsertaFacturaAsync(invoiceReqFinal);
 
       const existingLog = await fetchByContactId(payload!.contactId);
       if (existingLog?.id) {
@@ -627,7 +765,7 @@ const CheckoutPage: React.FC = () => {
 
       navigate("/successOrder", { replace: true });
     } catch (err: any) {
-      toast.error(err.message ?? "Error procesando pago");
+      toast.error(err?.message ?? "Error procesando pago");
       await UserSessionService.revokeCartTempLink(orderId);
       navigate("/unauthorized", { replace: true });
     } finally {
@@ -690,14 +828,18 @@ const CheckoutPage: React.FC = () => {
                 onNameChange={onNameChange}
                 cashAmount={cashAmount}
                 setCashAmount={setCashAmount}
-                carPCG={carPCG}
+                transferAmount={transferAmount}
+                setTransferAmount={setTransferAmount}
+                transfer={transferRef}
+                setTransfer={setTransferRef}
                 payNowDisabled={payNowDisabled}
                 payNowLock={payNowLock}
                 handlePayNow={handlePayNow}
-                transferAmount={transferAmount}
-                setTransferAmount={setTransferAmount}
-                transfer={transfer}
-                setTransfer={setTransfer}
+                divisaLoading={divisaLoading}
+                divisaOpts={divisaOpts}
+                divisaSelected={divisaSelected}
+                setDivisaSelected={setDivisaSelected}
+                carPCG={carPCG}
               />
             )}
           </div>

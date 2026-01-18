@@ -15,6 +15,8 @@ export interface LogCartResponseDto {
   statusId: number
   statusName: string
   branch: string;
+  addressId?: number
+  transCost?: number;
 }
 
 export interface LogCartRequestDto {
@@ -23,6 +25,8 @@ export interface LogCartRequestDto {
   conversationId: number
   statusId: number
   branch?: string;
+  addressId?: number
+  transCost?: number;
 }
 
 export interface LogCartFormValues {
@@ -31,4 +35,6 @@ export interface LogCartFormValues {
   conversationId: number
   statusId: number
   branch?: string
+  addressId?: number
+  transCost?: number;
 }

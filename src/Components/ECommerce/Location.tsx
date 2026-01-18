@@ -89,8 +89,8 @@ export const Location = ({
                     : "checkout-address"
                 }
                 onClick={() => {
-                  setSelectedAddressId(addr.idDireccion);
-                  setSelectedCoords({ latitud: addr.latitud, longitud: addr.longitud });
+                  setSelectedAddressId(addr.idDireccion ?? 0);
+                  setSelectedCoords({ latitud: addr.latitud ?? 0, longitud: addr.longitud ?? 0});
                   setBillingForm((prev) => ({
                     ...prev,
                     address: addr.descripcion ?? prev.address,
