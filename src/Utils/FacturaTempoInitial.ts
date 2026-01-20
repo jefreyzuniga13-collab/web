@@ -11,7 +11,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   sucursal: "010",
   codCli: "00000",
   nombreCliente: "",
-  codVendedor: "004",
+  codVendedor: "000",
   tasaCambio: 36.6243,
   diasCredito: 0,
   usuario: "",
@@ -41,6 +41,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   direccionCte: "",
   telefonoCte: "",
   tipoDocumentoLlamado: 1,
+  
   detallePago: null,
   clientePadre: "CLIENTES VARIOS",
   hayFormaPago: "N",
@@ -53,5 +54,5 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   idPromocion: "75343",
   codreferido: "000",
   correo: "",
-  retiraSucursal: 'S'
+  retiraSucursal: 'N'
 };

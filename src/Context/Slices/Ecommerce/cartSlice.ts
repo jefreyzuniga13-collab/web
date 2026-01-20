@@ -85,11 +85,15 @@ export const addProductTempoAsync = createAsyncThunk<
     const res = await CartService.AddProductToTempo(req);
 
     if (!res.success) {
-      toast.error(res.message);
+
+      // Mostrar este mensaje, si da errro, o similar
+      //no el quemado de catch
+      toast.error(res.data.header.msj);
       return rejectWithValue(res.message);
     }
 
     return res.data;
+    
   } catch (error: unknown) {
     const message = errMsg(error, "Error al agregar al carrito");
     toast.error(message);

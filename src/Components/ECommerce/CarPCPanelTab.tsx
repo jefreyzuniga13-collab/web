@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useRef, useState } from "react"
 import Input from "@/Components/Common/Input"
-import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+import type { CarDto, ListDetalleCarrito, InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
 import EmptyCart from "@/assets/emptycard.webp"
 import { toast } from "react-toastify"
 import "@/Styles/Ecommerce/cardPCGTab.css"
@@ -18,9 +20,9 @@ import {
   updateCarAsync,
   setActiveContactId
 } from "@/Context/Slices/Ecommerce/cartSlice"
-import { format } from 'date-fns';
-import { FaFilePdf } from "react-icons/fa";
-import { IoIosChatboxes } from "react-icons/io";
+import { format } from "date-fns"
+import { FaFilePdf } from "react-icons/fa"
+import { IoIosChatboxes } from "react-icons/io"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import useContact from "@/Hooks/Auth/useContact"
@@ -28,23 +30,23 @@ import { useUserEcommerce } from "@/Hooks/Ecommerce/useUserEcommerce"
 import type { UserEcommerceDto } from "@/Interfaces/Ecommerce/UserEcommerceInterface"
 import type { SendLinkRequestDto } from "@/Interfaces/Ecommerce/SendLinkInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
-import { UserSessionService } from '@/Services/auth/UserSessionService'
+import { UserSessionService } from "@/Services/auth/UserSessionService"
 import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
 import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import type { SendInteractiveMessajeRequestDto } from "@/Interfaces/Chat/ChatInterfaces"
-import { MdOutlineCancelScheduleSend } from "react-icons/md";
-import { IoSend } from "react-icons/io5";
+import { MdOutlineCancelScheduleSend } from "react-icons/md"
+import { IoSend } from "react-icons/io5"
 import { selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { generateRandomString } from "@/Utils/generateRandomString"
 import { formatCurrencyNIO } from "@/Utils/formatCurrencyNIO"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
-import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type { CalculationReqDto, ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import { CartService } from "@/Services/Ecommerce/CarPCGService"
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAppDispatch: () => AppDispatch = useDispatch
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 interface Props {
@@ -52,13 +54,36 @@ interface Props {
   contactId: number
 }
 
+type DraftState = {
+  addDescription: string
+  retiraSucursal: "S" | "N"
+  transCost: number
+  selectedAddressId: number | null
+  observation: string
+}
+
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const [orderId, setOrderId] = useState<number | null>(null)
   const [cancelLoading, setCancelLoading] = useState<boolean>(false)
   const [sendChatoading, setSendChatoading] = useState<boolean>(false)
+
   const [addDescription, setAddDescription] = useState<string>("")
+  const [retiraSucursal, setRetiraSucursal] = useState<"S" | "N">("N")
   const [transCost, setTransCost] = useState<number>(0)
+
+  const [invoiceTotalsDto, setInvoiceTotalsDto] = useState<InvoiceTotalsDto | null>(null)
+  const [totalsLoading, setTotalsLoading] = useState<boolean>(false)
+
+  const [showAddressModal, setShowAddressModal] = useState(false)
+  const [addresses, setAddresses] = useState<ClientLocationDto[]>([])
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [observation, setObservation] = useState<string>("")
+
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
+  const [addressSearch, setAddressSearch] = useState<string>("")
+
+  const [currentLog, setCurrentLog] = useState<LogCartResponseDto | null>(null)
 
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
@@ -67,137 +92,323 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const badgeMap = useAppSelector(selectCartBadgeByContactId)
   const contactHasCart = badgeMap?.[contactId] ?? { hasCart: false, count: 0 }
 
-  // Colócalo cerca de tus hooks dentro del componente:
-  const ensureEcommerceRef = useRef<
-    Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> | null>(null);
+  const ensureEcommerceRef = useRef<Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> | null>(null)
+  const reqRef = useRef(0)
+  const hydratedRef = useRef(false)
+  const skipPersistOnceRef = useRef(false)
 
-  const {
-    SendMessageLink,
-    GetMessageLink,
-    error: errorCart,
-    loading: loadingCart } = useCart()
-
-  const {
-    UpdatedStatus,
-    fetchByContactId,
-    update: updatedLogCart
-  } = useLogCart();
-
-  const {
-    UpdateEcommerceUserAsync,
-    getById } = useContact()
-
+  const { SendMessageLink, GetMessageLink, error: errorCart, loading: loadingCart } = useCart()
+  const { UpdatedStatus, fetchByContactId, update: updatedLogCart } = useLogCart()
+  const { UpdateEcommerceUserAsync, getById } = useContact()
   const { CreateAsync } = useUserEcommerce()
+  const { setFile, setText, handleSend, sending } = useChatWindow({ conversationId })
 
-  const {
-    setFile,
-    setText,
-    handleSend,
-    sending
-  } = useChatWindow({ conversationId })
+  const draftKey = useMemo(() => `cartDraft:v1:${conversationId}:${contactId}`, [conversationId, contactId])
 
-  useEffect(() => {
-    if (!contactId) return;
+  const isPickup = retiraSucursal === "S"
+  const hasSelectedAddress = selectedAddressId != null
+  const hasManualAddress = addDescription.trim().length > 0
 
-    // Este panel representa ESTE contacto
-    dispatch(setActiveContactId(contactId));
+  const addressInputsDisabled = isPickup || hasSelectedAddress
+  const transportDisabled = isPickup || hasSelectedAddress
+  const pickupDisabled = hasSelectedAddress || hasManualAddress
 
-    return () => {
-      // Cuando cambia de conversación o se desmonta
-      dispatch(setActiveContactId(null));
-    };
-  }, [contactId, dispatch]);
+  const showAddressButton = !isPickup && !hasManualAddress
 
-  const reqRef = useRef(0);
-
-  useEffect(() => {
-    if (!contactId || !conversationId) return;
-
-    const myReq = ++reqRef.current;
-
-    const loadCart = async () => {
-      //peticion se manda siempre el conactid bien
-      const log = await fetchByContactId(contactId);
-
-      // si ya hubo otra ejecución más nueva, ignorar esta
-      if (myReq !== reqRef.current) return;
-
-      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
-      setOrderId(noPedido > 0 ? noPedido : null);
-
-      console.log("El log es", log);
-      console.log("No pedido es", noPedido);
-
-      console.log("COntacto es", contactId)
-      //varias veces se usa el getProductFromCarAsync, se envia el valor que es, y en otros no se enviar, solo 0
-      const updated = await dispatch(
-        getProductFromCarAsync({ codCliente: contactId, noPedido })
-      ).unwrap();
-
-      console.log("El carrito es")
-
-      // Si ya hubo otra ejecución más nueva, ignorar esta
-      if (myReq !== reqRef.current) return;
-
-      // Determinar si el carrito está vacío
-      const arr = Array.isArray(updated) ? updated : []
-
-      const count =
-        arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
-
-      dispatch(
-        setContactCartBadge({
-          contactId,
-          hasCart: count > 0,
-          count,
-        })
-      )
-    };
-
-    void loadCart();
-  }, [contactId]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
+  const readDraft = (): DraftState | null => {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as Partial<DraftState>
+      const next: DraftState = {
+        addDescription: String(parsed.addDescription ?? ""),
+        retiraSucursal: parsed.retiraSucursal === "S" ? "S" : "N",
+        observation: observation,
+        transCost: Number(parsed.transCost ?? 0),
+        selectedAddressId:
+          parsed.selectedAddressId != null && Number.isFinite(Number(parsed.selectedAddressId))
+            ? Number(parsed.selectedAddressId)
+            : null
+      }
+      if (!Number.isFinite(next.transCost) || next.transCost < 0) next.transCost = 0
+      return next
+    } catch {
+      return null
     }
+  }
+
+  const writeDraft = (state: DraftState) => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(state))
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (!conversationId || !contactId) return
+    const draft = readDraft()
+    if (!draft) {
+      hydratedRef.current = true
+      return
+    }
+    skipPersistOnceRef.current = true
+    setAddDescription(draft.addDescription)
+    setRetiraSucursal(draft.retiraSucursal)
+    setTransCost(draft.transCost)
+    setSelectedAddressId(draft.selectedAddressId)
+    setObservation(draft.observation)
+    hydratedRef.current = true
+  }, [draftKey, conversationId, contactId])
+
+  useEffect(() => {
+    if (!hydratedRef.current) return
+    if (skipPersistOnceRef.current) {
+      skipPersistOnceRef.current = false
+      return
+    }
+    writeDraft({
+      addDescription,
+      retiraSucursal,
+      transCost: Number(transCost ?? 0),
+      selectedAddressId,
+      observation
+    })
+  }, [addDescription, retiraSucursal, transCost, selectedAddressId, draftKey])
+
+  useEffect(() => {
+    if (isPickup) {
+      if (selectedAddressId != null) setSelectedAddressId(null)
+      if (addDescription.trim().length > 0) setAddDescription("")
+      if (showAddressModal) setShowAddressModal(false)
+    }
+  }, [isPickup, selectedAddressId, addDescription, showAddressModal])
+
+  useEffect(() => {
+    if (hasSelectedAddress) {
+      if (retiraSucursal === "S") setRetiraSucursal("N")
+      if (addDescription.trim().length > 0) setAddDescription("")
+    }
+  }, [hasSelectedAddress, retiraSucursal, addDescription])
+
+  const filteredAddresses = useMemo(() => {
+    const term = addressSearch.trim().toLowerCase()
+
+    const base = !term
+      ? addresses
+      : addresses.filter((a) => {
+          const n = String(a.nombre ?? "").toLowerCase()
+          const d = String(a.descripcion ?? "").toLowerCase()
+          const r = String(a.referencia ?? "").toLowerCase()
+          return n.includes(term) || d.includes(term) || r.includes(term)
+        })
+
+    if (selectedAddressId == null) return base
+
+    const selected = base.find((a) => Number(a.idDireccion) === selectedAddressId)
+    if (!selected) return base
+
+    return [selected, ...base.filter((a) => Number(a.idDireccion) !== selectedAddressId)]
+  }, [addresses, addressSearch, selectedAddressId])
+
+  useEffect(() => {
+    if (!showAddressModal) setAddressSearch("")
+  }, [showAddressModal])
+
+  useEffect(() => {
+    if (!contactId) return
+    dispatch(setActiveContactId(contactId))
+    return () => {
+      dispatch(setActiveContactId(null))
+    }
+  }, [contactId, dispatch])
+
+  useEffect(() => {
+    if (error) toast.error(error)
   }, [error])
 
-  const handleRemoveItem = async (
-    idUsuario: number,
-    noPedido: number,
-    codProducto: string,
-    unico: string
-  ) => {
+  useEffect(() => {
+    if (!contactId || !conversationId) return
+    const myReq = ++reqRef.current
+
+    const loadCart = async () => {
+      const log = await fetchByContactId(contactId)
+      if (myReq !== reqRef.current) return
+
+      setCurrentLog(log ?? null)
+
+      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
+      setOrderId(noPedido > 0 ? noPedido : null)
+
+      const draft = readDraft()
+
+      if (draft?.selectedAddressId != null) setSelectedAddressId(draft.selectedAddressId)
+      else if (log?.addressId != null) setSelectedAddressId(Number(log.addressId))
+
+      if (draft?.transCost != null) setTransCost(Number(draft.transCost ?? 0))
+      else if (log?.transCost != null) setTransCost(Number(log.transCost ?? 0))
+
+      if (draft?.retiraSucursal === "S" || draft?.retiraSucursal === "N") setRetiraSucursal(draft.retiraSucursal)
+      else if (log?.retiraSucursal === "S" || log?.retiraSucursal === "N") setRetiraSucursal(log.retiraSucursal)
+
+      if (draft?.addDescription != null && String(draft.addDescription).trim().length > 0) {
+        setAddDescription(String(draft.addDescription))
+      }
+
+      const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId, noPedido })).unwrap()
+      if (myReq !== reqRef.current) return
+
+      const arr = Array.isArray(updated) ? updated : []
+      const count = arr[0]?.listDetalle?.reduce((sum: number, d: any) => sum + Number(d.cantidad ?? 0), 0) ?? 0
+      dispatch(setContactCartBadge({ contactId, hasCart: count > 0, count }))
+
+      const calcTrans = Number(draft?.transCost ?? log?.transCost ?? transCost ?? 0)
+
+      const calculationReqDto: CalculationReqDto = {
+        maquina: `CRM-${contactId}`,
+        usuario: `${contactId}`,
+        aplicaPropina: "N",
+        exonerada: "N",
+        imi: "N",
+        ir: "N",
+        tabla: "det_factura_tempo",
+        tasa: 36.6243,
+        tipoServicio: "8",
+        valorTransporte: isPickup ? 0 : calcTrans
+      }
+
+      setTotalsLoading(true)
+      try {
+        const res = await CartService.VspConsolidadoFactura(calculationReqDto)
+        setInvoiceTotalsDto(res.data?.[0] ?? null)
+      } catch {
+        setInvoiceTotalsDto(null)
+        toast.error("No se pudo calcular el total")
+      } finally {
+        setTotalsLoading(false)
+      }
+    }
+
+    void loadCart()
+  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey, isPickup, transCost])
+
+  const ensureEcommerceUser = async (): Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> => {
+    if (ensureEcommerceRef.current) return ensureEcommerceRef.current
+
+    ensureEcommerceRef.current = (async () => {
+      try {
+        const contact = await getById(contactId)
+        if (!contact) {
+          toast.error("No se pudo obtener el contacto")
+          return { ecommerceUserId: 0, contact: null }
+        }
+
+        const existingId = Number(contact.ecommerceUserId ?? 0)
+        if (existingId > 0) return { ecommerceUserId: existingId, contact }
+
+        const date = new Date()
+        const phone = (contact.phone ?? "").replace(/^505/, "").trim()
+
+        const createUserEcommerce: UserEcommerceDto = {
+          nombres: (contact.fullName ?? contact.waName ?? "").trim(),
+          apellidos: (contact.fullName ?? contact.waName ?? "").trim(),
+          codReferencia: "",
+          idUsuario: 0,
+          correo: (contact.email ?? "").trim(),
+          telefono: phone,
+          tokenReferencia: "",
+          clave: generateRandomString(),
+          fechaNacimiento: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear() - 20}`
+        }
+
+        const res = await CreateAsync(createUserEcommerce)
+        const ecommerceUserId = Number(res)
+
+        if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
+          toast.error("No se pudo crear el usuario ecommerce")
+          return { ecommerceUserId: 0, contact }
+        }
+
+        await UpdateEcommerceUserAsync(contactId, ecommerceUserId)
+        return { ecommerceUserId, contact: { ...contact, ecommerceUserId } }
+      } catch (err: any) {
+        const msg = err?.response?.data?.message ?? err?.message ?? "Error inesperado al asegurar usuario ecommerce"
+        toast.error(msg)
+        return { ecommerceUserId: 0, contact: null }
+      }
+    })()
+
+    try {
+      return await ensureEcommerceRef.current
+    } finally {
+      ensureEcommerceRef.current = null
+    }
+  }
+
+  const loadAddresses = async () => {
+    try {
+      setAddressLoading(true)
+      const { ecommerceUserId } = await ensureEcommerceUser()
+      if (!ecommerceUserId) {
+        toast.error("No se pudo obtener el usuario ecommerce")
+        return
+      }
+      const res = await ClientLocationService.Get(ecommerceUserId)
+      setAddresses(res.data ?? [])
+    } catch {
+      toast.error("No se pudieron cargar las direcciones")
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+    const applySelectedAddressToLog = async (addressId: number) => {
+      try {
+        if (retiraSucursal === "S") return
+        if (addDescription.trim().length > 0) return
+
+        const log = await fetchByContactId(contactId)
+        if (!log?.id) return
+
+        const nextId = selectedAddressId === addressId ? null : addressId
+
+        const updated: LogCartResponseDto = {
+          ...log,
+          addressId: nextId ?? undefined
+        }
+
+        setCurrentLog(updated)
+        setSelectedAddressId(nextId)
+
+        await updatedLogCart(updated.id, updated)
+
+        toast.success(nextId ? "Dirección seleccionada" : "Dirección deseleccionada")
+      } catch {
+        toast.error("No se pudo actualizar la dirección")
+      }
+    }
+
+
+  const handleRemoveItem = async (idUsuario: number, noPedido: number, codProducto: string, unico: string) => {
     if (!noPedido) return
 
-    // Actualizar item en el carrito
-    await dispatch(
-      updateCarAsync({
-        idUsuario,
-        noPedido,
-        codProducto,
-        unico
-      })
-    ).unwrap()
+    await dispatch(updateCarAsync({ idUsuario, noPedido, codProducto, unico })).unwrap()
 
     const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })).unwrap()
     const arr = Array.isArray(updated) ? updated : []
     const count = arr[0]?.listDetalle?.length ?? 0
     const empty = count === 0
 
-    dispatch(setContactCartBadge({
-      contactId,
-      hasCart: !empty,
-      count
-    }))
+    dispatch(setContactCartBadge({ contactId, hasCart: !empty, count }))
 
     if (empty) {
+      try {
+        if (noPedido && noPedido > 0) await UserSessionService.revokeCartTempLink(noPedido)
+      } catch {}
       const existingLog = await fetchByContactId(contactId)
       if (existingLog?.id) await UpdatedStatus(existingLog.id, 3)
+      try {
+        localStorage.removeItem(draftKey)
+      } catch {}
     }
   }
-
 
   const hasItems = useMemo(() => carPCG != null && carPCG.length > 0, [carPCG])
 
@@ -205,17 +416,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     if (!hasItems) return []
     const term = search.trim().toLowerCase()
     const result: { cart: CarDto; detail: ListDetalleCarrito }[] = []
-    carPCG.forEach(cart => {
-      cart.listDetalle.forEach(detail => {
-        if (!term || detail.descripcion.toLowerCase().includes(term)) {
-          result.push({ cart, detail })
-        }
+    carPCG.forEach((cart) => {
+      cart.listDetalle.forEach((detail) => {
+        if (!term || detail.descripcion.toLowerCase().includes(term)) result.push({ cart, detail })
       })
     })
     return result
   }, [carPCG, hasItems, search])
 
   if (loading) return <span>Cargando...</span>
+
   if (loadingCart)
     return (
       <div className="cartPanel-loadingCartContiner">
@@ -230,10 +440,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       </div>
     )
 
-  const cart = carPCG?.[0];
-  const detailsCount = cart?.listDetalle?.length ?? 0;
-
-  const showEmpty = !contactHasCart.hasCart || detailsCount === 0;
+  const cart = carPCG?.[0]
+  const detailsCount = cart?.listDetalle?.length ?? 0
+  const showEmpty = !contactHasCart.hasCart || detailsCount === 0
 
   if (showEmpty) {
     return (
@@ -246,255 +455,196 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
         </div>
       </div>
-    );
+    )
   }
 
   const handleSendCartPdf = async () => {
     if (!cart || sending) return
-
     const contact = await getById(contactId)
-
     if (!contact) {
       toast.error("No se pudo obtener el contacto")
       return
     }
-
     const file = generateCartPdfFile(cart, contact)
     setFile(file)
     setText("Resumen de carrito")
     await handleSend()
   }
 
-  const buildCartChatMessage = (cart: CarDto, opts?: {
-    orderId?: number | null;
-    //  payLink?: string | null; 
-    deliveryDate?: string | null
-  }) => {
+  const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
     const lines: string[] = []
-
-    // Encabezado
     lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
     lines.push("")
     lines.push("🛒 Artículos:")
     lines.push("")
 
-    // Detalles
     cart.listDetalle?.forEach((d) => {
       const qty = d.cantidad ?? 0
-      const title = (d.descripcion ?? "").trim()
+      const title = (d.descripcion ?? "").trim() + " - " + (d.observaciones)
       if (!title) return
-
       lines.push(`*${title}* - ${qty}`)
 
-      // opciones/modificadores debajo, estilo indentado
-      const opciones = d.listOpciones?.map(o => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim()).filter(Boolean) ?? []
-      opciones.forEach(op => lines.push(`   ${op}`))
+      const opciones =
+        d.listOpciones
+          ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
+          .filter(Boolean) ?? []
 
-      lines.push("") // espacio entre productos
+      opciones.forEach((op) => lines.push(`   ${op}`))
+      lines.push("")
     })
 
-    // Totales
     const total = cart.total ?? 0
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)} | *Más Envío*`)
 
-
-    if (opts?.deliveryDate) {
-      lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
+    if (retiraSucursal === "S") {
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+      lines.push("🏬 Retira en sucursal: Sí")
+    } else {
+      const envio = Number(transCost ?? 0)
+      const hasEnvio = Number.isFinite(envio) && envio > 0
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más Envío*" : ""}`)
+      if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
+      lines.push("🏠 Retira en sucursal: No")
+      if (selectedAddressId == null && addDescription.trim().length > 0) {
+        lines.push(`📍 Dirección: ${addDescription.trim()}`)
+      }
     }
 
-    // if (opts?.payLink) {
-    //   lines.push(`🔗 Link de pago: ${opts.payLink}`)
-    // }
-
+    if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
     return lines.join("\n").trim()
   }
 
-  const Cancel = async () => {
-    if (cart == null) return
+  const handlePersistLog = async (log: any, ecommerceUserId: number) => {
+    if (!log?.id) return log
 
-    setCancelLoading(true)
-    const res = await UserSessionService.revokeCartTempLink(orderId!)
-
-    if (res.success) toast.success(res.message)
-    setCancelLoading(false)
-  }
-
-  const ensureEcommerceUser = async (): Promise<{
-    ecommerceUserId: number;
-    contact: ContactLogInterface | null;
-  }> => {
-    // Evita que se ejecute dos veces al mismo tiempo (doble click / render / race)
-    if (ensureEcommerceRef.current) return ensureEcommerceRef.current;
-
-    ensureEcommerceRef.current = (async () => {
-      try {
-        const contact = await getById(contactId);
-
-        if (!contact) {
-          toast.error("No se pudo obtener el contacto");
-          return { ecommerceUserId: 0, contact: null };
+    if (retiraSucursal === "S") {
+      log.addressId = ""
+      log.transCost = 0
+    } else {
+      if (selectedAddressId != null) {
+        log.addressId = selectedAddressId
+      } else if (addDescription && addDescription.trim().length > 0) {
+        const reqAddr: ClientLocationDto = {
+          descripcion: addDescription.trim(),
+          nombre: addDescription.trim(),
+          referencia: addDescription.trim(),
+          idUsuario: ecommerceUserId
         }
-
-        const existingId = Number(contact.ecommerceUserId ?? 0);
-        if (existingId > 0) {
-          return { ecommerceUserId: existingId, contact };
-        }
-
-        // Crear usuario ecommerce
-        const date = new Date();
-        const day = date.getDate();
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear() - 20;
-
-        const phone = (contact.phone ?? "").replace(/^505/, "").trim();
-
-        const createUserEcommerce: UserEcommerceDto = {
-          nombres: (contact.fullName ?? contact.waName ?? "").trim(),
-          apellidos: (contact.fullName ?? contact.waName ?? "").trim(),
-          codReferencia: "",
-          idUsuario: 0,
-          correo: (contact.email ?? "").trim(),
-          telefono: phone,
-          tokenReferencia: "",
-          clave: generateRandomString(),
-          fechaNacimiento: `${day}/${month}/${year}`,
-        };
-
-        const res = await CreateAsync(createUserEcommerce);
-        const ecommerceUserId = Number(res);
-
-
-        if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
-          toast.error("No se pudo crear el usuario ecommerce");
-          return { ecommerceUserId: 0, contact };
-        }
-
-        await UpdateEcommerceUserAsync(contactId, ecommerceUserId);
-
-        // Devuelve el contacto actualizado sin re-consultar
-        const updatedContact = { ...contact, ecommerceUserId };
-        return { ecommerceUserId, contact: updatedContact };
-      } catch (err: any) {
-        const msg =
-          err?.response?.data?.message ??
-          err?.message ??
-          "Error inesperado al asegurar usuario ecommerce";
-
-        toast.error(msg);
-        return { ecommerceUserId: 0, contact: null };
+        const address = await ClientLocationService.Create(reqAddr)
+        const newId = address?.data?.idDireccion
+        if (newId) log.addressId = newId
+      } else {
+        log.addressId = ""
       }
-    })();
+      log.transCost = Number(transCost ?? 0)
+    }
+
+    log.retiraSucursal = retiraSucursal
+
+    log.ivaPantalla = invoiceTotalsDto?.iva
+    log.DescuentoPantalla = invoiceTotalsDto?.descuento
+    log.totalEnPantalla = invoiceTotalsDto?.total
+    log.propina = invoiceTotalsDto?.propina
+    log.subTotal = invoiceTotalsDto?.subTotal
+    log.observation = observation
+
+    await updatedLogCart(log.id, log)
+    setCurrentLog(log)
 
     try {
-      return await ensureEcommerceRef.current;
-    } finally {
-      // Importante: liberar el lock aunque haya error
-      ensureEcommerceRef.current = null;
-    }
-  };
+      localStorage.removeItem(draftKey)
+    } catch {}
 
-  
+    return log
+  }
+
   const handleSendLink = async (returnLink: boolean = false) => {
-    setSendChatoading(true);
-
-    const { ecommerceUserId, contact } = await ensureEcommerceUser();
-    if (!ecommerceUserId || !contact) {
-      setSendChatoading(false);
-      return;
-    }
-
-    const existingLog = await fetchByContactId(contactId);
-    const orderIdToSend = existingLog?.orderId ?? 0;
-
-    if (!orderIdToSend) {
-      toast.error("No hay pedido asociado a este contacto.");
-      setSendChatoading(false);
-      return;
-    }
-
-    const sendLinkRequest: SendLinkRequestDto = {
-      conversationId,
-      orderId: orderIdToSend,
-      ecommerceUserId,
-      email: contact.email ?? "",
-      fullName: contact.fullName ?? "",
-      contactId,
-    };
-
-
-    if(addDescription != null && addDescription.length > 0){
-            const req: ClientLocationDto ={
-            descripcion: addDescription,
-            nombre: addDescription,
-            referencia: addDescription,
-            idUsuario: ecommerceUserId,  
+    setSendChatoading(true)
+    try {
+      const { ecommerceUserId, contact } = await ensureEcommerceUser()
+      if (!ecommerceUserId || !contact) {
+        setSendChatoading(false)
+        return
       }
 
-      //Mandar a actualizar el log, es decir agregar la direccion que se guardar.
-      const address = await ClientLocationService.Create(req);
-      
-      //Indicar la direccion y el costo de envio
-      existingLog!.addressId = address.data.idDireccion;
-      existingLog!.transCost = transCost;
-      
-      updatedLogCart(existingLog!.id, existingLog!);
+      const existingLog = await fetchByContactId(contactId)
+      const orderIdToSend = existingLog?.orderId ?? 0
+
+      if (!orderIdToSend) {
+        toast.error("No hay pedido asociado a este contacto.")
+        setSendChatoading(false)
+        return
+      }
+
+      await handlePersistLog(existingLog, ecommerceUserId)
+
+      const sendLinkRequest: SendLinkRequestDto = {
+        conversationId,
+        orderId: orderIdToSend,
+        ecommerceUserId,
+        email: contact.email ?? "",
+        fullName: contact.fullName ?? "",
+        contactId
+      }
+
+      if (returnLink) {
+        setSendChatoading(false)
+        return GetMessageLink(sendLinkRequest)
+      }
+
+      await SendMessageLink(sendLinkRequest)
+      setSendChatoading(false)
+    } catch {
+      setSendChatoading(false)
+      toast.error("No se pudo enviar el link")
     }
-
-
-
-    if (returnLink) {
-      setSendChatoading(false);
-      return GetMessageLink(sendLinkRequest);
-    }
-
-    await SendMessageLink(sendLinkRequest);
-    setSendChatoading(false);
-  };
+  }
 
   const handleSendCartChat = async () => {
-    if (!cart || sending) return;
+    if (!cart || sending) return
+    const { ecommerceUserId } = await ensureEcommerceUser()
+    if (!ecommerceUserId) return
 
-    const { ecommerceUserId } = await ensureEcommerceUser();
-    if (!ecommerceUserId) return;
+    const msg = buildCartChatMessage(cart, { orderId, deliveryDate: format(cart.fecha, "dd/MM/yyyy") })
+    if (!msg) return
 
-    const msg = buildCartChatMessage(cart, {
-      orderId,
-      deliveryDate: format(cart.fecha, "dd/MM/yyyy"),
-    });
+    const existingLog = await fetchByContactId(contactId)
+    if (existingLog?.orderId) await handlePersistLog(existingLog, ecommerceUserId)
 
-    if (!msg) return;
+    const req: SendInteractiveMessajeRequestDto = { conversationId, contactId, body: msg }
+    await sendInterctiveMessage(req)
+  }
 
-    const req: SendInteractiveMessajeRequestDto = {
-      conversationId,
-      contactId,
-      body: msg,
-    };
+  const Cancel = async () => {
+    if (!orderId || orderId <= 0) return
+    setCancelLoading(true)
+    try {
+      const res = await UserSessionService.revokeCartTempLink(orderId)
+      if (res?.success) toast.success(res.message ?? "Link revocado")
+      else toast.success("Link revocado")
+      try {
+        localStorage.removeItem(draftKey)
+      } catch {}
+    } catch {
+      toast.error("No se pudo revocar el link")
+    } finally {
+      setCancelLoading(false)
+    }
+  }
 
-    await sendInterctiveMessage(req);
-  };
+  const actionsDisabled = loadingCart || loading || sending || sendChatoading || cancelLoading || totalsLoading
 
   return (
     <div className="carPCPanel-container">
       <header className="carPCPanel-header">
-        <h5 className="productTab-content-header__title">Carrito</h5>
-        <Input
-          id="searchProduct"
-          name="searchProduct"
-          value={search}
-          placeholder="Buscar categoria o producto"
-          onChange={e => setSearch(e.target.value)}
-        />
+        <h5 className="productTab-content-header__title">Carrito {`- Sucursal ${currentLog?.branch}`}</h5>
+        <Input id="searchProduct" name="searchProduct" value={search} placeholder="Buscar categoria o producto" onChange={(e) => setSearch(e.target.value)} />
       </header>
 
       <section className="carPCPanel-content">
         {filteredDetails.map(({ detail }, index) => (
           <div key={index} className="carPCPanel-content__list">
             <div className="carPCPanel-content__list-imgContainer">
-              <img
-                src={detail.imagen ?? noimageavailable}
-                aria-label="product image"
-                className="carPCPanel-content__list-image"
-              />
+              <img src={detail.imagen ?? noimageavailable} aria-label="product image" className="carPCPanel-content__list-image" />
               <p className="carPCPanel-content__list-flootingQuantity">{detail.cantidad}</p>
             </div>
 
@@ -513,120 +663,182 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
             <MdDelete
               fontSize={24}
-              onClick={() =>
-                handleRemoveItem(cart.idUsuario ?? 0, detail.noPedido,
-                  detail.codProducto, detail.unico!)}
+              onClick={() => handleRemoveItem(cart.idUsuario ?? 0, detail.noPedido, detail.codProducto, detail.unico!)}
               className="carPCPanel-content__removeIcon"
             />
           </div>
         ))}
 
-        {contactHasCart && (
-          <>
+        <div className="productTab-content-footer">
+          <div className="productTab-content__inputContaner">
+            <div className="productTab-content__inputs">
 
-          
-            <div className="productTab-content-footer">
+               <textarea
+                rows={5}
+                name="observation"
+                id="observation"
+                className="productTab-content__input"
+                placeholder="observación"
+                value={observation}
+                disabled={addressInputsDisabled}
+                onChange={(e) => {
+                  if (addressInputsDisabled) return
+                  setObservation(e.target.value)
+                }}
+              />
 
+              <textarea
+                rows={5}
+                name="descripcion"
+                id="descripcion"
+                className="productTab-content__input"
+                placeholder="dirección"
+                value={addDescription}
+                disabled={addressInputsDisabled}
+                onChange={(e) => {
+                  if (addressInputsDisabled) return
+                  setAddDescription(e.target.value)
+                }}
+              />
 
+              <div className="transportationCost__input">
+                <input
+                  type="number"
+                  min={0}
+                  name="shipment"
+                  id="shipment"
+                  placeholder="C$ transporte "
+                  value={transCost}
+                  disabled={transportDisabled}
+                  onChange={(e) => {
+                    if (transportDisabled) return
+                    setTransCost(e.target.value === "" ? 0 : Number(e.target.value))
+                  }}
+                  className="productTab-content__input transportationCost"
+                />
+              </div>
+              
 
-
-              {/*Guardar el costo, y le direccion, para el envio  */}
-              <div className="productTab-content__inputContaner">
-              <div className="productTab-content__inputs">
-                <textarea rows={5} name="descripcion"  id="descripcion"  
-                className="productTab-content__input" placeholder="dirección"
-                onChange={(e)=> setAddDescription(e.target.value)}/>
-               <div className="transportationCost__input">
-                 <input type="number" min={1} name="shipment"  
-                 id="shipment" placeholder="C$ transporte " 
-                 onChange={(e)=> setTransCost(Number(e.target.value))}
-                 className="productTab-content__input transportationCost"/>
-               </div>
+              <div className="transportationCost__checkbox">
+                <input
+                  type="checkbox"
+                  id="retiraSucursal"
+                  checked={retiraSucursal === "S"}
+                  disabled={pickupDisabled}
+                  onChange={(e) => setRetiraSucursal(e.target.checked ? "S" : "N")}
+                />
+                <label htmlFor="retiraSucursal">Retira en sucursal</label>
               </div>
             </div>
+          </div>
 
-              {/* {cart.subTotal != null && cart.subTotal > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">Subtotal:</p>
-                  <span className="productTab-content-footer__value">
-                    C$ {cart.subTotal ?? ""}
-                  </span>
-                </div>
-              )} */}
+          {invoiceTotalsDto?.subTotal != null && invoiceTotalsDto.subTotal > 0 && (
+            <div className="productTab-content__container">
+              <p className="productTab-content-footer__title">Subtotal:</p>
+              <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.subTotal ?? ""}</span>
+            </div>
+          )}
 
-              {/* {cart.descuento != null && cart.descuento > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">Descuento:</p>
-                  <span className="productTab-content-footer__value">
-                    C$ {cart.descuento ?? ""}
-                  </span>
-                </div>
-              )} */}
+          {invoiceTotalsDto?.descuento != null && invoiceTotalsDto.descuento > 0 && (
+            <div className="productTab-content__container">
+              <p className="productTab-content-footer__title">Descuento:</p>
+              <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.descuento ?? ""}</span>
+            </div>
+          )}
 
-              {/* {cart.iva != null && cart.iva > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">IVA:</p>
-                  <span className="productTab-content-footer__value">C$ {cart.iva ?? ""}</span>
-                </div>
-              )} */}
+          {invoiceTotalsDto?.iva != null && invoiceTotalsDto.iva > 0 && (
+            <div className="productTab-content__container">
+              <p className="productTab-content-footer__title">IVA:</p>
+              <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.iva ?? ""}</span>
+            </div>
+          )}
 
-              {/* {cart.total && cart.total > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">Total:</p>
-                  <span className="productTab-content-footer__totalValue">
-                    C$ {cart.total.toFixed(2)}
-                  </span>
-                </div>
-              )} */}
+          {invoiceTotalsDto?.total && invoiceTotalsDto.total > 0 && (
+            <div className="productTab-content__container">
+              <p className="productTab-content-footer__title">Total:</p>
+              <span className="productTab-content-footer__totalValue">
+                C$ {invoiceTotalsDto.total + (retiraSucursal === "S" ? 0 : Number(transCost ?? 0))}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {showAddressModal && (
+          <div className="addressMenu">
+            <div className="addressMenu__header">
+              <strong>Direcciones</strong>
+
+              <button className="addressMenu-close" onClick={() => setShowAddressModal(false)}>
+                Cerrar
+              </button>
             </div>
 
-            <div className="productTab-footer__payment">
-              <Button
-                className="carPanel-btn"
-                disabled={sending}
-                onClick={handleSendCartPdf}>
-                {
-                  sending ? <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p> :
-                    <p className="btn_text"><FaFilePdf fontSize={16} /></p>
-                }
-              </Button>
+            <div className="addressMenu__content">
+              <input
+                type="text"
+                className="addressMenu-search"
+                placeholder="Buscar dirección..."
+                value={addressSearch}
+                onChange={(e) => setAddressSearch(e.target.value)}
+              />
 
-              <Button
-                className="carPanel-btn"
-                disabled={sendChatoading || sending}
-                onClick={handleSendCartChat}>
-                {
-                  sendChatoading ?
-                    <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p>
-                    : <p className="btn_text"> <IoIosChatboxes fontSize={16} /></p>
-                }
-              </Button>
+              {addressLoading && <p>Cargando direcciones...</p>}
 
-              <Button
-                className="cancelPanel-btn"
-                disabled={loadingCart || sending}
-                onClick={Cancel}>
-                {
-                  cancelLoading ? <p className="btn_text"> <AiOutlineLoading3Quarters fontSize={16} /></p> : <p className="btn_text"> <MdOutlineCancelScheduleSend fontSize={16} /></p>
-                }
-              </Button>
+              {!addressLoading && filteredAddresses.length === 0 && <p>{addresses.length === 0 ? "No hay direcciones registradas" : "No hay resultados"}</p>}
 
-              <Button
-                className="payment-btn"
-                disabled={loadingCart || sending}
-                onClick={async () => {
-                  await handleSendLink(false)
-                }}>
-                {
-                  loadingCart ? <p className="btn_text"><AiOutlineLoading3Quarters fontSize={16} /></p> : <p className="btn_text"><IoSend fontSize={16} /></p>
-                }
-              </Button>
+              {!addressLoading &&
+                filteredAddresses.map((a) => (
+                  <div
+                    key={a.idDireccion}
+                    className={`addressMenu-item ${selectedAddressId === a.idDireccion ? "addressMenu-item--active" : ""}`}
+                    onClick={async () => {
+                      if (retiraSucursal === "S") return
+                      await applySelectedAddressToLog(Number(a.idDireccion))
+                      setShowAddressModal(false)
+                    }}
+                  >
+                    <strong>{a.nombre}</strong>
+                    <p>{a.descripcion}</p>
+                    <small>{a.referencia}</small>
+                  </div>
+                ))}
             </div>
-          </>
+          </div>
         )}
+
+        <div className="productTab-footer__payment">
+          {showAddressButton && (
+            <Button
+              className="carPanel-btn"
+              disabled={actionsDisabled}
+              onClick={async () => {
+                await loadAddresses()
+                setShowAddressModal(true)
+              }}
+            >
+              Direcciones
+            </Button>
+          )}
+
+          <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartPdf}>
+            {sending ? <AiOutlineLoading3Quarters fontSize={16} /> : <FaFilePdf fontSize={16} />}
+          </Button>
+
+          <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartChat}>
+            {sendChatoading ? <AiOutlineLoading3Quarters fontSize={16} /> : <IoIosChatboxes fontSize={16} />}
+          </Button>
+
+          <Button className="cancelPanel-btn" disabled={actionsDisabled} onClick={Cancel}>
+            {cancelLoading ? <AiOutlineLoading3Quarters fontSize={16} /> : <MdOutlineCancelScheduleSend fontSize={16} />}
+          </Button>
+
+          <Button className="payment-btn" disabled={actionsDisabled} onClick={async () => await handleSendLink(false)}>
+            {loadingCart ? <AiOutlineLoading3Quarters fontSize={16} /> : <IoSend fontSize={16} />}
+          </Button>
+        </div>
       </section>
     </div>
   )
 }
 
-export default CarPCPanelTab;
+export default CarPCPanelTab

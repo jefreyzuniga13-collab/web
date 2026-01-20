@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "@/Styles/Ecommerce/CartPage.css";
 import noimageavailable from "@/assets/noimageavailable.webp";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,9 @@ import {
 
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import type { RootState, AppDispatch } from "@/Context";
+// import { toast } from "react-toastify";
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+import useLogCart from "@/Hooks/Crm/useLogCard";
 
 interface CarPageProps {
   payload: TempLinkResolveResponseDto;
@@ -30,16 +33,32 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
   const carPCG = useAppSelector(selectCarPCG);
   const loading = useAppSelector(selectCartLoading);
   const error = useAppSelector(selectCartError);
+  const [existingLog, setExistingLog] = useState<LogCartResponseDto | null>(null);
 
-  useEffect(() => {
-    if (payload) {
-      console.log("El payload es", payload)
-      dispatch(getProductFromCarAsync({ codCliente: payload.contactId, noPedido: payload.orderId! }));
-    }
-  }, [dispatch, payload.contactId]);
+  const { fetchByContactId } = useLogCart();
 
-  const firstSummaryItem =
-    carPCG && carPCG.length > 0 ? carPCG[0] : null;
+useEffect(() => {
+  if (!payload?.contactId || !payload?.orderId) return;
+
+  const run = async () => {
+
+    dispatch(
+      getProductFromCarAsync({
+        codCliente: payload.contactId,
+        noPedido: payload.orderId,
+      })
+    );
+
+    const existingLog = await fetchByContactId(payload.contactId);
+    setExistingLog(existingLog ?? null);
+
+  //   if(existingLog != null){
+  // }
+};
+
+  run();
+}, [dispatch, fetchByContactId, payload]);
+
 
   const hasItems =
     carPCG &&
@@ -161,22 +180,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                               </span>
                             </div>
                           </td>
-
-                          {/* <td className="cart-table__cell cart-table__cell--total">
-                            {rowTotal.toLocaleString("es-NI", {
-                              style: "currency",
-                              currency: "NIO",
-                              maximumFractionDigits: 2,
-                            })}
-                          </td> */}
-
-                          {/* <td className="cart-table__cell cart-table__cell--total">
-                            {rowTotal.toLocaleString("es-NI", {
-                              style: "currency",
-                              currency: "NIO",
-                              maximumFractionDigits: 2,
-                            })}
-                          </td> */}
                         </tr>
                       );
                     }) ?? []
@@ -199,36 +202,44 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
         >
           <h2 className="cart-totals__title">Total Carrito</h2>
           <div className="cart-totals__card">
-            <div className="cart-totals__row">
-              <span className="cart-totals__label">Subtotal</span>
-              <span className="cart-totals__value">
-                {firstSummaryItem
-                  ? firstSummaryItem.subTotal?.toLocaleString(
-                      "es-NI",
-                      {
-                        style: "currency",
-                        currency: "NIO",
-                        maximumFractionDigits: 2,
-                      }
-                    ) ?? firstSummaryItem.subTotal
-                  : "--"}
-              </span>
-            </div>
             
             <div className="cart-totals__row cart-totals__row--total">
-              <span className="cart-totals__label">Total (Más Envío)</span>
+              <span className="cart-totals__label">Subtotal</span>
               <span className="cart-totals__value cart-totals__value--strong">
-                {firstSummaryItem
-                  ? firstSummaryItem.total?.toLocaleString(
-                      "es-NI",
-                      {
-                        style: "currency",
-                        currency: "NIO",
-                        maximumFractionDigits: 2,
-                      }
-                    ) ?? firstSummaryItem.total
-                  : "--"}
+                {existingLog?.subTotal}
               </span>
+              </div>
+
+              {existingLog != null && 
+              existingLog != undefined && 
+              Number(existingLog.transCost) > 0 && (
+              <div className="cart-totals__row cart-totals__row--total">
+              <span className="cart-totals__label">Transporte</span>
+              <span className="cart-totals__value cart-totals__value--strong">
+                {existingLog?.transCost}
+              </span>
+              </div>
+              )}
+
+            {existingLog != null  &&
+            existingLog !=  undefined && 
+            Number(existingLog.ivaPantalla ) > 0 && (
+              <div className="cart-totals__row">
+              <span className="cart-totals__label">Iva</span>
+              <span className="cart-totals__value">
+                {existingLog?.ivaPantalla}
+              </span>
+            </div>
+            )
+
+            }
+
+            <div className="cart-totals__row cart-totals__row--total">
+              <span className="cart-totals__label">Total</span>
+              <span className="cart-totals__value cart-totals__value--strong">
+                C$ {((existingLog?.totalEnPantalla ?? 0) + (existingLog?.ivaPantalla ?? 0))}
+              </span>
+
             </div>
             <button
               type="button"

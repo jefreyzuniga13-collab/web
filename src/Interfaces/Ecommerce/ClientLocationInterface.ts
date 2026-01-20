@@ -5,7 +5,7 @@ export interface ClientLocationDto{
     descripcion: string;
     latitud?: number;
     longitud?: number;
-    idUsuario: number;
+    idUsuario?: number;
 }
 
 
@@ -16,7 +16,6 @@ export interface Coords {
 
 export type LocationMode = "existing" | "new";
 
-
 export interface ClientLocation2Dto{
     idDireccion?: number;
     nombre: string;
@@ -26,16 +25,15 @@ export interface ClientLocation2Dto{
     longitud?: number;
 }
 
-
 export interface CalculationResultDto {
-  pasaSub: "S" | "N";
-  resulSub: number;
+  pasasub: "S" | "N";
+  resulsub: number;
 
-  pasaDesc: "S" | "N";
-  resulDesc: number;
+  pasadesc: "S" | "N";
+  resuldesc: number;
 
-  pasaIva: "S" | "N";
-  resulIva: number;
+  pasaiva: "S" | "N";
+  resuliva: number;
 }
 
 //req:

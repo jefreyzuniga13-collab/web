@@ -72,6 +72,90 @@
     display: none;
 }
 
+.addressMenu {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.addressMenu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.addressMenu__header strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.addressMenu-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #2563eb;
+}
+
+.addressMenu-close:hover {
+  text-decoration: underline;
+}
+
+.addressMenu__content {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.addressMenu-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.addressMenu-item:last-child {
+  border-bottom: none;
+}
+
+.addressMenu-item:hover {
+  background: #f9fafb;
+}
+
+.addressMenu-item--active {
+  background: #eef2ff;
+  border-left: 4px solid #2563eb;
+}
+
+.addressMenu-item strong {
+  display: block;
+  font-size: 14px;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.addressMenu-item p {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+}
+
+.addressMenu-item small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+
 .carPCPanel-content__list:hover
 .carPCPanel-content__removeIcon{
     display: block;
@@ -203,13 +287,78 @@
     margin-top: var(--space-lg);
 }
 
+
 .productTab-content-footer__total,
 .productTab-content-footer__title{
     color: var(--color-gray-700);
     text-align: right;
     margin: 0;
     padding: 0;
+}.transportationCost__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+/* ocultar checkbox nativo */
+.transportationCost__checkbox input[type="checkbox"] {
+  display: none;
+}
+
+/* label como contenedor visual */
+.transportationCost__checkbox label {
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  user-select: none;
+}
+
+/* caja del checkbox */
+.transportationCost__checkbox label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid #1976d2;
+  border-radius: 4px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* check */
+.transportationCost__checkbox label::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+}
+
+/* estado checked */
+.transportationCost__checkbox input[type="checkbox"]:checked + label::before {
+  background: #1976d2;
+}
+
+/* mostrar check */
+.transportationCost__checkbox input[type="checkbox"]:checked + label::after {
+  opacity: 1;
+}
+
+/* hover */
+.transportationCost__checkbox label:hover::before {
+  border-color: #125ea9;
+}
+
 
 .productTab-content-footer__title{
     color: var(--color-gray-700);
@@ -282,6 +431,31 @@
     display: flex;
     justify-content: center;
     align-items:center;
+}
+
+.addressMenu-search {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+
+  font-size: 14px;
+  color: #101828;
+  background-color: #ffffff;
+
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.addressMenu-search::placeholder {
+  color: #98a2b3;
+}
+
+.addressMenu-search:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
 .cartPanel-loadingCartText,

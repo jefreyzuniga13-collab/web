@@ -1,3 +1,4 @@
+import React from "react";
 import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type { BillingFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import MapPicker from "../Common/MapPicker";
@@ -12,12 +13,17 @@ interface Props {
   setBillingForm: React.Dispatch<React.SetStateAction<BillingFormState>>;
   selectedCoords: Coords | null;
   setSelectedCoords: (selectedCoords: Coords | null) => void;
-  selectedAddress: ClientLocationDto;
+  selectedAddress: ClientLocationDto | null;
   handleBillingChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleGoToCurrency: () => void;
   handleCoordsChange: (coords: Coords) => void;
+  isLocked?: boolean;
+  isPickup?: boolean;
 }
 
+//Cuando el usuario tiene habilitado la opcion de marcar direccipn en el mapa,
+//seria bueno mostrar una lista de direcciones diponibles, aunqueno se si se debe consumnir una api
+//o simialr
 export const Location = ({
   addressList,
   locationMode,
@@ -32,14 +38,27 @@ export const Location = ({
   handleBillingChange,
   handleGoToCurrency,
   handleCoordsChange,
+  isLocked = false,
+  isPickup = false
 }: Props) => {
+  const hasSaved = addressList.length > 0;
+
   return (
     <div className="checkout-section checkout-section__location">
       <div className="checkout-location__container">
         <h2 className="checkout-section__title">Selecciona la ubicación y tus datos</h2>
 
+        {isPickup && (
+              <div className="checkout-pickup-info">
+                <p>
+                  <strong>Retiro en sucursal</strong><br />
+                  No se requiere seleccionar dirección ni ubicación en el mapa.
+                </p>
+              </div>
+            )}
+
         <div className="checkout-location-mode">
-          {addressList.length > 0 ? (
+          {hasSaved ? (
             <>
               <label className="checkout-location-option">
                 <input
@@ -47,7 +66,11 @@ export const Location = ({
                   name="locationMode"
                   value="existing"
                   checked={locationMode === "existing"}
-                  onChange={() => setLocationMode("existing")}
+                  onChange={() => {
+                    if (isLocked) return;
+                    setLocationMode("existing");
+                  }}
+                  disabled={isLocked}
                 />
                 Usar una dirección guardada
               </label>
@@ -59,6 +82,7 @@ export const Location = ({
                   value="new"
                   checked={locationMode === "new"}
                   onChange={() => {
+                    if (isLocked) return;
                     setLocationMode("new");
                     setSelectedAddressId(null);
                     setSelectedCoords(null);
@@ -68,6 +92,7 @@ export const Location = ({
                       addressName: "",
                     }));
                   }}
+                  disabled={isLocked}
                 />
                 Usar nueva dirección en el mapa
               </label>
@@ -77,20 +102,22 @@ export const Location = ({
           )}
         </div>
 
-        {locationMode === "existing" && addressList.length > 0 && (
+        {locationMode === "existing" && hasSaved ? (
           <div className="checkout-address-list">
             {addressList.map((addr) => (
               <button
                 key={addr.idDireccion}
                 type="button"
+                disabled={isLocked}
                 className={
                   selectedAddressId === addr.idDireccion
                     ? "checkout-address checkout-address--active"
                     : "checkout-address"
                 }
                 onClick={() => {
+                  if (isLocked) return;
                   setSelectedAddressId(addr.idDireccion ?? 0);
-                  setSelectedCoords({ latitud: addr.latitud ?? 0, longitud: addr.longitud ?? 0});
+                  setSelectedCoords({ latitud: addr.latitud ?? 0, longitud: addr.longitud ?? 0 });
                   setBillingForm((prev) => ({
                     ...prev,
                     address: addr.descripcion ?? prev.address,
@@ -103,7 +130,7 @@ export const Location = ({
               </button>
             ))}
           </div>
-        )}
+        ) : null}
 
         {locationMode === "existing" && selectedAddress ? (
           <div className="checkout-current-location">
@@ -114,11 +141,22 @@ export const Location = ({
           </div>
         ) : null}
 
-        {locationMode === "new" ? (
-          <MapPicker value={selectedCoords} onChange={handleCoordsChange} />
+        {/* Lista de direcciones dispponible, para ahorra al usuario el que tenga que slecccionar */}
+        {locationMode === "new" && !isPickup ? (
+          <MapPicker value={selectedCoords} 
+          onChange={handleCoordsChange} 
+          />
         ) : null}
       </div>
+      
 
+      <div>
+        {/* Mostrar, sus direcciones guardadas, direccuies que hay para esa zona, por ejemplo
+        como en google maps, que se listan las direcciones a uno y uno puede selecciona una, pero claro no son las que he guardardo yo, creado yo
+        son direcciones que ya estan
+        y el mapa, serian 3
+        */}
+      </div>
       <div className="checkout-grid__container">
         {locationMode === "existing" && selectedAddress ? (
           <div className="checkout-current-location">
@@ -129,7 +167,7 @@ export const Location = ({
           </div>
         ) : null}
 
-        {locationMode === "new" ? (
+        {locationMode === "new" && !isPickup ? (
           <div className="checkout-current-location">
             <p className="checkout-location__hint">Haz clic en el mapa para marcar el lugar de entrega.</p>
           </div>
@@ -146,6 +184,7 @@ export const Location = ({
               className="checkout-input"
               value={billingForm.firstName}
               onChange={handleBillingChange}
+              disabled={false}
             />
           </div>
 
@@ -159,6 +198,7 @@ export const Location = ({
               className="checkout-input"
               value={billingForm.lastName}
               onChange={handleBillingChange}
+              disabled={false}
             />
           </div>
 
@@ -172,6 +212,7 @@ export const Location = ({
               className="checkout-input"
               value={billingForm.country}
               onChange={handleBillingChange}
+              disabled={isLocked && locationMode !== "new"}
             />
           </div>
 
@@ -185,6 +226,7 @@ export const Location = ({
               className="checkout-input"
               value={billingForm.city}
               onChange={handleBillingChange}
+              disabled={isLocked && locationMode !== "new"}
             />
           </div>
 
@@ -198,6 +240,7 @@ export const Location = ({
               className="checkout-input"
               value={billingForm.address}
               onChange={handleBillingChange}
+              disabled={isLocked && locationMode !== "new"}
             />
           </div>
 
@@ -212,6 +255,7 @@ export const Location = ({
                 className="checkout-input"
                 value={billingForm.addressName}
                 onChange={handleBillingChange}
+                disabled={isLocked}
               />
             </div>
           ) : null}

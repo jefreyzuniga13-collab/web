@@ -5,56 +5,31 @@ import * as turf from "@turf/turf";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
-
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-
 import type {
-  CalculationReqDto,
-  ClientLocationDto,
-  Coords,
-  LocationMode,
-  TotalesPantallaReqDTO,
+  //  CalculationReqDto, 
+  ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO,
 } from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import type { NearestBranchRequestDto, Currencyto, CheckoutStep, PaymentMethod, BillingFormState, CardFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type { FacturaTempo, PagoGenerico, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type {
-  NearestBranchRequestDto,
-  Currencyto,
-  CheckoutStep,
-  PaymentMethod,
-  BillingFormState,
-  CardFormState,
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import type {
-  FacturaTempo,
-  PagoGenerico,
-  ObtenerDivisaPagosTipoReq,
-  ObtenerDivisaPagosTipoRes,
-} from "@/Interfaces/Ecommerce/FacturaTempo";
-import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
-
+  FaloteRequestDto,
+  // InvoiceTotalsDto 
+} from "@/Interfaces/Crm/CartPCGInterface";
 import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import type { AppDispatch, RootState } from "@/Context";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
-
 import { UserSessionService } from "@/Services/auth/UserSessionService";
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
-
-import {
-  formatCardNumber,
-  formatCvc,
-  formatExpiry,
-  validateBillingForm,
-  validateCardForm,
-  validateLocation,
-} from "@/Utils/validation";
+import { formatCardNumber, formatCvc, isExpiryValid, validateBillingForm, validateCardForm, validateLocation } from "@/Utils/validation";
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage";
-
-import "@/Styles/Ecommerce/CheckoutPage.css";
-
 import { PaymentMethodComponent } from "@/Components/ECommerce/PaymentMethod";
 import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
+import "@/Styles/Ecommerce/CheckoutPage.css";
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -80,10 +55,10 @@ function safeStr(v: unknown): string {
   return String(v ?? "").trim();
 }
 
-// function yn(v: unknown): "S" | "N" {
-//   const s = safeStr(v).toUpperCase();
-//   return s === "S" ? "S" : "N";
-// }
+function n(v: unknown): number {
+  const x = Number(v ?? 0);
+  return Number.isFinite(x) ? x : 0;
+}
 
 type Payload = {
   fullName: string;
@@ -96,6 +71,7 @@ type Payload = {
   userId: number;
 };
 
+
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -105,6 +81,7 @@ const CheckoutPage: React.FC = () => {
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
   const [userFullName, setUserFullName] = useState<string>("");
+  // const [InvoiceTotalsDto, setInvoiceTotalsDto] = useState<InvoiceTotalsDto | null>(null)
 
   useEffect(() => {
     if (!payload) {
@@ -122,7 +99,7 @@ const CheckoutPage: React.FC = () => {
     setUserFullName(payload.fullName);
   }, [payload, navigate]);
 
-  const [step, setStep] = useState<CheckoutStep>("location");
+  const [step, setStep] = useState<CheckoutStep | string>("");
   const [method, setMethod] = useState<PaymentMethod>("card");
 
   const [billingForm, setBillingForm] = useState<BillingFormState>({
@@ -164,13 +141,20 @@ const CheckoutPage: React.FC = () => {
   const [lockedBranchCode, setLockedBranchCode] = useState<string>("");
   const [lastPreviewKey, setLastPreviewKey] = useState<string>("");
 
+  const [lockedAddressId, setLockedAddressId] = useState<number | null>(null);
+  const [lockedTranspCost, setLockedTranspCost] = useState<number | null>(null);
+  const [locationLockedByLog, setLocationLockedByLog] = useState<boolean>(false);
+
   const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([]);
   const [divisaSelected, setDivisaSelected] = useState<ObtenerDivisaPagosTipoRes | null>(null);
   const [divisaLoading, setDivisaLoading] = useState<boolean>(false);
+  const [existingLog, setExistingLog] = useState<LogCartResponseDto | null>(null);
 
   const dispatch = useAppDispatch();
   const carPCG = useAppSelector(selectCarPCG);
 
+  const cartTotal = useMemo(() => n(carPCG?.[0]?.total), [carPCG]);
+  const totalPagar = useMemo(() => round2(cartTotal + n(transpCost) + n(tip)), [cartTotal, transpCost, tip]);
   const {
     currency,
     GetCurrencyAsync,
@@ -181,7 +165,9 @@ const CheckoutPage: React.FC = () => {
   } = useInvoiceOrder();
 
   const { fetchByContactId, UpdatedStatus } = useLogCart();
-  const { CreateAsync: createLocationAsync, GetAsync, clientLocation } = useClientLocation();
+  const { CreateAsync: createLocationAsync, GetAsync,
+    // clientLocation, 
+    clientLocations } = useClientLocation();
 
   useEffect(() => {
     if (!payload?.contactId) return;
@@ -190,12 +176,36 @@ const CheckoutPage: React.FC = () => {
 
     const loadBranchLock = async () => {
       try {
-        const existingLog = await fetchByContactId(payload.contactId);
+        const log = await fetchByContactId(payload.contactId);
+
         if (cancelled) return;
-        setLockedBranchCode(String(existingLog?.branch?.toString()?.trim?.() ?? "").trim());
+
+        console.log("existingLog es:", log);
+
+        setExistingLog(log ?? null);
+
+        const logBranch = String(log?.branch ?? "").trim();
+        const logAddressId = Number(log?.addressId ?? 0);
+        const logTrans = log?.transCost != null ? Number(log.transCost) : null;
+
+        setLockedBranchCode(logBranch);
+
+        setLockedAddressId(logAddressId > 0 ? logAddressId : null);
+
+        setLockedTranspCost(logTrans != null && !Number.isNaN(logTrans) ? logTrans : null);
+
+        const lockByPickup = log?.retiraSucursal === "S";
+        const lockByAddress = logAddressId > 0 && !!logBranch;
+        const mustLock = lockByPickup || lockByAddress;
+
+        setLocationLockedByLog(mustLock);
       } catch {
         if (cancelled) return;
+        setExistingLog(null);
         setLockedBranchCode("");
+        setLockedAddressId(null);
+        setLockedTranspCost(null);
+        setLocationLockedByLog(false);
       }
     };
 
@@ -207,37 +217,78 @@ const CheckoutPage: React.FC = () => {
   }, [payload?.contactId, fetchByContactId]);
 
   useEffect(() => {
-    if (!orderId || !ecommerceUserId || !payload?.orderId || !payload?.contactId) return;
+    if (!payload?.contactId || !payload?.orderId || !ecommerceUserId) return;
 
     let cancelled = false;
 
-    const loadCart = async () => {
+    const boot = async () => {
       try {
-        await dispatch(getProductFromCarAsync({ codCliente: 0, noPedido: payload.orderId })).unwrap();
+        //  Carrito
+        await dispatch(
+          getProductFromCarAsync({ codCliente: payload.contactId, noPedido: payload.orderId })
+        ).unwrap();
         if (cancelled) return;
 
-        const existingLog = await fetchByContactId(payload.contactId);
+        //  Log
+        const log = await fetchByContactId(payload.contactId);
         if (cancelled) return;
 
-        if (Number(existingLog?.addressId ?? 0) > 0) {
-          setStep("currency");
+
+        //  Flags
+        const isPickup = log?.retiraSucursal === "S";
+        const logBranch = String(log?.branch ?? "").trim();
+        const logAddressId = Number(log?.addressId ?? 0);
+        const hasLockedAddress = logAddressId > 0 && !!logBranch;
+
+        //  Locks
+        setExistingLog(log ?? null);
+
+        setLockedBranchCode(logBranch);
+        setLockedAddressId(hasLockedAddress ? logAddressId : null);
+
+        const logTrans = log?.transCost != null ? Number(log.transCost) : null;
+        setLockedTranspCost(
+          isPickup ? 0 : (logTrans != null && !Number.isNaN(logTrans) ? logTrans : null)
+        );
+
+        setLocationLockedByLog(isPickup || hasLockedAddress);
+
+        //  Step
+        if (isPickup) {
+          setStep("currency"); // pickup: saltar mapa
+        } else if (hasLockedAddress) {
+          setStep("currency"); // direccion ya definida: saltar mapa
+        } else {
+          setStep("location"); // normal: pedir ubicacion
         }
 
+        // Currency + direcciones
         await GetCurrencyAsync();
         if (cancelled) return;
 
         await GetAsync(ecommerceUserId);
       } catch {
-        //
+        if (cancelled) return;
+        setExistingLog(null);
+        setLocationLockedByLog(false);
+        setStep("location");
       }
     };
 
-    void loadCart();
+    void boot();
 
     return () => {
       cancelled = true;
     };
-  }, [orderId, ecommerceUserId, payload?.orderId, payload?.contactId, dispatch, GetCurrencyAsync, GetAsync, fetchByContactId]);
+  }, [
+    payload?.contactId,
+    payload?.orderId,
+    ecommerceUserId,
+    dispatch,
+    fetchByContactId,
+    GetCurrencyAsync,
+    GetAsync
+  ]);
 
   useEffect(() => {
     if (!userFullName) return;
@@ -250,32 +301,52 @@ const CheckoutPage: React.FC = () => {
   }, [userFullName]);
 
   const addressList = useMemo(
-    () => (Array.isArray(clientLocation) ? clientLocation : clientLocation ? [clientLocation] : []),
-    [clientLocation]
+    () => (Array.isArray(clientLocations) ? clientLocations : clientLocations ? [clientLocations] : []),
+    [clientLocations]
   );
 
-  const selectedAddress = useMemo(
-    () => (selectedAddressId ? addressList.find((a) => a.idDireccion === selectedAddressId) ?? null : null),
-    [addressList, selectedAddressId]
-  );
+  const selectedAddress = useMemo(() => {
+    const id = selectedAddressId ?? lockedAddressId ?? null;
+    return id ? addressList.find((a) => a.idDireccion === id) ?? null : null;
+  }, [addressList, selectedAddressId, lockedAddressId]);
 
   useEffect(() => {
-    if (addressList.length > 0 && !selectedAddressId && locationMode === "existing") {
+    if (!locationLockedByLog) return;
+    if (!lockedAddressId) return;
+    if (addressList.length === 0) return;
+
+    const addr = addressList.find((a) => a.idDireccion === lockedAddressId) ?? null;
+    if (!addr) return;
+
+    setLocationMode("existing");
+    setSelectedAddressId(Number(addr.idDireccion));
+    setSelectedCoords({ latitud: Number(addr.latitud), longitud: Number(addr.longitud) });
+
+    setBillingForm((prev) => ({
+      ...prev,
+      address: addr.descripcion ?? prev.address,
+      addressName: addr.nombre ?? prev.addressName,
+    }));
+  }, [locationLockedByLog, lockedAddressId, addressList]);
+
+  useEffect(() => {
+    if (addressList.length > 0 && !selectedAddressId && locationMode === "existing" && !locationLockedByLog) {
       const first = addressList[0];
-      setSelectedAddressId(first.idDireccion);
-      setSelectedCoords({ latitud: first.latitud, longitud: first.longitud });
+      setSelectedAddressId(Number(first.idDireccion));
+      setSelectedCoords({ latitud: Number(first.latitud), longitud: Number(first.longitud) });
       setBillingForm((prev) => ({
         ...prev,
         address: first.descripcion ?? prev.address,
       }));
-    } else if (addressList.length === 0 && locationMode === "existing") {
+    } else if (addressList.length === 0 && locationMode === "existing" && !locationLockedByLog) {
       setLocationMode("new");
       setSelectedAddressId(null);
     }
-  }, [addressList, selectedAddressId, locationMode]);
+  }, [addressList, selectedAddressId, locationMode, locationLockedByLog]);
 
   useEffect(() => {
     if (!selectedCoords || locationMode !== "new") return;
+    if (locationLockedByLog) return;
 
     let cancelled = false;
 
@@ -304,7 +375,7 @@ const CheckoutPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectedCoords, locationMode]);
+  }, [selectedCoords, locationMode, locationLockedByLog]);
 
   useEffect(() => {
     setNearestBranch(null);
@@ -313,11 +384,11 @@ const CheckoutPage: React.FC = () => {
     setLastPreviewKey("");
 
     if (locationMode === "new") {
-      setSelectedAddressId(null);
+      if (!locationLockedByLog) setSelectedAddressId(null);
     } else {
-      setSelectedCoords(null);
+      if (!locationLockedByLog) setSelectedCoords(null);
     }
-  }, [locationMode]);
+  }, [locationMode, locationLockedByLog]);
 
   useEffect(() => {
     if (payNowCooldown <= 0) return;
@@ -341,8 +412,15 @@ const CheckoutPage: React.FC = () => {
     setCardForm((p) => ({ ...p, cardNumber: formatCardNumber(e.target.value) }));
   };
 
+  function formatExpiry(raw: string): string {
+    const digits = raw.replace(/\D/g, "").slice(0, 4); // MMAA
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+
   const onExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm((p) => ({ ...p, expiry: formatExpiry(e.target.value) }));
+    const value = formatExpiry(e.target.value);
+    setCardForm((p) => ({ ...p, expiry: value }));
   };
 
   const onCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -358,31 +436,31 @@ const CheckoutPage: React.FC = () => {
   const normalize = (v: string) => v.toLowerCase().trim();
 
   const resolveMethod = (item: Currencyto): "cash" | "transfer" | "card" => {
-    const desc = normalize(safeStr((item as any)?.descripcion_Pago));
-    const moneda = normalize(safeStr((item as any)?.moneda_Fija));
+    const desc = normalize(safeStr(item?.descripcion_Pago));
+    const moneda = normalize(safeStr(item?.moneda_Fija));
     if (desc.includes("efectivo") || moneda.includes("efectivo")) return "cash";
     if (desc.includes("transfer") || desc.includes("transferencia") || moneda.includes("transfer")) return "transfer";
     return "card";
   };
 
-  const getDivisaConfig = (m: "card" | "transfer"): ObtenerDivisaPagosTipoReq => {
+  const getDivisaConfig = (): ObtenerDivisaPagosTipoReq => {
     return {
-      codigo: safeStr((selectedCurrency as any)?.codPago),
-      formulario: m === "card" ? "TC" : "TR",
-      opcion: "1",
+      codigo: "0",
+      formulario: "1-",
+      opcion: safeStr(selectedCurrency?.codPago),
     };
   };
 
-  const loadDivisaIfNeeded = async (m: "card" | "transfer") => {
+  const loadDivisaIfNeeded = async () => {
     setDivisaLoading(true);
     try {
-      const req = getDivisaConfig(m);
+      const req = getDivisaConfig();
       const resp = await CartService.GetDivisaPagosTipoAsync(req);
 
       const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
       const fixed: ObtenerDivisaPagosTipoRes[] = list
         .filter(Boolean)
-        .map((x: any) => ({
+        .map((x: ObtenerDivisaPagosTipoRes) => ({
           nombre: safeStr(x?.nombre),
           codigo: safeStr(x?.codigo),
           codigoExterno: safeStr(x?.codigoExterno),
@@ -411,16 +489,23 @@ const CheckoutPage: React.FC = () => {
     setDivisaSelected(null);
 
     if (next === "card" || next === "transfer") {
-      void loadDivisaIfNeeded(next);
+      void loadDivisaIfNeeded();
     }
   };
 
   const getCoordsForFlow = (): Coords | null => {
-    if (locationMode === "existing") {
-      const addr = selectedAddress ?? addressList[0];
+    const addr = selectedAddress ?? addressList[0] ?? null;
+
+    if (locationLockedByLog) {
       if (!addr) return null;
       return { latitud: Number(addr.latitud), longitud: Number(addr.longitud) };
     }
+
+    if (locationMode === "existing") {
+      if (!addr) return null;
+      return { latitud: Number(addr.latitud), longitud: Number(addr.longitud) };
+    }
+
     if (!selectedCoords) return null;
     return { latitud: Number(selectedCoords.latitud), longitud: Number(selectedCoords.longitud) };
   };
@@ -449,6 +534,29 @@ const CheckoutPage: React.FC = () => {
   };
 
   const computeTransportPreview = async (coords: Coords) => {
+    if (locationLockedByLog) {
+      const locked = await getLockedBranch();
+      if (!locked) return null;
+
+      const km = (() => {
+        const lat1 = Number(coords.latitud);
+        const lon1 = Number(coords.longitud);
+        const lat2 = Number(locked.latitud);
+        const lon2 = Number(locked.longitud);
+        if ([lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))) return 0;
+        return calculateDistance(lat1, lon1, lat2, lon2);
+      })();
+
+      const cost = Number(lockedTranspCost ?? 0);
+
+      setNearestBranch(locked);
+      setDistanceKm(km);
+      setTranspCost(cost);
+      setLastPreviewKey(`${coordsKey(coords)}|${String(locked.codSucursal)}`);
+
+      return { nearest: locked, cost, km };
+    }
+
     const branchCode = String(lockedBranchCode ?? "").trim();
     const key = `${coordsKey(coords)}|${branchCode || "AUTO"}`;
 
@@ -488,15 +596,20 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleGoToCurrency = async () => {
+    if (locationLockedByLog) {
+      setStep("currency");
+      return;
+    }
+
     if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
     if (!validateBillingForm(billingForm, locationMode)) return;
 
     const coords = getCoordsForFlow();
-    if (!coords) return toastError("Debes seleccionar la ubicación.");
+    if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
     try {
       const preview = await computeTransportPreview(coords);
-      if (!preview) return toastError("No fue posible calcular el costo de transporte.");
+      if (!preview) return void toastError("No fue posible calcular el costo de transporte.");
       setStep("currency");
     } catch {
       toastError("No fue posible calcular el costo de transporte.");
@@ -504,13 +617,22 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleGoToPayment = () => {
+    if (locationLockedByLog) {
+      setStep("paymentMethod");
+      return;
+    }
+
     if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
     if (!validateBillingForm(billingForm, locationMode)) return;
     setStep("paymentMethod");
   };
 
-  const buildPagoGenerico = (invoiceReq: FacturaTempo, 
-    codSucursalFactura: string, TotalesPantallaReq: TotalesPantallaReqDTO): PagoGenerico => {
+  const buildPagoGenerico = (
+    invoiceReq: FacturaTempo,
+    codSucursalFactura: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    TotalesPantallaReq: TotalesPantallaReqDTO
+  ): PagoGenerico => {
     const moneda = safeStr(invoiceReq.moneda) || "1";
     const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
 
@@ -527,9 +649,8 @@ const CheckoutPage: React.FC = () => {
     const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
     const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
     const tipo = isCash ? "" : safeStr(selected?.tipo);
-    const banco = isCash ? safeStr((selectedCurrency as any)?.codigo_Banco) : safeStr(selected?.banco);
-    const codPagoExterno = isCash ? safeStr((selectedCurrency as any)?.codExterno) : safeStr(selected?.codigoExterno);
-    // const aplicaCambio = isCash ? "True" : yn(selected?.aCambio) === "S";
+    const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
+    const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
 
     let monto = totalPagar;
     let referencia = "";
@@ -537,70 +658,72 @@ const CheckoutPage: React.FC = () => {
     let fechaOVence = "";
     let ultDigito = "";
 
+    const total: number = Number(
+      ((existingLog?.totalEnPantalla ?? 0) + (transpCost && transpCost > 0
+        ? transpCost
+        : existingLog?.transCost ?? 0) + tip)
+    );
+
+
     if (isCash) {
-      monto = Number(cashAmount ?? 0);
+      monto = total;
     }
 
     if (isTransfer) {
-      monto = Number(transferAmount ?? 0);
+      // monto = Number(transferAmount ?? 0);
+      monto = total;
       referencia = safeStr(transferRef);
       numeroTransaccion = safeStr(transferRef);
       fechaOVence = dayjs().format("YYYY-MM-DD");
     }
 
     if (isCard) {
-      monto = totalPagar;
+      monto = total;
       const cleanCard = safeStr(cardForm.cardNumber).replace(/\s+/g, "");
       ultDigito = cleanCard.slice(-4);
       fechaOVence = safeStr(cardForm.expiry);
     }
 
-    const montoA = moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
-    // const montoP = totalPagar;
-    // const montoS = round2(totalPagar / (Number(tasaCambio || 1) || 1));
+    const montoA =
+      moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
 
-    const tipoPago = isCash ? "" : safeStr(tipo) || (isCard ? "TC" : isTransfer ? "TR" : "");
+    const tipoPago = isCash ? "" : safeStr(tipo);
 
     return {
       numPago: "1",
       concepto: isCash
         ? "Efectivo"
         : isTransfer
-        ? descripcionPago || "Transferencia"
-        : `${descripcionPago || "Tarjeta"}${ultDigito ? ` (${ultDigito})` : ""}`,
-
-      codPago: codPago || "1",
-      tipoPago: tipoPago || "1",
+          ? descripcionPago || "Transferencia"
+          : `${descripcionPago || "Tarjeta"}${ultDigito ? ` (${ultDigito})` : ""}`,
+      codPago: codPago,
+      tipoPago: tipoPago,
       aplicaCambio: "True",
       codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
       banco: banco || (isCash ? "00" : ""),
-
-      monto: Number(monto ?? 0),
+      monto: Number(monto),
       moneda,
-      montoA: Number(montoA ?? 0),
-      cambio: Number(TotalesPantallaReq.totalEnPantalla - monto),
-      tasaCambio: Number(tasaCambio ?? 1),
-      Fecha_o_Vence: fechaOVence,
+      montoA: Number(montoA),
+      cambio: isCash ? Number(monto - total) : 0,
+      tasaCambio: Number(tasaCambio),
+      Fecha_o_Vence: isCard ? fechaOVence : "",
       Dll: "",
       Numero: "",
       referencia,
       numeroTransaccion,
       cuentaContable: "",
-
       ultDigito,
       tarjeta: "",
       tarjetahabiente: isCard ? safeStr(cardForm.nameOnCard) : "",
       autorizacion: "",
       termId: "",
       afiliado: "",
-
-      montoP: TotalesPantallaReq.totalEnPantalla,
-      montoS: TotalesPantallaReq.totalEnPantalla / 36.6243,
-
+      montoP: round2(total),
+      montoS: round2(total / 36.6243),
       indice: "0",
       codClienteCrd: "00000",
       facturaPinpad: "",
-      codEmpresa: safeStr((invoiceReq as any)?.codEmpresa) || "01",
+      codEmpresa: safeStr((invoiceReq)?.codEmpresa),
       codSucursal: codSucursalFactura,
       montoFirma: "0",
       sobrante: "0",
@@ -616,8 +739,12 @@ const CheckoutPage: React.FC = () => {
     try {
       if (!carPCG || carPCG.length === 0) return void toastError("El carrito está vacío.");
       if (!selectedCurrency) return void toastError("Debe seleccionar un método de pago.");
-      if (!validateBillingForm(billingForm, locationMode)) return;
-      if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
+
+      if (!locationLockedByLog) {
+        if (!validateBillingForm(billingForm, locationMode)) return;
+        if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
+      }
+
       if (method === "card" && !validateCardForm(cardForm)) return;
 
       const cart = carPCG[0];
@@ -645,18 +772,59 @@ const CheckoutPage: React.FC = () => {
         return void toastError("Debe seleccionar el banco / forma de pago.");
       }
 
-      const coords = getCoordsForFlow();
-      if (!coords) return void toastError("Debes seleccionar la ubicación.");
+      if (method === "card" && !isExpiryValid(cardForm.expiry)) {
+        toast.error("Fecha de expiración inválida o tarjeta vencida");
+        console.log("Accedio a la validacion")
+        return;
+      }
 
-      const preview = await computeTransportPreview(coords);
-      if (!preview?.nearest) return void toastError("No hay sucursal disponible.");
 
-      const nearest = preview.nearest;
-      const transporte = Number(preview.cost ?? 0);
+      const isPickup = existingLog?.retiraSucursal === "S";
+      let nearest: any | null = null;
+      let transporte = 0;
+
+      const coords = !isPickup ? getCoordsForFlow() : null;
+
+      if (isPickup) {
+        nearest = await getLockedBranch();
+        if (!nearest) return void toastError("No fue posible determinar la sucursal para retiro.");
+        transporte = Number(existingLog?.transCost ?? 0);
+      } else {
+        if (!coords) return void toastError("Debes seleccionar la ubicación.");
+
+        const preview = await computeTransportPreview(coords);
+        if (!preview?.nearest) return void toastError("No hay sucursal disponible.");
+
+        nearest = preview.nearest;
+        transporte = Number(preview.cost ?? 0);
+      }
 
       let finalLocation: ClientLocationDto | null = null;
 
-      if (locationMode === "existing") {
+      if (isPickup) {
+        finalLocation = {
+          idDireccion: 0,
+          nombre: "RETIRO EN SUCURSAL",
+          referencia: "",
+          descripcion: "RETIRO EN SUCURSAL",
+          latitud: 0,
+          longitud: 0,
+          idUsuario: ecommerceUserId,
+        };
+      } else if (locationLockedByLog) {
+        const addr = selectedAddress ?? addressList.find((a) => a.idDireccion === lockedAddressId) ?? addressList[0];
+        if (!addr) return void toastError("No hay dirección bloqueada disponible.");
+
+        finalLocation = {
+          idDireccion: addr.idDireccion,
+          nombre: addr.nombre,
+          referencia: addr.referencia,
+          descripcion: addr.descripcion,
+          latitud: addr.latitud,
+          longitud: addr.longitud,
+          idUsuario: ecommerceUserId,
+        };
+      } else if (locationMode === "existing") {
         const addr = selectedAddress ?? addressList[0];
         if (!addr) return void toastError("No hay dirección seleccionada.");
 
@@ -670,6 +838,8 @@ const CheckoutPage: React.FC = () => {
           idUsuario: ecommerceUserId,
         };
       } else {
+        if (!coords) return void toastError("Debes seleccionar la ubicación.");
+
         const locationPayload: ClientLocationDto = {
           idDireccion: 0,
           nombre: billingForm.addressName || billingForm.address,
@@ -695,75 +865,94 @@ const CheckoutPage: React.FC = () => {
       const falote: FaloteRequestDto = { codSucursal: codSucursalFactura, documento: "OrdenFactura" };
       const dataconse = await CartService.GetConsecDocAsync(falote);
 
-
-      const calculationReqDto: CalculationReqDto ={
+      const TotalesPantallaReq: TotalesPantallaReqDTO = {
+        descuentoPantalla: existingLog?.DescuentoPantalla ?? 0,
+        exonerado: "N",
+        ivaPantalla: existingLog?.ivaPantalla ?? 0,
         maquina: `CRM-${payload?.contactId}`,
-        usuario: `${payload?.contactId}`,
-        aplicaPropina: 'N',
-        exonerada: 'N',
-        imi: 'N',
-        ir: 'N',
-        tabla: 'det_factura_tempo',
-        tasa: 36.6243,
-        tipoServicio: "8",
-        valorTransporte: transferAmount,
-      }
-
-      const VspConsolidadoFacturaRes = await CartService.VspConsolidadoFactura(calculationReqDto);
-
-
-      const TotalesPantallaReq: TotalesPantallaReqDTO ={
-        descuentoPantalla: 0,
-        exonerado: 'N',
-        ivaPantalla: VspConsolidadoFacturaRes.data[0].iva,
-        maquina: `CRM-${payload?.contactId}`,
-        sucursal: '',
-        tabla: 'det_factura_tempo',
-        totalEnPantalla: VspConsolidadoFacturaRes.data[0].total,
-        usuario: payload!.contactId.toString()
-      }
-      
-      const invoiceReqBase: FacturaTempo = {
-        ...facturaBase,
-        
-        codCli: "00000",
-        nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`,
-        clientePadre: `${billingForm.firstName} ${billingForm.lastName}`,
-        direccionCte: String(finalLocation.descripcion).trim(),
-        usuario: String(payload?.contactId),
-        maquina: `CRM-${payload?.contactId}`,
-        fechaFactura: dayjs().format("YYYYMMDD"),
-        tasaCambio:  36.6243,
-        sucursal: codSucursalFactura,
-        numero: Number(dataconse?.data?.consecutivo ?? 0),
-        idPromocion: String(orderId),
-        noOrden: String(orderId),
-        referencia: String(finalLocation.referencia ?? ""),
-        valorTransporte: Number(transporte ?? 0),
-        retiraSucursal: 'S',
-        hayFormaPago: "S"
+        sucursal: existingLog!.branch,
+        tabla: "det_factura_tempo",
+        // totalEnPantalla: existingLog?.totalEnPantalla ?? 0,
+        totalEnPantalla: existingLog?.subTotal ?? 0,
+        usuario: payload!.contactId.toString(),
       };
 
-      const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura,TotalesPantallaReq);
-      const detallePago: PagoGenerico[] = [pagoGenerico];
+      const res = await CartService.sp_valida_SobTotalFactura(TotalesPantallaReq);
+      const { pasasub, pasadesc, pasaiva } = res.data[0];
 
-      const invoiceReqFinal: FacturaTempo = {
-        ...invoiceReqBase,
-        detallePago
-        // detallePago: JSON.stringify(pagos),
-      } as FacturaTempo;
+      const errores: Record<string, string> = {
+        pasasub: "Subtotal no válido, diferencia con el valor real.",
+        pasadesc: "Descuento no válido, diferencia con el valor real.",
+        pasaiva: "IVA no válido, diferencia con el valor real.",
+      };
 
-      await InsertaFacturaAsync(invoiceReqFinal);
+      const flags = [
+        { key: "pasasub", value: pasasub },
+        { key: "pasadesc", value: pasadesc },
+        { key: "pasaiva", value: pasaiva },
+      ];
 
-      const existingLog = await fetchByContactId(payload!.contactId);
-      if (existingLog?.id) {
-        await UpdatedStatus(existingLog.id, 3);
+      const fallo = flags.find(f => f.value === "N");
+
+      if (fallo) {
+        toast.error(`(${errores[fallo.key]})`);
+        return;
+      }
+      else {
+        const invoiceReqBase: FacturaTempo = {
+          ...facturaBase,
+          codCli: "00000",
+          nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+          clientePadre: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+          direccionCte: String(finalLocation.descripcion ?? "").trim(),
+          usuario: String(payload?.contactId),
+          maquina: `CRM-${payload?.contactId}`,
+          fechaFactura: dayjs().format("YYYYMMDD"),
+          tasaCambio: 36.6243,
+          sucursal: codSucursalFactura,
+          numero: Number(dataconse?.data?.consecutivo ?? 0),
+          idPromocion: String(orderId),
+          noOrden: String(orderId),
+          referencia: String(finalLocation.referencia ?? ""),
+          valorTransporte: Number(transporte ?? 0),
+          aplicaPropina: "N",
+          observacion: existingLog?.observacion ?? "",
+
+          // El retiro en socursal, viene del ExistingLog
+          // retiraSucursal: "N",
+          hayFormaPago: "S",
+          retiraSucursal: existingLog?.retiraSucursal != undefined ? String(existingLog?.retiraSucursal) : "N"
+        };
+
+        const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura, TotalesPantallaReq);
+        const detallePago: PagoGenerico[] = [pagoGenerico];
+
+        const invoiceReqFinal: FacturaTempo = {
+          ...invoiceReqBase,
+          detallePago,
+        } as FacturaTempo;
+
+        const insertFacRes = await InsertaFacturaAsync(invoiceReqFinal);
+        if (insertFacRes?.success) {
+          const existingLog = await fetchByContactId(payload!.contactId);
+          if (existingLog?.id) {
+            await UpdatedStatus(existingLog.id, 3);
+          }
+
+          await UserSessionService.revokeCartTempLink(orderId);
+          const limRes = CartService.LimpiarFacturaTempo(String(payload?.contactId), `CRM-${payload?.contactId}`)
+
+          if ((await limRes).success) dispatch(setContactCartBadge({ contactId: payload!.contactId, hasCart: false, count: 0 }));
+          else toast.error((await limRes).message);
+
+          navigate("/successOrder", { replace: true });
+        } else {
+          toast.error(insertFacRes?.message)
+          return;
+        }
       }
 
-      await UserSessionService.revokeCartTempLink(orderId);
-      dispatch(setContactCartBadge({ contactId: payload!.contactId, hasCart: false, count: 0 }));
 
-      navigate("/successOrder", { replace: true });
     } catch (err: any) {
       toast.error(err?.message ?? "Error procesando pago");
       await UserSessionService.revokeCartTempLink(orderId);
@@ -786,20 +975,21 @@ const CheckoutPage: React.FC = () => {
               <Location
                 addressList={addressList}
                 locationMode={locationMode}
+                isPickup={existingLog?.retiraSucursal === "S"}
                 setLocationMode={setLocationMode}
                 selectedAddressId={selectedAddressId}
                 setSelectedAddressId={setSelectedAddressId}
                 setSelectedCoords={setSelectedCoords}
                 billingForm={billingForm}
                 setBillingForm={setBillingForm}
-                selectedAddress={selectedAddress as any}
+                selectedAddress={selectedAddress}
                 selectedCoords={selectedCoords}
                 handleBillingChange={handleBillingChange}
                 handleGoToCurrency={handleGoToCurrency}
                 handleCoordsChange={handleCoordsChange}
+                isLocked={locationLockedByLog}
               />
             )}
-
             {step === "currency" && (
               <Currency
                 step={step}
@@ -840,6 +1030,8 @@ const CheckoutPage: React.FC = () => {
                 divisaSelected={divisaSelected}
                 setDivisaSelected={setDivisaSelected}
                 carPCG={carPCG}
+                totalPagar={totalPagar}
+                existingLog={existingLog}
               />
             )}
           </div>

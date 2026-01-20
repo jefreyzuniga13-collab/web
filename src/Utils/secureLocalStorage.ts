@@ -1,17 +1,13 @@
-import type { FacturaTempo } from "@/Interfaces/Crm/CartPCGInterface";
-
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-
-/** Permitir objetos tipados (interfaces) mientras sean "object" */
 type JsonInput = JsonValue | object;
 
 type EnvelopeV1 = {
   v: 1;
   alg: "AES-GCM";
-  iv: string;   // base64
-  salt: string; // base64
-  ct: string;   // base64
+  iv: string;
+  salt: string;
+  ct: string;
 };
 
 const enc = new TextEncoder();
@@ -59,14 +55,7 @@ async function deriveKey(secret: string, saltU8: Uint8Array): Promise<CryptoKey>
   );
 }
 
-/**
- * Aceptar objetos tipados (FacturaTempo) sin exigir index signature.
- * Nota: en runtime igual se serializa con JSON.stringify.
- */
-async function encryptJson<T extends JsonInput>(
-  value: T,
-  secret: string
-): Promise<EnvelopeV1> {
+async function encryptJson<T extends JsonInput>(value: T, secret: string): Promise<EnvelopeV1> {
   const ivU8 = crypto.getRandomValues(new Uint8Array(12));
   const saltU8 = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(secret, saltU8);
@@ -101,8 +90,7 @@ async function decryptJson<T>(env: EnvelopeV1, secret: string): Promise<T> {
     toArrayBufferCopy(ctU8)
   );
 
-  const json = dec.decode(plainBuf);
-  return JSON.parse(json) as T;
+  return JSON.parse(dec.decode(plainBuf)) as T;
 }
 
 function getSecret(): string {
@@ -111,10 +99,7 @@ function getSecret(): string {
   return secret;
 }
 
-export async function secureSet<T extends FacturaTempo>(
-  key: string,
-  value: T
-): Promise<void> {
+export async function secureSet<T extends JsonInput>(key: string, value: T): Promise<void> {
   const secret = getSecret();
   const env = await encryptJson(value, secret);
   localStorage.setItem(key, JSON.stringify(env));

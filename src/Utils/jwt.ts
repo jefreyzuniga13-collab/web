@@ -13,6 +13,7 @@ export function getAccessToken(): string | null {
 export function removeAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
 }
+
 interface TokenPayload {
   role?: string | string[]
 }

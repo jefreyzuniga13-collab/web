@@ -32,7 +32,7 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
   // Header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(`Detalle Factura ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
+  doc.text(`Detalle Pedidio ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");

@@ -49,16 +49,16 @@ const useInvoiceOrder = () => {
 
     try{
         // const res = 
-        await InvoiceOrderService.CreatePCG(req);
+        const res = await InvoiceOrderService.CreatePCG(req);
 
-        // if(res.success){
+        if(res.success){
             // setInvoiceOrders(res.data);
             setLoadingInvoice(false)
-            // return res;
+            return res;
             // toast.success(res.message);
-        // }else{
-        //     toast.error(res.message);
-        // }
+        }else{
+            toast.error(res.message);
+        }
         
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }catch(err: any){

@@ -4,6 +4,7 @@ import {toast} from 'react-toastify'
 import type { ClientLocationDto } from '@/Interfaces/Ecommerce/ClientLocationInterface'
 
 export const useClientLocation = () =>{
+    const [clientLocations, setClientLocations] = useState<ClientLocationDto[] | []>([])
     const [clientLocation, setClientLocation] = useState<ClientLocationDto | null>(null)
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<Error | null>(null)
@@ -40,7 +41,10 @@ export const useClientLocation = () =>{
         try{
             const res = await ClientLocationService.Get(req);
             if(res.success){
-                setClientLocation(res.data)
+//                 Argument of type 'ClientLocationDto[]' is not assignable to parameter of type 'SetStateAction<ClientLocationDto | null>'.ts(2345)
+// (property) ApiPCGResponse<ClientLocationDto[]>.data: ClientLocationDto[]
+// No quick fixes available
+                setClientLocations(res.data)
                 // toast.success(res.message)
             }else{
                 toast.error(res.message)
@@ -82,6 +86,7 @@ export const useClientLocation = () =>{
         error,
         CreateAsync,
         GetAsync,
-        GetTransCostAsync
+        GetTransCostAsync,
+        clientLocations
     }
 }

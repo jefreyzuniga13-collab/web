@@ -36,13 +36,8 @@ export const validateBillingForm = (billingForm: BillingFormState,
 };
 
 export const validateCardForm = (cardForm: CardFormState) => {
-    if (!cardForm.cardNumber.trim()) return toastError("Número de tarjeta obligatorio.");
-    if (!/^\d{13,19}$/.test(cardForm.cardNumber.replace(/\s+/g, "")))
-        return toastError("Número de tarjeta inválido.");
     if (!/^\d{2}\/\d{2}$/.test(cardForm.expiry.trim()))
         return toastError("Formato expiración MM/AA inválido.");
-    if (!/^\d{3,4}$/.test(cardForm.cvc.trim())) return toastError("CVC inválido.");
-    if (!cardForm.nameOnCard.trim()) return toastError("Nombre en tarjeta obligatorio.");
     return true;
 };
 
@@ -61,3 +56,22 @@ const toastError = (msg: string) => {
     toast.error(msg);
     return false;
 };
+
+export function isExpiryValid(value: string): boolean {
+  const match = value.match(/^(\d{2})\/(\d{2})$/);
+  if (!match) return false;
+
+  const mm = Number(match[1]);
+  const yy = Number(match[2]);
+
+  if (mm < 1 || mm > 12) return false;
+
+  const now = new Date();
+  const currentMM = now.getMonth() + 1;
+  const currentYY = now.getFullYear() % 100;
+
+  if (yy < currentYY) return false;
+  if (yy === currentYY && mm < currentMM) return false;
+
+  return true;
+}

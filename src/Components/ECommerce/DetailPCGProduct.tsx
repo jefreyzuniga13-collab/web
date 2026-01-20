@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaShoppingCart } from "react-icons/fa";
 import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG";
-import type {
-  listaOpciones,
-  ProductoModificadorPCGInterface,
-  ProductoPCGInterface,
-} from "@/Interfaces/Chat/ProductPCGInterface";
+import type {listaOpciones, ProductoModificadorPCGInterface, ProductoPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface";
 import type { DetalleFacturaTempoRequest, FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
 import "@/Styles/Ecommerce/DetailProduct.css";
 import { addProductTempoAsync, getProductFromCarAsync, selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice";
@@ -23,6 +19,7 @@ import type { SelectedInterface } from "./ProductTab";
 import aguamarina from "@/assets/aguamarina.png";
 import { MdInventory } from "react-icons/md";
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
+import dayjs from "dayjs";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -61,6 +58,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
   const [branchRows, setBranchRows] = useState<BranchPick[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [branchUiSelected, setBranchUiSelected] = useState<string | null>(null);
+  // const [ wherehouseUiSelected, setWherehouseUiSelected] = useState<string | null>(null);
 
   const authRaw = localStorage.getItem("auth") || "{}";
   const { userId } = JSON.parse(authRaw);
@@ -71,6 +69,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
       if (existingLog?.branch) {
         setLockedBranch(existingLog.branch);
         setBranchUiSelected(existingLog.branch);
+        // setWherehouseUiSelected(existingLog.wherehouse ?? "")
       }
     };
     run();
@@ -91,6 +90,8 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
         setBranchRows(data);
         if (!lockedBranch && !branchUiSelected && data.length > 0) {
           setBranchUiSelected(data[0].codsucursal);
+
+          // setWherehouseUiSelected(data[0].sucursal);
         }
       } catch {
         setBranchRows([]);
@@ -105,7 +106,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     if (!detail?.codProducto) return;
     if (detail.tieneOpcion == false) return;
     getProductModifiers(detail.codProducto);
-  }, [detail?.codProducto, getProductModifiers]);
+  }, [detail.codProducto, detail.tieneOpcion, getProductModifiers]);
 
   useEffect(() => {
     if (!productModifiers || productModifiers.length === 0) {
@@ -340,7 +341,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
       sucursal: branch,
       usuario: String(contactId),
       maquina: `CRM-${contactId}`,
-      fecha: "20260116",
+      fecha: dayjs().format("YYYYMMDD"),
       codproducto: detail.codProducto.trim(),
       codprecio: "01",
       precio: detail.precio,
@@ -614,12 +615,6 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     setismaximize(false);
   };
 
-  // const quickSucursalRows = useMemo(() => {
-  //   const list = [...(branchRows ?? [])];
-  //   list.sort((a, b) => (b.existencia ?? 0) - (a.existencia ?? 0));
-  //   return list.slice(0, 6);
-  // }, [branchRows]);
-
   return (
     <>
       <div className="detail-product__container">
@@ -652,17 +647,6 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
             </p>
 
             <p className="detail-product__content">{detail.contenido}</p>
-
-            {/* {quickSucursalRows.length > 0 && (
-              <div className="detail-product__branchQuick">
-                {quickSucursalRows.map((x) => (
-                  <span key={`${x.codsucursal}-${x.serie}-${x.sucursal}`} className="detail-product__branchQuickItem">
-                    {x.codsucursal} {x.sucursal} · {x.existencia} {x.medida}
-                  </span>
-                ))}
-              </div>
-            )} */}
-
             {renderBranches()}
           </div>
 

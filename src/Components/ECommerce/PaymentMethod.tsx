@@ -1,74 +1,80 @@
-import React from "react";
-import type {
-  CardFormState,
-  CheckoutStep,
-  PaymentMethod,
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import React, { useEffect, useMemo } from "react";
+import type { CardFormState, CheckoutStep, PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { FaRegCreditCard } from "react-icons/fa";
 import VisaLogo from "@/assets/visaLogo.png";
 import MasterCardLogo from "@/assets/masterCardLogo.png";
 import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+import { toast } from "react-toastify";
+import { isExpiryValid } from "@/Utils/validation";
+
 
 export interface Props {
   step: CheckoutStep;
   setStep: (step: CheckoutStep) => void;
   method: PaymentMethod;
-
   transpCost: number;
   distanceKm: number;
-
   cardForm: CardFormState;
-
   tip: number;
   setTip: (tip: number) => void;
-
   onCardNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExpiryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCvcChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-
   cashAmount: number;
   setCashAmount: (cashAmount: number) => void;
-
   transferAmount: number;
   setTransferAmount: (transferAmount: number) => void;
-
   transfer: string;
   setTransfer: (transfer: string) => void;
-
   payNowDisabled: boolean;
   payNowLock: boolean;
   handlePayNow: () => void;
-
   divisaLoading: boolean;
   divisaOpts: ObtenerDivisaPagosTipoRes[];
   divisaSelected: ObtenerDivisaPagosTipoRes | null;
   setDivisaSelected: (v: ObtenerDivisaPagosTipoRes | null) => void;
-
   carPCG?: CarDto[];
+  totalPagar: number;
+  existingLog: LogCartResponseDto | null;
 }
 
 function safeStr(v: unknown): string {
   return String(v ?? "").trim();
+}
+function toNumberNoLeadingZeros(raw: string): number {
+  const s = String(raw ?? "").trim();
+  if (!s) return 0;
+
+  const digits = s.replace(/[^\d]/g, "");
+  if (!digits) return 0;
+
+  const normalized = digits.replace(/^0+(?=\d)/, "");
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function methodLabel(m: PaymentMethod): string {
+  if (m === "cash") return "Efectivo";
+  if (m === "card") return "Tarjeta";
+  return "Transferencia";
 }
 
 export const PaymentMethodComponent = ({
   step,
   setStep,
   method,
-  distanceKm,
+  // distanceKm,
   transpCost,
   cardForm,
   tip,
-  setTip,
   onExpiryChange,
-  onCardNumberChange,
   onCvcChange,
   onNameChange,
   cashAmount,
   setCashAmount,
-  transferAmount,
   setTransferAmount,
   transfer,
   setTransfer,
@@ -80,26 +86,46 @@ export const PaymentMethodComponent = ({
   divisaSelected,
   setDivisaSelected,
   carPCG,
+  totalPagar,
+  existingLog
 }: Props) => {
   const showDivisaSelect = method === "card" || method === "transfer";
+
+  useEffect(() => {
+    if (method === "transfer") setTransferAmount(totalPagar);
+  }, [method, totalPagar, setTransferAmount]);
+
+  const transferRefOk = useMemo(() => {
+    if (method !== "transfer") return true;
+    const ref = safeStr(transfer);
+    if (!ref) return false;
+    return /^[A-Za-z0-9-]{4,40}$/.test(ref);
+  }, [method, transfer]);
+
+  const expiryOk = useMemo(() => {
+    if (method !== "card") return true;
+    const v = (cardForm.expiry ?? "").trim();
+    if (v.length !== 5) return false;
+    return isExpiryValid(v);
+  }, [method, cardForm.expiry]);
 
   const canPay =
     !payNowDisabled &&
     !payNowLock &&
-    (showDivisaSelect ? !!divisaSelected : true);
+    (showDivisaSelect ? !!divisaSelected : true) &&
+    (method === "transfer" ? transferRefOk : true) &&
+    (method === "card" ? expiryOk : true);
 
   return (
     <>
       {step === "paymentMethod" && (
         <div className="checkout-section">
-          <h2 className="checkout-section__title">Método de pago</h2>
+          <h2 className="checkout-section__title">{`Método de pago ${methodLabel(method)}`}</h2>
 
           {showDivisaSelect && (
             <div className="checkout-field checkout-field--full">
               <label className="checkout-label" htmlFor="payType">
-                {method === "card"
-                  ? "Tipo de tarjeta / banco *"
-                  : "Tipo de transferencia / banco *"}
+                {method === "card" ? "Tipo de tarjeta / banco *" : "Tipo de transferencia / banco *"}
               </label>
 
               <select
@@ -108,15 +134,12 @@ export const PaymentMethodComponent = ({
                 value={safeStr(divisaSelected?.codigo)}
                 onChange={(e) => {
                   const code = safeStr(e.target.value);
-                  const found =
-                    divisaOpts.find((x) => safeStr(x.codigo) === code) ?? null;
+                  const found = divisaOpts.find((x) => safeStr(x.codigo) === code) ?? null;
                   setDivisaSelected(found);
                 }}
                 disabled={divisaLoading}
               >
-                <option value="">
-                  {divisaLoading ? "Cargando..." : "Seleccionar"}
-                </option>
+                <option value="">{divisaLoading ? "Cargando..." : "Seleccionar"}</option>
 
                 {divisaOpts.map((x) => (
                   <option key={`${x.codigo}-${x.codigoExterno}`} value={x.codigo}>
@@ -136,22 +159,11 @@ export const PaymentMethodComponent = ({
                 <input
                   id="cashAmount"
                   type="number"
+                  inputMode="numeric"
                   className="checkout-input"
                   value={cashAmount}
-                  onChange={(e) => setCashAmount(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="tip">
-                  Propina
-                </label>
-                <input
-                  id="tip"
-                  type="number"
-                  className="checkout-input"
-                  value={tip}
-                  onChange={(e) => setTip(Number(e.target.value))}
+                  onChange={(e) => setCashAmount(toNumberNoLeadingZeros(e.target.value))}
+                  onFocus={(e) => e.currentTarget.select()}
                 />
               </div>
             </div>
@@ -170,36 +182,17 @@ export const PaymentMethodComponent = ({
                   </div>
 
                   <div className="checkout-method__brands">
-                    <img src={VisaLogo} className="checkout-card-brand" />
-                    <img src={MasterCardLogo} className="checkout-card-brand" />
+                    <img src={VisaLogo} className="checkout-card-brand" alt="Visa" />
+                    <img src={MasterCardLogo} className="checkout-card-brand" alt="Mastercard" />
                   </div>
                 </div>
               </div>
 
-              <form
-                className="checkout-cardform"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <p>
-                  Costo de transporte C$ {Number(transpCost ?? 0)}
+              <form className="checkout-cardform" onSubmit={(e) => e.preventDefault()}>
+                {/* <p>
+                  Costo de transporte C$ {n(transpCost)}
                   {distanceKm > 0 ? ` (${distanceKm.toFixed(2)} km)` : ""}
-                </p>
-
-                <div className="checkout-field checkout-field--full">
-                  <label className="checkout-label" htmlFor="cardNumber">
-                    Número de tarjeta
-                  </label>
-                  <input
-                    id="cardNumber"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    className="checkout-input"
-                    placeholder="1234 5678 9012 3456"
-                    value={cardForm.cardNumber}
-                    onChange={onCardNumberChange}
-                  />
-                </div>
+                </p> */}
 
                 <div className="checkout-cardform__row">
                   <div className="checkout-field">
@@ -213,8 +206,16 @@ export const PaymentMethodComponent = ({
                       autoComplete="cc-exp"
                       className="checkout-input"
                       placeholder="MM/AA"
+                      maxLength={5}
                       value={cardForm.expiry}
                       onChange={onExpiryChange}
+
+                      //aqui esta bien
+                      onBlur={() => {
+                        if (cardForm.expiry.length === 5 && !isExpiryValid(cardForm.expiry)) {
+                          toast.error("Fecha de expiración inválida o tarjeta vencida");
+                        }
+                      }}
                     />
                   </div>
 
@@ -237,11 +238,12 @@ export const PaymentMethodComponent = ({
 
                 <div className="checkout-field checkout-field--full">
                   <label className="checkout-label" htmlFor="nameOnCard">
-                    Nombre en tarjeta
+                    Nombre del Titular
                   </label>
                   <input
                     id="nameOnCard"
                     type="text"
+                    maxLength={150}
                     autoComplete="cc-name"
                     className="checkout-input"
                     value={cardForm.nameOnCard}
@@ -258,13 +260,10 @@ export const PaymentMethodComponent = ({
                 <label className="checkout-label" htmlFor="transferAmount">
                   Monto C$ *
                 </label>
-                <input
-                  id="transferAmount"
-                  type="number"
-                  className="checkout-input"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(Number(e.target.value))}
-                />
+                <input id="transferAmount" type="number" className="checkout-input" value={totalPagar} readOnly />
+                <small className="checkout-hint">
+                  Total a transferir: <strong>C$ {totalPagar.toFixed(2)}</strong>
+                </small>
               </div>
 
               <div className="checkout-field checkout-field--full">
@@ -278,6 +277,9 @@ export const PaymentMethodComponent = ({
                   value={transfer}
                   onChange={(e) => setTransfer(e.target.value)}
                 />
+                {!transferRefOk && (
+                  <small className="checkout-error">Referencia inválida (4-40, solo letras, números o guion).</small>
+                )}
               </div>
             </div>
           )}
@@ -287,32 +289,33 @@ export const PaymentMethodComponent = ({
               <p className="checkout-summary__title">Resumen</p>
               <div className="checkout-summary__Cost_cost">
                 <p className="checkout-summary__content">
-                  Subtotal: <span>{carPCG[0].subTotal}</span>
+                  Subtotal: <span>{existingLog != null ? existingLog.subTotal : ""}</span>
                 </p>
 
                 {carPCG[0].descuento != null && carPCG[0].descuento > 0 && (
                   <p className="checkout-summary__content">
-                    Descuento: <span>{carPCG[0].descuento}</span>
+                    Descuento: <span>{existingLog != null ? existingLog.DescuentoPantalla : ""}</span>
                   </p>
                 )}
 
                 <p className="checkout-summary__content">
-                  IVA: <span>{carPCG[0].iva}</span>
+                  IVA: <span>{existingLog != null ? existingLog.ivaPantalla : ""}</span>
                 </p>
 
-                <p className="checkout-summary__content">
-                  Transporte: <span>{transpCost}</span>
-                </p>
+                <span className="checkout-summary__content">
+                  Transporte:
+                  <span>{transpCost && transpCost > 0 ? transpCost : existingLog?.transCost ?? 0}</span>
+                </span>
 
                 <p className="checkout-summary__content">
                   Total:
                   <span className="checkout-summary__content__total">
-                    C$
-                    {(
-                      Number(carPCG[0].total ?? 0) +
-                      Number(transpCost ?? 0) +
-                      Number(tip ?? 0)
-                    ).toFixed(2)}
+                    C${" "}
+                    {existingLog
+                      ? (existingLog.totalEnPantalla ?? 0) +
+                      tip +
+                      (transpCost && transpCost > 0 ? transpCost : existingLog?.transCost ?? 0)
+                      : 0}
                   </span>
                 </p>
               </div>
@@ -329,11 +332,8 @@ export const PaymentMethodComponent = ({
               Regresar
             </button>
 
-            <button
-              type="button"
-              className="checkout-paybtn"
-              onClick={handlePayNow}
-              disabled={!canPay}
+            <button type="button" className="checkout-paybtn"
+              onClick={handlePayNow} disabled={!canPay}
             >
               {payNowDisabled ? "Procesando..." : "Pagar ahora"}
             </button>

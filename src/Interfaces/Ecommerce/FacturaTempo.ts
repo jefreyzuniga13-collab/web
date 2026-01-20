@@ -53,7 +53,7 @@ export interface FacturaTempo {
   idPromocion: string;
   codreferido: string;
   correo: string;
-  retiraSucursal: string
+  retiraSucursal: string;
 }
 
 

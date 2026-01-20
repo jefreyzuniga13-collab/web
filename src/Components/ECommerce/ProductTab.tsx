@@ -18,6 +18,7 @@ import { TiArrowBack } from "react-icons/ti";
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
 import { SucursalPickerModal, type SucursalPickerValue } from "@/Components/ECommerce/SucursalPickerModal";
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo";
+import dayjs from "dayjs";
 
 interface Props {
   conversationId: number;
@@ -119,7 +120,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
       sucursal: branch,
       usuario: String(contactId),
       maquina: `CRM-${contactId}`,
-      fecha: "20260116",
+      fecha: dayjs().format("YYYYMMDD"),
       codproducto: productDetail.codProducto.trim(),
       codprecio: "01",
       precio: productDetail.precio,

@@ -35,7 +35,6 @@ export const ProductPCGTab = ({ prod, onClick,
   handleChangeSimpleQuantity,
   handleSimpleAdd,
   simpleQuantity
-
 }: Props) => {
   const { getProductModifiers } = useProductPCG()
   const [sending, setSending] = useState(false)

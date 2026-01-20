@@ -10,9 +10,15 @@ class ClientLocationServ {
         return data;
     }
 
-    async Get(req: number): Promise<ApiPCGResponse<ClientLocationDto>>{
-        const {data} = await apiPCG.get<ApiPCGResponse<ClientLocationDto>>
+    async Get(req: number): Promise<ApiPCGResponse<ClientLocationDto[]>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<ClientLocationDto[]>>
         (`Direcciones/ListaDirecciones/${req}`);
+        return data;
+    }
+
+    async GetUnaDireccion(idUsuario : number, idDireccion: number ): Promise<ApiPCGResponse<ClientLocationDto>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<ClientLocationDto>>
+        (`Direcciones/UnaDireccion/${idUsuario}/${idDireccion}`);
         return data;
     }
 
