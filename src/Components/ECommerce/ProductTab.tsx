@@ -19,6 +19,7 @@ import { CartService } from "@/Services/Ecommerce/CarPCGService";
 import { SucursalPickerModal, type SucursalPickerValue } from "@/Components/ECommerce/SucursalPickerModal";
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
 
 interface Props {
   conversationId: number;
@@ -37,6 +38,8 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1);
 
   const [lockedBranch, setLockedBranch] = useState<string | null>(null);
+  const [lockedBranchName, setLockedBranchName] = useState<string | null>(null);
+  const [lockedWherehouse, setLockedWherehouse] = useState<string | null>(null);
 
   const [openSucursalModal, setOpenSucursalModal] = useState(false);
   const [sucursalItems, setSucursalItems] = useState<ExistenciaSucursalItem[]>([]);
@@ -115,7 +118,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
     await GetProductByDescription(term);
   };
 
-  const buildCartRequest = (productDetail: ProductoPCGInterface, branch: string): DetalleFacturaTempoRequest => {
+  const buildCartRequest = (productDetail: ProductoPCGInterface, branch: string, wherehouse: string): DetalleFacturaTempoRequest => {
     const baseItem: DetalleFacturaTempoRequest = {
       sucursal: branch,
       usuario: String(contactId),
@@ -124,7 +127,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
       codproducto: productDetail.codProducto.trim(),
       codprecio: "01",
       precio: productDetail.precio,
-      bodega: "010",
+      bodega: wherehouse,
       cantidadmovimiento: simpleQuantity,
       medidamovimiento: "",
       nofactura: "00000000",
@@ -191,29 +194,41 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
     }
   };
 
-  const addToCartCore = async (productDetail: ProductoPCGInterface, branch: string) => {
+  const addToCartCore = async (productDetail: ProductoPCGInterface,
+     branch: string, branchName: string, wherehouse: string) => {
     if (simpleQuantity <= 0) return;
 
     const existingLog = await fetchByContactId(contactId);
 
     let consecutivo = 0;
     let branchToUse = branch;
+    let branchNameToUse = branchName;
+    let wherehouseToUse = wherehouse;
 
     if (!existingLog) {
       const falote: FaloteRequestDto = { codSucursal: branch, documento: "GetConsecDoc" };
       const conse = await CartService.GetConsecDocAsync(falote);
       consecutivo = Number(conse.data.consecutivo);
       branchToUse = branch;
+      branchNameToUse = branchName;
+      wherehouseToUse = wherehouse ?? "";
     } else {
       consecutivo = existingLog.orderId;
       branchToUse = existingLog.branch;
+      branchNameToUse = existingLog.branchName ?? "";
+      wherehouseToUse = existingLog.wherehouse ?? "";
     }
 
-    const carritoBase = buildCartRequest(productDetail, branchToUse);
+    const carritoBase = buildCartRequest(productDetail, branchToUse, wherehouseToUse);
     carritoBase.nofactura = String(consecutivo);
     carritoBase.sucursal = branchToUse;
 
-    await dispatch(addProductTempoAsync(carritoBase)).unwrap();
+        try {
+          await dispatch(addProductTempoAsync(carritoBase)).unwrap();
+        } catch (msg) {
+          toast.error(String(msg));
+        }
+    
 
     if (!existingLog) {
       if (Number(consecutivo) <= 0) {
@@ -226,6 +241,8 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
         conversationId,
         statusId: 1,
         branch: branchToUse,
+        branchName: branchNameToUse,
+        wherehouse: wherehouseToUse
       };
 
       await createLogCart(logOrderRequest);
@@ -237,21 +254,27 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
     setselectedCategory(null);
     setDetailProduct(null);
 
-    if (!lockedBranch) setLockedBranch(branchToUse);
+    if (!lockedBranch) {
+      setLockedBranch(branchToUse);
+      setLockedBranchName(branchNameToUse)
+      setLockedWherehouse(wherehouseToUse)
+    }
   };
 
   const handleSimpleAdd = async (productDetail: ProductoPCGInterface) => {
     if (simpleQuantity <= 0) return;
 
     if (lockedBranch) {
-      await addToCartCore(productDetail, lockedBranch);
+      await addToCartCore(productDetail, lockedBranch, lockedBranchName ?? "", lockedWherehouse ?? "");
       return;
     }
 
     const existingLog = await fetchByContactId(contactId);
     if (existingLog?.branch) {
       setLockedBranch(existingLog.branch);
-      await addToCartCore(productDetail, existingLog.branch);
+      setLockedBranchName(existingLog.branchName ?? "")
+      setLockedWherehouse(existingLog.wherehouse ?? "")
+      await addToCartCore(productDetail, existingLog.branch, existingLog.branchName ?? "", lockedWherehouse ?? "");
       return;
     }
 
@@ -324,7 +347,7 @@ export const ProductTab = ({ conversationId, contactId }: Props) => {
           setSimpleQuantity(prevQty);
 
           try {
-            await addToCartCore(prod, v.codsucursal);
+            await addToCartCore(prod, v.codsucursal, v.sucursal, v.bodegaSucursal ?? "");
           } finally {
             setSimpleQuantity(old);
           }

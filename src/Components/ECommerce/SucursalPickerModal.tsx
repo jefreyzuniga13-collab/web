@@ -8,6 +8,7 @@ export type SucursalPickerValue = {
   serie: string;
   existencia: number;
   medida: string;
+  bodegaSucursal: string;
 };
 
 interface Props {
@@ -94,7 +95,7 @@ export function SucursalPickerModal({
                       <div className="spmRowMain">
                         <div className="spmSucursal">
                           <span className="spmCode">{r.codsucursal}</span>
-                          <span className="spmName">{r.sucursal}</span>
+                          <span className="spmName">{r.sucursal} - {r.bodegaSucursal}</span>
                         </div>
                         <div className="spmMeta">
                           <span className="spmChip">Serie {r.serie}</span>
@@ -131,6 +132,7 @@ export function SucursalPickerModal({
                 serie: selected.serie,
                 existencia: selected.existencia,
                 medida: selected.medida,
+                bodegaSucursal: selected.bodegaSucursal
               });
               onClose();
             }}

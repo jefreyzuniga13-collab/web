@@ -38,6 +38,7 @@ type BranchPick = {
   serie: string;
   existencia: number;
   medida: string;
+  bodegaSucursal: string
 };
 
 const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct, setselectedCategory }: Props) => {
@@ -55,10 +56,11 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const [lockedBranch, setLockedBranch] = useState<string | null>(null);
+  const [lockedBranchName, setLockedBranchName] = useState<string | null>(null);
+  const [lockedWherehouse, setLockedWherehouse] = useState<string | null>(null);
   const [branchRows, setBranchRows] = useState<BranchPick[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [branchUiSelected, setBranchUiSelected] = useState<string | null>(null);
-  // const [ wherehouseUiSelected, setWherehouseUiSelected] = useState<string | null>(null);
 
   const authRaw = localStorage.getItem("auth") || "{}";
   const { userId } = JSON.parse(authRaw);
@@ -68,8 +70,9 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
       const existingLog = await fetchByContactId(contactId);
       if (existingLog?.branch) {
         setLockedBranch(existingLog.branch);
+        setLockedBranchName(existingLog.branchName ?? "")
         setBranchUiSelected(existingLog.branch);
-        // setWherehouseUiSelected(existingLog.wherehouse ?? "")
+        setLockedWherehouse(existingLog.wherehouse ?? "")
       }
     };
     run();
@@ -90,8 +93,8 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
         setBranchRows(data);
         if (!lockedBranch && !branchUiSelected && data.length > 0) {
           setBranchUiSelected(data[0].codsucursal);
-
-          // setWherehouseUiSelected(data[0].sucursal);
+          setLockedBranchName(data[0].sucursal)
+          setLockedWherehouse(data[0].bodegaSucursal ?? "")
         }
       } catch {
         setBranchRows([]);
@@ -106,7 +109,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     if (!detail?.codProducto) return;
     if (detail.tieneOpcion == false) return;
     getProductModifiers(detail.codProducto);
-  }, [detail.codProducto, detail.tieneOpcion, getProductModifiers]);
+  }, [detail?.codProducto, getProductModifiers]);
 
   useEffect(() => {
     if (!productModifiers || productModifiers.length === 0) {
@@ -336,7 +339,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     setOptionQuantities((prev) => ({ ...prev, [codOpcion]: safe }));
   };
 
-  const buildCartRequest = (branch: string): DetalleFacturaTempoRequest => {
+  const buildCartRequest = (branch: string, wherehouse: string): DetalleFacturaTempoRequest => {
     const baseItem: DetalleFacturaTempoRequest = {
       sucursal: branch,
       usuario: String(contactId),
@@ -345,7 +348,7 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
       codproducto: detail.codProducto.trim(),
       codprecio: "01",
       precio: detail.precio,
-      bodega: "010",
+      bodega: wherehouse,
       cantidadmovimiento: cantidad,
       medidamovimiento: "",
       nofactura: "00000000",
@@ -388,27 +391,39 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     );
   };
 
-  const addToCartCore = async (branch: string) => {
+  const addToCartCore = async (branch: string, branchName: string, wherehouse: string) => {
     const existingLog = await fetchByContactId(contactId);
 
     let consecutivo = 0;
     let branchToUse = branch;
+    let branchNameToUse = branchName;
+    let wherehouseToUse = wherehouse;
 
     if (existingLog?.orderId && existingLog.orderId > 0) {
       consecutivo = existingLog.orderId;
       branchToUse = existingLog.branch;
+      branchNameToUse = existingLog.branchName ?? "";
+      wherehouseToUse= existingLog.wherehouse ?? ""
     } else {
       const falote: FaloteRequestDto = { codSucursal: branch, documento: "GetConsecDoc" };
       const data = await CartService.GetConsecDocAsync(falote);
       consecutivo = Number(data.data.consecutivo);
       branchToUse = branch;
+      branchNameToUse = branchName;
+      wherehouseToUse = wherehouse;
     }
 
-    const req = buildCartRequest(branchToUse);
+    const req = buildCartRequest(branchToUse, wherehouseToUse);
     req.nofactura = String(consecutivo).trim();
     req.sucursal = branchToUse;
 
-    await dispatch(addProductTempoAsync(req)).unwrap();
+    // await dispatch(addProductTempoAsync(req)).unwrap();
+    try {
+      await dispatch(addProductTempoAsync(req)).unwrap();
+    } catch (msg) {
+      toast.error(String(msg));
+    }
+
 
     const tempo = await dispatch(
       getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido: Number(req.nofactura) })
@@ -427,13 +442,19 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
         conversationId,
         statusId: 1,
         branch: branchToUse,
+        branchName: branchNameToUse,
+        wherehouse: wherehouseToUse
       };
       await createLogCart(logOrderRequest);
     }
 
     await refreshBadge(orderId);
 
-    if (!lockedBranch) setLockedBranch(branchToUse);
+    if (!lockedBranch) {
+      setLockedBranch(branchToUse);
+      setLockedBranch(branchToUse);
+      setLockedWherehouse(wherehouseToUse)
+    }
 
     setCantidad(1);
     setselectedCategory(null);
@@ -475,24 +496,27 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     }
 
     if (lockedBranch) {
-      await addToCartCore(lockedBranch);
+      await addToCartCore(lockedBranch, lockedBranchName ?? "",  lockedWherehouse ?? "");
       return;
     }
 
     const existingLog = await fetchByContactId(contactId);
     if (existingLog?.branch) {
       setLockedBranch(existingLog.branch);
-      await addToCartCore(existingLog.branch);
+      await addToCartCore(existingLog.branch, existingLog.createdByName ?? "", lockedWherehouse ?? "");
       return;
     }
 
     const pick = branchUiSelected ?? branchRows[0]?.codsucursal ?? null;
+    const pickName = branchUiSelected ?? branchRows[0]?.sucursal ?? null;
+    const pickWherehouse = branchUiSelected ?? branchRows[0]?.bodegaSucursal ?? null;
+
     if (!pick) {
       toast.error("No hay sucursales disponibles.");
       return;
     }
 
-    await addToCartCore(pick);
+    await addToCartCore(pick, pickName, pickWherehouse);
   };
 
   const handlePickBranch = async (codsucursal: string) => {
@@ -501,6 +525,8 @@ const DetailPCGProduct = ({ detail, contactId, conversationId, setDetailProduct,
     if (existingLog?.branch) {
       setLockedBranch(existingLog.branch);
       setBranchUiSelected(existingLog.branch);
+      setLockedBranchName(existingLog.branchName ?? "")
+      setLockedWherehouse(existingLog.wherehouse ?? "")
       return;
     }
 

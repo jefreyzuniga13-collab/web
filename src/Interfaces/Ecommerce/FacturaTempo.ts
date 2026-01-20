@@ -63,6 +63,7 @@ export interface ExistenciaSucursalItem {
   serie: string;
   existencia: number;
   medida: string;
+  bodegaSucursal: string;
 }
 
 
