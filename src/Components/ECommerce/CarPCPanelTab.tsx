@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -62,6 +61,28 @@ type DraftState = {
   observation: string
 }
 
+type LogCartUpdateRequestDto = {
+  orderId: number
+  contactId: number
+  userId: number
+  conversationId: number
+  statusId: number
+  branch?: string | null
+  branchName?: string | null
+  addressId?: number | null
+  transCost?: number | null
+  wherehouse?: string | null
+  wherehouseCode?: string | null
+  totalEnPantalla?: number | null
+  descuentoPantalla?: number | null
+  ivaPantalla?: number | null
+  exonerado?: string | null
+  propina?: number | null
+  subTotal?: number | null
+  observacion?: string | null
+  retiraSucursal?: "S" | "N" | null
+}
+
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState<string>("")
   const [orderId, setOrderId] = useState<number | null>(null)
@@ -84,6 +105,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [addressSearch, setAddressSearch] = useState<string>("")
 
   const [currentLog, setCurrentLog] = useState<LogCartResponseDto | null>(null)
+
+  const [debouncedTransCost, setDebouncedTransCost] = useState<number>(0)
+  const totalsReqRef = useRef(0)
 
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
@@ -108,9 +132,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const isPickup = retiraSucursal === "S"
   const hasSelectedAddress = selectedAddressId != null
   const hasManualAddress = addDescription.trim().length > 0
+  const hasDeliveryAddress = hasSelectedAddress || hasManualAddress
+  const effectiveShipping = !isPickup && hasDeliveryAddress ? Number(transCost ?? 0) : 0
 
   const addressInputsDisabled = isPickup || hasSelectedAddress
-  const transportDisabled = isPickup || hasSelectedAddress
+  const transportDisabled = isPickup
   const pickupDisabled = hasSelectedAddress || hasManualAddress
 
   const showAddressButton = !isPickup && !hasManualAddress
@@ -123,12 +149,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       const next: DraftState = {
         addDescription: String(parsed.addDescription ?? ""),
         retiraSucursal: parsed.retiraSucursal === "S" ? "S" : "N",
-        observation: observation,
         transCost: Number(parsed.transCost ?? 0),
         selectedAddressId:
           parsed.selectedAddressId != null && Number.isFinite(Number(parsed.selectedAddressId))
             ? Number(parsed.selectedAddressId)
-            : null
+            : null,
+        observation: String(parsed.observation ?? "")
       }
       if (!Number.isFinite(next.transCost) || next.transCost < 0) next.transCost = 0
       return next
@@ -141,6 +167,42 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     try {
       localStorage.setItem(draftKey, JSON.stringify(state))
     } catch {}
+  }
+
+  const calcTotals = async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
+    if (!contactId) return
+    const myReq = ++totalsReqRef.current
+
+    const pickup = opts?.pickup ?? (retiraSucursal === "S")
+    const cost = Number(opts?.cost ?? transCost ?? 0)
+    const safeCost = Number.isFinite(cost) && cost > 0 ? cost : 0
+    const allowShipping = !pickup && (selectedAddressId != null || addDescription.trim().length > 0)
+
+    const calculationReqDto: CalculationReqDto = {
+      maquina: `CRM-${contactId}`,
+      usuario: `${contactId}`,
+      aplicaPropina: "N",
+      exonerada: "N",
+      imi: "N",
+      ir: "N",
+      tabla: "det_factura_tempo",
+      tasa: 36.6243,
+      tipoServicio: "8",
+      valorTransporte: allowShipping ? safeCost : 0
+    }
+
+    if (!opts?.silent) setTotalsLoading(true)
+    try {
+      const res = await CartService.VspConsolidadoFactura(calculationReqDto)
+      if (myReq !== totalsReqRef.current) return
+      setInvoiceTotalsDto(res.data?.[0] ?? null)
+    } catch {
+      if (myReq !== totalsReqRef.current) return
+      setInvoiceTotalsDto(null)
+      toast.error("No se pudo calcular el total")
+    } finally {
+      if (!opts?.silent) setTotalsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -172,15 +234,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       selectedAddressId,
       observation
     })
-  }, [addDescription, retiraSucursal, transCost, selectedAddressId, draftKey])
+  }, [addDescription, retiraSucursal, transCost, selectedAddressId, observation, draftKey])
 
   useEffect(() => {
     if (isPickup) {
       if (selectedAddressId != null) setSelectedAddressId(null)
       if (addDescription.trim().length > 0) setAddDescription("")
       if (showAddressModal) setShowAddressModal(false)
+      if (transCost !== 0) setTransCost(0)
     }
-  }, [isPickup, selectedAddressId, addDescription, showAddressModal])
+  }, [isPickup, selectedAddressId, addDescription, showAddressModal, transCost])
 
   useEffect(() => {
     if (hasSelectedAddress) {
@@ -226,6 +289,18 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   }, [error])
 
   useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedTransCost(Number(transCost ?? 0))
+    }, 350)
+    return () => clearTimeout(t)
+  }, [transCost])
+
+  useEffect(() => {
+    if (!contactId) return
+    void calcTotals({ cost: debouncedTransCost, pickup: retiraSucursal === "S" })
+  }, [contactId, debouncedTransCost, retiraSucursal, selectedAddressId, addDescription])
+
+  useEffect(() => {
     if (!contactId || !conversationId) return
     const myReq = ++reqRef.current
 
@@ -253,6 +328,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setAddDescription(String(draft.addDescription))
       }
 
+      if (draft?.observation != null && String(draft.observation).trim().length > 0) {
+        setObservation(String(draft.observation))
+      } else {
+        const obs = (log)?.observacion
+        if (String(obs ?? "").trim().length > 0) setObservation(String(obs))
+      }
+
       const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId, noPedido })).unwrap()
       if (myReq !== reqRef.current) return
 
@@ -261,34 +343,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       dispatch(setContactCartBadge({ contactId, hasCart: count > 0, count }))
 
       const calcTrans = Number(draft?.transCost ?? log?.transCost ?? transCost ?? 0)
-
-      const calculationReqDto: CalculationReqDto = {
-        maquina: `CRM-${contactId}`,
-        usuario: `${contactId}`,
-        aplicaPropina: "N",
-        exonerada: "N",
-        imi: "N",
-        ir: "N",
-        tabla: "det_factura_tempo",
-        tasa: 36.6243,
-        tipoServicio: "8",
-        valorTransporte: isPickup ? 0 : calcTrans
-      }
-
-      setTotalsLoading(true)
-      try {
-        const res = await CartService.VspConsolidadoFactura(calculationReqDto)
-        setInvoiceTotalsDto(res.data?.[0] ?? null)
-      } catch {
-        setInvoiceTotalsDto(null)
-        toast.error("No se pudo calcular el total")
-      } finally {
-        setTotalsLoading(false)
-      }
+      setDebouncedTransCost(calcTrans)
+      void calcTotals({
+        cost: calcTrans,
+        pickup: (draft?.retiraSucursal ?? log?.retiraSucursal ?? retiraSucursal) === "S",
+        silent: true
+      })
     }
 
     void loadCart()
-  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey, isPickup, transCost])
+  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey])
 
   const ensureEcommerceUser = async (): Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> => {
     if (ensureEcommerceRef.current) return ensureEcommerceRef.current
@@ -359,32 +423,48 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       setAddressLoading(false)
     }
   }
-    const applySelectedAddressToLog = async (addressId: number) => {
-      try {
-        if (retiraSucursal === "S") return
-        if (addDescription.trim().length > 0) return
 
-        const log = await fetchByContactId(contactId)
-        if (!log?.id) return
+  const applySelectedAddressToLog = async (addressId: number) => {
+    try {
+      if (retiraSucursal === "S") return
+      if (addDescription.trim().length > 0) return
 
-        const nextId = selectedAddressId === addressId ? null : addressId
+      const log = await fetchByContactId(contactId)
+      if (!log?.id) return
 
-        const updated: LogCartResponseDto = {
-          ...log,
-          addressId: nextId ?? undefined
-        }
+      const nextId = selectedAddressId === addressId ? null : addressId
 
-        setCurrentLog(updated)
-        setSelectedAddressId(nextId)
+      setCurrentLog({ ...log, addressId: nextId ?? undefined })
+      setSelectedAddressId(nextId)
 
-        await updatedLogCart(updated.id, updated)
-
-        toast.success(nextId ? "Dirección seleccionada" : "Dirección deseleccionada")
-      } catch {
-        toast.error("No se pudo actualizar la dirección")
+      const req: LogCartUpdateRequestDto = {
+        orderId: Number(log.orderId ?? 0),
+        contactId: Number(log.contactId ?? 0),
+        userId: Number(log.userId ?? 0),
+        conversationId: Number(log.conversationId ?? 0),
+        statusId: Number(log.statusId ?? 0),
+        branch: (log)?.branch ?? null,
+        branchName: (log)?.branchName ?? null,
+        wherehouse: (log)?.wherehouse ?? null,
+        wherehouseCode: (log)?.wherehouseCode ?? null,
+        retiraSucursal: "N",
+        addressId: nextId,
+        transCost: Number(transCost ?? 0),
+        totalEnPantalla: Number((invoiceTotalsDto)?.total ?? (log)?.totalEnPantalla ?? 0) || null,
+        descuentoPantalla: Number((invoiceTotalsDto)?.descuento ?? (log)?.DescuentoPantalla ?? 0) || null,
+        ivaPantalla: Number((invoiceTotalsDto as any)?.iva ?? (log)?.ivaPantalla ?? 0) || null,
+        exonerado: (log)?.Exonerado ?? null,
+        propina: Number((invoiceTotalsDto)?.propina ?? (log)?.propina ?? 0) || null,
+        subTotal: Number((invoiceTotalsDto)?.subTotal ?? (log)?.subTotal ?? 0) || null,
+        observacion: observation ?? ""
       }
-    }
 
+      await updatedLogCart(log.id, req as any)
+      toast.success(nextId ? "Dirección seleccionada" : "Dirección deseleccionada")
+    } catch {
+      toast.error("No se pudo actualizar la dirección")
+    }
+  }
 
   const handleRemoveItem = async (idUsuario: number, noPedido: number, codProducto: string, unico: string) => {
     if (!noPedido) return
@@ -458,70 +538,97 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     )
   }
 
-  const handleSendCartPdf = async () => {
-    if (!cart || sending) return
-    const contact = await getById(contactId)
-    if (!contact) {
-      toast.error("No se pudo obtener el contacto")
-      return
-    }
-    const file = generateCartPdfFile(cart, contact)
-    setFile(file)
-    setText("Resumen de carrito")
-    await handleSend()
-  }
-
-  const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
-    const lines: string[] = []
-    lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
-    lines.push("")
-    lines.push("🛒 Artículos:")
-    lines.push("")
-
-    cart.listDetalle?.forEach((d) => {
-      const qty = d.cantidad ?? 0
-      const title = (d.descripcion ?? "").trim() + " - " + (d.observaciones)
-      if (!title) return
-      lines.push(`*${title}* - ${qty}`)
-
-      const opciones =
-        d.listOpciones
-          ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
-          .filter(Boolean) ?? []
-
-      opciones.forEach((op) => lines.push(`   ${op}`))
-      lines.push("")
-    })
-
-    const total = cart.total ?? 0
-
-    if (retiraSucursal === "S") {
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
-      lines.push("🏬 Retira en sucursal: Sí")
-    } else {
-      const envio = Number(transCost ?? 0)
-      const hasEnvio = Number.isFinite(envio) && envio > 0
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más Envío*" : ""}`)
-      if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
-      lines.push("🏠 Retira en sucursal: No")
-      if (selectedAddressId == null && addDescription.trim().length > 0) {
-        lines.push(`📍 Dirección: ${addDescription.trim()}`)
+    const handleSendCartPdf = async () => {
+      if (!cart || sending) return
+      const contact = await getById(contactId)
+      if (!contact) {
+        toast.error("No se pudo obtener el contacto")
+        return
       }
+
+      const selected = selectedAddressId != null ? addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId)) : null
+      const addressName = String(selected?.nombre ?? "").trim()
+      const addressText = hasSelectedAddress
+        ? [String(selected?.descripcion ?? "").trim(), String(selected?.referencia ?? "").trim()].filter(Boolean).join(" | ")
+        : addDescription.trim()
+
+      const file = generateCartPdfFile(cart, invoiceTotalsDto, contact, {
+        retiraSucursal,
+        transCost,
+        addressName: addressName.length > 0 ? addressName : null,
+        addressText: addressText.length > 0 ? addressText : null,
+        finalTotal: (invoiceTotalsDto?.total ?? 0) +effectiveShipping
+      })
+
+      setFile(file)
+      setText("Resumen de carrito")
+      await handleSend()
     }
 
-    if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
-    return lines.join("\n").trim()
+const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
+  const lines: string[] = []
+  lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
+  lines.push("")
+  lines.push("🛒 Artículos:")
+  lines.push("")
+
+  cart.listDetalle?.forEach((d) => {
+    const qty = d.cantidad ?? 0
+    const title = (d.descripcion ?? "").trim() + " - " + d.observaciones
+    if (!title) return
+    lines.push(`*${title}* - ${qty}`)
+
+    const opciones =
+      d.listOpciones
+        ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
+        .filter(Boolean) ?? []
+
+    opciones.forEach((op) => lines.push(`   ${op}`))
+    lines.push("")
+  })
+
+  const total =
+  (invoiceTotalsDto?.total ?? 0) +
+  effectiveShipping
+
+  if (retiraSucursal === "S") {
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+    lines.push("🏬 Retira en sucursal")
+    if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
+  } else {
+    const envio = effectiveShipping
+    const hasEnvio = Number.isFinite(envio) && envio > 0
+
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
+    if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
+
+    if (hasSelectedAddress) {
+      const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
+      const addrName = String(selected?.nombre ?? "").trim()
+      const addrDesc = String(selected?.descripcion ?? "").trim()
+      const addrRef = String(selected?.referencia ?? "").trim()
+      const best = [addrName, addrDesc, addrRef].filter((x) => x.length > 0).join(" | ")
+      if (best.length > 0) lines.push(`📍 Dirección: ${best}`)
+    } else if (addDescription.trim().length > 0) {
+      lines.push(`📍 Dirección: ${addDescription.trim()}`)
+    }
+
+    if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
   }
 
-  const handlePersistLog = async (log: any, ecommerceUserId: number) => {
+  if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
+  return lines.join("\n").trim()
+}
+  const handlePersistLog = async (log: LogCartResponseDto, ecommerceUserId: number) => {
     if (!log?.id) return log
 
+    let addressId: number | null = null
+
     if (retiraSucursal === "S") {
-      log.addressId = ""
-      log.transCost = 0
+      addressId = null
     } else {
       if (selectedAddressId != null) {
-        log.addressId = selectedAddressId
+        addressId = selectedAddressId
       } else if (addDescription && addDescription.trim().length > 0) {
         const reqAddr: ClientLocationDto = {
           descripcion: addDescription.trim(),
@@ -531,24 +638,48 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         }
         const address = await ClientLocationService.Create(reqAddr)
         const newId = address?.data?.idDireccion
-        if (newId) log.addressId = newId
+        addressId = newId ? Number(newId) : null
       } else {
-        log.addressId = ""
+        addressId = null
       }
-      log.transCost = Number(transCost ?? 0)
     }
 
-    log.retiraSucursal = retiraSucursal
+    const req: LogCartUpdateRequestDto = {
+      orderId: Number(log.orderId ?? 0),
+      contactId: Number(log.contactId ?? 0),
+      userId: Number(log.userId ?? 0),
+      conversationId: Number(log.conversationId ?? 0),
+      statusId: Number(log.statusId ?? 0),
+      branch: (log)?.branch ?? null,
+      branchName: (log)?.branchName ?? null,
+      wherehouse: (log)?.wherehouse ?? null,
+      wherehouseCode: (log)?.wherehouseCode ?? null,
+      retiraSucursal,
+      addressId,
+      transCost: retiraSucursal === "S" ? 0 : effectiveShipping,
+      ivaPantalla: (invoiceTotalsDto)?.iva ?? null,
+      descuentoPantalla: (invoiceTotalsDto)?.descuento ?? null,
+      totalEnPantalla: (invoiceTotalsDto)?.total ?? null,
+      propina: (invoiceTotalsDto)?.propina ?? null,
+      subTotal: (invoiceTotalsDto)?.subTotal ?? null,
+      exonerado: (log)?.Exonerado ?? null,
+      observacion: observation ?? ""
+    }
 
-    log.ivaPantalla = invoiceTotalsDto?.iva
-    log.DescuentoPantalla = invoiceTotalsDto?.descuento
-    log.totalEnPantalla = invoiceTotalsDto?.total
-    log.propina = invoiceTotalsDto?.propina
-    log.subTotal = invoiceTotalsDto?.subTotal
-    log.observation = observation
+    await updatedLogCart(log.id, req as any)
 
-    await updatedLogCart(log.id, log)
-    setCurrentLog(log)
+    setCurrentLog({
+      ...log,
+      addressId: addressId ?? undefined,
+      transCost: req.transCost ?? 0,
+      retiraSucursal,
+      ivaPantalla: req.ivaPantalla ?? 0,
+      DescuentoPantalla: req.descuentoPantalla ?? 0,
+      totalEnPantalla: req.totalEnPantalla ?? 0,
+      propina: req.propina ?? 0,
+      subTotal: req.subTotal ?? 0,
+      observacion: req.observacion ?? ""
+    })
 
     try {
       localStorage.removeItem(draftKey)
@@ -574,6 +705,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setSendChatoading(false)
         return
       }
+
+        if (existingLog == null) {
+          toast.error("Log no encontrado")
+          setSendChatoading(false)
+          return
+        }
 
       await handlePersistLog(existingLog, ecommerceUserId)
 
@@ -636,15 +773,25 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   return (
     <div className="carPCPanel-container">
       <header className="carPCPanel-header">
-        <h5 className="productTab-content-header__title">Carrito {`- Sucursal ${currentLog?.branch}`}</h5>
-        <Input id="searchProduct" name="searchProduct" value={search} placeholder="Buscar categoria o producto" onChange={(e) => setSearch(e.target.value)} />
+        <h5 className="productTab-content-header__title">Carrito {`- Sucursal ${currentLog?.branchName}`}</h5>
+        <Input
+          id="searchProduct"
+          name="searchProduct"
+          value={search}
+          placeholder="Buscar categoria o producto"
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </header>
 
       <section className="carPCPanel-content">
         {filteredDetails.map(({ detail }, index) => (
           <div key={index} className="carPCPanel-content__list">
             <div className="carPCPanel-content__list-imgContainer">
-              <img src={detail.imagen ?? noimageavailable} aria-label="product image" className="carPCPanel-content__list-image" />
+              <img
+                src={detail.imagen ?? noimageavailable}
+                aria-label="product image"
+                className="carPCPanel-content__list-image"
+              />
               <p className="carPCPanel-content__list-flootingQuantity">{detail.cantidad}</p>
             </div>
 
@@ -672,19 +819,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         <div className="productTab-content-footer">
           <div className="productTab-content__inputContaner">
             <div className="productTab-content__inputs">
-
-               <textarea
+              <textarea
                 rows={5}
                 name="observation"
                 id="observation"
                 className="productTab-content__input"
                 placeholder="observación"
                 value={observation}
-                disabled={addressInputsDisabled}
-                onChange={(e) => {
-                  if (addressInputsDisabled) return
-                  setObservation(e.target.value)
-                }}
+                onChange={(e) => setObservation(e.target.value)}
               />
 
               <textarea
@@ -717,7 +859,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
                   className="productTab-content__input transportationCost"
                 />
               </div>
-              
 
               <div className="transportationCost__checkbox">
                 <input
@@ -755,10 +896,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
           {invoiceTotalsDto?.total && invoiceTotalsDto.total > 0 && (
             <div className="productTab-content__container">
-              <p className="productTab-content-footer__title">Total:</p>
-              <span className="productTab-content-footer__totalValue">
-                C$ {invoiceTotalsDto.total + (retiraSucursal === "S" ? 0 : Number(transCost ?? 0))}
-              </span>
+              <p className="productTab-content-footer__title">
+                {`Total${
+                  retiraSucursal === "N" &&
+                  selectedAddressId == null &&
+                  addDescription.trim().length === 0
+                    ? " Más envío"
+                    : ""
+                }:`}
+              </p>
+              <span className="productTab-content-footer__totalValue">C$ {invoiceTotalsDto.total + effectiveShipping}</span>
             </div>
           )}
         </div>
@@ -784,7 +931,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
               {addressLoading && <p>Cargando direcciones...</p>}
 
-              {!addressLoading && filteredAddresses.length === 0 && <p>{addresses.length === 0 ? "No hay direcciones registradas" : "No hay resultados"}</p>}
+              {!addressLoading && filteredAddresses.length === 0 && (
+                <p>{addresses.length === 0 ? "No hay direcciones registradas" : "No hay resultados"}</p>
+              )}
 
               {!addressLoading &&
                 filteredAddresses.map((a) => (

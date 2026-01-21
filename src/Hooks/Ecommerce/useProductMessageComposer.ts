@@ -1,0 +1,123 @@
+// src/Hooks/Ecommerce/useProductMessageComposer.ts
+import { useCallback, useMemo, useState } from "react"
+import type {
+  ProductoPCGInterface,
+  ProductoModificadorPCGInterface,
+} from "@/Interfaces/Chat/ProductPCGInterface"
+import { buildModifiersText } from "@/Utils/ECommerce/buildModifiersText"
+import { SendMediaECommerceFromUrlAsync } from "@/Services/chat/MessageService"
+import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG"
+import { toast } from "react-toastify"
+
+type SendProductMessageArgs = {
+  product: ProductoPCGInterface
+  conversationId: number
+  observation?: string
+  maxLen?: number
+  fallbackMediaUrl?: string
+  includeModifiers?: boolean
+}
+
+const safeAuthUserId = (): number | null => {
+  try {
+    const raw = localStorage.getItem("auth") || "{}"
+    const parsed = JSON.parse(raw)
+    return parsed?.userId ?? null
+  } catch {
+    return null
+  }
+}
+
+const buildBaseCaption = (p: ProductoPCGInterface): string => {
+  const parts: string[] = []
+  if (p.descripcion) parts.push(`*Producto:* ${p.descripcion}`)
+  if (p.contenido) parts.push(`*Contenido:* ${p.contenido}`)
+  if (p.precio && Number(p.precio) > 0) {
+    parts.push(`*Precio:* C$ ${Number(p.precio).toFixed(2)}`)
+  }
+  return parts.join("\n").trim()
+}
+
+export const useProductMessageComposer = () => {
+  const { getProductModifiers } = useProductPCG()
+  const [sending, setSending] = useState(false)
+
+  const sendProductMessage = useCallback(
+    async ({
+      product,
+      conversationId,
+      observation,
+      maxLen = 1024,
+      fallbackMediaUrl,
+      includeModifiers = true,
+    }: SendProductMessageArgs) => {
+      if (sending) return
+      if (!conversationId) return
+
+      const userId = safeAuthUserId()
+      if (!userId) return
+
+      setSending(true)
+      try {
+        const base = buildBaseCaption(product)
+        if (!base) return
+
+        let modsText = ""
+        if (includeModifiers && product.tieneOpcion) {
+          const mods = (await getProductModifiers(
+            product.codProducto
+          )) as ProductoModificadorPCGInterface[] | null
+
+          modsText = buildModifiersText(mods, {
+            maxLen,
+            includeRequiredTag: true,
+            includePrices: true,
+            currencyPrefix: "C$ ",
+            title: "*Opciones:*",
+          })
+
+          if (!modsText && mods && mods.length > 0) {
+            toast.warn("El texto permitido para la imagen es de 1024 caracteres.")
+          }
+        }
+
+        const obsText =
+          observation && observation.trim().length > 0
+            ? `\n\n*📝 Nota:* ${observation.trim()}`
+            : ""
+
+        const caption = `${base}${modsText}${obsText}`.trim()
+
+        if (!caption) return
+        if (caption.length > maxLen) {
+          toast.warn("El texto permitido para la imagen es de 1024 caracteres.")
+          return
+        }
+
+        const mediaUrl =
+          product.imagen && product.imagen.trim() !== ""
+            ? product.imagen
+            : fallbackMediaUrl ??
+              "https://i.ibb.co/ccjvL5Nh/aguamarina.png"
+
+        await SendMediaECommerceFromUrlAsync(conversationId, {
+          mediaUrl,
+          caption,
+          externalId: null,
+          repliedParentMessageId: null,
+        })
+      } finally {
+        setSending(false)
+      }
+    },
+    [getProductModifiers, sending]
+  )
+
+  return useMemo(
+    () => ({
+      sending,
+      sendProductMessage,
+    }),
+    [sending, sendProductMessage]
+  )
+}

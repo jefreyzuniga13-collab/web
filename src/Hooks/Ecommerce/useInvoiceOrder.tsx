@@ -89,20 +89,22 @@ const useInvoiceOrder = () => {
   },[])
 
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const PrintDetFacAsync = useCallback(async(req: string)=>{
     setLoading(false);
     setError(null)
     try{
-        const res = await InvoiceOrderService.PrintDetFac(req);
+        // const res = await InvoiceOrderService
+        // .PrintDetFac(req);
 
-        if(res.success){
-            setLoading(false)
-            setPrintOrdenFac(res.data)
-            return res.data
-            // toast.success(res.message)
-        }else{
-            toast.error(res.message)
-        }
+        // if(res.success){
+        //     setLoading(false)
+        //     setPrintOrdenFac(res.data)
+        //     return res.data;
+        //     // toast.success(res.message)
+        // }else{
+        //     toast.error(res.message)
+        // }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }catch(err: any){
         setError(err)

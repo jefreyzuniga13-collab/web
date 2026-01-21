@@ -63,7 +63,8 @@ export interface ExistenciaSucursalItem {
   serie: string;
   existencia: number;
   medida: string;
-  bodegaSucursal: string;
+  nombodega: string;
+  codbodega:string
 }
 
 
@@ -196,3 +197,9 @@ export interface ObtenerDivisaPagosTipoRes{
   banco: string
   aCambio: string;
 }
+
+
+//pago sucursal
+// export interface PrintFact{
+
+// }

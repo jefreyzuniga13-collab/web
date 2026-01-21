@@ -11,6 +11,7 @@ import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/Context";
+import { CartPCGFlowProvider } from "@/Context/CartPCGFlowProvider";
 
 type Props = {
   contactId?: number;
@@ -87,12 +88,14 @@ const DetailPanel: React.FC<Props> = ({
 
       <section className="detailPanel-content detailPanel-content--padded">
 
-        {optionMenu === 1 && (
-          <ProductTab 
-          conversationId={Number(conversationId)}
-          contactId= {Number(contactId)}/>
-
-        )}
+       {optionMenu === 1 && (
+            <CartPCGFlowProvider conversationId={Number(conversationId)} contactId={Number(contactId)}>
+              <ProductTab
+                conversationId={Number(conversationId)}
+                contactId={Number(contactId)}
+              />
+            </CartPCGFlowProvider>
+          )}
 
         {optionMenu === 2 && (
           <CarPCPanelTab 

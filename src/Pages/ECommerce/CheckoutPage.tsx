@@ -30,6 +30,8 @@ import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
 import "@/Styles/Ecommerce/CheckoutPage.css";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+// import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
+// import { sendMediaEcommerce } from "@/Services/chat/MessageService";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -162,6 +164,7 @@ const CheckoutPage: React.FC = () => {
     GetNearestBranchAsync,
     loading: invoiceLoading,
     InsertaFacturaAsync,
+    // PrintDetFacAsync
   } = useInvoiceOrder();
 
   const { fetchByContactId, UpdatedStatus } = useLogCart();
@@ -917,9 +920,6 @@ const CheckoutPage: React.FC = () => {
           valorTransporte: Number(transporte ?? 0),
           aplicaPropina: "N",
           observacion: existingLog?.observacion ?? "",
-
-          // El retiro en socursal, viene del ExistingLog
-          // retiraSucursal: "N",
           hayFormaPago: "S",
           retiraSucursal: existingLog?.retiraSucursal != undefined ? String(existingLog?.retiraSucursal) : "N"
         };
@@ -934,6 +934,35 @@ const CheckoutPage: React.FC = () => {
 
         const insertFacRes = await InsertaFacturaAsync(invoiceReqFinal);
         if (insertFacRes?.success) {
+
+          // const maquinaSucursal : PrintFactura = {
+            
+          // }
+
+          // const resPrintPDF = await PrintDetFacAsync(res.data);
+
+          // if (resPrintPDF) {
+          //   const pdfBlob = generateOrdeFacPDFFile(resPrintPDF);
+
+          //   if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+          //     throw new Error("El PDF generado está vacío o inválido.");
+          //   }
+
+          //   const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
+          //   const magic = String.fromCharCode(...head);
+          //   if (magic !== "%PDF-") {
+          //     throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
+          //   }
+
+          //   const noFactura = String(resPrintPDF.DatosGenerales?.NoFactura ?? "").trim();
+          //   const fileName = `Factura-${noFactura || "SN"}.pdf`;
+
+          //   const mime = pdfBlob.type || "application/pdf";
+          //   const file = new File([pdfBlob], fileName, { type: mime });
+
+          //   await sendMediaEcommerce(payload!.conversationId, file, "");
+          // }
+
           const existingLog = await fetchByContactId(payload!.contactId);
           if (existingLog?.id) {
             await UpdatedStatus(existingLog.id, 3);

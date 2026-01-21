@@ -140,3 +140,7 @@ export interface CardFormState {
   cvc: string;
   nameOnCard: string;
 }
+
+
+
+// Interfaz para imprimir

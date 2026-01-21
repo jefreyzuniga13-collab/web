@@ -171,6 +171,7 @@
     gap: 12px;
     padding: 10px 15px;
     margin: 0 ;
+    font-size: var(--font-size-base);
 }
 
 .button-text{

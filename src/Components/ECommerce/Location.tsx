@@ -149,14 +149,6 @@ export const Location = ({
         ) : null}
       </div>
       
-
-      <div>
-        {/* Mostrar, sus direcciones guardadas, direccuies que hay para esa zona, por ejemplo
-        como en google maps, que se listan las direcciones a uno y uno puede selecciona una, pero claro no son las que he guardardo yo, creado yo
-        son direcciones que ya estan
-        y el mapa, serian 3
-        */}
-      </div>
       <div className="checkout-grid__container">
         {locationMode === "existing" && selectedAddress ? (
           <div className="checkout-current-location">

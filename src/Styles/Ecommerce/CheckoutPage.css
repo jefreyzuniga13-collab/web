@@ -61,8 +61,8 @@
 }
 
 .checkout-section {
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */
+  /* flex-direction: column; */
   gap: 1.25rem;
   margin-bottom: 1.5rem;
   width: 100%;
@@ -72,7 +72,7 @@
 .checkout-section__location{
   min-width: 80vw;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr ;
 }
 
 .checkout-section:last-of-type {
@@ -497,7 +497,7 @@
 
   .checkout-section__location{
   grid-template-columns: 1fr 400px;
-  overflow-y: hidden;
+  /* overflow-y: hidden; */
 }
 }
 

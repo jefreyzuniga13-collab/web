@@ -1,26 +1,38 @@
-import React, { useMemo, useState, useEffect } from "react";
-import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo";
-import "@/Styles/Ecommerce/SucursalPickerModal.css";
+import React, { useMemo, useState, useEffect } from "react"
+import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
+import "@/Styles/Ecommerce/SucursalPickerModal.css"
 
 export type SucursalPickerValue = {
-  codsucursal: string;
-  sucursal: string;
-  serie: string;
-  existencia: number;
-  medida: string;
-  bodegaSucursal: string;
-};
+  codsucursal: string
+  sucursal: string
+  serie: string
+  existencia: number
+  medida: string
+  nombodega: string
+  codBodega: string
+}
 
 interface Props {
-  open: boolean;
-  loading?: boolean;
-  codProducto?: string;
-  items: ExistenciaSucursalItem[];
-  selectedCodSucursal?: string | null;
-
-  onClose: () => void;
-  onSelect: (value: SucursalPickerValue) => void;
+  open: boolean
+  loading?: boolean
+  codProducto?: string
+  items: ExistenciaSucursalItem[]
+  selectedCodSucursal?: string | null
+  onClose: () => void
+  onSelect: (value: SucursalPickerValue) => void
 }
+
+type NormalizedRow = {
+  codsucursal: string
+  sucursal: string
+  serie: string
+  existencia: number
+  medida: string
+  nombodega: string
+  codBodega: string
+}
+
+const buildKey = (r: { codsucursal: string; serie: string }) => `${r.codsucursal}__${r.serie}`
 
 export function SucursalPickerModal({
   open,
@@ -31,20 +43,43 @@ export function SucursalPickerModal({
   onClose,
   onSelect,
 }: Props) {
-  const [localSelected, setLocalSelected] = useState<string | null>(selectedCodSucursal);
+  const rows = useMemo<NormalizedRow[]>(() => {
+    const arr = Array.isArray(items) ? items : []
+
+    const normalized = arr.map((r) => {
+      const codBodega =
+        String((r as unknown as { codBodega?: string }).codBodega ?? (r as unknown as { codbodega?: string }).codbodega ?? "").trim()
+
+      return {
+        codsucursal: String(r.codsucursal ?? "").trim(),
+        sucursal: String(r.sucursal ?? "").trim(),
+        serie: String(r.serie ?? "").trim(),
+        existencia: Number(r.existencia ?? 0),
+        medida: String(r.medida ?? "").trim(),
+        nombodega: String((r as unknown as { nombodega?: string }).nombodega ?? "").trim(),
+        codBodega,
+      }
+    })
+
+    return normalized.sort((a, b) => Number(b.existencia) - Number(a.existencia))
+  }, [items])
+
+  const [localSelectedKey, setLocalSelectedKey] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!open) return;
-    setLocalSelected(selectedCodSucursal);
-  }, [open, selectedCodSucursal]);
+    if (!open) return
+    if (!selectedCodSucursal) {
+      setLocalSelectedKey(rows.length ? buildKey(rows[0]) : null)
+      return
+    }
 
-  const rows = useMemo(() => {
-    return [...(items ?? [])].sort((a, b) => (b.existencia ?? 0) - (a.existencia ?? 0));
-  }, [items]);
+    const found = rows.find((r) => r.codsucursal === selectedCodSucursal)
+    setLocalSelectedKey(found ? buildKey(found) : (rows.length ? buildKey(rows[0]) : null))
+  }, [open, selectedCodSucursal, rows])
 
-  if (!open) return null;
+  if (!open) return null
 
-  const selected = rows.find((x) => x.codsucursal === localSelected) ?? null;
+  const selected = rows.find((r) => buildKey(r) === localSelectedKey) ?? null
 
   return (
     <div className="spmOverlay" role="presentation" onMouseDown={onClose}>
@@ -82,20 +117,23 @@ export function SucursalPickerModal({
           ) : (
             <ul className="spmList">
               {rows.map((r) => {
-                const isActive = localSelected === r.codsucursal;
+                const key = buildKey(r)
+                const isActive = localSelectedKey === key
 
                 return (
-                  <li key={`${r.codsucursal}-${r.serie}`}>
+                  <li key={key}>
                     <button
                       type="button"
                       className={`spmRow ${isActive ? "spmRow--active" : ""}`}
-                      onClick={() => setLocalSelected(r.codsucursal)}
+                      onClick={() => setLocalSelectedKey(key)}
                       title="Seleccionar"
                     >
                       <div className="spmRowMain">
                         <div className="spmSucursal">
                           <span className="spmCode">{r.codsucursal}</span>
-                          <span className="spmName">{r.sucursal} - {r.bodegaSucursal}</span>
+                          <span className="spmName">
+                            {r.sucursal} - {r.nombodega}
+                          </span>
                         </div>
                         <div className="spmMeta">
                           <span className="spmChip">Serie {r.serie}</span>
@@ -109,7 +147,7 @@ export function SucursalPickerModal({
                       </span>
                     </button>
                   </li>
-                );
+                )
               })}
             </ul>
           )}
@@ -125,16 +163,19 @@ export function SucursalPickerModal({
             className="spmBtn spmBtn--primary"
             disabled={!selected}
             onClick={() => {
-              if (!selected) return;
+              if (!selected) return
+              if (!selected.codBodega) return
+
               onSelect({
                 codsucursal: selected.codsucursal,
                 sucursal: selected.sucursal,
                 serie: selected.serie,
                 existencia: selected.existencia,
                 medida: selected.medida,
-                bodegaSucursal: selected.bodegaSucursal
-              });
-              onClose();
+                nombodega: selected.nombodega,
+                codBodega: selected.codBodega,
+              })
+              onClose()
             }}
           >
             Confirmar
@@ -142,5 +183,5 @@ export function SucursalPickerModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

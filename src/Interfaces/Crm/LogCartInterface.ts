@@ -30,6 +30,7 @@ export interface LogCartResponseDto {
   retiraSucursal?: string;
   observacion?: string;
   wherehouse?: string;
+  wherehouseCode?: string;
 }
 
 export interface LogCartRequestDto {
@@ -54,6 +55,7 @@ export interface LogCartRequestDto {
   retiraSucursal?: string;
     observacion?: string
      wherehouse?: string;
+       wherehouseCode?: string;
 }
 
 export interface LogCartFormValues {
@@ -78,4 +80,5 @@ export interface LogCartFormValues {
   retiraSucursal?: string;
     observacion?: string
      wherehouse?: string;
+       wherehouseCode?: string;
 }

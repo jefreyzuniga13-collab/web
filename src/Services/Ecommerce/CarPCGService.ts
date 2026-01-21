@@ -154,9 +154,10 @@ class CartServ {
   ): Promise<ApiPCGResponse<CarDto[]>> {
     try {
       const cleanCode = codProducto.trim();
+      const cleannoPedido = noPedido.toString().trim();
 
       const { data } = await apiPCG.put<ApiPCGResponse<CarDto[]>>(
-        `CarritoCompra/QuitarCarrito/${idUsuario}/${noPedido}`,
+        `CarritoCompra/QuitarCarrito/${idUsuario}/${cleannoPedido}`,
         null,
         {
           params: {
