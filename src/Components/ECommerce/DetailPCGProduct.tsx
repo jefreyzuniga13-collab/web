@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { FaShoppingCart } from "react-icons/fa"
 import { IoMdSend } from "react-icons/io"
 import { MdInventory } from "react-icons/md"
@@ -40,6 +40,9 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
 
   const [selectedOptions] = useState<Record<string, string[]>>({})
   const [optionQuantities] = useState<Record<string, number>>({})
+
+  const sendLockRef = useRef(false)
+  const addLockRef = useRef(false)
 
   useEffect(() => {
     if (!detail.tieneOpcion) return
@@ -90,32 +93,64 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
     return true
   }, [productModifiers, selectedOptions])
 
-  const handleAddToCart = async () => {
-    if (cantidad <= 0) return
-    if (!validateRequiredModifiers()) return
+  const handleAddToCart = useCallback(async () => {
+    if (addLockRef.current) return
+    addLockRef.current = true
 
-    await addProduct({
-      product: detail,
-      qty: cantidad,
-      observacion,
-      branch: locked?.branch ?? branchUiSelected ?? undefined,
-      branchName: locked?.branchName ?? branchNameUiSelected ?? undefined,
-      wherehouse: locked?.wherehouse ?? wherehouseUiSelected ?? undefined,
-      wherehouseCode: locked?.wherehouseCode ?? wherehouseCodeUiSelected ?? undefined,
-    })
+    try {
+      if (cantidad <= 0) return
+      if (!validateRequiredModifiers()) return
 
-    setCantidad(1)
-    setDetailProduct(null)
-    setselectedCategory(null)
-  }
+      await addProduct({
+        product: detail,
+        qty: cantidad,
+        observacion,
+        branch: locked?.branch ?? branchUiSelected ?? undefined,
+        branchName: locked?.branchName ?? branchNameUiSelected ?? undefined,
+        wherehouse: locked?.wherehouse ?? wherehouseUiSelected ?? undefined,
+        wherehouseCode: locked?.wherehouseCode ?? wherehouseCodeUiSelected ?? undefined,
+      })
 
-  const handleSendMessage = async () => {
-    await sendProductMessage({
-      product: detail,
-      conversationId,
-      observation: observacion
-    })
-  }
+      setCantidad(1)
+      setDetailProduct(null)
+      setselectedCategory(null)
+    } finally {
+      addLockRef.current = false
+    }
+  }, [
+    addProduct,
+    branchNameUiSelected,
+    branchUiSelected,
+    cantidad,
+    detail,
+    locked?.branch,
+    locked?.branchName,
+    locked?.wherehouse,
+    locked?.wherehouseCode,
+    observacion,
+    setDetailProduct,
+    setselectedCategory,
+    validateRequiredModifiers,
+    wherehouseCodeUiSelected,
+    wherehouseUiSelected,
+  ])
+
+  const handleSendMessage = useCallback(async () => {
+    if (sendLockRef.current) return
+    sendLockRef.current = true
+
+    try {
+      await sendProductMessage({
+        product: detail,
+        conversationId,
+        observation: observacion,
+      })
+    } finally {
+      sendLockRef.current = false
+    }
+  }, [conversationId, detail, observacion, sendProductMessage])
+
+  const actionsDisabled = sending
 
   return (
     <section className="detail-product__container">
@@ -142,15 +177,15 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
             <div className="detail-product__branchList">
               {branchRows.map((b) => (
                 <button
-                  key={b.codsucursal}
+                  key={`${b.codsucursal}-${b.codbodega}`}
                   className={`detail-product__branchItem ${
                     branchUiSelected === b.codsucursal ? "detail-product__branchItem--active" : ""
                   }`}
                   type="button"
                   onClick={() => {
                     setBranchUiSelected(b.codsucursal)
-                    setBranchNameUiSelected(b.sucursal)
-                    setWherehouseUiSelected(b.nombodega)
+                    setBranchNameUiSelected(b.sucursal ?? "")
+                    setWherehouseUiSelected(b.nombodega ?? "")
                     setWherehouseCodeUiSelected((b.codbodega ?? "").trim())
                   }}
                 >
@@ -189,12 +224,17 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
           className="detail-product__inputNumber"
         />
 
-        <button type="button" className="productTab-buyButton" onClick={handleAddToCart}>
+        <button
+          type="button"
+          className="productTab-buyButton"
+          onClick={handleAddToCart}
+          disabled={actionsDisabled}
+        >
           <FaShoppingCart />
         </button>
 
-        <Button disabled={sending} onClick={handleSendMessage}>
-          {sending ? <AiOutlineLoading3Quarters /> : <IoMdSend />}
+        <Button disabled={actionsDisabled} onClick={handleSendMessage}>
+          {actionsDisabled ? <AiOutlineLoading3Quarters /> : <IoMdSend />}
         </Button>
       </footer>
     </section>

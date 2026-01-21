@@ -16,7 +16,7 @@ export interface LogCartResponseDto {
   statusName: string
   branch: string;
   branchName?: string;
-  
+
   addressId?: number
   transCost?: number;
 
@@ -27,10 +27,13 @@ export interface LogCartResponseDto {
   ivaPantalla?: number
   subTotal?: number
   propina?: number
+  
   retiraSucursal?: string;
   observacion?: string;
   wherehouse?: string;
   wherehouseCode?: string;
+    destinationBranchCode?: string;
+  destinationWherehouseCode?: string;
 }
 
 export interface LogCartRequestDto {
@@ -39,8 +42,8 @@ export interface LogCartRequestDto {
   conversationId: number
   statusId: number
   branch?: string;
-    branchName?: string;
-  
+  branchName?: string;
+
   addressId?: number
   transCost?: number;
 
@@ -53,9 +56,11 @@ export interface LogCartRequestDto {
   propina?: number
 
   retiraSucursal?: string;
-    observacion?: string
-     wherehouse?: string;
-       wherehouseCode?: string;
+  observacion?: string
+  wherehouse?: string;
+  wherehouseCode?: string;
+  destinationBranchCode?: string;
+  destinationWherehouseCode?: string;
 }
 
 export interface LogCartFormValues {
@@ -65,7 +70,7 @@ export interface LogCartFormValues {
   statusId: number
   branch?: string
   branchName?: string;
-  
+
   addressId?: number
   transCost?: number;
 
@@ -78,7 +83,9 @@ export interface LogCartFormValues {
   propina?: number
 
   retiraSucursal?: string;
-    observacion?: string
-     wherehouse?: string;
-       wherehouseCode?: string;
+  observacion?: string
+  wherehouse?: string;
+  wherehouseCode?: string;
+    destinationBranchCode?: string;
+  destinationWherehouseCode?: string;
 }

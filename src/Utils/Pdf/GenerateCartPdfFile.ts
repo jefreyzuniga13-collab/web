@@ -127,10 +127,11 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
   const labelX = boxX + 4
   const valueX = boxX + boxWidth - 4
 
-  const subtotal = sanitizeMoney(invoiceTotalsDto.subTotal)
-  const descuento = sanitizeMoney(invoiceTotalsDto.descuento)
-  const iva = sanitizeMoney(invoiceTotalsDto.iva)
-  const totalBase = sanitizeMoney(opts?.finalTotal)
+const subtotal = sanitizeMoney(invoiceTotalsDto?.subTotal ?? 0)
+const descuento = sanitizeMoney(invoiceTotalsDto?.descuento ?? 0)
+const iva = sanitizeMoney(invoiceTotalsDto?.iva ?? 0)
+const totalBase = sanitizeMoney(opts?.finalTotal ?? 0)
+
 
   let lineY = y + 6
   doc.text("Subtotal:", labelX, lineY)

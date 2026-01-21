@@ -81,6 +81,7 @@ type LogCartUpdateRequestDto = {
   subTotal?: number | null
   observacion?: string | null
   retiraSucursal?: "S" | "N" | null
+  
 }
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
