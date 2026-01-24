@@ -34,6 +34,7 @@ export function useUserRoles() {
     
       // Determinar si es admin o support
       setIsAdmin(userRoles.includes('Admin'));
+      setIsAdmin(userRoles.includes('Root'));
       setIsSupport(userRoles.includes('Support'));
       
       setUserId(decoded.sub || decoded.nameid || '');

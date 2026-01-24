@@ -58,7 +58,7 @@ export default function TicketModal({
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken } = JSON.parse(authRaw) as AuthStorage
   const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin'
+  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'root'
 
   const { createTicket, error, loading } = useTicketDetail()
   const { users, loading: usersLoading, page, pageSize, setPage, totalCount } = useUsers()

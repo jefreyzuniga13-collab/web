@@ -85,4 +85,5 @@ export const nameTranslations: Record<NameTranslation, string> = {
   MensajeConfirmarCarrito: "MensajeConfirmarCarrito",
   MensajeReaudarCarrito: "MensajeReaudarCarrito",
   MensajeCarritoEnProceso: "MensajeCarritoEnProceso",
+  AsignacionAutomatica: "AsignacionAutomatica"
 };

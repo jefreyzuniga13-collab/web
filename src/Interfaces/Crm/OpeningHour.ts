@@ -86,7 +86,8 @@ export type NameTranslation =
   | "MensajeConfirmarCarrito"
   | "MensajeReaudarCarrito"
   | "MensajeCarritoEnProceso"
-  | "MensajeTicketCreado";
+  | "MensajeTicketCreado"
+  | "AsignacionAutomatica";
 
   export type TypeTranslation =
   | 'Prompts'

@@ -30,8 +30,13 @@ import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
 import "@/Styles/Ecommerce/CheckoutPage.css";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+import { sendMediaEcommerce
+  // , sendText 
+} from "@/Services/chat/MessageService";
+import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
 // import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
 // import { sendMediaEcommerce } from "@/Services/chat/MessageService";
+import {InvoiceOrderService} from '@/Services/Ecommerce/InvoiceOrderService'
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -124,7 +129,7 @@ const CheckoutPage: React.FC = () => {
   const [selectedCoords, setSelectedCoords] = useState<Coords | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(null);
 
-  const [cashAmount, setCashAmount] = useState<number>(0);
+  const [cashAmount, setCashAmount] = useState<number>(1);
   const [tip, setTip] = useState<number>(0);
 
   const [transferAmount, setTransferAmount] = useState<number>(0);
@@ -547,7 +552,11 @@ const CheckoutPage: React.FC = () => {
         const lat2 = Number(locked.latitud);
         const lon2 = Number(locked.longitud);
         if ([lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))) return 0;
-        return calculateDistance(lat1, lon1, lat2, lon2);
+        
+        const data =  calculateDistance(lat1, lon1, lat2, lon2);
+
+        console.log("data", data)
+        return data;
       })();
 
       const cost = Number(lockedTranspCost ?? 0);
@@ -611,6 +620,7 @@ const CheckoutPage: React.FC = () => {
     if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
     try {
+      console.log("Calcular el tranbsporte es ")
       const preview = await computeTransportPreview(coords);
       if (!preview) return void toastError("No fue posible calcular el costo de transporte.");
       setStep("currency");
@@ -661,10 +671,11 @@ const CheckoutPage: React.FC = () => {
     let fechaOVence = "";
     let ultDigito = "";
 
-    const total: number = Number(
+    const total: number = 
+    Number(
       ((existingLog?.totalEnPantalla ?? 0) + (transpCost && transpCost > 0
         ? transpCost
-        : existingLog?.transCost ?? 0) + tip)
+        :  0) + tip)
     );
 
 
@@ -687,11 +698,13 @@ const CheckoutPage: React.FC = () => {
       fechaOVence = safeStr(cardForm.expiry);
     }
 
-    const montoA =
-      moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
+    // const montoA = moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
 
     const tipoPago = isCash ? "" : safeStr(tipo);
 
+    console.log("Vuelto", monto - cashAmount)
+    console.log("total",  total)
+    console.log("monto",  monto)
     return {
       numPago: "1",
       concepto: isCash
@@ -704,10 +717,10 @@ const CheckoutPage: React.FC = () => {
       aplicaCambio: "True",
       codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
       banco: banco || (isCash ? "00" : ""),
-      monto: Number(monto),
+      monto: isCash ? Number(cashAmount): monto ,
       moneda,
-      montoA: Number(montoA),
-      cambio: isCash ? Number(monto - total) : 0,
+      montoA: isCash ? Number(cashAmount): monto,
+      cambio: isCash ? Number(cashAmount - monto) : 0,
       tasaCambio: Number(tasaCambio),
       Fecha_o_Vence: isCard ? fechaOVence : "",
       Dll: "",
@@ -895,7 +908,7 @@ const CheckoutPage: React.FC = () => {
         { key: "pasaiva", value: pasaiva },
       ];
 
-      const fallo = flags.find(f => f.value === "N");
+      const fallo = flags.find(f => f.value === "N" || f.value === null);
 
       if (fallo) {
         toast.error(`(${errores[fallo.key]})`);
@@ -921,7 +934,8 @@ const CheckoutPage: React.FC = () => {
           aplicaPropina: "N",
           observacion: existingLog?.observacion ?? "",
           hayFormaPago: "S",
-          retiraSucursal: existingLog?.retiraSucursal != undefined ? String(existingLog?.retiraSucursal) : "N"
+          retiraSucursal: existingLog?.retiraSucursal != null ? String(existingLog?.retiraSucursal) : "N",
+          serie: existingLog?.serie != null ? existingLog?.serie: "F"
         };
 
         const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura, TotalesPantallaReq);
@@ -935,37 +949,12 @@ const CheckoutPage: React.FC = () => {
         const insertFacRes = await InsertaFacturaAsync(invoiceReqFinal);
         if (insertFacRes?.success) {
 
-          // const maquinaSucursal : PrintFactura = {
-            
-          // }
-
-          // const resPrintPDF = await PrintDetFacAsync(res.data);
-
-          // if (resPrintPDF) {
-          //   const pdfBlob = generateOrdeFacPDFFile(resPrintPDF);
-
-          //   if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
-          //     throw new Error("El PDF generado está vacío o inválido.");
-          //   }
-
-          //   const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
-          //   const magic = String.fromCharCode(...head);
-          //   if (magic !== "%PDF-") {
-          //     throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
-          //   }
-
-          //   const noFactura = String(resPrintPDF.DatosGenerales?.NoFactura ?? "").trim();
-          //   const fileName = `Factura-${noFactura || "SN"}.pdf`;
-
-          //   const mime = pdfBlob.type || "application/pdf";
-          //   const file = new File([pdfBlob], fileName, { type: mime });
-
-          //   await sendMediaEcommerce(payload!.conversationId, file, "");
-          // }
-
+          // const draftKey = useMemo(() => `cartDraft:v1:${existingLog != null ? existingLog.conversationId: 0}:${existingLog != null ? existingLog.contactId : 0}`, [conversationId, contactId])
+      
           const existingLog = await fetchByContactId(payload!.contactId);
           if (existingLog?.id) {
             await UpdatedStatus(existingLog.id, 3);
+
           }
 
           await UserSessionService.revokeCartTempLink(orderId);
@@ -973,6 +962,34 @@ const CheckoutPage: React.FC = () => {
 
           if ((await limRes).success) dispatch(setContactCartBadge({ contactId: payload!.contactId, hasCart: false, count: 0 }));
           else toast.error((await limRes).message);
+
+
+          const date = dayjs().format("YYYYMMDD");
+          const resPrintPDF = await InvoiceOrderService.PrintDetFac(codSucursalFactura, date, dataconse?.data?.consecutivo, 8);
+
+          console.log("resPrintPDF", resPrintPDF)
+          if (resPrintPDF) {
+            const pdfBlob = generateOrdeFacPDFFile(resPrintPDF.data);
+
+            if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+              throw new Error("El PDF generado está vacío o inválido.");
+            }
+
+            const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
+            const magic = String.fromCharCode(...head);
+            if (magic !== "%PDF-") {
+              throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
+            }
+
+            const noFactura = String(resPrintPDF.data.DatosGenerales?.NoFactura ?? "").trim();
+            
+            const fileName = `Factura-${noFactura || "SN"}.pdf`;
+
+            const mime = pdfBlob.type || "application/pdf";
+            const file = new File([pdfBlob], fileName, { type: mime });
+
+            await sendMediaEcommerce(payload!.conversationId, file, "");
+          }
 
           navigate("/successOrder", { replace: true });
         } else {
@@ -1032,36 +1049,45 @@ const CheckoutPage: React.FC = () => {
             )}
 
             {step === "paymentMethod" && (
-              <PaymentMethodComponent
-                step={step}
-                setStep={setStep}
-                method={method}
-                distanceKm={distanceKm}
-                transpCost={transpCost}
-                cardForm={cardForm}
-                tip={tip}
-                setTip={setTip}
-                onExpiryChange={onExpiryChange}
-                onCardNumberChange={onCardNumberChange}
-                onCvcChange={onCvcChange}
-                onNameChange={onNameChange}
-                cashAmount={cashAmount}
-                setCashAmount={setCashAmount}
-                transferAmount={transferAmount}
-                setTransferAmount={setTransferAmount}
-                transfer={transferRef}
-                setTransfer={setTransferRef}
-                payNowDisabled={payNowDisabled}
-                payNowLock={payNowLock}
-                handlePayNow={handlePayNow}
-                divisaLoading={divisaLoading}
-                divisaOpts={divisaOpts}
-                divisaSelected={divisaSelected}
-                setDivisaSelected={setDivisaSelected}
-                carPCG={carPCG}
-                totalPagar={totalPagar}
-                existingLog={existingLog}
+              payNowDisabled ? 
+              <div>
+
+                {/* <img src={} alt={} /> */}
+                
+                Cargando
+              </div>
+              : (
+                <PaymentMethodComponent
+                  step={step}
+                  setStep={setStep}
+                  method={method}
+                  distanceKm={distanceKm}
+                  transpCost={transpCost}
+                  cardForm={cardForm}
+                  tip={tip}
+                  setTip={setTip}
+                  onExpiryChange={onExpiryChange}
+                  onCardNumberChange={onCardNumberChange}
+                  onCvcChange={onCvcChange}
+                  onNameChange={onNameChange}
+                  cashAmount={cashAmount}
+                  setCashAmount={setCashAmount}
+                  transferAmount={transferAmount}
+                  setTransferAmount={setTransferAmount}
+                  transfer={transferRef}
+                  setTransfer={setTransferRef}
+                  payNowDisabled={payNowDisabled}
+                  payNowLock={payNowLock}
+                  handlePayNow={handlePayNow}
+                  divisaLoading={divisaLoading}
+                  divisaOpts={divisaOpts}
+                  divisaSelected={divisaSelected}
+                  setDivisaSelected={setDivisaSelected}
+                  carPCG={carPCG}
+                  totalPagar={totalPagar}
+                  existingLog={existingLog}
               />
+              )
             )}
           </div>
         </div>

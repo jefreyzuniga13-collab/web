@@ -59,7 +59,7 @@ export const addProductToCarAsync = createAsyncThunk<
   CarDto,
   { rejectValue: string }
 >("cart/addProductToCar", async (req, { rejectWithValue }) => {
-  try {
+  // try {
     const res = await CartService.AddProductToCar(req);
 
     if (!res.success) {
@@ -68,11 +68,11 @@ export const addProductToCarAsync = createAsyncThunk<
     }
 
     return res.data;
-  } catch (error: unknown) {
-    const message = errMsg(error, "Error al agregar al carrito");
-    toast.error(message);
-    return rejectWithValue(message);
-  }
+  // } catch (error: unknown) {
+  //   // const message = errMsg(error, "Error al agregar al carrito");
+  //   // toast.error(message);
+  //   return rejectWithValue(message);
+  // }
 });
 
 
@@ -89,14 +89,16 @@ export const addProductTempoAsync = createAsyncThunk<
       // Mostrar este mensaje, si da errro, o similar
       //no el quemado de catch
       toast.error(res.data.header.msj);
-      return rejectWithValue(res.message);
+      return rejectWithValue(res.data.header.msj);
     }
 
     return res.data;
     
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: unknown) {
-    const message = errMsg(error, "Error al agregar al carrito");
-    toast.error(message);
+    // const message = errMsg("Bodega no valida");
+    const message = "Producto en bodega no valido";
+    // toast.error(message);
     return rejectWithValue(message);
   }
 });
@@ -124,7 +126,7 @@ export const updateCarAsync = createAsyncThunk<
   { idUsuario: number; noPedido: number; codProducto: string; unico: string },
   { rejectValue: string }
 >("cart/updateCar", async ({ idUsuario, noPedido, codProducto, unico }, { rejectWithValue }) => {
-  try {
+  // try {
     const res = await CartService.removeProductFromCar(idUsuario, noPedido, codProducto, unico);
 
     if (!res.success) {
@@ -133,11 +135,11 @@ export const updateCarAsync = createAsyncThunk<
     }
 
     return res.data;
-  } catch (error: unknown) {
-    const message = errMsg(error, "Error al actualizar el carrito");
-    toast.error(message);
-    return rejectWithValue(message);
-  }
+  // } catch (error: unknown) {
+  //   const message = errMsg(error, "Error al actualizar el carrito");
+  //   toast.error(message);
+  //   return rejectWithValue(message);
+  // }
 });
 
 // Agregar varios productos al carrito normal
@@ -145,15 +147,16 @@ export const addProductsToCarAsync = createAsyncThunk<
   CarDto[],
   CarDto[],
   { rejectValue: string }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 >("cart/addProductsToCar", async (req, { rejectWithValue }) => {
-  try {
+  // try {
     const data = await CartService.AddProductsToCar(req);
     return data;
-  } catch (error: unknown) {
-    const message = errMsg(error, "Error al agregar productos al carrito");
-    toast.error(message);
-    return rejectWithValue(message);
-  }
+  // } catch (error: unknown) {
+  //   // const message = errMsg(error, "Error al agregar productos al carrito");
+  //   // toast.error(message);
+  //   return rejectWithValue("");
+  // }
 });
 
 
@@ -193,7 +196,7 @@ export const cartSlice = createSlice({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(addProductTempoAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error =  "Error al agregar al carrito";
+        // state.error =  "Error al agregar al carrito";
       });
 
     // ===== COMPATIBILIDAD (carrito normal: agregar 1) =====
@@ -206,9 +209,10 @@ export const cartSlice = createSlice({
         state.loading = false;
         state.carPCG = action.payload;
       })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(addProductToCarAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Error al agregar al carrito";
+        // state.error = action.payload ?? "Error al agregar al carrito";
       });
 
     // ===== CARRITO NORMAL: agregar varios =====
@@ -221,9 +225,10 @@ export const cartSlice = createSlice({
         state.loading = false;
         state.carPCG = action.payload;
       })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(addProductsToCarAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Error al agregar productos al carrito";
+        // state.error = action.payload ?? "Error al agregar productos al carrito";
       });
 
     // ===== CARRITO NORMAL: obtener =====
@@ -251,9 +256,10 @@ export const cartSlice = createSlice({
         state.loading = false;
         state.carPCG = action.payload;
       })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(updateCarAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Error al actualizar el carrito";
+        // state.error = action.payload ?? "Error al actualizar el carrito";
       });
   },
 });

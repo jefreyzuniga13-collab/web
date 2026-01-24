@@ -16,6 +16,7 @@ export interface LogCartResponseDto {
   statusName: string
   branch: string;
   branchName?: string;
+  serie?: string;
 
   addressId?: number
   transCost?: number;
@@ -32,8 +33,8 @@ export interface LogCartResponseDto {
   observacion?: string;
   wherehouse?: string;
   wherehouseCode?: string;
-    destinationBranchCode?: string;
-  destinationWherehouseCode?: string;
+  destinationBranchCode?: string
+  destinationWherehouseCode?: string
 }
 
 export interface LogCartRequestDto {
@@ -55,12 +56,13 @@ export interface LogCartRequestDto {
   subTotal?: number
   propina?: number
 
+  serie?: string;
   retiraSucursal?: string;
   observacion?: string
   wherehouse?: string;
   wherehouseCode?: string;
-  destinationBranchCode?: string;
-  destinationWherehouseCode?: string;
+  destinationBranchCode?: string
+  destinationWherehouseCode?: string
 }
 
 export interface LogCartFormValues {
@@ -82,10 +84,38 @@ export interface LogCartFormValues {
   subTotal?: number
   propina?: number
 
+    serie?: string;
   retiraSucursal?: string;
   observacion?: string
   wherehouse?: string;
   wherehouseCode?: string;
-    destinationBranchCode?: string;
-  destinationWherehouseCode?: string;
+  destinationBranchCode?: string
+  destinationWherehouseCode?: string
+}
+
+
+// Actualizar
+export interface LogCartUpdateRequestDto {
+  orderId: number
+  contactId: number
+  userId: number
+  conversationId: number
+  statusId: number
+  branch?: string | null
+  branchName?: string | null
+  serie?: string;
+  addressId?: number | null
+  transCost?: number | null
+  wherehouse?: string | null
+  wherehouseCode?: string | null
+  totalEnPantalla?: number | null
+  descuentoPantalla?: number | null
+  ivaPantalla?: number | null
+  exonerado?: string | null
+  propina?: number | null
+  subTotal?: number | null
+  observacion?: string | null
+  retiraSucursal?: "S" | "N" | null
+  destinationBranchCode?: string
+  destinationWherehouseCode?: string
 }

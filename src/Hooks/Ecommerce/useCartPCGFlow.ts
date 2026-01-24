@@ -18,6 +18,7 @@ export type LockedInfo = {
   branchName: string
   wherehouse: string
   wherehouseCode: string
+  serie?: string;
 }
 
 export type AddProductParams = {
@@ -28,6 +29,7 @@ export type AddProductParams = {
   branchName?: string
   wherehouse?: string
   wherehouseCode?: string
+  serie?: string;
   onDoneUiReset?: boolean
 }
 
@@ -36,6 +38,7 @@ type PickerSelectValue = {
   sucursal: string
   nombodega?: string
   codBodega?: string
+  serie?: string;
 }
 
 export type SucursalPickerProps = {
@@ -73,6 +76,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           branchName: existingLog.branchName ?? "",
           wherehouse: existingLog.wherehouse ?? "",
           wherehouseCode: existingLog.wherehouseCode ?? "",
+          serie: existingLog.serie ?? "",
         })
       }
     }
@@ -156,6 +160,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           branchName: existingLog.branchName ?? "",
           wherehouse: existingLog.wherehouse ?? "",
           wherehouseCode: existingLog.wherehouseCode ?? "",
+          serie: existingLog.serie ?? ""
         }
       }
 
@@ -170,7 +175,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         branch,
         branchName: "",
         wherehouse: "",
-        wherehouseCode: "",   // ← CLAVE
+        wherehouseCode: "", 
+        serie: ""
       }
     },
     [contactId, fetchByContactId]
@@ -190,6 +196,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         branchName: info.branchName,
         wherehouse: info.wherehouse,
         wherehouseCode: info.wherehouseCode,
+        serie: info.serie
       }
 
       await createLogCart(logOrderRequest)
@@ -223,7 +230,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
   const addProductCore = useCallback(
     async (args: AddProductParams, options?: { skipPicker?: boolean }) => {
-      const { product, qty, observacion = "", branch, branchName, wherehouse, wherehouseCode } = args
+      const { product, qty, observacion = "", branch, branchName, wherehouse, wherehouseCode, serie } = args
       const safeQty = Number(qty)
 
       if (!product) return
@@ -231,6 +238,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
       if (locked) {
         const ord = await resolveOrder(locked.branch)
+
         const payload = buildCartRequest(product, safeQty, locked.branch, locked.wherehouseCode, ord.noPedido, observacion)
 
         try {
@@ -246,14 +254,18 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       }
 
       const existingLog = await fetchByContactId(contactId)
+
+
       if (existingLog?.branch && existingLog?.orderId) {
         const lockInfo: LockedInfo = {
           branch: existingLog.branch,
           branchName: existingLog.branchName ?? "",
           wherehouse: existingLog.wherehouse ?? "",
           wherehouseCode: existingLog.wherehouseCode ?? "",
+          serie: existingLog.serie
         }
 
+         console.log("accder a; segund if")
         setLocked(lockInfo)
 
         const payload = buildCartRequest(product, safeQty, lockInfo.branch, lockInfo.wherehouseCode, String(existingLog.orderId), observacion)
@@ -285,6 +297,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         branchName: (branchName ?? ord.branchName ?? "").trim(),
         wherehouse: (wherehouse ?? ord.wherehouse ?? "").trim(),
         wherehouseCode: (wherehouseCode ?? ord.wherehouseCode ?? "").trim(),
+        serie: (serie ?? ord.serie ?? "").trim()
       }
 
       console.log("", lockInfo)
@@ -343,6 +356,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           branchName: v.sucursal,
           wherehouse: v.nombodega ?? "",
           wherehouseCode: v.codBodega ?? "",
+          serie: v.serie ?? ""
         },
         { skipPicker: true }
       )

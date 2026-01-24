@@ -42,7 +42,7 @@ export function useConversations(filter: Filter = 'all', searchConversation: str
   const authRaw = localStorage.getItem('auth') || '{}'
   const { accessToken, userId } = JSON.parse(authRaw) as { accessToken: string,userId: number }
   const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin'
+  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'root' 
   const [form, setForm] = useState<FormInterface>(initialRange())
   const [appliedRange, setAppliedRange] = useState<FormInterface>(initialRange())
   const [conversations, setConversations] = useState<ConversationDto[]>([])

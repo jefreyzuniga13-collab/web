@@ -237,7 +237,7 @@ useEffect(() => {
             <div className="cart-totals__row cart-totals__row--total">
               <span className="cart-totals__label">Total</span>
               <span className="cart-totals__value cart-totals__value--strong">
-                C$ {((existingLog?.totalEnPantalla ?? 0) + (existingLog?.transCost ?? 0 ))}
+                C$ {((existingLog?.totalEnPantalla ?? 0))}
               </span>
 
             </div>

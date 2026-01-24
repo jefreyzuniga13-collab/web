@@ -1,6 +1,6 @@
-/* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useRef, useState } from "react"
+/* eslint-disable no-empty */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Input from "@/Components/Common/Input"
 import type { CarDto, ListDetalleCarrito, InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
 import EmptyCart from "@/assets/emptycard.webp"
@@ -81,7 +81,9 @@ type LogCartUpdateRequestDto = {
   subTotal?: number | null
   observacion?: string | null
   retiraSucursal?: "S" | "N" | null
-  
+  destinationBranchCode?: string
+  destinationWherehouseCode?: string
+  serie?: string;
 }
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
@@ -142,7 +144,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const showAddressButton = !isPickup && !hasManualAddress
 
-  const readDraft = (): DraftState | null => {
+  const readDraft = useCallback((): DraftState | null => {
     try {
       const raw = localStorage.getItem(draftKey)
       if (!raw) return null
@@ -162,15 +164,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } catch {
       return null
     }
-  }
+  }, [draftKey])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const writeDraft = (state: DraftState) => {
     try {
       localStorage.setItem(draftKey, JSON.stringify(state))
     } catch {}
   }
 
-  const calcTotals = async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
+  const calcTotals = useCallback(async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
     if (!contactId) return
     const myReq = ++totalsReqRef.current
 
@@ -204,7 +207,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } finally {
       if (!opts?.silent) setTotalsLoading(false)
     }
-  }
+  },[
+    // addDescription, 
+    contactId, retiraSucursal, selectedAddressId, transCost])
 
   useEffect(() => {
     if (!conversationId || !contactId) return
@@ -220,7 +225,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setSelectedAddressId(draft.selectedAddressId)
     setObservation(draft.observation)
     hydratedRef.current = true
-  }, [draftKey, conversationId, contactId])
+  }, [draftKey, conversationId, contactId, readDraft])
 
   useEffect(() => {
     if (!hydratedRef.current) return
@@ -235,7 +240,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       selectedAddressId,
       observation
     })
-  }, [addDescription, retiraSucursal, transCost, selectedAddressId, observation, draftKey])
+  }, [addDescription, retiraSucursal, transCost, selectedAddressId, observation, draftKey, writeDraft])
 
   useEffect(() => {
     if (isPickup) {
@@ -299,7 +304,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   useEffect(() => {
     if (!contactId) return
     void calcTotals({ cost: debouncedTransCost, pickup: retiraSucursal === "S" })
-  }, [contactId, debouncedTransCost, retiraSucursal, selectedAddressId, addDescription])
+  }, [contactId, debouncedTransCost, retiraSucursal, selectedAddressId, addDescription, calcTotals])
 
   useEffect(() => {
     if (!contactId || !conversationId) return
@@ -353,7 +358,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     }
 
     void loadCart()
-  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey])
+  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey, readDraft, transCost, calcTotals, retiraSucursal])
 
   const ensureEcommerceUser = async (): Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> => {
     if (ensureEcommerceRef.current) return ensureEcommerceRef.current
@@ -453,11 +458,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         transCost: Number(transCost ?? 0),
         totalEnPantalla: Number((invoiceTotalsDto)?.total ?? (log)?.totalEnPantalla ?? 0) || null,
         descuentoPantalla: Number((invoiceTotalsDto)?.descuento ?? (log)?.DescuentoPantalla ?? 0) || null,
-        ivaPantalla: Number((invoiceTotalsDto as any)?.iva ?? (log)?.ivaPantalla ?? 0) || null,
+        ivaPantalla: Number((invoiceTotalsDto)?.iva ?? (log)?.ivaPantalla ?? 0) || null,
         exonerado: (log)?.Exonerado ?? null,
         propina: Number((invoiceTotalsDto)?.propina ?? (log)?.propina ?? 0) || null,
         subTotal: Number((invoiceTotalsDto)?.subTotal ?? (log)?.subTotal ?? 0) || null,
-        observacion: observation ?? ""
+        observacion: observation ?? "",
+
+        // Actualizar cuando estos log estos dos campos son basios o null
+        destinationBranchCode: "",
+        destinationWherehouseCode: "",
+        serie: log.serie
       }
 
       await updatedLogCart(log.id, req as any)
@@ -558,7 +568,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         transCost,
         addressName: addressName.length > 0 ? addressName : null,
         addressText: addressText.length > 0 ? addressText : null,
-        finalTotal: (invoiceTotalsDto?.total ?? 0) +effectiveShipping
+        finalTotal: invoiceTotalsDto?.total
       })
 
       setFile(file)
@@ -589,8 +599,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
   })
 
   const total =
-  (invoiceTotalsDto?.total ?? 0) +
-  effectiveShipping
+  (invoiceTotalsDto?.total ?? 0)
 
   if (retiraSucursal === "S") {
     lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
@@ -664,7 +673,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
       propina: (invoiceTotalsDto)?.propina ?? null,
       subTotal: (invoiceTotalsDto)?.subTotal ?? null,
       exonerado: (log)?.Exonerado ?? null,
-      observacion: observation ?? ""
+      observacion: observation ?? "",
     }
 
     await updatedLogCart(log.id, req as any)
@@ -731,6 +740,8 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
 
       await SendMessageLink(sendLinkRequest)
       setSendChatoading(false)
+
+      localStorage.removeItem(draftKey)
     } catch {
       setSendChatoading(false)
       toast.error("No se pudo enviar el link")
@@ -749,7 +760,10 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
     if (existingLog?.orderId) await handlePersistLog(existingLog, ecommerceUserId)
 
     const req: SendInteractiveMessajeRequestDto = { conversationId, contactId, body: msg }
+    
     await sendInterctiveMessage(req)
+
+    localStorage.removeItem(draftKey)
   }
 
   const Cancel = async () => {
@@ -906,7 +920,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
                     : ""
                 }:`}
               </p>
-              <span className="productTab-content-footer__totalValue">C$ {invoiceTotalsDto.total + effectiveShipping}</span>
+              <span className="productTab-content-footer__totalValue">C$ {invoiceTotalsDto.total}</span>
             </div>
           )}
         </div>

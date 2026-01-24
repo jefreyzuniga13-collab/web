@@ -1,9 +1,10 @@
 import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+// import { formatoNicaragua } from "@/Utils/LocalDateFormat";
 
 type AutoTableDoc = jsPDF & { lastAutoTable?: { finalY: number } };
-type Row = [string, string, string, string];
+type Row = [string, string, string, string, string];
 
 const money = (v: number) =>
   new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO" }).format(v ?? 0);
@@ -21,7 +22,6 @@ const fmtDate = (isoOrText: string) => {
 };
 
 const safeText = (v?: string) => (v ?? "").toString().trim();
-
 export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Blob => {
   const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDoc;
 
@@ -32,27 +32,30 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
   // Header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(`Detalle Pedidio ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
+  doc.text(`Detalle Pedido ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
 
   const yInfo = marginY + 7;
   doc.text(`A nombre de: ${safeText(orderFac.DatosGenerales?.Nombrede)}`, marginX, yInfo);
-  doc.text(`Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`, marginX, yInfo + 6);
 
+  // Espera un date pero es un string, 
+  // doc.text(`Fecha: ${orderFac.DatosGenerales?.FechaFactura}`, marginX, yInfo + 6);
+  doc.text(`Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`, marginX, yInfo + 6);
   // Separador
   doc.setDrawColor(180);
   doc.line(marginX, yInfo + 10, pageWidth - marginX, yInfo + 10);
 
   // Dirección
-  const yDir = yInfo + 16;
-  doc.setFont("helvetica", "bold");
-  doc.text("Dirección:", marginX, yDir);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Nombre: ${safeText(orderFac.DatosDireccion?.Nombre)}`, marginX, yDir + 6);
-  doc.text(`Descripción: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 12);
-  doc.text(`Referencia: ${safeText(orderFac.DatosDireccion?.Referencia)}`, marginX, yDir + 18);
+  const yDir = yInfo + 7;
+  // doc.setFont("helvetica", "bold");
+  // doc.text("Dirección:", marginX, yDir);
+  // doc.setFont("helvetica", "normal");
+  // doc.text(`Nombre: ${safeText(orderFac.DatosDireccion?.Nombre)}`, marginX, yDir + 6);
+  // doc.text(`Cantidad: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 12);
+  doc.text(`Dirección: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 10);
+  // doc.text(`Referencia: ${safeText(orderFac.DatosDireccion?.Referencia)}`, marginX, yDir + 18);
 
   // Tabla del carrito
   const carritoRows: Row[] = [];
@@ -60,19 +63,22 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
   for (const item of orderFac.Carrito ?? []) {
     carritoRows.push([
       safeText(item.Descripcion),
+      safeText(item.Cantidad.toString()),
       safeText(item.UnidadMedida),
       money(item.Precio ?? 0),
       money(item.TotalMenu ?? 0),
     ]);
 
-    for (const op of item.Opciones ?? []) {
-      carritoRows.push([
-        `   ${safeText(op.Descripcion)} (x${op.Cantidad ?? 0})`,
-        safeText(op.UnidadMedida),
-        money(op.Precio ?? 0),
-        money(op.TotalMenu ?? 0),
-      ]);
-    }
+    // Descomentar al usar con asana
+    // for (const op of item.Opciones ?? []) {
+    //   carritoRows.push([
+    //     `   ${safeText(op.Descripcion)}`,
+    //     // safeText(op.Cantidad.toString()),
+    //     safeText(op.UnidadMedida),
+    //     money(op.Precio ?? 0),
+    //     money(op.TotalMenu ?? 0),
+    //   ]);
+    // }
   }
 
   const startCarritoY = yDir + 24;
@@ -81,14 +87,15 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
     startY: startCarritoY,
     theme: "grid",
     styles: { font: "helvetica", fontSize: 9, cellPadding: 2 },
-    head: [["Descripción", "UM", "Precio", "Total"]],
+    head: [["Descripción", 'Cantidad', "UM", "Precio", "Total"]],
     body: carritoRows,
     headStyles: { fillColor: [245, 245, 245], textColor: 20 },
     columnStyles: {
-      0: { halign: "left", cellWidth: 100 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 15 },
-      3: { halign: "left", cellWidth: 25 },
+      0: { halign: "left", cellWidth: 85 },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 25 },
+      4: { cellWidth: 25 },
+      5: { halign: "left", cellWidth: 25 },
     },
   });
 
@@ -105,7 +112,7 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
       ["Descuento:", money(p?.Descuento ?? 0)],
       ["IVA:", money(p?.Iva ?? 0)],
       ["Transporte:", money(p?.Transporte ?? 0)],
-      ["Propina:", money(p?.Propina ?? 0)],
+      // ["Propina:", money(p?.Propina ?? 0)],
       ["Método de pago:", safeText(p?.MetodoPago)],
       [
         { content: "TOTAL A PAGAR:", styles: { fontStyle: "bold" } },

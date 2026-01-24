@@ -44,15 +44,26 @@ export interface Props {
 function safeStr(v: unknown): string {
   return String(v ?? "").trim();
 }
+
 function toNumberNoLeadingZeros(raw: string): number {
+  // Limpieza de espacios y manejo de nulos
   const s = String(raw ?? "").trim();
   if (!s) return 0;
 
-  const digits = s.replace(/[^\d]/g, "");
-  if (!digits) return 0;
+  // Bloquear ceros a la izquierda (ej: "010", "0.5" SI es permitido, "01.5" NO)
+  // Si empieza con 0, el siguiente carácter DEBE ser un punto o nada más.
+  if (s.length > 1 && s.startsWith('0') && s[1] !== '.') {
+    return 0;
+  }
 
-  const normalized = digits.replace(/^0+(?=\d)/, "");
-  const num = Number(normalized);
+  //  Limpiar caracteres no numéricos excepto el PUNTO
+  // Reemplaza todo lo que NO sea dígito o punto
+  const cleaned = s.replace(/[^\d.]/g, "");
+
+  // Convertir a número
+  const num = Number(cleaned);
+
+  // Validar que sea un número real (evita NaN por múltiples puntos como "1.2.3")
   return Number.isFinite(num) ? num : 0;
 }
 
@@ -66,10 +77,8 @@ export const PaymentMethodComponent = ({
   step,
   setStep,
   method,
-  // distanceKm,
   transpCost,
   cardForm,
-  tip,
   onExpiryChange,
   onCvcChange,
   onNameChange,
@@ -160,9 +169,13 @@ export const PaymentMethodComponent = ({
                   id="cashAmount"
                   type="number"
                   inputMode="numeric"
+                  min={1}
                   className="checkout-input"
                   value={cashAmount}
-                  onChange={(e) => setCashAmount(toNumberNoLeadingZeros(e.target.value))}
+                  onChange={
+
+                    (e) => setCashAmount(toNumberNoLeadingZeros(e.target.value))
+                  }
                   onFocus={(e) => e.currentTarget.select()}
                 />
               </div>
@@ -189,11 +202,6 @@ export const PaymentMethodComponent = ({
               </div>
 
               <form className="checkout-cardform" onSubmit={(e) => e.preventDefault()}>
-                {/* <p>
-                  Costo de transporte C$ {n(transpCost)}
-                  {distanceKm > 0 ? ` (${distanceKm.toFixed(2)} km)` : ""}
-                </p> */}
-
                 <div className="checkout-cardform__row">
                   <div className="checkout-field">
                     <label className="checkout-label" htmlFor="expiry">
@@ -301,6 +309,7 @@ export const PaymentMethodComponent = ({
                 <p className="checkout-summary__content">
                   IVA: <span>{existingLog != null ? existingLog.ivaPantalla : ""}</span>
                 </p>
+                
 
                 <span className="checkout-summary__content">
                   Transporte:
@@ -311,11 +320,17 @@ export const PaymentMethodComponent = ({
                   Total:
                   <span className="checkout-summary__content__total">
                     C${" "}
+
+                    {/* {existingLog != null ? existingLog.totalEnPantalla : 0} */}
+                    
                     {existingLog
                       ? (existingLog.totalEnPantalla ?? 0) +
-                      tip +
-                      (transpCost && transpCost > 0 ? transpCost : existingLog?.transCost ?? 0)
-                      : 0}
+                      (
+                        transpCost && transpCost > 0 ? transpCost : 
+                        0)
+                      : 0
+                      }
+
                   </span>
                 </p>
               </div>

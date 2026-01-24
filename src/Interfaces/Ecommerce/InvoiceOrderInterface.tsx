@@ -95,6 +95,7 @@ export interface PrintOrdenFactInterfaceRaw {
     Imagen: string
     UnidadMedida: string
     Precio: number
+    Cantidad: number;
     TotalMenu: number
     Opciones: Array<{
       Codigo: string

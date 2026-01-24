@@ -2,6 +2,7 @@ import {apiPCG} from '@/Utils/ApiConfig'
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import type {InvoiceOrderRequestDto, 
     InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto,
+    PrintOrdenFactInterfaceRaw,
     // PrintOrdenFactInterfaceRaw
 } from '@/Interfaces/Ecommerce/InvoiceOrderInterface'
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
@@ -35,6 +36,17 @@ async CreatePCG(req: FacturaTempo): Promise<ApiPCGResponse<string>>{
     //     )
     //     return data;
     // }
+
+     async PrintDetFac(
+         sucursal: string,
+         fecha: string, 
+        numero : number,
+        servicio: number
+    ): Promise<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>{
+        const {data} = await apiPCG.get<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>(`OrdenFactura/ImprimeOrdenFactura/${sucursal}/${fecha}/${numero}/${servicio}`
+        )
+        return data;
+    }
 
     async GetLastest(idUsuario: number): Promise<ApiPCGResponse<InvoiceOrderInterface>>{
         const {data} = await apiPCG.get<ApiPCGResponse<InvoiceOrderInterface>>(`OrdenFactura/ObtenerUltimaOrden/${idUsuario}`)

@@ -39,7 +39,7 @@ export function useSupportPage() {
   const authRaw = localStorage.getItem("auth") || "{}";
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage;
   const { role } = jwtDecode<JwtPayload>(accessToken);
-  const isAdmin = role.toLowerCase() === "admin";
+  const isAdmin = role.toLowerCase() === "admin" ||  role.toLowerCase() === "root";
   let DEFAULT_OPTIONS: FilterOption[];
 
   const [detailToggle, setDetailToggle] = useState<boolean>(false);
