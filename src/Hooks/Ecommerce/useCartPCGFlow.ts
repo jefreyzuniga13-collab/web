@@ -1,5 +1,5 @@
 // src/Hooks/Ecommerce/useCartPCGFlow.ts
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dayjs from "dayjs"
 import { useDispatch } from "react-redux"
 import type { AppDispatch } from "@/Context"
@@ -18,7 +18,7 @@ export type LockedInfo = {
   branchName: string
   wherehouse: string
   wherehouseCode: string
-  serie?: string;
+  serie?: string
 }
 
 export type AddProductParams = {
@@ -29,7 +29,7 @@ export type AddProductParams = {
   branchName?: string
   wherehouse?: string
   wherehouseCode?: string
-  serie?: string;
+  serie?: string
   onDoneUiReset?: boolean
 }
 
@@ -38,7 +38,7 @@ type PickerSelectValue = {
   sucursal: string
   nombodega?: string
   codBodega?: string
-  serie?: string;
+  serie?: string
 }
 
 export type SucursalPickerProps = {
@@ -49,6 +49,16 @@ export type SucursalPickerProps = {
   selectedCodSucursal: string | null
   onClose: () => void
   onSelect: (v: PickerSelectValue) => void | Promise<void>
+}
+
+type ResolveOrderResult = {
+  existingLog: unknown | null
+  noPedido: string
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
 }
 
 export const useCartPCGFlow = (conversationId: number, contactId: number) => {
@@ -65,23 +75,33 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   const [pendingQuantity, setPendingQuantity] = useState<number>(1)
   const [pendingObservacion, setPendingObservacion] = useState<string>("")
 
+  const hydratedRef = useRef(false)
+
+  // Inicializar el estado del carrito desde backend cuando cambia el contacto.
+  // Evitar rehidrataciones repetidas durante el flujo normal de agregar productos.
   useEffect(() => {
+    hydratedRef.current = false
+    setLocked(null)
+
     const run = async () => {
       if (!contactId) return
-      if (locked) return
+      if (hydratedRef.current) return
+      hydratedRef.current = true
+
       const existingLog = await fetchByContactId(contactId)
       if (existingLog?.branch && existingLog?.orderId) {
-        setLocked({
+        setLocked((prev) => ({
           branch: existingLog.branch,
-          branchName: existingLog.branchName ?? "",
-          wherehouse: existingLog.wherehouse ?? "",
-          wherehouseCode: existingLog.wherehouseCode ?? "",
-          serie: existingLog.serie ?? "",
-        })
+          branchName: existingLog.branchName ?? prev?.branchName ?? "",
+          wherehouse: existingLog.wherehouse ?? prev?.wherehouse ?? "",
+          wherehouseCode: existingLog.wherehouseCode ?? prev?.wherehouseCode ?? "",
+          serie: existingLog.serie ?? prev?.serie ?? "",
+        }))
       }
     }
+
     run()
-  }, [contactId, fetchByContactId, locked])
+  }, [contactId, fetchByContactId])
 
   const buildCartRequest = useCallback(
     (
@@ -92,7 +112,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       noPedido: string,
       observacion: string
     ): DetalleFacturaTempoRequest => {
-
       return {
         sucursal: branch,
         usuario: String(contactId),
@@ -149,8 +168,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   )
 
   const resolveOrder = useCallback(
-    async (branch: string) => {
+    async (branch: string): Promise<ResolveOrderResult> => {
       const existingLog = await fetchByContactId(contactId)
+
+      console.log("[CartFlow] fetchByContactId result:", existingLog)
 
       if (existingLog?.orderId && existingLog?.branch) {
         return {
@@ -160,23 +181,23 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           branchName: existingLog.branchName ?? "",
           wherehouse: existingLog.wherehouse ?? "",
           wherehouseCode: existingLog.wherehouseCode ?? "",
-          serie: existingLog.serie ?? ""
+          serie: existingLog.serie ?? "",
         }
       }
 
       const falote: FaloteRequestDto = { codSucursal: branch, documento: "GetConsecDoc" }
+      console.log("falote", falote)
       const conse = await CartService.GetConsecDocAsync(falote)
       const consecutivo = Number(conse.data.consecutivo)
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        existingLog: null as any,
+        existingLog: null,
         noPedido: String(consecutivo),
         branch,
         branchName: "",
         wherehouse: "",
-        wherehouseCode: "", 
-        serie: ""
+        wherehouseCode: "",
+        serie: "",
       }
     },
     [contactId, fetchByContactId]
@@ -196,7 +217,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         branchName: info.branchName,
         wherehouse: info.wherehouse,
         wherehouseCode: info.wherehouseCode,
-        serie: info.serie
+        serie: info.serie,
       }
 
       await createLogCart(logOrderRequest)
@@ -236,6 +257,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       if (!product) return
       if (!safeQty || safeQty <= 0) return
 
+      // Si ya existe lock, usarlo como fuente de verdad para no depender de respuestas lentas del backend.
       if (locked) {
         const ord = await resolveOrder(locked.branch)
 
@@ -247,14 +269,48 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           toast.error(String(msg))
           return
         }
-
+          console.log("[CartFlow] createLogIfNeeded?",ord)
         await createLogIfNeeded(Number(ord.noPedido), locked, !!ord.existingLog)
         await refreshBadge(Number(ord.noPedido))
         return
       }
 
-      const existingLog = await fetchByContactId(contactId)
+      // Si vienen datos de sucursal/bodega por argumentos (flujo desde picker),
+      // priorizarlos antes de consultar existingLog para evitar condiciones de carrera.
+      if (branch && wherehouseCode) {
+        const ord = await resolveOrder(branch)
 
+        const lockInfo: LockedInfo = {
+          branch: ord.branch,
+          branchName: (branchName ?? ord.branchName ?? "").trim(),
+          wherehouse: (wherehouse ?? ord.wherehouse ?? "").trim(),
+          wherehouseCode: (wherehouseCode ?? ord.wherehouseCode ?? "").trim(),
+          serie: (serie ?? ord.serie ?? "").trim(),
+        }
+
+        if (!lockInfo.wherehouseCode) {
+          toast.error("Debe seleccionar una bodega válida (codBodega).")
+          return
+        }
+
+        const payload = buildCartRequest(product, safeQty, lockInfo.branch, lockInfo.wherehouseCode, ord.noPedido, observacion)
+
+        try {
+          await dispatch(addProductTempoAsync(payload)).unwrap()
+        } catch (msg) {
+          toast.error(String(msg))
+          return
+        }
+
+        await createLogIfNeeded(Number(ord.noPedido), lockInfo, !!ord.existingLog)
+        await refreshBadge(Number(ord.noPedido))
+        setLocked(lockInfo)
+        return
+      }
+
+      // Si no hay lock y tampoco se enviaron datos de sucursal/bodega,
+      // consultar si ya existe LogCart persistido.
+      const existingLog = await fetchByContactId(contactId)
 
       if (existingLog?.branch && existingLog?.orderId) {
         const lockInfo: LockedInfo = {
@@ -262,10 +318,9 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           branchName: existingLog.branchName ?? "",
           wherehouse: existingLog.wherehouse ?? "",
           wherehouseCode: existingLog.wherehouseCode ?? "",
-          serie: existingLog.serie
+          serie: existingLog.serie ?? "",
         }
 
-         console.log("accder a; segund if")
         setLocked(lockInfo)
 
         const payload = buildCartRequest(product, safeQty, lockInfo.branch, lockInfo.wherehouseCode, String(existingLog.orderId), observacion)
@@ -281,43 +336,14 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         return
       }
 
+      // Si no existe LogCart y no se recibió sucursal, solicitar selección.
       if (!branch) {
         if (options?.skipPicker) {
           toast.error("Debe seleccionar una sucursal.")
           return
         }
         await openBranchPickerForProduct(product, safeQty, observacion)
-        return
       }
-
-      const ord = await resolveOrder(branch)
-
-      const lockInfo: LockedInfo = {
-        branch: ord.branch,
-        branchName: (branchName ?? ord.branchName ?? "").trim(),
-        wherehouse: (wherehouse ?? ord.wherehouse ?? "").trim(),
-        wherehouseCode: (wherehouseCode ?? ord.wherehouseCode ?? "").trim(),
-        serie: (serie ?? ord.serie ?? "").trim()
-      }
-
-      console.log("", lockInfo)
-      if (!lockInfo.wherehouseCode) {
-        toast.error("Debe seleccionar una bodega válida (codBodega).")
-        return
-      }
-
-      const payload = buildCartRequest(product, safeQty, lockInfo.branch, lockInfo.wherehouseCode, ord.noPedido, observacion)
-
-      try {
-        await dispatch(addProductTempoAsync(payload)).unwrap()
-      } catch (msg) {
-        toast.error(String(msg))
-        return
-      }
-
-      await createLogIfNeeded(Number(ord.noPedido), lockInfo, !!ord.existingLog)
-      await refreshBadge(Number(ord.noPedido))
-      setLocked(lockInfo)
     },
     [
       locked,
@@ -347,19 +373,18 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
       if (!prod) return
 
-      await addProductCore(
-        {
-          product: prod,
-          qty,
-          observacion: obs,
-          branch: v.codsucursal,
-          branchName: v.sucursal,
-          wherehouse: v.nombodega ?? "",
-          wherehouseCode: v.codBodega ?? "",
-          serie: v.serie ?? ""
-        },
-        { skipPicker: true }
-      )
+      const lockInfo: LockedInfo = {
+        branch: v.codsucursal,
+        branchName: v.sucursal,
+        wherehouse: v.nombodega ?? "",
+        wherehouseCode: v.codBodega ?? "",
+        serie: v.serie ?? "",
+      }
+
+      // Establecer el lock antes de ejecutar operaciones remotas para evitar estados intermedios.
+      setLocked(lockInfo)
+
+      await addProductCore({ product: prod, qty, observacion: obs, ...lockInfo }, { skipPicker: true })
     },
     [addProductCore, pendingObservacion, pendingProduct, pendingQuantity]
   )

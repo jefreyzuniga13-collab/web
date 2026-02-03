@@ -15,6 +15,7 @@ import { useBranchesByProduct } from "@/Hooks/Ecommerce/useBranchesByProduct"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/useProductMessageComposer"
 import { toast } from "react-toastify"
+import type { AddProductParams } from "@/Hooks/Ecommerce/useCartPCGFlow"
 
 interface Props {
   detail: ProductoPCGInterface
@@ -31,15 +32,19 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
   const { sending, sendProductMessage } = useProductMessageComposer()
 
   const { productModifiers, getProductModifiers } = useProductPCG()
-  const { rows: branchRows, loading: loadingBranches } = useBranchesByProduct(detail.codProducto, { enabled: !locked })
+  const { rows: branchRows, loading: loadingBranches } = useBranchesByProduct(detail.codProducto, {
+    enabled: !locked,
+  })
 
   const [branchUiSelected, setBranchUiSelected] = useState<string | null>(null)
   const [branchNameUiSelected, setBranchNameUiSelected] = useState("")
   const [wherehouseUiSelected, setWherehouseUiSelected] = useState("")
   const [wherehouseCodeUiSelected, setWherehouseCodeUiSelected] = useState("")
+  const [serieUiSelected, setSerieCodeUiSelected] = useState("")
 
-  const [selectedOptions] = useState<Record<string, string[]>>({})
-  const [optionQuantities] = useState<Record<string, number>>({})
+  // Nota: si aún no implementas opciones, esto evita estado "congelado" innecesario
+  const selectedOptions = useMemo(() => ({} as Record<string, string[]>), [])
+  const optionQuantities = useMemo(() => ({} as Record<string, number>), [])
 
   const sendLockRef = useRef(false)
   const addLockRef = useRef(false)
@@ -49,6 +54,7 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
     getProductModifiers(detail.codProducto)
   }, [detail.codProducto, detail.tieneOpcion, getProductModifiers])
 
+  // Seleccionar automáticamente la primera sucursal disponible
   useEffect(() => {
     if (!branchRows.length || locked) return
     const first = branchRows[0]
@@ -56,6 +62,7 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
     setBranchNameUiSelected(first.sucursal ?? "")
     setWherehouseUiSelected(first.nombodega ?? "")
     setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
+    setSerieCodeUiSelected((first.serie ?? "").trim())
   }, [branchRows, locked])
 
   const optionIndex = useMemo(() => {
@@ -101,15 +108,27 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
       if (cantidad <= 0) return
       if (!validateRequiredModifiers()) return
 
-      await addProduct({
-        product: detail,
-        qty: cantidad,
-        observacion,
-        branch: locked?.branch ?? branchUiSelected ?? undefined,
-        branchName: locked?.branchName ?? branchNameUiSelected ?? undefined,
-        wherehouse: locked?.wherehouse ?? wherehouseUiSelected ?? undefined,
-        wherehouseCode: locked?.wherehouseCode ?? wherehouseCodeUiSelected ?? undefined,
-      })
+          const payload: AddProductParams = {
+            product: detail,
+            qty: cantidad,
+            observacion,
+          }
+
+          if (locked) {
+            payload.branch = locked.branch
+            payload.branchName = locked.branchName
+            payload.wherehouse = locked.wherehouse
+            payload.wherehouseCode = locked.wherehouseCode
+            payload.serie = locked.serie
+          } else if (branchUiSelected && wherehouseCodeUiSelected) {
+            payload.branch = branchUiSelected
+            payload.branchName = branchNameUiSelected
+            payload.wherehouse = wherehouseUiSelected
+            payload.wherehouseCode = wherehouseCodeUiSelected
+            payload.serie =serieUiSelected
+          }
+
+          await addProduct(payload)
 
       setCantidad(1)
       setDetailProduct(null)
@@ -119,20 +138,18 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
     }
   }, [
     addProduct,
-    branchNameUiSelected,
-    branchUiSelected,
     cantidad,
-    detail,
-    locked?.branch,
-    locked?.branchName,
-    locked?.wherehouse,
-    locked?.wherehouseCode,
     observacion,
+    detail,
+    locked,
+    branchUiSelected,
+    branchNameUiSelected,
+    wherehouseUiSelected,
+    wherehouseCodeUiSelected,
+    serieUiSelected,
     setDetailProduct,
     setselectedCategory,
     validateRequiredModifiers,
-    wherehouseCodeUiSelected,
-    wherehouseUiSelected,
   ])
 
   const handleSendMessage = useCallback(async () => {
@@ -173,29 +190,44 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
             </p>
           )}
 
+          {/* Sucursales: siempre lista + check a la par */}
           {!locked && !loadingBranches && (
             <div className="detail-product__branchList">
-              {branchRows.map((b) => (
-                <button
-                  key={`${b.codsucursal}-${b.codbodega}`}
-                  className={`detail-product__branchItem ${
-                    branchUiSelected === b.codsucursal ? "detail-product__branchItem--active" : ""
-                  }`}
-                  type="button"
-                  onClick={() => {
-                    setBranchUiSelected(b.codsucursal)
-                    setBranchNameUiSelected(b.sucursal ?? "")
-                    setWherehouseUiSelected(b.nombodega ?? "")
-                    setWherehouseCodeUiSelected((b.codbodega ?? "").trim())
-                  }}
-                >
-                  <span>{b.codsucursal}</span>
-                  <span>{b.sucursal}</span>
-                  <span>
-                    {b.existencia} {b.medida}
-                  </span>
-                </button>
-              ))}
+              {branchRows.map((b) => {
+                const whCode = (b.codbodega ?? "").trim()
+                const isActive = branchUiSelected === b.codsucursal && wherehouseCodeUiSelected === whCode
+
+                return (
+                  <button
+                    key={`${b.codsucursal}-${b.codbodega}`}
+                    className={`detail-product__branchItem ${isActive ? "detail-product__branchItem--active" : ""}`}
+                    type="button"
+                    onClick={() => {
+                      setBranchUiSelected(b.codsucursal)
+                      setBranchNameUiSelected(b.sucursal ?? "")
+                      setWherehouseUiSelected(b.nombodega ?? "")
+                      setWherehouseCodeUiSelected(whCode)
+                      setSerieCodeUiSelected(b.serie)
+                    }}
+                  >
+                    <div className="detail-product__branchItemMain">
+                      <span className="detail-product__branchCode">{b.codsucursal}</span>
+                      <span className="detail-product__branchName">{b.sucursal}</span>
+                      <span className="detail-product__branchSerie">{b.nombodega}</span>
+                    </div>
+
+                    <div className="detail-product__branchItemMeta">
+                      <span className="detail-product__branchStock">
+                        {b.existencia} {b.medida}
+                      </span>
+
+                      <span className={`detail-product__branchCheck ${isActive ? "isActive" : ""}`}>
+                        {isActive ? "✓" : ""}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -224,12 +256,7 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
           className="detail-product__inputNumber"
         />
 
-        <button
-          type="button"
-          className="productTab-buyButton"
-          onClick={handleAddToCart}
-          disabled={actionsDisabled}
-        >
+        <button type="button" className="productTab-buyButton" onClick={handleAddToCart} disabled={actionsDisabled}>
           <FaShoppingCart />
         </button>
 

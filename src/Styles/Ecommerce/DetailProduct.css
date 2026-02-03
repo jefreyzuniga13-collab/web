@@ -356,3 +356,89 @@
   margin-top: 10px;
   opacity: 0.85;
 }
+
+/* ===============================
+   Lista de sucursales con CHECK
+   =============================== */
+
+.detail-product__branchList{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* Item de sucursal */
+.detail-product__branchItem{
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+/* Activo */
+.detail-product__branchItem--active{
+  border-color: rgba(37, 99, 235, 0.65);
+  background: rgba(37, 99, 235, 0.10);
+}
+
+/* Contenido izquierdo */
+.detail-product__branchItemMain{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.detail-product__branchCode{
+  font-weight: 700;
+}
+
+.detail-product__branchName{
+  opacity: 0.95;
+}
+
+.detail-product__branchSerie{
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Meta derecha */
+.detail-product__branchItemMeta{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.detail-product__branchStock{
+  font-weight: 700;
+}
+
+/* CHECK */
+.detail-product__branchCheck{
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  transition: all .15s ease;
+}
+
+.detail-product__branchCheck.isActive{
+  color: #2563eb;
+}

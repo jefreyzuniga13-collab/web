@@ -1,18 +1,23 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { Provider } from 'react-redux'
-import { BrowserRouter } from 'react-router-dom'
-import App from '@/App'
-import { store } from '@/Context'
-import '@/index.css'
-import { setupResponseInterceptor } from '@/Interceptors/responseInterceptor'
-import { setupRequestInterceptor }  from '@/Interceptors/requestInterceptor'
+import React from "react"
+import ReactDOM from "react-dom/client"
+import { Provider } from "react-redux"
+import { BrowserRouter } from "react-router-dom"
+import App from "@/App"
+import { store } from "@/Context"
+import "@/index.css"
 
+import api, { apiPCG } from "@/Utils/ApiConfig"
+import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
+import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
+import { setupNetworkInterceptor } from "@/Utils/setupInterceptors"
 
-setupResponseInterceptor();
-setupRequestInterceptor();
+setupRequestInterceptor(api)
+setupResponseInterceptor(api)      // refresh solo en CRM
+setupNetworkInterceptor(api)
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+setupNetworkInterceptor(apiPCG)    // timeout/network para PCG también
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>

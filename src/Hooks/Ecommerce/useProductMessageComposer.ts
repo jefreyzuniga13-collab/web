@@ -83,7 +83,7 @@ export const useProductMessageComposer = () => {
 
         const obsText =
           observation && observation.trim().length > 0
-            ? `\n\n*📝 Nota:* ${observation.trim()}`
+            ? `\n\n*📝 Observación :* ${observation.trim()}`
             : ""
 
         const caption = `${base}${modsText}${obsText}`.trim()

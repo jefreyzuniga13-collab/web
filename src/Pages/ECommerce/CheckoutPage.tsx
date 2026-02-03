@@ -983,7 +983,7 @@ const CheckoutPage: React.FC = () => {
 
             const noFactura = String(resPrintPDF.data.DatosGenerales?.NoFactura ?? "").trim();
             
-            const fileName = `Factura-${noFactura || "SN"}.pdf`;
+            const fileName = `Pedido-${noFactura || "SN"}.pdf`;
 
             const mime = pdfBlob.type || "application/pdf";
             const file = new File([pdfBlob], fileName, { type: mime });

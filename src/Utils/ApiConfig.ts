@@ -19,7 +19,7 @@ const apiPCG = axios.create({
   headers: {
     Accept: 'application/json',
   },
-  timeout: 50000,
+  timeout: 120000,
 });
 
 export default api;

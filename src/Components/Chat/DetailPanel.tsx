@@ -73,6 +73,7 @@ const DetailPanel: React.FC<Props> = ({
       window.removeEventListener("CartReloadForActiveContact", onReload);
   }, [contactId, dispatch]);
   
+  console.log("[ProductTab] contactId:", contactId)
   return (
     <div
       key={`${contactId ?? "c"}-${conversationId ?? "v"}-${
