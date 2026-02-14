@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Auth/ContactInterface'
-import { useInnova } from '@/Hooks/Crm/useInnova'
+// import { useInnova } from '@/Hooks/Crm/useInnova'
 
 type Mode = 'create' | 'edit' | 'view'
 
@@ -24,16 +24,16 @@ interface FormErrors {
 export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
   const isView = mode === 'view'
 
-  const {
-    data: clients,
-    loading: clientsLoading,
-    error: clientsError,
-    getAllAsync,
-  } = useInnova()
+  // const {
+  //   data: clients,
+  //   loading: clientsLoading,
+  //   error: clientsError,
+  //   getAllAsync,
+  // } = useInnova()
 
-  useEffect(() => {
-    getAllAsync()
-  }, [])
+  // useEffect(() => {
+  //   getAllAsync()
+  // }, [])
 
   const [form, setForm] = useState<ContactFormValues>({
     waName: null,
@@ -150,15 +150,15 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     (field: keyof ContactFormValues, value: any) => {
       setForm(f => {
         const next = { ...f, [field]: value }
-        if (field === 'clientId' && Array.isArray(clients) && clients.length) {
-          const v = String(value)
-          const selected = clients.find((c: any) => String(c.clientId) === v)
-          next.companyName = selected?.clientId ?? ''
-        }
+        // if (field === 'clientId' && Array.isArray(clients) && clients.length) {
+        //   const v = String(value)
+        //   const selected = clients.find((c: any) => String(c.clientId) === v)
+        //   next.companyName = selected?.clientId ?? ''
+        // }
         return next
       })
     },
-    [clients]
+    []
   )
 
   const handleCheckbox = useCallback(
@@ -182,9 +182,9 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     form,
     errors,
     isView,
-    clients,
-    clientsLoading,
-    clientsError,
+    // clients,
+    // clientsLoading,
+    // clientsError,
     handleChange,
     handleSelect,
     handleCheckbox,

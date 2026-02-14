@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import {
   getConversation,
-  closeConversation,
+  // closeConversation,
   SetHaltedConversation
 } from "@/Services/chat/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
@@ -102,23 +102,32 @@ export function useSupportPage() {
       fetchByName('OpcionesRapidas')
     }, [convId, fetchByName])
   
-  const handleAfterAssign = () => {
-    if (!convId) return;
-    getConversation(convId)
-      .then((res) => setConversation(res.data.data))
-      .catch(console.error);
-  };
+  // const handleAfterAssign = () => {
+  //   if (!convId) return;
+  //   getConversation(convId)
+  //     .then((res) => setConversation(res.data.data))
+  //     .catch(console.error);
+  // };
 
-  const handleAssignClick = () => {
+  // const handleAssignClick = () => {
+  //   if (!convId || !conversation) return;
+  //   if (isAdmin) {
+  //     dispatch(openAssignModal(conversation));
+  //   } else {
+  //     closeConversation(convId).then(handleAfterAssign).catch(console.error);
+  //   }
+  // };
+
+   const handleAssignClick = () => {
     if (!convId || !conversation) return;
-    if (isAdmin) {
+    // if (isAdmin) {
       dispatch(openAssignModal(conversation));
-    } else {
-      closeConversation(convId).then(handleAfterAssign).catch(console.error);
-    }
+    // } else {
+    //   closeConversation(convId).then(handleAfterAssign).catch(console.error);
+    // }
   };
 
-  
+
   const handleSetHaltedConversation = useCallback(async () => {
     if (!convId || !conversation || !isAdmin) return
     try {

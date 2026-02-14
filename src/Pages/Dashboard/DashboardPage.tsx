@@ -15,6 +15,9 @@ import type { WaitingClientResponseDto } from "@/Interfaces/Dashboard/DashboardI
 import { format, toZonedTime } from "date-fns-tz";
 import { parseISO, parse } from "date-fns";
 import RatingStars from '@/Utils/ConvertToStarts'
+import { ImWhatsapp } from "react-icons/im";
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 
 const DashboardPage: React.FC = () => {
   const {
@@ -113,6 +116,11 @@ const DashboardPage: React.FC = () => {
   
   const columnsRatingConversation = useMemo<Column<ConversationDto>[]>(() => [
     { field: "assignedAgentName", headerName: "Agente Asignado" },
+    { field: "metaChannelId", headerName: "Red Social",
+       render: c =>  c?.metaChannelId == 1 ? <ImWhatsapp className="whatsapp-icon" />
+                  :  c?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+                : <FaInstagram size={16} className="instagram-icon"/>
+     },
     { field: "clientContactName", headerName: "Contacto" },
     {
       field: "systemDefinedCompanyName",
@@ -166,6 +174,13 @@ const DashboardPage: React.FC = () => {
 
   const columns = useMemo<Column<ConversationDto>[]>(() => [
     { field: "clientContactName", headerName: "Contacto" },
+     {
+      field: "metaChannelId",
+      headerName: "Red Social",
+      render: c =>  c?.metaChannelId == 1 ? <ImWhatsapp className="whatsapp-icon" />
+                  :  c?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+                : <FaInstagram size={16} className="instagram-icon"/>
+    },
     //Si es null se muestra "-"
     {
       field: "systemDefinedCompanyName",

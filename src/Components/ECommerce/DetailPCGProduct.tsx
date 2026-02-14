@@ -241,21 +241,23 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
         onChange={(e) => setObservacion(e.target.value)}
       />
 
-      <footer className="detail-product__actions">
-        {total > 0 && (
+       <div className="productDetail-total__container">
+         {total > 0 && (
           <p className="productDetail-total">
-            Total: <span>C$ {total.toFixed(2)}</span>
-          </p>
+            Total: <span className="productDetail-total__value">C$ {total.toFixed(2)}</span>
+          </p> 
         )}
+       </div>
+      <footer className="detail-product__actions">
 
-        <input
+       <div className="detail-product__footer">
+         <input
           type="number"
           min={1}
           value={cantidad}
           onChange={(e) => setCantidad(Number(e.target.value) || 1)}
           className="detail-product__inputNumber"
         />
-
         <button type="button" className="productTab-buyButton" onClick={handleAddToCart} disabled={actionsDisabled}>
           <FaShoppingCart />
         </button>
@@ -263,6 +265,7 @@ const DetailPCGProduct = ({ detail, setDetailProduct, setselectedCategory }: Pro
         <Button disabled={actionsDisabled} onClick={handleSendMessage}>
           {actionsDisabled ? <AiOutlineLoading3Quarters /> : <IoMdSend />}
         </Button>
+       </div>
       </footer>
     </section>
   )

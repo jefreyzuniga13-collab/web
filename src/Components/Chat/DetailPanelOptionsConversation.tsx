@@ -4,6 +4,8 @@ import { FaWhatsapp } from 'react-icons/fa';
 import { IoIosOptions } from 'react-icons/io';
 import { SetHaltedConversation } from '@/Services/chat/ConversationService';
 import { useContactDetail } from '@/Hooks/Chat/useContactDetail';
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 
 interface Props {
     conversationId: number;
@@ -94,6 +96,17 @@ const DetailPanelOptionsConversation: React.FC<Props> = ({
                 <div className="detailPanel-contactGroup">
                     <p className="detailPanel-clientGroup__title">Nombre</p>
                     <span className="detailPanel-clientGroup__cliente">{conv?.contactNumber ?? '---'}</span>
+                </div>
+                <div className="detailPanel-contactGroup">
+                    <p className="detailPanel-clientGroup__title">Canal</p>
+                    
+                    <span className="detailPanel-clientGroup__cliente">
+                        
+                        {conv?.metaChannelId == 1 ? <FaWhatsapp className="whatsapp-icon" style={{ verticalAlign: 'middle' }} />
+                        : conv?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+                        : <FaInstagram size={16} className="instagram-icon"/>}
+                        
+                        </span>
                 </div>
                 <div className="detailPanel-contactGroup">
                     <p className="detailPanel-clientGroup__title">Canal</p>

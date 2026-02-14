@@ -199,11 +199,21 @@
 }
 
 
-/* Barra de scroll */
 .detailPanel-content::-webkit-scrollbar,
 .detailPanel-card::-webkit-scrollbar {
-  width: 3px;
-  height: 10px; 
+  width: 10px;
+}
+
+.detailPanel-content::-webkit-scrollbar-thumb,
+.detailPanel-card::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  min-height: 100px; 
+}
+
+.detailPanel-content::-webkit-scrollbar-thumb:hover,
+.detailPanel-card::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
 
 .detailPanel-content::-webkit-scrollbar-thumb,

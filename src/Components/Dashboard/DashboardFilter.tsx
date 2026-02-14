@@ -14,7 +14,7 @@ import type { FilterForm } from "@/Interfaces/Dashboard/DashboardInterfaces";
 import { parseISO, parse } from "date-fns";
 import { format } from "date-fns-tz";
 import { useEffect } from "react";
-import { useInnova } from "@/Hooks/Crm/useInnova";
+// import { useInnova } from "@/Hooks/Crm/useInnova";
 import type { Dayjs } from "dayjs";
 
 interface Props {
@@ -42,18 +42,18 @@ export default function DashboardFilterModal({
 
   const { users, getAgents, agents } = useUsers();
   const { data: contacts } = useContact();
-  const { data: clients, getAllAsync } = useInnova();
+  // const { data: clients, getAllAsync } = useInnova();
 
   useEffect(() => {
     getAgents();
-    getAllAsync();
+    // getAllAsync();
   }, []);
 
   const admins = users.filter((u) =>
     u.roles.some((r) => r.roleName === "Admin")
   );
 
-  // 👇 Helpers para convertir PickerValue (Date | Dayjs | null) a Date
+  // Helpers para convertir PickerValue (Date | Dayjs | null) a Date
   const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
     if (!value) return null;
     return value instanceof Date ? value : (value as Dayjs).toDate();
@@ -127,7 +127,7 @@ export default function DashboardFilterModal({
             onChange={handleSelectOption("adminUserId", "adminUserName")}
           />
 
-          <CustomAutocomplete
+          {/* <CustomAutocomplete
             label="Cliente"
             placeholder="Filtrar por cliente"
             options={[
@@ -146,7 +146,7 @@ export default function DashboardFilterModal({
                 : null;
             })()}
             onChange={handleSelectOption("clientId", "clientName", true)}
-          />
+          /> */}
 
           <CustomAutocomplete
             label="Contacto"

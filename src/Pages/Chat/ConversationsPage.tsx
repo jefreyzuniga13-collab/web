@@ -12,6 +12,9 @@ import Button from '@/Components/Common/Button'
 import type { StateTranslation } from '@/Interfaces/Common/GlobalInterface'
 import { stateTranslations } from '@/Utils/Translation/stateTranslations'
 import  RatingStars from '@/Utils/ConvertToStarts'
+import { ImWhatsapp } from "react-icons/im";
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 
 export default function ConversationsPage() {
   const location = useLocation();
@@ -52,6 +55,11 @@ useEffect(() => {
 
   const columns: Column<ConversationDto>[] = [
     { id: 'clientContactName', label: 'Cliente', minWidth: 90, render: r => r.clientContactName ?? '-' },
+    { id: 'metaChannelId', label: 'Red Social', minWidth: 90, 
+      render: c =>  c?.metaChannelId == 1 ? <ImWhatsapp className="whatsapp-icon" />
+                        :  c?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+                      : <FaInstagram size={16} className="instagram-icon"/>
+    },
     { id: 'contactNumber', label: 'Contacto', minWidth: 90 },
     {
       id: 'status', label: 'Estado', minWidth: 90,

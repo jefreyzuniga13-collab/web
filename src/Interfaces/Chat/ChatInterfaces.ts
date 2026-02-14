@@ -62,6 +62,9 @@ export interface ConversationDto {
   SystemDefinedCompanyName?: string;
   isHalted?: boolean; 
   isItemsInCart?: boolean
+
+
+   metaChannelId: number;
 }
 
 export interface UpdateConversationRequest {

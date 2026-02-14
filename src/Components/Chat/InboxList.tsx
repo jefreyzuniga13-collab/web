@@ -9,6 +9,9 @@ import CustomLoader from "@/Components/Common/CustomLoader"
 import { selectCartBadgeByContactId } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { useSelector } from "react-redux"
 import { FaCartFlatbedSuitcase } from "react-icons/fa6"
+import { ImWhatsapp } from "react-icons/im";
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 
 interface Props {
   selectedId?: number
@@ -111,7 +114,8 @@ export const InboxList: React.FC<Props> = ({
     <ul className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
-        const statusClass = c.status.toLowerCase()
+        // const statusClass = c.status.toLowerCase()
+        const statusClass = c.status?.toLowerCase() ?? ""
         const statusTextMap: Record<string, string> = {
           bot: "Bot",
           waiting: "Pendiente",
@@ -121,7 +125,7 @@ export const InboxList: React.FC<Props> = ({
           paused: "Pausada"
         }
 
-        const statusText = statusTextMap[c.status.toLowerCase()] || c.status
+        const statusText = statusTextMap[status] ?? c.status ?? "—"
 
         const unread =
           userId === c.assignedAgentId
@@ -167,15 +171,23 @@ export const InboxList: React.FC<Props> = ({
               <div className="inbox-list__details">
                 <div className="inbox-list__name-row">
                   <span className="inbox-list__name">
-                    {hasCart && (
-                      <span className="inbox-list__isItemsInCart">
-                        <FaCartFlatbedSuitcase fontSize={16} />
-                      </span>
-                    )}
+                    <span className="inbox-list-icon_conversation">
+                            {c.metaChannelId == 1 ? 
+                            <ImWhatsapp size={16} className="whatsapp-icon"/> : c.metaChannelId == 2 
+                              ? 
+                            <RiMessengerLine size={18} className="messenger-icon"/> : 
+                            <FaInstagram size={16} className="instagram-icon"/>}
+                          </span> 
+
                     {c.systemDefinedCompanyName != null ? c.systemDefinedCompanyName : ""}
                     <span>
                       {c.clientContactId != null ? ` (${c.clientContactName})` : ""}
                     </span>
+                                        {hasCart && (
+                      <span className="inbox-list__isItemsInCart">
+                        <FaCartFlatbedSuitcase fontSize={16} />
+                      </span>
+                    )}
                   </span>
                 </div>
 

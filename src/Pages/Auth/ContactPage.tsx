@@ -14,6 +14,10 @@ import CustomTable from "@/Components/Common/CustomTable";
 import '@/Styles/Auth/ContactPage.css';
 import ContactModalForm from "@/Components/Auth/ContactModalForm";
 import { TextField } from "@mui/material";
+import { ImWhatsapp } from "react-icons/im";
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
+
 
 export default function ContactPage() {
   const {
@@ -45,6 +49,14 @@ export default function ContactPage() {
       minWidth: 80,
       render: row => row.fullName ?? row.waName
     },
+    {
+        id: "metaChannelId",
+        label: "Red Social",
+        minWidth: 30,
+        render: (row) => row.metaChannelId == 1 ? <ImWhatsapp className="whatsapp-icon" style={{ verticalAlign: 'middle' }} />
+        : row.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+        : <FaInstagram size={16} className="instagram-icon"/>,
+      },
     {
       id: 'clienteCodigo',
       label: 'Fuente',

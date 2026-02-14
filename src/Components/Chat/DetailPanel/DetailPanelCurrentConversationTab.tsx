@@ -5,6 +5,8 @@ import { Check, Edit, Tag, X } from "lucide-react";
 import { SetHaltedConversation } from "@/Services/chat/ConversationService";
 import { useContactDetail } from "@/Hooks/Chat/useContactDetail";
 import "@/Styles/Chat/DetailPanel/DetailPanelCurrentConversationTab.css";
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 interface Props {
   conversationId: number;
   formatDate: (v?: string | number | Date | null) => string;
@@ -120,7 +122,16 @@ const DetailPanelCurrentConversationTab: React.FC<Props> = ({
         </div>
 
         <div className="detailPanel-contactGroup">
-          <p className="detailPanel-clientGroup__title">Nombre</p>
+          <p className="detailPanel-clientGroup__title">Canal</p>
+          <span className="detailPanel-clientGroup__cliente">
+            {conv?.metaChannelId == 1 ? <FaWhatsapp className="whatsapp-icon" />
+            :  conv?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+          : <FaInstagram size={16} className="instagram-icon"/>}
+          </span>
+        </div>
+
+        <div className="detailPanel-contactGroup">
+          <p className="detailPanel-clientGroup__title">Numero</p>
           <span className="detailPanel-clientGroup__cliente">
             {conv?.contactNumber ?? "---"}
           </span>

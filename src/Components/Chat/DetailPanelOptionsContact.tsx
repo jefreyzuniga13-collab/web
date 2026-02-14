@@ -5,7 +5,8 @@ import { Check, X } from 'lucide-react'
 import React, { useState } from 'react'
 import { FaCalendarAlt, FaPhone, FaRegClock, 
   FaUserAlt, FaUserCheck, FaWhatsapp } from 'react-icons/fa'
-
+import { RiMessengerLine } from "react-icons/ri";
+import { FaInstagram } from "react-icons/fa6";
 interface Props
 {
   selectedData: ContactLogInterface | null;
@@ -61,6 +62,20 @@ const DetailPanelOptionsContact: React.FC<Props> = ({
               {displayOrDash(selectedData?.fullName)}
             </p>
           </div>
+
+                <div className="detailPanel-contactGroup"
+      >
+                  <p className="detailPanel-clientGroup__title">Red Social</p>
+                  <span className='detailPanel-clientGroup__cliente'>
+
+                                     {
+                   selectedData?.metaChannelId == 1 ? <FaWhatsapp className="whatsapp-icon" 
+                   style={{ verticalAlign: 'middle' }} />
+                          : selectedData?.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
+                          : <FaInstagram size={16} className="instagram-icon"/>
+                 }
+                  </span>
+                </div>
 
           <div className="detailPanel-contactGroup"
           onClick={()=>{

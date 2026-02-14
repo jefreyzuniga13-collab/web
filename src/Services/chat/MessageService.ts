@@ -33,7 +33,7 @@ export function getMessages(conversationId: number,
 
 export function sendText(message: SentMessage) {
   return api.post<{ data: MessageDto }>(
-    `/WhatsappWebhook/${message.conversationId}/send`,
+    `/Webhook/${message.conversationId}/send`,
     {
       conversationId: message.conversationId,
       senderId: message.senderId,
@@ -48,7 +48,7 @@ export function sendText(message: SentMessage) {
 
 export function sendInterctiveMessage(req: SendInteractiveMessajeRequestDto) {
   return api.post<{ data: MessageDto }>(
-    `/WhatsappWebhook/sendInterctiveMessage`, req
+    `/Webhook/sendInterctiveMessage`, req
   );
 }
 
@@ -57,7 +57,7 @@ export function SendMediaECommerceFromUrlAsync(
   payload: SendMediaFromUrlDto
 ) {
   return api.post(
-    `/WhatsappWebhook/${conversationId}/sendEcommerce/media-from-url`,
+    `/Webhook/${conversationId}/sendEcommerce/media-from-url`,
     payload
   )
 }
@@ -77,7 +77,7 @@ export function sendMediaEcommerce(
   if (repliedParentMessageId) form.append('repliedParentMessageId', repliedParentMessageId.toString())//Pasar como number
 
   return api.post<{ data: MessageDto }>(
-    `/WhatsappWebhook/${conversationId}/sendEcommerce/media`,
+    `/Webhook/${conversationId}/sendEcommerce/media`,
     form,
     {
       headers: {
@@ -103,7 +103,7 @@ export function sendMedia(
   if (repliedParentMessageId) form.append('repliedParentMessageId', repliedParentMessageId.toString())//Pasar como number
 
   return api.post<{ data: MessageDto }>(
-    `/WhatsappWebhook/${conversationId}/send/media`,
+    `/Webhook/${conversationId}/send/media`,
     form,
     {
       headers: {
@@ -119,7 +119,7 @@ export function sendMedia(
   //   form.append("file", file);
   //   if (caption) form.append("caption", caption);
 
-  //   return api.post(`/WhatsappWebhook/${conversationId}/send/media`, form, {
+  //   return api.post(`/Webhook/${conversationId}/send/media`, form, {
   //     headers: {
   //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
   //       "Content-Type": undefined as any,

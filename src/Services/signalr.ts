@@ -134,7 +134,7 @@ notificationsConnection.on(
         })
       );
 
-      // 2) Si el carrito visible corresponde a ese contacto, límpialo
+      // Si el carrito visible corresponde a ese contacto, límpialo
       const state = store.getState();
       const activeContactId = state.cart?.activeContactId ?? null;
 

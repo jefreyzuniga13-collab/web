@@ -1,111 +1,24 @@
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
-import useResetPasswordForm from "@/Hooks/Auth/useResetPasswordForm";
+import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
 
 import "@/Styles/Auth/LoginPresentation.css";
-import "@/Styles/Auth/ResetPasswordPresentation.css";
+import "@/Styles/Auth/ForgotPasswordPresentation.css";
 
 import addGroup from "@/assets/Add_Group_2025.png";
 
-export default function ResetPasswordPresentation() {
-  const {
-    formik,
-    loading,
-    canSubmit,
-    showPassword,
-    toggleShowPassword,
-    showConfirm,
-    toggleShowConfirm,
-    formError,
-  } = useResetPasswordForm();
+export default function ForgotPasswordPresentation() {
+  const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEnterKey = (event: any) => {
+    if (event.key === "Enter") formik.handleSubmit();
+  };
 
   return (
     <div className="login-GeneralContainer">
-      <div className={`login ${loading ? "login--loading" : ""}`}>
-        <div className="login__container">
-          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
-            {formError && <div className="login__error">{formError}</div>}
-
-            <div className="login__brand">
-              <img
-                className="login__brand-image"
-                src={addGroup}
-                alt="Imagen de restablecer contraseña"
-              />
-            </div>
-
-            <form onSubmit={formik.handleSubmit} noValidate>
-              <p className="resetPassword-subtitle">
-                Ingresa tu nueva contraseña. Mínimo 8 caracteres.
-              </p>
-
-              <label htmlFor="newPassword" className="login__label">
-                Nueva contraseña
-              </label>
-              <Input
-                id="newPassword"
-                name="newPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="Escribe tu nueva contraseña"
-                value={formik.values.newPassword}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
-                onIconClick={toggleShowPassword}
-                autoFocus
-                error={formik.touched.newPassword ? formik.errors.newPassword : undefined}
-              />
-
-              <label htmlFor="confirmNewPassword" className="login__label">
-                Confirmar contraseña
-              </label>
-              <Input
-                id="confirmNewPassword"
-                name="confirmNewPassword"
-                type={showConfirm ? "text" : "password"}
-                placeholder="Confirma tu nueva contraseña"
-                value={formik.values.confirmNewPassword}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                rightIcon={showConfirm ? <FaEyeSlash /> : <FaEye />}
-                onIconClick={toggleShowConfirm}
-                error={
-                  formik.touched.confirmNewPassword
-                    ? formik.errors.confirmNewPassword
-                    : undefined
-                }
-              />
-
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit || loading}
-                className="login__submit-button"
-              >
-                <p className="login__submit-text">
-                  {loading ? "Guardando…" : "Guardar contraseña"}
-                </p>
-              </Button>
-            </form>
-          </section>
-        </div>
-
-        <img
-          className="login__image-footer"
-          src="https://i.ibb.co/LXbMbMm2/logo.png"
-          alt="Logo de la empresa"
-        />
-
-        <p className="login__footer">
-          ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
-        </p>
-        <p className="login__footer">
-          <span className="login__footer-text">Add Group 2.0</span>
-        </p>
-      </div>
-
-      {/* MISMO BANNER DEL LOGIN */}
+      {/* Banner IZQUIERDA (desktop) / arriba (mobile) */}
       <aside className="login__banner" aria-label="Marketing banner">
         <div className="login__banner-shape" />
         <div className="login__banner-content">
@@ -133,6 +46,77 @@ export default function ResetPasswordPresentation() {
           </p>
         </div>
       </aside>
+
+      {/* Form DERECHA (desktop) / abajo (mobile) */}
+      <div className={`login ${loading ? "login--loading" : ""}`}>
+        <div className="login__container">
+          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
+            {formError && <div className="login__error">{formError}</div>}
+
+            <div className="login__brand">
+              <img
+                className="login__brand-image"
+                src={addGroup}
+                alt="Recuperar contraseña"
+              />
+            </div>
+
+            <form onSubmit={formik.handleSubmit} noValidate>
+              <p className="forgotPassword-subtitle">
+                Ingresa tu correo electrónico y se enviará un enlace para restablecer tu contraseña.
+              </p>
+
+              <label htmlFor="email" className="login__label">
+                Correo electrónico
+              </label>
+
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Ingresa tu correo electrónico"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                onKeyDown={handleEnterKey}
+                autoFocus
+                error={formik.touched.email ? formik.errors.email : undefined}
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!canSubmit || loading}
+                className="login__submit-button"
+              >
+                <span className="login__submit-text">
+                  {loading ? "Enviando…" : "Enviar enlace"}
+                </span>
+              </Button>
+            </form>
+
+            <div className="forgotPassword-actions">
+              <Link to="/login" replace className="login__forgot-link">
+                Volver a iniciar sesión
+              </Link>
+            </div>
+          </section>
+        </div>
+
+        <img
+          className="login__image-footer"
+          src="https://i.ibb.co/LXbMbMm2/logo.png"
+          alt="Logo de la empresa"
+        />
+
+        <p className="login__footer">
+          ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
+        </p>
+
+        <p className="login__footer">
+          <span className="login__footer-text">Add Group 26.02.28.1</span>
+        </p>
+      </div>
     </div>
   );
 }

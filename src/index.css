@@ -31,7 +31,6 @@ body {
   color: var(--text-default);
   line-height: 1.5;
   font-size: 1.6rem;
-  overflow: hidden;
 }
 
 .detailPanelHistoryTab_rating{
@@ -75,7 +74,10 @@ body {
   --input-bg: #ffffff;
   --input-focus-border: #015d96;
   --grayColor: #374151;
+  
   --greenColor: #37c255;
+  --purpleColor: #9044e7;
+  --blueColor: #4675d1;
   
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -152,6 +154,14 @@ body {
   --breakpoint-tablet: 76.8rem; /* 1024px */
   --breakpoint-laptop: 120rem; /* 1200px */
   --breakpoint-desktop: 144rem; /* 1440px */
+
+
+  --bp-xs: 36rem;
+  --bp-sm: 48rem;
+  --bp-md: 64rem;
+  --bp-lg: 76.8rem;
+  --bp-xl: 90rem;
+  --bp-2xl: 120rem;
 }
 
 .loader-container {
@@ -250,4 +260,17 @@ body {
 .MuiTableCell-root
 .MuiTableCell-body{
     font-family: 'Roboto', sans-serif !important;
+}
+
+.whatsapp-icon{
+  color: var(--greenColor);
+  font-size: var(--font-size-lg);
+}
+.instagram-icon{
+  color: var(--purpleColor);
+  font-size: var(--font-size-lg);
+}
+.messenger-icon{
+  color: var(--blueColor);
+  font-size: var(--font-size-lg);
 }

@@ -13,6 +13,36 @@ export default function ForgotPasswordPresentation() {
 
   return (
     <div className="login-GeneralContainer">
+      {/* Banner IZQUIERDA (desktop) / arriba (mobile) */}
+      <aside className="login__banner" aria-label="Marketing banner">
+        <div className="login__banner-shape" />
+        <div className="login__banner-content">
+          <div className="login__banner-top">
+            <h2 className="login__banner-title">
+              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
+            </h2>
+            <p className="login__banner-subtitle">
+              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
+            </p>
+          </div>
+
+          <div className="login__banner-card">
+            <img
+              src="https://i.ibb.co/9HBdj911/7015971.jpg"
+              alt="Banner promocional"
+              className="login__banner-image"
+              loading="lazy"
+            />
+          </div>
+
+          <p className="login__banner-text">
+            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos,
+            construye relaciones que cierran negocios. Comienza hoy mismo a transformar tu proceso comercial.
+          </p>
+        </div>
+      </aside>
+
+      {/* Form DERECHA (desktop) / abajo (mobile) */}
       <div className={`login ${loading ? "login--loading" : ""}`}>
         <div className="login__container">
           <section
@@ -57,9 +87,9 @@ export default function ForgotPasswordPresentation() {
                 disabled={!canSubmit || loading}
                 className="login__submit-button"
               >
-                <p className="login__submit-text">
+                <span className="login__submit-text">
                   {loading ? "Enviando…" : "Enviar enlace"}
-                </p>
+                </span>
               </Button>
 
               <p className="forgotPassword-back">
@@ -78,43 +108,16 @@ export default function ForgotPasswordPresentation() {
         />
 
         <p className="login__footer">
-          ©<span className="login__footer-text">
+          ©
+          <span className="login__footer-text">
             2025 PC Group S.A. Todos los derechos reservados.
           </span>
         </p>
 
         <p className="login__footer">
-          <span className="login__footer-text">Add Group 2.0</span>
+          <span className="login__footer-text">Add Group 26.02.28.1</span>
         </p>
       </div>
-
-      <aside className="login__banner" aria-label="Marketing banner">
-        <div className="login__banner-shape" />
-        <div className="login__banner-content">
-          <div className="login__banner-top">
-            <h2 className="login__banner-title">
-              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
-            </h2>
-            <p className="login__banner-subtitle">
-              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
-            </p>
-          </div>
-
-          <div className="login__banner-card">
-            <img
-              src="https://i.ibb.co/9HBdj911/7015971.jpg"
-              alt="Banner promocional"
-              className="login__banner-image"
-              loading="lazy"
-            />
-          </div>
-
-          <p className="login__banner-text">
-            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos,
-            construye relaciones que cierran negocios. Comienza hoy mismo a transformar tu proceso comercial.
-          </p>
-        </div>
-      </aside>
     </div>
   );
 }
