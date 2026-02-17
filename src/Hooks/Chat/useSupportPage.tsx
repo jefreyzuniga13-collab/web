@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import {
   getConversation,
-  // closeConversation,
+  closeConversation,
   SetHaltedConversation
 } from "@/Services/chat/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
@@ -11,6 +11,9 @@ import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
 import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
 import type { AuthStorage, JwtPayload } from "@/Interfaces/Auth/AuthInterface";
 type FilterOption = { label: string; value: string; content: string };
+import { CompanySystemParamsService } from "@/Services/Crm/CompanySystemParamsService";
+import { SystemParamType } from "@/Utils/systemParam";
+import type { CompanySystemParamsInterface } from "@/Interfaces/Crm/CompanySystemParams";
 
 const FILTER_ORDER_STORAGE_KEY = "filterOrder";
 
@@ -35,7 +38,7 @@ export function useSupportPage() {
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const { selectedParam, fetchByName } = useSystemParams();
-
+  const [companySystemParam, setCompanySystemParam] = useState<CompanySystemParamsInterface | null>(null);
   const authRaw = localStorage.getItem("auth") || "{}";
   const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage;
   const { role } = jwtDecode<JwtPayload>(accessToken);
@@ -102,6 +105,28 @@ export function useSupportPage() {
       fetchByName('OpcionesRapidas')
     }, [convId, fetchByName])
   
+
+      // Lógica de permisos
+    const canAssign = isAdmin || (companySystemParam?.isActive === true);
+    const label = canAssign ? "Asignar" : "Cerrar";
+    
+    //Obtener la policica, para verificar si los agentes, pueden o no asignar conversaciones
+    useEffect(() => {
+      const fetchPolicy = async () => {
+        try {
+          const res = await CompanySystemParamsService.getByIdAsync(
+            SystemParamType.AsignarConversacionesEntreAgentes
+          );
+          setCompanySystemParam(res);
+        } catch (error) {
+          console.error("Error al obtener la política:", error);
+        }
+      };
+    
+      fetchPolicy();
+    }, []);
+
+    // Bajo la misma logica, y bajo el mismo hook
   // const handleAfterAssign = () => {
   //   if (!convId) return;
   //   getConversation(convId)
@@ -118,14 +143,43 @@ export function useSupportPage() {
   //   }
   // };
 
-   const handleAssignClick = () => {
-    if (!convId || !conversation) return;
-    // if (isAdmin) {
-      dispatch(openAssignModal(conversation));
-    // } else {
-    //   closeConversation(convId).then(handleAfterAssign).catch(console.error);
-    // }
+  //  const handleAssignClick = () => {
+  //   if (!convId || !conversation) return;
+  //   // if (isAdmin) {
+  //     dispatch(openAssignModal(conversation));
+  //   // } else {
+  //   //   closeConversation(convId).then(handleAfterAssign).catch(console.error);
+  //   // }
+  // };// 1. Extraemos la lógica de permisos para usarla en ambos lados (UI y Funciones)
+
+  const handleAfterAssign = async () => {
+    if (!convId) return;
+    try {
+      const res = await getConversation(convId);
+      setConversation(res.data.data);
+    } catch (error) {
+      console.error("Error al actualizar conversación:", error);
+    }
   };
+
+  const handleAssignClick = async () => {
+    if (!convId || !conversation) return;
+
+    // Seguimos la misma lógica que el botón:
+    if (canAssign) {
+      // Si es Admin o tiene la política activa -> Abre Modal
+      dispatch(openAssignModal(conversation));
+    } else {
+      // Si no es Admin Y la política está inactiva -> Cierra directamente
+      try {
+        await closeConversation(convId);
+        handleAfterAssign();
+      } catch (error) {
+        console.error("Error al cerrar conversación:", error);
+      }
+    }
+  };
+
 
 
   const handleSetHaltedConversation = useCallback(async () => {
@@ -182,6 +236,8 @@ export function useSupportPage() {
     selectedParam,
     isToggling,
     setIsToggling,
-    handleSetHaltedConversation
+    handleSetHaltedConversation,
+    label,
+    canAssign
   };
 }

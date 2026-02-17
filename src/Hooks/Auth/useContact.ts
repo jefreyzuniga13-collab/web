@@ -216,12 +216,28 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
     []
   )
 
-  const verify = useCallback(
-    async (phone: string) => {
+  // const verify = useCallback(
+  //   async (phone: string) => {
+  //     setLoadingItem(true)
+  //     setError(null)
+  //     try {
+  //       navigate(`/verify-contact/${phone}`)
+  //     } catch (err: any) {
+  //       setError(err)
+  //     } finally {
+  //       setLoadingItem(false)
+  //     }
+  //   },
+  //   []
+  // )
+
+
+    const verify = useCallback(
+    async (id: number) => {
       setLoadingItem(true)
       setError(null)
       try {
-        navigate(`/verify-contact/${phone}`)
+        navigate(`/verify-contact/${id}`)
       } catch (err: any) {
         setError(err)
       } finally {

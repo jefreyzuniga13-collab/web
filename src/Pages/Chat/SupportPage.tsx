@@ -54,7 +54,13 @@ const SupportPage: React.FC = () => {
     userId,
     extraerNumero,
     selectedParam,
+    label,
+    canAssign
   } = useSupportPage();
+
+
+// Lógica de deshabilitado
+const isClosed = conversation?.status === "Closed" || conversation?.status === "Incomplete";
 
 
   const {
@@ -98,43 +104,6 @@ const SupportPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-//   useEffect(() => {
-//   const codCliente = Number(contact?.id ?? 0)
-
-//   let cancelled = false
-
-//   const loadCart = async () => {
-//     // si no hay conversación, podés decidir no cargar nada
-//     if (!convId) return
-
-//     if (!codCliente) return
-
-//     const log = await fetchByContactId(codCliente)
-//     if (cancelled) return
-
-//     const noPedido = Number(log?.orderId ?? 0)
-
-//     // NO enviar si ambos son 0
-//     if (codCliente === 0 && noPedido === 0) return
-
-//     const cart = await dispatch(
-//       getProductFromCarAsync({ codCliente, noPedido })
-//     ).unwrap()
-
-//     if (cancelled) return
-
-//     const arr = Array.isArray(cart) ? cart : []
-//     const count =
-//       arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
-
-//     dispatch(setContactCartBadge({ contactId: codCliente, hasCart: count > 0, count }))
-//   }
-
-//   void loadCart()
-
-//   return () => { cancelled = true }
-// }, [convId, contact?.id, dispatch, fetchByContactId])
 
 useEffect(() => {
   if (!convId) {
@@ -256,19 +225,19 @@ useEffect(() => {
               </button>
             )}
 
+
             {convId && (
               <button
-                // className={`assign-button ${isAdmin ? "" : "button-cerrar"
-                className={`assign-button
-                  } ${conversation?.status == "Closed" ? "btnDisabled" : ""
-                  } ${conversation?.status == "Incomplete" ? "btnDisabled" : ""
-                  }`}
+                // Si no puede asignar (es decir, va a "Cerrar"), aplicamos la clase de cerrar
+                className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${isClosed ? "btnDisabled" : ""}`}
                 onClick={handleAssignClick}
+                disabled={isClosed} // Es buena práctica deshabilitar el botón nativo
               >
-                <FaUserAlt size={16} /> {"Asignar"}
-                {/* <FaUserAlt size={16} /> {isAdmin ? "Asignar" : "Cerrar"} */}
+                <FaUserAlt size={16} /> {label}
               </button>
             )}
+
+
           </div>
         </header>
 

@@ -1,6 +1,9 @@
 .verifyContact__general-container{
-    display: grid;
-    grid-template-columns: 1fr 400px;
+    /* display: grid; */
+    /* grid-template-columns: 1fr 400px; */
+    display: flex;
+    justify-content: center;
+    align-items: start;
     padding: 0 var(--space-2xl);
 }
 
@@ -13,7 +16,8 @@
 }
 
 .verifyContact-container{
-    padding: var(--space-xl) var(--space-2xl)
+    padding: var(--space-xl) var(--space-2xl);
+    max-width: 1200px;
 }
 
 .verifyContact-title{
@@ -37,9 +41,15 @@ margin: 0;
 .verifyContact-grid{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: var(--space-2xl);
+    gap: var(--space-sm);
     padding-top: var(--space-3xl);
 }
+
+.verifyContact-grid-col{
+    text-align: left;
+    font-weight: 700;
+}
+
 .verifyContact-grid-col-ck{
     display: flex;
     justify-content: start;

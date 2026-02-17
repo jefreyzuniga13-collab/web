@@ -13,18 +13,18 @@ export default function ForgotPasswordPresentation() {
 
   return (
     <div className="login-GeneralContainer">
-      {/* Banner IZQUIERDA (desktop) / arriba (mobile) */}
+      {/* IZQUIERDA */}
       <aside className="login__banner" aria-label="Marketing banner">
         <div className="login__banner-shape" />
         <div className="login__banner-content">
-          <div className="login__banner-top">
+          <header className="login__banner-top">
             <h2 className="login__banner-title">
               ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
             </h2>
             <p className="login__banner-subtitle">
               Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
             </p>
-          </div>
+          </header>
 
           <div className="login__banner-card">
             <img
@@ -42,14 +42,10 @@ export default function ForgotPasswordPresentation() {
         </div>
       </aside>
 
-      {/* Form DERECHA (desktop) / abajo (mobile) */}
-      <div className={`login ${loading ? "login--loading" : ""}`}>
-        <div className="login__container">
-          <section
-            className={`login__form-section ${
-              formError ? "login__form-section--error" : ""
-            }`}
-          >
+      {/* DERECHA */}
+      <main className={`login ${loading ? "login--loading" : ""}`}>
+        <div className="login__panel">
+          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
             {formError && <div className="login__error">{formError}</div>}
 
             <div className="login__brand">
@@ -99,25 +95,24 @@ export default function ForgotPasswordPresentation() {
               </p>
             </form>
           </section>
+
+          <footer className="login__footer-area">
+            <img
+              className="login__image-footer"
+              src="https://i.ibb.co/LXbMbMm2/logo.png"
+              alt="Logo de la empresa"
+            />
+
+            <p className="login__footer">
+              ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
+            </p>
+
+            <p className="login__footer">
+              <span className="login__footer-text">Add Group 26.02.28.1</span>
+            </p>
+          </footer>
         </div>
-
-        <img
-          className="login__image-footer"
-          src="https://i.ibb.co/LXbMbMm2/logo.png"
-          alt="Logo de la empresa"
-        />
-
-        <p className="login__footer">
-          ©
-          <span className="login__footer-text">
-            2025 PC Group S.A. Todos los derechos reservados.
-          </span>
-        </p>
-
-        <p className="login__footer">
-          <span className="login__footer-text">Add Group 26.02.28.1</span>
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

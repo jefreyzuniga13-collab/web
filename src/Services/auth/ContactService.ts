@@ -148,6 +148,13 @@ class ContactService {
       throw error;
     }
   }
+
+    async verifyNewcontact(id: number, fullName: string){
+      const { data } = await api.patch<ApiResponse<ContactLogInterface>>(
+        `/ContactLogs/VerifyNewContact/${id}/${fullName}`
+      );
+      return data.data;
+  }
 }
 
 export const contactService = new ContactService();

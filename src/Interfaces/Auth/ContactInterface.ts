@@ -42,22 +42,20 @@ export interface ContactLogInterface {
   clienteNombre?: string;
 
    ecommerceUserId?: number;
-
-
      isSpam?: boolean;
-  metaChannelId: number
-  //Messenger
-  pSID?: string;
-  messengerPsid?: string;
-  messengerFirstName?: string;
-  messengerLastName?: string;
-  messengerProfilePic?: string;
+    metaChannelId: number;
+    //Messenger
+    pSID?: string;
+    messengerPsid?: string;
+    messengerFirstName?: string;
+    messengerLastName?: string;
+    messengerProfilePic?: string;
 
-  //Instagram
-  instagramScopedId?: string;
-  instegramName?: string;
-  instegramUsername?: string;
-  instegramProfilePic?: string;
+    //Instagram
+    instagramScopedId?: string;
+    instegramName?: string;
+    instegramUsername?: string;
+    instegramProfilePic?: string;
 }
 
 export interface ContactFormValues {
