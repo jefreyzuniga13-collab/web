@@ -109,12 +109,15 @@ export const InboxList: React.FC<Props> = ({
       </ul>
     )
   }
+const safeLower = (v: unknown): string =>
+  typeof v === "string" && v.trim() ? v.toLowerCase() : "waiting";
 
   return (
     <ul className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
         // const statusClass = c.status.toLowerCase()
+        const normalizedStatus = safeLower(c.status);
         const statusClass = c.status?.toLowerCase() ?? ""
         const statusTextMap: Record<string, string> = {
           bot: "Bot",
@@ -124,8 +127,8 @@ export const InboxList: React.FC<Props> = ({
           incomplete: "Incompleta",
           paused: "Pausada"
         }
-
-        const statusText = statusTextMap[status] ?? c.status ?? "—"
+        
+        const statusText = statusTextMap[normalizedStatus] ?? (c.status ?? "Pendiente");
 
         const unread =
           userId === c.assignedAgentId
@@ -144,7 +147,8 @@ export const InboxList: React.FC<Props> = ({
         }
 
         const clientLast = formatTime(c.clientLastMessageAt)
-        let previewText = `Cliente últ. msj: ${clientLast}`
+        let previewText = `Cliente últ. msj: ${clientLast}`;
+        
         if (!c.assignedAt && c.requestedAgentAt) {
           previewText += ` · Desde solicitud: ${timeSinceRequest}`
         }
@@ -155,7 +159,7 @@ export const InboxList: React.FC<Props> = ({
         const hasCart =
           contactId > 0
             ? (badge?.hasCart ?? c.isItemsInCart)
-            : c.isItemsInCart
+            : c.isItemsInCart;
 
         return (
           <li
@@ -183,7 +187,7 @@ export const InboxList: React.FC<Props> = ({
                     <span>
                       {c.clientContactId != null ? ` (${c.clientContactName})` : ""}
                     </span>
-                                        {hasCart && (
+                    {hasCart && (
                       <span className="inbox-list__isItemsInCart">
                         <FaCartFlatbedSuitcase fontSize={16} />
                       </span>

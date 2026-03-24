@@ -27,6 +27,7 @@
 }
 
 .chat-window__reply-preview {
+  width: 100%;
   margin: 6px 10px 4px; 
   padding: 6px 8px;
   border: 0;

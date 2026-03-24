@@ -914,6 +914,7 @@ const CheckoutPage: React.FC = () => {
         toast.error(`(${errores[fallo.key]})`);
         return;
       }
+      
       else {
         const invoiceReqBase: FacturaTempo = {
           ...facturaBase,
@@ -967,7 +968,6 @@ const CheckoutPage: React.FC = () => {
           const date = dayjs().format("YYYYMMDD");
           const resPrintPDF = await InvoiceOrderService.PrintDetFac(codSucursalFactura, date, dataconse?.data?.consecutivo, 8);
 
-          console.log("resPrintPDF", resPrintPDF)
           if (resPrintPDF) {
             const pdfBlob = generateOrdeFacPDFFile(resPrintPDF.data);
 

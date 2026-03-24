@@ -3,6 +3,7 @@ import axios from 'axios';
 // Normalizar URLs eliminando barras sobrantes
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
 const BASE_URLPCG = import.meta.env.VITE_API_URLPCG?.replace(/\/+$/, '');
+const VITE_API_URLPowerTranz = import.meta.env.VITE?.replace(/\/+$/, '');
 
 // API CRM
 const api = axios.create({
@@ -22,5 +23,15 @@ const apiPCG = axios.create({
   timeout: 120000,
 });
 
+// API pasarela de pago
+const apiPowerTranz = axios.create({
+  baseURL: VITE_API_URLPowerTranz,
+  headers: {
+    Accept: 'application/json',
+  },
+  timeout: 120000,
+});
+
+
 export default api;
-export { apiPCG };
+export { apiPCG , apiPowerTranz};

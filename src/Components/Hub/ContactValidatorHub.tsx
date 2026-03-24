@@ -13,14 +13,17 @@ export const ContactValidatorPopup: React.FC = () => {
 
   if (!current || current.type !== 'newContactValidation') return null
 
-  const { waName, fullName, createdAt, isVerified, phone } = current.payload
+  const { waName, fullName, createdAt, isVerified,
+    //  phone, 
+     id
+    } = current.payload
 
   const handleClose = () => {
     dispatch(dequeuePopup())
   }
 
   const handleSubmit = () => {
-    navigate(`/verify-contact/${phone}`)
+    navigate(`/verify-contact/${id}`)
     dispatch(dequeuePopup())
   }
 

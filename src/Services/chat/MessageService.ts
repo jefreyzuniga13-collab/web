@@ -62,6 +62,32 @@ export function SendMediaECommerceFromUrlAsync(
   )
 }
 
+
+// export function sendMedia(
+//   conversationId: number,
+//   file: File,
+//   caption?: string,
+//   externalId?: string | null,
+//   repliedParentMessageId?: number | null
+// ) {
+//   const form = new FormData()
+//   form.append("file", file)
+//   if (caption) form.append("caption", caption)
+//   if (externalId) form.append("externalId", externalId)
+//   if (repliedParentMessageId != null)
+//     form.append("repliedParentMessageId", String(repliedParentMessageId))
+
+//   return api.post<{ data: MessageDto }>(
+//     `/Webhook/${conversationId}/send/media`,
+//     form,
+//     {
+//       // por si el PDF es grande
+//       maxBodyLength: Infinity,
+//       maxContentLength: Infinity,
+//     }
+//   )
+// }
+
 export function sendMediaEcommerce(
   conversationId: number,
   file: File,
@@ -70,20 +96,18 @@ export function sendMediaEcommerce(
   repliedParentMessageId?: number | null
 ) {
   const form = new FormData()
-  form.append('file', file)
-  if (caption) form.append('caption', caption)
-  if (externalId) form.append('externalId', externalId)
+  form.append("file", file)
+  if (caption) form.append("caption", caption)
+  if (externalId) form.append("externalId", externalId)
+  if (repliedParentMessageId != null)
+    form.append("repliedParentMessageId", String(repliedParentMessageId))
 
-  if (repliedParentMessageId) form.append('repliedParentMessageId', repliedParentMessageId.toString())//Pasar como number
-
-  return api.post<{ data: MessageDto }>(
+  return api.post(
     `/Webhook/${conversationId}/sendEcommerce/media`,
     form,
     {
-      headers: {
-        // obligamos a multipart/form-data con boundary
-        'Content-Type': 'multipart/form-data'
-      }
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
     }
   )
 }
@@ -112,6 +136,7 @@ export function sendMedia(
       }
     }
   )
+
   // }
 
   // export function sendMediaPDF(conversationId: number, file: File, caption?: string) {

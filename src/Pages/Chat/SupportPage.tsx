@@ -189,7 +189,8 @@ useEffect(() => {
         </div>
 
         <InboxList
-          selectedId={convId ?? undefined}
+          selectedId={convId ?? 0
+          }
           onSelect={setConvId}
           conversations={convHook.conversations}
           loading={convHook.loading}

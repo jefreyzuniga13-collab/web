@@ -149,12 +149,15 @@ class ContactService {
     }
   }
 
-    async verifyNewcontact(id: number, fullName: string){
+    async verifyNewcontact(id: number, fullName: string) {
+      const encoded = encodeURIComponent(fullName);
+
       const { data } = await api.patch<ApiResponse<ContactLogInterface>>(
-        `/ContactLogs/VerifyNewContact/${id}/${fullName}`
+        `/ContactLogs/VerifyNewContact/${id}/${encoded}`
       );
+
       return data.data;
-  }
+    }
 }
 
 export const contactService = new ContactService();

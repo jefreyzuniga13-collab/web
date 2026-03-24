@@ -1,4 +1,3 @@
-// src/Utils/ecommerce/buildModifiersText.ts
 import type { ProductoModificadorPCGInterface, listaOpciones } from "@/Interfaces/Chat/ProductPCGInterface"
 
 type BuildModifiersTextOptions = {

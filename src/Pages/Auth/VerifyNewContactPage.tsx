@@ -8,7 +8,7 @@ import '@/Styles/Auth/VerifyNewContact.css'
 // import CustomAutocomplete from '@/Components/Common/CustomAutocomplete'
 
 const VerifyNewContactPage: React.FC = () => {
-  const { phoneNumber } = useParams<{ phoneNumber: string }>()
+  const { id } = useParams<{ id: string }>()
   const {
     contact,
     // clientes,
@@ -26,7 +26,7 @@ const VerifyNewContactPage: React.FC = () => {
     // clients,
     // clientsLoading,
     // clientsError,
-  } = useVerifyNewContact(phoneNumber!)
+  } = useVerifyNewContact(id!)
 
   return (
     <div className="verifyContact__general-container">

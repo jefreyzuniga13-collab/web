@@ -22,6 +22,7 @@
     flex: 0.5;
 }
 
+
 .detail-product__image{
     width: 50%;
     text-align: center;
@@ -31,6 +32,55 @@
     max-height: 50%;
     max-height: 100%;
     border-radius: 12px;
+}
+
+
+.detail-product__container{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detail-product__stickyHeader{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  background: #fff;
+}
+
+.detail-product__carouselHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  padding: .6rem .6rem;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.detail-product__navGroup{
+  display: flex;
+  gap: .4rem;
+  align-items: center;
+}
+
+.detail-product__navBtn{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .35rem .45rem;
+  border-radius: .6rem;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.detail-product__navBtn:disabled{
+  opacity: .35;
+  cursor: not-allowed;
 }
 
 .detail-image{
@@ -49,6 +99,7 @@
     justify-content: start;
     align-items: start;
     margin: 0;
+    gap: 12px;
     margin-top: 10px;
     text-align: left;
 }
@@ -286,6 +337,50 @@
 }
 
 
+.detail-product__imageBtn{
+  border:none;
+  background:transparent;
+  padding:0;
+  cursor:zoom-in;
+  width:100%;
+  display:block;
+}
+
+.detail-product__imgModal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.78);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:1.2rem;
+}
+
+.detail-product__imgModalImage{
+  max-width:95vw;
+  max-height:90vh;
+  object-fit:contain;
+  border-radius:1rem;
+  background:#fff;
+}
+
+.detail-product__imgModalClose{
+  position:absolute;
+  top:1rem;
+  right:1rem;
+  width:3rem;
+  height:3rem;
+  border:none;
+  border-radius:999px;
+  background:rgba(255,255,255,.16);
+  color:#fff;
+  font-size:1.4rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
 @media (max-width: 640px) {
     .product-modifiers__option__container{

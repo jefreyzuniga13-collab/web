@@ -32,9 +32,14 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     justify-content: start;
-    align-items: start;
+    /* align-items: start; */
+    place-items: end;
+    gap: 12px;
     gap: 4px;
     flex-direction: column;
+    max-height: 700px;
+    overflow-y: auto;
+    padding-bottom: 12rem;
 }
 .productTab-icon{
     color: var(--color-primary);
@@ -139,3 +144,12 @@
   border-radius: 4px;
   padding: 2px 4px;
 } */
+
+
+
+/* Scroll interno para lista de productos (root del IntersectionObserver) */
+.productTab-productPCG__container--scroll{
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  padding-right: .4rem;
+}

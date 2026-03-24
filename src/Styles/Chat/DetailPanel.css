@@ -230,6 +230,8 @@
 
 .detailPanel-content--padded {
   padding: 0 12px;
+  overflow-y: auto;
+  /* overflow: hidden; */
 }
 
 .detailPanel-content-header {

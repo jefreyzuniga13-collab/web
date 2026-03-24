@@ -55,7 +55,6 @@ export interface ListOpciones{
 export type TipoTrabajo = "INSERT" | "CANTIDAD";
 
 export interface DetalleFacturaTempoRequest {
-  // request.*
   usuario: string;
   maquina: string;
   codproducto: string;
@@ -69,7 +68,6 @@ export interface DetalleFacturaTempoRequest {
   codcliente?: string | null;
   producto?: string | null; 
  
-  // valores.*
   sucursal: string;
   bodega: string;
   nofactura: string;

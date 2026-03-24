@@ -80,7 +80,7 @@ export function AppRouter() {
           <Route path="profile"                 element={<ProfilePage />} />
           <Route path="opening-hour"            element={<OpeningHourPage />} />
           <Route path="work-shift"              element={<WorkShiftPage />} />
-          <Route path="verify-contact/:phoneNumber" element={<VerifyNewContactPage />} />
+          <Route path="verify-contact/:id" element={<VerifyNewContactPage />} />
           <Route path="conversation/status/:state"     element={<ConversationsPage />} />
           <Route path="conversation/rating/:rating/:selectedAgentId"     element={<ConversationsPage />} />
           <Route path="whatsapp-productcatalogs"     element={<ProductCatalogPage />} />

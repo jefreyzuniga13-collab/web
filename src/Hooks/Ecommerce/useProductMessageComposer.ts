@@ -1,4 +1,3 @@
-// src/Hooks/Ecommerce/useProductMessageComposer.ts
 import { useCallback, useMemo, useState } from "react"
 import type {
   ProductoPCGInterface,
@@ -14,7 +13,7 @@ type SendProductMessageArgs = {
   conversationId: number
   observation?: string
   maxLen?: number
-  fallbackMediaUrl?: string
+  fallbackMediaUrl?: string 
   includeModifiers?: boolean
 }
 
@@ -89,6 +88,7 @@ export const useProductMessageComposer = () => {
         const caption = `${base}${modsText}${obsText}`.trim()
 
         if (!caption) return
+        
         if (caption.length > maxLen) {
           toast.warn("El texto permitido para la imagen es de 1024 caracteres.")
           return
