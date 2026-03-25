@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import "@/Styles/Ecommerce/CartPage.css";
-import noimageavailable from "@/assets/noimageavailable.webp";
+import noimageavailable from "@/assets/img/noimageavailable.webp";
 import { useNavigate } from "react-router-dom";
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
 import CustomLoader from '@/Components/Common/CustomLoader'
-import EmptyCart from "@/assets/emptycard.webp"
-
+import Lottie from "lottie-react";
+import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import {
   selectCarPCG,
   selectCartError,
   selectCartLoading,
   getProductFromCarAsync
 } from "@/Context/Slices/Ecommerce/cartSlice";
-
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import type { RootState, AppDispatch } from "@/Context";
-// import { toast } from "react-toastify";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 
@@ -123,13 +121,6 @@ useEffect(() => {
                     group.listDetalle?.map((item) => {
                       const options = item.listOpciones ?? [];
 
-                      // const rowTotal =
-                      //   options.length > 0
-                      //     ? options.reduce(
-                      //         (sum, opt) => sum + (opt.totalMenu ?? 0),
-                      //         0
-                      //       )
-                      //     : item.precioV ?? 0;
                       return (
                         <tr
                           className="cart-table__row"
@@ -257,7 +248,8 @@ useEffect(() => {
         </>
       ): (
         <section className="emptycart__container">
-          <img src={EmptyCart} className="emptycart__container-img" alt="carrito limpio" />
+      
+           <Lottie   loop={false} autoplay animationData={EmptyCartPlayer} width={200} height={200}/>
           <h2 className="emptycart__container-title">Parece que tu carrito está vacío</h2>
           <p className="emptycart__container-subtitle">Dale un vistazo a nuestras novedades y empieza a solicitar productos y llenar tu carrrito.</p>
         </section>

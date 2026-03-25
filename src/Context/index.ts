@@ -9,6 +9,7 @@ import assignModalReducer from '@/Context/Slices/Chat/assignModalSlice'
 import activeSesionModalReducer from '@/Context/Slices/Chat/activeSesionModalSlice'
 import cartReducer from '@/Context/Slices/Ecommerce/cartSlice'
 import cartBadgeReducer from '@/Context/Slices/Ecommerce/cartBadgeSlice'
+import powerTranzReducer from '@/Context/Slices/Ecommerce/powertranzSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,9 +21,12 @@ export const store = configureStore({
     assignModal: assignModalReducer,
     activeSesionModal: activeSesionModalReducer,
     cart: cartReducer,
-    cartBadge: cartBadgeReducer
+    cartBadge: cartBadgeReducer,
+
+    //pasarela de pago con powertranz
+    powerTranz: powerTranzReducer
   }
 })
 
 export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type AppDispatch = typeof store.dispatch;

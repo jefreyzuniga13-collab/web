@@ -10,7 +10,7 @@ import "@/Styles/Auth/ProfileCard.css";
 import { useProfileCard } from "@/Hooks/Auth/useProfileCard";
 import Button from '@/Components/Common/Button'
 import Spinner from "@/Components/Common/Spinner";
-import AddGroup from '@/assets/Add_Group_2025.png'
+import AddGroup from '@/assets/img/Add_Group_2025.png'
 const ProfileCard: React.FC = () => {
   const {
     loading,

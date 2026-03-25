@@ -14,6 +14,9 @@ import { selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
 import { SucursalPickerModal } from "@/Components/ECommerce/SucursalPickerModal"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { KEY_SCROLL } from "@/Utils/ECommerce/keys"
+import EmptyPlayer from '@/assets/lottie/Empty.json'
+import Lottie from "lottie-react";
+
 interface Props {
   conversationId: number
   contactId: number
@@ -43,7 +46,7 @@ export const ProductTab = ({ conversationId }: Props) => {
     loadNextPage,
     hasMore,
     reset,
-  } = useProductPCG({ initialPageSize: 20 })
+  } = useProductPCG({ initialPageSize: 50 })
 
   const listRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -211,10 +214,6 @@ export const ProductTab = ({ conversationId }: Props) => {
     )
   }
 
-
-//renderizado ms de 10 veces, super mal. peticiones hechas 1
-  console.log("Datos del carrito",  productPcg)
-
   return (
     <section className="productTab-card">
       <SucursalPickerModal {...pickerProps} />
@@ -262,6 +261,9 @@ export const ProductTab = ({ conversationId }: Props) => {
             <>
               {productPcg == null || productPcg.length === 0 ? (
                 <div className="productTab-emptyState">
+
+                  <Lottie   loop={false} autoplay animationData={EmptyPlayer} />
+
                   No hay productos disponibles.
                 </div>
               ) : (

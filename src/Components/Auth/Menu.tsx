@@ -13,7 +13,7 @@ import { presenceConnection } from '@/Services/signalr';
 import { markOffline } from '@/Hooks/Auth/useUserPresence';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 import { useAuth } from '@/Hooks/Auth/useAuth'
-import Profile from '@/assets/profile.png'
+import Profile from '@/assets/img/profile.png'
 interface NavbarProps {
   id: number;
 }

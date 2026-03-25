@@ -1,221 +1,239 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import type {
   ProductoModificadorPCGInterface,
   ProductoPCGInterface,
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import { ProductPCGService } from "@/Services/Ecommerce/ProductPCGService"
 
-type Mode = "idle" | "category" | "search" | "all"
+type Mode = "idle" | "category" | "search" | "all" | "code"
 
 interface UseProductPCGOptions {
   initialPageSize?: number
 }
 
 export function useProductPCG(options?: UseProductPCGOptions) {
-  const initialPageSize = options?.initialPageSize ?? 20
+  const queryClient = useQueryClient()
+  const initialPageSize = options?.initialPageSize ?? 50
 
-  const [productPcg, setProductPcg] = useState<ProductoPCGInterface[]>([])
-  const [productModifiers, setProductModifiers] = useState<ProductoModificadorPCGInterface[]>([])
-  const [loadingProductPcg, setLoadingProductPcg] = useState<boolean>(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [page, setPage] = useState<number>(0)
   const [pageSize, setPageSize] = useState<number>(initialPageSize)
   const [mode, setMode] = useState<Mode>("idle")
   const [lastCategory, setLastCategory] = useState<string | null>(null)
   const [lastSearch, setLastSearch] = useState<string | null>(null)
-  const [hasMore, setHasMore] = useState<boolean>(true)
-  // Evitar duplicados (por reintentos o paginación rara)
-  const seenRef = useRef<Set<string>>(new Set())
+  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const [modifierCode, setModifierCode] = useState<string | null>(null)
 
-  const reset = useCallback(() => {
-    setProductPcg([])
-    setError(null)
-    setPage(0)
-    setHasMore(true)
-    seenRef.current = new Set()
-  }, [])
+  const listEnabled =
+    mode === "category" ||
+    mode === "search" ||
+    mode === "all"
 
-  const appendUnique = useCallback((items: ProductoPCGInterface[]) => {
-    if (!items?.length) return
-
-    setProductPcg((prev) => {
-      const next = [...prev]
-      for (const it of items) {
-        const key = String(it.codProducto ?? "")
-        if (!key) continue
-        if (seenRef.current.has(key)) continue
-        seenRef.current.add(key)
-        next.push(it)
-      }
-      return next
-    })
-  }, [])
-
-  const inferHasMore = useCallback(
-    (fetchedCount: number) => {
-      // Regla común: si viene menos que pageSize, ya no hay más
-      if (fetchedCount < pageSize) setHasMore(false)
-      else setHasMore(true)
-    },
-    [pageSize]
-  )
-
-  const GetAll = useCallback(
-    async (descripcion: string) => {
-      const term = (descripcion ?? "").trim()
-      if (!term) return
-      setMode("search")
-      setLastSearch(term)
-      setLastCategory(null)
-      reset()
-
-      setLoadingProductPcg(true)
-      setError(null)
-
-      try {
-        const items = await ProductPCGService.getAll(0, pageSize, term)
-        appendUnique(items ?? [])
-        inferHasMore((items ?? []).length)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingProductPcg(false)
-      }
-    },
-    [appendUnique, inferHasMore, pageSize, reset]
-  )
-
-  const GetByCategory = useCallback(
-    async (codGrupo: string) => {
-      const cat = (codGrupo ?? "").trim()
-      if (!cat) return
-
-      setMode("category")
-      setLastCategory(cat)
-      setLastSearch(null)
-      reset()
-
-      setLoadingProductPcg(true)
-      setError(null)
-
-      try {
-        const items = await ProductPCGService.GetByCategory(cat, 0, pageSize)
-        appendUnique(items ?? [])
-        inferHasMore((items ?? []).length)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingProductPcg(false)
-      }
-    },
-    [appendUnique, inferHasMore, pageSize, reset]
-  )
-
-  const GetByCode = useCallback(async (codProducto: string) => {
-    const code = (codProducto ?? "").trim()
-    if (!code) return
-
-    setLoadingProductPcg(true)
-    setError(null)
-    try {
-      const item = await ProductPCGService.GetByCode(code)
-      // Nota: este endpoint normalmente retorna 1 producto (o lista)
-      setProductPcg(Array.isArray(item) ? item : item ? [item] : [])
-      setHasMore(false)
-    } catch (err: any) {
-      setError(err)
-    } finally {
-      setLoadingProductPcg(false)
-    }
-  }, [])
-
-  const getProductModifiers = useCallback(async (codProducto: string) => {
-    const code = (codProducto ?? "").trim()
-    if (!code) return []
-
-    setLoadingProductPcg(true)
-    setError(null)
-    try {
-      const item = await ProductPCGService.getProductModifiers(code)
-      setProductModifiers(item ?? [])
-      return item ?? []
-    } catch (err: any) {
-      setError(err)
-      return []
-    } finally {
-      setLoadingProductPcg(false)
-    }
-  }, [])
-
-  // Cargar la siguiente página según modo actual (para Infinite Scroll)
-  const loadNextPage = useCallback(async () => {
-    if (loadingProductPcg) return
-    if (!hasMore) return
-
-    // Debe existir un contexto previo
-    if (mode === "idle") return
-
-    const nextPage = page + 1
-
-    setLoadingProductPcg(true)
-    setError(null)
-
-    try {
-      let items: ProductoPCGInterface[] = []
+  const listQuery = useInfiniteQuery<
+    ProductoPCGInterface[],
+    Error
+  >({
+    queryKey: ["product-pcg-list", mode, lastCategory, lastSearch, pageSize],
+    enabled: listEnabled,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const page = Number(pageParam)
 
       if (mode === "category" && lastCategory) {
-        items = (await ProductPCGService.GetByCategory(lastCategory, nextPage, pageSize)) ?? []
-      } else if (mode === "search" && lastSearch) {
-        items = (await ProductPCGService.getAll(nextPage, pageSize, lastSearch)) ?? []
-      } else if (mode === "all") {
-        // Si tenés un endpoint que trae "todo" sin filtro, con paginación:
-        // items = (await ProductPCGService.getAll(nextPage, pageSize, "")) ?? []
-        // Si NO existe, mejor dejarlo deshabilitado:
-        items = []
+        return (await ProductPCGService.GetByCategory(lastCategory, page, pageSize)) ?? []
       }
 
-      appendUnique(items)
-      setPage(nextPage)
-      inferHasMore(items.length)
-    } catch (err: any) {
-      setError(err)
-    } finally {
-      setLoadingProductPcg(false)
+      if (mode === "search" && lastSearch) {
+        return (await ProductPCGService.getAll(page, pageSize, lastSearch)) ?? []
+      }
+
+      if (mode === "all") {
+        return (await ProductPCGService.getAll(page, pageSize, "")) ?? []
+      }
+
+      return []
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage?.length || lastPage.length < pageSize) return undefined
+      return allPages.length
+    },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+  })
+
+  const codeQuery = useQuery<ProductoPCGInterface | ProductoPCGInterface[] | null, Error>({
+    queryKey: ["product-pcg-code", selectedCode],
+    enabled: mode === "code" && !!selectedCode,
+    queryFn: async () => {
+      if (!selectedCode) return null
+      return await ProductPCGService.GetByCode(selectedCode)
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  })
+
+  const modifiersQuery = useQuery<ProductoModificadorPCGInterface[], Error>({
+    queryKey: ["product-pcg-modifiers", modifierCode],
+    enabled: !!modifierCode,
+    queryFn: async () => {
+      if (!modifierCode) return []
+      return (await ProductPCGService.getProductModifiers(modifierCode)) ?? []
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  })
+
+  const productPcg = useMemo<ProductoPCGInterface[]>(() => {
+    if (mode === "code") {
+      const data = codeQuery.data
+      if (!data) return []
+      return Array.isArray(data) ? data : [data]
     }
+
+    const pages = listQuery.data?.pages ?? []
+    const map = new Map<string, ProductoPCGInterface>()
+
+    for (const page of pages) {
+      for (const item of page ?? []) {
+        const key = String(item.codProducto ?? "")
+        if (!key) continue
+        if (!map.has(key)) {
+          map.set(key, item)
+        }
+      }
+    }
+
+    return Array.from(map.values())
+  }, [mode, codeQuery.data, listQuery.data])
+
+  const productModifiers = useMemo(() => {
+    return modifiersQuery.data ?? []
+  }, [modifiersQuery.data])
+
+  const page = useMemo(() => {
+    if (mode === "code" || mode === "idle") return 0
+    return Math.max((listQuery.data?.pages?.length ?? 1) - 1, 0)
+  }, [mode, listQuery.data])
+
+  const hasMore = useMemo(() => {
+    if (mode === "code" || mode === "idle") return false
+    return !!listQuery.hasNextPage
+  }, [mode, listQuery.hasNextPage])
+
+  const loadingProductPcg = useMemo(() => {
+    if (mode === "code") {
+      return codeQuery.isPending || codeQuery.isFetching
+    }
+
+    if (listEnabled) {
+      return listQuery.isPending || listQuery.isFetching
+    }
+
+    return false
   }, [
-    appendUnique,
-    hasMore,
-    inferHasMore,
-    lastCategory,
-    lastSearch,
-    loadingProductPcg,
     mode,
-    page,
-    pageSize,
+    listEnabled,
+    codeQuery.isPending,
+    codeQuery.isFetching,
+    listQuery.isPending,
+    listQuery.isFetching,
   ])
 
-  // Helpers útiles para UI
-  const isSearching = useMemo(() => mode === "search", [mode])
-  const isCategory = useMemo(() => mode === "category", [mode])
+  const error = useMemo(() => {
+    return codeQuery.error ?? listQuery.error ?? modifiersQuery.error ?? null
+  }, [codeQuery.error, listQuery.error, modifiersQuery.error])
 
-  // Si cambia pageSize, conviene resetear para evitar inconsistencias
-  useEffect(() => {
-    // solo si ya hay un contexto
-    if (mode === "idle") return
-    // reset mas recargar primera página según contexto actual
-    ;(async () => {
-      const currentMode = mode
-      const cat = lastCategory
-      const term = lastSearch
+  const reset = useCallback(() => {
+    setMode("idle")
+    setLastCategory(null)
+    setLastSearch(null)
+    setSelectedCode(null)
+    setModifierCode(null)
+  }, [])
 
+  const GetAll = useCallback((descripcion: string) => {
+    const term = (descripcion ?? "").trim()
+    if (!term) {
       reset()
+      return
+    }
 
-      if (currentMode === "category" && cat) await GetByCategory(cat)
-      if (currentMode === "search" && term) await GetAll(term)
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageSize])
+    setSelectedCode(null)
+    setLastCategory(null)
+    setLastSearch(term)
+    setMode("search")
+  }, [reset])
+
+  const GetByCategory = useCallback((codGrupo: string) => {
+    const category = (codGrupo ?? "").trim()
+    if (!category) {
+      reset()
+      return
+    }
+
+    setSelectedCode(null)
+    setLastSearch(null)
+    setLastCategory(category)
+    setMode("category")
+  }, [reset])
+
+  const GetByCode = useCallback((codProducto: string) => {
+    const code = (codProducto ?? "").trim()
+    if (!code) {
+      reset()
+      return
+    }
+
+    setLastCategory(null)
+    setLastSearch(null)
+    setSelectedCode(code)
+    setMode("code")
+  }, [reset])
+
+  const GetEverything = useCallback(() => {
+    setSelectedCode(null)
+    setLastCategory(null)
+    setLastSearch(null)
+    setMode("all")
+  }, [])
+
+  const loadNextPage = useCallback(async () => {
+    if (!listEnabled) return
+    if (!listQuery.hasNextPage) return
+    if (listQuery.isFetchingNextPage) return
+
+    await listQuery.fetchNextPage()
+  }, [listEnabled, listQuery])
+
+  const getProductModifiers = useCallback(
+    async (codProducto: string) => {
+      const code = (codProducto ?? "").trim()
+      if (!code) {
+        setModifierCode(null)
+        return []
+      }
+
+      setModifierCode(code)
+
+      const data = await queryClient.fetchQuery<ProductoModificadorPCGInterface[]>({
+        queryKey: ["product-pcg-modifiers", code],
+        queryFn: async () => {
+          return (await ProductPCGService.getProductModifiers(code)) ?? []
+        },
+        staleTime: 1000 * 60 * 5,
+      })
+
+      return data
+    },
+    [queryClient]
+  )
+
+  const isSearching = mode === "search"
+  const isCategory = mode === "category"
 
   return {
     productPcg,
@@ -225,7 +243,6 @@ export function useProductPCG(options?: UseProductPCGOptions) {
 
     page,
     pageSize,
-    setPage,
     setPageSize,
 
     hasMore,
@@ -234,12 +251,19 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     GetAll,
     GetByCode,
     GetByCategory,
+    GetEverything,
 
-    loadNextPage, // <-- Infinite scroll usa esto
-
+    loadNextPage,
     getProductModifiers,
 
     isSearching,
     isCategory,
+
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    refetch: async () => {
+      if (mode === "code") return await codeQuery.refetch()
+      if (listEnabled) return await listQuery.refetch()
+      return null
+    },
   }
 }

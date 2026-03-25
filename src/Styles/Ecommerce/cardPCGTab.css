@@ -22,6 +22,11 @@
 
 .carPCPanel-emptyContainer{
     overflow: hidden;
+    padding: 5rem;
+}
+
+.cardPanel--emptyText{
+    font-size: var(--font-size-sm);
 }
 .carPCPanel-header{
     min-width: 100%;

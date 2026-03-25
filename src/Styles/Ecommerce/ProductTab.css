@@ -65,7 +65,9 @@
     overflow-y: auto;
 }
 
-
+.productTab-emptyState{
+  font-size: var(--font-size-sm);
+}
 .button-text{
   margin: 0;
   padding: 0;

@@ -8,16 +8,10 @@ import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-import type {
-  //  CalculationReqDto, 
-  ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO,
-} from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import type {ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO} from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type { NearestBranchRequestDto, Currencyto, CheckoutStep, PaymentMethod, BillingFormState, CardFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import type { FacturaTempo, PagoGenerico, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, } from "@/Interfaces/Ecommerce/FacturaTempo";
-import type {
-  FaloteRequestDto,
-  // InvoiceTotalsDto 
-} from "@/Interfaces/Crm/CartPCGInterface";
+import type {FaloteRequestDto} from "@/Interfaces/Crm/CartPCGInterface";
 import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import type { AppDispatch, RootState } from "@/Context";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
@@ -30,12 +24,8 @@ import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
 import "@/Styles/Ecommerce/CheckoutPage.css";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import { sendMediaEcommerce
-  // , sendText 
-} from "@/Services/chat/MessageService";
+import { sendMediaEcommerce} from "@/Services/chat/MessageService";
 import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
-// import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
-// import { sendMediaEcommerce } from "@/Services/chat/MessageService";
 import {InvoiceOrderService} from '@/Services/Ecommerce/InvoiceOrderService'
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
@@ -78,7 +68,7 @@ type Payload = {
   userId: number;
 };
 
-
+//Pago por tarjea, debe de integrar la pasarela de pago, esta tiene lo mismo que la ya integrada, se necesito el auth, paso a paso para integrarla
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -187,8 +177,6 @@ const CheckoutPage: React.FC = () => {
         const log = await fetchByContactId(payload.contactId);
 
         if (cancelled) return;
-
-        console.log("existingLog es:", log);
 
         setExistingLog(log ?? null);
 
@@ -555,7 +543,6 @@ const CheckoutPage: React.FC = () => {
         
         const data =  calculateDistance(lat1, lon1, lat2, lon2);
 
-        console.log("data", data)
         return data;
       })();
 
@@ -620,7 +607,6 @@ const CheckoutPage: React.FC = () => {
     if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
     try {
-      console.log("Calcular el tranbsporte es ")
       const preview = await computeTransportPreview(coords);
       if (!preview) return void toastError("No fue posible calcular el costo de transporte.");
       setStep("currency");
@@ -698,13 +684,8 @@ const CheckoutPage: React.FC = () => {
       fechaOVence = safeStr(cardForm.expiry);
     }
 
-    // const montoA = moneda === "1" ? Number(monto ?? 0) : round2(Number(monto ?? 0) / (Number(tasaCambio || 1) || 1));
-
     const tipoPago = isCash ? "" : safeStr(tipo);
 
-    console.log("Vuelto", monto - cashAmount)
-    console.log("total",  total)
-    console.log("monto",  monto)
     return {
       numPago: "1",
       concepto: isCash
@@ -790,7 +771,6 @@ const CheckoutPage: React.FC = () => {
 
       if (method === "card" && !isExpiryValid(cardForm.expiry)) {
         toast.error("Fecha de expiración inválida o tarjeta vencida");
-        console.log("Accedio a la validacion")
         return;
       }
 

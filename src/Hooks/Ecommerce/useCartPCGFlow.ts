@@ -170,8 +170,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     async (branch: string): Promise<ResolveOrderResult> => {
       const existingLog = await fetchByContactId(contactId)
 
-      console.log("[CartFlow] fetchByContactId result:", existingLog)
-
       if (existingLog?.orderId && existingLog?.branch) {
         return {
           existingLog,
@@ -185,7 +183,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       }
 
       const falote: FaloteRequestDto = { codSucursal: branch, documento: "GetConsecDoc" }
-      console.log("falote", falote)
       const conse = await CartService.GetConsecDocAsync(falote)
       const consecutivo = Number(conse.data.consecutivo)
 
@@ -268,7 +265,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           toast.error(String(msg))
           return
         }
-          console.log("[CartFlow] createLogIfNeeded?",ord)
         await createLogIfNeeded(Number(ord.noPedido), locked, !!ord.existingLog)
         await refreshBadge(Number(ord.noPedido))
         return

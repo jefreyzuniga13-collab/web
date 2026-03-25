@@ -226,10 +226,8 @@ useEffect(() => {
               </button>
             )}
 
-
             {convId && (
               <button
-                // Si no puede asignar (es decir, va a "Cerrar"), aplicamos la clase de cerrar
                 className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${isClosed ? "btnDisabled" : ""}`}
                 onClick={handleAssignClick}
                 disabled={isClosed} // Es buena práctica deshabilitar el botón nativo
@@ -237,7 +235,6 @@ useEffect(() => {
                 <FaUserAlt size={16} /> {label}
               </button>
             )}
-
 
           </div>
         </header>

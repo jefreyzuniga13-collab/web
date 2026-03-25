@@ -16,28 +16,6 @@ function formatError(error: unknown): Error {
 }
 
 class ProductPCGServ {
-  // async getAll(descripcion?: string): Promise<ProductoPCGInterface[]> {
-  //     try {
-  //         const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>('Catalogos/ListaProducto', {
-  //             params:{
-  //                 descripcion
-  //             }
-  //         });
-  //         return data.data;
-  //     } catch (error) {
-  //         throw formatError(error)
-  //     }
-  // }
-
-  // async GetByCategory(codGrupo: string): Promise<ProductoPCGInterface[]> {
-  //     try {
-  //         const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(`Catalogos/ProductosPorCategoria/${codGrupo}`);
-
-  //         return data.data;
-  //     } catch (error) {
-  //         throw formatError(error)
-  //     }
-  // }
 
   async getAll(
     page: number,
@@ -46,12 +24,7 @@ class ProductPCGServ {
   ): Promise<ProductoPCGInterface[]> {
     try {
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}`,
-        //     , {
-        //     params:{
-        //         descripcion
-        //     }
-        // }
+        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}`
       );
       return data.data;
     } catch (error) {

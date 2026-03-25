@@ -1,6 +1,6 @@
 import React from "react";
 import "@/Styles/Auth/PrivacyPolicy.css";
-import logopcg from '@/assets/logopcg.png'
+import logopcg from '@/assets/img/logopcg.png'
 
 const PrivacyPolicy: React.FC = () => {
   return (

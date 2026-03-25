@@ -6,7 +6,7 @@ import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
 import "@/Styles/Auth/LoginPresentation.css";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
 
-import addGroup from "@/assets/Add_Group_2025.png";
+import addGroup from "@/assets/img/Add_Group_2025.png";
 
 export default function ForgotPasswordPresentation() {
   const { formik, loading, canSubmit, formError } = useForgotPasswordForm();

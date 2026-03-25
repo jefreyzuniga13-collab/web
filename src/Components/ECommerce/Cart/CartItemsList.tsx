@@ -1,6 +1,6 @@
 import React, { useMemo } from "react"
 import { MdDelete } from "react-icons/md"
-import noimageavailable from "@/assets/noimageavailable.webp"
+import noimageavailable from "@/assets/img/noimageavailable.webp"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 
 type Row = { cart: CarDto; detail: ListDetalleCarrito }

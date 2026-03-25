@@ -1,5 +1,5 @@
 import '@/Styles/Common/OfflinePage.css'
-import Unavailable from '@/assets/unavailable.webp'
+import Unavailable from '@/assets/img/unavailable.webp'
 
 export default function OfflinePage({
   onRetry

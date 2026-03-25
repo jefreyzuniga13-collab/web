@@ -5,8 +5,6 @@ type Status = "loading" | "ok" | "unauthorized";
 import NotFound from '@/Pages/Auth/NotFound'
 import CarPage from '@/Pages/ECommerce/CarPage'
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
-// import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
-
 const ProtectedCartRoute = () => {
   const [status, setStatus] = useState<Status>("loading");
   const [payload, setPayload] = useState<TempLinkResolveResponseDto | null>(null);

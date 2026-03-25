@@ -8,6 +8,7 @@ import UserSessionPage from '@/Pages/Auth/UserSessionPage'
 import ProtectedCartRoute from '@/Pages/ECommerce/ProtectedCartRoute'
 import CheckoutPage from '@/Pages/ECommerce/CheckoutPage'
 import SuccessRequest from '@/Pages/ECommerce/SuccessRequest'
+import PaymentHostedPage from '@/Pages/ECommerce/PaymentHostedPage'
 import CustomLoader from '@/Components/Common/CustomLoader'
 
 const Register             = lazy(() => import('@/Pages/Auth/RegisterAccountPage'))
@@ -47,6 +48,7 @@ export function AppRouter() {
         <Route path="cart" element={<ProtectedCartRoute />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="successOrder" element={<SuccessRequest />} />
+        <Route path="payment-hosted" element={<PaymentHostedPage />} />
 
       
         <Route element={<PublicRoute />}>

@@ -6,7 +6,7 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-import addGroup from "@/assets/Add_Group_2025.png";
+import addGroup from "@/assets/img/Add_Group_2025.png";
 import "@/Styles/Auth/LoginPresentation.css";
 
 export default function LoginPresentation() {

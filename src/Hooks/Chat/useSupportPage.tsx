@@ -126,32 +126,6 @@ export function useSupportPage() {
       fetchPolicy();
     }, []);
 
-    // Bajo la misma logica, y bajo el mismo hook
-  // const handleAfterAssign = () => {
-  //   if (!convId) return;
-  //   getConversation(convId)
-  //     .then((res) => setConversation(res.data.data))
-  //     .catch(console.error);
-  // };
-
-  // const handleAssignClick = () => {
-  //   if (!convId || !conversation) return;
-  //   if (isAdmin) {
-  //     dispatch(openAssignModal(conversation));
-  //   } else {
-  //     closeConversation(convId).then(handleAfterAssign).catch(console.error);
-  //   }
-  // };
-
-  //  const handleAssignClick = () => {
-  //   if (!convId || !conversation) return;
-  //   // if (isAdmin) {
-  //     dispatch(openAssignModal(conversation));
-  //   // } else {
-  //   //   closeConversation(convId).then(handleAfterAssign).catch(console.error);
-  //   // }
-  // };// 1. Extraemos la lógica de permisos para usarla en ambos lados (UI y Funciones)
-
   const handleAfterAssign = async () => {
     if (!convId) return;
     try {

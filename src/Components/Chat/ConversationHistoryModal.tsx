@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Search, ChevronDown, ChevronUp, X, Loader2, Download } from "lucide-react";
 import { ConversationService } from "@/Services/chat/ConversationService";
 import useContact from "@/Hooks/Auth/useContact";
-import bg from "@/assets/backgroundchat.png";
+import bg from "@/assets/img/backgroundchat.png";
 import "@/Styles/Chat/ConversationHistoryModal.css";
 import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from "react";
 import type { CardFormState, CheckoutStep, PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { FaRegCreditCard } from "react-icons/fa";
-import VisaLogo from "@/assets/visaLogo.png";
-import MasterCardLogo from "@/assets/masterCardLogo.png";
+import VisaLogo from "@/assets/img/visaLogo.png";
+import MasterCardLogo from "@/assets/img/masterCardLogo.png";
 import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";

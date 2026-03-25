@@ -1,9 +1,9 @@
 import type { CategoriaPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
 import '@/Styles/Chat/DetailPanel/CategoryRow.css'
 import Tooltip from '@mui/material/Tooltip';
-// import noimageavailable from '@/assets/noimageavailable.webp'
+// import noimageavailable from '@/assets/img/noimageavailable.webp'
 import type { SelectedInterface } from "./ProductTab";
-import aguamarina from '@/assets/aguamarina.png'
+import aguamarina from '@/assets/img/aguamarina.png'
 
 interface Props{
     cat?: CategoriaPCGInterface;

@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Input from "@/Components/Common/Input"
 import type { CarDto, ListDetalleCarrito, InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
-import EmptyCart from "@/assets/emptycard.webp"
 import { toast } from "react-toastify"
 import "@/Styles/Ecommerce/cardPCGTab.css"
 import Button from "@/Components/Common/Button"
 import { useCart } from "@/Hooks/Ecommerce/useCart"
-import noimageavailable from "@/assets/noimageavailable.webp"
+import noimageavailable from "@/assets/img/noimageavailable.webp"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import { MdDelete } from "react-icons/md"
 import {
@@ -44,6 +43,9 @@ import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationServic
 import type { CalculationReqDto, ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
+import EmptyCartPlayer from '@/assets/lottie/Empty.json'
+import Lottie from "lottie-react";
+
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -542,7 +544,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           <h5 className="productTab-content-header__title">Carrito</h5>
         </header>
         <div className="carPCPanel-emptyContainer">
-          <img src={EmptyCart} alt="empty" className="cardPanel-emptyImage" />
+           <Lottie   loop={false} autoplay animationData={EmptyCartPlayer} />
           <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
         </div>
       </div>
@@ -629,6 +631,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
   if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
   return lines.join("\n").trim()
 }
+
   const handlePersistLog = async (log: LogCartResponseDto, ecommerceUserId: number) => {
     if (!log?.id) return log
 
