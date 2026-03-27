@@ -3,7 +3,6 @@ import Input from "@/Components/Common/Input";
 import { Label } from "@/Components/Common/Label";
 import { Textarea } from "@/Components/Common/Textarea";
 import { useTemplateCategoryForm } from "@/Hooks/Chat/useTemplateCategoryForm";
-
 import type {
   TemplateCategoryRequestDto,
   TemplateCategoryResponseDto,
@@ -136,7 +135,6 @@ export default function SystemParamModal({
                 )}
               </div>
             )}
-
           </div>
 
           <footer className="sp-modal__footer">

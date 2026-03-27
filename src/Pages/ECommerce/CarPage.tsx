@@ -35,27 +35,27 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
   const { fetchByContactId } = useLogCart();
 
-useEffect(() => {
-  if (!payload?.contactId || !payload?.orderId) return;
+  useEffect(() => {
+    if (!payload?.contactId || !payload?.orderId) return;
 
-  const run = async () => {
+    const run = async () => {
 
-    dispatch(
-      getProductFromCarAsync({
-        codCliente: payload.contactId,
-        noPedido: payload.orderId,
-      })
-    );
+      dispatch(
+        getProductFromCarAsync({
+          codCliente: payload.contactId,
+          noPedido: payload.orderId,
+        })
+      );
 
-    const existingLog = await fetchByContactId(payload.contactId);
-    setExistingLog(existingLog ?? null);
+      const existingLog = await fetchByContactId(payload.contactId);
+      setExistingLog(existingLog ?? null);
 
-  //   if(existingLog != null){
-  // }
-};
+    //   if(existingLog != null){
+    // }
+  };
 
-  run();
-}, [dispatch, fetchByContactId, payload]);
+    run();
+  }, [dispatch, fetchByContactId, payload]);
 
 
   const hasItems =

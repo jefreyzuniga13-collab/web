@@ -206,3 +206,4 @@ const useClasicUser = (userId?: number) => {
 };
 
 export default useClasicUser;
+//usar la mejora con TanStack Query

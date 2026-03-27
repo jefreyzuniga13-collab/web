@@ -119,3 +119,16 @@ export interface LogCartUpdateRequestDto {
   destinationBranchCode?: string
   destinationWherehouseCode?: string
 }
+
+
+
+export type Payload = {
+  fullName: string;
+  email: string;
+  ecommerceUserId: number;
+  expiresAtUtc: string;
+  orderId: number;
+  conversationId: number;
+  contactId: number;
+  userId: number;
+};

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
 const BASE_URLPCG = import.meta.env.VITE_API_URLPCG?.replace(/\/+$/, '');
-const VITE_API_URLPowerTranz = import.meta.env.VITE?.replace(/\/+$/, '');
+const VITE_API_URLPowerTranz = import.meta.env.VITE_API_URLPowerTranz?.replace(/\/+$/, '');
 
 // API CRM
 const api = axios.create({

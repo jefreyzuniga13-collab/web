@@ -18,9 +18,9 @@ import { es } from "date-fns/locale/es";
 import SmsIcon from "@mui/icons-material/Sms";
 import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage";
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout";
-import "@/Styles/Chat/custom-messages-flyout.css";
 import { FaArrowDown } from "react-icons/fa";
 import "@/styles/Chat/ChatWindow.css";
+import "@/Styles/Chat/custom-messages-flyout.css";
 
 const formatTime = (iso?: string) => {
   if (!iso) return "";

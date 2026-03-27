@@ -75,13 +75,6 @@ export function useCarPCG() {
     try {
       const item = await CartService.removeProductFromCar(idUsuario, noPedido, codProducto, unico);
       setCarPCG(item.data);
-
-      // if (item.success) {
-      //   toast.success(item.message);
-      // } 
-      // else {
-      //   toast.error(item.message);
-      // }
     } catch (err: any) {
       setError(err);
     } finally {
@@ -101,4 +94,4 @@ export function useCarPCG() {
     updateCarAsync,
     AddProductToCarAsync
   }
-}
+}//uso de TanStack Query completo y actualizado

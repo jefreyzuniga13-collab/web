@@ -2,32 +2,46 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as turf from "@turf/turf";
-import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-import type {ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO} from "@/Interfaces/Ecommerce/ClientLocationInterface";
-import type { NearestBranchRequestDto, Currencyto, CheckoutStep, PaymentMethod, BillingFormState, CardFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import type { FacturaTempo, PagoGenerico, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, } from "@/Interfaces/Ecommerce/FacturaTempo";
-import type {FaloteRequestDto} from "@/Interfaces/Crm/CartPCGInterface";
+import { useIniciarPago } from "@/Hooks/Ecommerce/useIniciarPago";
+import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
+import {n, round2,safeStr} from '@/Utils/ECommerce/validators'
+import {CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY} from '@/Utils/ECommerce/keys'
+import type {
+  ClientLocationDto,
+  Coords,
+  LocationMode,
+  TotalesPantallaReqDTO
+} from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import type {
+  NearestBranchRequestDto,
+  Currencyto,
+  CheckoutStep,
+  PaymentMethod,
+  BillingFormState
+} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type {
+  FacturaTempo,
+  PagoGenerico,
+  ObtenerDivisaPagosTipoReq,
+  ObtenerDivisaPagosTipoRes
+} from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
 import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import type { AppDispatch, RootState } from "@/Context";
-import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
-import { UserSessionService } from "@/Services/auth/UserSessionService";
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
-import { formatCardNumber, formatCvc, isExpiryValid, validateBillingForm, validateCardForm, validateLocation } from "@/Utils/validation";
+import { validateBillingForm, validateLocation } from "@/Utils/validation";
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage";
 import { PaymentMethodComponent } from "@/Components/ECommerce/PaymentMethod";
 import { Currency } from "@/Components/ECommerce/Currency";
 import { Location } from "@/Components/ECommerce/Location";
 import "@/Styles/Ecommerce/CheckoutPage.css";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import { sendMediaEcommerce} from "@/Services/chat/MessageService";
-import { generateOrdeFacPDFFile } from "@/Utils/Pdf/PrintDetFac";
-import {InvoiceOrderService} from '@/Services/Ecommerce/InvoiceOrderService'
-
+import type { Payload } from '@/Interfaces/Crm/LogCartInterface';
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
@@ -44,31 +58,6 @@ type BranchLike = {
   longitud: number | string;
 };
 
-function round2(n: number): number {
-  return Math.round((Number(n ?? 0) + Number.EPSILON) * 100) / 100;
-}
-
-function safeStr(v: unknown): string {
-  return String(v ?? "").trim();
-}
-
-function n(v: unknown): number {
-  const x = Number(v ?? 0);
-  return Number.isFinite(x) ? x : 0;
-}
-
-type Payload = {
-  fullName: string;
-  email: string;
-  ecommerceUserId: number;
-  expiresAtUtc: string;
-  orderId: number;
-  conversationId: number;
-  contactId: number;
-  userId: number;
-};
-
-//Pago por tarjea, debe de integrar la pasarela de pago, esta tiene lo mismo que la ya integrada, se necesito el auth, paso a paso para integrarla
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,7 +67,6 @@ const CheckoutPage: React.FC = () => {
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
   const [userFullName, setUserFullName] = useState<string>("");
-  // const [InvoiceTotalsDto, setInvoiceTotalsDto] = useState<InvoiceTotalsDto | null>(null)
 
   useEffect(() => {
     if (!payload) {
@@ -106,14 +94,7 @@ const CheckoutPage: React.FC = () => {
     country: "NI",
     city: "",
     address: "",
-    addressName: "",
-  });
-
-  const [cardForm, setCardForm] = useState<CardFormState>({
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-    nameOnCard: "",
+    addressName: ""
   });
 
   const [selectedCoords, setSelectedCoords] = useState<Coords | null>(null);
@@ -152,20 +133,28 @@ const CheckoutPage: React.FC = () => {
 
   const cartTotal = useMemo(() => n(carPCG?.[0]?.total), [carPCG]);
   const totalPagar = useMemo(() => round2(cartTotal + n(transpCost) + n(tip)), [cartTotal, transpCost, tip]);
+
   const {
     currency,
     GetCurrencyAsync,
     GetTransportationCostAsync,
     GetNearestBranchAsync,
     loading: invoiceLoading,
-    InsertaFacturaAsync,
-    // PrintDetFacAsync
+    InsertaFacturaAsync
   } = useInvoiceOrder();
 
   const { fetchByContactId, UpdatedStatus } = useLogCart();
-  const { CreateAsync: createLocationAsync, GetAsync,
-    // clientLocation, 
-    clientLocations } = useClientLocation();
+  const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation();
+
+  const iniciarPagoMutation = useIniciarPago({
+    onSuccess: (response) => {
+      navigate("/payment-hosted", {
+        state: {
+          payment: response.data
+        }
+      });
+    }
+  });
 
   useEffect(() => {
     if (!payload?.contactId) return;
@@ -185,9 +174,7 @@ const CheckoutPage: React.FC = () => {
         const logTrans = log?.transCost != null ? Number(log.transCost) : null;
 
         setLockedBranchCode(logBranch);
-
         setLockedAddressId(logAddressId > 0 ? logAddressId : null);
-
         setLockedTranspCost(logTrans != null && !Number.isNaN(logTrans) ? logTrans : null);
 
         const lockByPickup = log?.retiraSucursal === "S";
@@ -219,46 +206,38 @@ const CheckoutPage: React.FC = () => {
 
     const boot = async () => {
       try {
-        //  Carrito
         await dispatch(
           getProductFromCarAsync({ codCliente: payload.contactId, noPedido: payload.orderId })
         ).unwrap();
         if (cancelled) return;
 
-        //  Log
         const log = await fetchByContactId(payload.contactId);
         if (cancelled) return;
 
-
-        //  Flags
         const isPickup = log?.retiraSucursal === "S";
         const logBranch = String(log?.branch ?? "").trim();
         const logAddressId = Number(log?.addressId ?? 0);
         const hasLockedAddress = logAddressId > 0 && !!logBranch;
 
-        //  Locks
         setExistingLog(log ?? null);
-
         setLockedBranchCode(logBranch);
         setLockedAddressId(hasLockedAddress ? logAddressId : null);
 
         const logTrans = log?.transCost != null ? Number(log.transCost) : null;
         setLockedTranspCost(
-          isPickup ? 0 : (logTrans != null && !Number.isNaN(logTrans) ? logTrans : null)
+          isPickup ? 0 : logTrans != null && !Number.isNaN(logTrans) ? logTrans : null
         );
 
         setLocationLockedByLog(isPickup || hasLockedAddress);
 
-        //  Step
         if (isPickup) {
-          setStep("currency"); // pickup: saltar mapa
+          setStep("currency");
         } else if (hasLockedAddress) {
-          setStep("currency"); // direccion ya definida: saltar mapa
+          setStep("currency");
         } else {
-          setStep("location"); // normal: pedir ubicacion
+          setStep("location");
         }
 
-        // Currency + direcciones
         await GetCurrencyAsync();
         if (cancelled) return;
 
@@ -292,7 +271,7 @@ const CheckoutPage: React.FC = () => {
     setBillingForm((prev) => ({
       ...prev,
       firstName: parts[0] ?? "",
-      lastName: parts.slice(1).join(" ") ?? "",
+      lastName: parts.slice(1).join(" ") ?? ""
     }));
   }, [userFullName]);
 
@@ -321,7 +300,7 @@ const CheckoutPage: React.FC = () => {
     setBillingForm((prev) => ({
       ...prev,
       address: addr.descripcion ?? prev.address,
-      addressName: addr.nombre ?? prev.addressName,
+      addressName: addr.nombre ?? prev.addressName
     }));
   }, [locationLockedByLog, lockedAddressId, addressList]);
 
@@ -332,7 +311,7 @@ const CheckoutPage: React.FC = () => {
       setSelectedCoords({ latitud: Number(first.latitud), longitud: Number(first.longitud) });
       setBillingForm((prev) => ({
         ...prev,
-        address: first.descripcion ?? prev.address,
+        address: first.descripcion ?? prev.address
       }));
     } else if (addressList.length === 0 && locationMode === "existing" && !locationLockedByLog) {
       setLocationMode("new");
@@ -347,7 +326,6 @@ const CheckoutPage: React.FC = () => {
     let cancelled = false;
 
     const fetchAddress = async () => {
-      try {
         const { latitud, longitud } = selectedCoords;
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${latitud}&lon=${longitud}&format=json&addressdetails=1`
@@ -359,11 +337,8 @@ const CheckoutPage: React.FC = () => {
           ...prev,
           country: data.address?.country ?? prev.country,
           city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
-          address: data.display_name ?? prev.address,
+          address: data.display_name ?? prev.address
         }));
-      } catch {
-        //
-      }
     };
 
     void fetchAddress();
@@ -404,29 +379,6 @@ const CheckoutPage: React.FC = () => {
     setBillingForm((prev) => ({ ...prev, [id]: value }));
   };
 
-  const onCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm((p) => ({ ...p, cardNumber: formatCardNumber(e.target.value) }));
-  };
-
-  function formatExpiry(raw: string): string {
-    const digits = raw.replace(/\D/g, "").slice(0, 4); // MMAA
-    if (digits.length <= 2) return digits;
-    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  }
-
-  const onExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = formatExpiry(e.target.value);
-    setCardForm((p) => ({ ...p, expiry: value }));
-  };
-
-  const onCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm((p) => ({ ...p, cvc: formatCvc(e.target.value) }));
-  };
-
-  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardForm((p) => ({ ...p, nameOnCard: e.target.value }));
-  };
-
   const handleCoordsChange = (coords: Coords) => setSelectedCoords(coords);
 
   const normalize = (v: string) => v.toLowerCase().trim();
@@ -443,7 +395,7 @@ const CheckoutPage: React.FC = () => {
     return {
       codigo: "0",
       formulario: "1-",
-      opcion: safeStr(selectedCurrency?.codPago),
+      opcion: safeStr(selectedCurrency?.codPago)
     };
   };
 
@@ -462,7 +414,7 @@ const CheckoutPage: React.FC = () => {
           codigoExterno: safeStr(x?.codigoExterno),
           tipo: safeStr(x?.tipo),
           banco: safeStr(x?.banco),
-          aCambio: safeStr(x?.aCambio),
+          aCambio: safeStr(x?.aCambio)
         }))
         .filter((x) => x.codigo || x.codigoExterno || x.nombre);
 
@@ -525,7 +477,7 @@ const CheckoutPage: React.FC = () => {
       codSucursal,
       sucursal: item?.sucursal ?? item?.nombreSucursal ?? item?.nombre ?? null,
       latitud,
-      longitud,
+      longitud
     };
   };
 
@@ -540,10 +492,8 @@ const CheckoutPage: React.FC = () => {
         const lat2 = Number(locked.latitud);
         const lon2 = Number(locked.longitud);
         if ([lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))) return 0;
-        
-        const data =  calculateDistance(lat1, lon1, lat2, lon2);
 
-        return data;
+        return calculateDistance(lat1, lon1, lat2, lon2);
       })();
 
       const cost = Number(lockedTranspCost ?? 0);
@@ -628,16 +578,14 @@ const CheckoutPage: React.FC = () => {
 
   const buildPagoGenerico = (
     invoiceReq: FacturaTempo,
-    codSucursalFactura: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    TotalesPantallaReq: TotalesPantallaReqDTO
+    codSucursalFactura: string
   ): PagoGenerico => {
     const moneda = safeStr(invoiceReq.moneda) || "1";
     const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
 
     const cart = carPCG?.[0];
     const baseTotal = Number(cart?.total ?? 0);
-    const totalPagar = round2(baseTotal + Number(transpCost ?? 0) + Number(tip ?? 0));
+    const totalCalculado = round2(baseTotal + Number(transpCost ?? 0) + Number(tip ?? 0));
 
     const isCash = method === "cash";
     const isCard = method === "card";
@@ -651,37 +599,30 @@ const CheckoutPage: React.FC = () => {
     const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
     const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
 
-    let monto = totalPagar;
+    let monto = totalCalculado;
     let referencia = "";
     let numeroTransaccion = "";
     let fechaOVence = "";
-    let ultDigito = "";
 
-    const total: number = 
-    Number(
-      ((existingLog?.totalEnPantalla ?? 0) + (transpCost && transpCost > 0
-        ? transpCost
-        :  0) + tip)
+    const total: number = Number(
+      (existingLog?.totalEnPantalla ?? 0) +
+      (transpCost && transpCost > 0 ? transpCost : 0) +
+      tip
     );
-
 
     if (isCash) {
       monto = total;
     }
 
     if (isTransfer) {
-      // monto = Number(transferAmount ?? 0);
       monto = total;
       referencia = safeStr(transferRef);
       numeroTransaccion = safeStr(transferRef);
-      fechaOVence = dayjs().format("YYYY-MM-DD");
+      fechaOVence = new Date().toISOString().slice(0, 10);
     }
 
     if (isCard) {
       monto = total;
-      const cleanCard = safeStr(cardForm.cardNumber).replace(/\s+/g, "");
-      ultDigito = cleanCard.slice(-4);
-      fechaOVence = safeStr(cardForm.expiry);
     }
 
     const tipoPago = isCash ? "" : safeStr(tipo);
@@ -692,15 +633,15 @@ const CheckoutPage: React.FC = () => {
         ? "Efectivo"
         : isTransfer
           ? descripcionPago || "Transferencia"
-          : `${descripcionPago || "Tarjeta"}${ultDigito ? ` (${ultDigito})` : ""}`,
-      codPago: codPago,
-      tipoPago: tipoPago,
+          : descripcionPago || "Tarjeta",
+      codPago,
+      tipoPago,
       aplicaCambio: "True",
       codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
       banco: banco || (isCash ? "00" : ""),
-      monto: isCash ? Number(cashAmount): monto ,
+      monto: isCash ? Number(cashAmount) : monto,
       moneda,
-      montoA: isCash ? Number(cashAmount): monto,
+      montoA: isCash ? Number(cashAmount) : monto,
       cambio: isCash ? Number(cashAmount - monto) : 0,
       tasaCambio: Number(tasaCambio),
       Fecha_o_Vence: isCard ? fechaOVence : "",
@@ -709,9 +650,9 @@ const CheckoutPage: React.FC = () => {
       referencia,
       numeroTransaccion,
       cuentaContable: "",
-      ultDigito,
+      ultDigito: "",
       tarjeta: "",
-      tarjetahabiente: isCard ? safeStr(cardForm.nameOnCard) : "",
+      tarjetahabiente: "",
       autorizacion: "",
       termId: "",
       afiliado: "",
@@ -720,15 +661,15 @@ const CheckoutPage: React.FC = () => {
       indice: "0",
       codClienteCrd: "00000",
       facturaPinpad: "",
-      codEmpresa: safeStr((invoiceReq)?.codEmpresa),
+      codEmpresa: safeStr(invoiceReq.codEmpresa),
       codSucursal: codSucursalFactura,
       montoFirma: "0",
-      sobrante: "0",
+      sobrante: "0"
     };
   };
 
   const handlePayNow = async () => {
-    if (payNowLock || payNowCooldown > 0) return;
+    if (payNowLock || payNowCooldown > 0 || iniciarPagoMutation.isPending) return;
 
     setPayNowLock(true);
     setPayNowCooldown(5);
@@ -741,8 +682,6 @@ const CheckoutPage: React.FC = () => {
         if (!validateBillingForm(billingForm, locationMode)) return;
         if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
       }
-
-      if (method === "card" && !validateCardForm(cardForm)) return;
 
       const cart = carPCG[0];
       const total = Number(cart.total ?? 0);
@@ -768,12 +707,6 @@ const CheckoutPage: React.FC = () => {
       if ((method === "card" || method === "transfer") && !divisaSelected) {
         return void toastError("Debe seleccionar el banco / forma de pago.");
       }
-
-      if (method === "card" && !isExpiryValid(cardForm.expiry)) {
-        toast.error("Fecha de expiración inválida o tarjeta vencida");
-        return;
-      }
-
 
       const isPickup = existingLog?.retiraSucursal === "S";
       let nearest: any | null = null;
@@ -805,7 +738,7 @@ const CheckoutPage: React.FC = () => {
           descripcion: "RETIRO EN SUCURSAL",
           latitud: 0,
           longitud: 0,
-          idUsuario: ecommerceUserId,
+          idUsuario: ecommerceUserId
         };
       } else if (locationLockedByLog) {
         const addr = selectedAddress ?? addressList.find((a) => a.idDireccion === lockedAddressId) ?? addressList[0];
@@ -818,7 +751,7 @@ const CheckoutPage: React.FC = () => {
           descripcion: addr.descripcion,
           latitud: addr.latitud,
           longitud: addr.longitud,
-          idUsuario: ecommerceUserId,
+          idUsuario: ecommerceUserId
         };
       } else if (locationMode === "existing") {
         const addr = selectedAddress ?? addressList[0];
@@ -831,7 +764,7 @@ const CheckoutPage: React.FC = () => {
           descripcion: addr.descripcion,
           latitud: addr.latitud,
           longitud: addr.longitud,
-          idUsuario: ecommerceUserId,
+          idUsuario: ecommerceUserId
         };
       } else {
         if (!coords) return void toastError("Debes seleccionar la ubicación.");
@@ -843,7 +776,7 @@ const CheckoutPage: React.FC = () => {
           descripcion: billingForm.address,
           latitud: coords.latitud,
           longitud: coords.longitud,
-          idUsuario: ecommerceUserId,
+          idUsuario: ecommerceUserId
         };
 
         const newLocation = await createLocationAsync(locationPayload);
@@ -868,9 +801,8 @@ const CheckoutPage: React.FC = () => {
         maquina: `CRM-${payload?.contactId}`,
         sucursal: existingLog!.branch,
         tabla: "det_factura_tempo",
-        // totalEnPantalla: existingLog?.totalEnPantalla ?? 0,
         totalEnPantalla: existingLog?.subTotal ?? 0,
-        usuario: payload!.contactId.toString(),
+        usuario: payload!.contactId.toString()
       };
 
       const res = await CartService.sp_valida_SobTotalFactura(TotalesPantallaReq);
@@ -879,116 +811,95 @@ const CheckoutPage: React.FC = () => {
       const errores: Record<string, string> = {
         pasasub: "Subtotal no válido, diferencia con el valor real.",
         pasadesc: "Descuento no válido, diferencia con el valor real.",
-        pasaiva: "IVA no válido, diferencia con el valor real.",
+        pasaiva: "IVA no válido, diferencia con el valor real."
       };
 
       const flags = [
         { key: "pasasub", value: pasasub },
         { key: "pasadesc", value: pasadesc },
-        { key: "pasaiva", value: pasaiva },
+        { key: "pasaiva", value: pasaiva }
       ];
 
-      const fallo = flags.find(f => f.value === "N" || f.value === null);
+      const fallo = flags.find((f) => f.value === "N" || f.value === null);
 
       if (fallo) {
         toast.error(`(${errores[fallo.key]})`);
         return;
       }
-      
-      else {
-        const invoiceReqBase: FacturaTempo = {
-          ...facturaBase,
-          codCli: "00000",
-          nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
-          clientePadre: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
-          direccionCte: String(finalLocation.descripcion ?? "").trim(),
-          usuario: String(payload?.contactId),
-          maquina: `CRM-${payload?.contactId}`,
-          fechaFactura: dayjs().format("YYYYMMDD"),
-          tasaCambio: 36.6243,
-          sucursal: codSucursalFactura,
-          numero: Number(dataconse?.data?.consecutivo ?? 0),
-          idPromocion: String(orderId),
-          noOrden: String(orderId),
-          referencia: String(finalLocation.referencia ?? ""),
-          valorTransporte: Number(transporte ?? 0),
-          aplicaPropina: "N",
-          observacion: existingLog?.observacion ?? "",
-          hayFormaPago: "S",
-          retiraSucursal: existingLog?.retiraSucursal != null ? String(existingLog?.retiraSucursal) : "N",
-          serie: existingLog?.serie != null ? existingLog?.serie: "F"
-        };
 
-        const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura, TotalesPantallaReq);
-        const detallePago: PagoGenerico[] = [pagoGenerico];
+      const invoiceReqBase: FacturaTempo = {
+        ...facturaBase,
+        codCli: "00000",
+        nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+        clientePadre: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+        direccionCte: String(finalLocation.descripcion ?? "").trim(),
+        usuario: String(payload?.contactId),
+        maquina: `CRM-${payload?.contactId}`,
+        fechaFactura: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
+        tasaCambio: 36.6243,
+        sucursal: codSucursalFactura,
+        numero: Number(dataconse?.data?.consecutivo ?? 0),
+        idPromocion: String(orderId),
+        noOrden: String(orderId),
+        referencia: String(finalLocation.referencia ?? ""),
+        valorTransporte: Number(transporte ?? 0),
+        aplicaPropina: "N",
+        observacion: existingLog?.observacion ?? "",
+        hayFormaPago: "S",
+        retiraSucursal: existingLog?.retiraSucursal != null ? String(existingLog.retiraSucursal) : "N",
+        serie: existingLog?.serie != null ? existingLog.serie : "F"
+      };
 
-        const invoiceReqFinal: FacturaTempo = {
-          ...invoiceReqBase,
-          detallePago,
-        } as FacturaTempo;
+      const pagoGenerico: PagoGenerico = buildPagoGenerico(
+        invoiceReqBase,
+        codSucursalFactura
+      );
 
-        const insertFacRes = await InsertaFacturaAsync(invoiceReqFinal);
-        if (insertFacRes?.success) {
+      const detallePago: PagoGenerico[] = [pagoGenerico];
 
-          // const draftKey = useMemo(() => `cartDraft:v1:${existingLog != null ? existingLog.conversationId: 0}:${existingLog != null ? existingLog.contactId : 0}`, [conversationId, contactId])
-      
-          const existingLog = await fetchByContactId(payload!.contactId);
-          if (existingLog?.id) {
-            await UpdatedStatus(existingLog.id, 3);
+      const invoiceReqFinal: FacturaTempo = {
+        ...invoiceReqBase,
+        detallePago
+      } as FacturaTempo;
 
-          }
+      if (method === "card") {
+        const totalMonto = Number(
+          (existingLog?.totalEnPantalla ?? 0)
+        );
 
-          await UserSessionService.revokeCartTempLink(orderId);
-          const limRes = CartService.LimpiarFacturaTempo(String(payload?.contactId), `CRM-${payload?.contactId}`)
+        sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
+        sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
 
-          if ((await limRes).success) dispatch(setContactCartBadge({ contactId: payload!.contactId, hasCart: false, count: 0 }));
-          else toast.error((await limRes).message);
+        await iniciarPagoMutation.mutateAsync({
+          orderId: String(orderId),
+          amount: totalMonto,
+          currencyCode: "558"
+        });
 
-
-          const date = dayjs().format("YYYYMMDD");
-          const resPrintPDF = await InvoiceOrderService.PrintDetFac(codSucursalFactura, date, dataconse?.data?.consecutivo, 8);
-
-          if (resPrintPDF) {
-            const pdfBlob = generateOrdeFacPDFFile(resPrintPDF.data);
-
-            if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
-              throw new Error("El PDF generado está vacío o inválido.");
-            }
-
-            const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
-            const magic = String.fromCharCode(...head);
-            if (magic !== "%PDF-") {
-              throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
-            }
-
-            const noFactura = String(resPrintPDF.data.DatosGenerales?.NoFactura ?? "").trim();
-            
-            const fileName = `Pedido-${noFactura || "SN"}.pdf`;
-
-            const mime = pdfBlob.type || "application/pdf";
-            const file = new File([pdfBlob], fileName, { type: mime });
-
-            await sendMediaEcommerce(payload!.conversationId, file, "");
-          }
-
-          navigate("/successOrder", { replace: true });
-        } else {
-          toast.error(insertFacRes?.message)
-          return;
-        }
+        return;
       }
 
-
+      await procesarCheckoutExitoso({
+        invoiceReqFinal,
+        payload: payload!,
+        orderId,
+        codSucursalFactura,
+        consecutivo: Number(dataconse?.data?.consecutivo ?? 0),
+        fetchByContactId,
+        updatedStatus: UpdatedStatus,
+        insertaFacturaAsync: InsertaFacturaAsync,
+        dispatch,
+        navigate
+      });
     } catch (err: any) {
       toast.error(err?.message ?? "Error procesando pago");
-      await UserSessionService.revokeCartTempLink(orderId);
       navigate("/unauthorized", { replace: true });
     } finally {
       window.setTimeout(() => setPayNowLock(false), 500);
     }
   };
 
-  const payNowDisabled = payNowLock || payNowCooldown > 0;
+  const payNowDisabled = payNowLock || payNowCooldown > 0 || iniciarPagoMutation.isPending;
 
   return (
     <section className="checkout-page">
@@ -1016,6 +927,7 @@ const CheckoutPage: React.FC = () => {
                 isLocked={locationLockedByLog}
               />
             )}
+
             {step === "currency" && (
               <Currency
                 step={step}
@@ -1029,27 +941,17 @@ const CheckoutPage: React.FC = () => {
             )}
 
             {step === "paymentMethod" && (
-              payNowDisabled ? 
-              <div>
-
-                {/* <img src={} alt={} /> */}
-                
-                Cargando
-              </div>
-              : (
+              payNowDisabled ? (
+                <div>Cargando</div>
+              ) : (
                 <PaymentMethodComponent
                   step={step}
                   setStep={setStep}
                   method={method}
                   distanceKm={distanceKm}
                   transpCost={transpCost}
-                  cardForm={cardForm}
                   tip={tip}
                   setTip={setTip}
-                  onExpiryChange={onExpiryChange}
-                  onCardNumberChange={onCardNumberChange}
-                  onCvcChange={onCvcChange}
-                  onNameChange={onNameChange}
                   cashAmount={cashAmount}
                   setCashAmount={setCashAmount}
                   transferAmount={transferAmount}
@@ -1066,7 +968,7 @@ const CheckoutPage: React.FC = () => {
                   carPCG={carPCG}
                   totalPagar={totalPagar}
                   existingLog={existingLog}
-              />
+                />
               )
             )}
           </div>

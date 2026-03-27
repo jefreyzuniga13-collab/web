@@ -251,11 +251,11 @@ export const Location = ({
               />
             </div>
           ) : null}
+        </div>
 
           <button type="button" className="checkout-paybtn" onClick={handleGoToCurrency}>
             Continuar a pago
           </button>
-        </div>
       </div>
     </div>
   );

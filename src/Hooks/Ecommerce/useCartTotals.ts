@@ -1,10 +1,9 @@
-// src/Hooks/Ecommerce/useCartTotals.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-toastify"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import type { CalculationReqDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
-
+import {n} from '@/Utils/ECommerce/validators'
 type TotalsOptions = {
   contactId: number
   retiraSucursal: "S" | "N"
@@ -12,11 +11,6 @@ type TotalsOptions = {
   selectedAddressId: number | null
   addDescription: string
   debounceMs?: number
-}
-
-const toNumber0 = (v: unknown) => {
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
 }
 
 export function useCartTotals({
@@ -42,13 +36,13 @@ export function useCartTotals({
 
   const effectiveShipping = useMemo(() => {
     if (!allowShipping) return 0
-    const cost = toNumber0(transCost)
+    const cost = n(transCost)
     return cost > 0 ? cost : 0
   }, [allowShipping, transCost])
 
   useEffect(() => {
     const t = setTimeout(() => {
-      setDebouncedTransCost(toNumber0(transCost))
+      setDebouncedTransCost(n(transCost))
     }, debounceMs)
     return () => clearTimeout(t)
   }, [transCost, debounceMs])
@@ -59,7 +53,7 @@ export function useCartTotals({
       const myReq = ++reqRef.current
 
       const pickup = opts?.pickup ?? (retiraSucursal === "S")
-      const cost = toNumber0(opts?.cost ?? debouncedTransCost)
+      const cost = n(opts?.cost ?? debouncedTransCost)
       const safeCost = cost > 0 ? cost : 0
 
       const shippingAllowedNow = !(pickup === true) && (selectedAddressId != null || addDescription.trim().length > 0)

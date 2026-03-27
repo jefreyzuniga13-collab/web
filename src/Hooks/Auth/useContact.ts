@@ -1,250 +1,335 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Auth/ContactInterface'
 import { contactService } from '@/Services/auth/ContactService'
 import type { PagedResponse } from '@/Interfaces/Common/GlobalInterface'
 import { toast } from 'react-toastify'
 
-const useContact = (contactId?: number) => {
-  const [data, setData] = useState<ContactLogInterface[]>([])
-  const [contactByClient, setContactByClient] = useState<ContactLogInterface[]>([])
-  const [verifiedContact, setVerifiedContact] = useState<ContactLogInterface[]>([])
-  const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(30)
-  const [totalCount, setTotalCount] = useState(0)
-  const [loadingList, setLoadingList] = useState(false)
-  const [loadingItem, setLoadingItem] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
-  const [isModalOpen, setModalOpen] = useState(false)
-  const [globalFilter, setGlobalFilter] = useState<string>('')
+type ModalMode = 'create' | 'edit' | 'view'
 
+const contactKeys = {
+  all: ['contacts'] as const,
+  list: (filter: string, page: number, pageSize: number) =>
+    [...contactKeys.all, 'list', filter, page, pageSize] as const,
+  verified: (page: number, pageSize: number) =>
+    [...contactKeys.all, 'verified', page, pageSize] as const,
+  detail: (id: number) => [...contactKeys.all, 'detail', id] as const,
+  phone: (phone: string) => [...contactKeys.all, 'phone', phone] as const,
+  byClient: (clientId: string, page: number, pageSize: number) =>
+    [...contactKeys.all, 'client', clientId, page, pageSize] as const,
+  byClientCode: (clientCode: string, page: number, pageSize: number) =>
+    [...contactKeys.all, 'client-code', clientCode, page, pageSize] as const,
+}
+
+const useContact = (contactId?: number) => {
   const navigate = useNavigate()
-  const lastRequestRef = useRef(0)
+  const queryClient = useQueryClient()
+
+  const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
+  const [contactByClient, setContactByClient] = useState<ContactLogInterface[]>([])
+  const [modalMode, setModalMode] = useState<ModalMode>('create')
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [page, setPageState] = useState(1)
+  const [pageSize, setPageSizeState] = useState(30)
+
+  const {
+    data: pagedContacts,
+    isLoading: loadingList,
+    isFetching: fetchingList,
+    error: listError,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    refetch: refetchPage,
+  } = useQuery<PagedResponse<ContactLogInterface>, Error>({
+    queryKey: contactKeys.list(globalFilter, page, pageSize),
+    queryFn: () => contactService.getAllAsync(globalFilter, page, pageSize),
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const {
+    data: verifiedPagedContacts,
+    isLoading: loadingVerified,
+    isFetching: fetchingVerified,
+    error: verifiedError,
+  } = useQuery<PagedResponse<ContactLogInterface>, Error>({
+    queryKey: contactKeys.verified(page, pageSize),
+    queryFn: () => contactService.getAllVerifiedAsync(page, pageSize),
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const {
+    data: detailData,
+    isLoading: loadingDetail,
+    isFetching: fetchingDetail,
+    error: detailError,
+  } = useQuery<ContactLogInterface | null, Error>({
+    queryKey: contactKeys.detail(contactId ?? 0),
+    queryFn: async () => {
+      if (!contactId || contactId <= 0) return null
+      return await contactService.getContactByIdAsync(contactId)
+    },
+    enabled: typeof contactId === 'number' && contactId > 0,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const createMutation = useMutation<ContactLogInterface, Error, ContactFormValues>({
+    mutationFn: async values => {
+      const payload = { ...values } as ContactLogInterface
+      return await contactService.createAsync(payload)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: contactKeys.all })
+    },
+    onError: err => {
+      toast.error('Error al crear el contacto')
+      throw err
+    },
+  })
+
+  const updateMutation = useMutation<
+    ContactLogInterface,
+    Error,
+    { id: number; values: ContactFormValues }
+  >({
+    mutationFn: async ({ id, values }) => {
+      const payload = { ...(selectedData ?? {}), ...values, id } as ContactLogInterface
+      return await contactService.updateContactAsync(payload)
+    },
+    onSuccess: async (updatedItem, variables) => {
+      queryClient.setQueryData<ContactLogInterface>(contactKeys.detail(variables.id), updatedItem)
+      setSelectedData(prev => (prev?.id === variables.id ? updatedItem : prev))
+      await queryClient.invalidateQueries({ queryKey: contactKeys.all })
+    },
+    onError: err => {
+      toast.error('Error al actualizar el contacto')
+      throw err
+    },
+  })
+
+  const toggleMutation = useMutation<void, Error, number>({
+    mutationFn: async id => {
+      await contactService.toggleAsync(id)
+    },
+    onSuccess: async (_, id) => {
+      queryClient.setQueriesData<PagedResponse<ContactLogInterface>>(
+        { queryKey: contactKeys.all },
+        old => {
+          if (!old?.items) return old
+
+          return {
+            ...old,
+            items: old.items.map(item =>
+              item.id === id ? { ...item, isActive: !item.isActive } : item
+            ),
+          }
+        }
+      )
+
+      setSelectedData(prev =>
+        prev?.id === id ? { ...prev, isActive: !prev.isActive } : prev
+      )
+
+      await queryClient.invalidateQueries({ queryKey: contactKeys.all })
+    },
+    onError: err => {
+      toast.error('Error al alternar el estado del contacto')
+      throw err
+    },
+  })
+
+  const updateEcommerceUserMutation = useMutation<any, Error, { id: number; ecommerceUserId: number }>({
+    mutationFn: async ({ id, ecommerceUserId }) =>
+      await contactService.UpdateEcommerceUser(id, ecommerceUserId),
+    onError: err => {
+      toast.error('Error al actualizar el usuario ecommerce del contacto')
+      throw err
+    },
+  })
 
   const fetchPage = useCallback(
     async (p = page, s = pageSize) => {
-      setLoadingList(true)
-      setError(null)
-      try {
-        const res: PagedResponse<ContactLogInterface> = await contactService.getAllAsync(globalFilter, p, s)
-        const verifiedRes: PagedResponse<ContactLogInterface> = await contactService.getAllVerifiedAsync(p, s)
+      setPageState(p)
+      setPageSizeState(s)
 
-        setData(res.items)
-        setVerifiedContact(verifiedRes.items)
-        setTotalCount(res.meta.totalCount)
-        setPage(res.meta.currentPage)
-        setPageSize(res.meta.pageSize)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingList(false)
-      }
+      const result = await queryClient.fetchQuery<PagedResponse<ContactLogInterface>>({
+        queryKey: contactKeys.list(globalFilter, p, s),
+        queryFn: () => contactService.getAllAsync(globalFilter, p, s),
+        staleTime: 1000 * 60 * 5,
+      })
+
+      await queryClient.prefetchQuery({
+        queryKey: contactKeys.verified(p, s),
+        queryFn: () => contactService.getAllVerifiedAsync(p, s),
+        staleTime: 1000 * 60 * 5,
+      })
+
+      return result
     },
-    [globalFilter, page, pageSize]
+    [globalFilter, page, pageSize, queryClient]
   )
 
   const getByClient = useCallback(
     async (clientId: string, p = page, s = pageSize) => {
-      setLoadingList(true)
-      setError(null)
       try {
-        const res = await contactService.getContactByClientAsync(clientId, p, s)
+        setPageState(p)
+        setPageSizeState(s)
+
+        const res = await queryClient.fetchQuery<PagedResponse<ContactLogInterface>>({
+          queryKey: contactKeys.byClient(clientId, p, s),
+          queryFn: () => contactService.getContactByClientAsync(clientId, p, s),
+          staleTime: 1000 * 60 * 5,
+        })
+
         setContactByClient(res.items)
-        setTotalCount(res.meta.totalCount)
-        setPage(res.meta.currentPage)
-        setPageSize(res.meta.pageSize)
         return res
-      } catch (err: any) {
-        setError(err)
+      } catch {
         return null
-      } finally {
-        setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [page, pageSize, queryClient]
   )
 
   const getByClientCode = useCallback(
     async (clientCode: string, p = page, s = pageSize) => {
-      setLoadingList(true)
-      setError(null)
       try {
-        const res = await contactService.getContactByClientCodeAsync(clientCode, p, s)
+        setPageState(p)
+        setPageSizeState(s)
+
+        const res = await queryClient.fetchQuery<PagedResponse<ContactLogInterface>>({
+          queryKey: contactKeys.byClientCode(clientCode, p, s),
+          queryFn: () => contactService.getContactByClientCodeAsync(clientCode, p, s),
+          staleTime: 1000 * 60 * 5,
+        })
+
         setContactByClient(res.items)
-        setTotalCount(res.meta.totalCount)
-        setPage(res.meta.currentPage)
-        setPageSize(res.meta.pageSize)
         return res
-      } catch (err: any) {
-        setError(err)
+      } catch {
         return null
-      } finally {
-        setLoadingList(false)
       }
     },
-    [page, pageSize]
+    [page, pageSize, queryClient]
   )
 
-  const getById = useCallback(async (id: number) => {
-  setLoadingItem(true)
-  setError(null)
+  const getById = useCallback(
+    async (id: number) => {
+      try {
+        const res = await contactService.getById(id)
 
-  try {
-    const res = await contactService.getById(id)
+        if (res.success) {
+          setSelectedData(res.data)
+          queryClient.setQueryData(contactKeys.detail(id), res.data)
+          return res.data
+        }
 
-    if (res.success) {
-      setSelectedData(res.data)
-      return res.data
-    } else {
-      toast.error(res.message)
-      return null
-    }
-  } catch (err: any) {
-    setError(err)
-    return null
-  } finally {
-    setLoadingItem(false)
-  }
-}, [])
-
+        toast.error(res.message)
+        return null
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Error al obtener el contacto')
+        return null
+      }
+    },
+    [queryClient]
+  )
 
   const fetchById = useCallback(
     async (id: number) => {
-      setLoadingItem(true)
-      setError(null)
-      const requestId = ++lastRequestRef.current
+      if (!id || id <= 0) {
+        setSelectedData(null)
+        return null
+      }
+
       try {
-        const item = await contactService.getContactByIdAsync(id)
-        if (requestId !== lastRequestRef.current) return
+        const item = await queryClient.fetchQuery<ContactLogInterface>({
+          queryKey: contactKeys.detail(id),
+          queryFn: () => contactService.getContactByIdAsync(id),
+          staleTime: 1000 * 60 * 5,
+        })
+
         setSelectedData(item)
-      } catch (err: any) {
-        if (requestId === lastRequestRef.current) setError(err)
-      } finally {
-        if (requestId === lastRequestRef.current) setLoadingItem(false)
+        return item
+      } catch {
+        return null
       }
     },
-    []
+    [queryClient]
   )
 
   const fetchByPhone = useCallback(
     async (phone: string) => {
-      setLoadingItem(true)
-      setError(null)
-      const requestId = ++lastRequestRef.current
+      if (!phone?.trim()) {
+        setSelectedData(null)
+        return null
+      }
+
       try {
-        const item = await contactService.getContactByPhoneAsync(phone)
-        if (requestId !== lastRequestRef.current) return
+        const item = await queryClient.fetchQuery<ContactLogInterface>({
+          queryKey: contactKeys.phone(phone),
+          queryFn: () => contactService.getContactByPhoneAsync(phone),
+          staleTime: 1000 * 60 * 5,
+        })
+
         setSelectedData(item)
-      } catch (err: any) {
-        if (requestId === lastRequestRef.current) setError(err)
-      } finally {
-        if (requestId === lastRequestRef.current) setLoadingItem(false)
+        return item
+      } catch {
+        return null
       }
     },
-    []
+    [queryClient]
   )
 
   const create = useCallback(
     async (values: ContactFormValues) => {
-      setLoadingItem(true)
-      setError(null)
       try {
-        const payload = { ...values } as ContactLogInterface
-        const newItem = await contactService.createAsync(payload)
-        setData(prev => [...prev, newItem])
-        setTotalCount(prev => prev + 1)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
+        return await createMutation.mutateAsync(values)
+      } catch {
+        return null
       }
     },
-    []
+    [createMutation]
   )
 
   const update = useCallback(
     async (id: number, values: ContactFormValues) => {
-      setLoadingItem(true)
-      setError(null)
       try {
-        const payload = { ...(selectedData ?? {}), ...values, id } as ContactLogInterface
-        const updatedItem = await contactService.updateContactAsync(payload)
-        setData(prev => prev.map(item => (item.id === id ? updatedItem : item)))
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
+        return await updateMutation.mutateAsync({ id, values })
+      } catch {
+        return null
       }
     },
-    [selectedData]
+    [updateMutation]
   )
 
-const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: number)=>{
-  setLoadingItem(true);
-  setError(null);
-
-  try{
-    const res = await contactService.UpdateEcommerceUser(id, ecommerceUserId)
-     
-    return res;
-  }catch(err: any){
-    setError(err)
-  }finally{
-    setLoadingItem(false)
-  }
-}, [])
   const toggle = useCallback(
     async (id: number) => {
-      setLoadingItem(true)
-      setError(null)
       try {
-        await contactService.toggleAsync(id)
-        setData(prev =>
-          prev.map(item =>
-            item.id === id ? { ...item, isActive: !item.isActive } : item
-          )
-        )
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
+        await toggleMutation.mutateAsync(id)
+        return true
+      } catch {
+        return false
       }
     },
-    []
+    [toggleMutation]
   )
 
-  // const verify = useCallback(
-  //   async (phone: string) => {
-  //     setLoadingItem(true)
-  //     setError(null)
-  //     try {
-  //       navigate(`/verify-contact/${phone}`)
-  //     } catch (err: any) {
-  //       setError(err)
-  //     } finally {
-  //       setLoadingItem(false)
-  //     }
-  //   },
-  //   []
-  // )
-
-
-    const verify = useCallback(
-    async (id: number) => {
-      setLoadingItem(true)
-      setError(null)
+  const UpdateEcommerceUserAsync = useCallback(
+    async (id: number, ecommerceUserId: number) => {
       try {
-        navigate(`/verify-contact/${id}`)
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
+        return await updateEcommerceUserMutation.mutateAsync({ id, ecommerceUserId })
+      } catch {
+        return null
       }
     },
-    []
+    [updateEcommerceUserMutation]
+  )
+
+  const verify = useCallback(
+    async (id: number) => {
+      navigate(`/verify-contact/${id}`)
+      return true
+    },
+    [navigate]
   )
 
   const openCreate = useCallback(() => {
@@ -271,16 +356,19 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
     setModalMode('create')
   }, [])
 
-  useEffect(() => {
-    fetchPage();
-  }, [fetchPage]);
-
   const handleSubmit = useCallback(
-    (values: ContactFormValues) => {
-      if (modalMode === 'create') create(values)
-      else if (modalMode === 'edit' && selectedData)
-        update(selectedData.id as number, values)
-      closeModal()
+    async (values: ContactFormValues) => {
+      let result: ContactLogInterface | null = null
+
+      if (modalMode === 'create') {
+        result = await create(values)
+      } else if (modalMode === 'edit' && selectedData) {
+        result = await update(selectedData.id as number, values)
+      }
+
+      if (result) {
+        closeModal()
+      }
     },
     [modalMode, selectedData, create, update, closeModal]
   )
@@ -290,15 +378,61 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
       setSelectedData(null)
       return
     }
-    setSelectedData(null)
-    fetchById(contactId)
-  }, [contactId, fetchById])
+
+    if (detailData) {
+      setSelectedData(detailData)
+    }
+  }, [contactId, detailData])
+
+  const data = useMemo(() => pagedContacts?.items ?? [], [pagedContacts])
+  const verifiedContact = useMemo(
+    () => verifiedPagedContacts?.items ?? [],
+    [verifiedPagedContacts]
+  )
+
+  const totalCount = pagedContacts?.meta.totalCount ?? 0
+
+  const loadingMutations =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    toggleMutation.isPending ||
+    updateEcommerceUserMutation.isPending
+
+  const loading =
+    loadingList ||
+    fetchingList ||
+    loadingVerified ||
+    fetchingVerified ||
+    loadingDetail ||
+    fetchingDetail ||
+    loadingMutations
+
+  const error = useMemo(
+    () =>
+      createMutation.error ||
+      updateMutation.error ||
+      toggleMutation.error ||
+      updateEcommerceUserMutation.error ||
+      detailError ||
+      verifiedError ||
+      listError ||
+      null,
+    [
+      createMutation.error,
+      updateMutation.error,
+      toggleMutation.error,
+      updateEcommerceUserMutation.error,
+      detailError,
+      verifiedError,
+      listError,
+    ]
+  )
 
   return {
     data,
     verifiedContact,
     selectedData,
-    loading: loadingList || loadingItem,
+    loading,
     error,
     page,
     pageSize,
@@ -306,8 +440,13 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
     isModalOpen,
     modalMode,
     globalFilter,
-    setPage: (p: number) => fetchPage(p, pageSize),
-    setPageSize: (s: number) => fetchPage(1, s),
+    setPage: (p: number) => {
+      setPageState(p)
+    },
+    setPageSize: (s: number) => {
+      setPageSizeState(s)
+      setPageState(1)
+    },
     openCreate,
     openEdit,
     openView,
@@ -325,7 +464,7 @@ const UpdateEcommerceUserAsync = useCallback(async(id: number, ecommerceUserId: 
     getByClientCode,
     contactByClient,
     UpdateEcommerceUserAsync,
-    getById
+    getById,
   }
 }
 

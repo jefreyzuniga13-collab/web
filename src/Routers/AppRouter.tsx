@@ -8,6 +8,7 @@ import UserSessionPage from '@/Pages/Auth/UserSessionPage'
 import ProtectedCartRoute from '@/Pages/ECommerce/ProtectedCartRoute'
 import CheckoutPage from '@/Pages/ECommerce/CheckoutPage'
 import SuccessRequest from '@/Pages/ECommerce/SuccessRequest'
+import PaymentResultPage from '@/Pages/ECommerce/PaymentResultPage'
 import PaymentHostedPage from '@/Pages/ECommerce/PaymentHostedPage'
 import CustomLoader from '@/Components/Common/CustomLoader'
 
@@ -44,9 +45,9 @@ export function AppRouter() {
     }>
       <Routes>
 
-        {/* rutas externas (no necesitan login, y no son parte de auth del crm) */}
         <Route path="cart" element={<ProtectedCartRoute />} />
         <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="payment-result" element={<PaymentResultPage />} />
         <Route path="successOrder" element={<SuccessRequest />} />
         <Route path="payment-hosted" element={<PaymentHostedPage />} />
 
@@ -61,15 +62,14 @@ export function AppRouter() {
           <Route path="verify-account"  element={<Activation />} />
         </Route>
 
-                  <Route path="privacy-policy"  element={<PrivacyPolicy />} />
-
+        <Route path="privacy-policy"  element={<PrivacyPolicy />} />
          <Route path="unauthorized"    element={<Unauthorized />} />
-
         <Route element={
           <RequireAuth>
             <MainLayout />
           </RequireAuth>
         }>
+
           <Route index element={<Navigate to="chat" replace />} />
           <Route path="dashboard"               element={<DashboardPage />} />
           <Route path="chat"                    element={<SupportPage />} />

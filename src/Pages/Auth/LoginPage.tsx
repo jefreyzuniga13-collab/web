@@ -7,6 +7,7 @@ import Button from "@/Components/Common/Button";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
 import addGroup from "@/assets/img/Add_Group_2025.png";
+import loginImg from "@/assets/img/login2.png";
 import "@/Styles/Auth/LoginPresentation.css";
 
 export default function LoginPresentation() {
@@ -44,7 +45,7 @@ export default function LoginPresentation() {
 
           <div className="login__banner-card">
             <img
-              src="https://i.ibb.co/9HBdj911/7015971.jpg"
+              src={loginImg}
               alt="Banner promocional"
               className="login__banner-image"
               loading="lazy"

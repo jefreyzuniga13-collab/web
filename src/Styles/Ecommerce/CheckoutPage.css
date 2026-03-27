@@ -35,7 +35,7 @@
 .checkout-methods-list{
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -234,6 +234,10 @@
   box-sizing: border-box;
 }
 
+.checkout-error{
+  font-size: var(--font-size-sm);
+}
+
 .checkout-input::placeholder {
   color: var(--color-gray-400, #9ca3af);
 }
@@ -260,7 +264,7 @@
   border-radius: 0.6rem;
   border: 1px solid var(--color-gray-200, #e5e7eb);
   background-color: #f9fafb;
-  padding: 0.75rem 0.9rem;
+  padding: 1rem 0.9rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -304,6 +308,13 @@
   color: var(--color-gray-800, #111827);
 }
 
+.checkout-selected-currency{
+  font-size: var(--font-size-base) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  }
 .checkout-method__brands {
   display: flex;
   align-items: center;
@@ -384,6 +395,10 @@
     min-width: 100%;
 }
 
+.checkout-hint{
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
 .checkout-actionBtn{
     display: flex;
     justify-content: space-around;
@@ -392,7 +407,8 @@
 }
 .checkout-paybtn,
 .checkout-paybtn__back{
-  width: 45%;
+  width: 40%;
+  max-width: 45%;
   margin-top: 1.25rem;
   padding: 0.85rem 1rem;
   border-radius: 0.7rem;
@@ -405,7 +421,6 @@
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
   box-shadow: 0 10px 22px rgba(88, 73, 243, 0.1);
-
   display: flex;
   justify-content: center;
   align-items: center;
@@ -452,6 +467,8 @@
   flex-direction: column;
   gap: 1.25rem;
   box-sizing: border-box;
+  min-width: 100%;
+  font-size: var(--font-size-base);
 }
 
 .checkout-summary__title {
@@ -462,7 +479,19 @@
   text-align: left;
   text-decoration: underline;
 }
+.checkout-summary__p{
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-base);
+}
 
+.checkout-summary__subtitle{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-content: center;
+  align-items: center;
+  text-align: left;
+}
 .checkout-summary__Cost_cost {
   display: flex;
   flex-direction: column;

@@ -61,6 +61,7 @@
 }
 
 .carPCPanel-content{
+    padding: 12px;
     padding-bottom: 2rem;
 }
 .carPCPanel-content__list{

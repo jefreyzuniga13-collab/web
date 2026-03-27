@@ -1,0 +1,128 @@
+// import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
+// import { formatNiPhone } from "../formatters";
+
+// type AutoTableDoc = jsPDF & { lastAutoTable?: { finalY: number } };
+// type Row = [string, string, string, string, string];
+
+// const money = (v: number) =>
+//   new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO" }).format(v ?? 0);
+
+// const fmtDate = (isoOrText: string) => {
+//   const d = new Date(isoOrText);
+//   if (Number.isNaN(d.getTime())) return isoOrText;
+//   return new Intl.DateTimeFormat("es-NI", {
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//     hour: "2-digit",
+//     minute: "2-digit",
+//   }).format(d);
+// };
+
+// const safeText = (v?: string) => (v ?? "").toString().trim();
+
+// export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, contactNumber: string, identificarTransaccion: string, tarjeta: string): Blob => {
+//   const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDoc;
+
+//   const marginX = 14;
+//   const marginY = 14;
+//   const pageWidth = doc.internal.pageSize.getWidth();
+
+//   // Header
+//   doc.setFont("helvetica", "bold");
+//   doc.setFontSize(16);
+//   doc.text(`Detalle Pedido ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
+//   doc.text(`Numero de tarjetas ${}`)
+//   doc.text(`Identificador de transacción ${identificarTransaccion}`)
+
+//   doc.setFontSize(11);
+//   doc.setFont("helvetica", "normal");
+
+//   const yInfo = marginY + 7;
+//   doc.text(`A nombre de: ${safeText(orderFac.DatosGenerales?.Nombrede)}`, marginX, yInfo);
+
+//   // Espera un date pero es un string, 
+//   // doc.text(`Fecha: ${orderFac.DatosGenerales?.FechaFactura}`, marginX, yInfo + 6);
+//   doc.text(`Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`, marginX, yInfo + 6);
+//   // Separador
+//   doc.setDrawColor(180);
+//   doc.line(marginX, yInfo + 10, pageWidth - marginX, yInfo + 10);
+
+//   // Dirección
+//   const yDir = yInfo + 7;
+  
+//   doc.text(`Dirección: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 10);
+
+//   // Tabla del carrito
+//   const carritoRows: Row[] = [];
+
+//   for (const item of orderFac.Carrito ?? []) {
+//     carritoRows.push([
+//       safeText(item.Descripcion),
+//       safeText(item.Cantidad.toString()),
+//       safeText(item.UnidadMedida),
+//       money(item.Precio ?? 0),
+//       money(item.TotalMenu ?? 0),
+//     ]);
+//   }
+
+//   const startCarritoY = yDir + 24;
+
+//   autoTable(doc, {
+//     startY: startCarritoY,
+//     theme: "grid",
+//     styles: { font: "helvetica", fontSize: 9, cellPadding: 2 },
+//     head: [["Descripción", 'Cantidad', "UM", "Precio", "Total"]],
+//     body: carritoRows,
+//     headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+//     columnStyles: {
+//       0: { halign: "left", cellWidth: 85 },
+//       2: { cellWidth: 25 },
+//       3: { cellWidth: 25 },
+//       4: { cellWidth: 25 },
+//       5: { halign: "left", cellWidth: 25 },
+//     },
+//   });
+
+//   // Totales
+//   const yTotals = (doc.lastAutoTable?.finalY ?? startCarritoY) + 6;
+//   const p = orderFac.DetallePago;
+
+//   autoTable(doc, {
+//     startY: yTotals,
+//     theme: "plain",
+//     styles: { font: "helvetica", fontSize: 10, cellPadding: 1.5 },
+//     body: [
+//       ["SubTotal:", money(p?.SubTotal ?? 0)],
+//       ["Descuento:", money(p?.Descuento ?? 0)],
+//       ["IVA:", money(p?.Iva ?? 0)],
+//       ["Transporte:", money(p?.Transporte ?? 0)],
+//       // ["Propina:", money(p?.Propina ?? 0)],
+//       ["Método de pago:", safeText(p?.MetodoPago)],
+//       [
+//         { content: "TOTAL A PAGAR:", styles: { fontStyle: "bold" } },
+//         { content: money(p?.Valor_Pagar ?? 0), styles: { fontStyle: "bold" } },
+//       ],
+//     ],
+//     columnStyles: {
+//       0: { cellWidth: 40 },
+//       1: { cellWidth: 45, halign: "right" },
+//     },
+//     margin: { left: pageWidth - marginX - 90 },
+//   });
+
+
+
+//     // Espera un date pero es un string, 
+//   // doc.text(`Fecha: ${orderFac.DatosGenerales?.FechaFactura}`, marginX, yInfo + 6);
+//   doc.text(`PAGO ELECTRONICO`, marginX, yInfo + 6);
+//   doc.text(`TEL ${formatNiPhone(contactNumber)}`, marginX, yInfo + 6);
+//   doc.text(`PAGO ELECTRONICO`, marginX, yInfo + 6);
+//   doc.text(`ORDEN DEL EMISOR, SEGUN CONTRATO SUSCRITO`, marginX, yInfo + 6);
+
+//   return doc.output("blob");
+// };
+
+// //pdf de recibo generado para el pago en linea por media de tarjeta

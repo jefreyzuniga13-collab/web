@@ -168,7 +168,6 @@ body{
   margin-left:.3rem;
 }
 
-/* Panel izquierdo */
 .login__banner{
   position:relative;
   height:100%;
@@ -177,17 +176,14 @@ body{
   isolation:isolate;
 }
 
-/* Fondo con un toque de “glass haze” */
 .login__banner-shape{
   position:absolute;
   inset:0;
-  background:
-    radial-gradient(1200px 700px at 18% 18%, rgba(255,255,255,.22), transparent 55%),
-    radial-gradient(900px 560px at 78% 35%, rgba(255,255,255,.14), transparent 55%),
-    linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background-color: var(--color-primary);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
 }
 
-/* Haze tipo vidrio (suave) */
 .login__banner::after{
   content:"";
   position:absolute;
@@ -217,7 +213,7 @@ body{
 .login__banner-content{
   position:relative;
   z-index:3;
-  height:100%;
+  min-height: 100vh;
   padding: clamp(2.0rem, 2.6vw, 4.6rem);
   color:#fff;
   display:flex;
@@ -260,26 +256,23 @@ body{
   margin-inline:auto;
   padding: 1.2rem;
   border-radius: 2.4rem;
-  background: rgba(255,255,255,.10);
+  /* background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.20);
   box-shadow:
     0 18px 55px rgba(0,0,0,.18),
-    inset 0 1px 0 rgba(255,255,255,.24);
-  backdrop-filter: blur(10px) saturate(130%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
+    inset 0 1px 0 rgba(255,255,255,.24); */
+  /* backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%); */
 }
 
 .login__banner-image{
   width:100%;
   display:block;
   border-radius: 1.8rem;
-  object-fit: cover;
-  height: min(38vh, 36rem);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,.18),
-    inset 0 1px 0 rgba(255,255,255,.08);
+  object-fit: contain;
+  height: min(40vh, 40rem);
+  clip-path: circle(49.7% at 50% 50%);
 }
-
 /* Texto inferior con “glass chip” muy tenue */
 .login__banner-text{
   margin:0;

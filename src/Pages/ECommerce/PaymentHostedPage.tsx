@@ -1,21 +1,34 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
+type PaymentHostedState = {
+  payment?: {
+    redirectData?: string;
+  };
+};
 
 export default function PaymentHostedPage() {
   const location = useLocation();
-  const payment = location.state?.payment;
+  const navigate = useNavigate();
 
-  if (!payment?.redirectData) {
-    return (
-      <div style={{ padding: "2rem", textAlign: "center" }}>
-        No se recibió información del pago.
-      </div>
-    );
+  const state = location.state as PaymentHostedState | null;
+  const redirectData = state?.payment?.redirectData ?? "";
+
+  useEffect(() => {
+    console.log("redirectData es", redirectData)
+    if (!redirectData) {
+      navigate("/unauthorized", { replace: true });
+    }
+  }, [redirectData, navigate]);
+
+  if (!redirectData) {
+    return null;
   }
 
   return (
-    <section style={{ width: "100%", height: "100vh" }}>
+    <section style={{ width: "100%", height: "100vh", overflow: "hidden" }}>
       <iframe
-        srcDoc={payment.redirectData}
+        srcDoc={redirectData}
         title="Powertranz Checkout"
         style={{ width: "100%", height: "100%", border: "none" }}
         sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-top-navigation-by-user-activation"

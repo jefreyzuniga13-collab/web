@@ -60,7 +60,7 @@
   background-color: var(--bg-primary);
   border-radius: 0.75rem;
   border: 1px solid var(--bg-secondary);
-  padding: 1.25rem 1.5rem;
+  /* padding: 1.25rem 1.5rem; */
 }
 
 .cart-page__totals {
@@ -115,17 +115,21 @@
 }
 
 .cart-table__head {
-  border-bottom: 1px solid var(--bg-secondary);
+  border-bottom: 1px solid var(--color-secondary);
+  /* background-color: var(--color-gray-600); */
+  border-radius: var(--space-2lg);
 }
 
 .cart-table__row--head {
-  background-color: #fafafa;
+  /* background-color: var(--color-primary); */
+    background-color: var(--color-gray-500);
+  color: #fff;
 }
 
 .cart-table__row--head .cart-table__cell {
-  font-size: var(--space-base);
+  font-size: var(--font-size-base);
   font-weight: 600;
-  color: #6b7280;
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -395,7 +399,9 @@
   font-size: var(--font-size-base);
   font-weight: 600;
   text-transform: uppercase;
-  background-color: var(--color-primary);
+  /* background-color: var(--color-secondary); */
+  /* background-color: var(--greenColor); */
+  background-color: var(--color-gray-500);
   color: var(--bg-primary);
   cursor: pointer;
 }

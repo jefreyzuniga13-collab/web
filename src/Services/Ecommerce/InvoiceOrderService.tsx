@@ -14,28 +14,11 @@ class InvoiceOrderServ{
         return data;
     } 
 
-
 async CreatePCG(req: FacturaTempo): Promise<ApiPCGResponse<string>>{
         const {data} = await apiPCG.post<ApiPCGResponse<string>>(`CarritoCompra/InsertaFactura`, req)
 
         return data;
     } 
-
-    // async PrintDetFac(
-    //     fecha: string, 
-    //     sucursal: string, 
-    // ): 
-    // Promise<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>{
-    //     const {data} = await apiPCG.get<ApiPCGResponse<PrintOrdenFactInterfaceRaw>>(`OrdenFactura/ImprimeOrdenFactura`, 
-    //         {
-    //             params:{
-    //                 noFactura,
-
-    //             }
-    //         }
-    //     )
-    //     return data;
-    // }
 
      async PrintDetFac(
          sucursal: string,
