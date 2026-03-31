@@ -102,6 +102,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     run()
   }, [contactId, fetchByContactId])
 
+
+  //agregar datos inciales, no incluri aqui directamente ejemplo los de facturas.
   const buildCartRequest = useCallback(
     (
       product: ProductoPCGInterface,
@@ -148,6 +150,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     },
     [contactId]
   )
+
 
   const refreshBadge = useCallback(
     async (noPedido: number) => {

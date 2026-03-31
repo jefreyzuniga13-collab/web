@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ResponseAgentAverageClienteDataResponseDto, FilterForm } from '@/Interfaces/Dashboard/DashboardInterfaces';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { ConversationService } from '@/Services/chat/ConversationService';
-import { formatoNicaragua } from '@/Utils/LocalDateFormat';
+import { formatoNicaragua } from '@/Utils/ECommerce/formatters';
 import '@/Styles/Dashboard/CustomBarChart.css';
 
 import { useUsers } from '@/Hooks/Auth/useUsers';

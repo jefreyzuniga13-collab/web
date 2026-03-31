@@ -1,7 +1,10 @@
 export interface ApiPCGResponse<T> {
-    success: boolean
-    message: string
-    data: T
+    success: boolean;
+    message: string;
+    data: T;
+
+    //agregaron este campo a la paginaciones de productos
+    totalItems?: string;
 }
 
 export interface TempLinkResolveResponseDto{

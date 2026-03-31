@@ -1,5 +1,3 @@
-//validaciones 
-
 import type { Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type { BillingFormState, CardFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { toast } from "react-toastify";

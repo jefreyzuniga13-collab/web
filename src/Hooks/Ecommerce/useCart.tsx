@@ -1,57 +1,68 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {useState} from 'react'
-import {CartService} from '@/Services/Ecommerce/CartService'
-import { toast } from 'react-toastify'
-import type { SendLinkRequestDto } from '@/Interfaces/Ecommerce/SendLinkInterface'
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { CartService } from "@/Services/Ecommerce/CartService";
+import type { SendLinkRequestDto } from "@/Interfaces/Ecommerce/SendLinkInterface";
+import type { ApiPCGResponse } from "@/Interfaces/Common/GlobalPCGInterface";
 
 export const useCart = () => {
-    const [cart, setCart] = useState<boolean>(false)
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<Error | null>(null)
+  const sendMessageLinkMutation = useMutation<
+    ApiPCGResponse<boolean>,
+    Error,
+    SendLinkRequestDto
+  >({
+    mutationFn: async (req) => {
+      const response = await CartService.SendMessageLink(req);
 
-    const SendMessageLink = async(req: SendLinkRequestDto)=>{
-        setLoading(true)
-        setError(null)
-        try{
-            const data = await CartService.SendMessageLink(req);
-            setCart(data.data);
-            if(data.success){
-                toast.success(data.message);
-            }else{
-                toast.error(data.message)
-            }
-        }catch(err: any){
-            setError(err)
-            console.error("Error. Company request.")
-        }finally{
-            setLoading(false)
-        }
-    }
+      if (!response.success) {
+        throw new Error(response.message);
+      }
 
-    const GetMessageLink = async(req: SendLinkRequestDto)=>{
-        setLoading(true)
-        setError(null)
-        try{
-            const data = await CartService.GetMessageLink(req);
-            if(data.success){
-                // toast.success(data.message);
-                return data.data
-            }else{
-                toast.error(data.message)
-            }
-        }catch(err: any){
-            setError(err)
-            console.error("Error. Company request.")
-        }finally{
-            setLoading(false)
-        }
-    }
+      return response;
+    },
+    onSuccess: (response) => {
+      toast.success(response.message);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      console.error("Error. Company request.", error);
+    },
+  });
+
+  const getMessageLinkMutation = useMutation<
+    ApiPCGResponse<string>,
+    Error,
+    SendLinkRequestDto
+  >({
+    mutationFn: async (req) => {
+      const response = await CartService.GetMessageLink(req);
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      return response;
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      console.error("Error. Company request.", error);
+    },
+  });
 
   return {
-      cart,
-      GetMessageLink,
-      SendMessageLink,
-    error,
-    loading,
-  }
-}
+    cart: sendMessageLinkMutation.data?.data ?? false,
+    messageLink: getMessageLinkMutation.data?.data ?? null,
+    sendMessageLink: sendMessageLinkMutation.mutate,
+    sendMessageLinkAsync: sendMessageLinkMutation.mutateAsync,
+
+    getMessageLink: getMessageLinkMutation.mutate,
+    getMessageLinkAsync: getMessageLinkMutation.mutateAsync,
+
+    loading:
+      sendMessageLinkMutation.isPending || getMessageLinkMutation.isPending,
+
+    error: sendMessageLinkMutation.error || getMessageLinkMutation.error,
+
+    resetSendMessageLink: sendMessageLinkMutation.reset,
+    resetGetMessageLink: getMessageLinkMutation.reset,
+  };
+};

@@ -8,7 +8,7 @@ import type {
 } from '@/Interfaces/Chat/ChatInterfaces'
 import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces'
 import { notificationSound } from '@/Utils/sound'
-import {formatDateTimeNI } from "@/Utils/niDate";
+import {formatDateTimeNI } from "@/Utils/ECommerce/formatters"
 import { store } from "@/Context";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { clearCart } from "@/Context/Slices/Ecommerce/cartSlice";

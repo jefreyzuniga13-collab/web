@@ -23,7 +23,6 @@ type ProcesarCheckoutExitosoParams = {
     id: number,
     status: number,
   ) => Promise<LogCartResponseDto | null>;
-
   insertaFacturaAsync: (
     invoice: FacturaTempo,
   ) => Promise<ApiResponse<unknown>>;
@@ -102,7 +101,7 @@ export async function procesarCheckoutExitoso({
     const noFactura = String(
       resPrintPDF.data.DatosGenerales?.NoFactura ?? "",
     ).trim();
-    
+
     const fileName = `Pedido-${noFactura || "SN"}.pdf`;
     const mime = pdfBlob.type || "application/pdf";
     const file = new File([pdfBlob], fileName, { type: mime });

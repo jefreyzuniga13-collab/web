@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import api, { apiPCG } from "@/Utils/ApiConfig"
 import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
-import { setupNetworkInterceptor } from "@/Utils/setupInterceptors"
+import { setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
 
 const queryClient = new QueryClient()
 

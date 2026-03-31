@@ -1,43 +1,39 @@
-import {useCallback, useState} from 'react'
-import type {UserEcommerceDto} from '@/Interfaces/Ecommerce/UserEcommerceInterface'
-import {UserEcommerceService} from '@/Services/Ecommerce/UserEcommerceService'
-import {toast} from 'react-toastify'
-
-export const useUserEcommerce = () =>{
-    const [userEcommerce, setUserEcommerce] = useState< number | null>(null)
-    const [loading, setLoading] = useState<boolean>(false)
-    const [error, setError] = useState<Error | null>(null)
-
-    const CreateAsync = useCallback(async (req: UserEcommerceDto)=>{
-        setLoading(true)
-        setError(null)
-
-        try{
-            const res = await UserEcommerceService.Create(req);
-
-            if(res.success){
-                setUserEcommerce(res.data)
-                return res.data;
-                // toast.success(res.message);
-            }else{
-                toast.error(res.message);
-            }
-
-            return res.data
-            
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        }catch(err: any){
-            setError(err)
-        }finally{
-            setLoading(false)
-        }
-    }, [])
+import { useMutation } from "@tanstack/react-query";
+import type { UserEcommerceDto } from "@/Interfaces/Ecommerce/UserEcommerceInterface";
+import { UserEcommerceService } from "@/Services/Ecommerce/UserEcommerceService";
+import { toast } from "react-toastify";
+import type { ApiPCGResponse } from "@/Interfaces/Common/GlobalPCGInterface";
+export const useUserEcommerce = () => {
     
-    return{
-        userEcommerce,
-        setUserEcommerce,
-        loading,
-        error,
-        CreateAsync,
-    }
-}
+  const mutation = useMutation<
+    ApiPCGResponse<number>,
+    Error,
+    UserEcommerceDto
+  >({
+    mutationFn: async (req) => {
+      const res = await UserEcommerceService.Create(req);
+
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+
+      return res;
+    },
+    onSuccess: (response) => {
+      toast.success(response.message);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  return {
+    userEcommerce: mutation.data?.data ?? null,
+    response: mutation.data ?? null,
+    loading: mutation.isPending,
+    error: mutation.error,
+    createAsync: mutation.mutateAsync,
+    create: mutation.mutate,
+    reset: mutation.reset,
+  };
+};

@@ -10,14 +10,7 @@ import { useCart } from "@/Hooks/Ecommerce/useCart"
 import noimageavailable from "@/assets/img/noimageavailable.webp"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import { MdDelete } from "react-icons/md"
-import {
-  selectCarPCG,
-  selectCartError,
-  selectCartLoading,
-  getProductFromCarAsync,
-  updateCarAsync,
-  setActiveContactId
-} from "@/Context/Slices/Ecommerce/cartSlice"
+import { selectCarPCG, selectCartError, selectCartLoading, getProductFromCarAsync, updateCarAsync, setActiveContactId } from "@/Context/Slices/Ecommerce/cartSlice"
 import { format } from "date-fns"
 import { FaFilePdf } from "react-icons/fa"
 import { IoIosChatboxes } from "react-icons/io"
@@ -37,12 +30,12 @@ import { IoSend } from "react-icons/io5"
 import { selectCartBadgeByContactId, setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import { generateRandomString } from "@/Utils/generateRandomString"
-import { formatCurrencyNIO } from "@/Utils/formatCurrencyNIO"
+import { generateRandomString } from "@/Utils/ECommerce/formatters"
+import { formatCurrencyNIO } from "@/Utils/ECommerce/formatters"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
 import type { CalculationReqDto, ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
-import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
+import type { LogCartResponseDto, LogCartUpdateRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
 
@@ -61,31 +54,6 @@ type DraftState = {
   transCost: number
   selectedAddressId: number | null
   observation: string
-}
-
-type LogCartUpdateRequestDto = {
-  orderId: number
-  contactId: number
-  userId: number
-  conversationId: number
-  statusId: number
-  branch?: string | null
-  branchName?: string | null
-  addressId?: number | null
-  transCost?: number | null
-  wherehouse?: string | null
-  wherehouseCode?: string | null
-  totalEnPantalla?: number | null
-  descuentoPantalla?: number | null
-  ivaPantalla?: number | null
-  exonerado?: string | null
-  propina?: number | null
-  subTotal?: number | null
-  observacion?: string | null
-  retiraSucursal?: "S" | "N" | null
-  destinationBranchCode?: string
-  destinationWherehouseCode?: string
-  serie?: string;
 }
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
@@ -126,10 +94,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const hydratedRef = useRef(false)
   const skipPersistOnceRef = useRef(false)
 
-  const { SendMessageLink, GetMessageLink, error: errorCart, loading: loadingCart } = useCart()
+  const { sendMessageLinkAsync, getMessageLinkAsync, error: errorCart, loading: loadingCart } = useCart()
   const { UpdatedStatus, fetchByContactId, update: updatedLogCart } = useLogCart()
   const { UpdateEcommerceUserAsync, getById } = useContact()
-  const { CreateAsync } = useUserEcommerce()
+
+  const { createAsync } = useUserEcommerce()
   const { setFile, setText, handleSend, sending } = useChatWindow({ conversationId })
 
   const draftKey = useMemo(() => `cartDraft:v1:${conversationId}:${contactId}`, [conversationId, contactId])
@@ -172,7 +141,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const writeDraft = (state: DraftState) => {
     try {
       localStorage.setItem(draftKey, JSON.stringify(state))
-    } catch {}
+    } catch { }
   }
 
   const calcTotals = useCallback(async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
@@ -209,7 +178,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } finally {
       if (!opts?.silent) setTotalsLoading(false)
     }
-  },[
+  }, [
     // addDescription, 
     contactId, retiraSucursal, selectedAddressId, transCost])
 
@@ -266,11 +235,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     const base = !term
       ? addresses
       : addresses.filter((a) => {
-          const n = String(a.nombre ?? "").toLowerCase()
-          const d = String(a.descripcion ?? "").toLowerCase()
-          const r = String(a.referencia ?? "").toLowerCase()
-          return n.includes(term) || d.includes(term) || r.includes(term)
-        })
+        const n = String(a.nombre ?? "").toLowerCase()
+        const d = String(a.descripcion ?? "").toLowerCase()
+        const r = String(a.referencia ?? "").toLowerCase()
+        return n.includes(term) || d.includes(term) || r.includes(term)
+      })
 
     if (selectedAddressId == null) return base
 
@@ -391,7 +360,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           fechaNacimiento: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear() - 20}`
         }
 
-        const res = await CreateAsync(createUserEcommerce)
+        const res = await createAsync(createUserEcommerce)
         const ecommerceUserId = Number(res)
 
         if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
@@ -494,12 +463,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     if (empty) {
       try {
         if (noPedido && noPedido > 0) await UserSessionService.revokeCartTempLink(noPedido)
-      } catch {}
+      } catch { }
       const existingLog = await fetchByContactId(contactId)
       if (existingLog?.id) await UpdatedStatus(existingLog.id, 3)
       try {
         localStorage.removeItem(draftKey)
-      } catch {}
+      } catch { }
     }
   }
 
@@ -544,93 +513,93 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           <h5 className="productTab-content-header__title">Carrito</h5>
         </header>
         <div className="carPCPanel-emptyContainer">
-           <Lottie   loop={false} autoplay animationData={EmptyCartPlayer} />
+          <Lottie loop={false} autoplay animationData={EmptyCartPlayer} />
           <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
         </div>
       </div>
     )
   }
 
-    const handleSendCartPdf = async () => {
-      if (!cart || sending) return
-      const contact = await getById(contactId)
-      if (!contact) {
-        toast.error("No se pudo obtener el contacto")
-        return
-      }
-
-      const selected = selectedAddressId != null ? addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId)) : null
-      const addressName = String(selected?.nombre ?? "").trim()
-      const addressText = hasSelectedAddress
-        ? [String(selected?.descripcion ?? "").trim(), String(selected?.referencia ?? "").trim()].filter(Boolean).join(" | ")
-        : addDescription.trim()
-
-      const file = generateCartPdfFile(cart, invoiceTotalsDto, contact, {
-        retiraSucursal,
-        transCost,
-        addressName: addressName.length > 0 ? addressName : null,
-        addressText: addressText.length > 0 ? addressText : null,
-        finalTotal: invoiceTotalsDto?.total
-      })
-
-      setFile(file)
-      setText("Resumen de carrito")
-      await handleSend()
+  const handleSendCartPdf = async () => {
+    if (!cart || sending) return
+    const contact = await getById(contactId)
+    if (!contact) {
+      toast.error("No se pudo obtener el contacto")
+      return
     }
 
-const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
-  const lines: string[] = []
-  lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
-  lines.push("")
-  lines.push("🛒 Artículos:")
-  lines.push("")
+    const selected = selectedAddressId != null ? addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId)) : null
+    const addressName = String(selected?.nombre ?? "").trim()
+    const addressText = hasSelectedAddress
+      ? [String(selected?.descripcion ?? "").trim(), String(selected?.referencia ?? "").trim()].filter(Boolean).join(" | ")
+      : addDescription.trim()
 
-  cart.listDetalle?.forEach((d) => {
-    const qty = d.cantidad ?? 0
-    const title = (d.descripcion ?? "").trim() + " - " + d.observaciones
-    if (!title) return
-    lines.push(`*${title}* - ${qty}`)
+    const file = generateCartPdfFile(cart, invoiceTotalsDto, contact, {
+      retiraSucursal,
+      transCost,
+      addressName: addressName.length > 0 ? addressName : null,
+      addressText: addressText.length > 0 ? addressText : null,
+      finalTotal: invoiceTotalsDto?.total
+    })
 
-    const opciones =
-      d.listOpciones
-        ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
-        .filter(Boolean) ?? []
-
-    opciones.forEach((op) => lines.push(`   ${op}`))
-    lines.push("")
-  })
-
-  const total =
-  (invoiceTotalsDto?.total ?? 0)
-
-  if (retiraSucursal === "S") {
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
-    lines.push("🏬 Retira en sucursal")
-    if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
-  } else {
-    const envio = effectiveShipping
-    const hasEnvio = Number.isFinite(envio) && envio > 0
-
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
-    if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
-
-    if (hasSelectedAddress) {
-      const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
-      const addrName = String(selected?.nombre ?? "").trim()
-      const addrDesc = String(selected?.descripcion ?? "").trim()
-      const addrRef = String(selected?.referencia ?? "").trim()
-      const best = [addrName, addrDesc, addrRef].filter((x) => x.length > 0).join(" | ")
-      if (best.length > 0) lines.push(`📍 Dirección: ${best}`)
-    } else if (addDescription.trim().length > 0) {
-      lines.push(`📍 Dirección: ${addDescription.trim()}`)
-    }
-
-    if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
+    setFile(file)
+    setText("Resumen de carrito")
+    await handleSend()
   }
 
-  if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
-  return lines.join("\n").trim()
-}
+  const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
+    const lines: string[] = []
+    lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
+    lines.push("")
+    lines.push("🛒 Artículos:")
+    lines.push("")
+
+    cart.listDetalle?.forEach((d) => {
+      const qty = d.cantidad ?? 0
+      const title = (d.descripcion ?? "").trim() + " - " + d.observaciones
+      if (!title) return
+      lines.push(`*${title}* - ${qty}`)
+
+      const opciones =
+        d.listOpciones
+          ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
+          .filter(Boolean) ?? []
+
+      opciones.forEach((op) => lines.push(`   ${op}`))
+      lines.push("")
+    })
+
+    const total =
+      (invoiceTotalsDto?.total ?? 0)
+
+    if (retiraSucursal === "S") {
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+      lines.push("🏬 Retira en sucursal")
+      if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
+    } else {
+      const envio = effectiveShipping
+      const hasEnvio = Number.isFinite(envio) && envio > 0
+
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
+      if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
+
+      if (hasSelectedAddress) {
+        const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
+        const addrName = String(selected?.nombre ?? "").trim()
+        const addrDesc = String(selected?.descripcion ?? "").trim()
+        const addrRef = String(selected?.referencia ?? "").trim()
+        const best = [addrName, addrDesc, addrRef].filter((x) => x.length > 0).join(" | ")
+        if (best.length > 0) lines.push(`📍 Dirección: ${best}`)
+      } else if (addDescription.trim().length > 0) {
+        lines.push(`📍 Dirección: ${addDescription.trim()}`)
+      }
+
+      if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
+    }
+
+    if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
+    return lines.join("\n").trim()
+  }
 
   const handlePersistLog = async (log: LogCartResponseDto, ecommerceUserId: number) => {
     if (!log?.id) return log
@@ -696,7 +665,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
 
     try {
       localStorage.removeItem(draftKey)
-    } catch {}
+    } catch { }
 
     return log
   }
@@ -719,11 +688,11 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
         return
       }
 
-        if (existingLog == null) {
-          toast.error("Log no encontrado")
-          setSendChatoading(false)
-          return
-        }
+      if (existingLog == null) {
+        toast.error("Log no encontrado")
+        setSendChatoading(false)
+        return
+      }
 
       await handlePersistLog(existingLog, ecommerceUserId)
 
@@ -738,10 +707,10 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
 
       if (returnLink) {
         setSendChatoading(false)
-        return GetMessageLink(sendLinkRequest)
+        return getMessageLinkAsync(sendLinkRequest)
       }
 
-      await SendMessageLink(sendLinkRequest)
+      await sendMessageLinkAsync(sendLinkRequest)
       setSendChatoading(false)
 
       localStorage.removeItem(draftKey)
@@ -763,7 +732,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
     if (existingLog?.orderId) await handlePersistLog(existingLog, ecommerceUserId)
 
     const req: SendInteractiveMessajeRequestDto = { conversationId, contactId, body: msg }
-    
+
     await sendInterctiveMessage(req)
 
     localStorage.removeItem(draftKey)
@@ -778,7 +747,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
       else toast.success("Link revocado")
       try {
         localStorage.removeItem(draftKey)
-      } catch {}
+      } catch { }
     } catch {
       toast.error("No se pudo revocar el link")
     } finally {
@@ -915,13 +884,12 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
           {invoiceTotalsDto?.total && invoiceTotalsDto.total > 0 && (
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">
-                {`Total${
-                  retiraSucursal === "N" &&
-                  selectedAddressId == null &&
-                  addDescription.trim().length === 0
+                {`Total${retiraSucursal === "N" &&
+                    selectedAddressId == null &&
+                    addDescription.trim().length === 0
                     ? " Más envío"
                     : ""
-                }:`}
+                  }:`}
               </p>
               <span className="productTab-content-footer__totalValue">C$ {invoiceTotalsDto.total}</span>
             </div>
@@ -1006,6 +974,7 @@ const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; de
       </section>
     </div>
   )
+
 }
 
 export default CarPCPanelTab

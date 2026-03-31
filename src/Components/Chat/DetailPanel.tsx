@@ -1,6 +1,6 @@
 import { useDetailPanel } from "@/Hooks/Chat/useDetailPanel";
-import DetailPanelHeaderTabs from "@/Components/Chat/DetailPanel/DetailPanelHeaderTabs";
-import DetailPanelCurrentConversationTab from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
+import {DetailPanelHeaderTabs} from "@/Components/Chat/DetailPanel/DetailPanelHeaderTabs";
+import {DetailPanelCurrentConversationTab} from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
 import DetailPanelOptionsContact from "@/Components/Chat/DetailPanelOptionsContact";
 import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
 import {ProductTab} from '@/Components/ECommerce/ProductTab'

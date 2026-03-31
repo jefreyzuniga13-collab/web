@@ -1,11 +1,12 @@
 import {apiPCG} from '@/Utils/ApiConfig'
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import type {InvoiceOrderRequestDto, 
-    InvoiceOrderInterface, Currencyto, NearestBranchRequestDto, NearestBranchResponseDto,
+    InvoiceOrderInterface, Currencyto,
     PrintOrdenFactInterfaceRaw,
     // PrintOrdenFactInterfaceRaw
 } from '@/Interfaces/Ecommerce/InvoiceOrderInterface'
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { NearestBranchRequestDto, NearestBranchResponseDto } from '@/Interfaces/Ecommerce/BranchInterfaces';
 
 class InvoiceOrderServ{
     async Create(req: InvoiceOrderRequestDto): Promise<ApiPCGResponse<string>>{

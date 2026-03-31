@@ -54,3 +54,11 @@ export interface DataTableProps<T> {
   | 'Marketing'
   | 'Authentication'
   | "Service"
+
+
+  
+export const MODAL_MODE = {
+  CREATE: "CREATE",
+  EDIT: "EDIT",
+  VIEW: "VIEW",
+} as const;

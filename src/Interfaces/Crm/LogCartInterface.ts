@@ -95,7 +95,34 @@ export interface LogCartFormValues {
 
 
 // Actualizar
-export interface LogCartUpdateRequestDto {
+// export interface LogCartUpdateRequestDto {
+//   orderId: number
+//   contactId: number
+//   userId: number
+//   conversationId: number
+//   statusId: number
+//   branch?: string | null
+//   branchName?: string | null
+//   serie?: string;
+//   addressId?: number | null
+//   transCost?: number | null
+//   wherehouse?: string | null
+//   wherehouseCode?: string | null
+//   totalEnPantalla?: number | null
+//   descuentoPantalla?: number | null
+//   ivaPantalla?: number | null
+//   exonerado?: string | null
+//   propina?: number | null
+//   subTotal?: number | null
+//   observacion?: string | null
+//   retiraSucursal?: "S" | "N" | null
+//   destinationBranchCode?: string
+//   destinationWherehouseCode?: string
+// }
+
+
+
+export type LogCartUpdateRequestDto = {
   orderId: number
   contactId: number
   userId: number
@@ -103,7 +130,6 @@ export interface LogCartUpdateRequestDto {
   statusId: number
   branch?: string | null
   branchName?: string | null
-  serie?: string;
   addressId?: number | null
   transCost?: number | null
   wherehouse?: string | null
@@ -118,9 +144,8 @@ export interface LogCartUpdateRequestDto {
   retiraSucursal?: "S" | "N" | null
   destinationBranchCode?: string
   destinationWherehouseCode?: string
+  serie?: string;
 }
-
-
 
 export type Payload = {
   fullName: string;

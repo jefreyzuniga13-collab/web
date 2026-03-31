@@ -23,6 +23,7 @@ class ProductPCGServ {
     descripcion?: string,
   ): Promise<ProductoPCGInterface[]> {
     try {
+      //pendiente paginación
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
         `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}`
       );

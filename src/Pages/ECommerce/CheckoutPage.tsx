@@ -9,7 +9,7 @@ import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import { useIniciarPago } from "@/Hooks/Ecommerce/useIniciarPago";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
-import {n, round2,safeStr} from '@/Utils/ECommerce/validators'
+import {normalizeNumber, round2,safeStr} from '@/Utils/ECommerce/formatters'
 import {CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY} from '@/Utils/ECommerce/keys'
 import type {
   ClientLocationDto,
@@ -18,12 +18,12 @@ import type {
   TotalesPantallaReqDTO
 } from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type {
-  NearestBranchRequestDto,
   Currencyto,
   CheckoutStep,
   PaymentMethod,
   BillingFormState
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type { NearestBranchRequestDto } from '@/Interfaces/Ecommerce/BranchInterfaces'
 import type {
   FacturaTempo,
   PagoGenerico,
@@ -62,7 +62,7 @@ const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const payload = location.state?.payload as Payload | undefined;
+  const payload = location.state?.payload as Payload;
 
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
@@ -131,8 +131,8 @@ const CheckoutPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const carPCG = useAppSelector(selectCarPCG);
 
-  const cartTotal = useMemo(() => n(carPCG?.[0]?.total), [carPCG]);
-  const totalPagar = useMemo(() => round2(cartTotal + n(transpCost) + n(tip)), [cartTotal, transpCost, tip]);
+  const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
+  const totalPagar = useMemo(() => round2(cartTotal + normalizeNumber(transpCost) + normalizeNumber(tip)), [cartTotal, transpCost, tip]);
 
   const {
     currency,

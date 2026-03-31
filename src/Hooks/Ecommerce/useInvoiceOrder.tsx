@@ -4,13 +4,12 @@ import type {
   Currencyto,
   InvoiceOrderInterface,
   InvoiceOrderRequestDto,
-  NearestBranchRequestDto,
-  NearestBranchResponseDto,
   PrintOrdenFactInterfaceRaw,
 } from '@/Interfaces/Ecommerce/InvoiceOrderInterface'
 import { InvoiceOrderService } from '@/Services/Ecommerce/InvoiceOrderService'
 import { toast } from 'react-toastify'
 import type { FacturaTempo } from '@/Interfaces/Ecommerce/FacturaTempo'
+import type { NearestBranchRequestDto, NearestBranchResponseDto } from '@/Interfaces/Ecommerce/BranchInterfaces'
 
 interface ApiResponse<T> {
   success: boolean

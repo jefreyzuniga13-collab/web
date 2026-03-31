@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from "react";
-import { formatoNicaragua } from "@/Utils/LocalDateFormat";
+import { formatoNicaragua } from "@/Utils/ECommerce/formatters"
 import { ConversationService } from "@/Services/chat/ConversationService";
 import { SystemParamService } from "@/Services/Crm/SystemParamService";
 import type {

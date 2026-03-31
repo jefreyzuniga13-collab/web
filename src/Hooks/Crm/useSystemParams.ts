@@ -81,10 +81,8 @@ export function useSystemParams() {
         setLoadingItem(false)
       }
     },
-    [fetchPage, pageSize]
+    [fetchPage, page, pageSize]
   )
-
-  // Update
   const update = useCallback(
     async (id: number, values: SystemParamRequestDto) => {
       setLoadingItem(true)
@@ -101,7 +99,6 @@ export function useSystemParams() {
     [fetchPage, page, pageSize]
   )
 
-  // Toggle status
   const toggleStatus = useCallback(
     async (id: number) => {
       setLoadingItem(true)
@@ -121,7 +118,6 @@ export function useSystemParams() {
     []
   )
 
-  // Modal controls
   const openCreate = useCallback(() => {
     setSelectedParam(null)
     setModalMode('create')
@@ -164,9 +160,7 @@ export function useSystemParams() {
     [modalMode, selectedParam, create, update, closeModal]
   )
 
-  // Initial load & reload
   useEffect(() => {
-    //Aqui el filtro muestra la informacion que se esta asignado en vivo con el setGlobalFilter
     fetchPage()
   }, [fetchPage, globalFilter])
 

@@ -3,46 +3,45 @@ import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces"
 import type { LogCartRequestDto, LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 
 class LogCartService {
-  async getAllAsync(): Promise<LogCartResponseDto[]> {
+  async getAllAsync(): Promise<ApiResponse<LogCartResponseDto[]>> {
     const { data } = await api.get<ApiResponse<LogCartResponseDto[]>>("/LogCart")
-    return data.data
+    return data
   }
 
-  async getByIdAsync(id: number): Promise<LogCartResponseDto> {
+  async getByIdAsync(id: number): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.get<ApiResponse<LogCartResponseDto>>(`/LogCart/${id}`)
-    return data.data
+    return data
   }
 
-  async GetByContactAndStatus(contactId: number): Promise<LogCartResponseDto> {
+  async GetByContactAndStatus(contactId: number): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.get<ApiResponse<LogCartResponseDto>>(`/LogCart/GetByContactAndStatus/${contactId}`)
-    return data.data
+    return data
   }
 
-  async getByOrderIdAsync(id: number): Promise<LogCartResponseDto> {
+  async getByOrderIdAsync(id: number): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.get<ApiResponse<LogCartResponseDto>>(`/LogCart/getByOrderId/${id}`)
-    return data.data
+    return data
   }
 
-  async createAsync(payload: LogCartRequestDto): Promise<LogCartResponseDto> {
+  async createAsync(payload: LogCartRequestDto): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.post<ApiResponse<LogCartResponseDto>>("/LogCart", payload)
-    return data.data
+    return data
   }
 
-  async updateAsync(id: number, payload: LogCartRequestDto): Promise<LogCartResponseDto> {
+  async updateAsync(id: number, payload: LogCartRequestDto): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.put<ApiResponse<LogCartResponseDto>>(`/LogCart/${id}`, payload)
-    return data.data
+    return data
   }
 
-  async toggleAsync(id: number): Promise<LogCartResponseDto> {
+  async toggleAsync(id: number): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.patch<ApiResponse<LogCartResponseDto>>(`/LogCart/${id}`)
-    return data.data
+    return data
   }
 
-   async UpdatedStatusAsync(id: number, statusId: number): Promise<LogCartResponseDto> {
+  async UpdatedStatusAsync(id: number, statusId: number): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.patch<ApiResponse<LogCartResponseDto>>(`/LogCart/UpdatedStatus/${id}/${statusId}`)
-    return data.data
+    return data
   }
 }
 
 export const logCartService = new LogCartService()
-

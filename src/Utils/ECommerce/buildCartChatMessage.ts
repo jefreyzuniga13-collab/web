@@ -1,5 +1,5 @@
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface"
-import { formatCurrencyNIO } from "@/Utils/formatCurrencyNIO"
+import { formatCurrencyNIO } from "@/Utils/ECommerce/formatters"
 
 type AddressLite = {
   idDireccion?: number | null

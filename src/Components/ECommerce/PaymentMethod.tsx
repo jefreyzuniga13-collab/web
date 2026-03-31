@@ -6,7 +6,7 @@ import MasterCardLogo from "@/assets/img/masterCardLogo.png";
 import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import {toNumberNoLeadingZeros,safeStr} from '@/Utils/ECommerce/validators'
+import {toNumberNoLeadingZeros,safeStr} from '@/Utils/ECommerce/formatters'
 export interface Props {
   step: CheckoutStep;
   setStep: (step: CheckoutStep) => void;
@@ -204,7 +204,6 @@ export const PaymentMethodComponent = ({
             </div>
           )}
 
-          {/* RESUMEN */}
           {carPCG && carPCG.length > 0 && (
             <aside className="checkout-summary">
               <p className="checkout-summary__title">Resumen</p>
@@ -221,7 +220,6 @@ export const PaymentMethodComponent = ({
             </aside>
           )}
 
-          {/* BOTONES */}
           <div className="checkout-actionBtn">
             <button
               className="checkout-paybtn__back"

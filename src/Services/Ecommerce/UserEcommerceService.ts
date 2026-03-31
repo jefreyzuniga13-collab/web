@@ -1,25 +1,15 @@
 import type {UserEcommerceDto} from '@/Interfaces/Ecommerce/UserEcommerceInterface'
 import type {ApiPCGResponse} from '@/Interfaces/Common/GlobalPCGInterface'
 import {apiPCG} from '@/Utils/ApiConfig'
+import {randomPhoneNumber} from '@/Utils/ECommerce/formatters'
 
 class UserEcommerceServ {
 
-
-      private generarTelefono8(): string {
-    const first = Math.floor(Math.random() * 9) + 1;
-
-    let rest = "";
-    for (let i = 0; i < 7; i++) {
-      rest += Math.floor(Math.random() * 10);
-    }
-
-    return `${first}${rest}`;
-  }
-
     async Create(req: UserEcommerceDto): Promise<ApiPCGResponse<number>>{
 
+      //Lo pide la api, y es requirido.
         if (!req.telefono || req.telefono.trim() === "") {
-            req.telefono = this.generarTelefono8();
+            req.telefono = randomPhoneNumber();
         }
 
         const {data} = await 
@@ -27,7 +17,6 @@ class UserEcommerceServ {
         
         return data;
     }
-
 }
 
 export const UserEcommerceService = new UserEcommerceServ()

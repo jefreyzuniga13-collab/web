@@ -5,7 +5,7 @@ import Spinner from "@/Components/Common/Spinner";
 import { MdFilterListAlt } from "react-icons/md";
 import CustomBarChart from "@/Components/Chart/CustomBarChart";
 import Button from "@/Components/Common/Button";
-import DashboardFilterModal from "@/Components/Dashboard/DashboardFilter";
+import DashboardFilterModal from "@/Components/Chart/DashboardFilter";
 import "@/Styles/Dashboard/Dashboard.css";
 import AgentResponseChart from "@/Components/Chart/AgentResponseChart";
 import { ListComponent, type Column } from "@/Components/Chart/ListComponent";
