@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
 import { fetchNotifications } from '@/Context/Slices/Crm/notificationsSlice'
 import type { AppDispatch } from '@/Context'
-import { notificationsConnection } from '@/Services/signalr/signalr'
+import { getNotificationsConnection } from '@/Services/signalr/signalr'
 import type { NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 export function useRealtimeNotifications(
@@ -11,16 +11,21 @@ export function useRealtimeNotifications(
   pageSize: number = 10
 ) {
   const dispatch = useDispatch<AppDispatch>()
+
   useEffect(() => {
+    const connection = getNotificationsConnection()
+
+    if (!connection) return
+
     const handler = (dto: NotificationDto) => {
-      toast.info(`📬 ${dto.payload}`) 
-      // dispatch(fetchUnreadCount())
+      toast.info(`📬 ${dto.payload}`)
       dispatch(fetchNotifications({ page: currentPage, pageSize }))
     }
 
-    notificationsConnection?.on('Notification', handler)
+    connection.on('Notification', handler)
+
     return () => {
-      notificationsConnection?.off('Notification', handler)
+      connection.off('Notification', handler)
     }
   }, [dispatch, currentPage, pageSize])
 }
