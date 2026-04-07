@@ -55,11 +55,9 @@ export default function DynamicParamsForm({
   const {
     users,
     page,
-    pageSize,
     totalCount,
     setPage,
-    loading,
-    fetchPage,
+    loadingList,
   } = useClasicUser();
 
   const [allUsers, setAllUsers] = useState<typeof users>([]);
@@ -68,10 +66,11 @@ export default function DynamicParamsForm({
     if (!isOpen) return;
     setAllUsers([]);
     setPage(1);
-    fetchPage(1, pageSize);
-  }, [isOpen, setPage, fetchPage, pageSize]);
+  }, [isOpen, setPage]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     setAllUsers((prev) => {
       const map = new Map(prev.map((u) => [u.userId, u]));
       for (const u of users) {
@@ -79,7 +78,7 @@ export default function DynamicParamsForm({
       }
       return Array.from(map.values());
     });
-  }, [users]);
+  }, [users, isOpen]);
 
   const userOptions: MultiOption[] = useMemo(
     () =>
@@ -101,14 +100,14 @@ export default function DynamicParamsForm({
   );
 
   const hasMoreUsers = useMemo(
-    () => page * pageSize < totalCount,
-    [page, pageSize, totalCount]
+    () => allUsers.length < totalCount,
+    [allUsers.length, totalCount]
   );
 
   const handleLoadMoreUsers = useCallback(() => {
-    if (!hasMoreUsers || loading) return;
+    if (!hasMoreUsers || loadingList) return;
     setPage(page + 1);
-  }, [hasMoreUsers, loading, page, setPage]);
+  }, [hasMoreUsers, loadingList, page, setPage]);
 
   if (!isOpen) return null;
 
@@ -118,8 +117,9 @@ export default function DynamicParamsForm({
   const isUserType = form.type === "Users";
 
   const handleEmojiChange = (val: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    handleChange({ target: { name: "value", value: val } } as any);
+    handleChange({
+      target: { name: "value", value: val },
+    } as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>);
   };
 
   return (
@@ -143,7 +143,7 @@ export default function DynamicParamsForm({
         <form className="sp-modal__body" onSubmit={handleSubmit}>
           <div className="sp-modal__grid sp-modal__grid__dynamicParam">
             <div className="sp-modal__col">
-              <Label htmlFor="name" className="sp-modal__label ">
+              <Label htmlFor="name" className="sp-modal__label">
                 Nombre *
               </Label>
               <Input
@@ -251,7 +251,7 @@ export default function DynamicParamsForm({
                   }}
                   options={userOptions}
                   hasMore={hasMoreUsers}
-                  loading={loading}
+                  loading={loadingList}
                   onLoadMore={handleLoadMoreUsers}
                 />
               </div>
@@ -348,6 +348,7 @@ export default function DynamicParamsForm({
             >
               Cancelar
             </Button>
+
             {!isView && (
               <Button
                 variant="primary"

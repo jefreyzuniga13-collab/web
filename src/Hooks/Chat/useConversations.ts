@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { jwtDecode } from 'jwt-decode'
+import { selectIsAdmin, selectUserId } from '@/Context/Slices/Auth/authSlice';
 import { useSignalR } from '@/Context/SignalRContext'
 import type { ConversationDto, MessageDto, AttachmentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { PaginationInfo } from '@/Interfaces/Common/GlobalInterface'
-import { joinConversation, leaveConversation } from '@/Services/signalr'
+import { joinConversation, leaveConversation } from '@/Services/signalr/signalr'
 import { ConversationService } from '@/Services/chat/ConversationService'
+import { useSelector } from 'react-redux';
 
 export type Filter = 'all' | 'bot' | 'waiting' | 'human' | 'closed' | 'incomplete'
-
-interface JwtPayload { role: string }
-
 export interface FormInterface {
   validFrom: Date | null
   validTo:   Date | null
@@ -39,10 +37,10 @@ const initialRange = (): FormInterface => {
 }
 
 export function useConversations(filter: Filter = 'all', searchConversation: string): UseConversationsResult {
-  const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken, userId } = JSON.parse(authRaw) as { accessToken: string,userId: number }
-  const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'root' 
+
+   const isAdmin = useSelector(selectIsAdmin);
+   const userId = useSelector(selectUserId);
+
   const [form, setForm] = useState<FormInterface>(initialRange())
   const [appliedRange, setAppliedRange] = useState<FormInterface>(initialRange())
   const [conversations, setConversations] = useState<ConversationDto[]>([])

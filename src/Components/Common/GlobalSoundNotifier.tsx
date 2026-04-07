@@ -1,6 +1,6 @@
 import { useEffect }                       from 'react'
 import { onPlayNewMessageSound, 
-         offPlayNewMessageSound }          from '@/Services/signalr'
+         offPlayNewMessageSound }          from '@/Services/signalr/signalr'
 import { notificationSound }               from '@/Utils/sound'
 import type { AuthData }                   from '@/Interfaces/Auth/AuthInterface'
 

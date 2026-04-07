@@ -5,14 +5,12 @@ import { BrowserRouter } from "react-router-dom"
 import App from "@/App"
 import { store } from "@/Context"
 import "@/index.css"
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/Utils/Https/reactQuery";
 import api, { apiPCG } from "@/Utils/ApiConfig"
 import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
 import { setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
-
-const queryClient = new QueryClient()
 
 
 setupRequestInterceptor(api)

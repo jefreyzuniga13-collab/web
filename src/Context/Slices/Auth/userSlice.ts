@@ -130,7 +130,7 @@ const userSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
-        const { items, meta } = action.payload;
+        const { items, meta } = action.payload.data;
         state.users = items;
         state.pagination = meta;
         state.loading = false;
@@ -144,7 +144,7 @@ const userSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUserById.fulfilled, (state, action) => {
-        state.currentUser = action.payload;
+        state.currentUser = action.payload.data;
         state.loading = false;
       })
       .addCase(fetchUserById.rejected, (state, action) => {
@@ -186,10 +186,10 @@ const userSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(fetchRoles.fulfilled, (state, action) => {
-        state.roles = action.payload;
+        state.roles = action.payload.data;
       })
       .addCase(fetchCompanies.fulfilled, (state, action) => {
-        state.companies = action.payload;
+        state.companies = action.payload.data;
       });
   }
 });

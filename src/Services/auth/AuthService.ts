@@ -1,110 +1,95 @@
-import api from '@/Utils/ApiConfig'
+import api from '@/Utils/ApiConfig';
 import type {
   ApiResponse,
   AuthData,
   LoginRequest,
   RegisterRequest,
-  RefreshRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   VerifyEmailRequest,
-  LogOutAtResponseDto
-} from '@/Interfaces/Auth/AuthInterface'
-import type { AxiosError } from 'axios'
-
-function formatError<T>(error: unknown): Error {
-  const axiosError = error as AxiosError<ApiResponse<T>>
-  const message = axiosError.response?.data?.message ?? axiosError.message
-  return new Error(message)
-}
-
+  LogOutAtResponseDto,
+  AuthMe
+} from '@/Interfaces/Auth/AuthInterface';
 class AuthService {
-  async loginAsync({ email, password }: LoginRequest): Promise<AuthData> {
-    if (!email || !password) throw new Error('Email y contraseña son requeridos')
-    try {
-      const { data } = await api.post<ApiResponse<AuthData>>('Auth/login', { email, password })
-      return data.data
-    } catch (error) {
-      throw formatError<AuthData>(error)
+  async loginAsync({ email, password }: LoginRequest): Promise<ApiResponse<AuthData>> {
+    if (!email || !password) {
+      throw new Error('Email y contraseña son requeridos');
     }
+    const { data } = await api.post<ApiResponse<AuthData>>('/Auth/login', {
+      email,
+      password
+    });
+
+    return data;
   }
 
-
-  async logoutAsync(id: number): Promise<LogOutAtResponseDto> {
-    try {
-      const { data } = await api.post<ApiResponse<LogOutAtResponseDto>>(`Auth/logout/${id}`)
-      return data.data
-    } catch (error) {
-      throw formatError<AuthData>(error)
-    }
+  async logoutAsync(): Promise<LogOutAtResponseDto> {
+    const { data } = await api.post<ApiResponse<LogOutAtResponseDto>>('/Auth/logout');
+    return data.data;
   }
 
-async registerAsync(req: RegisterRequest): Promise<string> {
-  const { data } = await api.post<ApiResponse<string>>(
-    '/Auth/register',
-    {
-      fullName:  req.fullName,
-      email:     req.email,
-      password:  req.password,
+  async registerAsync(req: RegisterRequest): Promise<ApiResponse<string>> {
+    const { data } = await api.post<ApiResponse<string>>('/Auth/register', {
+      fullName: req.fullName,
+      email: req.email,
+      password: req.password,
       companyId: req.companyId,
-      phone:     req.phone,
-      identifier:req.identifier
-    }
-  );
-  return data.data;
-}
+      phone: req.phone,
+      identifier: req.identifier
+    });
 
-  async refreshTokenAsync({ refreshToken }: RefreshRequest): Promise<AuthData> {
-    if (!refreshToken) throw new Error('Refresh token es requerido')
-    try {
-      const { data } = await api.post<ApiResponse<AuthData>>('/Auth/refresh', {
-        refreshToken
-      })
-      return data.data
-    } catch (error) {
-      throw formatError<AuthData>(error)
-    }
+    return data;
   }
 
-  async forgotPasswordAsync({ email }: ForgotPasswordRequest): Promise<string> {
-    if (!email) throw new Error('Email es requerido')
-    try {
-      const { data } = await api.post<ApiResponse<string>>('/Auth/forgot-password', {
-        email
-      })
-      return data.data
-    } catch (error) {
-      throw formatError<string>(error)
+  async refreshTokenAsync(): Promise<AuthData> {
+    const { data } = await api.post<ApiResponse<AuthData>>('/Auth/refresh');
+    return data.data;
+  }
+
+  async forgotPasswordAsync({ email }: ForgotPasswordRequest): Promise<ApiResponse<string>> {
+    if (!email) {
+      throw new Error('Email es requerido');
     }
+
+    const { data } = await api.post<ApiResponse<string>>('/Auth/forgot-password', {
+      email
+    });
+
+    return data;
   }
 
   async resetPasswordAsync({
     token,
     newPassword
-  }: ResetPasswordRequest): Promise<string> {
-    if (!token || !newPassword) throw new Error('Token y nueva contraseña son requeridos')
-    try {
-      const { data } = await api.post<ApiResponse<string>>('/Auth/reset-password', {
-        token,
-        newPassword
-      })
-      return data.data
-    } catch (error) {
-      throw formatError<string>(error)
+  }: ResetPasswordRequest): Promise<ApiResponse<string>> {
+    if (!token || !newPassword) {
+      throw new Error('Token y nueva contraseña son requeridos');
     }
+
+    const { data } = await api.post<ApiResponse<string>>('/Auth/reset-password', {
+      token,
+      newPassword
+    });
+
+    return data;
   }
 
-  async verifyEmailAsync({ token }: VerifyEmailRequest): Promise<string> {
-    if (!token) throw new Error('Token es requerido')
-    try {
-      const { data } = await api.get<ApiResponse<string>>('/Auth/verify-email', {
-        params: { token }
-      })
-      return data.data
-    } catch (error) {
-      throw formatError<string>(error)
+  async verifyEmailAsync({ token }: VerifyEmailRequest): Promise<ApiResponse<string>> {
+    if (!token) {
+      throw new Error('Token es requerido');
     }
+
+    const { data } = await api.get<ApiResponse<string>>('/Auth/verify-email', {
+      params: { token }
+    });
+
+    return data;
+  }
+
+  async meAsync(): Promise<AuthMe> {
+    const { data } = await api.get<ApiResponse<AuthMe>>('/Auth/me');
+    return data.data;
   }
 }
 
-export const authService = new AuthService()
+export const authService = new AuthService();

@@ -1,8 +1,7 @@
-import { type ReactNode, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { Navigate, useLocation } from 'react-router-dom'
-import { setCredentials } from '@/Context/Slices/Auth/authSlice'
-import type { RootState } from '@/Context/index'
+import { type ReactNode } from 'react';
+import { useSelector } from 'react-redux';
+import { Navigate, useLocation } from 'react-router-dom';
+import type { RootState } from '@/Context';
 import { SupportRequestedPopup } from "@/Components/Hub/SupportRequestedPopup";
 import { ConversationAssignedPopup } from "@/Components/Hub/ConversationAssignedPopup";
 import { AssignmentResponsePopup } from "@/Components/Hub/AssignmentResponsePopup";
@@ -12,32 +11,25 @@ import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
 import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
 
 interface RequireAuthProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function RequireAuth({ children }: RequireAuthProps) {
-  const dispatch = useDispatch()
-  const location = useLocation()
-  const { accessToken } = useSelector((state: RootState) => state.auth)
+  const location = useLocation();
+  const { isAuthenticated, checkingSession } = useSelector((state: RootState) => state.auth);
 
   useForceLogoutListener();
 
-  useEffect(() => {
-    if (!accessToken) {
-      const stored = localStorage.getItem('auth')
-      if (stored) {
-        const data = JSON.parse(stored)
-        dispatch(setCredentials(data))
-      }
-    }
-  }, [accessToken, dispatch])
-
-  if (!accessToken) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  if (checkingSession) {
+    return null;
   }
 
-  return <>
-   {/* Mover pop-up a rutas privadas*/}
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return (
+    <>
       <GlobalSoundNotifier />
       <SupportRequestedPopup />
       <ConversationAssignedPopup />
@@ -45,5 +37,6 @@ export function RequireAuth({ children }: RequireAuthProps) {
       <AssignmentForcedPopup />
       <ContactValidatorHub />
       {children}
-  </>
+    </>
+  );
 }

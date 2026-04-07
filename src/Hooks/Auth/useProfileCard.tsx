@@ -77,7 +77,7 @@ export function useProfileCard() {
        try{
          const res = await userService.uploadUserAvatar(currentUser.userId, selectedFile)
   
-        const newUrl = res.imageUrl ?? res.user?.imageUrl ?? ''
+        const newUrl = res.data.imageUrl ?? res.data.imageUrl ?? ''
         setFormData(prev => ({ ...prev, imageUrl: newUrl }))
         toast.success("Foto de perfil actualizada con éxito.")
        // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -96,7 +96,7 @@ export default function WorkShiftModal({
   useEffect(() => {
     if (isOpen) {
       userService.getAgentsByRoleAsync('support').then(list =>
-        setAgents(list.map(x => ({ userId: x.userId, fullName: x.fullName })))
+        setAgents(list.data.map(x => ({ userId: x.userId, fullName: x.fullName })))
       )
     }
   }, [isOpen])

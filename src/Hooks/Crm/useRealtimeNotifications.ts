@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
 import { fetchNotifications } from '@/Context/Slices/Crm/notificationsSlice'
 import type { AppDispatch } from '@/Context'
-import { notificationsConnection } from '@/Services/signalr'
+import { notificationsConnection } from '@/Services/signalr/signalr'
 import type { NotificationDto } from '@/Interfaces/Chat/ChatInterfaces'
 
 export function useRealtimeNotifications(

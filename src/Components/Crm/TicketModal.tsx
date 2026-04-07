@@ -12,11 +12,11 @@ import '@/Styles/Crm/TicketModal.css'
 import { useTicketDetail } from '@/Hooks/Crm/useTicketDetail'
 // import type { Prioridad } from '@/Interfaces/Crm/TicketInterfaces'
 import { useUsers } from '@/Hooks/Auth/useUsers'
-import { jwtDecode } from 'jwt-decode'
 import DatePickerField from '@/Components/Common/DatePickerField'
 import { toast } from 'react-toastify'
 import CustomAutocomplete from '@/Components/Common/CustomAutocomplete'
-import type { AuthStorage, JwtPayload } from '@/Interfaces/Auth/AuthInterface'
+import { useSelector } from 'react-redux';
+import { selectIsAdmin } from '@/Context/Slices/Auth/authSlice';
 
 interface TicketModalProps {
   isOpen: boolean
@@ -43,22 +43,11 @@ export default function TicketModal({
 
   const [responsibleId, setResponsibleId] = useState<number | null>(null)
   const [dueDate, setDueDate] = useState<Date | null>(null)
-  // const [selectedColor, setSelectedColor] = useState('#ffffff'); 
-
-
-  // const handleColorChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   setSelectedColor(event.target.value);
-  // };
-  // const [files, setFiles] = useState<File[]>([])
 
   const [errors, setErrors] = useState<{ title?: string; description?: string; priority?: string; responsibleId?: string;dueDate?: string; selectedColor?: string }>({})
-  // const [isDragging, setIsDragging] = useState(false)
-  // const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const authRaw = localStorage.getItem('auth') || '{}'
-  const { accessToken } = JSON.parse(authRaw) as AuthStorage
-  const { role } = jwtDecode<JwtPayload>(accessToken)
-  const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'root'
+
+  const isAdmin = useSelector(selectIsAdmin);
 
   const { createTicket, error, loading } = useTicketDetail()
   const { users, loading: usersLoading, page, pageSize, setPage, totalCount } = useUsers()
@@ -104,27 +93,6 @@ export default function TicketModal({
     []
   )
 
-  // const responsibleOptions = useMemo(() => {
-  //   if (!users || !Array.isArray(users)) return []
-  //   return users
-  //     .filter(u => {
-  //       const roles = Array.isArray(u.roles)
-  //         ? u.roles.map(r =>
-  //           (r.roleName ?? '').toLowerCase()
-  //         )
-  //         : []
-
-  //       if (roles.includes('support')) return true
-  //       if (roles.includes('admin')) return u.userId === userId
-  //       return false
-  //     })
-  //     .map(u => ({
-  //       label: u.fullName ?? String(u.userId),
-  //       value: String(u.userId)
-  //     }))
-  // }, [users, userId])
-
-
   const responsibleOptions = useMemo(() => {
     if (!allUsers || !Array.isArray(allUsers)) return []
     return allUsers.map(u => ({
@@ -134,40 +102,6 @@ export default function TicketModal({
   }, [allUsers])
 
 
-  // const addFiles = useCallback((incoming: File[]) => {
-  //   setFiles(prev => {
-  //     const map = new Map(prev.map(f => [f.name + f.size + f.lastModified, f]))
-  //     for (const f of incoming) map.set(f.name + f.size + f.lastModified, f)
-  //     return Array.from(map.values())
-  //   })
-  // }, [])
-
-  // const handlePickFiles = () => fileInputRef.current?.click()
-
-  // const handleFiles = (list: FileList | null) => {
-  //   if (!list) return
-  //   addFiles(Array.from(list))
-  // }
-
-  // const onDragOver = (e: React.DragEvent) => {
-  //   e.preventDefault()
-  //   setIsDragging(true)
-  // }
-
-  // const onDragLeave = () => {
-  //   setIsDragging(false)
-  // }
-
-  // const onDrop = (e: React.DragEvent) => {
-  //   e.preventDefault()
-  //   setIsDragging(false)
-  //   const list = e.dataTransfer.files
-  //   if (!list || list.length === 0) return
-  //   addFiles(Array.from(list))
-  // }
-
-  // const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
-
   const validate = () => {
     const e: typeof errors = {}
     if (!title.trim()) e.title = 'Requerido'
@@ -175,7 +109,6 @@ export default function TicketModal({
     if (!priority || priority == 0) e.priority = 'Seleccione una prioridad'
     if (isAdmin && !responsibleId) e.responsibleId = 'Requerido'
      if (!dueDate) e.dueDate = 'Requerida'
-    //  if (!selectedColor) e.selectedColor = 'Requerido'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -191,11 +124,9 @@ export default function TicketModal({
       titulo: title.trim(),
       descripcion: description.trim(),
       prioridad: Number(priority),
-      // archivos: files,
       archivos: [],
       responsibleId,
       DueDate: dueDate!,
-      // selectedColor: selectedColor
     })
 
     if (!resp || !resp.success) {
@@ -208,7 +139,6 @@ export default function TicketModal({
     setTitle('')
     setDescription('')
     setPriority(1)
-    // setFiles([])
     setResponsibleId(null)
     setDueDate(null)
     onClose()
@@ -292,18 +222,6 @@ export default function TicketModal({
               />
               {errors.dueDate && <span className="tm-error">{errors.dueDate}</span>}
             </div>
-
-            {/* <div className="tm-field">
-               <Label htmlFor="tk-due">Seleccion color *</Label>
-              <input
-                type="color"
-                id="colorInput"
-                value={selectedColor}
-                onChange={handleColorChange}
-              />
-            </div> */}
-
-            {/* {errors.selectedColor && <span className="tm-error">{errors.selectedColor}</span>} */}
           </div>
 
           <div className="tm-field">
@@ -318,56 +236,6 @@ export default function TicketModal({
             />
             {errors.description && <span className="tm-error">{errors.description}</span>}
           </div>
-
-          {/* <div className="tm-field">
-            <Label>Adjuntos</Label>
-            <div
-              className={`tm-attach-card ${isDragging ? 'is-dragging' : ''}`}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-            >
-              <div className="tm-attach-left">
-                <div className="tm-attach-text">
-                  <strong>Arrastra y suelta</strong> tus archivos aquí o
-                  <button type="button" className="tm-link" onClick={handlePickFiles}>
-                    buscar
-                  </button>
-                </div>
-              </div>
-              <div className="tm-attach-actions">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="tm-file-input"
-                  onChange={e => handleFiles(e.target.files)}
-                />
-              </div>
-            </div>
-
-            {files.length > 0 && (
-              <ul className="tm-files">
-                {files.map((f, i) => (
-                  <li key={f.name + f.size + f.lastModified} className="tm-file">
-                    <div className="tm-file-meta">
-                      <span className="tm-file-name">{f.name}</span>
-                      <span className="tm-file-size">
-                        {Intl.NumberFormat(undefined, {
-                          style: 'unit',
-                          unit: 'byte',
-                          unitDisplay: 'narrow'
-                        }).format(f.size)}
-                      </span>
-                    </div>
-                    <button type="button" className="tm-file-remove" onClick={() => removeFile(i)}>
-                      Eliminar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div> */}
 
           <footer className="tm-footer">
             <Button type="button" variant="secondary" className="tm-btn" onClick={onClose} disabled={loading}>

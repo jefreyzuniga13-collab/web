@@ -187,7 +187,7 @@ export default function App() {
       />
 
       {accessToken ? (
-        <SignalRProvider token={accessToken}>
+        <SignalRProvider>
           {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
           <ReLoginModal />
           <AppRouter />

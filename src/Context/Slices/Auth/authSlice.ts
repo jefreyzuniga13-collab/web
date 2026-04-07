@@ -1,86 +1,143 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { authService } from '@/Services/auth/AuthService'
-import type { AuthData } from '@/Interfaces/Auth/AuthInterface'
-
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { authService } from '@/Services/auth/AuthService';
+import type { AuthData, AuthMe } from '@/Interfaces/Auth/AuthInterface';
+import type { RootState } from '@/Context/index';
 interface AuthState {
-  accessToken:  string | null
-  refreshToken: string | null
-  userId:       string | null
-  expiresAt:    string | null
+  isAuthenticated: boolean;
+  userId: string | null;
+  expiresAt: string | null;
+  checkingSession: boolean;
+  roles: string[];
 }
 
-const saved = localStorage.getItem('auth')
-const parsed: AuthData | null = saved ? JSON.parse(saved) : null
+const initialState: AuthState = {
+  isAuthenticated: false,
+  userId: null,
+  expiresAt: null,
+  checkingSession: false,
+  roles: []
+};
 
-const initialState: AuthState = parsed
-  ? {
-      accessToken:  parsed.accessToken,
-      refreshToken: parsed.refreshToken,
-      userId:       parsed.userId,
-      expiresAt:    parsed.expiresAt
-    }
-  : {
-      accessToken:  null,
-      refreshToken: null,
-      userId:       null,
-      expiresAt:    null
-    }
-
-// Thunk para renovar tokens cuando expira el accessToken
 export const refreshTokenThunk = createAsyncThunk<
   AuthData,
   void,
-  { rejectValue: string; state: { auth: AuthState } }
+  { rejectValue: string }
 >(
   'auth/refreshToken',
-  async (_, { getState, rejectWithValue }) => {
-    const token = getState().auth.refreshToken
-    if (!token) return rejectWithValue('No hay refresh token')
+  async (_, { rejectWithValue }) => {
     try {
-      return await authService.refreshTokenAsync({ refreshToken: token })
+      return await authService.refreshTokenAsync();
     } catch {
-      return rejectWithValue('No se pudo renovar token')
+      return rejectWithValue('No se pudo renovar token');
     }
   }
-)
+);
+
+export const checkSessionThunk = createAsyncThunk<
+  AuthMe,
+  void,
+  { rejectValue: string }
+>(
+  'auth/checkSession',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await authService.meAsync();
+    } catch {
+      return rejectWithValue('No hay sesión activa');
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
-      localStorage.setItem("forceLogout", Date.now().toString());
+      const creds = action.payload;
+      state.isAuthenticated = true;
+      state.userId = String(creds.userId);
+      state.expiresAt = creds.expiresAt;
+      state.checkingSession = false;
+    },
+    setAuthenticated(state, action: PayloadAction<boolean>) {
+      state.isAuthenticated = action.payload;
+      state.checkingSession = false;
 
-      const creds = action.payload
-      state.accessToken  = creds.accessToken
-      state.refreshToken = creds.refreshToken
-      state.userId       = creds.userId
-      state.expiresAt    = creds.expiresAt
-
-      localStorage.setItem('auth', JSON.stringify(creds))
-
+      if (!action.payload) {
+        state.userId = null;
+        state.expiresAt = null;
+        state.roles = [];
+      }
+    },
+    startCheckingSession(state) {
+      state.checkingSession = true;
+    },
+    finishCheckingSession(state) {
+      state.checkingSession = false;
     },
     logout(state) {
-      state.accessToken  = null
-      state.refreshToken = null
-      state.userId       = null
-      state.expiresAt    = null
-
-      // Eliminar del storage
-      localStorage.removeItem('auth')
+      state.isAuthenticated = false;
+      state.userId = null;
+      state.expiresAt = null;
+      state.checkingSession = false;
+      state.roles = [];
     }
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
+    builder.addCase(refreshTokenThunk.pending, (state) => {
+      state.checkingSession = true;
+    });
+
     builder.addCase(refreshTokenThunk.fulfilled, (state, { payload }) => {
-      state.accessToken  = payload.accessToken
-      state.refreshToken = payload.refreshToken
-      state.expiresAt    = payload.expiresAt
+      state.isAuthenticated = true;
+      state.userId = String(payload.userId);
+      state.expiresAt = payload.expiresAt;
+      state.checkingSession = false;
+    });
 
-      // Actualizar storage tras refresh exitoso
-      localStorage.setItem('auth', JSON.stringify(payload))
-    })
+    builder.addCase(refreshTokenThunk.rejected, (state) => {
+      state.isAuthenticated = false;
+      state.userId = null;
+      state.expiresAt = null;
+      state.checkingSession = false;
+      state.roles = [];
+    });
+
+    builder.addCase(checkSessionThunk.pending, (state) => {
+      state.checkingSession = true;
+    });
+
+    builder.addCase(checkSessionThunk.fulfilled, (state, { payload }) => {
+      state.isAuthenticated = true;
+      state.userId = String(payload.userId);
+      state.expiresAt = null;
+      state.roles = payload.roles ?? [];
+      state.checkingSession = false;
+    });
+
+    builder.addCase(checkSessionThunk.rejected, (state) => {
+      state.isAuthenticated = false;
+      state.userId = null;
+      state.expiresAt = null;
+      state.roles = [];
+      state.checkingSession = false;
+    });
   }
-})
+});
 
-export const { setCredentials, logout } = authSlice.actions
-export default authSlice.reducer
+export const {
+  setCredentials,
+  setAuthenticated,
+  startCheckingSession,
+  finishCheckingSession,
+  logout
+} = authSlice.actions;
+
+export const selectIsAdmin = (state: RootState) =>
+  state.auth.roles.some(
+    r => r.toLowerCase() === 'admin' || r.toLowerCase() === 'root'
+  );
+
+  export const selectUserId = (state: RootState) => Number(state.auth.userId);
+
+export default authSlice.reducer;

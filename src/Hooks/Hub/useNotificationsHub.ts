@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { notificationsConnection } from '@/Services/signalr'
+import { notificationsConnection } from '@/Services/signalr/signalr'
 import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces';
 import { notificationSound } from '@/Utils/sound';
 

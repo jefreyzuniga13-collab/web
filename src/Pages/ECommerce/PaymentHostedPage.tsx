@@ -15,7 +15,6 @@ export default function PaymentHostedPage() {
   const redirectData = state?.payment?.redirectData ?? "";
 
   useEffect(() => {
-    console.log("redirectData es", redirectData)
     if (!redirectData) {
       navigate("/unauthorized", { replace: true });
     }

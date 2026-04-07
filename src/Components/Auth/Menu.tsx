@@ -3,15 +3,15 @@ import * as Icons from 'lucide-react';
 import { useMenus } from '@/Hooks/Auth/useMenus';
 import MenuItem from '@/Components/Auth/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/Context/Slices/Auth/authSlice';
 // import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Auth/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/Auth/useUsers';
-import { presenceConnection } from '@/Services/signalr';
+import { presenceConnection } from '@/Services/signalr/signalr';
 import { markOffline } from '@/Hooks/Auth/useUserPresence';
-import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
+import {selectUserId } from '@/Context/Slices/Auth/authSlice';
 import { useAuth } from '@/Hooks/Auth/useAuth'
 import Profile from '@/assets/img/profile.png'
 interface NavbarProps {
@@ -29,8 +29,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
 
   const { logout: logoutAuth } = useAuth()
 
-    const authRaw = localStorage.getItem('auth') || '{}';
-    const { userId } = JSON.parse(authRaw) as AuthData;
+   const userId = useSelector(selectUserId);
 
   useEffect(() => {
     if (!currentUser) {

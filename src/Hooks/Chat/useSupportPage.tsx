@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { jwtDecode } from "jwt-decode";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   getConversation,
   closeConversation,
@@ -9,7 +8,7 @@ import {
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
 import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
-import type { AuthStorage, JwtPayload } from "@/Interfaces/Auth/AuthInterface";
+import { selectIsAdmin, selectUserId } from '@/Context/Slices/Auth/authSlice';
 type FilterOption = { label: string; value: string; content: string };
 import { CompanySystemParamsService } from "@/Services/Crm/CompanySystemParamsService";
 import { SystemParamType } from "@/Utils/systemParam";
@@ -39,10 +38,8 @@ export function useSupportPage() {
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const { selectedParam, fetchByName } = useSystemParams();
   const [companySystemParam, setCompanySystemParam] = useState<CompanySystemParamsInterface | null>(null);
-  const authRaw = localStorage.getItem("auth") || "{}";
-  const { accessToken, userId } = JSON.parse(authRaw) as AuthStorage;
-  const { role } = jwtDecode<JwtPayload>(accessToken);
-  const isAdmin = role.toLowerCase() === "admin" ||  role.toLowerCase() === "root";
+   const isAdmin = useSelector(selectIsAdmin);
+   const userId = useSelector(selectUserId);
   let DEFAULT_OPTIONS: FilterOption[];
 
   const [detailToggle, setDetailToggle] = useState<boolean>(false);

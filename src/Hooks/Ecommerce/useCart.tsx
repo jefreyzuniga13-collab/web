@@ -53,15 +53,10 @@ export const useCart = () => {
     messageLink: getMessageLinkMutation.data?.data ?? null,
     sendMessageLink: sendMessageLinkMutation.mutate,
     sendMessageLinkAsync: sendMessageLinkMutation.mutateAsync,
-
     getMessageLink: getMessageLinkMutation.mutate,
     getMessageLinkAsync: getMessageLinkMutation.mutateAsync,
-
-    loading:
-      sendMessageLinkMutation.isPending || getMessageLinkMutation.isPending,
-
+    loading: sendMessageLinkMutation.isPending || getMessageLinkMutation.isPending,
     error: sendMessageLinkMutation.error || getMessageLinkMutation.error,
-
     resetSendMessageLink: sendMessageLinkMutation.reset,
     resetGetMessageLink: getMessageLinkMutation.reset,
   };

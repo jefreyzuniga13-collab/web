@@ -1,69 +1,62 @@
 export interface ApiResponse<T> {
-    success: boolean
-    message: string
-    data: T
-    errors?: string[]
-  }
-  
-  export interface AuthData {
-    accessToken: string
-    refreshToken: string
-    expiresAt: string
-    userId: string
-  }
-  
-  export interface LoginRequest {
-    email: string
-    password: string
-  }
-  
-  export type LoginResponse = ApiResponse<AuthData>
-  
-export interface RegisterRequest {
-  fullName:   string
-  email:      string
-  password:   string
-  companyId:  number
-  phone:      string
-  identifier: string 
+  success: boolean;
+  message: string;
+  data: T;
+  errors?: string[];
 }
-  
 
-  export type RegisterResponse = ApiResponse<AuthData>
-  
-  export interface RefreshRequest {
-    refreshToken: string
-  }
-  
-  export type RefreshResponse = ApiResponse<AuthData>
-  
-  export interface ForgotPasswordRequest {
-    email: string
-  }
-  
-  export type ForgotPasswordResponse = ApiResponse<string>
-  
-  export interface ResetPasswordRequest {
-    token: string;
-    newPassword: string;
-    confirmNewPassword:string;
-  }
-  
-  export type ResetPasswordResponse = ApiResponse<string>
-  
-  export interface VerifyEmailRequest {
-    token: string
-  }
-  
-  export type VerifyEmailResponse = ApiResponse<string>
+export interface AuthData {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  userId: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export type LoginResponse = ApiResponse<AuthData>;
+
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  companyId: number;
+  phone: string;
+  identifier: string;
+}
+
+export type RegisterResponse = ApiResponse<AuthData>;
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export type ForgotPasswordResponse = ApiResponse<string>;
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export type ResetPasswordResponse = ApiResponse<string>;
+
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+export type VerifyEmailResponse = ApiResponse<string>;
 
 export interface RegisterForm {
-  fullName:  string
-  email:     string
-  password:  string
-  companyId: number
-  phone:     string
-  identifier:string
+  fullName: string;
+  email: string;
+  password: string;
+  companyId: number;
+  phone: string;
+  identifier: string;
 }
 
 export interface RoleResponseDto {
@@ -72,7 +65,6 @@ export interface RoleResponseDto {
   description: string;
   isActive?: boolean;
 }
-
 
 export interface SystemParamResponseDto {
   id: number;
@@ -94,19 +86,18 @@ export interface SystemParamRequestDto {
   isActive?: boolean;
 }
 
-export interface LogOutAtResponseDto{
+export interface LogOutAtResponseDto {
   isSuccess?: boolean;
   message?: string;
 }
 
-
 export interface JwtPayload {
-  role: string
+  role: string;
 }
 
-export interface AuthStorage {
-  accessToken: string
-  refreshToken: string
-  expiresAt: string
-  userId: number
+export interface AuthMe {
+  userId: string;
+  fullName?: string;
+  email?: string;
+  roles?: string[];
 }
