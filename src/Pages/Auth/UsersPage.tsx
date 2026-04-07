@@ -33,7 +33,8 @@ export default function UsersPage() {
     openEdit,
     openView,
     closeModal,
-    handleSubmit,
+    create,
+    update,
     toggle,
     globalFilter,
     setGlobalFilter,
@@ -91,7 +92,15 @@ export default function UsersPage() {
     ],
     [openView, openEdit, toggle]
   )
+const handleSubmit = async (data: any) => {
+  if (modalMode === 'create') {
+    return create(data)
+  }
 
+  if (modalMode === 'edit') {
+    return update(data)
+  }
+}
   return (
     <div className="users-page__container">
       <div className="users-page__header">

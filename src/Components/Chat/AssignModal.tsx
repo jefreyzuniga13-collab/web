@@ -8,7 +8,8 @@ export const AssignModal: React.FC = () => {
   const {
     isDropdownOpen,
     statusOptions,
-    safeConversation,
+    // safeConversation,
+    conversation,
     isOpen,
     selectedAgentData,
     agents,
@@ -22,7 +23,7 @@ export const AssignModal: React.FC = () => {
     loading
   } = useAssignModal();
 
-    if (!isOpen || !safeConversation) return null
+    if (!isOpen || !conversation) return null
 
   return (
     <div className="assign-modal__overlay">

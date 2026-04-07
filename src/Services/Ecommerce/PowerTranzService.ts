@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import {apiPowerTranz} from '@/Utils/ApiConfig'
+import {apiPCG} from '@/Utils/ApiConfig'
 
 import type {
   ApiErrorResponse,
@@ -60,7 +60,7 @@ function validarRespuestaApi(response: ApiResponse<InitResponse>): IniciarPagoSe
 
 async function iniciarPago(payload: InitPaymentRequest): Promise<IniciarPagoServiceResponse> {
   try {
-    const respuesta = await apiPowerTranz.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
+    const respuesta = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
     return validarRespuestaApi(respuesta.data);
   } catch (error: unknown) {
     const errorNormalizado = obtenerMensajeError(error);

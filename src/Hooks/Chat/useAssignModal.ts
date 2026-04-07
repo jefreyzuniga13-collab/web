@@ -33,6 +33,8 @@ type AssignModalHook = {
   isDropdownOpen: boolean;
   statusOptions: { value: ConversationStatus; label: string; color: string }[];
   isOpen: boolean;
+  conversation: ConversationDto | null | undefined;
+  safeConversation: SafeConversation | null;
   selectedAgent: string;
   selectedAgentData: AgentDto | null;
   agents: AgentDto[];
@@ -189,18 +191,20 @@ export function useAssignModal(): AssignModalHook {
     agents.find((agent) => agent.userId.toString() === selectedAgent) ?? null;
 
   return {
-    isDropdownOpen,
-    statusOptions: CONVERSATION_STATUS_OPTIONS,
-    isOpen,
-    selectedAgent,
-    selectedAgentData,
-    agents,
-    selectedIsOnline,
-    setIsDropdownOpen,
-    setSelectedAgent,
-    handleAssign,
-    handleStatusChange,
-    handleClose,
-    loading: assignMutation.isPending || isFetching,
-  };
+  isDropdownOpen,
+  statusOptions: CONVERSATION_STATUS_OPTIONS,
+  isOpen,
+  conversation,
+  safeConversation,
+  selectedAgent,
+  selectedAgentData,
+  agents,
+  selectedIsOnline,
+  setIsDropdownOpen,
+  setSelectedAgent,
+  handleAssign,
+  handleStatusChange,
+  handleClose,
+  loading: assignMutation.isPending || isFetching,
+};
 }
