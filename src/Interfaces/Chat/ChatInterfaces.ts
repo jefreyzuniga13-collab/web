@@ -22,7 +22,7 @@ export interface ConversationDto {
   clientContactName?: string
   clientName?: string
   priority: string
-  assignedAgentId?: number
+  assignedAgentId?: number | null
   assignedAgentName?: string
   assignedByUserId?: number
   assignedByUserName?: string

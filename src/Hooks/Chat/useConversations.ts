@@ -36,8 +36,8 @@ const initialRange = (): FormInterface => {
     : { validFrom: null, validTo: null }
 }
 
-export function useConversations(filter: Filter = 'all', 
-  searchConversation: string): UseConversationsResult {
+export function useConversations(filter: Filter = 'all', searchConversation: string): UseConversationsResult {
+
    const isAdmin = useSelector(selectIsAdmin);
    const userId = useSelector(selectUserId);
 
@@ -110,13 +110,14 @@ export function useConversations(filter: Filter = 'all',
   }, [sortByActivity])
 
 
-const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+  const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
   setConversations(prev => {
     const current = prev.find(p => p.conversationId === updated.conversationId);
 
     const mergedConversation: ConversationDto = {
       ...current,
       ...updated,
+      
       assignedAgentId: updated.assignedAgentId ?? current?.assignedAgentId ?? null,
       clientContactId: updated.clientContactId ?? current?.clientContactId ?? null,
       lastActivity:
@@ -131,7 +132,7 @@ const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
     const belongsToMe =
       Number(mergedConversation.assignedAgentId ?? 0) === Number(userId);
 
-    if (!isAdmin) {
+     if (!isAdmin) {
       const shouldRemove = filter === "human" && !belongsToMe;
 
       if (shouldRemove) {
@@ -179,6 +180,35 @@ const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
   });
 }, [isAdmin, userId, filter, matchesFilter]);
 
+// const handleUpdatedConvo = useCallback((updated: ConversationDto) => {
+//   setConversations(prev => {
+
+//     if (!isAdmin) {
+
+//       if (updated.assignedAgentId !== userId) {
+
+//         // Cambia de agente asignado -> quitarla, salir del grupo y avisar
+//         const removed = prev.filter(p => p.conversationId !== updated.conversationId)
+//         leaveConversation(updated.conversationId)
+//         window.dispatchEvent(new CustomEvent('ConversationLost', {
+//           detail: { conversationId: updated.conversationId }
+//         }))
+//         return removed
+//       }
+
+//       // Si es propia la asignación.
+//       joinConversation(updated.conversationId)
+//       const base   = prev.filter(p => p.conversationId !== updated.conversationId && p.clientContactId !== updated.clientContactId)
+//       const merged = matchesFilter(updated) ? [updated, ...base] : base
+//       return dedupeByClientKeepNewest(merged)
+//     }
+
+//     // Admin
+//     const baseAdmin   = prev.filter(p => p.conversationId !== updated.conversationId && p.clientContactId !== updated.clientContactId)
+//     const mergedAdmin = matchesFilter(updated) ? [updated, ...baseAdmin] : baseAdmin
+//     return dedupeByClientKeepNewest(mergedAdmin)
+//   })
+// }, [isAdmin, userId, matchesFilter])
 
   const handleNewMessage = useCallback((payload: { message: MessageDto; attachments: AttachmentDto[] }) => {
     const msg = payload.message

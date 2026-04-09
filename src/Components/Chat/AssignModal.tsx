@@ -8,7 +8,6 @@ export const AssignModal: React.FC = () => {
   const {
     isDropdownOpen,
     statusOptions,
-    // safeConversation,
     conversation,
     isOpen,
     selectedAgentData,

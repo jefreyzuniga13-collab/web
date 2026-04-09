@@ -1,19 +1,25 @@
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { ThemeProvider } from "@mui/material/styles";
+
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
+import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
+
 import { useOnline } from "@/Hooks/Auth/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
-import { ThemeProvider } from "@mui/material/styles";
-import { theme } from "@/Utils/materialTheme";
+
 import type { RootState } from "@/Context";
+import { theme } from "@/Utils/materialTheme";
+
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
 
@@ -73,12 +79,14 @@ export default function App() {
     } as NotificationOptions & { renotify: boolean });
   }
 
+  // Registrar service worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
   }, []);
 
+  // Permiso de notificaciones
   useEffect(() => {
     if (!("Notification" in window)) return;
     if (Notification.permission === "default") {
@@ -86,6 +94,7 @@ export default function App() {
     }
   }, []);
 
+  // Escuchar eventos de notificación
   useEffect(() => {
     const onDesktopNotify = (e: Event) => {
       const evt = (e as CustomEvent).detail;
@@ -98,6 +107,7 @@ export default function App() {
     return () => window.removeEventListener("DesktopNotify", onDesktopNotify);
   }, []);
 
+  // Manejo de navegación desde SW
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
@@ -114,9 +124,11 @@ export default function App() {
     };
 
     navigator.serviceWorker.addEventListener("message", handler);
-    return () => navigator.serviceWorker.removeEventListener("message", handler);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handler);
   }, [navigate]);
 
+  // Notificaciones en tiempo real
   useEffect(() => {
     if (!lastEvent) return;
 
@@ -127,6 +139,7 @@ export default function App() {
     }
   }, [lastEvent, dispatch]);
 
+  // Sonido
   useEffect(() => {
     if (!lastEvent) return;
 
@@ -138,26 +151,31 @@ export default function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <ToastContainer
-        position="top-right"
-        autoClose={500}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="colored"
-      />
+      {/* 🔥 BOOTSTRAP DE SESIÓN */}
+      <SessionBootstrap>
+        <ToastContainer
+          position="top-right"
+          autoClose={500}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="colored"
+        />
 
-      {isAuthenticated ? (
-        <SignalRProvider>
-          {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
-          <ReLoginModal />
+        {isAuthenticated ? (
+          <SignalRProvider>
+            {!online && (
+              <OfflineBanner onRetry={() => window.location.reload()} />
+            )}
+            <ReLoginModal />
+            <AppRouter />
+          </SignalRProvider>
+        ) : (
           <AppRouter />
-        </SignalRProvider>
-      ) : (
-        <AppRouter />
-      )}
+        )}
+      </SessionBootstrap>
     </ThemeProvider>
   );
 }
