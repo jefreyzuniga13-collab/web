@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/Context';
 import { checkSessionThunk } from '@/Context/Slices/Auth/authSlice';
 
-interface SessionBootstrapProps {
-  children: React.ReactNode;
-}
+// interface SessionBootstrapProps {
+//   children: React.ReactNode;
+// }
 
-export default function SessionBootstrap({ children }: SessionBootstrapProps) {
+export default function SessionBootstrap(children : React.ReactNode) {
   const dispatch = useDispatch<AppDispatch>();
   const checkingSession = useSelector((state: RootState) => state.auth.checkingSession);
 

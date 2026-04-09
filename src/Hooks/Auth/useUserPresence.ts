@@ -1,97 +1,55 @@
-import { useEffect, useState } from "react";
-import { HubConnectionState } from "@microsoft/signalr";
-import { userService } from "@/Services/auth/UserService";
-import {
-  createHubConnection,
-  getPresenceConnection,
-} from "@/Services/signalr";
+import { useEffect, useState } from 'react'
+import { userService } from '@/Services/auth/UserService'
+import { presenceConnection } from '@/Services/signalr'
+import { HubConnectionState } from '@microsoft/signalr'
 
 export function useUserPresence(userId: number) {
-  const [isOnline, setIsOnline] = useState(false);
-  const [lastOnline, setLastOnline] = useState<Date | null>(null);
+  const [isOnline, setIsOnline] = useState(false)
+  const [lastOnline, setLastOnline] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
 
-    userService
-      .getUserPresence(userId)
-      .then((dto) => {
-        setIsOnline(dto.data.isOnline);
-        setLastOnline(dto.data.lastOnline ? new Date(dto.data.lastOnline) : null);
+    userService.getUserPresence(userId)
+      .then(dto => {
+        setIsOnline(dto.data.isOnline)
+        setLastOnline(dto.data.lastOnline ? new Date(dto.data.lastOnline) : null)
       })
-      .catch((error) => {
-        console.error("Error obteniendo presencia inicial", error);
-      });
-  }, [userId]);
+      .catch(console.error)
+  }, [userId])
 
+  // Suscripción a eventos SignalR
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
 
-    let isMounted = true;
-
-    const registerPresence = async () => {
-      try {
-        await createHubConnection();
-
-        const connection = getPresenceConnection();
-        if (!connection) return;
-
-        const onOnline = (id: number) => {
-          if (!isMounted) return;
-          if (id === userId) {
-            setIsOnline(true);
-          }
-        };
-
-        const onOffline = (id: number, lastSeen?: string | Date) => {
-          if (!isMounted) return;
-          if (id === userId) {
-            setIsOnline(false);
-            setLastOnline(lastSeen ? new Date(lastSeen) : new Date());
-          }
-        };
-
-        connection.off("UserIsOnline", onOnline);
-        connection.on("UserIsOnline", onOnline);
-
-        connection.off("UserIsOffline", onOffline);
-        connection.on("UserIsOffline", onOffline);
-
-        return () => {
-          connection.off("UserIsOnline", onOnline);
-          connection.off("UserIsOffline", onOffline);
-        };
-      } catch (error) {
-        console.error("Error registrando eventos de presencia", error);
+    const onOnline = (id: number) => {
+      if (id === userId) setIsOnline(true)
+    }
+    const onOffline = (id: number) => {
+      if (id === userId) {
+        setIsOnline(false)
+        setLastOnline(new Date())
       }
-    };
+    }
 
-    let cleanup: (() => void) | undefined;
-
-    registerPresence().then((fn) => {
-      cleanup = fn;
-    });
+    presenceConnection?.on('UserIsOnline', onOnline)
+    presenceConnection?.on('UserIsOffline', onOffline)
 
     return () => {
-      isMounted = false;
-      if (cleanup) cleanup();
-    };
-  }, [userId]);
+      presenceConnection?.off('UserIsOnline', onOnline)
+      presenceConnection?.off('UserIsOffline', onOffline)
+    }
+  }, [userId])
 
-  return { isOnline, lastOnline };
+  return { isOnline, lastOnline }
 }
 
 export async function markOffline(userId: number) {
-  if (!userId) return;
+  if (!presenceConnection) return;
 
-  await createHubConnection();
-
-  const connection = getPresenceConnection();
-  if (!connection) return;
-
-  if (connection.state !== HubConnectionState.Connected) {
-    return;
+  if (presenceConnection.state !== HubConnectionState.Connected) {
+    // eslint-disable-next-line no-empty
+    try { await presenceConnection.start(); } catch {}
   }
-
-  await connection.invoke("UserDisconnected", userId);
+  await presenceConnection.invoke('UserDisconnected', userId); // método del Hub
 }

@@ -1,52 +1,53 @@
 
-import { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
+// import { useState, useEffect } from 'react';
+// import { jwtDecode } from 'jwt-decode';
 
-interface JWTPayload {
-  role?: string | string[];
-  sub?: string;
-  nameid?: string;
-  email?: string[];
-  jti?: string;
-}
+// interface JWTPayload {
+//   role?: string | string[];
+//   sub?: string;
+//   nameid?: string;
+//   email?: string[];
+//   jti?: string;
+// }
 
-export function useUserRoles() {
-  const [roles, setRoles] = useState<string[]>([]);
-  const [userId, setUserId] = useState<string>('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isSupport, setIsSupport] = useState(false);
+// export function useUserRoles() {
+//   const [roles, setRoles] = useState<string[]>([]);
+//   const [userId, setUserId] = useState<string>('');
+//   const [isAdmin, setIsAdmin] = useState(false);
+//   const [isSupport, setIsSupport] = useState(false);
   
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      return;
-    }
+//   useEffect(() => {
+//     const token = localStorage.getItem('accessToken');
+//     if (!token) {
+//       return;
+//     }
     
-    try {
-      const decoded = jwtDecode<JWTPayload>(token);
+//     try {
+//       const decoded = jwtDecode<JWTPayload>(token);
       
-      let userRoles: string[] = [];
-      if (decoded.role) {
-        userRoles = Array.isArray(decoded.role) ? decoded.role : [decoded.role];
+//       let userRoles: string[] = [];
+//       if (decoded.role) {
+//         userRoles = Array.isArray(decoded.role) ? decoded.role : [decoded.role];
 
-      }
-      setRoles(userRoles);
+//       }
+//       setRoles(userRoles);
     
-      // Determinar si es admin o support
-      setIsAdmin(userRoles.includes('Admin'));
-      setIsAdmin(userRoles.includes('Root'));
-      setIsSupport(userRoles.includes('Support'));
+//       // Determinar si es admin o support
+//       setIsAdmin(userRoles.includes('Admin'));
+//       setIsAdmin(userRoles.includes('Root'));
+//       setIsSupport(userRoles.includes('Support'));
       
-      setUserId(decoded.sub || decoded.nameid || '');
-    } catch (error) {
-      console.error('Error al decodificar el token JWT:', error);
-    }
-  }, []);
+//       setUserId(decoded.sub || decoded.nameid || '');
+//     } catch (error) {
+//       console.error('Error al decodificar el token JWT:', error);
+//     }
+//   }, []);
 
-  return { 
-    roles,
-    userId, 
-    isAdmin, 
-    isSupport,
-  };
-}
+//   return { 
+//     roles,
+//     userId, 
+//     isAdmin, 
+//     isSupport,
+//   };
+// }
+// //aqui se dbebe de usar el sclice y no mas el localstorae

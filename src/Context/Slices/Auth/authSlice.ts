@@ -153,5 +153,5 @@ export const selectUserId = (state: RootState) => Number(state.auth.userId);
 export const selectEmpresaId = (state: RootState) => state.auth.empresaId;
 
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
-
+export const selectRoles = (state: RootState) => state.auth.roles;
 export default authSlice.reducer;

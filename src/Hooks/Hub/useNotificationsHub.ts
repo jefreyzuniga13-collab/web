@@ -1,40 +1,14 @@
 import { useState, useEffect } from 'react'
 import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces'
-import { getNotificationsConnection } from '@/Services/signalr'
-import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces'
-import { notificationSound } from '@/Utils/sound'
+import { notificationsConnection } from '@/Services/signalr'
+import type { ContactLog } from '@/Interfaces/Auth/UserInterfaces';
+import { notificationSound } from '@/Utils/sound';
 
-type SupportRequestedPayload = {
-  conversationId: number
-  requestedAt: string
-  clientContactName: string
-  systemDefinedCompanyName: string
-}
-
-type AssignmentResponsePayload = {
-  conversationId: number
-  AssignedAgentName?: string
-  accepted: boolean
-  comment?: string
-  justification?: string
-  clientContactName?: string
-  systemDefinedCompanyName?: string
-}
-
-type AssignmentForcedPayload = {
-  conversationId: number
-  assignmentComment: string
-  clientContactName: string
-  systemDefinedCompanyName: string
-}
-
-type AssignmentForcedAdminPayload = {
-  conversationId: number
-  targetAgentId: number
-  comment: string
-  clientContactName: string
-  systemDefinedCompanyName: string
-}
+type SupportRequestedPayload = { conversationId: number; requestedAt: string; clientContactName: string; systemDefinedCompanyName: string;  }
+type AssignmentResponsePayload = { conversationId: number; AssignedAgentName?: string, accepted: boolean; comment?: string; justification?: string; 
+  clientContactName?: string; systemDefinedCompanyName?: string;}
+type AssignmentForcedPayload = { conversationId: number; assignmentComment: string; clientContactName: string; systemDefinedCompanyName: string; }
+type AssignmentForcedAdminPayload = { conversationId: number; targetAgentId: number; comment: string; clientContactName: string; systemDefinedCompanyName: string; }
 
 export type NotificationEvent =
   | { type: 'SupportRequested'; payload: SupportRequestedPayload }
@@ -42,67 +16,67 @@ export type NotificationEvent =
   | { type: 'AssignmentResponse'; payload: AssignmentResponsePayload }
   | { type: 'AssignmentForced'; payload: AssignmentForcedPayload }
   | { type: 'AssignmentForcedAdmin'; payload: AssignmentForcedAdminPayload }
-  | { type: 'newContactValidation'; payload: ContactLog }
+  | {type: "newContactValidation", payload: ContactLog};
 
 export function useNotificationsHub(): NotificationEvent | null {
-  const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null)
+  const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null);
 
   useEffect(() => {
-    const conn = getNotificationsConnection()
-    if (!conn) return
+    const conn = notificationsConnection;
+    if (!conn) return;
 
     const play = () => {
       if (!notificationSound.playing()) {
-        notificationSound.play()
+        notificationSound.play();
       }
-    }
+    };
 
     const supportRequested = (payload: SupportRequestedPayload) => {
-      setLastEvent({ type: 'SupportRequested', payload })
-      play()
-    }
+      setLastEvent({ type: 'SupportRequested', payload });
+      play();
+    };
 
     const conversationAssigned = (payload: ConversationDto) => {
-      setLastEvent({ type: 'ConversationAssigned', payload })
-      play()
-    }
+      setLastEvent({ type: 'ConversationAssigned', payload });
+      play();
+    };
 
     const assignmentResponse = (payload: AssignmentResponsePayload) => {
-      setLastEvent({ type: 'AssignmentResponse', payload })
-      play()
-    }
+      setLastEvent({ type: 'AssignmentResponse', payload });
+      play();
+    };
 
     const assignmentForced = (payload: AssignmentForcedPayload) => {
-      setLastEvent({ type: 'AssignmentForced', payload })
-      play()
-    }
+      setLastEvent({ type: 'AssignmentForced', payload });
+      play();
+    };
 
     const assignmentForcedAdmin = (payload: AssignmentForcedAdminPayload) => {
-      setLastEvent({ type: 'AssignmentForcedAdmin', payload })
-      play()
-    }
+      setLastEvent({ type: 'AssignmentForcedAdmin', payload });
+      play();
+    };
 
     const newContactValidation = (payload: ContactLog) => {
-      setLastEvent({ type: 'newContactValidation', payload })
-      play()
-    }
+      setLastEvent({ type: 'newContactValidation', payload });
+      play();
+    };
 
-    conn.on('SupportRequested', supportRequested)
-    conn.on('ConversationAssigned', conversationAssigned)
-    conn.on('AssignmentResponse', assignmentResponse)
-    conn.on('AssignmentForced', assignmentForced)
-    conn.on('AssignmentForcedAdmin', assignmentForcedAdmin)
-    conn.on('newContactValidation', newContactValidation)
+    conn.on('SupportRequested', supportRequested);
+    conn.on('ConversationAssigned', conversationAssigned);
+    conn.on('AssignmentResponse', assignmentResponse);
+    conn.on('AssignmentForced', assignmentForced);
+    conn.on('AssignmentForcedAdmin', assignmentForcedAdmin);
+    conn.on('newContactValidation', newContactValidation);
 
     return () => {
-      conn.off('SupportRequested', supportRequested)
-      conn.off('ConversationAssigned', conversationAssigned)
-      conn.off('AssignmentResponse', assignmentResponse)
-      conn.off('AssignmentForced', assignmentForced)
-      conn.off('AssignmentForcedAdmin', assignmentForcedAdmin)
-      conn.off('newContactValidation', newContactValidation)
-    }
-  }, [])
+      conn.off('SupportRequested', supportRequested);
+      conn.off('ConversationAssigned', conversationAssigned);
+      conn.off('AssignmentResponse', assignmentResponse);
+      conn.off('AssignmentForced', assignmentForced);
+      conn.off('AssignmentForcedAdmin', assignmentForcedAdmin);
+      conn.off('newContactValidation', newContactValidation);
+    };
+  }, []);
 
-  return lastEvent
+  return lastEvent;
 }

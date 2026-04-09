@@ -7,13 +7,10 @@ import { store } from "@/Context"
 import "@/index.css"
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/Utils/Https/reactQuery";
-
 import api, { apiPCG } from "@/Utils/ApiConfig"
-
 import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
 import { setupEmpresaInterceptor, setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
-
 
 setupRequestInterceptor(api)
 setupResponseInterceptor(api)      // refresh solo api CRM

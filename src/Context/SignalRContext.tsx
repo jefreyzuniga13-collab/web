@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import {
   createHubConnection,
-  stopHubConnection,
   joinConversation,
   leaveConversation,
   onNewMessage,
@@ -16,13 +15,14 @@ import {
   offMessageStatusChanged,
   onNewNotification,
   offNewNotification
-} from '@/Services/signalr/signalr';
+} from "@/Services/signalr";
+
 import type {
   MessageDto,
   AttachmentDto,
   ConversationDto,
   NotificationDto
-} from '@/Interfaces/Chat/ChatInterfaces';
+} from "@/Interfaces/Chat/ChatInterfaces";
 
 interface SignalRContextValue {
   joinConversation(id: number): void;
@@ -62,25 +62,9 @@ export const SignalRProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let active = true;
-
     createHubConnection()
-      .then(() => {
-        if (active) {
-          setReady(true);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setReady(true);
-        }
-      });
-
-    return () => {
-      active = false;
-      stopHubConnection().catch(() => {
-      });
-    };
+      .then(() => setReady(true))
+      .catch(() => setReady(true));
   }, []);
 
   if (!ready) return null;
