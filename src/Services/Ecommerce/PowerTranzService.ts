@@ -5,7 +5,9 @@ import type {
   ApiErrorResponse,
   ApiResponse,
   InitPaymentRequest,
-  InitResponse
+  InitResponse,
+  PowertranzRefundRequestDto,
+  PowertranzRefundResponseDto
 } from "@/Interfaces/Ecommerce/powertranzInterface";
 
 export type IniciarPagoServiceResponse = {
@@ -19,12 +21,12 @@ function obtenerMensajeError(error: unknown): { message: string; detail: string 
 
     return {
       message:
-        typeof data?.mensaje === "string" && data.mensaje.trim().length > 0
-          ? data.mensaje
+        typeof data?.messages === "string" && data.messages.trim().length > 0
+          ? data.messages
           : "No fue posible iniciar el pago.",
       detail:
-        typeof data?.detalle === "string" && data.detalle.trim().length > 0
-          ? data.detalle
+        typeof data?.details === "string" && data.details.trim().length > 0
+          ? data.details
           : error.message
     };
   }
@@ -43,31 +45,39 @@ function obtenerMensajeError(error: unknown): { message: string; detail: string 
 }
 
 function validarRespuestaApi(response: ApiResponse<InitResponse>): IniciarPagoServiceResponse {
-  if (!response.exito) {
+  if (!response.success) {
     throw new Error(
       JSON.stringify({
-        message: response.mensaje || "No fue posible iniciar el pago.",
+        message: response.messages || "No fue posible iniciar el pago.",
         detail: ""
       })
     );
   }
 
   return {
-    data: response.datos,
-    message: response.mensaje
+    data: response.data,
+    message: response.messages
   };
 }
 
 async function iniciarPago(payload: InitPaymentRequest): Promise<IniciarPagoServiceResponse> {
   try {
     const respuesta = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
+
     return validarRespuestaApi(respuesta.data);
   } catch (error: unknown) {
+    console.log("Accedio al catch", error)
     const errorNormalizado = obtenerMensajeError(error);
     throw new Error(JSON.stringify(errorNormalizado));
   }
 }
 
+async function refundAsync(payload: PowertranzRefundRequestDto): Promise<ApiResponse<PowertranzRefundResponseDto>> {
+    const res = await apiPCG.post<ApiResponse<PowertranzRefundResponseDto>>("/powertranz/refund", payload);
+    return res.data;
+}
+
 export const powertranzService = {
-  iniciarPago
+  iniciarPago,
+refundAsync
 }

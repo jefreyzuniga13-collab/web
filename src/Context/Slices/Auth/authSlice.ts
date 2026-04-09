@@ -2,12 +2,14 @@ import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/tool
 import { authService } from '@/Services/auth/AuthService';
 import type { AuthData, AuthMe } from '@/Interfaces/Auth/AuthInterface';
 import type { RootState } from '@/Context/index';
+
 interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
   expiresAt: string | null;
   checkingSession: boolean;
   roles: string[];
+  empresaId: string;
 }
 
 const initialState: AuthState = {
@@ -15,7 +17,8 @@ const initialState: AuthState = {
   userId: null,
   expiresAt: null,
   checkingSession: false,
-  roles: []
+  roles: [],
+  empresaId: ''
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -57,6 +60,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.userId = String(creds.userId);
       state.expiresAt = creds.expiresAt;
+      state.empresaId = String(creds.empresaId ?? '');
       state.checkingSession = false;
     },
     setAuthenticated(state, action: PayloadAction<boolean>) {
@@ -67,6 +71,7 @@ const authSlice = createSlice({
         state.userId = null;
         state.expiresAt = null;
         state.roles = [];
+        state.empresaId = '';
       }
     },
     startCheckingSession(state) {
@@ -81,6 +86,7 @@ const authSlice = createSlice({
       state.expiresAt = null;
       state.checkingSession = false;
       state.roles = [];
+      state.empresaId = '';
     }
   },
   extraReducers: (builder) => {
@@ -92,6 +98,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.userId = String(payload.userId);
       state.expiresAt = payload.expiresAt;
+      state.empresaId = String(payload.empresaId ?? '');
       state.checkingSession = false;
     });
 
@@ -101,6 +108,7 @@ const authSlice = createSlice({
       state.expiresAt = null;
       state.checkingSession = false;
       state.roles = [];
+      state.empresaId = '';
     });
 
     builder.addCase(checkSessionThunk.pending, (state) => {
@@ -112,6 +120,7 @@ const authSlice = createSlice({
       state.userId = String(payload.userId);
       state.expiresAt = null;
       state.roles = payload.roles ?? [];
+      state.empresaId = String(payload.empresaId ?? '');
       state.checkingSession = false;
     });
 
@@ -120,6 +129,7 @@ const authSlice = createSlice({
       state.userId = null;
       state.expiresAt = null;
       state.roles = [];
+      state.empresaId = '';
       state.checkingSession = false;
     });
   }
@@ -138,6 +148,10 @@ export const selectIsAdmin = (state: RootState) =>
     r => r.toLowerCase() === 'admin' || r.toLowerCase() === 'root'
   );
 
-  export const selectUserId = (state: RootState) => Number(state.auth.userId);
+export const selectUserId = (state: RootState) => Number(state.auth.userId);
+
+export const selectEmpresaId = (state: RootState) => state.auth.empresaId;
+
+export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 
 export default authSlice.reducer;

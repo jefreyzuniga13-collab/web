@@ -48,7 +48,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
       );
 
       const existingLog = await fetchByContactId(payload.contactId);
-      setExistingLog(existingLog ?? null);
+      setExistingLog(existingLog);
 
     //   if(existingLog != null){
     // }

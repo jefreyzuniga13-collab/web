@@ -2,16 +2,14 @@ import { useEffect }                       from 'react'
 import { onPlayNewMessageSound, 
          offPlayNewMessageSound }          from '@/Services/signalr/signalr'
 import { notificationSound }               from '@/Utils/sound'
-import type { AuthData }                   from '@/Interfaces/Auth/AuthInterface'
-
+import { selectUserId } from '@/Context/Slices/Auth/authSlice';
+import { useSelector } from 'react-redux';
 export function GlobalSoundNotifier() {
-  const authRaw = localStorage.getItem('auth') || '{}'
-  const { userId: uid } = JSON.parse(authRaw) as AuthData
-  const myUserId = Number(uid)
+   const userId = useSelector(selectUserId);
 
   useEffect(() => {
     const playIfNotMine = (senderUserId: number) => {
-      if (senderUserId !== myUserId) {
+      if (senderUserId !== userId) {
         notificationSound.play()
       }
     }
@@ -20,7 +18,7 @@ export function GlobalSoundNotifier() {
     return () => {
       offPlayNewMessageSound()
     }
-  }, [myUserId])
+  }, [userId])
 
   return null
 }

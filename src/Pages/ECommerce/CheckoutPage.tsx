@@ -656,6 +656,9 @@ const CheckoutPage: React.FC = () => {
       autorizacion: "",
       termId: "",
       afiliado: "",
+      CodStrCadsaccion:"",
+      Codtransaccion:"",
+      CuentaHabiente:"",
       montoP: round2(total),
       montoS: round2(total / 36.6243),
       indice: "0",
@@ -871,7 +874,7 @@ const CheckoutPage: React.FC = () => {
         sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
 
         await iniciarPagoMutation.mutateAsync({
-          orderId: String(orderId),
+          orderId: dataconse?.data?.consecutivo.toString(),
           amount: totalMonto,
           currencyCode: "558"
         });

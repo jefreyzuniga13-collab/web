@@ -7,6 +7,8 @@ import { buildModifiersText } from "@/Utils/ECommerce/buildModifiersText"
 import { SendMediaECommerceFromUrlAsync } from "@/Services/chat/MessageService"
 import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG"
 import { toast } from "react-toastify"
+import { selectUserId } from '@/Context/Slices/Auth/authSlice';
+import { useSelector } from "react-redux"
 
 type SendProductMessageArgs = {
   product: ProductoPCGInterface
@@ -17,15 +19,6 @@ type SendProductMessageArgs = {
   includeModifiers?: boolean
 }
 
-const safeAuthUserId = (): number | null => {
-  try {
-    const raw = localStorage.getItem("auth") || "{}"
-    const parsed = JSON.parse(raw)
-    return parsed?.userId ?? null
-  } catch {
-    return null
-  }
-}
 
 const buildBaseCaption = (p: ProductoPCGInterface): string => {
   const parts: string[] = []
@@ -40,8 +33,10 @@ const buildBaseCaption = (p: ProductoPCGInterface): string => {
 export const useProductMessageComposer = () => {
   const { getProductModifiers } = useProductPCG()
   const [sending, setSending] = useState(false)
-
-  const sendProductMessage = useCallback(
+  
+  const userId = useSelector(selectUserId);
+  
+    const sendProductMessage = useCallback(
     async ({
       product,
       conversationId,
@@ -53,7 +48,6 @@ export const useProductMessageComposer = () => {
       if (sending) return
       if (!conversationId) return
 
-      const userId = safeAuthUserId()
       if (!userId) return
 
       setSending(true)

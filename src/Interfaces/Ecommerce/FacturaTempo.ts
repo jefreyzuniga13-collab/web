@@ -56,6 +56,52 @@ export interface FacturaTempo {
   retiraSucursal: string;
 }
 
+//este modelo se pasa a todos:
+export interface PagoGenerico {
+  numPago: string;
+  concepto: string;          
+  codPago: string;        
+  tipoPago: string;           
+  aplicaCambio: string;      
+  codPagoExterno: string;    
+  banco: string;           
+
+  monto: number;
+  moneda: string;
+  montoA: number;
+  cambio: number;
+  tasaCambio: number;
+  Fecha_o_Vence: string;        
+  referencia: string;         
+  numeroTransaccion: string;  
+  cuentaContable?: string;
+  Dll: string;
+  Numero: string;
+
+  ultDigito: string;  
+  tarjeta: string;     
+  tarjetahabiente: string;
+  autorizacion: string; 
+  termId: string;           
+  afiliado: string;          
+
+
+  montoP: number;
+  montoS: number;
+
+  indice: string;
+  codClienteCrd: string;     
+  facturaPinpad: string;
+  codEmpresa: string;      
+  codSucursal: string;
+  montoFirma: string;         
+  sobrante: string;   
+  
+  // Campos para guardar detalles deel pago:
+  Codtransaccion: string;
+  CuentaHabiente: string;
+  CodStrCadsaccion: string;
+}
 
 export interface ExistenciaSucursalItem {
   codsucursal: string;
@@ -134,49 +180,6 @@ export interface PagoTransferencia {
   sobrante: string;          
 }
 
-
-
-//este modelo se pasa a todos:
-export interface PagoGenerico {
-  numPago: string;
-  concepto: string;          
-  codPago: string;        
-  tipoPago: string;           
-  aplicaCambio: string;      
-  codPagoExterno: string;    
-  banco: string;           
-
-  monto: number;
-  moneda: string;
-  montoA: number;
-  cambio: number;
-  tasaCambio: number;
-  Fecha_o_Vence: string;        
-  referencia: string;         
-  numeroTransaccion: string;  
-  cuentaContable?: string;
-  Dll: string;
-  Numero: string;
-
-  ultDigito: string;  
-  tarjeta: string;     
-  tarjetahabiente: string;
-  autorizacion: string; 
-  termId: string;           
-  afiliado: string;          
-
-
-  montoP: number;
-  montoS: number;
-
-  indice: string;
-  codClienteCrd: string;     
-  facturaPinpad: string;
-  codEmpresa: string;      
-  codSucursal: string;
-  montoFirma: string;         
-  sobrante: string;          
-}
 
 
 //solicita la lista de metod0os de transferencia y la respuesta, 

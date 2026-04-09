@@ -3,7 +3,8 @@ import { useUsers } from "@/Hooks/Auth/useUsers";
 import type { UpdateUserRequest } from "@/Interfaces/Auth/UserInterfaces";
 import { toast } from "react-toastify";
 import { userService } from "@/Services/auth/UserService";
-
+import { useSelector } from "react-redux";
+import {selectUserId } from '@/Context/Slices/Auth/authSlice';
 export function useProfileCard() {
   const { currentUser, loading, fetchOne } = useUsers();
 
@@ -21,8 +22,7 @@ export function useProfileCard() {
     roleIds: [],
   });
 
-  const authRaw = localStorage.getItem("auth") || "{}";
-  const { userId } = JSON.parse(authRaw);
+   const userId = useSelector(selectUserId);
 
   useEffect(() => {
     if (!currentUser) {

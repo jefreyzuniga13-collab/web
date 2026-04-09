@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "@/Utils/ApiConfig";
-type Status = "loading" | "ok" | "unauthorized";
-import NotFound from '@/Pages/Auth/NotFound'
-import CarPage from '@/Pages/ECommerce/CarPage'
+import NotFound from "@/Pages/Auth/NotFound";
+import CarPage from "@/Pages/ECommerce/CarPage";
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
+
+type Status = "loading" | "ok" | "unauthorized";
 
 const ProtectedCartRoute = () => {
   const [status, setStatus] = useState<Status>("loading");
@@ -20,14 +21,40 @@ const ProtectedCartRoute = () => {
       }
 
       try {
-        const { data } = await api.post(`/Auth/TempLink/Resolve`, token, {
-          headers: { "Content-Type": "application/json" },
-        });
+        const { data } = await api.post<{ data: TempLinkResolveResponseDto }>(
+          `/Auth/TempLink/Resolve`,
+          token,
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
 
-        // ApiResponse<TempLinkResolveResponseDto>
-        setPayload(data.data);
+        const resolvedPayload = data.data;
+
+        setPayload(resolvedPayload);
+
+        console.log("Datos del resolve", JSON.stringify(data));
+
+        const empresaId = resolvedPayload?.empresaId?.trim() ?? "";
+
+        if (empresaId) {
+          sessionStorage.setItem("EmpresaId", empresaId);
+          localStorage.setItem("EmpresaId", empresaId);
+          console.log("EmpresaId guardado:", empresaId);
+        } else {
+          sessionStorage.removeItem("EmpresaId");
+          localStorage.removeItem("EmpresaId");
+          console.warn("empresaId no vino en el payload");
+        }
+
+        console.log("sessionStorage EmpresaId:", sessionStorage.getItem("EmpresaId"));
+        console.log("localStorage EmpresaId:", localStorage.getItem("EmpresaId"));
+
         setStatus("ok");
-      } catch {
+      } catch (error) {
+        console.error("Error resolviendo token temporal:", error);
+        sessionStorage.removeItem("EmpresaId");
+        localStorage.removeItem("EmpresaId");
         setStatus("unauthorized");
       }
     };
@@ -49,6 +76,5 @@ const ProtectedCartRoute = () => {
 
   return <CarPage payload={payload} />;
 };
-
 
 export default ProtectedCartRoute;

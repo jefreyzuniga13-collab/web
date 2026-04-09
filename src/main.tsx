@@ -7,16 +7,19 @@ import { store } from "@/Context"
 import "@/index.css"
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/Utils/Https/reactQuery";
+
 import api, { apiPCG } from "@/Utils/ApiConfig"
+
 import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
-import { setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
+import { setupEmpresaInterceptor, setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
 
 
 setupRequestInterceptor(api)
 setupResponseInterceptor(api)      // refresh solo api CRM
 setupNetworkInterceptor(api)
 
+setupEmpresaInterceptor(apiPCG);
 setupNetworkInterceptor(apiPCG)    // timeout/network para api PCG también
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

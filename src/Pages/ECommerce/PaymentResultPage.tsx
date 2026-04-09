@@ -1,30 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-import { useDispatch } from "react-redux";
+import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
 
 function getParam(value: string | null): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function getLast4(value: string): string {
+  const clean = value.trim();
+  return clean.length >= 4 ? clean.slice(-4) : clean;
 }
 
 export default function PaymentResultPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const executedRef = useRef(false);
 
   const approved = getParam(params.get("approved"));
-  const orderId = Number(getParam(params.get("orderId")));
+  const orderIdRaw = getParam(params.get("orderId"));
   const transactionIdentifier = getParam(params.get("transactionIdentifier"));
+  const panToken = getParam(params.get("PanToken")) || getParam(params.get("panToken"));
+  const cardBrand = getParam(params.get("CardBrand")) || getParam(params.get("cardBrand"));
 
-  const isApproved = useMemo(
-    () => approved.toLowerCase() === "true",
-    [approved]
-  );
+  const orderId = Number(orderIdRaw);
+  const isApproved = approved.toLowerCase() === "true";
 
   const { InsertaFacturaAsync } = useInvoiceOrder();
   const { fetchByContactId, UpdatedStatus } = useLogCart();
@@ -35,17 +41,16 @@ export default function PaymentResultPage() {
 
     const run = async () => {
       try {
-
-        //axitoso pasa
         if (!isApproved) {
-          console.log("isApproved es: ", isApproved)
+          console.log("Pago no aprobado en PaymentResultPage");
           navigate("/unauthorized", { replace: true });
           return;
         }
 
-        // Aquí debes recuperar lo necesario para reconstruir la factura
-        // Ideal: que backend ya tenga esto y solo confirmes
-        //nueva factura creada en base a los datos proporcionado por la pasarela de pago, no por otro medio, ya no usar lo viejo, factura simplete nada completo
+        if (!orderIdRaw || Number.isNaN(orderId) || orderId <= 0) {
+          throw new Error("orderId inválido.");
+        }
+
         const payloadRaw = sessionStorage.getItem("checkout_payload");
         const invoiceRaw = sessionStorage.getItem("checkout_invoice");
 
@@ -53,26 +58,36 @@ export default function PaymentResultPage() {
           throw new Error("No hay contexto de checkout.");
         }
 
-        const payload = JSON.parse(payloadRaw);
-        const invoiceReqFinal = JSON.parse(invoiceRaw);
+const payload = JSON.parse(payloadRaw);
+const invoiceReqFinal = JSON.parse(invoiceRaw) as FacturaTempo;
 
-        console.log("procesarCheckoutExitoso")
+const invoiceActualizada: FacturaTempo = {
+  ...invoiceReqFinal,
+  detallePago: (invoiceReqFinal.detallePago ?? []).map((item) => ({
+    ...item,
+    CodStrCadsaccion: String(orderId),
+    Codtransaccion: transactionIdentifier,
+    CuentaHabiente: cardBrand,
+    ultDigito: getLast4(panToken),
+  })),
+};
+
+        console.log("Navegar a procesarCheckoutExitoso");
+
         await procesarCheckoutExitoso({
-          invoiceReqFinal,
+          invoiceReqFinal: invoiceActualizada,
           payload,
           orderId,
-          codSucursalFactura: invoiceReqFinal.sucursal,
-          consecutivo: invoiceReqFinal.numero,
+          codSucursalFactura: invoiceActualizada.sucursal,
+          consecutivo: invoiceActualizada.numero,
           fetchByContactId,
           updatedStatus: UpdatedStatus,
           insertaFacturaAsync: InsertaFacturaAsync,
           dispatch,
-          navigate
+          navigate,
         });
-
       } catch (err: any) {
-        console.log("Se produce un error o no: ", err)
-        
+        console.log("Se produjo un error en PaymentResultPage:", err);
         navigate("/unauthorized", { replace: true });
       }
     };
@@ -80,13 +95,16 @@ export default function PaymentResultPage() {
     run();
   }, [
     isApproved,
-    navigate,
     orderId,
+    orderIdRaw,
     transactionIdentifier,
+    panToken,
+    cardBrand,
     fetchByContactId,
     UpdatedStatus,
     InsertaFacturaAsync,
-    dispatch
+    dispatch,
+    navigate,
   ]);
 
   return null;

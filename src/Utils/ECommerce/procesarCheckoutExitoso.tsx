@@ -42,6 +42,8 @@ export async function procesarCheckoutExitoso({
   dispatch,
   navigate,
 }: ProcesarCheckoutExitosoParams): Promise<void> {
+
+  console.log("LLega antes de", insertaFacturaAsync)
   const insertFacRes = await insertaFacturaAsync(invoiceReqFinal);
 
   if (!insertFacRes?.success) {
@@ -50,7 +52,9 @@ export async function procesarCheckoutExitoso({
     );
   }
 
+    console.log("LLega antes de", fetchByContactId)
   const existingLog = await fetchByContactId(payload.contactId);
+
 
   if (existingLog?.id) {
     await updatedStatus(existingLog.id, 3);

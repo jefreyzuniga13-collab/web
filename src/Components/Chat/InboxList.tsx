@@ -12,7 +12,7 @@ import { FaCartFlatbedSuitcase } from "react-icons/fa6"
 import { ImWhatsapp } from "react-icons/im";
 import { RiMessengerLine } from "react-icons/ri";
 import { FaInstagram } from "react-icons/fa6";
-
+import { selectUserId } from '@/Context/Slices/Auth/authSlice';
 interface Props {
   selectedId?: number
   onSelect: (id: number | null) => void
@@ -44,9 +44,7 @@ export const InboxList: React.FC<Props> = ({
   const loaderRef = useRef<HTMLLIElement>(null)
 
   const [now, setNow] = useState(Date.now())
-  const { userId } = JSON.parse(localStorage.getItem("auth") || "{}") as {
-    userId: number
-  }
+   const userId = useSelector(selectUserId);
 
   const badgeMap = useSelector(selectCartBadgeByContactId)
 

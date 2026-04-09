@@ -16,4 +16,5 @@ export interface TempLinkResolveResponseDto{
     orderId: number
     contactId: number
     userId: number;
+    empresaId: string
 }

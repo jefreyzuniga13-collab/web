@@ -10,6 +10,7 @@ export interface AuthData {
   refreshToken: string;
   expiresAt: string;
   userId: string;
+  empresaId: string
 }
 
 export interface LoginRequest {
@@ -100,4 +101,5 @@ export interface AuthMe {
   fullName?: string;
   email?: string;
   roles?: string[];
+  empresaId: string;
 }
