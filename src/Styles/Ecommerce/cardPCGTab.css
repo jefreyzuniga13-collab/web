@@ -62,8 +62,10 @@
 
 .carPCPanel-content{
     padding: 12px;
-    padding-bottom: 2rem;
+    padding-bottom: 12rem;
+    margin-bottom: 12rem;
 }
+
 .carPCPanel-content__list{
     display: grid;
     grid-template-columns: 0.3fr 0.5fr 1fr;
@@ -393,6 +395,11 @@
     margin-top: var(--space-lg);
 }
 
+.productTab-footer__address{
+    font-size: var(--font-size-sm);
+    padding: 0;
+    margin: 0;
+}
 .btn_text{
     font: var(--font-size-sm);
     padding: 0;

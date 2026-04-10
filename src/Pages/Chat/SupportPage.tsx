@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
@@ -12,26 +12,21 @@ import { Sticker } from "lucide-react";
 import { useConversations } from "@/Hooks/Chat/useConversations";
 import TicketModal from "@/Components/Crm/TicketModal";
 import useContact from "@/Hooks/Auth/useContact";
-import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-
-import {
-  // selectCartError,
-  // selectCartLoading,
-  getProductFromCarAsync,
-} from "@/Context/Slices/Ecommerce/cartSlice"
-import { useDispatch } from "react-redux"
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
+import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/Context";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 
-export const useAppDispatch: () => AppDispatch = useDispatch
+export const useAppDispatch: () => AppDispatch = useDispatch;
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
-  const dispatch = useAppDispatch()
+  const dispatch = useAppDispatch();
 
-  const { fetchById,
-    selectedData: contact } = useContact();
+  const { fetchById, selectedData: contact } = useContact();
+  const { fetchByContactId } = useLogCart();
 
   const {
     conversation,
@@ -55,99 +50,120 @@ const SupportPage: React.FC = () => {
     extraerNumero,
     selectedParam,
     label,
-    canAssign
+    canAssign,
   } = useSupportPage();
-
-
-// Lógica de deshabilitado
-const isClosed = conversation?.status === "Closed" || conversation?.status === "Incomplete";
-
-
-  const {
-    fetchByContactId
-  } = useLogCart();
-
-  useEffect(() => {
-    if (!conversation?.clientContactId) return;
-    fetchById(conversation.clientContactId);
-  }, [conversation?.clientContactId, fetchById]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
+
+  const activeConversation = useMemo(() => {
+    if (!convId) return null;
+
+    return (
+      convHook.conversations.find((c) => c.conversationId === convId) ??
+      conversation ??
+      null
+    );
+  }, [convId, convHook.conversations, conversation]);
+
+  const isClosed =
+    activeConversation?.status === "Closed" ||
+    activeConversation?.status === "Incomplete";
+
+  useEffect(() => {
+    if (!activeConversation?.clientContactId) return;
+    fetchById(activeConversation.clientContactId);
+  }, [activeConversation?.clientContactId, fetchById]);
 
   useEffect(() => {
     if (
       !convHook.loading &&
       convId &&
-      !convHook.conversations.some(c => c.conversationId === convId)
+      !convHook.conversations.some((c) => c.conversationId === convId)
     ) {
       setConvId(null);
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-  const handleScapePress = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
+  useEffect(() => {
+    const handleEscapePress = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
       setContactDetailToggle(false);
       setTicketOpen(false);
       setDetailToggle(false);
       setConvId(null);
       setSearchConversation("");
       convHook.clearFilter();
-    }
-  };
+    };
+
+    window.addEventListener("keydown", handleEscapePress);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscapePress);
+    };
+  }, [
+    convHook,
+    setContactDetailToggle,
+    setConvId,
+    setDetailToggle,
+  ]);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleScapePress);
-    return () => {
-      window.removeEventListener("keydown", handleScapePress);
+    if (!convId) {
+      void dispatch(
+        getProductFromCarAsync({
+          codCliente: contact?.id ?? 0,
+          noPedido: 0,
+        })
+      );
+      return;
+    }
+
+    if (!contact?.id) return;
+
+    let cancelled = false;
+
+    const loadCart = async () => {
+      const log = await fetchByContactId(contact.id);
+      if (cancelled) return;
+
+      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
+
+      const cart = await dispatch(
+        getProductFromCarAsync({
+          codCliente: contact.id,
+          noPedido,
+        })
+      ).unwrap();
+
+      if (cancelled) return;
+
+      const arr = Array.isArray(cart) ? cart : [];
+      const count =
+        arr[0]?.listDetalle?.reduce(
+          (sum, d) => sum + Number(d.cantidad ?? 0),
+          0
+        ) ?? 0;
+
+      dispatch(
+        setContactCartBadge({
+          contactId: contact.id,
+          hasCart: count > 0,
+          count,
+        })
+      );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
+    void loadCart();
 
-useEffect(() => {
-  if (!convId) {
-    void dispatch(getProductFromCarAsync({ codCliente: contact?.id ?? 0, noPedido: 0 }))
-    return
-  }
-
-  if (!contact?.id) return
-
-  let cancelled = false
-
-  const loadCart = async () => {
-    const log = await fetchByContactId(contact.id)
-    if (cancelled) return
-
-    const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
-
-    const cart = await dispatch(
-      getProductFromCarAsync({ codCliente: contact.id, noPedido })
-    ).unwrap()
-
-    if (cancelled) return
-
-    const arr = Array.isArray(cart) ? cart : []
-    // const count = arr[0]?.listDetalle?.length ?? 0
-    const count =
-       arr[0]?.listDetalle?.reduce((sum, d) => sum + Number(d.cantidad ?? 0), 0) ?? 0
-
-    dispatch(setContactCartBadge({ contactId: contact.id, hasCart: count > 0, count }))
-  }
-
-  void loadCart()
-
-  return () => {
-    cancelled = true
-  }
-}, [convId, contact?.id, dispatch, fetchByContactId])
-
+    return () => {
+      cancelled = true;
+    };
+  }, [convId, contact?.id, dispatch, fetchByContactId]);
 
   return (
-    <div
-      className={`support-layout ${detailToggle && convId ? "details-open" : ""
-        }`}
-    >
+    <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
       <aside className="sidebar">
         <div className="inbox-header">
           <div className="inbox-title-container">
@@ -162,7 +178,7 @@ useEffect(() => {
           </div>
 
           <div className="inbox-status__container">
-            {sortedOptions.map(opt => (
+            {sortedOptions.map((opt) => (
               <label key={opt.value} className="inbox-status__label">
                 <input
                   id={opt.value}
@@ -182,15 +198,14 @@ useEffect(() => {
             <Input
               className="inbox-title-container__filter__input"
               value={searchConversation}
-              onChange={e => setSearchConversation(e.target.value)}
+              onChange={(e) => setSearchConversation(e.target.value)}
               placeholder="Filtrar Conversaciones"
             />
           </div>
         </div>
 
         <InboxList
-          selectedId={convId ?? 0
-          }
+          selectedId={convId ?? 0}
           onSelect={setConvId}
           conversations={convHook.conversations}
           loading={convHook.loading}
@@ -204,16 +219,16 @@ useEffect(() => {
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">
-            {convId != null && conversation?.systemDefinedCompanyName != null
-              ? conversation.systemDefinedCompanyName + " | "
+            {convId != null && activeConversation?.systemDefinedCompanyName != null
+              ? `${activeConversation.systemDefinedCompanyName} | `
               : ""}
-            {convId != null && conversation?.clientContactName != null
-              ? "Contacto: " + conversation.clientContactName + " | "
+            {convId != null && activeConversation?.clientContactName != null
+              ? `Contacto: ${activeConversation.clientContactName} | `
               : " "}
             {convId != null && "Télefono: "}
-            {conversation?.contactNumber == null
+            {activeConversation?.contactNumber == null
               ? ""
-              : extraerNumero(conversation.contactNumber)}
+              : extraerNumero(activeConversation.contactNumber)}
           </h2>
 
           <div className="btn-container">
@@ -230,20 +245,18 @@ useEffect(() => {
               <button
                 className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${isClosed ? "btnDisabled" : ""}`}
                 onClick={handleAssignClick}
-                disabled={isClosed} // Es buena práctica deshabilitar el botón nativo
+                disabled={isClosed}
               >
                 <FaUserAlt size={16} /> {label}
               </button>
             )}
-
           </div>
         </header>
 
         <ChatWindow
-          // key={convId ?? 0}
           conversationId={convId ?? undefined}
           userId={userId}
-          conversationStatus={conversation?.status}
+          conversationStatus={activeConversation?.status}
           selectedParam={selectedParam}
           highlightTerm={searchConversation}
           validFrom={convHook.form.validFrom}
@@ -254,8 +267,7 @@ useEffect(() => {
       <aside className="detail-aside">
         {detailToggle && convId && (
           <DetailPanel
-            // key={convId ?? 0}
-            contactId={conversation?.clientContactId}
+            contactId={activeConversation?.clientContactId}
             selectedParam={selectedParam}
             conversationId={convId ?? undefined}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -267,9 +279,8 @@ useEffect(() => {
 
       <button
         type="button"
-        className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"
-          }`}
-        onClick={() => setDetailToggle(t => !t)}
+        className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
+        onClick={() => setDetailToggle((t) => !t)}
         disabled={!convId}
         aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
         title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
@@ -293,7 +304,7 @@ useEffect(() => {
         <FilterOrderModal
           currentOrder={filterOrder}
           options={DEFAULT_OPTIONS}
-          onSave={newOrder => {
+          onSave={(newOrder) => {
             saveOrder(newOrder);
             setOrderModalVisible(false);
           }}
@@ -308,12 +319,12 @@ useEffect(() => {
       {ticketOpen &&
         convId &&
         contact?.isVerified &&
-        conversation &&
+        activeConversation &&
         contact?.clienteCodigo && (
           <TicketModal
             isOpen={ticketOpen}
             onClose={() => setTicketOpen(false)}
-            conversationId={conversation.conversationId}
+            conversationId={activeConversation.conversationId}
             codCliente={contact.clienteCodigo ?? ""}
             clientName={contact.clienteNombre ?? ""}
             contactId={contact.id}

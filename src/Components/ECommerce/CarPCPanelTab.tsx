@@ -951,24 +951,24 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
                 setShowAddressModal(true)
               }}
             >
-              Direcciones
+              <p className="productTab-footer__address">Direcciones</p>
             </Button>
           )}
 
           <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartPdf}>
-            {sending ? <AiOutlineLoading3Quarters fontSize={16} /> : <FaFilePdf fontSize={16} />}
+            {sending ? <AiOutlineLoading3Quarters fontSize={18} /> : <FaFilePdf fontSize={18} />}
           </Button>
 
           <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartChat}>
-            {sendChatoading ? <AiOutlineLoading3Quarters fontSize={16} /> : <IoIosChatboxes fontSize={16} />}
+            {sendChatoading ? <AiOutlineLoading3Quarters fontSize={18} /> : <IoIosChatboxes fontSize={18} />}
           </Button>
 
           <Button className="cancelPanel-btn" disabled={actionsDisabled} onClick={Cancel}>
-            {cancelLoading ? <AiOutlineLoading3Quarters fontSize={16} /> : <MdOutlineCancelScheduleSend fontSize={16} />}
+            {cancelLoading ? <AiOutlineLoading3Quarters fontSize={18} /> : <MdOutlineCancelScheduleSend fontSize={18} />}
           </Button>
 
           <Button className="payment-btn" disabled={actionsDisabled} onClick={async () => await handleSendLink(false)}>
-            {loadingCart ? <AiOutlineLoading3Quarters fontSize={16} /> : <IoSend fontSize={16} />}
+            {loadingCart ? <AiOutlineLoading3Quarters fontSize={18} /> : <IoSend fontSize={16} />}
           </Button>
         </div>
       </section>

@@ -14,7 +14,7 @@ import {
   onMessageStatusChanged,
   offMessageStatusChanged,
   onNewNotification,
-  offNewNotification
+  offNewNotification,
 } from "@/Services/signalr";
 
 import type {
@@ -25,6 +25,7 @@ import type {
 } from "@/Interfaces/Chat/ChatInterfaces";
 
 interface SignalRContextValue {
+  ready: boolean;
   joinConversation(id: number): void;
   leaveConversation(id: number): void;
   onNewMessage(handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void): void;
@@ -42,6 +43,7 @@ interface SignalRContextValue {
 }
 
 const SignalRContext = createContext<SignalRContextValue>({
+  ready: false,
   joinConversation: () => {},
   leaveConversation: () => {},
   onNewMessage: () => {},
@@ -55,16 +57,26 @@ const SignalRContext = createContext<SignalRContextValue>({
   onMessageStatusChanged: () => {},
   offMessageStatusChanged: () => {},
   onNewNotification: () => {},
-  offNewNotification: () => {}
+  offNewNotification: () => {},
 });
 
 export const SignalRProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     createHubConnection()
-      .then(() => setReady(true))
-      .catch(() => setReady(true));
+      .then(() => {
+        if (mounted) setReady(true);
+      })
+      .catch(() => {
+        if (mounted) setReady(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (!ready) return null;
@@ -72,6 +84,7 @@ export const SignalRProvider: React.FC<{ children: ReactNode }> = ({ children })
   return (
     <SignalRContext.Provider
       value={{
+        ready,
         joinConversation,
         leaveConversation,
         onNewMessage,
@@ -85,7 +98,7 @@ export const SignalRProvider: React.FC<{ children: ReactNode }> = ({ children })
         onMessageStatusChanged,
         offMessageStatusChanged,
         onNewNotification,
-        offNewNotification
+        offNewNotification,
       }}
     >
       {children}

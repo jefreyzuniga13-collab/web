@@ -171,7 +171,8 @@
 }
 
 .assign-modal__dropdown-content {
-  max-height: 20rem;
+  /* max-height: 90vh; */
+  max-height: 400px;
   overflow-y: auto;
 }
 

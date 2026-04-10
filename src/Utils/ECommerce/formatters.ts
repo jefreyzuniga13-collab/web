@@ -121,3 +121,12 @@ export const formatDateTimeNI = (iso?: string) => {
     hour12: false,
   }).format(d);
 };
+
+export function getParam(value: string | null): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function getLast4(value: string): string {
+  const clean = value.trim();
+  return clean.length >= 4 ? clean.slice(-4) : clean;
+}

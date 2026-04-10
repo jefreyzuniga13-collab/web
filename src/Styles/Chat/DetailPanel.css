@@ -410,13 +410,11 @@
   gap: 8px;
 }
 
-/* =========================================================
-   BOTONES / INPUTS / ESTADOS DE ERROR
-   ========================================================= */
 .btn {
   border: 1px solid var(--border-secondary, #e5e7eb);
   border-radius: 8px;
-  padding: 6px 10px;
+  /* padding: 6px 10px; */
+  font-size: 12px;
   background: var(--bg-primary, #fff);
   cursor: pointer;
   font: inherit;

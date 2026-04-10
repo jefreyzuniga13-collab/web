@@ -1,7 +1,6 @@
 import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-// import { formatoNicaragua } from "@/Utils/LocalDateFormat";
 
 type AutoTableDoc = jsPDF & { lastAutoTable?: { finalY: number } };
 type Row = [string, string, string, string, string];
@@ -109,11 +108,12 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
     styles: { font: "helvetica", fontSize: 10, cellPadding: 1.5 },
     body: [
       ["SubTotal:", money(p?.SubTotal ?? 0)],
-      ["Descuento:", money(p?.Descuento ?? 0)],
+      p.Descuento > 0 ? ["Descuento:", money(p?.Descuento ?? 0)] : [],
       ["IVA:", money(p?.Iva ?? 0)],
-      ["Transporte:", money(p?.Transporte ?? 0)],
+      ["Transporte:", money(p?.Propina ?? 0)],
       // ["Propina:", money(p?.Propina ?? 0)],
-      ["Método de pago:", safeText(p?.MetodoPago)],
+      //Mostrar solo si la propina es mayor a 0, caso contrario no.
+      p?.Propina > 0 ? ["Método de pago:", safeText(p?.MetodoPago)] : [],
       [
         { content: "TOTAL A PAGAR:", styles: { fontStyle: "bold" } },
         { content: money(p?.Valor_Pagar ?? 0), styles: { fontStyle: "bold" } },

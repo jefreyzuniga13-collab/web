@@ -1,210 +1,125 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
+import  { useEffect, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import type { AgentDto, ConversationDto, ConversationStatus } from '@/Interfaces/Chat/ChatInterfaces'
+import { getAgents } from '@/Services/auth/AgentService'
+import { assignAgent, closeConversation as apiCloseConversation } from '@/Services/chat/ConversationService'
+import { useUserPresence } from '@/Hooks/Auth/useUserPresence'
+import { toast } from 'react-toastify'
+import '@/styles/Chat/AssignModal.css'
+import type { RootState, AppDispatch } from '@/Context/index'
 
-import type { AppDispatch, RootState } from "@/Context";
-import { closeAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
-import {
-  CONVERSATION_STATUS,
-  CONVERSATION_STATUS_OPTIONS,
-} from "@/Constants/conversation";
-import { QUERY_KEYS } from "@/Constants/queryKeys";
-import { useUserPresence } from "@/Hooks/Auth/useUserPresence";
-import type {
-  AgentDto,
-  ConversationDto,
-  ConversationStatus,
-} from "@/Interfaces/Chat/ChatInterfaces";
-import { getAgents } from "@/Services/auth/AgentService";
-import {
-  assignAgent,
-  closeConversation as apiCloseConversation,
-} from "@/Services/chat/ConversationService";
-import { handleMutationError } from "@/Utils/Https/handleMutationError";
-
-type SafeConversation = {
-  conversationId: number;
-  status: ConversationStatus;
-  assignedAgentId: number;
-};
-
-type AssignModalHook = {
-  isDropdownOpen: boolean;
-  statusOptions: { value: ConversationStatus; label: string; color: string }[];
-  isOpen: boolean;
-  conversation: ConversationDto | null | undefined;
-  safeConversation: SafeConversation | null;
-  selectedAgent: string;
-  selectedAgentData: AgentDto | null;
-  agents: AgentDto[];
-  selectedIsOnline: boolean;
-  setIsDropdownOpen: (open: boolean) => void;
-  setSelectedAgent: (agentId: string) => void;
-  handleAssign: () => Promise<void>;
-  handleStatusChange: (newStatus: ConversationStatus) => void;
-  handleClose: () => void;
-  loading: boolean;
-};
-
-type AssignModalState = {
-  isOpen: boolean;
-  conversation?: ConversationDto | null;
-};
-
-type AgentsResponse = {
-  data: {
-    data: AgentDto[];
-  };
-};
-
-function normalizeConversation(
+import { closeAssignModal } from '@/Context/Slices/Chat/assignModalSlice'
+interface AssignModalHook {
+  isDropdownOpen: boolean
+  statusOptions: { value: ConversationStatus; label: string; color: string }[]
   conversation: ConversationDto | null | undefined
-): SafeConversation | null {
-  if (!conversation) {
-    return null;
-  }
-
-  return {
-    conversationId: conversation.conversationId,
-    status: conversation.status,
-    assignedAgentId:
-      typeof conversation.assignedAgentId === "number" &&
-      Number.isFinite(conversation.assignedAgentId)
-        ? conversation.assignedAgentId
-        : 0,
-  };
+  isOpen: boolean
+  selectedAgent: string
+  selectedAgentData: AgentDto | undefined
+  agents: AgentDto[]
+  selectedIsOnline: boolean
+  setIsDropdownOpen: (open: boolean) => void
+  setSelectedAgent: (agentId: string) => void
+  handleAssign: () => Promise<void>
+  handleStatusChange: (newStatus: ConversationStatus) => void
+  handleClose: () => void
+  loading:boolean;
 }
+  
 
-export function useAssignModal(): AssignModalHook {
-  const dispatch = useDispatch<AppDispatch>();
-  const queryClient = useQueryClient();
+export function useAssignModal () :  AssignModalHook{
+ const dispatch = useDispatch<AppDispatch>()
+  const { isOpen, conversation } = useSelector((state: RootState) => state.assignModal)
 
-  const { isOpen, conversation } = useSelector(
-    (state: RootState): AssignModalState => state.assignModal
-  );
+  const [agents, setAgents] = useState<AgentDto[]>([])
+  const [selectedAgent, setSelectedAgent] = useState<string>('')
+  const [status, setStatus] = useState<ConversationStatus>('Bot')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
-  const safeConversation = normalizeConversation(conversation);
+  const selectedAgentId = selectedAgent ? Number(selectedAgent) : 0
+  const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId)
 
-  const [selectedAgent, setSelectedAgent] = useState("");
-  const [status, setStatus] = useState<ConversationStatus>(
-    CONVERSATION_STATUS.BOT
-  );
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const statusOptions: { value: ConversationStatus; label: string; color: string }[] = [
+    { value: 'Closed', label: 'Cerrar', color: 'closed' },
+     { value: 'Human', label: 'Asignar', color: 'human' },
+  ]
 
-  const selectedAgentId = selectedAgent !== "" ? Number(selectedAgent) : 0;
-  const { isOnline: selectedIsOnline } = useUserPresence(selectedAgentId);
-
-  const { data: agents = [], isFetching } = useQuery<AgentDto[]>({
-    queryKey: QUERY_KEYS.agents,
-    enabled: isOpen,
-    queryFn: async () => {
-      const response = (await getAgents()) as AgentsResponse;
-      return response.data.data;
-    },
-  });
-
+  // Al abrir, cargar agentes y estado inicial
   useEffect(() => {
-    if (!safeConversation) {
-      setSelectedAgent("");
-      setStatus(CONVERSATION_STATUS.BOT);
-      return;
-    }
+    if (!isOpen || !conversation) return
 
-    setSelectedAgent(
-      safeConversation.assignedAgentId > 0
-        ? safeConversation.assignedAgentId.toString()
-        : ""
-    );
-    setStatus(safeConversation.status);
-  }, [safeConversation]);
+    setSelectedAgent(conversation.assignedAgentId?.toString() ?? '')
+    setStatus(conversation.status)
 
-  const assignMutation = useMutation<void, Error, void>({
-    mutationFn: async () => {
-      if (!safeConversation) {
-        return;
-      }
-
-      if (status === CONVERSATION_STATUS.CLOSED) {
-        await apiCloseConversation(safeConversation.conversationId);
-        return;
-      }
-
-      if (status === CONVERSATION_STATUS.HUMAN) {
-        await assignAgent(
-          safeConversation.conversationId,
-          selectedAgent,
-          status
-        );
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.conversations,
-      });
-
-      toast.success(
-        status === CONVERSATION_STATUS.CLOSED
-          ? "Conversación cerrada correctamente."
-          : "Agente asignado correctamente."
-      );
-
-      dispatch(closeAssignModal());
-    },
-    onError: handleMutationError,
-  });
+    getAgents()
+      .then(res => setAgents(res.data.data))
+      .catch(console.error)
+  }, [isOpen, conversation])
 
   const handleStatusChange = (newStatus: ConversationStatus) => {
-    if (newStatus === CONVERSATION_STATUS.HUMAN) {
-      if (selectedAgent === "") {
-        toast.warn("Debes seleccionar un agente.");
-        return;
+    if (newStatus === 'Human') {
+      if (!selectedAgent) {
+        toast.warn('Debes seleccionar un agente antes de asignar.')
+        return
       }
-
       if (!selectedIsOnline) {
-        toast.warn("Agente desconectado.");
-        return;
+        toast.warn('No puedes asignar a un agente desconectado.')
+        return
       }
     }
-
-    if (newStatus === CONVERSATION_STATUS.BOT && selectedAgent !== "") {
-      toast.warn("No puedes usar Bot con agente.");
-      return;
+    if (newStatus === 'Bot' && selectedAgent) {
+      toast.warn('No puedes establecer Bot cuando hay un agente seleccionado.')
+      return
     }
-
-    setStatus(newStatus);
-  };
+    setStatus(newStatus)
+  }
 
   const handleAssign = async () => {
-    if (!safeConversation) {
-      return;
-    }
+    if (!conversation) return
 
-    await assignMutation.mutateAsync();
-  };
+    setLoading(true)
+    try {
+      if (status === 'Closed') {
+        await apiCloseConversation(conversation.conversationId)
+        toast.success('Conversación cerrada correctamente.')
+      } else if (status === 'Human') {
+        await assignAgent(conversation.conversationId, selectedAgent, status)
+        toast.success('Agente asignado correctamente.')
+      } else {
+        toast.warn('No se aplicaron cambios.')
+        setLoading(false)
+        return
+      }
+      setLoading(false)
+      dispatch(closeAssignModal())
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   } catch (err: any) {
+      const mensaje = err.response?.data?.message || 'Por favor, intenta de nuevo.';
+      toast.error(mensaje);
+    }
+  }
 
   const handleClose = () => {
-    dispatch(closeAssignModal());
-  };
+    dispatch(closeAssignModal())
+  }
 
-  const selectedAgentData =
-    agents.find((agent) => agent.userId.toString() === selectedAgent) ?? null;
+  const selectedAgentData = agents.find(a => a.userId.toString() === selectedAgent)
 
   return {
-  isDropdownOpen,
-  statusOptions: CONVERSATION_STATUS_OPTIONS,
-  isOpen,
-  conversation,
-  safeConversation,
-  selectedAgent,
-  selectedAgentData,
-  agents,
-  selectedIsOnline,
-  setIsDropdownOpen,
-  setSelectedAgent,
-  handleAssign,
-  handleStatusChange,
-  handleClose,
-  loading: assignMutation.isPending || isFetching,
-};
+    isDropdownOpen,
+    statusOptions,
+    conversation,
+    selectedAgent,
+    isOpen,
+    selectedAgentData,
+    agents,
+    selectedIsOnline,
+    setIsDropdownOpen,
+    setSelectedAgent,
+    handleAssign,
+    handleStatusChange,
+    handleClose,
+    loading,
+  }
 }

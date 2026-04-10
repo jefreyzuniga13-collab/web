@@ -4,7 +4,7 @@ import '@/styles/Chat/AssignModal.css'
 import { useAssignModal } from '@/Hooks/Chat/useAssignModal';
 
 export const AssignModal: React.FC = () => {
- 
+
   const {
     isDropdownOpen,
     statusOptions,

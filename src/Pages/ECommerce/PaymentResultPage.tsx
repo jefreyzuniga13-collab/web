@@ -1,21 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
-
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
 import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
-
-function getParam(value: string | null): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function getLast4(value: string): string {
-  const clean = value.trim();
-  return clean.length >= 4 ? clean.slice(-4) : clean;
-}
+import { getLast4, getParam } from "@/Utils/ECommerce/formatters";
 
 export default function PaymentResultPage() {
   const [params] = useSearchParams();
@@ -26,8 +16,10 @@ export default function PaymentResultPage() {
   const approved = getParam(params.get("approved"));
   const orderIdRaw = getParam(params.get("orderId"));
   const transactionIdentifier = getParam(params.get("transactionIdentifier"));
-  const panToken = getParam(params.get("PanToken")) || getParam(params.get("panToken"));
-  const cardBrand = getParam(params.get("CardBrand")) || getParam(params.get("cardBrand"));
+  const panToken =
+    getParam(params.get("PanToken")) || getParam(params.get("panToken"));
+  const cardBrand =
+    getParam(params.get("CardBrand")) || getParam(params.get("cardBrand"));
 
   const orderId = Number(orderIdRaw);
   const isApproved = approved.toLowerCase() === "true";
@@ -58,21 +50,19 @@ export default function PaymentResultPage() {
           throw new Error("No hay contexto de checkout.");
         }
 
-const payload = JSON.parse(payloadRaw);
-const invoiceReqFinal = JSON.parse(invoiceRaw) as FacturaTempo;
+        const payload = JSON.parse(payloadRaw);
+        const invoiceReqFinal = JSON.parse(invoiceRaw) as FacturaTempo;
 
-const invoiceActualizada: FacturaTempo = {
-  ...invoiceReqFinal,
-  detallePago: (invoiceReqFinal.detallePago ?? []).map((item) => ({
-    ...item,
-    CodStrCadsaccion: String(orderId),
-    Codtransaccion: transactionIdentifier,
-    CuentaHabiente: cardBrand,
-    ultDigito: getLast4(panToken),
-  })),
-};
-
-        console.log("Navegar a procesarCheckoutExitoso");
+        const invoiceActualizada: FacturaTempo = {
+          ...invoiceReqFinal,
+          detallePago: (invoiceReqFinal.detallePago ?? []).map((item) => ({
+            ...item,
+            CodStrCadsaccion: String(orderId),
+            Codtransaccion: transactionIdentifier,
+            CuentaHabiente: cardBrand,
+            ultDigito: getLast4(panToken),
+          })),
+        };
 
         await procesarCheckoutExitoso({
           invoiceReqFinal: invoiceActualizada,
@@ -86,9 +76,18 @@ const invoiceActualizada: FacturaTempo = {
           dispatch,
           navigate,
         });
-      } catch (err: any) {
+        
+        //evitar err: unknown
+      } catch (err: unknown) {
         console.log("Se produjo un error en PaymentResultPage:", err);
         navigate("/unauthorized", { replace: true });
+        // navigate("/successOrder", { replace: true });
+        if (err instanceof Error) {
+          console.log(err.message); // Seguro
+        } else {
+          console.log(err);
+        }
+
       }
     };
 

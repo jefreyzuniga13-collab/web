@@ -1,32 +1,26 @@
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "@mui/material/styles";
-
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
 import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
-
 import { useOnline } from "@/Hooks/Auth/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
 import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
-
 import type { RootState } from "@/Context";
 import { theme } from "@/Utils/materialTheme";
-
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
 
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
-
 function sanitizeExternalUrl(url: string): string {
   if (isExternalUrl(url)) return url;
   return `https://${String(url).replace(/^\/+/, "")}`;
@@ -53,8 +47,7 @@ export default function App() {
       (evt?.content && String(evt.content).trim()) ??
       "Tienes una nueva notificación";
 
-    const rawUrl =
-      evt?.url ?? "https://staging.dsujq9sb48iiw.amplifyapp.com/chat/";
+    const rawUrl = evt?.url;
 
     const url = sanitizeExternalUrl(String(rawUrl));
 
@@ -151,7 +144,6 @@ export default function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      {/* 🔥 BOOTSTRAP DE SESIÓN */}
       <SessionBootstrap>
         <ToastContainer
           position="top-right"

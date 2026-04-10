@@ -10,7 +10,7 @@ export type MessageType =
   | 'Contact'
 
 export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed'
-export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete'
+export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete' | "Paused"
 export type NotificationType = 'NewContact' | 'HumanSupport' | 'ConversationAssigned' | 'MessageReceived'
 
 export interface ConversationDto {
