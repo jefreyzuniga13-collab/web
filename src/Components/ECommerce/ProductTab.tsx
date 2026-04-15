@@ -137,14 +137,15 @@ export const ProductTab = ({ conversationId }: Props) => {
       setSimpleQuantity(1)
 
       reset()
+
       await GetProductByDescription(term)
 
       requestAnimationFrame(() => {
-        if (listRef.current) listRef.current.scrollTop = 0
-      })
-    },
-    [GetProductByDescription, reset]
-  )
+              if (listRef.current) listRef.current.scrollTop = 0
+            })
+          },
+          [GetProductByDescription, reset]
+        )
 
   const showCategories = !selectedCategory && !normalizedSearch
   const showProducts = !!selectedCategory || !!normalizedSearch

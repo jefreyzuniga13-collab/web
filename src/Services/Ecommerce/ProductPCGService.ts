@@ -25,8 +25,8 @@ class ProductPCGServ {
     try {
       //pendiente paginación
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}`
-      );
+        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}/BD/T`
+     );
       return data.data;
     } catch (error) {
       throw formatError(error);

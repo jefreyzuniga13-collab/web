@@ -76,8 +76,8 @@ export function buildCartChatMessage({
   } else {
     const hasShipping = shipping > 0
 
-    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasShipping ?  "" : " | *Más envío*"}`)
     if (hasShipping) lines.push(`🚚 Envío: C$ ${shipping.toFixed(2)}`)
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
 
     if (selectedAddressId != null) {
       const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))

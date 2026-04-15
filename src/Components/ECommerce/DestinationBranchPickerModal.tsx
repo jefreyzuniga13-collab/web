@@ -1,4 +1,3 @@
-// src/Components/ECommerce/DestinationBranchPickerModal.tsx
 import React from "react"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
 import { SucursalPickerModal } from "@/Components/ECommerce/SucursalPickerModal"

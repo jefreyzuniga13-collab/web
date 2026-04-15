@@ -35,6 +35,12 @@
     border-radius: 12px;
 }
 
+.detail-product__branchItem--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 
 .detail-product__container{
   height: 100%;

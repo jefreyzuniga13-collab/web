@@ -14,6 +14,7 @@ import { selectCarPCG, selectCartError, selectCartLoading, getProductFromCarAsyn
 import { format } from "date-fns"
 import { FaFilePdf } from "react-icons/fa"
 import { IoIosChatboxes } from "react-icons/io"
+import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import useContact from "@/Hooks/Auth/useContact"
@@ -81,7 +82,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const [debouncedTransCost, setDebouncedTransCost] = useState<number>(0)
   const totalsReqRef = useRef(0)
-
+const { setLocked } = useCartPCGFlowCtx()
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
   const loading = useAppSelector(selectCartLoading)
@@ -118,6 +119,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const readDraft = useCallback((): DraftState | null => {
     try {
       const raw = localStorage.getItem(draftKey)
+
       if (!raw) return null
       const parsed = JSON.parse(raw) as Partial<DraftState>
       const next: DraftState = {
@@ -198,20 +200,23 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     hydratedRef.current = true
   }, [draftKey, conversationId, contactId, readDraft])
 
-  useEffect(() => {
-    if (!hydratedRef.current) return
-    if (skipPersistOnceRef.current) {
-      skipPersistOnceRef.current = false
-      return
-    }
-    writeDraft({
-      addDescription,
-      retiraSucursal,
-      transCost: Number(transCost ?? 0),
-      selectedAddressId,
-      observation
-    })
-  }, [addDescription, retiraSucursal, transCost, selectedAddressId, observation, draftKey, writeDraft])
+useEffect(() => {
+  if (!hydratedRef.current) return
+  if (!carPCG || carPCG.length === 0) return
+
+  if (skipPersistOnceRef.current) {
+    skipPersistOnceRef.current = false
+    return
+  }
+
+  writeDraft({
+    addDescription,
+    retiraSucursal,
+    transCost: Number(transCost ?? 0),
+    selectedAddressId,
+    observation
+  })
+}, [carPCG, addDescription, retiraSucursal, transCost, selectedAddressId, observation, draftKey])
 
   useEffect(() => {
     if (isPickup) {
@@ -363,6 +368,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         const res = await createAsync(createUserEcommerce)
         const ecommerceUserId = Number(res)
 
+        //accede aqui aunque realmente si se crea y da
+        console.log()
         if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
           toast.error("No se pudo crear el usuario ecommerce")
           return { ecommerceUserId: 0, contact }
@@ -455,12 +462,23 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido })).unwrap()
     const arr = Array.isArray(updated) ? updated : []
-    const count = arr[0]?.listDetalle?.length ?? 0
+    // const count = arr[0]?.listDetalle?.length ?? 0
+    const count =
+  arr[0]?.listDetalle?.reduce((sum: number, d: any) => sum + Number(d.cantidad ?? 0), 0) ?? 0
     const empty = count === 0
 
     dispatch(setContactCartBadge({ contactId, hasCart: !empty, count }))
 
     if (empty) {
+          setAddDescription("")
+          setRetiraSucursal("N")
+          setTransCost(0)
+          setSelectedAddressId(null)
+          setObservation("")
+          setCurrentLog(null)
+          setOrderId(null)
+          setLocked(null)
+
       try {
         if (noPedido && noPedido > 0) await UserSessionService.revokeCartTempLink(noPedido)
       } catch { }
@@ -580,8 +598,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       const envio = effectiveShipping
       const hasEnvio = Number.isFinite(envio) && envio > 0
 
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
       if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
+      // lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
 
       if (hasSelectedAddress) {
         const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))

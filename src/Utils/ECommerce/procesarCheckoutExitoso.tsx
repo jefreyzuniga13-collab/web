@@ -11,11 +11,19 @@ import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { Payload } from '@/Interfaces/Crm/LogCartInterface';
+import { generatePagoElectronicoPDFFile } from "../Pdf/generateReciboPasarelaPDFFile";
+import type {
+  PowertranzVoidRequestDto
+} from "@/Interfaces/Ecommerce/powertranzInterface";
+import { powertranzService } from "@/Services/Ecommerce/PowerTranzService";
+
 
 type ProcesarCheckoutExitosoParams = {
   invoiceReqFinal: FacturaTempo;
   payload: Payload;
   orderId: number;
+  transactionIdentifier: string
+  usarPdfPagoElectronico: boolean
   codSucursalFactura: string;
   consecutivo: number;
   fetchByContactId: (contactId: number) => Promise<LogCartResponseDto | null>;
@@ -34,6 +42,8 @@ export async function procesarCheckoutExitoso({
   invoiceReqFinal,
   payload,
   orderId,
+  transactionIdentifier,
+  usarPdfPagoElectronico= false,
   codSucursalFactura,
   consecutivo,
   fetchByContactId,
@@ -43,16 +53,34 @@ export async function procesarCheckoutExitoso({
   navigate,
 }: ProcesarCheckoutExitosoParams): Promise<void> {
 
-  console.log("LLega antes de", insertaFacturaAsync)
   const insertFacRes = await insertaFacturaAsync(invoiceReqFinal);
 
   if (!insertFacRes?.success) {
+
+    const voidReq: PowertranzVoidRequestDto ={
+      transactionIdentifier:transactionIdentifier,
+      externalIdentifier:orderId.toString()
+    }
+    const voidRes = await powertranzService.voidsync(
+      voidReq
+    )
     throw new Error(
       insertFacRes?.message ?? "No fue posible insertar la factura.",
     );
+
+    if(voidRes.data.Approved){
+      throw new Error(
+      voidRes.data.ResponseMessage ?? "Se ha anulado la transacción. Intente procesar el pago de nuevo",
+      );
+    }
+
+    else if(!voidRes.data.Approved){
+      throw new Error(
+      voidRes.data.ResponseMessage ?? "No fue posible anular la transacción",
+      );
+    }
   }
 
-    console.log("LLega antes de", fetchByContactId)
   const existingLog = await fetchByContactId(payload.contactId);
 
 
@@ -89,7 +117,15 @@ export async function procesarCheckoutExitoso({
   );
 
   if (resPrintPDF) {
-    const pdfBlob = generateOrdeFacPDFFile(resPrintPDF.data);
+    const pdfBlob = usarPdfPagoElectronico
+        ? generatePagoElectronicoPDFFile({
+            orderFac: resPrintPDF.data,
+            transactionIdentifier,
+            telefono: "+505 7545 4150",
+            existingLog
+          })
+        : generateOrdeFacPDFFile(resPrintPDF.data);
+  
 
     if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
       throw new Error("El PDF generado está vacío o inválido.");

@@ -76,8 +76,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
   const hydratedRef = useRef(false)
 
-  // Inicializar el estado del carrito desde backend cuando cambia el contacto.
-  // Evitar rehidrataciones repetidas durante el flujo normal de agregar productos.
   useEffect(() => {
     hydratedRef.current = false
     setLocked(null)
@@ -128,7 +126,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         tipo: "1",
         tipodesc: "N",
         tipotrabajo: "INSERT",
-        tasacambio: 36.0,
+        tasacambio: 36.6243,
         financiamiento: 0,
         descuento: 0,
         codvendedor: "004",

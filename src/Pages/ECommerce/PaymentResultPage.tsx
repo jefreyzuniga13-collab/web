@@ -35,6 +35,7 @@ export default function PaymentResultPage() {
       try {
         if (!isApproved) {
           console.log("Pago no aprobado en PaymentResultPage");
+          //se debe de mandar a regresar el dinero en ese caso.
           navigate("/unauthorized", { replace: true });
           return;
         }
@@ -67,7 +68,9 @@ export default function PaymentResultPage() {
         await procesarCheckoutExitoso({
           invoiceReqFinal: invoiceActualizada,
           payload,
-          orderId,
+          orderId: orderId,
+          transactionIdentifier:transactionIdentifier,
+          usarPdfPagoElectronico:true,
           codSucursalFactura: invoiceActualizada.sucursal,
           consecutivo: invoiceActualizada.numero,
           fetchByContactId,
@@ -76,18 +79,16 @@ export default function PaymentResultPage() {
           dispatch,
           navigate,
         });
-        
-        //evitar err: unknown
+
       } catch (err: unknown) {
         console.log("Se produjo un error en PaymentResultPage:", err);
         navigate("/unauthorized", { replace: true });
         // navigate("/successOrder", { replace: true });
         if (err instanceof Error) {
-          console.log(err.message); // Seguro
+          console.log(err.message);
         } else {
           console.log(err);
         }
-
       }
     };
 

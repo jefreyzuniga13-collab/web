@@ -130,3 +130,25 @@ export function getLast4(value: string): string {
   const clean = value.trim();
   return clean.length >= 4 ? clean.slice(-4) : clean;
 }
+
+
+export function normalizePath(pathname: string) {
+  if (!pathname) return "/";
+  const normalized = pathname.replace(/\/+$/, "");
+  return normalized === "" ? "/" : normalized;
+}
+
+// export const obtenerFechaNica = () => {
+//   return new Intl.DateTimeFormat('es-NI', {
+//     timeZone: 'America/Managua',
+//     year: 'numeric',
+//     month: '2-digit',
+//     day: '2-digit',
+//    hour: "2-digit",
+//      minute: "2-digit",
+//   })
+//   .format(new Date())
+//   .split('/')
+//   .reverse()
+//   .join('');
+// };

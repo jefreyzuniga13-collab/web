@@ -1,4 +1,8 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 
 import type {
@@ -37,8 +41,10 @@ function errMsg(error: unknown, fallback: string): string {
 }
 
 /** Ajusta este mapper si ListDetalleCarrito tiene otros campos */
-function mapTempoDetalleToListDetail(data: DetalleFacturaTempoData): ListDetalleCarrito[] {
-  return data.detalle.map(d => ({
+function mapTempoDetalleToListDetail(
+  data: DetalleFacturaTempoData,
+): ListDetalleCarrito[] {
+  return data.detalle.map((d) => ({
     codigo: d.codigo,
     producto: d.producto,
     cantidad: d.cantidad,
@@ -60,21 +66,20 @@ export const addProductToCarAsync = createAsyncThunk<
   { rejectValue: string }
 >("cart/addProductToCar", async (req, { rejectWithValue }) => {
   // try {
-    const res = await CartService.AddProductToCar(req);
+  const res = await CartService.AddProductToCar(req);
 
-    if (!res.success) {
-      toast.error(res.message);
-      return rejectWithValue(res.message);
-    }
+  if (!res.success) {
+    toast.error(res.message);
+    return rejectWithValue(res.message);
+  }
 
-    return res.data;
+  return res.data;
   // } catch (error: unknown) {
   //   // const message = errMsg(error, "Error al agregar al carrito");
   //   // toast.error(message);
   //   return rejectWithValue(message);
   // }
 });
-
 
 export const addProductTempoAsync = createAsyncThunk<
   DetalleFacturaTempoData,
@@ -85,7 +90,6 @@ export const addProductTempoAsync = createAsyncThunk<
     const res = await CartService.AddProductToTempo(req);
 
     if (!res.success) {
-
       // Mostrar este mensaje, si da errro, o similar
       //no el quemado de catch
       toast.error(res.data.header.msj);
@@ -93,8 +97,8 @@ export const addProductTempoAsync = createAsyncThunk<
     }
 
     return res.data;
-    
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: unknown) {
     // const message = errMsg("Bodega no valida");
     const message = "Producto en bodega no valido";
@@ -103,31 +107,40 @@ export const addProductTempoAsync = createAsyncThunk<
   }
 });
 
-
 // Obtener carrito normal
 export const getProductFromCarAsync = createAsyncThunk<
   CarDto[],
   { codCliente: number; noPedido: number },
   { rejectValue: string }
->("cart/getProductFromCar", async ({ codCliente, noPedido }, { rejectWithValue }) => {
-  try {
-    const data = await CartService.getProductFromCar(codCliente, noPedido);
-    return data;
-  } catch (error: unknown) {
-    const message = errMsg(error, "Error al obtener el carrito");
-    toast.error(message);
-    return rejectWithValue(message);
-  }
-});
+>(
+  "cart/getProductFromCar",
+  async ({ codCliente, noPedido }, { rejectWithValue }) => {
+    try {
+      const data = await CartService.getProductFromCar(codCliente, noPedido);
+      return data;
+    } catch (error: unknown) {
+      const message = errMsg(error, "Error al obtener el carrito");
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  },
+);
 
 // Quitar producto del carrito normal
 export const updateCarAsync = createAsyncThunk<
   CarDto[],
   { idUsuario: number; noPedido: number; codProducto: string; unico: string },
   { rejectValue: string }
->("cart/updateCar", async ({ idUsuario, noPedido, codProducto, unico }, { rejectWithValue }) => {
-  // try {
-    const res = await CartService.removeProductFromCar(idUsuario, noPedido, codProducto, unico);
+>(
+  "cart/updateCar",
+  async ({ idUsuario, noPedido, codProducto, unico }, { rejectWithValue }) => {
+    // try {
+    const res = await CartService.removeProductFromCar(
+      idUsuario,
+      noPedido,
+      codProducto,
+      unico,
+    );
 
     if (!res.success) {
       toast.error(res.message);
@@ -135,31 +148,30 @@ export const updateCarAsync = createAsyncThunk<
     }
 
     return res.data;
-  // } catch (error: unknown) {
-  //   const message = errMsg(error, "Error al actualizar el carrito");
-  //   toast.error(message);
-  //   return rejectWithValue(message);
-  // }
-});
+    // } catch (error: unknown) {
+    //   const message = errMsg(error, "Error al actualizar el carrito");
+    //   toast.error(message);
+    //   return rejectWithValue(message);
+    // }
+  },
+);
 
 // Agregar varios productos al carrito normal
 export const addProductsToCarAsync = createAsyncThunk<
   CarDto[],
   CarDto[],
   { rejectValue: string }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 >("cart/addProductsToCar", async (req, { rejectWithValue }) => {
   // try {
-    const data = await CartService.AddProductsToCar(req);
-    return data;
+  const data = await CartService.AddProductsToCar(req);
+  return data;
   // } catch (error: unknown) {
   //   // const message = errMsg(error, "Error al agregar productos al carrito");
   //   // toast.error(message);
   //   return rejectWithValue("");
   // }
 });
-
-
 
 export const cartSlice = createSlice({
   name: "cart",
@@ -179,10 +191,11 @@ export const cartSlice = createSlice({
       state.loading = false;
     },
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
+    
     // ===== TEMPO =====
     builder
-      .addCase(addProductTempoAsync.pending, state => {
+      .addCase(addProductTempoAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -201,7 +214,7 @@ export const cartSlice = createSlice({
 
     // ===== COMPATIBILIDAD (carrito normal: agregar 1) =====
     builder
-      .addCase(addProductToCarAsync.pending, state => {
+      .addCase(addProductToCarAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -217,7 +230,7 @@ export const cartSlice = createSlice({
 
     // ===== CARRITO NORMAL: agregar varios =====
     builder
-      .addCase(addProductsToCarAsync.pending, state => {
+      .addCase(addProductsToCarAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -233,7 +246,7 @@ export const cartSlice = createSlice({
 
     // ===== CARRITO NORMAL: obtener =====
     builder
-      .addCase(getProductFromCarAsync.pending, state => {
+      .addCase(getProductFromCarAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -248,7 +261,7 @@ export const cartSlice = createSlice({
 
     // ===== CARRITO NORMAL: actualizar/remover =====
     builder
-      .addCase(updateCarAsync.pending, state => {
+      .addCase(updateCarAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -264,17 +277,20 @@ export const cartSlice = createSlice({
   },
 });
 
-export const { setListDetail, clearCart, setActiveContactId } = cartSlice.actions;
+export const { setListDetail, clearCart, setActiveContactId } =
+  cartSlice.actions;
 export default cartSlice.reducer;
 
 /* ======================= SELECTORS ======================= */
 
 export const selectCartState = (state: RootState): CartState => state.cart;
 
-export const selectCarPCG = (state: RootState): CarDto[] => selectCartState(state).carPCG;
+export const selectCarPCG = (state: RootState): CarDto[] =>
+  selectCartState(state).carPCG;
 
-export const selectTempoState = (state: RootState): DetalleFacturaTempoData | null =>
-  selectCartState(state).tempoState;
+export const selectTempoState = (
+  state: RootState,
+): DetalleFacturaTempoData | null => selectCartState(state).tempoState;
 
 export const selectTempoHeader = (state: RootState) =>
   selectCartState(state).tempoState?.header ?? null;
@@ -282,9 +298,11 @@ export const selectTempoHeader = (state: RootState) =>
 export const selectTempoDetalle = (state: RootState) =>
   selectCartState(state).tempoState?.detalle ?? [];
 
-export const selectCartLoading = (state: RootState): boolean => selectCartState(state).loading;
+export const selectCartLoading = (state: RootState): boolean =>
+  selectCartState(state).loading;
 
-export const selectCartError = (state: RootState): string | null => selectCartState(state).error;
+export const selectCartError = (state: RootState): string | null =>
+  selectCartState(state).error;
 
 export const selectActiveContactId = (state: RootState): number | null =>
   selectCartState(state).activeContactId;
@@ -299,7 +317,8 @@ export const selectCartItemsCount = (state: RootState): number => {
   if (!Array.isArray(carPCG) || carPCG.length === 0) return 0;
 
   return carPCG.reduce((acc, cart) => {
-    const count = cart.listDetalle?.reduce((sum, d) => sum + d.cantidad, 0) ?? 0;
+    const count =
+      cart.listDetalle?.reduce((sum, d) => sum + d.cantidad, 0) ?? 0;
     return acc + count;
   }, 0);
 };

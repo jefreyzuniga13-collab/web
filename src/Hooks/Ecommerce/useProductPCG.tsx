@@ -240,11 +240,9 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     productModifiers,
     loadingProductPcg,
     error,
-
     page,
     pageSize,
     setPageSize,
-
     hasMore,
     reset,
 

@@ -832,9 +832,8 @@ const CheckoutPage: React.FC = () => {
 
       const invoiceReqBase: FacturaTempo = {
         ...facturaBase,
-        codCli: "00000",
-        nombreCliente: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
-        clientePadre: `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+        nombreCliente: (existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim()),
+        clientePadre: (existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim()),
         direccionCte: String(finalLocation.descripcion ?? "").trim(),
         usuario: String(payload?.contactId),
         maquina: `CRM-${payload?.contactId}`,
@@ -886,6 +885,8 @@ const CheckoutPage: React.FC = () => {
         invoiceReqFinal,
         payload: payload!,
         orderId,
+        transactionIdentifier:'',
+        usarPdfPagoElectronico:false,
         codSucursalFactura,
         consecutivo: Number(dataconse?.data?.consecutivo ?? 0),
         fetchByContactId,

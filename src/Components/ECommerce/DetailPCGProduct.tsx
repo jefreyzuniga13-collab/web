@@ -17,6 +17,7 @@ import { toast } from "react-toastify"
 import type { AddProductParams } from "@/Hooks/Ecommerce/useCartPCGFlow"
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md"
 
+
 interface Props {
   detail: ProductoPCGInterface
   setDetailProduct: (detailP: ProductoPCGInterface | null) => void
@@ -65,10 +66,14 @@ const DetailPCGProduct = ({
   const { conversationId, locked, addProduct } = useCartPCGFlowCtx()
   const { sending, sendProductMessage } = useProductMessageComposer()
 
-  const { productModifiers, getProductModifiers } = useProductPCG()
-  const { rows: branchRows, loading: loadingBranches } = useBranchesByProduct(detail.codProducto, {
-    enabled: !locked,
-  })
+  const { productModifiers, getProductModifiers } = useProductPCG();
+
+  // const { rows: branchRows, loading: loadingBranches } = useBranchesByProduct(detail.codProducto, {
+  //   enabled: !locked,
+  // })
+
+  const { rows: branchRows, loading: loadingBranches } = useBranchesByProduct(detail.codProducto)
+  
   const [branchUiSelected, setBranchUiSelected] = useState<string | null>(null)
   const [branchNameUiSelected, setBranchNameUiSelected] = useState("")
   const [wherehouseUiSelected, setWherehouseUiSelected] = useState("")
@@ -118,9 +123,18 @@ const DetailPCGProduct = ({
     getProductModifiers(detail.codProducto)
   }, [detail.codProducto, detail.tieneOpcion, getProductModifiers])
 
-  // Seleccionar automáticamente la primera sucursal disponible
   useEffect(() => {
-    if (!branchRows.length || locked) return
+    if (locked) {
+      setBranchUiSelected(locked.branch ?? null)
+      setBranchNameUiSelected(locked.branchName ?? "")
+      setWherehouseUiSelected(locked.wherehouse ?? "")
+      setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
+      setSerieCodeUiSelected((locked.serie ?? "").trim())
+      return
+    }
+
+    if (!branchRows.length) return
+
     const first = branchRows[0]
     setBranchUiSelected(first.codsucursal)
     setBranchNameUiSelected(first.sucursal ?? "")
@@ -171,38 +185,68 @@ const DetailPCGProduct = ({
     return true
   }, [detail.tieneOpcion, productModifiers, selectedOptions])
 
-  const canPickBranch = !locked
+  // const canPickBranch = !locked
 
+  // const resolveBranchPayload = useCallback(() => {
+  //   if (locked) {
+  //     return {
+  //       branch: locked.branch,
+  //       branchName: locked.branchName,
+  //       wherehouse: locked.wherehouse,
+  //       wherehouseCode: locked.wherehouseCode,
+  //       serie: locked.serie,
+  //     }
+  //   }
+
+  //   if (branchUiSelected && wherehouseCodeUiSelected) {
+  //     return {
+  //       branch: branchUiSelected,
+  //       branchName: branchNameUiSelected,
+  //       wherehouse: wherehouseUiSelected,
+  //       wherehouseCode: wherehouseCodeUiSelected,
+  //       serie: serieUiSelected,
+  //     }
+  //   }
+
+  //   return {}
+  // }, [
+  //   locked,
+  //   branchUiSelected,
+  //   branchNameUiSelected,
+  //   wherehouseUiSelected,
+  //   wherehouseCodeUiSelected,
+  //   serieUiSelected,
+  // ])
   const resolveBranchPayload = useCallback(() => {
-    if (locked) {
-      return {
-        branch: locked.branch,
-        branchName: locked.branchName,
-        wherehouse: locked.wherehouse,
-        wherehouseCode: locked.wherehouseCode,
-        serie: locked.serie,
-      }
+  if (branchUiSelected && wherehouseCodeUiSelected) {
+    return {
+      branch: branchUiSelected,
+      branchName: branchNameUiSelected,
+      wherehouse: wherehouseUiSelected,
+      wherehouseCode: wherehouseCodeUiSelected,
+      serie: serieUiSelected,
     }
+  }
 
-    if (branchUiSelected && wherehouseCodeUiSelected) {
-      return {
-        branch: branchUiSelected,
-        branchName: branchNameUiSelected,
-        wherehouse: wherehouseUiSelected,
-        wherehouseCode: wherehouseCodeUiSelected,
-        serie: serieUiSelected,
-      }
+  if (locked) {
+    return {
+      branch: locked.branch,
+      branchName: locked.branchName,
+      wherehouse: locked.wherehouse,
+      wherehouseCode: locked.wherehouseCode,
+      serie: locked.serie,
     }
+  }
 
-    return {}
-  }, [
-    locked,
-    branchUiSelected,
-    branchNameUiSelected,
-    wherehouseUiSelected,
-    wherehouseCodeUiSelected,
-    serieUiSelected,
-  ])
+  return {}
+}, [
+  locked,
+  branchUiSelected,
+  branchNameUiSelected,
+  wherehouseUiSelected,
+  wherehouseCodeUiSelected,
+  serieUiSelected,
+])
 
   const buildOptionsPayload = useCallback(() => {
     return {
@@ -262,6 +306,7 @@ const DetailPCGProduct = ({
   }, [conversationId, detail, observacion, sendProductMessage])
 
   const actionsDisabled = sending
+const canPickBranch = !locked
 
   return (
     <section className="detail-product__container">
@@ -326,45 +371,51 @@ const DetailPCGProduct = ({
               </p>
             )}
 
-            {canPickBranch && !loadingBranches && (
-              <div className="detail-product__branchList">
-                {branchRows.map((b) => {
-                  const whCode = (b.codbodega ?? "").trim()
-                  const isActive = branchUiSelected === b.codsucursal && wherehouseCodeUiSelected === whCode
+           {!loadingBranches && (
+  <div className="detail-product__branchList">
+    {branchRows.map((b) => {
+      const whCode = (b.codbodega ?? "").trim()
+      const isActive = branchUiSelected === b.codsucursal && wherehouseCodeUiSelected === whCode
+      const isDisabled = !!locked && !isActive
 
-                  return (
-                    <button
-                      key={`${b.codsucursal}-${b.codbodega}`}
-                      className={`detail-product__branchItem ${isActive ? "detail-product__branchItem--active" : ""}`}
-                      type="button"
-                      onClick={() => {
-                        setBranchUiSelected(b.codsucursal)
-                        setBranchNameUiSelected(b.sucursal ?? "")
-                        setWherehouseUiSelected(b.nombodega ?? "")
-                        setWherehouseCodeUiSelected(whCode)
-                        setSerieCodeUiSelected((b.serie ?? "").trim())
-                      }}
-                    >
-                      <div className="detail-product__branchItemMain">
-                        <span className="detail-product__branchCode">{b.codsucursal}</span>
-                        <span className="detail-product__branchName">{b.sucursal}</span>
-                        <span className="detail-product__branchSerie">{b.nombodega}</span>
-                      </div>
+      return (
+        <button
+          key={`${b.codsucursal}-${b.codbodega}`}
+          className={`detail-product__branchItem 
+            ${isActive ? "detail-product__branchItem--active" : ""} 
+            ${isDisabled ? "detail-product__branchItem--disabled" : ""}`}
+          type="button"
+          disabled={!canPickBranch && !isActive}
+          onClick={() => {
+            if (!canPickBranch) return
 
-                      <div className="detail-product__branchItemMeta">
-                        <span className="detail-product__branchStock">
-                          {b.existencia} {b.medida}
-                        </span>
+            setBranchUiSelected(b.codsucursal)
+            setBranchNameUiSelected(b.sucursal ?? "")
+            setWherehouseUiSelected(b.nombodega ?? "")
+            setWherehouseCodeUiSelected(whCode)
+            setSerieCodeUiSelected((b.serie ?? "").trim())
+          }}
+        >
+          <div className="detail-product__branchItemMain">
+            <span className="detail-product__branchCode">{b.codsucursal}</span>
+            <span className="detail-product__branchName">{b.sucursal}</span>
+            <span className="detail-product__branchSerie">{b.nombodega}</span>
+          </div>
 
-                        <span className={`detail-product__branchCheck ${isActive ? "isActive" : ""}`}>
-                          {isActive ? "✓" : ""}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+          <div className="detail-product__branchItemMeta">
+            <span className="detail-product__branchStock">
+              {b.existencia} {b.medida}
+            </span>
+
+            <span className={`detail-product__branchCheck ${isActive ? "isActive" : ""}`}>
+              {isActive ? "✓" : ""}
+            </span>
+          </div>
+        </button>
+      )
+    })}
+  </div>
+)}
 
             <textarea
               className="detailPanel-description__textarea"

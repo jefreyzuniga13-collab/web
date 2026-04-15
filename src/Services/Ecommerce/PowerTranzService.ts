@@ -6,8 +6,10 @@ import type {
   ApiResponse,
   InitPaymentRequest,
   InitResponse,
-  PowertranzRefundRequestDto,
-  PowertranzRefundResponseDto
+  // PowertranzRefundRequestDto,
+  // PowertranzRefundResponseDto,
+  PowertranzVoidRequestDto,
+  PowertranzVoidResponseDto
 } from "@/Interfaces/Ecommerce/powertranzInterface";
 
 export type IniciarPagoServiceResponse = {
@@ -72,12 +74,12 @@ async function iniciarPago(payload: InitPaymentRequest): Promise<IniciarPagoServ
   }
 }
 
-async function refundAsync(payload: PowertranzRefundRequestDto): Promise<ApiResponse<PowertranzRefundResponseDto>> {
-    const res = await apiPCG.post<ApiResponse<PowertranzRefundResponseDto>>("/powertranz/refund", payload);
+async function voidsync(payload: PowertranzVoidRequestDto): Promise<ApiResponse<PowertranzVoidResponseDto>> {
+    const res = await apiPCG.post<ApiResponse<PowertranzVoidResponseDto>>("/powertranz/void", payload);
     return res.data;
 }
 
 export const powertranzService = {
   iniciarPago,
-refundAsync
+  voidsync
 }

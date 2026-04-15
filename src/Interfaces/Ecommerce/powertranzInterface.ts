@@ -59,46 +59,62 @@ export type PaymentResultQuery = {
   orderId: string;
 };
 
+/**
+ * Representa un error individual en la respuesta de Powertranz
+ */
+export interface PowertranzErrorItemDto {
+  code?: string;
+  message?: string;
+}
 
-    /**
-     * Representa un error individual en la respuesta de Powertranz
-     */
-    export interface PowertranzErrorItemDto {
-        code?: string;
-        message?: string;
-    }
+/**
+ * Representa la respuesta de una operación de reembolso (Refund)
+ */
+export interface PowertranzRefundResponseDto {
+  approved: boolean;
+  authorizationCode?: string;
+  isoResponseCode?: string;
+  responseMessage?: string;
+  transactionIdentifier?: string;
+  originalTrxnIdentifier?: string;
+  externalIdentifier?: string;
+  orderIdentifier?: string;
+  currencyCode?: string;
+  cardBrand?: string;
+  cardSuffix?: string;
+  panToken?: string;
+  rrn?: string;
+  totalAmount?: number; // double en C# es number en TS
+  transactionType: number;
+  errors?: PowertranzErrorItemDto[];
+}
 
-    /**
-     * Representa la respuesta de una operación de reembolso (Refund)
-     */
-    export interface PowertranzRefundResponseDto {
-        approved: boolean;
-        authorizationCode?: string;
-        isoResponseCode?: string;
-        responseMessage?: string;
-        transactionIdentifier?: string;
-        originalTrxnIdentifier?: string;
-        externalIdentifier?: string;
-        orderIdentifier?: string;
-        currencyCode?: string;
-        cardBrand?: string;
-        cardSuffix?: string;
-        panToken?: string;
-        rrn?: string;
-        totalAmount?: number; // double en C# es number en TS
-        transactionType: number;
-        errors?: PowertranzErrorItemDto[];
-    }
+/**
+ * Representa la solicitud para realizar un reembolso
+ */
+export interface PowertranzRefundRequestDto {
+  transactionIdentifier: string;
+  totalAmount: number;
+  externalIdentifier?: string;
+  refund: boolean; // Valor por defecto true en C#
+  taxAmount?: number;
+  tipAmount?: number;
+}
 
-    /**
-     * Representa la solicitud para realizar un reembolso
-     */
-    export interface PowertranzRefundRequestDto {
-        transactionIdentifier: string;
-        totalAmount: number;
-        externalIdentifier?: string;
-        refund: boolean; // Valor por defecto true en C#
-        taxAmount?: number;
-        tipAmount?: number;
-    }
+/**
+ * Representa la solicitud para anulacion
+ */
+export interface PowertranzVoidRequestDto {
+  externalIdentifier: string;
+  transactionIdentifier: string;
+}
 
+/**
+ * Representa la respuesta para anulacion
+ */
+export interface PowertranzVoidResponseDto {
+  Approved: boolean;
+  IsoResponseCode: string;
+  ResponseMessage: string;
+  spiToken: string;
+}

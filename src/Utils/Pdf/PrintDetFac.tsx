@@ -15,12 +15,13 @@ const fmtDate = (isoOrText: string) => {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
+    // hour: "2-digit",
+    // minute: "2-digit",
   }).format(d);
 };
 
 const safeText = (v?: string) => (v ?? "").toString().trim();
+
 export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Blob => {
   const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDoc;
 
@@ -110,7 +111,7 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
       ["SubTotal:", money(p?.SubTotal ?? 0)],
       p.Descuento > 0 ? ["Descuento:", money(p?.Descuento ?? 0)] : [],
       ["IVA:", money(p?.Iva ?? 0)],
-      ["Transporte:", money(p?.Propina ?? 0)],
+      ["Transporte:", money(p?.Transporte ?? 0)],
       // ["Propina:", money(p?.Propina ?? 0)],
       //Mostrar solo si la propina es mayor a 0, caso contrario no.
       p?.Propina > 0 ? ["Método de pago:", safeText(p?.MetodoPago)] : [],

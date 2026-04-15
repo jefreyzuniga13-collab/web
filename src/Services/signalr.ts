@@ -118,31 +118,61 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
   );
 
   connection.off("cart:cleared");
-  connection.on(
-    "cart:cleared",
-    (payload: { contactId: number; orderId: number; conversationId: number }) => {
-      console.log("[EVENT cart:cleared bridge]", payload);
+  // connection.on(
+  //   "cart:cleared",
+  //   (payload: { contactId: number; orderId: number; conversationId: number }) => {
+  //     // console.log("[EVENT cart:cleared bridge]", payload);
+  //     const draftKey = `cartDraft:v1:${conversationId}:${contactId}`;
 
-      try {
-        store.dispatch(
-          setContactCartBadge({
-            contactId: payload.contactId,
-            hasCart: false,
-            count: 0,
-          })
-        );
+  //     localStorage.removeItem(draftKey)
+      
+  //     try {
+  //       store.dispatch(
+  //         setContactCartBadge({
+  //           contactId: payload.contactId,
+  //           hasCart: false,
+  //           count: 0,
+  //         })
+  //       );
 
-        const state = store.getState();
-        const activeContactId = state.cart?.activeContactId ?? null;
+  //       const state = store.getState();
+  //       const activeContactId = state.cart?.activeContactId ?? null;
 
-        if (activeContactId === payload.contactId) {
-          store.dispatch(clearCart());
+  //       if (activeContactId === payload.contactId) {
+  //         store.dispatch(clearCart());
+  //       }
+  //     } catch (err) {
+  //       console.error("[cart:cleared] Error procesando evento", err);
+  //     }
+  //   }
+  // );
+        connection.on(
+        "cart:cleared",
+        (payload: { contactId: number; orderId: number; conversationId: number }) => {
+          const draftKey = `cartDraft:v1:${payload.conversationId}:${payload.contactId}`;
+
+          localStorage.removeItem(draftKey);
+
+          try {
+            store.dispatch(
+              setContactCartBadge({
+                contactId: payload.contactId,
+                hasCart: false,
+                count: 0,
+              })
+            );
+
+            const state = store.getState();
+            const activeContactId = state.cart?.activeContactId ?? null;
+
+            if (activeContactId === payload.contactId) {
+              store.dispatch(clearCart());
+            }
+          } catch (err) {
+            console.error("[cart:cleared] Error procesando evento", err);
+          }
         }
-      } catch (err) {
-        console.error("[cart:cleared] Error procesando evento", err);
-      }
-    }
-  );
+      );
 
   connection.off("ConversationAssigned");
   connection.on("ConversationAssigned", (dto: ConversationDto) => {
