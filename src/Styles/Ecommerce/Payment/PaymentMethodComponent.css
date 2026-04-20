@@ -1,0 +1,13 @@
+.checkout-hint {
+  font-size: var(--font-size-sm);
+  margin: 0;
+  text-align: left;
+  margin-top: var(--space-lg);
+}
+
+.checkout-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}

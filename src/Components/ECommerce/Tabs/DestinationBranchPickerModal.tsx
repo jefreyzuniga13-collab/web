@@ -1,7 +1,7 @@
 import React from "react"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
-import { SucursalPickerModal } from "@/Components/ECommerce/SucursalPickerModal"
-import type { SucursalPickerValue } from "@/Components/ECommerce/SucursalPickerModal"
+import { SucursalPickerModal } from "@/Components/ECommerce/Tabs/SucursalPickerModal"
+import type { SucursalPickerValue } from "@/Components/ECommerce/Tabs/SucursalPickerModal"
 
 interface Props {
   open: boolean

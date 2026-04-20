@@ -1,21 +1,21 @@
 import Input from "@/Components/Common/Input"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useCategoryPCG } from "@/Hooks/Crm/useCategoryPCG"
-import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG"
-import { CategoryTab } from "@/Components/ECommerce/CategoryTab"
-import { ProductPCGTab } from "@/Components/ECommerce/ProductPCGTab"
-import DetailPCGProduct from "@/Components/ECommerce/DetailPCGProduct"
+import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
+import { CategoryTab } from "@/Components/ECommerce/Tabs/CategoryTab"
+import { ProductPCGTab } from "@/Components/ECommerce/Tabs/ProductPCGTab"
+import DetailPCGProduct from "@/Components/ECommerce/Tabs/DetailPCGProduct"
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
-import "@/Styles/Ecommerce/ProductTab.css"
 import { TiArrowBack } from "react-icons/ti"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/Context"
 import { selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
-import { SucursalPickerModal } from "@/Components/ECommerce/SucursalPickerModal"
+import { SucursalPickerModal } from "@/Components/ECommerce/Tabs/SucursalPickerModal"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { KEY_SCROLL } from "@/Utils/ECommerce/keys"
 import EmptyPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
+import "@/Styles/Ecommerce/ProductTab.css"
 
 interface Props {
   conversationId: number
@@ -32,7 +32,6 @@ export const ProductTab = ({ conversationId }: Props) => {
   const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null)
   const [detailIndex, setDetailIndex] = useState<number>(-1)
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1)
-
   const { pickerProps } = useCartPCGFlowCtx()
   const cartLoading = useSelector((state: RootState) => selectCartLoading(state))
 
@@ -183,7 +182,6 @@ export const ProductTab = ({ conversationId }: Props) => {
   if (error) return <div className="detailPanel-error">Error al cargar categorías</div>
   if (errProducts && selectedCategory) return <div className="detailPanel-error">Error al cargar productos</div>
 
-  // Detalle con carrusel
   if (detailProduct) {
     return (
       <section className="productTab-card">
@@ -203,12 +201,10 @@ export const ProductTab = ({ conversationId }: Props) => {
 
           currentIndex={detailIndex + 1}
           totalCount={productPcg.length}
-          // carrusel
           canPrev={detailIndex > 0}
           canNext={detailIndex >= 0 && detailIndex < productPcg.length - 1}
           onPrev={handlePrevDetail}
           onNext={handleNextDetail}
-          // volver (restaura scroll)
           onBack={handleBackToList}
         />
       </section>

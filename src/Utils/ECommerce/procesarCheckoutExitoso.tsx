@@ -16,6 +16,8 @@ import type {
   PowertranzVoidRequestDto
 } from "@/Interfaces/Ecommerce/powertranzInterface";
 import { powertranzService } from "@/Services/Ecommerce/PowerTranzService";
+import { GENERAL_STATUS } from "@/Constants/status";
+import { PCG_SERVICES } from "@/Constants/pcgservices";
 
 
 type ProcesarCheckoutExitosoParams = {
@@ -68,15 +70,15 @@ export async function procesarCheckoutExitoso({
       insertFacRes?.message ?? "No fue posible insertar la factura.",
     );
 
-    if(voidRes.data.Approved){
+    if(voidRes.data.approved){
       throw new Error(
-      voidRes.data.ResponseMessage ?? "Se ha anulado la transacción. Intente procesar el pago de nuevo",
+      voidRes.data.responseMessage ?? "Se ha anulado la transacción. Intente procesar el pago de nuevo",
       );
     }
 
-    else if(!voidRes.data.Approved){
+    else if(!voidRes.data.approved){
       throw new Error(
-      voidRes.data.ResponseMessage ?? "No fue posible anular la transacción",
+      voidRes.data.responseMessage ?? "No fue posible anular la transacción",
       );
     }
   }
@@ -85,7 +87,7 @@ export async function procesarCheckoutExitoso({
 
 
   if (existingLog?.id) {
-    await updatedStatus(existingLog.id, 3);
+    await updatedStatus(existingLog.id, GENERAL_STATUS.Cancelada);
   }
 
   await UserSessionService.revokeCartTempLink(orderId);
@@ -113,7 +115,7 @@ export async function procesarCheckoutExitoso({
     codSucursalFactura,
     date,
     consecutivo,
-    8,
+    PCG_SERVICES.CRM,
   );
 
   if (resPrintPDF) {

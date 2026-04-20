@@ -95,6 +95,7 @@ export const formatoNicaragua = (fecha: Date) => {
 };
 
 
+import type { PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { parseISO } from "date-fns";
 
 export const formatTimeNI = (iso?: string) => {
@@ -152,3 +153,9 @@ export function normalizePath(pathname: string) {
 //   .reverse()
 //   .join('');
 // };
+
+export function methodLabel(m: PaymentMethod): string {
+  if (m === "cash") return "Efectivo";
+  if (m === "card") return "Tarjeta";
+  return "Transferencia";
+}

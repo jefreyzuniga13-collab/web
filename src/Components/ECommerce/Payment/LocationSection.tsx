@@ -1,7 +1,7 @@
 import React from "react";
 import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type { BillingFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import MapPicker from "../Common/MapPicker";
+import MapPicker from "@/Components/Common/MapPicker";
 
 interface Props {
   addressList: ClientLocationDto[] | [];
@@ -21,10 +21,7 @@ interface Props {
   isPickup?: boolean;
 }
 
-//Cuando el usuario tiene habilitado la opcion de marcar direccipn en el mapa,
-//seria bueno mostrar una lista de direcciones diponibles, aunqueno se si se debe consumnir una api
-//o simialr
-export const Location = ({
+export const LocationSection = ({
   addressList,
   locationMode,
   setLocationMode,

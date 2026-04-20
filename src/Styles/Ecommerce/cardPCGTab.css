@@ -64,6 +64,7 @@
     padding: 12px;
     padding-bottom: 12rem;
     margin-bottom: 12rem;
+    min-width: 100%;
 }
 
 .carPCPanel-content__list{

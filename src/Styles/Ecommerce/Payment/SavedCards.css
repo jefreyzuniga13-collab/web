@@ -1,0 +1,116 @@
+.checkout-saved-cards {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkout-saved-cards__title {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.95rem);
+  font-weight: 600;
+  color: var(--color-gray-700, #374151);
+  text-align: left;
+  font-size: var(--font-size-lg);
+  margin-top: 2rem;
+}
+
+.checkout-saved-cards__empty {
+  width: 100%;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: var(--font-size-sm, 0.9rem);
+  color: #6b7280;
+  background: #f9fafb;
+  text-align: left;
+}
+
+.checkout-saved-card {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  padding: var(--space-sm);
+  display: flex;
+}
+
+.checkout-saved-card:hover {
+  border-color: #283ad9;
+  box-shadow: 0 4px 12px rgba(40, 58, 217, 0.1);
+}
+
+.checkout-saved-card--active {
+  border-color: #283ad9;
+  background: #eef2ff;
+  box-shadow: 0 0 0 1px rgba(40, 58, 217, 0.15);
+}
+
+.checkout-saved-card__info {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex: 1;
+}
+
+.checkout-saved-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checkout-saved-card__brand {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.checkout-saved-card__number {
+  font-size: var(--font-size-sm);
+  color: #4b5563;
+}
+
+.checkout-saved-card__owner {
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.checkout-saved-card__default {
+  font-size: 0.7rem;
+  background: #283ad9;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.checkout-saved-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkout-saved-card__btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #ef4444;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-saved-card__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

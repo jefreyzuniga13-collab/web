@@ -4,13 +4,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 import * as turf from "@turf/turf";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
-import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
-import { useClientLocation } from "@/Hooks/Ecommerce/useClientLocation";
+import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder";
+import { useClientLocation } from "@/Hooks/Ecommerce/payment/useClientLocation";
 import useLogCart from "@/Hooks/Crm/useLogCard";
-import { useIniciarPago } from "@/Hooks/Ecommerce/useIniciarPago";
+import { useIniciarPago } from "@/Hooks/Ecommerce/payment/useIniciarPago";
+import { usePayWithToken } from "@/Hooks/Ecommerce/payment/usePayWithToken";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
-import {normalizeNumber, round2,safeStr} from '@/Utils/ECommerce/formatters'
-import {CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY} from '@/Utils/ECommerce/keys'
+import { normalizeNumber, round2, safeStr } from "@/Utils/ECommerce/formatters";
+import {
+  CHECKOUT_INVOICE_KEY,
+  CHECKOUT_PAYLOAD_KEY,
+  ECOMMERCEUSERID_KEY
+} from "@/Utils/ECommerce/keys";
 import type {
   ClientLocationDto,
   Coords,
@@ -23,7 +28,7 @@ import type {
   PaymentMethod,
   BillingFormState
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import type { NearestBranchRequestDto } from '@/Interfaces/Ecommerce/BranchInterfaces'
+import type { NearestBranchRequestDto } from "@/Interfaces/Ecommerce/BranchInterfaces";
 import type {
   FacturaTempo,
   PagoGenerico,
@@ -36,12 +41,17 @@ import type { AppDispatch, RootState } from "@/Context";
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
 import { validateBillingForm, validateLocation } from "@/Utils/validation";
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage";
-import { PaymentMethodComponent } from "@/Components/ECommerce/PaymentMethod";
-import { Currency } from "@/Components/ECommerce/Currency";
-import { Location } from "@/Components/ECommerce/Location";
-import "@/Styles/Ecommerce/CheckoutPage.css";
-import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import type { Payload } from '@/Interfaces/Crm/LogCartInterface';
+import { PaymentMethodComponent } from "@/Components/ECommerce/Payment/PaymentMethodComponent";
+import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection";
+import { LocationSection } from "@/Components/ECommerce/Payment/LocationSection";
+import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface";
+import type {
+  PowertranzBrowserInfoDto,
+  PowertranzPayWithTokenRequestDto,
+} from "@/Interfaces/Ecommerce/powertranzInterface";
+import type {TarjetaModelInterface} from '@/Interfaces/Ecommerce/TarjetaInterface'
+import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
+
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
@@ -49,6 +59,26 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const from = turf.point([lon1, lat1]);
   const to = turf.point([lon2, lat2]);
   return turf.distance(from, to, { units: "kilometers" });
+}
+
+function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
+  return {
+    browserLanguage: window?.navigator?.language ?? "es-NI",
+    browserScreenHeight: window?.screen?.height?.toString() ?? "",
+    browserScreenWidth: window?.screen?.width?.toString() ?? "",
+    browserTimeZone: String(new Date().getTimezoneOffset() * -1),
+    browserUserAgent: window?.navigator?.userAgent ?? "",
+    browserIp: null,
+    browserJavaEnabled:
+      typeof window !== "undefined" && typeof window.navigator?.javaEnabled === "function"
+        ? window.navigator.javaEnabled()
+        : false,
+    browserJavascriptEnabled: true,
+    browserColorDepth: window?.screen?.colorDepth?.toString() ?? "",
+    challengeWindowSize: 5,
+    challengeIndicator: "01",
+    browserAcceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+  };
 }
 
 type BranchLike = {
@@ -67,6 +97,7 @@ const CheckoutPage: React.FC = () => {
   const [ecommerceUserId, setEcommerceUserId] = useState<number>(0);
   const [orderId, setOrderId] = useState<number>(0);
   const [userFullName, setUserFullName] = useState<string>("");
+  const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
 
   useEffect(() => {
     if (!payload) {
@@ -132,7 +163,10 @@ const CheckoutPage: React.FC = () => {
   const carPCG = useAppSelector(selectCarPCG);
 
   const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
-  const totalPagar = useMemo(() => round2(cartTotal + normalizeNumber(transpCost) + normalizeNumber(tip)), [cartTotal, transpCost, tip]);
+  const totalPagar = useMemo(
+    () => round2(cartTotal + normalizeNumber(transpCost) + normalizeNumber(tip)),
+    [cartTotal, transpCost, tip]
+  );
 
   const {
     currency,
@@ -146,6 +180,7 @@ const CheckoutPage: React.FC = () => {
   const { fetchByContactId, UpdatedStatus } = useLogCart();
   const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation();
 
+  //en el componente principal
   const iniciarPagoMutation = useIniciarPago({
     onSuccess: (response) => {
       navigate("/payment-hosted", {
@@ -153,6 +188,39 @@ const CheckoutPage: React.FC = () => {
           payment: response.data
         }
       });
+    }
+  });
+
+  const payWithTokenMutation = usePayWithToken({
+    onSuccess: (response) => {
+      if (response.data.redirectData) {
+        console.log("Datos recibidos en payWithTokenMutation son: ", JSON.stringify(response))
+        navigate("/payment-hosted", {
+          state: {
+            payment: {
+              orderId: response.data.orderIdentifier ?? "",
+              transactionIdentifier: response.data.transactionIdentifier ?? "",
+              isoResponseCode: response.data.isoResponseCode ?? "",
+              responseMessage: response.data.responseMessage ?? "",
+              redirectData: response.data.redirectData ?? "",
+              spiToken: response.data.spiToken ?? ""
+            }
+          }
+        });
+        return;
+      }
+
+      const params = new URLSearchParams({
+        approved: String(response.data.approved ?? false),
+        orderId: response.data.orderIdentifier ?? "",
+        transactionIdentifier: response.data.transactionIdentifier ?? "",
+        panToken: response.data.panToken ?? "",
+        cardBrand: response.data.cardBrand ?? "",
+        code: response.data.isoResponseCode ?? "",
+        message: response.data.responseMessage ?? ""
+      });
+
+      navigate(`/payment-result?${params.toString()}`, { replace: true });
     }
   });
 
@@ -326,19 +394,19 @@ const CheckoutPage: React.FC = () => {
     let cancelled = false;
 
     const fetchAddress = async () => {
-        const { latitud, longitud } = selectedCoords;
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${latitud}&lon=${longitud}&format=json&addressdetails=1`
-        );
-        const data = await res.json();
-        if (cancelled) return;
+      const { latitud, longitud } = selectedCoords;
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitud}&lon=${longitud}&format=json&addressdetails=1`
+      );
+      const data = await res.json();
+      if (cancelled) return;
 
-        setBillingForm((prev) => ({
-          ...prev,
-          country: data.address?.country ?? prev.country,
-          city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
-          address: data.display_name ?? prev.address
-        }));
+      setBillingForm((prev) => ({
+        ...prev,
+        country: data.address?.country ?? prev.country,
+        city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
+        address: data.display_name ?? prev.address
+      }));
     };
 
     void fetchAddress();
@@ -492,7 +560,6 @@ const CheckoutPage: React.FC = () => {
         const lat2 = Number(locked.latitud);
         const lon2 = Number(locked.longitud);
         if ([lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))) return 0;
-
         return calculateDistance(lat1, lon1, lat2, lon2);
       })();
 
@@ -656,9 +723,9 @@ const CheckoutPage: React.FC = () => {
       autorizacion: "",
       termId: "",
       afiliado: "",
-      CodStrCadsaccion:"",
-      Codtransaccion:"",
-      CuentaHabiente:"",
+      CodStrCadsaccion: "",
+      Codtransaccion: "",
+      CuentaHabiente: "",
       montoP: round2(total),
       montoS: round2(total / 36.6243),
       indice: "0",
@@ -672,7 +739,9 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handlePayNow = async () => {
-    if (payNowLock || payNowCooldown > 0 || iniciarPagoMutation.isPending) return;
+    const isProcessingPayment = iniciarPagoMutation.isPending || payWithTokenMutation.isPending;
+
+    if (payNowLock || payNowCooldown > 0 || isProcessingPayment) return;
 
     setPayNowLock(true);
     setPayNowCooldown(5);
@@ -694,7 +763,9 @@ const CheckoutPage: React.FC = () => {
         if (tip > cashAmount) return void toastError("La propina no puede ser mayor al monto ingresado.");
         const disponible = cashAmount - tip;
         if (disponible < total) {
-          return void toastError(`Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`);
+          return void toastError(
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+          );
         }
       }
 
@@ -703,7 +774,9 @@ const CheckoutPage: React.FC = () => {
         if (!safeStr(transferRef)) return void toastError("La referencia es requerida.");
         const disponible = transferAmount - tip;
         if (disponible < total) {
-          return void toastError(`Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`);
+          return void toastError(
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+          );
         }
       }
 
@@ -744,7 +817,8 @@ const CheckoutPage: React.FC = () => {
           idUsuario: ecommerceUserId
         };
       } else if (locationLockedByLog) {
-        const addr = selectedAddress ?? addressList.find((a) => a.idDireccion === lockedAddressId) ?? addressList[0];
+        const addr =
+          selectedAddress ?? addressList.find((a) => a.idDireccion === lockedAddressId) ?? addressList[0];
         if (!addr) return void toastError("No hay dirección bloqueada disponible.");
 
         finalLocation = {
@@ -832,8 +906,10 @@ const CheckoutPage: React.FC = () => {
 
       const invoiceReqBase: FacturaTempo = {
         ...facturaBase,
-        nombreCliente: (existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim()),
-        clientePadre: (existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim()),
+        nombreCliente:
+          existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim(),
+        clientePadre:
+          existingLog?.contactName?.trim() || `${billingForm.firstName} ${billingForm.lastName}`.trim(),
         direccionCte: String(finalLocation.descripcion ?? "").trim(),
         usuario: String(payload?.contactId),
         maquina: `CRM-${payload?.contactId}`,
@@ -852,10 +928,7 @@ const CheckoutPage: React.FC = () => {
         serie: existingLog?.serie != null ? existingLog.serie : "F"
       };
 
-      const pagoGenerico: PagoGenerico = buildPagoGenerico(
-        invoiceReqBase,
-        codSucursalFactura
-      );
+      const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura);
 
       const detallePago: PagoGenerico[] = [pagoGenerico];
 
@@ -865,15 +938,35 @@ const CheckoutPage: React.FC = () => {
       } as FacturaTempo;
 
       if (method === "card") {
-        const totalMonto = Number(
-          (existingLog?.totalEnPantalla ?? 0)
-        );
+        const totalMonto = Number(existingLog?.totalEnPantalla ?? 0);
 
         sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
         sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
+        sessionStorage.setItem(ECOMMERCEUSERID_KEY, JSON.stringify(ecommerceUserId));
+
+        if (selectedSavedCard?.panToken) {
+          const requestToken: PowertranzPayWithTokenRequestDto = {
+            transactionIdentifier: null,
+            orderId: String(dataconse?.data?.consecutivo ?? ""),
+            amount: totalMonto,
+            currencyCode: "558",
+            capturaAutomatica: false,
+            externalIdentifier: null,
+            addressMatch: false,
+            panToken: selectedSavedCard.panToken,
+            tokenType: null,
+            cardCvv: null,
+            billingAddress: null,
+            shippingAddress: null,
+            browserInfo: obtenerBrowserInfo()
+          };
+
+          await payWithTokenMutation.mutateAsync(requestToken);
+          return;
+        }
 
         await iniciarPagoMutation.mutateAsync({
-          orderId: dataconse?.data?.consecutivo.toString(),
+          orderId: String(dataconse?.data?.consecutivo ?? ""),
           amount: totalMonto,
           currencyCode: "558"
         });
@@ -885,8 +978,8 @@ const CheckoutPage: React.FC = () => {
         invoiceReqFinal,
         payload: payload!,
         orderId,
-        transactionIdentifier:'',
-        usarPdfPagoElectronico:false,
+        transactionIdentifier: "",
+        usarPdfPagoElectronico: false,
         codSucursalFactura,
         consecutivo: Number(dataconse?.data?.consecutivo ?? 0),
         fetchByContactId,
@@ -903,7 +996,8 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const payNowDisabled = payNowLock || payNowCooldown > 0 || iniciarPagoMutation.isPending;
+  const isProcessingPayment = iniciarPagoMutation.isPending || payWithTokenMutation.isPending;
+  const payNowDisabled = payNowLock || payNowCooldown > 0 || isProcessingPayment;
 
   return (
     <section className="checkout-page">
@@ -913,7 +1007,7 @@ const CheckoutPage: React.FC = () => {
         <div className="checkout-main">
           <div className="checkout-left">
             {step === "location" && (
-              <Location
+              <LocationSection
                 addressList={addressList}
                 locationMode={locationMode}
                 isPickup={existingLog?.retiraSucursal === "S"}
@@ -933,7 +1027,7 @@ const CheckoutPage: React.FC = () => {
             )}
 
             {step === "currency" && (
-              <Currency
+              <CurrencySection
                 step={step}
                 currency={currency}
                 selectedCurrency={selectedCurrency}
@@ -944,9 +1038,9 @@ const CheckoutPage: React.FC = () => {
               />
             )}
 
-            {step === "paymentMethod" && (
-              payNowDisabled ? (
-                <div>Cargando</div>
+            {step === "paymentMethod" &&
+              (payNowDisabled ? (
+                <div>Cargando...</div>
               ) : (
                 <PaymentMethodComponent
                   step={step}
@@ -972,9 +1066,10 @@ const CheckoutPage: React.FC = () => {
                   carPCG={carPCG}
                   totalPagar={totalPagar}
                   existingLog={existingLog}
+                  ecommerceUserId={payload.ecommerceUserId}
+                  onSelectCard={setSelectedSavedCard}
                 />
-              )
-            )}
+              ))}
           </div>
         </div>
       </div>

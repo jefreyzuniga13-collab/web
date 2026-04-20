@@ -70,9 +70,10 @@ const useLogCart = (logCartId?: number) => {
     LogCartFormValues
   >({
     mutationFn: (values) => logCartService.createAsync(values),
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.all })
-      toast.success(response.message)
+      // toast.success(response.message)
     },
     onError: (err) => toast.error(err.message),
   })

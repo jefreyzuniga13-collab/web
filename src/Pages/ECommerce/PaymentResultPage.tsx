@@ -2,10 +2,18 @@ import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
-import useInvoiceOrder from "@/Hooks/Ecommerce/useInvoiceOrder";
+import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder";
 import useLogCart from "@/Hooks/Crm/useLogCard";
+import { useTarjetaPCG } from "@/Hooks/Ecommerce/payment/useTarjeta";
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import { getLast4, getParam } from "@/Utils/ECommerce/formatters";
+import {
+  CHECKOUT_INVOICE_KEY,
+  CHECKOUT_PAYLOAD_KEY,
+  ECOMMERCEUSERID_KEY,
+  SAVE_CARD_AFTER_PAYMENT_KEY,
+} from "@/Utils/ECommerce/keys";
 
 export default function PaymentResultPage() {
   const [params] = useSearchParams();
@@ -20,12 +28,15 @@ export default function PaymentResultPage() {
     getParam(params.get("PanToken")) || getParam(params.get("panToken"));
   const cardBrand =
     getParam(params.get("CardBrand")) || getParam(params.get("cardBrand"));
+  const cardSuffix =
+    getParam(params.get("CardSuffix")) || getParam(params.get("cardSuffix"));
 
   const orderId = Number(orderIdRaw);
   const isApproved = approved.toLowerCase() === "true";
 
   const { InsertaFacturaAsync } = useInvoiceOrder();
   const { fetchByContactId, UpdatedStatus } = useLogCart();
+  const { CreateCard, GetByUser } = useTarjetaPCG();
 
   useEffect(() => {
     if (executedRef.current) return;
@@ -34,8 +45,6 @@ export default function PaymentResultPage() {
     const run = async () => {
       try {
         if (!isApproved) {
-          console.log("Pago no aprobado en PaymentResultPage");
-          //se debe de mandar a regresar el dinero en ese caso.
           navigate("/unauthorized", { replace: true });
           return;
         }
@@ -44,8 +53,10 @@ export default function PaymentResultPage() {
           throw new Error("orderId inválido.");
         }
 
-        const payloadRaw = sessionStorage.getItem("checkout_payload");
-        const invoiceRaw = sessionStorage.getItem("checkout_invoice");
+        const payloadRaw = sessionStorage.getItem(CHECKOUT_PAYLOAD_KEY);
+        const invoiceRaw = sessionStorage.getItem(CHECKOUT_INVOICE_KEY);
+        const ecommerceUserIdRaw = sessionStorage.getItem(ECOMMERCEUSERID_KEY);
+        const saveCardFlag = sessionStorage.getItem(SAVE_CARD_AFTER_PAYMENT_KEY);
 
         if (!payloadRaw || !invoiceRaw) {
           throw new Error("No hay contexto de checkout.");
@@ -53,6 +64,7 @@ export default function PaymentResultPage() {
 
         const payload = JSON.parse(payloadRaw);
         const invoiceReqFinal = JSON.parse(invoiceRaw) as FacturaTempo;
+        const ecommerceUserId = Number(JSON.parse(ecommerceUserIdRaw ?? "0"));
 
         const invoiceActualizada: FacturaTempo = {
           ...invoiceReqFinal,
@@ -61,16 +73,16 @@ export default function PaymentResultPage() {
             CodStrCadsaccion: String(orderId),
             Codtransaccion: transactionIdentifier,
             CuentaHabiente: cardBrand,
-            ultDigito: getLast4(panToken),
+            ultDigito: getLast4(cardSuffix || panToken),
           })),
         };
 
         await procesarCheckoutExitoso({
           invoiceReqFinal: invoiceActualizada,
           payload,
-          orderId: orderId,
-          transactionIdentifier:transactionIdentifier,
-          usarPdfPagoElectronico:true,
+          orderId,
+          transactionIdentifier,
+          usarPdfPagoElectronico: true,
           codSucursalFactura: invoiceActualizada.sucursal,
           consecutivo: invoiceActualizada.numero,
           fetchByContactId,
@@ -80,10 +92,46 @@ export default function PaymentResultPage() {
           navigate,
         });
 
+        console.log("saveCardFlag", saveCardFlag)
+        console.log("ecommerceUserId", ecommerceUserId);
+        console.log("panToken: ", panToken);
+
+        if (
+          saveCardFlag === "S" &&
+          ecommerceUserId > 0 &&
+          panToken
+        ) {
+
+          // const tarjetasUsuario = await GetByUser(ecommerceUserId);
+          // const yaExiste = tarjetasUsuario.some(
+          //   (x) => (x.panToken ?? "").trim() === panToken.trim()
+          // );
+
+          // if (!yaExiste) {
+            const tarjetaNueva: TarjetaModelInterface = {
+              // idTarjeta: '',
+              numero: getLast4(cardSuffix || panToken),
+              cVV2: '',
+              fechaVencimiento: '',
+              idUsuario: ecommerceUserId,
+              porDefecto: false,
+              titular: payload?.fullName ?? '',
+              correo: payload?.email ?? '',
+              telefono: payload?.phoneNumber ?? '',
+              panToken,
+              spiToken: '',
+              marca: cardBrand || '',
+              ultimos4: getLast4(cardSuffix || panToken),
+            };
+
+            await CreateCard(tarjetaNueva);
+          }
+        // }
+
+        sessionStorage.removeItem(SAVE_CARD_AFTER_PAYMENT_KEY);
       } catch (err: unknown) {
-        console.log("Se produjo un error en PaymentResultPage:", err);
         navigate("/unauthorized", { replace: true });
-        // navigate("/successOrder", { replace: true });
+
         if (err instanceof Error) {
           console.log(err.message);
         } else {
@@ -92,7 +140,7 @@ export default function PaymentResultPage() {
       }
     };
 
-    run();
+    void run();
   }, [
     isApproved,
     orderId,
@@ -100,12 +148,38 @@ export default function PaymentResultPage() {
     transactionIdentifier,
     panToken,
     cardBrand,
+    cardSuffix,
     fetchByContactId,
     UpdatedStatus,
     InsertaFacturaAsync,
     dispatch,
     navigate,
+    CreateCard,
+    GetByUser,
   ]);
 
   return null;
 }
+
+
+
+// {
+//     "success": true,
+//     "data": {
+//         "idTarjeta": null,
+//         "numero": "8zzy",
+//         "cvV2": "",
+//         "fechaVencimiento": "",
+//         "idUsuario": 8,
+//         "porDefecto": false,
+//         "titular": "CRM TEST - WHATSAPP",
+//         "correo": "",
+//         "telefono": "",
+//         "panToken": "agt1f0da33n3plu8u4c8a648w53eh7ej0bw5c5295b63u8zzy",
+//         "spiToken": "",
+//         "marca": "Visa",
+//         "ultimos4": "8zzy"
+//     },
+//     "message": "Tarjeta agregada con éxito",
+//     "totalItems": null
+// }

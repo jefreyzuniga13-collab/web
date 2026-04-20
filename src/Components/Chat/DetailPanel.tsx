@@ -3,8 +3,8 @@ import DetailPanelHeaderTabs from "@/Components/Chat/DetailPanel/DetailPanelHead
 import DetailPanelCurrentConversationTab from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
 import DetailPanelOptionsContact from "@/Components/Chat/DetailPanelOptionsContact";
 import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
-import {ProductTab} from '@/Components/ECommerce/ProductTab'
-import CarPCPanelTab from "@/Components/ECommerce/CarPCPanelTab";
+import {ProductTab} from '@/Components/ECommerce/Tabs/ProductTab'
+import CarPCPanelTab from "@/Components/ECommerce/Tabs/CarPCPanelTab";
 import "@/Styles/Chat/DetailPanel.css";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
@@ -144,4 +144,3 @@ const DetailPanel: React.FC<Props> = ({
 };
 
 export default DetailPanel;
-//Por que cuando selecciona o ya tengo seleccionada la bodega, no sale seleccionada por defecto aqui, para saber que bodega tiene seleccionada estaimado comprendes esta logica!!!

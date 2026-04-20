@@ -10,7 +10,7 @@ export interface Props {
   handleGoToPayment: () => void;
 }
 
-export const Currency = ({
+export const CurrencySection = ({
   step,
   currency,
   selectedCurrency,
@@ -19,6 +19,11 @@ export const Currency = ({
   setStep,
   handleGoToPayment,
 }: Props) => {
+  const handleSelectAndContinue = (item: Currencyto) => {
+    handleSelectCurrency(item);
+    handleGoToPayment();
+  };
+
   return (
     <>
       {step === "currency" && (
@@ -30,13 +35,12 @@ export const Currency = ({
               <button
                 key={item.codPago}
                 type="button"
-                onDoubleClick={handleGoToPayment}
+                onDoubleClick={() => handleSelectAndContinue(item)}
                 className={
                   selectedCurrency?.codPago === item.codPago
                     ? "checkout-method checkout-method--active"
                     : "checkout-method"
                 }
-                onClick={() => handleSelectCurrency(item)}
                 disabled={invoiceLoading}
               >
                 <div className="checkout-method__left">
@@ -71,14 +75,6 @@ export const Currency = ({
             >
               Regresar
             </button>
-            {/* <button
-              type="button"
-              className="checkout-paybtn"
-              onClick={handleGoToPayment}
-              disabled={invoiceLoading || !selectedCurrency}
-            >
-              {invoiceLoading ? "Cargando" : "Continuar"}
-            </button> */}
           </div>
         </div>
       )}

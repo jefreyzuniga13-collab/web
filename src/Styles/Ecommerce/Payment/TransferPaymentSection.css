@@ -1,0 +1,11 @@
+.checkout-transfer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .checkout-transfer {
+    flex-direction: column;
+  }
+}

@@ -5,7 +5,7 @@ import type {
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import { buildModifiersText } from "@/Utils/ECommerce/buildModifiersText"
 import { SendMediaECommerceFromUrlAsync } from "@/Services/chat/MessageService"
-import { useProductPCG } from "@/Hooks/Ecommerce/useProductPCG"
+import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { toast } from "react-toastify"
 import { selectUserId } from '@/Context/Slices/Auth/authSlice';
 import { useSelector } from "react-redux"

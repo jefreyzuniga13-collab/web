@@ -1,12 +1,15 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { CheckoutStep, PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import { FaRegCreditCard } from "react-icons/fa";
-import VisaLogo from "@/assets/img/visaLogo.png";
-import MasterCardLogo from "@/assets/img/masterCardLogo.png";
 import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import {toNumberNoLeadingZeros,safeStr} from '@/Utils/ECommerce/formatters'
+import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
+import CashPaymentSection from "@/Components/ECommerce/Payment/CashPaymentSection";
+import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSection";
+import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection";
+import { safeStr } from "@/Utils/ECommerce/formatters";
+import '@/Styles/Ecommerce/Payment/PaymentMethodComponent.css';
+
 export interface Props {
   step: CheckoutStep;
   setStep: (step: CheckoutStep) => void;
@@ -31,6 +34,8 @@ export interface Props {
   carPCG?: CarDto[];
   totalPagar: number;
   existingLog: LogCartResponseDto | null;
+  ecommerceUserId: number;
+  onSelectCard?: (card: TarjetaModelInterface | null) => void;
 }
 
 function methodLabel(m: PaymentMethod): string {
@@ -58,8 +63,11 @@ export const PaymentMethodComponent = ({
   setDivisaSelected,
   carPCG,
   totalPagar,
-  existingLog
+  existingLog,
+  ecommerceUserId,
+  onSelectCard,
 }: Props) => {
+  const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
 
   const showDivisaSelect = method === "card" || method === "transfer";
 
@@ -82,16 +90,19 @@ export const PaymentMethodComponent = ({
     (showDivisaSelect ? !!divisaSelected : true) &&
     (method === "transfer" ? transferRefOk : true);
 
+  const handleSelectCard = (card: TarjetaModelInterface | null) => {
+    setSelectedSavedCard(card);
+    onSelectCard?.(card);
+  };
+
   return (
     <>
       {step === "paymentMethod" && (
         <div className="checkout-section">
-
           <h2 className="checkout-section__title">
             {`Método de pago ${methodLabel(method)}`}
           </h2>
 
-          {/* SELECT BANCO / TARJETA */}
           {showDivisaSelect && (
             <div className="checkout-field checkout-field--full">
               <label className="checkout-label" htmlFor="payType">
@@ -125,99 +136,73 @@ export const PaymentMethodComponent = ({
             </div>
           )}
 
-          {/* EFECTIVO */}
-          {method === "cash" && (
-            <div className="checkout-cash">
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="cashAmount">
-                  Monto con el que pagas
-                </label>
-                <input
-                  id="cashAmount"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  className="checkout-input"
-                  value={cashAmount}
-                  onChange={(e) =>
-                    setCashAmount(
-                      toNumberNoLeadingZeros(e.target.value)
-                    )
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TARJETA */}
-          {method === "card" && (
-            <>
-              <div className="checkout-methods">
-                <div className="checkout-method checkout-method--active">
-                  <div className="checkout-method__left">
-                    <span className="checkout-radio">
-                      <span className="checkout-radio__dot checkout-radio__dot--active" />
-                    </span>
-                    <FaRegCreditCard className="checkout-method__icon" />
-                    <span className="checkout-method__label">Tarjeta</span>
-                  </div>
-
-                  <div className="checkout-method__brands">
-                    <img src={VisaLogo} className="checkout-card-brand" alt="Visa" />
-                    <img src={MasterCardLogo} className="checkout-card-brand" alt="Mastercard" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="checkout-field checkout-field--full">
-                <p className="checkout-hint">
-                  Serás redirigido a una pasarela segura.
-                </p>
-                <p className="checkout-hint">
-                  Total: <strong>C$ {totalPagar.toFixed(2)}</strong>
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* TRANSFERENCIA */}
-          {method === "transfer" && (
-            <div className="checkout-cash">
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label">Monto</label>
-                <input className="checkout-input" value={totalPagar} readOnly />
-              </div>
-
-              <div className="checkout-field checkout-field--full">
-                <label className="checkout-label">Referencia *</label>
-                <input
-                  className="checkout-input"
-                  value={transfer}
-                  onChange={(e) => setTransfer(e.target.value)}
-                />
-                {!transferRefOk && (
-                  <small className="checkout-error">
-                    Referencia inválida
-                  </small>
-                )}
-              </div>
-            </div>
-          )}
 
           {carPCG && carPCG.length > 0 && (
             <aside className="checkout-summary">
               <p className="checkout-summary__title">Resumen</p>
 
-              <div className="checkout-summary__subtitle"><p className="checkout-summary__p">Subtotal: </p> <strong className="checkout-summary__strong">{existingLog?.subTotal}</strong></div>
-              <div className="checkout-summary__subtitle"><p className="checkout-summary__p">IVA: </p><strong className="checkout-summary__strong">{existingLog?.ivaPantalla}</strong></div>
-              <div className="checkout-summary__subtitle"><p className="checkout-summary__p">Transporte: </p><strong className="checkout-summary__strong"> {transpCost || existingLog?.transCost}</strong></div>
+              <div className="checkout-summary__subtitle">
+                <p className="checkout-summary__p">Subtotal: </p>
+                <strong className="checkout-summary__strong">
+                  {existingLog?.subTotal}
+                </strong>
+              </div>
 
-             <div className="checkout-summary__subtitle"> <p className="checkout-summary__p">Total :</p> <strong className="checkout-summary__strong">
+              <div className="checkout-summary__subtitle">
+                <p className="checkout-summary__p">IVA: </p>
+                <strong className="checkout-summary__strong">
+                  {existingLog?.ivaPantalla}
+                </strong>
+              </div>
+
+              <div className="checkout-summary__subtitle">
+                <p className="checkout-summary__p">Transporte: </p>
+                <strong className="checkout-summary__strong">
+                  {transpCost || existingLog?.transCost}
+                </strong>
+              </div>
+
+              <div className="checkout-summary__subtitle">
+                <p className="checkout-summary__p">Total :</p>
+                <strong className="checkout-summary__strong">
                   C${" "}
                   {(existingLog?.totalEnPantalla ?? 0) +
                     (transpCost > 0 ? transpCost : 0)}
-                </strong></div>
+                </strong>
+              </div>
+
+              {method === "card" && selectedSavedCard && (
+                <div className="checkout-summary__subtitle">
+                  <p className="checkout-summary__p">Tarjeta:</p>
+                  <strong className="checkout-summary__strong">
+                    **** {safeStr(selectedSavedCard.ultimos4)}
+                  </strong>
+                </div>
+              )}
             </aside>
+          )}
+
+          {method === "cash" && (
+            <CashPaymentSection
+              cashAmount={cashAmount}
+              setCashAmount={setCashAmount}
+            />
+          )}
+
+          {method === "card" && (
+            <CardPaymentSection
+              ecommerceUserId={ecommerceUserId}
+              onSelectCard={handleSelectCard}
+            />
+          )}
+
+          {method === "transfer" && (
+            <TransferPaymentSection
+              totalPagar={totalPagar}
+              transfer={transfer}
+              setTransfer={setTransfer}
+              transferRefOk={transferRefOk}
+            />
           )}
 
           <div className="checkout-actionBtn">
@@ -236,7 +221,6 @@ export const PaymentMethodComponent = ({
               {payNowDisabled ? "Procesando..." : "Pagar ahora"}
             </button>
           </div>
-
         </div>
       )}
     </>

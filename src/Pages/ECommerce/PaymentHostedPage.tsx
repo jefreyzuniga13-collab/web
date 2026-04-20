@@ -14,15 +14,17 @@ export default function PaymentHostedPage() {
   const state = location.state as PaymentHostedState | null;
   const redirectData = state?.payment?.redirectData ?? "";
 
+  console.log("Datos recibidos", JSON.stringify(state))
+  console.log("redirectData", redirectData)
+
   useEffect(() => {
+    // Validar existencia de redirectData
     if (!redirectData) {
       navigate("/unauthorized", { replace: true });
     }
   }, [redirectData, navigate]);
 
-  if (!redirectData) {
-    return null;
-  }
+  if (!redirectData) return null;
 
   return (
     <section style={{ width: "100%", height: "100vh", overflow: "hidden" }}>

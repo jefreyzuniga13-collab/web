@@ -6,7 +6,7 @@ import type { CarDto, ListDetalleCarrito, InvoiceTotalsDto } from "@/Interfaces/
 import { toast } from "react-toastify"
 import "@/Styles/Ecommerce/cardPCGTab.css"
 import Button from "@/Components/Common/Button"
-import { useCart } from "@/Hooks/Ecommerce/useCart"
+import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import noimageavailable from "@/assets/img/noimageavailable.webp"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import { MdDelete } from "react-icons/md"
@@ -18,7 +18,7 @@ import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import useContact from "@/Hooks/Auth/useContact"
-import { useUserEcommerce } from "@/Hooks/Ecommerce/useUserEcommerce"
+import { useUserEcommerce } from "@/Hooks/Ecommerce/tabs/useUserEcommerce"
 import type { UserEcommerceDto } from "@/Interfaces/Ecommerce/UserEcommerceInterface"
 import type { SendLinkRequestDto } from "@/Interfaces/Ecommerce/SendLinkInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
@@ -39,6 +39,7 @@ import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import type { LogCartResponseDto, LogCartUpdateRequestDto } from "@/Interfaces/Crm/LogCartInterface"
 import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
+import { PCG_SERVICES } from "@/Constants/pcgservices"
 
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -164,7 +165,7 @@ const { setLocked } = useCartPCGFlowCtx()
       ir: "N",
       tabla: "det_factura_tempo",
       tasa: 36.6243,
-      tipoServicio: "8",
+      tipoServicio: PCG_SERVICES.CRM.toString(),
       valorTransporte: allowShipping ? safeCost : 0
     }
 
@@ -993,7 +994,6 @@ useEffect(() => {
       </section>
     </div>
   )
-
 }
 
 export default CarPCPanelTab

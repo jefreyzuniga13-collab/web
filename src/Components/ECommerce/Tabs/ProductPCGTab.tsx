@@ -9,7 +9,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import aguamarina from "@/assets/img/aguamarina.png"
 import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
-import { useProductMessageComposer } from "@/Hooks/Ecommerce/useProductMessageComposer"
+import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
 
 interface Props {
   prod: ProductoPCGInterface

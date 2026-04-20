@@ -1,3 +1,4 @@
+import { PCG_SERVICES } from "@/Constants/pcgservices";
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
 
 export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
@@ -30,7 +31,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   codSubCli: 0,
   observacion: "",
   verComoPreventa: "S",
-  tipoServicio: 8,
+  tipoServicio: PCG_SERVICES.CRM,
   agente: -1,
   fechaFactura: "20260117",
   cajero: "Pcg",
@@ -41,7 +42,6 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   direccionCte: "",
   telefonoCte: "",
   tipoDocumentoLlamado: 1,
-  
   detallePago: null,
   clientePadre: "CLIENTES VARIOS",
   hayFormaPago: "N",

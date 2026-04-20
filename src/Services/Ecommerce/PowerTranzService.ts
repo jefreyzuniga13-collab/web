@@ -1,23 +1,13 @@
 import { AxiosError } from "axios";
-import {apiPCG} from '@/Utils/ApiConfig'
+import { apiPCG } from "@/Utils/ApiConfig";
+import type { ApiErrorResponse, ApiResponse, IniciarPagoServiceResponse, InitPaymentRequest, 
+  InitResponse, PagarConTokenServiceResponse, PowertranzFpiResponseDto, PowertranzPayWithTokenRequestDto, 
+  PowertranzVoidRequestDto, PowertranzVoidResponseDto } from "@/Interfaces/Ecommerce/powertranzInterface";
 
-import type {
-  ApiErrorResponse,
-  ApiResponse,
-  InitPaymentRequest,
-  InitResponse,
-  // PowertranzRefundRequestDto,
-  // PowertranzRefundResponseDto,
-  PowertranzVoidRequestDto,
-  PowertranzVoidResponseDto
-} from "@/Interfaces/Ecommerce/powertranzInterface";
-
-export type IniciarPagoServiceResponse = {
-  data: InitResponse;
-  message: string;
-};
-
-function obtenerMensajeError(error: unknown): { message: string; detail: string } {
+function obtenerMensajeError(
+  error: unknown,
+  fallbackMessage: string
+): { message: string; detail: string } {
   if (error instanceof AxiosError) {
     const data = error.response?.data as Partial<ApiErrorResponse> | undefined;
 
@@ -25,7 +15,7 @@ function obtenerMensajeError(error: unknown): { message: string; detail: string 
       message:
         typeof data?.messages === "string" && data.messages.trim().length > 0
           ? data.messages
-          : "No fue posible iniciar el pago.",
+          : fallbackMessage,
       detail:
         typeof data?.details === "string" && data.details.trim().length > 0
           ? data.details
@@ -35,23 +25,41 @@ function obtenerMensajeError(error: unknown): { message: string; detail: string 
 
   if (error instanceof Error) {
     return {
-      message: "No fue posible iniciar el pago.",
+      message: fallbackMessage,
       detail: error.message
     };
   }
 
   return {
-    message: "No fue posible iniciar el pago.",
+    message: fallbackMessage,
     detail: "Ocurrió un error inesperado."
   };
 }
 
-function validarRespuestaApi(response: ApiResponse<InitResponse>): IniciarPagoServiceResponse {
+function validarRespuestaInit(response: ApiResponse<InitResponse>): IniciarPagoServiceResponse {
   if (!response.success) {
     throw new Error(
       JSON.stringify({
         message: response.messages || "No fue posible iniciar el pago.",
-        detail: ""
+        detail: response.details || ""
+      })
+    );
+  }
+
+  return {
+    data: response.data,
+    message: response.messages
+  };
+}
+
+function validarRespuestaPayWithToken(
+  response: ApiResponse<PowertranzFpiResponseDto>
+): PagarConTokenServiceResponse {
+  if (!response.success) {
+    throw new Error(
+      JSON.stringify({
+        message: response.messages || "No fue posible iniciar el pago con token.",
+        detail: response.details || ""
       })
     );
   }
@@ -65,21 +73,38 @@ function validarRespuestaApi(response: ApiResponse<InitResponse>): IniciarPagoSe
 async function iniciarPago(payload: InitPaymentRequest): Promise<IniciarPagoServiceResponse> {
   try {
     const respuesta = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
-
-    return validarRespuestaApi(respuesta.data);
+    return validarRespuestaInit(respuesta.data);
   } catch (error: unknown) {
-    console.log("Accedio al catch", error)
-    const errorNormalizado = obtenerMensajeError(error);
+    const errorNormalizado = obtenerMensajeError(error, "No fue posible iniciar el pago.");
     throw new Error(JSON.stringify(errorNormalizado));
   }
 }
 
-async function voidsync(payload: PowertranzVoidRequestDto): Promise<ApiResponse<PowertranzVoidResponseDto>> {
-    const res = await apiPCG.post<ApiResponse<PowertranzVoidResponseDto>>("/powertranz/void", payload);
-    return res.data;
+async function voidsync(
+  payload: PowertranzVoidRequestDto
+): Promise<ApiResponse<PowertranzVoidResponseDto>> {
+  const res = await apiPCG.post<ApiResponse<PowertranzVoidResponseDto>>("/powertranz/void", payload);
+  return res.data;
+}
+
+async function payWithTokensync(
+  payload: PowertranzPayWithTokenRequestDto
+): Promise<PagarConTokenServiceResponse> {
+  try {
+    const res = await apiPCG.post<ApiResponse<PowertranzFpiResponseDto>>(
+      "/powertranz/pay-with-token",
+      payload
+    );
+
+    return validarRespuestaPayWithToken(res.data);
+  } catch (error: unknown) {
+    const errorNormalizado = obtenerMensajeError(error, "No fue posible iniciar el pago con token.");
+    throw new Error(JSON.stringify(errorNormalizado));
+  }
 }
 
 export const powertranzService = {
   iniciarPago,
-  voidsync
-}
+  voidsync,
+  payWithTokensync
+};
