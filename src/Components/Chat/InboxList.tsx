@@ -41,7 +41,10 @@ export const InboxList: React.FC<Props> = ({
   pagination,
   onPageChange
 }) => {
-  const loaderRef = useRef<HTMLLIElement>(null)
+  // const loaderRef = useRef<HTMLLIElement>(null)
+
+const listRef = useRef<HTMLUListElement>(null)
+const loaderRef = useRef<HTMLLIElement>(null)
 
   const [now, setNow] = useState(Date.now())
    const userId = useSelector(selectUserId);
@@ -53,23 +56,35 @@ export const InboxList: React.FC<Props> = ({
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (
-          entries[0].isIntersecting &&
-          page < pagination.totalPages &&
-          !loading
-        ) {
-          onPageChange(page + 1)
-        }
-      },
-      { root: null, rootMargin: "0px", threshold: 1.0 }
-    )
-    if (loaderRef.current) observer.observe(loaderRef.current)
+useEffect(() => {
+  const root = listRef.current
+  const loader = loaderRef.current
 
-    return () => observer.disconnect()
-  }, [loading, onPageChange, page, pagination.totalPages])
+  if (!root || !loader) return
+
+  const observer = new IntersectionObserver(
+    entries => {
+      const entry = entries[0]
+
+      if (
+        entry.isIntersecting &&
+        page < pagination.totalPages &&
+        !loading
+      ) {
+        onPageChange(page + 1)
+      }
+    },
+    {
+      root,
+      rootMargin: "120px",
+      threshold: 0.1
+    }
+  )
+
+  observer.observe(loader)
+
+  return () => observer.disconnect()
+}, [loading, onPageChange, page, pagination.totalPages])
 
   const formatTime = (iso?: string) => {
     if (!iso) return ""
@@ -91,7 +106,7 @@ export const InboxList: React.FC<Props> = ({
 
   if (error) {
     return (
-      <ul className="inbox-list">
+<ul ref={listRef} className="inbox-list">
         <li className="inbox-list__empty">{error}</li>
       </ul>
     )
@@ -99,7 +114,7 @@ export const InboxList: React.FC<Props> = ({
 
   if (conversations.length === 0 && !loading) {
     return (
-      <ul className="inbox-list">
+<ul ref={listRef} className="inbox-list">
         <li className="inbox-list__empty">
           <MessageSquareOff size={48} />
           <span>No hay conversaciones disponibles</span>
@@ -111,7 +126,7 @@ const safeLower = (v: unknown): string =>
   typeof v === "string" && v.trim() ? v.toLowerCase() : "waiting";
 
   return (
-    <ul className="inbox-list">
+    <ul ref={listRef} className="inbox-list">
       {conversations.map(c => {
         const isSelected = c.conversationId === selectedId
         // const statusClass = c.status.toLowerCase()
@@ -220,7 +235,7 @@ const safeLower = (v: unknown): string =>
 
       {loading && <CustomLoader />}
 
-      <li ref={loaderRef} />
+      <li ref={loaderRef} className="inbox-list__loader-anchor" />
     </ul>
   )
 }

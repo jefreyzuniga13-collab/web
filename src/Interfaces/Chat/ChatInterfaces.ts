@@ -64,6 +64,7 @@ export interface ConversationDto {
   isItemsInCart?: boolean
 
 
+  // Whatsapp = 1, messenger = 2, instagrams = 3
    metaChannelId: number;
 }
 

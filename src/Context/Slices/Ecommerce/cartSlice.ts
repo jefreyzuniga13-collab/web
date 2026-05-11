@@ -15,7 +15,27 @@ import type {
 
 import { CartService } from "@/Services/Ecommerce/CarPCGService";
 import type { RootState } from "@/Context/index";
+import type { AxiosError } from "axios";
 
+interface ApiErrorResponse {
+  message?: string;
+  data?: {
+    header?: {
+      msj?: string;
+    };
+  };
+}
+
+function getApiErrorMessage(error: unknown): string {
+  const axiosError = error as AxiosError<ApiErrorResponse>;
+
+  return (
+    axiosError.response?.data?.data?.header?.msj ||
+    axiosError.response?.data?.message ||
+    axiosError.message ||
+    "Ocurrió un error inesperado"
+  );
+}
 export interface CartState {
   carPCG: CarDto[];
   listDetail: ListDetalleCarrito[];
@@ -90,19 +110,18 @@ export const addProductTempoAsync = createAsyncThunk<
     const res = await CartService.AddProductToTempo(req);
 
     if (!res.success) {
-      // Mostrar este mensaje, si da errro, o similar
-      //no el quemado de catch
-      toast.error(res.data.header.msj);
-      return rejectWithValue(res.data.header.msj);
+      const message =
+        res.data?.header?.msj ||
+        res.message ||
+        "No fue posible agregar el producto";
+
+      // toast.error(message);
+      return rejectWithValue(message);
     }
 
     return res.data;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: unknown) {
-    // const message = errMsg("Bodega no valida");
-    const message = "Producto en bodega no valido";
-    // toast.error(message);
+    const message = getApiErrorMessage(error);
     return rejectWithValue(message);
   }
 });

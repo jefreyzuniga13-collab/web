@@ -151,7 +151,17 @@ export function useSupportPage() {
     }
   };
 
+    const handleAfterActionRefresh = useCallback(() => {
+    if (!convId) return;
+    getConversation(convId)
+      .then((res) => setConversation(res.data.data))
+      .catch(() => {});
+  }, [convId]);
 
+    const handleCloseClick = useCallback(() => {
+    if (!convId || !conversation) return;
+    closeConversation(convId).then(handleAfterActionRefresh).catch(() => {});
+  }, [convId, conversation, handleAfterActionRefresh]);
 
   const handleSetHaltedConversation = useCallback(async () => {
     if (!convId || !conversation || !isAdmin) return
@@ -209,6 +219,7 @@ export function useSupportPage() {
     setIsToggling,
     handleSetHaltedConversation,
     label,
-    canAssign
+    canAssign,
+    handleCloseClick
   };
 }

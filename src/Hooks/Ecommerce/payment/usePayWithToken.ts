@@ -37,7 +37,7 @@ function parsearError(error: Error): { message: string; detail: string } {
 
 export function usePayWithToken(options?: UsePayWithTokenOptions) {
   return useMutation<PagarConTokenServiceResponse, Error, PowertranzPayWithTokenRequestDto>({
-    mutationFn: powertranzService.payWithTokensync,
+    mutationFn: powertranzService.payWithToken,
     onSuccess: (response) => {
       toast.success(response.data.responseMessage || response.message || "Pago iniciado correctamente.");
       options?.onSuccess?.(response);

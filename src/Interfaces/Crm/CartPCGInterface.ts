@@ -92,6 +92,12 @@ export interface DetalleFacturaTempoRequest {
 
   // extra que no viene en request/valores directo
   fecha: string; // en C# la envías como DbType.String
+
+
+  tipoComponente: string;
+  unico: string
+  codModificador: string
+  sistema: string
 }
 
 
@@ -148,6 +154,9 @@ export interface DetalleFacturaTempoItem {
 
   subTotal: number;
   total: number;
+
+  //Modificadores y ópcional
+  unico: string;
 }
 
 //Obtener el numero de falote

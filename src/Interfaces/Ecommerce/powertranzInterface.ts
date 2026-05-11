@@ -136,18 +136,18 @@ export interface PowertranzAddressDto {
 }
 
 export interface PowertranzBrowserInfoDto {
-  browserLanguage: string | null;
-  browserScreenHeight: string | null;
-  browserScreenWidth: string | null;
-  browserTimeZone: string | null;
-  browserUserAgent: string | null;
-  browserIp: string | null;
-  browserJavaEnabled: boolean;
-  browserJavascriptEnabled: boolean;
-  browserColorDepth: string | null;
-  challengeWindowSize: number;
-  challengeIndicator: string;
-  browserAcceptHeader: string | null;
+  Language: string | null;
+  ScreenHeight: string | null;
+  ScreenWidth: string | null;
+  TimeZone: string | null;
+  UserAgent: string | null;
+  Ip: string | null;
+  JavaEnabled: boolean;
+  JavascriptEnabled: boolean;
+  ColorDepth: string | null;
+  ChallengeWindowSize: number;
+  ChallengeIndicator: string;
+  AcceptHeader: string | null;
 }
 
 export interface PowertranzFpiResponseDto {
@@ -204,4 +204,84 @@ export interface IniciarPagoServiceResponse {
 export interface PagarConTokenServiceResponse {
   data: PowertranzFpiResponseDto;
   message: string;
+}
+
+export interface PowertranzFpiResponseDto {
+    transactionType: number | null;
+    approved: boolean;
+    authorizationCode: string | null;
+    transactionIdentifier: string | null;
+    totalAmount: number;
+    currencyCode: string | null;
+    cardBrand: string | null;
+    cardSuffix: string | null;
+    panToken: string | null;
+    isoResponseCode: string | null;
+    responseMessage: string | null;
+    orderIdentifier: string | null;
+    externalIdentifier: string | null;
+    redirectData: string | null;
+    spiToken: string | null;
+    rRN: string | null;
+    riskManagement: PowertranzRiskManagementDto | null;
+    errors: PowertranzErrorItemDto[] | null;
+}
+
+export interface PowertranzRiskManagementDto {
+    threeDSecure: PowertranzThreeDSecureInfoDto | null;
+    fraudCheck: PowertranzFraudCheckDto | null;
+}
+
+export interface PowertranzRiskManagementDto {
+    threeDSecure: PowertranzThreeDSecureInfoDto | null;
+    fraudCheck: PowertranzFraudCheckDto | null;
+}
+
+export interface PowertranzThreeDSecureInfoDto {
+    eci: string | null;
+    xid: string | null;
+    cavv: string | null;
+    authenticationStatus: string | null;
+    protocolVersion: string | null;
+    fingerprintIndicator: string | null;
+    dsTransId: string | null;
+    responseCode: string | null;
+    redirectData: string | null;
+    authenticateUrl: string | null;
+    cardholderInfo: string | null;
+}
+
+export interface PowertranzFraudCheckDto {
+    fcResponseCode: string | null;
+    fcScore: string | null;
+    fcResponseMessage: string | null;
+}
+
+export interface PowertranzSpiTokenRequestDto {
+    spiToken: string;
+    orderId: string | null;
+}
+
+export interface PowertranzProcessPaymentResultDto {
+  approved: boolean;
+  isoResponseCode?: string | null;
+  responseMessage?: string | null;
+  transactionIdentifier?: string | null;
+  spiToken?: string | null;
+  payment?: {
+    transactionType?: number | null;
+    approved?: boolean;
+    authorizationCode?: string | null;
+    transactionIdentifier?: string | null;
+    totalAmount?: number;
+    currencyCode?: string | null;
+    cardBrand?: string | null;
+    cardSuffix?: string | null;
+    panToken?: string | null;
+    isoResponseCode?: string | null;
+    responseMessage?: string | null;
+    orderIdentifier?: string | null;
+    externalIdentifier?: string | null;
+    rrn?: string | null;
+  };
 }

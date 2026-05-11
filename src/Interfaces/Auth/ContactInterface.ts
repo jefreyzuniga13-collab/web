@@ -42,10 +42,15 @@ export interface ContactLogInterface {
   clienteNombre?: string;
 
    ecommerceUserId?: number;
-     isSpam?: boolean;
+  isSpam?: boolean;
+
+    //  Mismo que el chat, 1 whatsapp, 2 messenger y 3 instagrsm
     metaChannelId: number;
-    //Messenger
+
+
+    //Messenger usar el mismo para el instagram al bloquear
     pSID?: string;
+
     messengerPsid?: string;
     messengerFirstName?: string;
     messengerLastName?: string;

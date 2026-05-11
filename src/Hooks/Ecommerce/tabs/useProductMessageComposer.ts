@@ -9,6 +9,7 @@ import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { toast } from "react-toastify"
 import { selectUserId } from '@/Context/Slices/Auth/authSlice';
 import { useSelector } from "react-redux"
+import vacio from '@/assets/vacio.png'
 
 type SendProductMessageArgs = {
   product: ProductoPCGInterface
@@ -92,7 +93,7 @@ export const useProductMessageComposer = () => {
           product.imagen && product.imagen.trim() !== ""
             ? product.imagen
             : fallbackMediaUrl ??
-              "https://i.ibb.co/ccjvL5Nh/aguamarina.png"
+              vacio
 
         await SendMediaECommerceFromUrlAsync(conversationId, {
           mediaUrl,

@@ -63,7 +63,7 @@ export async function procesarCheckoutExitoso({
       transactionIdentifier:transactionIdentifier,
       externalIdentifier:orderId.toString()
     }
-    const voidRes = await powertranzService.voidsync(
+    const voidRes = await powertranzService.void(
       voidReq
     )
     throw new Error(
@@ -118,36 +118,85 @@ export async function procesarCheckoutExitoso({
     PCG_SERVICES.CRM,
   );
 
-  if (resPrintPDF) {
-    const pdfBlob = usarPdfPagoElectronico
-        ? generatePagoElectronicoPDFFile({
-            orderFac: resPrintPDF.data,
-            transactionIdentifier,
-            telefono: "+505 7545 4150",
-            existingLog
-          })
-        : generateOrdeFacPDFFile(resPrintPDF.data);
+  // if (resPrintPDF) {
+
+  //   //si el usarPdfPagoElectronico es true, se deven de generar y enviar ambos pdf
+  //   const pdfBlob = usarPdfPagoElectronico
+  //       ? generatePagoElectronicoPDFFile({
+  //           orderFac: resPrintPDF.data,
+  //           transactionIdentifier,
+  //           telefono: "+505 7545 4150",
+  //           existingLog
+  //         })
+  //       : generateOrdeFacPDFFile(resPrintPDF.data);
   
 
-    if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
-      throw new Error("El PDF generado está vacío o inválido.");
-    }
+  //   if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+  //     throw new Error("El PDF generado está vacío o inválido.");
+  //   }
 
-    const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
-    const magic = String.fromCharCode(...head);
+  //   const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
+  //   const magic = String.fromCharCode(...head);
 
-    if (magic !== "%PDF-") {
-      throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
-    }
+  //   if (magic !== "%PDF-") {
+  //     throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
+  //   }
+
+  //   const noFactura = String(
+  //     resPrintPDF.data.DatosGenerales?.NoFactura ?? "",
+  //   ).trim();
+
+  //   const fileName = `Pedido-${noFactura || "SN"}.pdf`;
+  //   const mime = pdfBlob.type || "application/pdf";
+  //   const file = new File([pdfBlob], fileName, { type: mime });
+  //   await sendMediaEcommerce(payload.conversationId, file, "");
+  // }
+
+    if (resPrintPDF) {
+    const archivos: File[] = [];
 
     const noFactura = String(
-      resPrintPDF.data.DatosGenerales?.NoFactura ?? "",
+      resPrintPDF.data.DatosGenerales?.NoFactura ?? ""
     ).trim();
 
-    const fileName = `Pedido-${noFactura || "SN"}.pdf`;
-    const mime = pdfBlob.type || "application/pdf";
-    const file = new File([pdfBlob], fileName, { type: mime });
-    await sendMediaEcommerce(payload.conversationId, file, "");
+    const nombreBase = `Pedido-${noFactura || "SN"}`;
+
+    const validarPdf = async (pdfBlob: Blob, fileName: string): Promise<File> => {
+      if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+        throw new Error(`El PDF ${fileName} está vacío o inválido.`);
+      }
+
+      const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
+      const magic = String.fromCharCode(...head);
+
+      if (magic !== "%PDF-") {
+        throw new Error(`El archivo ${fileName} no parece PDF válido (magic=${magic}).`);
+      }
+
+      return new File([pdfBlob], fileName, {
+        type: pdfBlob.type || "application/pdf",
+      });
+    };
+
+    const pdfPedido = generateOrdeFacPDFFile(resPrintPDF.data);
+    archivos.push(await validarPdf(pdfPedido, `${nombreBase}.pdf`));
+
+    if (usarPdfPagoElectronico) {
+      const pdfPagoElectronico = generatePagoElectronicoPDFFile({
+        orderFac: resPrintPDF.data,
+        transactionIdentifier,
+        telefono: "+505 7545 4150",
+        existingLog,
+      });
+
+      archivos.push(
+        await validarPdf(pdfPagoElectronico, `${nombreBase}-PagoElectronico.pdf`)
+      );
+    }
+
+    for (const archivo of archivos) {
+      await sendMediaEcommerce(payload.conversationId, archivo, "");
+    }
   }
 
   navigate("/successOrder", { replace: true });

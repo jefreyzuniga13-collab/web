@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '@/Services/auth/AuthService';
 import type { AuthData, AuthMe } from '@/Interfaces/Auth/AuthInterface';
 import type { RootState } from '@/Context/index';
@@ -10,6 +10,8 @@ interface AuthState {
   checkingSession: boolean;
   roles: string[];
   empresaId: string;
+  companyImageUrl: string;
+  companySistema: string
 }
 
 const initialState: AuthState = {
@@ -18,7 +20,9 @@ const initialState: AuthState = {
   expiresAt: null,
   checkingSession: false,
   roles: [],
-  empresaId: ''
+  empresaId: '',
+  companyImageUrl: '',
+  companySistema:''
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -51,44 +55,55 @@ export const checkSessionThunk = createAsyncThunk<
   }
 );
 
+const limpiarSesion = (state: AuthState) => {
+  state.isAuthenticated = false;
+  state.userId = null;
+  state.expiresAt = null;
+  state.checkingSession = false;
+  state.roles = [];
+  state.empresaId = '';
+  state.companyImageUrl = '';
+  state.companySistema = ''
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
       const creds = action.payload;
+
       state.isAuthenticated = true;
       state.userId = String(creds.userId);
       state.expiresAt = creds.expiresAt;
       state.empresaId = String(creds.empresaId ?? '');
+      state.companyImageUrl = creds.companyImageUrl ?? '';
       state.checkingSession = false;
+      state.companySistema = creds.companySistema
     },
+
     setAuthenticated(state, action: PayloadAction<boolean>) {
       state.isAuthenticated = action.payload;
       state.checkingSession = false;
 
       if (!action.payload) {
-        state.userId = null;
-        state.expiresAt = null;
-        state.roles = [];
-        state.empresaId = '';
+        limpiarSesion(state);
       }
     },
+
     startCheckingSession(state) {
       state.checkingSession = true;
     },
+
     finishCheckingSession(state) {
       state.checkingSession = false;
     },
+
     logout(state) {
-      state.isAuthenticated = false;
-      state.userId = null;
-      state.expiresAt = null;
-      state.checkingSession = false;
-      state.roles = [];
-      state.empresaId = '';
+      limpiarSesion(state);
     }
   },
+
   extraReducers: (builder) => {
     builder.addCase(refreshTokenThunk.pending, (state) => {
       state.checkingSession = true;
@@ -99,16 +114,13 @@ const authSlice = createSlice({
       state.userId = String(payload.userId);
       state.expiresAt = payload.expiresAt;
       state.empresaId = String(payload.empresaId ?? '');
+      state.companyImageUrl = payload.companyImageUrl ?? '';
       state.checkingSession = false;
+      state.companySistema = payload.companySistema
     });
 
     builder.addCase(refreshTokenThunk.rejected, (state) => {
-      state.isAuthenticated = false;
-      state.userId = null;
-      state.expiresAt = null;
-      state.checkingSession = false;
-      state.roles = [];
-      state.empresaId = '';
+      limpiarSesion(state);
     });
 
     builder.addCase(checkSessionThunk.pending, (state) => {
@@ -121,16 +133,13 @@ const authSlice = createSlice({
       state.expiresAt = null;
       state.roles = payload.roles ?? [];
       state.empresaId = String(payload.empresaId ?? '');
+      state.companyImageUrl = payload.companyImageUrl ?? '';
       state.checkingSession = false;
+      state.companySistema = payload.companySistema
     });
 
     builder.addCase(checkSessionThunk.rejected, (state) => {
-      state.isAuthenticated = false;
-      state.userId = null;
-      state.expiresAt = null;
-      state.roles = [];
-      state.empresaId = '';
-      state.checkingSession = false;
+      limpiarSesion(state);
     });
   }
 });
@@ -145,13 +154,27 @@ export const {
 
 export const selectIsAdmin = (state: RootState) =>
   state.auth.roles.some(
-    r => r.toLowerCase() === 'admin' || r.toLowerCase() === 'root'
+    role =>
+      role.toLowerCase() === 'admin' ||
+      role.toLowerCase() === 'root'
   );
 
-export const selectUserId = (state: RootState) => Number(state.auth.userId);
+export const selectUserId = (state: RootState) =>
+  Number(state.auth.userId);
 
-export const selectEmpresaId = (state: RootState) => state.auth.empresaId;
+export const selectEmpresaId = (state: RootState) =>
+  state.auth.empresaId;
 
-export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
-export const selectRoles = (state: RootState) => state.auth.roles;
+export const selectCompanyImageUrl = (state: RootState) =>
+  state.auth.companyImageUrl || null;
+
+export const selectCompanySistema = (state: RootState) =>
+  state.auth.companySistema;
+
+export const selectIsAuthenticated = (state: RootState) =>
+  state.auth.isAuthenticated;
+
+export const selectRoles = (state: RootState) =>
+  state.auth.roles;
+
 export default authSlice.reducer;

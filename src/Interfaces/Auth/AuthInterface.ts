@@ -11,6 +11,8 @@ export interface AuthData {
   expiresAt: string;
   userId: string;
   empresaId: string
+  companyImageUrl?: string;
+  companySistema: string
 }
 
 export interface LoginRequest {
@@ -102,4 +104,6 @@ export interface AuthMe {
   email?: string;
   roles?: string[];
   empresaId: string;
+  companyImageUrl?: string;
+  companySistema: string;
 }

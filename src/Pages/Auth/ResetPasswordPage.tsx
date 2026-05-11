@@ -1,124 +1,161 @@
+import { FaEye, FaEyeSlash, FaLock, FaArrowLeft } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
-import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
+import useResetPasswordForm from "@/Hooks/Auth/useResetPasswordForm";
+import logo from "@/assets/img/pcgroup.png";
+import "@/Styles/Auth/ResetPasswordPresentation.css";
 
-import "@/Styles/Auth/LoginPresentation.css";
-import "@/Styles/Auth/ForgotPasswordPresentation.css";
+export default function ResetPasswordPresentation() {
+  const { t } = useTranslation();
 
-import addGroup from "@/assets/img/Add_Group_2025.png";
-
-export default function ForgotPasswordPresentation() {
-  const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEnterKey = (event: any) => {
-    if (event.key === "Enter") formik.handleSubmit();
-  };
+  const {
+    formik,
+    loading,
+    canSubmit,
+    showPassword,
+    toggleShowPassword,
+    showConfirm,
+    toggleShowConfirm,
+    formError,
+  } = useResetPasswordForm();
 
   return (
-    <div className="login-GeneralContainer">
-      {/* IZQUIERDA */}
-      <aside className="login__banner" aria-label="Marketing banner">
-        <div className="login__banner-shape" />
-        <div className="login__banner-content">
-          <header className="login__banner-top">
-            <h2 className="login__banner-title">
-              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
-            </h2>
-            <p className="login__banner-subtitle">
-              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
-            </p>
-          </header>
+    <section className={`reset-password ${loading ? "reset-password--loading" : ""}`}>
+      <div className="reset-password__shell">
+        <aside className="reset-password__brand">
+          <div className="reset-password__brand-overlay" />
 
-          <div className="login__banner-card">
-            <img
-              src="https://i.ibb.co/9HBdj911/7015971.jpg"
-              alt="Banner promocional"
-              className="login__banner-image"
-              loading="lazy"
-            />
+          <div className="reset-password__brand-content">
+            <img src={logo} alt="Logo" className="reset-password__brand-logo" />
+
+            <span className="reset-password__badge">
+              Seguridad de acceso CRM
+            </span>
+
+            <h1>Creá una nueva contraseña segura</h1>
+
+            <p>
+              Definí una nueva credencial para proteger tu cuenta y continuar
+              usando la plataforma de forma segura.
+            </p>
+
+            <div className="reset-password__features">
+              <span>Protección</span>
+              <span>Verificación</span>
+              <span>Acceso seguro</span>
+              <span>CRM</span>
+            </div>
           </div>
 
-          <p className="login__banner-text">
-            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos,
-            construye relaciones que cierran negocios. Comienza hoy mismo a transformar tu proceso comercial.
-          </p>
-        </div>
-      </aside>
+          <main className="reset-password__form-panel">
+            <section
+              className={`reset-password__card ${
+                formError ? "reset-password__card--error" : ""
+              }`}
+            >
+              <div className="reset-password__mobile-logo">
+                <img src={logo} alt="Logo" />
+              </div>
 
-      {/* DERECHA */}
-      <main className={`login ${loading ? "login--loading" : ""}`}>
-        <div className="login__panel">
-          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
-            {formError && <div className="login__error">{formError}</div>}
+              <div className="reset-password__icon">
+                <FaLock />
+              </div>
 
-            <div className="login__brand">
-              <img
-                className="login__brand-image"
-                src={addGroup}
-                alt="Recuperar contraseña"
-              />
-            </div>
+              <div className="reset-password__card-header">
+                <h2>Restablecer contraseña</h2>
+                <p>Ingresá una nueva credencial. Mínimo 8 caracteres.</p>
+              </div>
 
-            <form onSubmit={formik.handleSubmit} noValidate>
-              <p className="forgotPassword-subtitle">
-                Ingresa tu correo electrónico y se enviará un enlace para restablecer tu contraseña.
-              </p>
+              {formError && (
+                <div className="reset-password__error">{formError}</div>
+              )}
 
-              <label htmlFor="email" className="login__label">
-                Correo electrónico
-              </label>
-
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Ingresa tu correo electrónico"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                onKeyDown={handleEnterKey}
-                autoFocus
-                error={formik.touched.email ? formik.errors.email : undefined}
-              />
-
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit || loading}
-                className="login__submit-button"
+              <form
+                onSubmit={formik.handleSubmit}
+                className="reset-password__form"
+                noValidate
               >
-                <span className="login__submit-text">
-                  {loading ? "Enviando…" : "Enviar enlace"}
-                </span>
-              </Button>
-            </form>
+                <div className="reset-password__field">
+                  <label htmlFor="newPassword">Nueva contraseña</label>
 
-            <div className="forgotPassword-actions">
-              <Link to="/login" replace className="login__forgot-link">
-                Volver a iniciar sesión
-              </Link>
-            </div>
-          </section>
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Ingresá tu nueva contraseña"
+                    value={formik.values.newPassword}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
+                    onIconClick={toggleShowPassword}
+                    autoFocus
+                    autoComplete="new-password"
+                    error={
+                      formik.touched.newPassword
+                        ? formik.errors.newPassword
+                        : undefined
+                    }
+                  />
+                </div>
 
-          <footer className="login__footer-area">
-            <img
-              className="login__image-footer"
-              src="https://i.ibb.co/LXbMbMm2/logo.png"
-              alt="Logo de la empresa"
-            />
+                <div className="reset-password__field">
+                  <label htmlFor="confirmNewPassword">
+                    Confirmar contraseña
+                  </label>
 
-            <p className="login__footer">
-              ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
-            </p>
+                  <Input
+                    id="confirmNewPassword"
+                    name="confirmNewPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Confirmá tu nueva contraseña"
+                    value={formik.values.confirmNewPassword}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    rightIcon={showConfirm ? <FaEyeSlash /> : <FaEye />}
+                    onIconClick={toggleShowConfirm}
+                    autoComplete="new-password"
+                    error={
+                      formik.touched.confirmNewPassword
+                        ? formik.errors.confirmNewPassword
+                        : ""
+                    }
+                  />
+                </div>
 
-            <p className="login__footer">
-              <span className="login__footer-text">Add Group 26.02.28.1</span>
-            </p>
-          </footer>
-        </div>
-      </main>
-    </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!canSubmit || loading}
+                  className="reset-password__submit-button"
+                >
+                  {loading
+                    ? t("resetPassword.submitting") || "Guardando..."
+                    : t("resetPassword.submit") || "Guardar contraseña"}
+                </Button>
+
+                <Link to="/login" className="reset-password__back-link">
+                  <FaArrowLeft />
+                  <span>Volver al inicio de sesión</span>
+                </Link>
+              </form>
+
+              <p className="reset-password__copyright">
+                © 2026 PC GROUP S.A. Todos los derechos reservados.
+              </p>
+            </section>
+          </main>
+
+          <svg
+            className="reset-password__wave"
+            viewBox="0 0 1440 320"
+            preserveAspectRatio="none"
+          >
+            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
+          </svg>
+        </aside>
+      </div>
+    </section>
   );
 }

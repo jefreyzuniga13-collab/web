@@ -3,7 +3,7 @@ import '@/Styles/Chat/DetailPanel/CategoryRow.css'
 import Tooltip from '@mui/material/Tooltip';
 // import noimageavailable from '@/assets/img/noimageavailable.webp'
 import type { SelectedInterface } from "./ProductTab";
-import aguamarina from '@/assets/img/aguamarina.png'
+import vacio from '@/assets/vacio.png'
 
 interface Props{
     cat?: CategoriaPCGInterface;
@@ -22,7 +22,7 @@ export const CategoryTab = ({
             <div className="category-row__image">
                 <img 
                 // src={cat?.imagen ?? noimageavailable}
-                src={cat?.imagen || aguamarina}
+                src={cat?.imagen || vacio}
                 // Para no mostrar texto, debido a que son muchas imagenes.
                 // alt="category image"
                 aria-label="category mage" 

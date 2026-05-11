@@ -62,32 +62,6 @@ export function SendMediaECommerceFromUrlAsync(
   )
 }
 
-
-// export function sendMedia(
-//   conversationId: number,
-//   file: File,
-//   caption?: string,
-//   externalId?: string | null,
-//   repliedParentMessageId?: number | null
-// ) {
-//   const form = new FormData()
-//   form.append("file", file)
-//   if (caption) form.append("caption", caption)
-//   if (externalId) form.append("externalId", externalId)
-//   if (repliedParentMessageId != null)
-//     form.append("repliedParentMessageId", String(repliedParentMessageId))
-
-//   return api.post<{ data: MessageDto }>(
-//     `/Webhook/${conversationId}/send/media`,
-//     form,
-//     {
-//       // por si el PDF es grande
-//       maxBodyLength: Infinity,
-//       maxContentLength: Infinity,
-//     }
-//   )
-// }
-
 export function sendMediaEcommerce(
   conversationId: number,
   file: File,
@@ -136,23 +110,61 @@ export function sendMedia(
       }
     }
   )
+  
+}
 
-  // }
+export function blockWhatsapp(waId: string) {
+  return api.post(
+    `/Webhook/whatsapp/blocks/${encodeURIComponent(waId)}`
+  );
+}
 
-  // export function sendMediaPDF(conversationId: number, file: File, caption?: string) {
-  //   const form = new FormData();
-  //   form.append("file", file);
-  //   if (caption) form.append("caption", caption);
+export function unblockWhatsapp(waId: string) {
+  return api.delete(
+    `/Webhook/whatsapp/blocks/${encodeURIComponent(waId)}`
+  );
+}
 
-  //   return api.post(`/Webhook/${conversationId}/send/media`, form, {
-  //     headers: {
-  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //       "Content-Type": undefined as any,
-  //     },
-  //     // por si tu pdf crece
-  //     maxBodyLength: Infinity,
-  //     maxContentLength: Infinity,
-  //   });
+export function getWhatsappBlocks() {
+  return api.get<{ data: string[] }>(
+    `/Webhook/whatsapp/blocks`
+  );
+}
+
+export function blockMessenger(psid: string) {
+  return api.post(
+    `/Webhook/messenger/blocks/${encodeURIComponent(psid)}`
+  );
+}
+
+export function unblockMessenger(psid: string) {
+  return api.delete(
+    `/Webhook/messenger/blocks/${encodeURIComponent(psid)}`
+  );
+}
+
+export function moveMessengerToSpam(psid: string) {
+  return api.post(
+    `/Webhook/messenger/spam/${encodeURIComponent(psid)}`
+  );
+}
+
+export function blockInstagram(instagramScopedId: string) {
+  return api.post(
+    `/Webhook/instagram/blocks/${encodeURIComponent(instagramScopedId)}`
+  );
+}
+
+export function unblockInstagram(instagramScopedId: string) {
+  return api.delete(
+    `/Webhook/instagram/blocks/${encodeURIComponent(instagramScopedId)}`
+  );
+}
+
+export function moveInstagramToSpam(instagramScopedId: string) {
+  return api.post(
+    `/Webhook/instagram/spam/${encodeURIComponent(instagramScopedId)}`
+  );
 }
 
 export async function DownloadMedia(

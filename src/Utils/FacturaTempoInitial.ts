@@ -54,5 +54,9 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   idPromocion: "75343",
   codreferido: "000",
   correo: "",
-  retiraSucursal: 'N'
+  retiraSucursal: 'N',
+  tipoComponente: 'P',
+  unico: '',
+  // Por defecto para los padres son 5 ceros, para las opciones se debe de enviar el del modificador
+  codModificador: '00000'
 };

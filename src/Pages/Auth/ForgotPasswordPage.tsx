@@ -1,118 +1,125 @@
+import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
-import { Link } from "react-router-dom";
-
-import "@/Styles/Auth/LoginPresentation.css";
+import { FaArrowLeft, FaEnvelope } from "react-icons/fa";
+import logo from "@/assets/img/pcgroup.png";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
-
-import addGroup from "@/assets/img/Add_Group_2025.png";
 
 export default function ForgotPasswordPresentation() {
   const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
 
   return (
-    <div className="login-GeneralContainer">
-      {/* IZQUIERDA */}
-      <aside className="login__banner" aria-label="Marketing banner">
-        <div className="login__banner-shape" />
-        <div className="login__banner-content">
-          <header className="login__banner-top">
-            <h2 className="login__banner-title">
-              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
-            </h2>
-            <p className="login__banner-subtitle">
-              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
-            </p>
-          </header>
+    <section className={`forgot-password ${loading ? "forgot-password--loading" : ""}`}>
+      <div className="forgot-password__shell">
+        <aside className="forgot-password__brand">
+          <div className="forgot-password__brand-overlay" />
 
-          <div className="login__banner-card">
-            <img
-              src="https://i.ibb.co/9HBdj911/7015971.jpg"
-              alt="Banner promocional"
-              className="login__banner-image"
-              loading="lazy"
-            />
+          <div className="forgot-password__brand-content">
+            <img src={logo} alt="Logo" className="forgot-password__brand-logo" />
+
+            <span className="forgot-password__badge">
+              Recuperación de acceso CRM
+            </span>
+
+            <h1>Recuperá el acceso</h1>
+
+            <p>
+              Ingresá tu correo electrónico y te enviaremos las instrucciones
+              necesarias para restablecer tu contraseña.
+            </p>
+
+            <div className="forgot-password__features">
+              <span>Seguro</span>
+              <span>Rápido</span>
+              <span>Verificado</span>
+              <span>Confiable</span>
+            </div>
           </div>
 
-          <p className="login__banner-text">
-            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos,
-            construye relaciones que cierran negocios. Comienza hoy mismo a transformar tu proceso comercial.
-          </p>
-        </div>
-      </aside>
+          <main className="forgot-password__form-panel">
+            <section
+              className={`forgot-password__card ${
+                formError ? "forgot-password__card--error" : ""
+              }`}
+            >
+              <div className="forgot-password__mobile-logo">
+                <img src={logo} alt="Logo" />
+              </div>
 
-      {/* DERECHA */}
-      <main className={`login ${loading ? "login--loading" : ""}`}>
-        <div className="login__panel">
-          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
-            {formError && <div className="login__error">{formError}</div>}
+              <div className="forgot-password__icon">
+                <FaEnvelope />
+              </div>
 
-            <div className="login__brand">
-              <img
-                className="login__brand-image"
-                src={addGroup}
-                alt="Recuperar contraseña"
-              />
-            </div>
+              <div className="forgot-password__card-header">
+                <h2>Recuperar contraseña</h2>
+                <p>
+                 Ingresá tu correo electrónico para continuar
+                </p>
+              </div>
 
-            <form onSubmit={formik.handleSubmit} noValidate>
-              <p className="forgotPassword-subtitle">
-                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
-              </p>
+              {formError && (
+                <div className="forgot-password__error">{formError}</div>
+              )}
 
-              <label htmlFor="email" className="login__label">
-                Correo electrónico
-              </label>
-
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Ingresa tu correo electrónico"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                autoFocus
-                error={formik.touched.email ? formik.errors.email : undefined}
-              />
-
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit || loading}
-                className="login__submit-button"
+              <form
+                onSubmit={formik.handleSubmit}
+                className="forgot-password__form"
+                noValidate
               >
-                <span className="login__submit-text">
-                  {loading ? "Enviando…" : "Enviar enlace"}
-                </span>
-              </Button>
+                <div className="forgot-password__field">
+                  <label htmlFor="email">
+                    Correo electrónico
+                  </label>
 
-              <p className="forgotPassword-back">
-                <Link to="/login" replace className="forgotPassword-link">
-                  Volver a iniciar sesión
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Ej: admin@empresa.com"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoFocus
+                    autoComplete="email"
+                    error={formik.touched.email ? formik.errors.email : undefined}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!canSubmit || loading}
+                  className="forgot-password__submit-button"
+                >
+                  {loading
+                    ?  "Enviando..."
+                      :"Enviar instrucciones"}
+                </Button>
+
+                <Link to="/login" className="forgot-password__back-link">
+                  <FaArrowLeft />
+                  <span>
+                    Volver al inicio de sesión
+                  </span>
                 </Link>
+              </form>
+
+              <p className="forgot-password__copyright">
+                © 2026 PC GROUP S.A. Todos los derechos reservados.
               </p>
-            </form>
-          </section>
+            </section>
+          </main>
 
-          <footer className="login__footer-area">
-            <img
-              className="login__image-footer"
-              src="https://i.ibb.co/LXbMbMm2/logo.png"
-              alt="Logo de la empresa"
-            />
-
-            <p className="login__footer">
-              ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
-            </p>
-
-            <p className="login__footer">
-              <span className="login__footer-text">Add Group 26.02.28.1</span>
-            </p>
-          </footer>
-        </div>
-      </main>
-    </div>
+          <svg
+            className="forgot-password__wave"
+            viewBox="0 0 1440 320"
+            preserveAspectRatio="none"
+          >
+            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
+          </svg>
+        </aside>
+      </div>
+    </section>
   );
 }

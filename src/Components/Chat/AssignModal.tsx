@@ -1,33 +1,24 @@
 import { X } from 'lucide-react'
 import { AgentCard } from '@/Components/Chat/AgentCard'
+import { useAssignModal } from '@/Hooks/Chat/useAssignModal'
 import '@/styles/Chat/AssignModal.css'
-import { useAssignModal } from '@/Hooks/Chat/useAssignModal';
 
 export const AssignModal: React.FC = () => {
-
   const {
-    isDropdownOpen,
-    statusOptions,
     conversation,
     isOpen,
-    selectedAgentData,
     agents,
-    selectedIsOnline,
-    setIsDropdownOpen,
-    setSelectedAgent,
-    selectedAgent,
-    handleAssign,
-    handleStatusChange,
+    handleAssignAgent,
     handleClose,
-    loading
-  } = useAssignModal();
+    loadingAgentId,
+    loadingAgents
+  } = useAssignModal()
 
-    if (!isOpen || !conversation) return null
+  if (!isOpen || !conversation) return null
 
   return (
     <div className="assign-modal__overlay">
       <div className="assign-modal__container">
-
         <header className="assign-modal__header">
           <div className="assign-modal__header-content">
             <h2 className="assign-modal__title">
@@ -36,133 +27,64 @@ export const AssignModal: React.FC = () => {
                 {conversation.clientContactName ?? `#${conversation.conversationId}`}
               </span>
             </h2>
+
             <button
               className="assign-modal__close-button"
               onClick={handleClose}
               aria-label="Cerrar modal"
               type="button"
+              disabled={loadingAgentId !== null}
             >
               <X size={20} />
             </button>
           </div>
         </header>
 
-
         <div className="assign-modal__body">
-          <div className="assign-modal__field">
-            <label className="assign-modal__label">Seleccionar agente</label>
-            <div className="assign-modal__dropdown">
-              <button
-                type="button"
-                className="assign-modal__dropdown-trigger"
-                // onClick={() => setIsDropdownOpen((o) => !o)}
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                aria-expanded={isDropdownOpen}
-              >
-                {selectedAgentData ? (
-                  <div className="assign-modal__selected-agent">
-                    <AgentCard agent={selectedAgentData} isCompact />
-                  </div>
-                ) : (
-                  <span className="assign-modal__placeholder">
-                    — Selecciona un agente —
-                  </span>
-                )}
-                <svg
-                  className={`assign-modal__dropdown-icon ${
-                    isDropdownOpen ? 'assign-modal__dropdown-icon--open' : ''
-                  }`}
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                >
-                  <path d="M4.427 6.573L8 10.146l3.573-3.573a.5.5 0 0 1 .707.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 1 1 .708-.708z" />
-                </svg>
-              </button>
-              {isDropdownOpen && (
-                <div className="assign-modal__dropdown-menu">
-                  <div className="assign-modal__dropdown-content">
-                    <button
-                      type="button"
-                      className="assign-modal__dropdown-item"
-                      onClick={() => {
-                        setSelectedAgent('')
-                        setIsDropdownOpen(false)
-                      }}
-                    >
-                      — Selecciona un agente —
-                    </button>
-                    {agents.map(agent => (
-                      <button
-                        key={agent.userId}
-                        type="button"
-                        className="assign-modal__dropdown-item"
-                        onClick={() => {
-                          setSelectedAgent(agent.userId.toString())
-                          setIsDropdownOpen(false)
-                        }}
-                      >
-                        <AgentCard agent={agent} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {loadingAgents ? (
+            <div className="assign-modal__empty">
+              Cargando agentes...
             </div>
-          </div>
-
-           <div className="assign-modal__field">
-            <label className="assign-modal__label">Estado de la conversación</label>
-            <div className="assign-modal__status-grid">
-
-              {statusOptions.map(option => (
-                <label
-                  key={option.value}
-                  className={`assign-modal__status-option assign-modal__status-option--${option.color} 
-                  assign-modal__status-option--selected`}
-                >
-                  <input
-                    type="radio"
-                    name="conversation-status"
-                    value={option.value}
-                    disabled={
-                      option.value === 'Human'
-                        ? !(selectedAgent && selectedIsOnline)
-                        : option.value === 'Bot'
-                        ? !!selectedAgent
-                        : false
-                    }
-                    onChange={() => handleStatusChange(option.value)}
-                    className="assign-modal__status-radio"
-                  />
-                  <span className="assign-modal__status-label">{option.label}</span>
-                </label>
-              ))}
-              
+          ) : agents.length === 0 ? (
+            <div className="assign-modal__empty">
+              No hay agentes disponibles.
             </div>
-          </div>
-          
+          ) : (
+            <div className="assign-modal__agents-list">
+              {agents.map(agent => {
+                const isAssigned = true
+
+                const isLoading =
+                  loadingAgentId === agent.userId
+
+                const isDisabled =
+                  loadingAgentId !== null || isAssigned
+
+                return (
+                  <button
+                    key={agent.userId}
+                    type="button"
+                    className={`assign-modal__agent-button ${
+                      isAssigned ? 'assign-modal__agent-button--assigned' : ''
+                    }`}
+                    onClick={() => handleAssignAgent(agent.userId)}
+                    disabled={isDisabled}
+                  >
+                    <AgentCard agent={agent} />
+
+                    <span className="assign-modal__agent-action">
+                      {isLoading
+                        ? 'Asignando...'
+                        : isAssigned
+                        ? 'Asignado'
+                        : ''}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
-
-
-        <footer className="assign-modal__footer">
-          <button
-            type="button"
-            className="assign-modal__button assign-modal__button--secondary"
-            onClick={handleClose}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="assign-modal__button assign-modal__button--primary"
-            onClick={handleAssign}
-            disabled={loading}
-          >
-            {loading ? "Cargando..." : "Guardar Cambios"}
-          </button>
-        </footer>
       </div>
     </div>
   )

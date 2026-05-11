@@ -75,6 +75,8 @@ class ProductPCGServ {
         ApiPCGResponse<ProductoModificadorPCGInterface[]>
       >(`Catalogos/ModificadorOpcion/${codProducto}`);
       return data.data;
+
+
     } catch (error) {
       throw formatError(error);
     }

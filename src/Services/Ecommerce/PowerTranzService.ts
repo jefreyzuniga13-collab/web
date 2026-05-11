@@ -1,110 +1,145 @@
 import { AxiosError } from "axios";
 import { apiPCG } from "@/Utils/ApiConfig";
-import type { ApiErrorResponse, ApiResponse, IniciarPagoServiceResponse, InitPaymentRequest, 
-  InitResponse, PagarConTokenServiceResponse, PowertranzFpiResponseDto, PowertranzPayWithTokenRequestDto, 
-  PowertranzVoidRequestDto, PowertranzVoidResponseDto } from "@/Interfaces/Ecommerce/powertranzInterface";
+import type {
+  ApiErrorResponse,
+  ApiResponse,
+  IniciarPagoServiceResponse,
+  InitPaymentRequest,
+  InitResponse,
+  PagarConTokenServiceResponse,
+  PowertranzFpiResponseDto,
+  PowertranzPayWithTokenRequestDto,
+  PowertranzProcessPaymentResultDto,
+  PowertranzVoidRequestDto,
+  PowertranzVoidResponseDto
+} from "@/Interfaces/Ecommerce/powertranzInterface";
 
-function obtenerMensajeError(
-  error: unknown,
-  fallbackMessage: string
-): { message: string; detail: string } {
+type Authenticate3dsRequest = {
+  spiToken: string;
+  orderId: string;
+};
+
+
+type CompleteFpiRequest = {
+  spiToken: string;
+  orderId: string;
+};
+
+type CompleteFpiServiceResponse = {
+  data: PowertranzProcessPaymentResultDto;
+  message?: string;
+};
+
+function obtenerMensajeError(error: unknown, fallbackMessage: string) {
   if (error instanceof AxiosError) {
     const data = error.response?.data as Partial<ApiErrorResponse> | undefined;
-
     return {
-      message:
-        typeof data?.messages === "string" && data.messages.trim().length > 0
-          ? data.messages
-          : fallbackMessage,
-      detail:
-        typeof data?.details === "string" && data.details.trim().length > 0
-          ? data.details
-          : error.message
+      message: data?.messages || fallbackMessage,
+      detail: data?.details || error.message
     };
   }
 
   if (error instanceof Error) {
-    return {
-      message: fallbackMessage,
-      detail: error.message
-    };
+    return { message: fallbackMessage, detail: error.message };
   }
 
-  return {
-    message: fallbackMessage,
-    detail: "Ocurrió un error inesperado."
-  };
+  return { message: fallbackMessage, detail: "Error inesperado." };
 }
 
 function validarRespuestaInit(response: ApiResponse<InitResponse>): IniciarPagoServiceResponse {
   if (!response.success) {
-    throw new Error(
-      JSON.stringify({
-        message: response.messages || "No fue posible iniciar el pago.",
-        detail: response.details || ""
-      })
-    );
+    throw new Error(JSON.stringify({
+      message: response.messages || "Error init",
+      detail: response.details || ""
+    }));
   }
 
-  return {
-    data: response.data,
-    message: response.messages
-  };
+  return { data: response.data, message: response.messages };
 }
 
-function validarRespuestaPayWithToken(
+function validarRespuestaToken(
   response: ApiResponse<PowertranzFpiResponseDto>
 ): PagarConTokenServiceResponse {
   if (!response.success) {
-    throw new Error(
-      JSON.stringify({
-        message: response.messages || "No fue posible iniciar el pago con token.",
-        detail: response.details || ""
-      })
-    );
+    throw new Error(JSON.stringify({
+      message: response.messages || "Error token",
+      detail: response.details || ""
+    }));
   }
 
-  return {
-    data: response.data,
-    message: response.messages
-  };
+  return { data: response.data, message: response.messages };
 }
 
-async function iniciarPago(payload: InitPaymentRequest): Promise<IniciarPagoServiceResponse> {
-  try {
-    const respuesta = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
-    return validarRespuestaInit(respuesta.data);
-  } catch (error: unknown) {
-    const errorNormalizado = obtenerMensajeError(error, "No fue posible iniciar el pago.");
-    throw new Error(JSON.stringify(errorNormalizado));
+function validarRespuestaComplete(
+  response: ApiResponse<PowertranzProcessPaymentResultDto>
+): CompleteFpiServiceResponse {
+  if (!response.success) {
+    throw new Error(JSON.stringify({
+      message: response.messages || "Error complete",
+      detail: response.details || ""
+    }));
   }
-}
 
-async function voidsync(
-  payload: PowertranzVoidRequestDto
-): Promise<ApiResponse<PowertranzVoidResponseDto>> {
-  const res = await apiPCG.post<ApiResponse<PowertranzVoidResponseDto>>("/powertranz/void", payload);
-  return res.data;
-}
-
-async function payWithTokensync(
-  payload: PowertranzPayWithTokenRequestDto
-): Promise<PagarConTokenServiceResponse> {
-  try {
-    const res = await apiPCG.post<ApiResponse<PowertranzFpiResponseDto>>(
-      "/powertranz/pay-with-token",
-      payload
-    );
-
-    return validarRespuestaPayWithToken(res.data);
-  } catch (error: unknown) {
-    const errorNormalizado = obtenerMensajeError(error, "No fue posible iniciar el pago con token.");
-    throw new Error(JSON.stringify(errorNormalizado));
-  }
+  return { data: response.data, message: response.messages };
 }
 
 export const powertranzService = {
-  iniciarPago,
-  voidsync,
-  payWithTokensync
+  async iniciarPago(payload: InitPaymentRequest) {
+    try {
+      const res = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
+      return validarRespuestaInit(res.data);
+    } catch (e) {
+      throw new Error(JSON.stringify(obtenerMensajeError(e, "Error init")));
+    }
+  },
+
+  async payWithToken(payload: PowertranzPayWithTokenRequestDto) {
+    try {
+      const res = await apiPCG.post<ApiResponse<PowertranzFpiResponseDto>>(
+        "/powertranz/pay-with-token",
+        payload
+      );
+      return validarRespuestaToken(res.data);
+    } catch (e) {
+      throw new Error(JSON.stringify(obtenerMensajeError(e, "Error token")));
+    }
+  },
+
+  async authenticate3ds(payload: Authenticate3dsRequest) {
+    try {
+      const res = await apiPCG.post<ApiResponse<PowertranzFpiResponseDto>>(
+        "/powertranz/fpi/3ds2/authenticate",
+        payload
+      );
+      return validarRespuestaToken(res.data);
+    } catch (e) {
+      throw new Error(JSON.stringify(obtenerMensajeError(e, "Error 3DS")));
+    }
+  },
+
+  async completeFpi(payload: CompleteFpiRequest) {
+    try {
+      const res = await apiPCG.post<ApiResponse<PowertranzProcessPaymentResultDto>>(
+        "/powertranz/fpi/complete",
+        payload
+      );
+      return validarRespuestaComplete(res.data);
+    } catch (e) {
+      throw new Error(JSON.stringify(obtenerMensajeError(e, "Error complete FPI")));
+    }
+  },
+
+  async void(payload: PowertranzVoidRequestDto) {
+    const res = await apiPCG.post<ApiResponse<PowertranzVoidResponseDto>>(
+      "/powertranz/void",
+      payload
+    );
+    return res.data;
+  }
+};
+
+export type {
+  Authenticate3dsRequest,
+  CompleteFpiRequest,
+  CompleteFpiServiceResponse
 };

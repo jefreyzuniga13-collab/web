@@ -88,6 +88,8 @@ class AuthService {
 
   async meAsync(): Promise<AuthMe> {
     const { data } = await api.get<ApiResponse<AuthMe>>('/Auth/me');
+
+    console.log("data", data)
     return data.data;
   }
 }

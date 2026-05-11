@@ -21,6 +21,7 @@ import "@/App.css";
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
+
 function sanitizeExternalUrl(url: string): string {
   if (isExternalUrl(url)) return url;
   return `https://${String(url).replace(/^\/+/, "")}`;

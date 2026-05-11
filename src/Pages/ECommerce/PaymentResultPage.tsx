@@ -30,13 +30,15 @@ export default function PaymentResultPage() {
     getParam(params.get("CardBrand")) || getParam(params.get("cardBrand"));
   const cardSuffix =
     getParam(params.get("CardSuffix")) || getParam(params.get("cardSuffix"));
+  const code = getParam(params.get("code"));
+  const message = getParam(params.get("message"));
 
   const orderId = Number(orderIdRaw);
   const isApproved = approved.toLowerCase() === "true";
 
   const { InsertaFacturaAsync } = useInvoiceOrder();
   const { fetchByContactId, UpdatedStatus } = useLogCart();
-  const { CreateCard, GetByUser } = useTarjetaPCG();
+  const { CreateCard } = useTarjetaPCG();
 
   useEffect(() => {
     if (executedRef.current) return;
@@ -45,12 +47,15 @@ export default function PaymentResultPage() {
     const run = async () => {
       try {
         if (!isApproved) {
-          navigate("/unauthorized", { replace: true });
-          return;
+          throw new Error(message || code || "Pago no aprobado.");
         }
 
         if (!orderIdRaw || Number.isNaN(orderId) || orderId <= 0) {
           throw new Error("orderId inválido.");
+        }
+
+        if (!transactionIdentifier) {
+          throw new Error("transactionIdentifier inválido.");
         }
 
         const payloadRaw = sessionStorage.getItem(CHECKOUT_PAYLOAD_KEY);
@@ -73,7 +78,7 @@ export default function PaymentResultPage() {
             CodStrCadsaccion: String(orderId),
             Codtransaccion: transactionIdentifier,
             CuentaHabiente: cardBrand,
-            ultDigito: getLast4(cardSuffix || panToken),
+            ultDigito: cardSuffix,
           })),
         };
 
@@ -92,41 +97,24 @@ export default function PaymentResultPage() {
           navigate,
         });
 
-        console.log("saveCardFlag", saveCardFlag)
-        console.log("ecommerceUserId", ecommerceUserId);
-        console.log("panToken: ", panToken);
+        if (saveCardFlag === "S" && ecommerceUserId > 0 && panToken) {
+          const tarjetaNueva: TarjetaModelInterface = {
+            numero: getLast4(cardSuffix || panToken),
+            cVV2: "",
+            fechaVencimiento: "",
+            idUsuario: ecommerceUserId,
+            porDefecto: false,
+            titular: payload?.fullName ?? "",
+            correo: payload?.email ?? "",
+            telefono: payload?.phoneNumber ?? "",
+            panToken,
+            spiToken: "",
+            marca: cardBrand || "",
+            ultimos4: getLast4(cardSuffix || panToken),
+          };
 
-        if (
-          saveCardFlag === "S" &&
-          ecommerceUserId > 0 &&
-          panToken
-        ) {
-
-          // const tarjetasUsuario = await GetByUser(ecommerceUserId);
-          // const yaExiste = tarjetasUsuario.some(
-          //   (x) => (x.panToken ?? "").trim() === panToken.trim()
-          // );
-
-          // if (!yaExiste) {
-            const tarjetaNueva: TarjetaModelInterface = {
-              // idTarjeta: '',
-              numero: getLast4(cardSuffix || panToken),
-              cVV2: '',
-              fechaVencimiento: '',
-              idUsuario: ecommerceUserId,
-              porDefecto: false,
-              titular: payload?.fullName ?? '',
-              correo: payload?.email ?? '',
-              telefono: payload?.phoneNumber ?? '',
-              panToken,
-              spiToken: '',
-              marca: cardBrand || '',
-              ultimos4: getLast4(cardSuffix || panToken),
-            };
-
-            await CreateCard(tarjetaNueva);
-          }
-        // }
+          await CreateCard(tarjetaNueva);
+        }
 
         sessionStorage.removeItem(SAVE_CARD_AFTER_PAYMENT_KEY);
       } catch (err: unknown) {
@@ -139,7 +127,6 @@ export default function PaymentResultPage() {
         }
       }
     };
-
     void run();
   }, [
     isApproved,
@@ -149,37 +136,15 @@ export default function PaymentResultPage() {
     panToken,
     cardBrand,
     cardSuffix,
+    code,
+    message,
     fetchByContactId,
     UpdatedStatus,
     InsertaFacturaAsync,
     dispatch,
     navigate,
     CreateCard,
-    GetByUser,
   ]);
 
   return null;
 }
-
-
-
-// {
-//     "success": true,
-//     "data": {
-//         "idTarjeta": null,
-//         "numero": "8zzy",
-//         "cvV2": "",
-//         "fechaVencimiento": "",
-//         "idUsuario": 8,
-//         "porDefecto": false,
-//         "titular": "CRM TEST - WHATSAPP",
-//         "correo": "",
-//         "telefono": "",
-//         "panToken": "agt1f0da33n3plu8u4c8a648w53eh7ej0bw5c5295b63u8zzy",
-//         "spiToken": "",
-//         "marca": "Visa",
-//         "ultimos4": "8zzy"
-//     },
-//     "message": "Tarjeta agregada con éxito",
-//     "totalItems": null
-// }

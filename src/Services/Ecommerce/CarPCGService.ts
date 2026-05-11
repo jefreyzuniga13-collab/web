@@ -160,15 +160,16 @@ class CartServ {
     return data;
   }
   async LimpiarFacturaTempo(
-    usuario: string,
-    maquina: string,
-  ): Promise<ApiResponse<null>> {
-    const { data } = await apiPCG.get<ApiResponse<null>>(
-      `CarritoCompra/Limpiar_Factura_Tempo/${usuario}/${maquina}`,
-    );
+  usuario: string,
+  maquina: string,
+): Promise<ApiResponse<null>> {
+  const { data } = await apiPCG.get<ApiResponse<null>>(
+    `CarritoCompra/Limpiar_Factura_Tempo/${usuario}/${maquina}`,
+  )
 
-    return data;
-  }
+  return data
+}
+  
 }
 
 export const CartService = new CartServ();

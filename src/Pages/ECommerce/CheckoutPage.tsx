@@ -51,6 +51,7 @@ import type {
 } from "@/Interfaces/Ecommerce/powertranzInterface";
 import type {TarjetaModelInterface} from '@/Interfaces/Ecommerce/TarjetaInterface'
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
+import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -63,21 +64,21 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   return {
-    browserLanguage: window?.navigator?.language ?? "es-NI",
-    browserScreenHeight: window?.screen?.height?.toString() ?? "",
-    browserScreenWidth: window?.screen?.width?.toString() ?? "",
-    browserTimeZone: String(new Date().getTimezoneOffset() * -1),
-    browserUserAgent: window?.navigator?.userAgent ?? "",
-    browserIp: null,
-    browserJavaEnabled:
+    Language: window?.navigator?.language ?? "es-NI",
+    ScreenHeight: window?.screen?.height?.toString() ?? "",
+    ScreenWidth: window?.screen?.width?.toString() ?? "",
+    TimeZone: String(new Date().getTimezoneOffset() * -1),
+    UserAgent: window?.navigator?.userAgent ?? "",
+    Ip: null,
+    JavaEnabled:
       typeof window !== "undefined" && typeof window.navigator?.javaEnabled === "function"
         ? window.navigator.javaEnabled()
         : false,
-    browserJavascriptEnabled: true,
-    browserColorDepth: window?.screen?.colorDepth?.toString() ?? "",
-    challengeWindowSize: 5,
-    challengeIndicator: "01",
-    browserAcceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    JavascriptEnabled: true,
+    ColorDepth: window?.screen?.colorDepth?.toString() ?? "",
+    ChallengeWindowSize: 5,
+    ChallengeIndicator: "01",
+    AcceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
   };
 }
 
@@ -168,6 +169,8 @@ const CheckoutPage: React.FC = () => {
     [cartTotal, transpCost, tip]
   );
 
+    const { mutateAsync: completeFpiAsync } = useCompleteFpi();
+  
   const {
     currency,
     GetCurrencyAsync,
@@ -180,49 +183,75 @@ const CheckoutPage: React.FC = () => {
   const { fetchByContactId, UpdatedStatus } = useLogCart();
   const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation();
 
-  //en el componente principal
-  const iniciarPagoMutation = useIniciarPago({
-    onSuccess: (response) => {
+const iniciarPagoMutation = useIniciarPago({
+  onSuccess: (response) => {
+    navigate("/payment-hosted", {
+      state: {
+        payment: {
+          redirectData: response.data.redirectData,
+          spiToken: response.data.spiToken,
+          orderId: response.data.orderId,
+          mode: "hosted"
+        }
+      }
+    });
+  }
+});
+
+const payWithTokenMutation = usePayWithToken({
+  onSuccess: async (response) => {
+    const data = response.data;
+
+    const redirectData =
+      data.riskManagement?.threeDSecure?.redirectData ??
+      data.redirectData ??
+      "";
+
+    const authStatus = data.riskManagement?.threeDSecure?.authenticationStatus ?? "";
+    const isoCode = data.isoResponseCode ?? "";
+    const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
+
+    if (redirectData) {
       navigate("/payment-hosted", {
         state: {
-          payment: response.data
+          payment: {
+            redirectData,
+            spiToken: data.spiToken,
+            orderId: data.orderIdentifier,
+            mode: "token-3ds"
+          }
         }
       });
+      return;
     }
-  });
 
-  const payWithTokenMutation = usePayWithToken({
-    onSuccess: (response) => {
-      if (response.data.redirectData) {
-        console.log("Datos recibidos en payWithTokenMutation son: ", JSON.stringify(response))
-        navigate("/payment-hosted", {
-          state: {
-            payment: {
-              orderId: response.data.orderIdentifier ?? "",
-              transactionIdentifier: response.data.transactionIdentifier ?? "",
-              isoResponseCode: response.data.isoResponseCode ?? "",
-              responseMessage: response.data.responseMessage ?? "",
-              redirectData: response.data.redirectData ?? "",
-              spiToken: response.data.spiToken ?? ""
-            }
-          }
-        });
-        return;
-      }
+    if (threeDsCompleted) {
+      const completeRes = await completeFpiAsync({
+        spiToken: data.spiToken ?? "",
+        orderId: data.orderIdentifier ?? ""
+      });
+
+      const payment = completeRes.data.payment;
 
       const params = new URLSearchParams({
-        approved: String(response.data.approved ?? false),
-        orderId: response.data.orderIdentifier ?? "",
-        transactionIdentifier: response.data.transactionIdentifier ?? "",
-        panToken: response.data.panToken ?? "",
-        cardBrand: response.data.cardBrand ?? "",
-        code: response.data.isoResponseCode ?? "",
-        message: response.data.responseMessage ?? ""
+        approved: String(completeRes.data.approved ?? false),
+        orderId: payment?.orderIdentifier ?? "",
+        transactionIdentifier: payment?.transactionIdentifier ?? "",
+        panToken: payment?.panToken ?? "",
+        cardBrand: payment?.cardBrand ?? "",
+        cardSuffix: payment?.cardSuffix ?? "",
+        code: completeRes.data.isoResponseCode ?? "",
+        message: completeRes.data.responseMessage ?? "",
       });
 
       navigate(`/payment-result?${params.toString()}`, { replace: true });
+      return;
     }
-  });
+
+    navigate("/unauthorized", { replace: true });
+  }
+});
+
 
   useEffect(() => {
     if (!payload?.contactId) return;
@@ -459,55 +488,57 @@ const CheckoutPage: React.FC = () => {
     return "card";
   };
 
-  const getDivisaConfig = (): ObtenerDivisaPagosTipoReq => {
-    return {
-      codigo: "0",
-      formulario: "1-",
-      opcion: safeStr(selectedCurrency?.codPago)
-    };
+const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
+  return {
+    codigo: "0",
+    formulario: "1-",
+    opcion: safeStr(item?.codPago)
   };
+};
 
-  const loadDivisaIfNeeded = async () => {
-    setDivisaLoading(true);
-    try {
-      const req = getDivisaConfig();
-      const resp = await CartService.GetDivisaPagosTipoAsync(req);
+const loadDivisaIfNeeded = async (item: Currencyto) => {
+  setDivisaLoading(true);
 
-      const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
-      const fixed: ObtenerDivisaPagosTipoRes[] = list
-        .filter(Boolean)
-        .map((x: ObtenerDivisaPagosTipoRes) => ({
-          nombre: safeStr(x?.nombre),
-          codigo: safeStr(x?.codigo),
-          codigoExterno: safeStr(x?.codigoExterno),
-          tipo: safeStr(x?.tipo),
-          banco: safeStr(x?.banco),
-          aCambio: safeStr(x?.aCambio)
-        }))
-        .filter((x) => x.codigo || x.codigoExterno || x.nombre);
+  try {
+    const req = getDivisaConfig(item);
+    const resp = await CartService.GetDivisaPagosTipoAsync(req);
 
-      setDivisaOpts(fixed);
-      setDivisaSelected(fixed.length > 0 ? fixed[0] : null);
-    } catch {
-      setDivisaOpts([]);
-      setDivisaSelected(null);
-    } finally {
-      setDivisaLoading(false);
-    }
-  };
+    const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
 
-  const handleSelectCurrency = (item: Currencyto) => {
-    setSelectedCurrency(item);
-    const next = resolveMethod(item);
-    setMethod(next);
+    const fixed: ObtenerDivisaPagosTipoRes[] = list
+      .filter(Boolean)
+      .map((x: ObtenerDivisaPagosTipoRes) => ({
+        nombre: safeStr(x?.nombre),
+        codigo: safeStr(x?.codigo),
+        codigoExterno: safeStr(x?.codigoExterno),
+        tipo: safeStr(x?.tipo),
+        banco: safeStr(x?.banco),
+        aCambio: safeStr(x?.aCambio)
+      }))
+      .filter((x) => x.codigo || x.codigoExterno || x.nombre);
 
+    setDivisaOpts(fixed);
+    setDivisaSelected(fixed.length > 0 ? fixed[0] : null);
+  } catch {
     setDivisaOpts([]);
     setDivisaSelected(null);
+  } finally {
+    setDivisaLoading(false);
+  }
+};
+const handleSelectCurrency = (item: Currencyto) => {
+  setSelectedCurrency(item);
 
-    if (next === "card" || next === "transfer") {
-      void loadDivisaIfNeeded();
-    }
-  };
+  const next = resolveMethod(item);
+  setMethod(next);
+
+  setDivisaOpts([]);
+  setDivisaSelected(null);
+
+  if (next === "card" || next === "transfer") {
+    void loadDivisaIfNeeded(item);
+  }
+};
 
   const getCoordsForFlow = (): Coords | null => {
     const addr = selectedAddress ?? addressList[0] ?? null;
@@ -937,14 +968,14 @@ const CheckoutPage: React.FC = () => {
         detallePago
       } as FacturaTempo;
 
-      if (method === "card") {
-        const totalMonto = Number(existingLog?.totalEnPantalla ?? 0);
+  if (method === "card") {
+    const totalMonto = Number(existingLog?.totalEnPantalla ?? 0);
 
-        sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
-        sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
-        sessionStorage.setItem(ECOMMERCEUSERID_KEY, JSON.stringify(ecommerceUserId));
+    sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
+    sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
+    sessionStorage.setItem(ECOMMERCEUSERID_KEY, JSON.stringify(ecommerceUserId));
 
-        if (selectedSavedCard?.panToken) {
+  if (selectedSavedCard?.panToken) {
           const requestToken: PowertranzPayWithTokenRequestDto = {
             transactionIdentifier: null,
             orderId: String(dataconse?.data?.consecutivo ?? ""),

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
-import "@/Styles/Chat/SupportPage.css";
-import { FaFilter, FaUserAlt } from "react-icons/fa";
+import { FaFilter, FaPhoneAlt, FaUserAlt } from "react-icons/fa";
+// import { BiSolidBuildingHouse } from "react-icons/bi";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import Input from "@/Components/Common/Input";
@@ -16,7 +16,10 @@ import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/Context";
+import "@/Styles/Chat/SupportPage.css";
 import useLogCart from "@/Hooks/Crm/useLogCard";
+import { MdContacts } from "react-icons/md";
+import { IoMdCloseCircleOutline } from "react-icons/io";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
@@ -42,12 +45,13 @@ const SupportPage: React.FC = () => {
     convId,
     isAdmin,
     handleAssignClick,
+    handleCloseClick,
     sortedOptions,
     handleOptionChange,
     setConvId,
     filter,
     userId,
-    extraerNumero,
+    // extraerNumero,
     selectedParam,
     label,
     canAssign,
@@ -168,31 +172,29 @@ const SupportPage: React.FC = () => {
         <div className="inbox-header">
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
-            <button
-              className="sort-button"
-              onClick={() => setOrderModalVisible(true)}
-              title="Ordenar filtros"
-            >
-              <FaFilter className="sort-button-icon" />
-            </button>
+
+            <div>
+              {/* <button
+                className="sort-button"
+                onClick={()=> {
+                  
+                }}
+                title="Filtrar por empresa"
+                >
+                  <BiSolidBuildingHouse  className="sort-button-icon" />
+                </button> */}
+                
+                <button
+                  className="sort-button"
+                  onClick={() => setOrderModalVisible(true)}
+                  title="Ordenar filtros"
+                >
+                  <FaFilter className="sort-button-icon" />
+                </button>
+            </div>
           </div>
 
-          <div className="inbox-status__container">
-            {sortedOptions.map((opt) => (
-              <label key={opt.value} className="inbox-status__label">
-                <input
-                  id={opt.value}
-                  type="radio"
-                  name="filters"
-                  value={opt.value}
-                  checked={filter === opt.value}
-                  onChange={handleOptionChange}
-                  className="inbox-status__input"
-                />
-                {opt.content}
-              </label>
-            ))}
-          </div>
+       
 
           <div className="inbox-title-container__filter">
             <Input
@@ -219,17 +221,27 @@ const SupportPage: React.FC = () => {
       <main className="main-content">
         <header className="main-header">
           <h2 className="main-title">
-            {convId != null && activeConversation?.systemDefinedCompanyName != null
-              ? `${activeConversation.systemDefinedCompanyName} | `
+            {/* Empresa */}
+            {convId != null && activeConversation?.systemDefinedCompanyName != null ? 
+               <span style={{ marginLeft: '5px', marginRight: '5px' }} className="main_header-text" >
+                <MdContacts fontSize={12} className="main_header-icon" /> {activeConversation.systemDefinedCompanyName}
+              </span>  : ""}
+            
+            {/* Contacto */}
+            {convId != null && activeConversation?.clientContactName != null ? 
+              <span style={{ marginLeft: '5px', marginRight: '5px' }}  className="main_header-text">
+                <MdContacts fontSize={12}  className="main_header-icon"/> {activeConversation.clientContactName}
+              </span> 
               : ""}
-            {convId != null && activeConversation?.clientContactName != null
-              ? `Contacto: ${activeConversation.clientContactName} | `
-              : " "}
-            {convId != null && "Télefono: "}
-            {activeConversation?.contactNumber == null
-              ? ""
-              : extraerNumero(activeConversation.contactNumber)}
+            
+            {/* Telefono */}
+            {convId != null && activeConversation?.contactNumber != null ? 
+              <span style={{ marginLeft: '5px', marginRight: '5px',  }}  className="main_header-text">
+                 <FaPhoneAlt fontSize={12} className="main_header-icon" /> {activeConversation.contactNumber}
+              </span> 
+              : ""}
           </h2>
+
 
           <div className="btn-container">
             {convId && contact?.clienteCodigo && (
@@ -240,8 +252,14 @@ const SupportPage: React.FC = () => {
                 <Sticker size={16} /> Crear Ticket
               </button>
             )}
-
             {convId && (
+              
+              <div className={`inbox-list__action ${isClosed ? "btnDisabled" : ""}`}>
+              <button className={`close-btn`} onClick={handleCloseClick}>
+                <IoMdCloseCircleOutline size={14} /> Cerrar
+              </button>
+            
+
               <button
                 className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${isClosed ? "btnDisabled" : ""}`}
                 onClick={handleAssignClick}
@@ -249,6 +267,8 @@ const SupportPage: React.FC = () => {
               >
                 <FaUserAlt size={16} /> {label}
               </button>
+
+              </div>
             )}
           </div>
         </header>
@@ -313,6 +333,9 @@ const SupportPage: React.FC = () => {
           handleDate={convHook.handleDate}
           applyDateFilter={convHook.applyDateFilter}
           clearFilter={convHook.clearFilter}
+          handleOptionChange={handleOptionChange}
+          sortedOptions={sortedOptions}
+          filter={filter}
         />
       )}
 

@@ -54,6 +54,10 @@ export interface FacturaTempo {
   codreferido: string;
   correo: string;
   retiraSucursal: string;
+
+  codModificador?: string
+  tipoComponente?: string
+  unico?: string;
 }
 
 //este modelo se pasa a todos:

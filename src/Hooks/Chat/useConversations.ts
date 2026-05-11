@@ -7,7 +7,9 @@ import type {
   AttachmentDto,
 } from "@/Interfaces/Chat/ChatInterfaces";
 import type { PaginationInfo } from "@/Interfaces/Common/GlobalInterface";
-import { joinConversation, leaveConversation } from "@/Services/signalr/signalr";
+import { joinConversation
+  // , leaveConversation 
+} from "@/Services/signalr/signalr";
 import { ConversationService } from "@/Services/chat/ConversationService";
 import { useSelector } from "react-redux";
 
@@ -287,112 +289,147 @@ export function useConversations(
     [normalizeConversation, sortByActivity]
   );
 
+
   const handleUpdatedConvo = useCallback(
-    (updated: ConversationDto) => {
-      console.log("[HOOK handleUpdatedConvo received]", updated);
+  (updated: ConversationDto) => {
+    const normalizedUpdated = normalizeConversation(updated);
 
-      const normalizedUpdated = normalizeConversation(updated);
+    setConversations((prev) => {
+      const current = prev.find(
+        (p) => p.conversationId === normalizedUpdated.conversationId
+      );
 
-      setConversations((prev) => {
-        console.log("[HOOK handleUpdatedConvo prev]", prev);
+      const mergedConversation = mergeConversation(current, normalizedUpdated);
 
-        const current = prev.find(
-          (p) => p.conversationId === normalizedUpdated.conversationId
-        );
+      void joinConversation(mergedConversation.conversationId);
 
-        const mergedConversation = mergeConversation(current, normalizedUpdated);
+      const base = prev.filter(
+        (p) =>
+          p.conversationId !== mergedConversation.conversationId &&
+          p.clientContactId !== mergedConversation.clientContactId
+      );
 
-        const belongsToMe =
-          Number(mergedConversation.assignedAgentId ?? 0) === Number(userId);
+      const merged = matchesFilter(mergedConversation)
+        ? [mergedConversation, ...base]
+        : base;
 
-        console.log("[HOOK handleUpdatedConvo merged]", {
-          mergedConversation,
-          belongsToMe,
-          isAdmin,
-          filter,
-        });
+      return dedupeByClientKeepNewest(merged);
+    });
+  },
+  [
+    dedupeByClientKeepNewest,
+    matchesFilter,
+    mergeConversation,
+    normalizeConversation,
+  ]
+);
+  
+// const handleUpdatedConvo = useCallback(
+  //   (updated: ConversationDto) => {
+  //     console.log("[HOOK handleUpdatedConvo received]", updated);
 
-        if (!isAdmin) {
-          const shouldRemoveFromHuman =
-            filter === "human" &&
-            !belongsToMe &&
-            mergedConversation.status === "Human";
+  //     const normalizedUpdated = normalizeConversation(updated);
 
-          console.log("[HOOK handleUpdatedConvo non-admin]", {
-            shouldRemoveFromHuman,
-            conversationId: mergedConversation.conversationId,
-          });
+  //     setConversations((prev) => {
+  //       console.log("[HOOK handleUpdatedConvo prev]", prev);
 
-          if (shouldRemoveFromHuman) {
-            const removed = prev.filter(
-              (p) => p.conversationId !== mergedConversation.conversationId
-            );
+  //       const current = prev.find(
+  //         (p) => p.conversationId === normalizedUpdated.conversationId
+  //       );
 
-            console.log("[HOOK handleUpdatedConvo removing]", {
-              removed,
-              conversationId: mergedConversation.conversationId,
-            });
+  //       const mergedConversation = mergeConversation(current, normalizedUpdated);
 
-            void leaveConversation(mergedConversation.conversationId);
+  //       const belongsToMe =
+  //         Number(mergedConversation.assignedAgentId ?? 0) === Number(userId);
 
-            window.dispatchEvent(
-              new CustomEvent("ConversationLost", {
-                detail: { conversationId: mergedConversation.conversationId },
-              })
-            );
+  //       console.log("[HOOK handleUpdatedConvo merged]", {
+  //         mergedConversation,
+  //         belongsToMe,
+  //         isAdmin,
+  //         filter,
+  //       });
 
-            return removed;
-          }
+  //       if (!isAdmin) {
+  //         const shouldRemoveFromHuman =
+  //           filter === "human" &&
+  //           !belongsToMe &&
+  //           mergedConversation.status === "Human";
 
-          console.log("[HOOK handleUpdatedConvo joinConversation]", {
-            conversationId: mergedConversation.conversationId,
-          });
-          void joinConversation(mergedConversation.conversationId);
+  //         console.log("[HOOK handleUpdatedConvo non-admin]", {
+  //           shouldRemoveFromHuman,
+  //           conversationId: mergedConversation.conversationId,
+  //         });
 
-          const base = prev.filter(
-            (p) =>
-              p.conversationId !== mergedConversation.conversationId &&
-              p.clientContactId !== mergedConversation.clientContactId
-          );
+  //         if (shouldRemoveFromHuman) {
+  //           const removed = prev.filter(
+  //             (p) => p.conversationId !== mergedConversation.conversationId
+  //           );
 
-          const merged = matchesFilter(mergedConversation)
-            ? [mergedConversation, ...base]
-            : base;
+  //           console.log("[HOOK handleUpdatedConvo removing]", {
+  //             removed,
+  //             conversationId: mergedConversation.conversationId,
+  //           });
 
-          const result = dedupeByClientKeepNewest(merged);
+  //           void leaveConversation(mergedConversation.conversationId);
 
-          console.log("[HOOK handleUpdatedConvo result non-admin]", result);
+  //           window.dispatchEvent(
+  //             new CustomEvent("ConversationLost", {
+  //               detail: { conversationId: mergedConversation.conversationId },
+  //             })
+  //           );
 
-          return result;
-        }
+  //           return removed;
+  //         }
 
-        const baseAdmin = prev.filter(
-          (p) =>
-            p.conversationId !== mergedConversation.conversationId &&
-            p.clientContactId !== mergedConversation.clientContactId
-        );
+  //         console.log("[HOOK handleUpdatedConvo joinConversation]", {
+  //           conversationId: mergedConversation.conversationId,
+  //         });
+  //         void joinConversation(mergedConversation.conversationId);
 
-        const mergedAdmin = matchesFilter(mergedConversation)
-          ? [mergedConversation, ...baseAdmin]
-          : baseAdmin;
+  //         const base = prev.filter(
+  //           (p) =>
+  //             p.conversationId !== mergedConversation.conversationId &&
+  //             p.clientContactId !== mergedConversation.clientContactId
+  //         );
 
-        const result = dedupeByClientKeepNewest(mergedAdmin);
+  //         const merged = matchesFilter(mergedConversation)
+  //           ? [mergedConversation, ...base]
+  //           : base;
 
-        console.log("[HOOK handleUpdatedConvo result admin]", result);
+  //         const result = dedupeByClientKeepNewest(merged);
 
-        return result;
-      });
-    },
-    [
-      dedupeByClientKeepNewest,
-      filter,
-      isAdmin,
-      matchesFilter,
-      mergeConversation,
-      normalizeConversation,
-      userId,
-    ]
-  );
+  //         console.log("[HOOK handleUpdatedConvo result non-admin]", result);
+
+  //         return result;
+  //       }
+
+  //       const baseAdmin = prev.filter(
+  //         (p) =>
+  //           p.conversationId !== mergedConversation.conversationId &&
+  //           p.clientContactId !== mergedConversation.clientContactId
+  //       );
+
+  //       const mergedAdmin = matchesFilter(mergedConversation)
+  //         ? [mergedConversation, ...baseAdmin]
+  //         : baseAdmin;
+
+  //       const result = dedupeByClientKeepNewest(mergedAdmin);
+
+  //       console.log("[HOOK handleUpdatedConvo result admin]", result);
+
+  //       return result;
+  //     });
+  //   },
+  //   [
+  //     dedupeByClientKeepNewest,
+  //     filter,
+  //     isAdmin,
+  //     matchesFilter,
+  //     mergeConversation,
+  //     normalizeConversation,
+  //     userId,
+  //   ]
+  // );
 
   const handleNewMessage = useCallback(
     (payload: { message: MessageDto; attachments: AttachmentDto[] }) => {

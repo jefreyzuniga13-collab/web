@@ -6,7 +6,7 @@ import { IoMdSend } from "react-icons/io"
 import { MdInventory } from "react-icons/md"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import aguamarina from "@/assets/img/aguamarina.png"
+import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
@@ -28,9 +28,10 @@ export const ProductPCGTab = ({
   handleChangeSimpleQuantity,
   cartLoading,
 }: Props) => {
-  const { addProduct } = useCartPCGFlowCtx()
-  const { sending, sendProductMessage } = useProductMessageComposer()
 
+  const { addProduct} = useCartPCGFlowCtx()
+  const { sending, sendProductMessage } = useProductMessageComposer()
+  
   const handleOpenDetail = useCallback(() => {
     if (onClick) onClick(prod)
   }, [onClick, prod])
@@ -56,12 +57,17 @@ export const ProductPCGTab = ({
     [sendProductMessage, prod, conversationId]
   )
 
+  // addProduct, mismo metodo usado en el DetailPCGProduct, 
+  //con las modificadores, validar las opciones por defceto y demas logica que es la misma
+  //aqui no se muestran los modificadoe solo el producto en si, por lo que es probable que no seleccione o se debe de lanzar un mensaje de error y no procgiuir por ejemplo
+  //cando una opcion de los modificadores es obligatoria y desde este listad o general no se selecciona, asi el usuario navegaria o tendria que ir al detalle para ver los modificadors y selecciona, etc
+
   return (
     <div className="productPCG-row">
       <div className="productPCG-row-header" onClick={handleOpenDetail}>
         <div className="productPCG-row__image">
           <img
-            src={prod.imagen || aguamarina}
+            src={prod.imagen || vacio}
             aria-label="product image"
             className="product-image"
           />
@@ -119,6 +125,7 @@ export const ProductPCGTab = ({
           </button>
         </div>
 
+            
         <Button
           variant="tertiary"
           className="product-row__btn"

@@ -5,6 +5,7 @@
     /* height: 100%; */
     width: 100%;
     max-width: 100%;
+    min-height: 100vh;
     overflow-x: hidden;
     overflow-y:auto;
     margin-bottom: 12rem;
@@ -111,6 +112,7 @@
     text-align: left;
 }
 
+
 .detail-product__descriptions{
     color: var(--color-gray-800);
     padding: 0;
@@ -125,6 +127,7 @@
     margin: 0 !important;
     text-transform: lowercase;
     font-size: var(--font-size-base);
+    text-align: left;
 }
 .detail-product__content{
     color: var(--color-gray-600);
@@ -157,7 +160,7 @@
     font-size: var(--font-size-base);
     padding: 0;
     margin: 0;
-    text-align: right;
+    text-align: left;
 }
 
 .detail-product__inputNumber{

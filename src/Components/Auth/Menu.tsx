@@ -4,7 +4,7 @@ import * as Icons from 'lucide-react';
 import { useMenus } from '@/Hooks/Auth/useMenus';
 import MenuItem from '@/Components/Auth/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/Context/Slices/Auth/authSlice';
 // import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Auth/Navbar.css';
@@ -15,6 +15,7 @@ import { markOffline } from '@/Hooks/Auth/useUserPresence';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 import { useAuth } from '@/Hooks/Auth/useAuth'
 import Profile from '@/assets/img/profile.png'
+import { selectCompanyImageUrl } from '@/Context/Slices/Auth/authSlice';
 interface NavbarProps {
   id: number;
 }
@@ -26,6 +27,10 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+    //llega en null, no debria por que esta pesistido incluso
+  const CompanyImageUrl = useSelector(selectCompanyImageUrl);
+
   const { currentUser, loading: userLoading, fetchOne } = useUsers();
 
   const { logout: logoutAuth } = useAuth()
@@ -60,8 +65,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
     <nav className={`navbar ${collapsed ? 'navbar--collapsed' : ''}`}>
       <div className="navbar__header">
         <img
-          src="https://i.ibb.co/B5tvT539/logopcg.webp"
-          alt="PC Group S.A logo"
+          src={CompanyImageUrl ?? ''}
+          alt="Logo"
           className="navbar__logo"
         />
         

@@ -41,11 +41,15 @@ export function useAuth(): UseAuthHook {
 
   const loginMutation = useMutation({
     mutationFn: (payload: LoginRequest) => authService.loginAsync(payload),
+
     onSuccess: (response) => {
+      
       dispatch(setCredentials(response.data));
+
       toast.success(response.message);
       navigate("/chat", { replace: true });
     },
+    
     onError: (error) => {
       toast.error(formatErrorMessage(error));
     },

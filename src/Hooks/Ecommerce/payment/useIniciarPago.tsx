@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import {toast} from 'react-toastify'
-import { powertranzService, type IniciarPagoServiceResponse } from "@/Services/Ecommerce/PowerTranzService";
-import type { InitPaymentRequest } from "@/Interfaces/Ecommerce/powertranzInterface";
+import { powertranzService } from "@/Services/Ecommerce/PowerTranzService";
+import type { IniciarPagoServiceResponse, InitPaymentRequest } from "@/Interfaces/Ecommerce/powertranzInterface";
 
 type UseIniciarPagoOptions = {
   onSuccess?: (response: IniciarPagoServiceResponse) => void;

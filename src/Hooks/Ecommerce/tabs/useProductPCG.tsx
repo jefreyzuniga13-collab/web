@@ -209,29 +209,64 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     await listQuery.fetchNextPage()
   }, [listEnabled, listQuery])
 
-  const getProductModifiers = useCallback(
-    async (codProducto: string) => {
-      const code = (codProducto ?? "").trim()
-      if (!code) {
-        setModifierCode(null)
-        return []
-      }
+//   const getProductModifiers = useCallback(
+//   async (codProducto: string) => {
+//     const code = (codProducto ?? "").trim()
 
-      setModifierCode(code)
+//     if (!code) {
+//       setModifierCode(null)
+//       return []
+//     }
 
-      const data = await queryClient.fetchQuery<ProductoModificadorPCGInterface[]>({
-        queryKey: ["product-pcg-modifiers", code],
-        queryFn: async () => {
-          return (await ProductPCGService.getProductModifiers(code)) ?? []
-        },
-        staleTime: 1000 * 60 * 5,
-      })
+//     const queryKey = ["product-pcg-modifiers", code]
 
-      return data
-    },
-    [queryClient]
-  )
+//     await queryClient.invalidateQueries({ queryKey })
 
+//     console.log("Ante de await queryClient.fetchQuery")
+//     // const data = await queryClient.fetchQuery<ProductoModificadorPCGInterface[]>({
+//     //   queryKey,
+//     //   queryFn: async () => {
+//     //     return (await ProductPCGService.getProductModifiers(code)) ?? []
+//     //   },
+//     //   staleTime: 0,
+//     // })
+
+//     const data = await ProductPCGService.getProductModifiers(code)
+// //aqui hace la peticion sin probkleas
+//     console.log("Luego de await queryClient.fetchQuery")
+//     setModifierCode(code)
+
+//     // Este return no no haace nada por que el componente detailPCgProducto, pinta los modificadore que viene desd ele productModifiers, y este returno no hago nada con la informacion
+//     return data;
+    
+//   },
+//   [queryClient]
+// )
+
+const getProductModifiers = useCallback(
+  async (codProducto: string) => {
+    const code = (codProducto ?? "").trim()
+
+    if (!code) {
+      setModifierCode(null)
+      return []
+    }
+
+    const queryKey = ["product-pcg-modifiers", code]
+
+    const data = await ProductPCGService.getProductModifiers(code)
+
+    queryClient.setQueryData<ProductoModificadorPCGInterface[]>(
+      queryKey,
+      data ?? []
+    )
+
+    setModifierCode(code)
+
+    return data ?? []
+  },
+  [queryClient]
+)
   const isSearching = mode === "search"
   const isCategory = mode === "category"
 

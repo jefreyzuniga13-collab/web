@@ -19,10 +19,6 @@ export const CurrencySection = ({
   setStep,
   handleGoToPayment,
 }: Props) => {
-  const handleSelectAndContinue = (item: Currencyto) => {
-    handleSelectCurrency(item);
-    handleGoToPayment();
-  };
 
   return (
     <>
@@ -35,7 +31,7 @@ export const CurrencySection = ({
               <button
                 key={item.codPago}
                 type="button"
-                onDoubleClick={() => handleSelectAndContinue(item)}
+                onClick={() => handleSelectCurrency(item)}
                 className={
                   selectedCurrency?.codPago === item.codPago
                     ? "checkout-method checkout-method--active"
@@ -74,6 +70,15 @@ export const CurrencySection = ({
               disabled={invoiceLoading}
             >
               Regresar
+            </button>
+
+            <button
+              type="button"
+              className="checkout-paybtn"
+              onClick={handleGoToPayment}
+              disabled={invoiceLoading || !selectedCurrency}
+            >
+              Continuar
             </button>
           </div>
         </div>

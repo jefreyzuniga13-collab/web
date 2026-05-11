@@ -1,16 +1,21 @@
 import { Link } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
-import { FaLinkedin } from "react-icons/fa6";
-import { FaInstagramSquare, FaTiktok } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaWhatsapp,
+  FaLinkedinIn,
+} from "react-icons/fa";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-import addGroup from "@/assets/img/Add_Group_2025.png";
-import loginImg from "@/assets/img/login2.png";
+// import logo from "@/assets/img/pcgroup.png"
+import logo from '@/assets/orbita3.png'
 import "@/Styles/Auth/LoginPresentation.css";
 
 export default function LoginPresentation() {
+
   const {
     formik,
     loading,
@@ -20,183 +25,150 @@ export default function LoginPresentation() {
     formError,
     showModal,
     confirmLogin,
-    cancelLogin
+    cancelLogin,
   } = useLoginForm();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEnterKey = (event: any) => {
-    if (event.key === "Enter") confirmLogin();
-  };
-
+  
   return (
-    <div className="login-GeneralContainer">
-      {/* IZQUIERDA */}
-      <aside className="login__banner" aria-label="Marketing banner">
-        <div className="login__banner-shape" />
-        <div className="login__banner-content">
-          <header className="login__banner-top">
-            <h2 className="login__banner-title">
-              ¡Impulsa tus Ventas y Conquista Clientes con Nuestro CRM de ventas!
-            </h2>
-            <p className="login__banner-subtitle">
-              Optimiza tu tiempo, organiza tus prioridades y convierte tu flujo de trabajo en una máquina de cerrar ventas.
-            </p>
-          </header>
+    <section className={`login ${loading ? "login--loading" : ""}`}>
+      <div className="login__shell">
+        <aside className="login__brand">
+          <div className="login__brand-overlay" />
 
-          <div className="login__banner-card">
-            <img
-              src={loginImg}
-              alt="Banner promocional"
-              className="login__banner-image"
-              loading="lazy"
-            />
+          <div className="login__brand-content">
+            <img src={logo} alt="Logo" className="login__brand-logo" />
+
+            <span className="login__badge">
+             Control total de ventas y atención en redes sociales
+            </span>
+
+            <h1 className="login__title">CONECTA, OPTIMIZA Y EXPANDE</h1>
+
+            <p>
+              Centralizá ventas y atención por WhatsApp, Instagram y Messenger en un solo lugar. Automatizá procesos con carritos de compra y links de pago integrados con pasarela, con reportes en tiempo real y máxima seguridad.
+            </p>
+
+            <div className="login__features">
+              <span>Atención</span>
+              <span>Contactos</span>
+              <span>Ventas</span>
+              <span>Pagos en linea</span>
+            </div>
           </div>
 
-          <p className="login__banner-text">
-            Únete a las empresas que ya están escalando su éxito. Nuestro CRM no solo organiza datos, construye relaciones que cierran negocios.
-            Comienza hoy mismo a transformar tu proceso comercial.
-          </p>
-        </div>
-      </aside>
-
-      {/* DERECHA */}
-      <main className={`login ${loading ? "login--loading" : ""}`}>
-        <div className="login__panel">
-          <section className={`login__form-section ${formError ? "login__form-section--error" : ""}`}>
-            {formError && <div className="login__error">{formError}</div>}
-
-            <div className="login__brand">
-              <img
-                className="login__brand-image"
-                src={addGroup}
-                alt="Imagen de inicio de sesión"
-              />
-            </div>
-
-            <form onSubmit={formik.handleSubmit} noValidate>
-              <label htmlFor="email" className="login__label">Correo electrónico</label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Ingresa tu correo electrónico"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                autoFocus
-                onKeyDown={handleEnterKey}
-                error={formik.touched.email ? formik.errors.email : undefined}
-              />
-
-              <label htmlFor="password" className="login__label">Contraseña</label>
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Ingresa tu contraseña"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.password ? formik.errors.password : undefined}
-                rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
-                onIconClick={toggleShowPassword}
-                onKeyDown={handleEnterKey}
-              />
-
-              <div className="login__options">
-                <Link to="/forgot-password" replace className="login__forgot-link">
-                  ¿Olvidaste tu contraseña?
-                </Link>
+          <main className="login__form-panel">
+            <div className={`login__card ${formError ? "login__card--error" : ""}`}>
+              <div className="login__mobile-logo">
+                <img src={logo} alt="Logo" />
               </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit || loading}
-                className="login__submit-button"
-                onKeyDown={handleEnterKey}
-              >
-                <span className="login__submit-text">
-                  {loading ? "Iniciando sesión…" : "Iniciar sesión"}
-                </span>
-              </Button>
-            </form>
+              <div className="login__card-header">
+                <h2>Iniciar sesión</h2>
+                <p>Ingresá tus credenciales para continuar</p>
+              </div>
 
-            <ul className="login__social">
-              <li className="login__social-item">
-                <a
-                  href="https://www.facebook.com/61567499630347"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="login__social-link"
-                  aria-label="Facebook"
+              {formError && <div className="login__error">{formError}</div>}
+
+              <form onSubmit={formik.handleSubmit} className="login__form" noValidate>
+                <div className="login__field">
+                  <label htmlFor="email">
+                    Usuario o correo
+                  </label>
+
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="admin@empresa.com"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoFocus
+                    autoComplete="username"
+                    error={formik.touched.email ? formik.errors.email : undefined}
+                  />
+                </div>
+
+                <div className="login__field">
+                  <label htmlFor="password">
+                    Contraseña
+                  </label>
+
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Ingresá tu contraseña"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoComplete="current-password"
+                    error={formik.touched.password ? formik.errors.password : undefined}
+                    rightIcon={showPassword ? <FaEyeSlash /> : <FaEye />}
+                    onIconClick={toggleShowPassword}
+                  />
+                </div>
+
+                <div className="login__options">
+                  <label className="login__remember">
+                    <input type="checkbox" />
+                    <span>Recordarme</span>
+                  </label>
+
+                  <Link to="/forgot-password" className="login__forgot-link">
+                    
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!canSubmit || loading}
+                  className="login__submit-button"
                 >
-                  <FaFacebook className="login__social-icon" />
+                  {loading
+                    ? "Validando..."
+                    : "Ingresar al sistema"}
+                </Button>
+              </form>
+
+              <div className="login__divider">
+                <span>Seguinos en redes</span>
+              </div>
+
+              <div className="login__social">
+                <a href="https://www.facebook.com/61567499630347" target="_blank" rel="noreferrer" aria-label="Facebook">
+                  <FaFacebookF />
                 </a>
-              </li>
 
-              <li className="login__social-item">
-                <a
-                  href="https://www.instagram.com/pcgroupsa/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="login__social-link"
-                  aria-label="Instagram"
-                >
-                  <FaInstagramSquare className="login__social-icon" />
+                <a href="https://www.instagram.com/pcgroupsa/" target="_blank" rel="noreferrer" aria-label="Instagram">
+                  <FaInstagram />
                 </a>
-              </li>
 
-              <li className="login__social-item">
-                <a
-                  href="https://www.tiktok.com/@pcgroupsa"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="login__social-link"
-                  aria-label="TikTok"
-                >
-                  <FaTiktok className="login__social-icon" />
+                <a href="https://wa.me/" target="_blank" rel="noreferrer" aria-label="WhatsApp">
+                  <FaWhatsapp />
                 </a>
-              </li>
 
-              <li className="login__social-item">
-                <a
-                  href="https://ni.linkedin.com/company/pc-group-s-a"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="login__social-link"
-                  aria-label="LinkedIn"
-                >
-                  <FaLinkedin className="login__social-icon" />
+                <a href="https://ni.linkedin.com/company/pc-group-s-a" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+                  <FaLinkedinIn />
                 </a>
-              </li>
-            </ul>
-          </section>
+              </div>
 
-          <footer className="login__footer-area">
-            <img
-              className="login__image-footer"
-              src="https://i.ibb.co/LXbMbMm2/logo.png"
-              alt="Logo de la empresa"
-            />
+              <p className="login__copyright">
+                © 2026 PC GROUP S.A. Todos los derechos reservados.
+              </p>
+            </div>
+          </main>
 
-            <p className="login__footer">
-              ©<span className="login__footer-text">2025 PC Group S.A. Todos los derechos reservados.</span>
-            </p>
+          <svg className="login__wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
+          </svg>
+        </aside>
+      </div>
 
-            <p className="login__footer">
-              <span className="login__footer-text">Add Group 26.02.28.1</span>
-            </p>
-          </footer>
-        </div>
-
-        {showModal && (
-          <ActivationSesionModal
-            onAccept={confirmLogin}
-            onCancel={cancelLogin}
-          />
-        )}
-      </main>
-    </div>
+      {showModal && (
+        <ActivationSesionModal onAccept={confirmLogin} onCancel={cancelLogin} />
+      )}
+    </section>
   );
 }

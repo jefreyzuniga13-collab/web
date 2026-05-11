@@ -1,12 +1,16 @@
 import { useCallback, useMemo, useState } from "react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
+import { toast } from "react-toastify"
 import type {
   LogCartFormValues,
   LogCartResponseDto,
 } from "@/Interfaces/Crm/LogCartInterface"
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces"
 import { logCartService } from "@/Services/Crm/LogCartService"
-import { toast } from "react-toastify"
 
 export const LOG_CART_MODAL_MODE = {
   CREATE: "CREATE",
@@ -29,8 +33,11 @@ const queryKeys = {
 const useLogCart = (logCartId?: number) => {
   const queryClient = useQueryClient()
 
-  const [selectedData, setSelectedData] = useState<LogCartResponseDto>()
+  const [selectedData, setSelectedData] =
+    useState<LogCartResponseDto | null>(null)
+
   const [isModalOpen, setModalOpen] = useState(false)
+
   const [modalMode, setModalMode] = useState<ModalMode>(
     LOG_CART_MODAL_MODE.CREATE
   )
@@ -56,13 +63,42 @@ const useLogCart = (logCartId?: number) => {
     isLoading: loadingDetail,
     isFetching: fetchingDetail,
     error: detailError,
-  } = useQuery<ApiResponse<LogCartResponseDto>, Error>({
+  } = useQuery<ApiResponse<LogCartResponseDto | null>, Error>({
     queryKey: queryKeys.detail(logCartId ?? 0),
     queryFn: () => logCartService.getByIdAsync(logCartId as number),
     enabled: typeof logCartId === "number" && logCartId > 0,
   })
 
-  const detailData = detailResponse?.data
+  const detailData = detailResponse?.data ?? null
+
+  const invalidateLogCartQueries = useCallback(
+    async (params?: {
+      id?: number
+      orderId?: number
+      contactId?: number
+    }) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.all })
+
+      if (params?.id && params.id > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.detail(params.id),
+        })
+      }
+
+      if (params?.orderId && params.orderId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.byOrder(params.orderId),
+        })
+      }
+
+      if (params?.contactId && params.contactId > 0) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.byContact(params.contactId),
+        })
+      }
+    },
+    [queryClient]
+  )
 
   const createMutation = useMutation<
     ApiResponse<LogCartResponseDto>,
@@ -70,12 +106,18 @@ const useLogCart = (logCartId?: number) => {
     LogCartFormValues
   >({
     mutationFn: (values) => logCartService.createAsync(values),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.all })
-      // toast.success(response.message)
+    onSuccess: async (response) => {
+      setSelectedData(response.data)
+
+      await invalidateLogCartQueries({
+        id: response.data?.id,
+        orderId: response.data?.orderId,
+        contactId: response.data?.contactId,
+      })
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(err.message)
+    },
   })
 
   const updateMutation = useMutation<
@@ -85,16 +127,25 @@ const useLogCart = (logCartId?: number) => {
   >({
     mutationFn: ({ id, values }) =>
       logCartService.updateAsync(id, values),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.all })
+    onSuccess: async (response, variables) => {
+      setSelectedData(response.data)
+
       queryClient.setQueryData(
         queryKeys.detail(variables.id),
         response
       )
-      setSelectedData(response.data)
+
+      await invalidateLogCartQueries({
+        id: variables.id,
+        orderId: response.data?.orderId,
+        contactId: response.data?.contactId,
+      })
+
       toast.success(response.message)
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(err.message)
+    },
   })
 
   const toggleMutation = useMutation<
@@ -103,13 +154,25 @@ const useLogCart = (logCartId?: number) => {
     number
   >({
     mutationFn: (id) => logCartService.toggleAsync(id),
-    onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.all })
-      queryClient.setQueryData(queryKeys.detail(id), response)
+    onSuccess: async (response, id) => {
       setSelectedData(response.data)
+
+      queryClient.setQueryData(
+        queryKeys.detail(id),
+        response
+      )
+
+      await invalidateLogCartQueries({
+        id,
+        orderId: response.data?.orderId,
+        contactId: response.data?.contactId,
+      })
+
       toast.success(response.message)
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(err.message)
+    },
   })
 
   const updateStatusMutation = useMutation<
@@ -119,16 +182,23 @@ const useLogCart = (logCartId?: number) => {
   >({
     mutationFn: ({ id, statusId }) =>
       logCartService.UpdatedStatusAsync(id, statusId),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.all })
+    onSuccess: async (response, variables) => {
+      setSelectedData(response.data)
+
       queryClient.setQueryData(
         queryKeys.detail(variables.id),
         response
       )
-      setSelectedData(response.data)
-      toast.success(response.message)
+
+      await invalidateLogCartQueries({
+        id: variables.id,
+        orderId: response.data?.orderId,
+        contactId: response.data?.contactId,
+      })
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(err.message)
+    },
   })
 
   const fetchAll = useCallback(async () => {
@@ -138,37 +208,52 @@ const useLogCart = (logCartId?: number) => {
 
   const fetchById = useCallback(
     async (id: number) => {
-      const res = await queryClient.fetchQuery<ApiResponse<LogCartResponseDto>>({
+      if (!id || id <= 0) return null
+
+      const res = await queryClient.fetchQuery<
+        ApiResponse<LogCartResponseDto | null>
+      >({
         queryKey: queryKeys.detail(id),
         queryFn: () => logCartService.getByIdAsync(id),
       })
-      setSelectedData(res.data)
-      return res.data
+
+      setSelectedData(res.data ?? null)
+      return res.data ?? null
     },
     [queryClient]
   )
 
   const fetchByOrderId = useCallback(
     async (orderId: number) => {
-      const res = await queryClient.fetchQuery<ApiResponse<LogCartResponseDto>>({
+      if (!orderId || orderId <= 0) return null
+
+      const res = await queryClient.fetchQuery<
+        ApiResponse<LogCartResponseDto | null>
+      >({
         queryKey: queryKeys.byOrder(orderId),
         queryFn: () => logCartService.getByOrderIdAsync(orderId),
       })
-      setSelectedData(res.data)
-      return res.data
+
+      setSelectedData(res.data ?? null)
+      return res.data ?? null
     },
     [queryClient]
   )
 
   const fetchByContactId = useCallback(
     async (contactId: number) => {
-      const res = await queryClient.fetchQuery<ApiResponse<LogCartResponseDto>>({
+      if (!contactId || contactId <= 0) return null
+
+      const res = await queryClient.fetchQuery<
+        ApiResponse<LogCartResponseDto | null>
+      >({
         queryKey: queryKeys.byContact(contactId),
         queryFn: () =>
           logCartService.GetByContactAndStatus(contactId),
       })
-      setSelectedData(res.data)
-      return res.data
+
+      setSelectedData(res.data ?? null)
+      return res.data ?? null
     },
     [queryClient]
   )
@@ -199,35 +284,39 @@ const useLogCart = (logCartId?: number) => {
 
   const UpdatedStatus = useCallback(
     async (id: number, statusId: number) => {
-      const res = await updateStatusMutation.mutateAsync({ id, statusId })
+      const res = await updateStatusMutation.mutateAsync({
+        id,
+        statusId,
+      })
+
       return res.data
     },
     [updateStatusMutation]
   )
 
-  const openCreate = () => {
-    setSelectedData(undefined)
+  const openCreate = useCallback(() => {
+    setSelectedData(null)
     setModalMode(LOG_CART_MODAL_MODE.CREATE)
     setModalOpen(true)
-  }
+  }, [])
 
-  const openEdit = (item: LogCartResponseDto) => {
+  const openEdit = useCallback((item: LogCartResponseDto) => {
     setSelectedData(item)
     setModalMode(LOG_CART_MODAL_MODE.EDIT)
     setModalOpen(true)
-  }
+  }, [])
 
-  const openView = (item: LogCartResponseDto) => {
+  const openView = useCallback((item: LogCartResponseDto) => {
     setSelectedData(item)
     setModalMode(LOG_CART_MODAL_MODE.VIEW)
     setModalOpen(true)
-  }
+  }, [])
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalOpen(false)
-    setSelectedData(undefined)
+    setSelectedData(null)
     setModalMode(LOG_CART_MODAL_MODE.CREATE)
-  }
+  }, [])
 
   const handleSubmit = useCallback(
     async (values: LogCartFormValues) => {
@@ -237,20 +326,17 @@ const useLogCart = (logCartId?: number) => {
 
       if (
         modalMode === LOG_CART_MODAL_MODE.EDIT &&
-        selectedData
+        selectedData?.id
       ) {
         await update(selectedData.id, values)
       }
 
       closeModal()
     },
-    [modalMode, selectedData, create, update]
+    [modalMode, selectedData, create, update, closeModal]
   )
 
-  const data = listData
-
-  const selected =
-    selectedData ?? detailData ?? undefined
+  const selected = selectedData ?? detailData ?? null
 
   const error =
     createMutation.error ||
@@ -271,21 +357,24 @@ const useLogCart = (logCartId?: number) => {
     updateStatusMutation.isPending
 
   return {
-    data,
+    data: listData,
     selectedData: selected,
     loading,
     error,
     isModalOpen,
     modalMode,
+
     openCreate,
     openEdit,
     openView,
     closeModal,
     handleSubmit,
+
     fetchAll,
     fetchById,
     fetchByOrderId,
     fetchByContactId,
+
     create,
     update,
     toggle,
