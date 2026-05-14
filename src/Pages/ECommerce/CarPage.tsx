@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import "@/Styles/Ecommerce/CartPage.css"
 import noimageavailable from "@/assets/img/noimageavailable.webp"
 import { useNavigate } from "react-router-dom"
@@ -10,9 +10,13 @@ import {
   selectCarPCG,
   selectCartError,
   selectCartLoading,
-  getProductFromCarAsync
+  getProductFromCarAsync,
 } from "@/Context/Slices/Ecommerce/cartSlice"
-import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
+import {
+  useDispatch,
+  useSelector,
+  type TypedUseSelectorHook,
+} from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
@@ -48,7 +52,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
       await dispatch(
         getProductFromCarAsync({
           codCliente: payload.contactId,
-          noPedido: payload.orderId
+          noPedido: payload.orderId,
         })
       )
 
@@ -56,7 +60,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
       setExistingLog(log)
     }
 
-    run()
+    void run()
   }, [dispatch, fetchByContactId, payload])
 
   const productGroups = useMemo<ProductGroup[]>(() => {
@@ -69,7 +73,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
         if (item.tipoComponente === "P") {
           currentProduct = {
             product: item,
-            options: []
+            options: [],
           }
 
           groups.push(currentProduct)
@@ -91,13 +95,33 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
     return Number(value ?? 0).toLocaleString("es-NI", {
       style: "currency",
       currency: "NIO",
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     })
   }
 
   const getImage = (image?: string | null) => {
     const img = String(image ?? "").trim()
     return img.length > 0 ? img : noimageavailable
+  }
+
+  const getOptionLabel = (option: ListDetalleCarrito) => {
+    const text = String(option.observaciones ?? "").trim()
+    return text.length > 0 ? text : "Modificador"
+  }
+
+  const getProductKey = (product: ListDetalleCarrito, index: number) => {
+    return `product-${product.unico ?? product.codProducto ?? index}`
+  }
+
+  const getOptionKey = (
+    product: ListDetalleCarrito,
+    option: ListDetalleCarrito,
+    productIndex: number,
+    optionIndex: number
+  ) => {
+    return `option-${
+      product.unico ?? product.codProducto ?? productIndex
+    }-${option.unico ?? option.codProducto ?? optionIndex}`
   }
 
   const goToCheckout = () => {
@@ -151,13 +175,10 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
               <tbody className="cart-table__body">
                 {productGroups.map(({ product, options }, index) => (
-                  <>
-                    <tr
-                      className="cart-table__row cart-table__row--product"
-                      key={`product-${product.unico ?? product.codProducto ?? index}`}
-                    >
+                  <Fragment key={getProductKey(product, index)}>
+                    <tr className="cart-table__row cart-table__row--product">
                       <td className="cart-table__cell cart-table__cell--product">
-                        <div className="cart-item">
+                        <div className="cart-item cart-item--product">
                           <div className="cart-item__image-wrapper">
                             <img
                               src={getImage(product.imagen)}
@@ -179,7 +200,8 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                             {options.length > 0 && (
                               <span className="cart-item__option-count">
-                                {options.length} opción{options.length === 1 ? "" : "es"}
+                                {options.length} opción
+                                {options.length === 1 ? "" : "es"}
                               </span>
                             )}
                           </div>
@@ -206,30 +228,28 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                     {options.map((option, optionIndex) => (
                       <tr
                         className="cart-table__row cart-table__row--option"
-                        key={`option-${product.unico ?? index}-${option.unico ?? option.codProducto ?? optionIndex}`}
+                        key={getOptionKey(product, option, index, optionIndex)}
                       >
                         <td className="cart-table__cell cart-table__cell--product">
                           <div className="cart-item cart-item--option">
                             <div className="cart-item__option-indicator" />
 
                             <div className="cart-item__image-wrapper cart-item__image-wrapper--option">
-                              <img
+                              {/* <img
                                 src={getImage(option.imagen)}
                                 className="cart-item__image"
                                 alt={option.descripcion ?? "Opción"}
-                              />
+                              /> */}
                             </div>
 
-                            <div className="cart-item__info">
+                            <div className="cart-item__info cart-item__info--option">
+                              <span className="cart-item__modifier-label">
+                                {getOptionLabel(option)}
+                              </span>
+
                               <p className="cart-item__name cart-item__name--option">
                                 {option.descripcion}
                               </p>
-
-                              {option.observaciones && (
-                                <span className="cart-item__note">
-                                  {option.observaciones}
-                                </span>
-                              )}
                             </div>
                           </div>
                         </td>
@@ -247,11 +267,11 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--total cart-table__cell--option">
-                          Opción del producto
+                          Opción
                         </td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -315,7 +335,8 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
           </h2>
 
           <p className="emptycart__container-subtitle">
-            Dale un vistazo a nuestras novedades y empieza a solicitar productos y llenar tu carrito.
+            Dale un vistazo a nuestras novedades y empieza a solicitar productos
+            y llenar tu carrito.
           </p>
         </section>
       )}

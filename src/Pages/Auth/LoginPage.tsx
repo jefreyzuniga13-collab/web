@@ -10,8 +10,11 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-// import logo from "@/assets/img/pcgroup.png"
-import logo from '@/assets/orbita3.png'
+import logo from "@/assets/img/logoinicio.png"
+import { BiSolidContact } from "react-icons/bi";
+import { MdSupportAgent } from "react-icons/md";
+import { BiSupport } from "react-icons/bi";
+import { MdPayment } from "react-icons/md";
 import "@/Styles/Auth/LoginPresentation.css";
 
 export default function LoginPresentation() {
@@ -48,10 +51,10 @@ export default function LoginPresentation() {
             </p>
 
             <div className="login__features">
-              <span>Atención</span>
-              <span>Contactos</span>
-              <span>Ventas</span>
-              <span>Pagos en linea</span>
+              <span className="login_features_content"><BiSolidContact /> Atención</span>
+              <span className="login_features_content"><MdSupportAgent /> Contactos</span>
+              <span className="login_features_content"><BiSupport /> Ventas</span>
+              <span className="login_features_content"><MdPayment /> Pagos en linea</span>
             </div>
           </div>
 

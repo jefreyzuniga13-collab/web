@@ -13,7 +13,7 @@ import { MdDelete } from "react-icons/md"
 import { selectCarPCG, selectCartError, selectCartLoading, getProductFromCarAsync, updateCarAsync, setActiveContactId } from "@/Context/Slices/Ecommerce/cartSlice"
 import { format } from "date-fns"
 import { FaFilePdf, 
-  FaLongArrowAltLeft, FaLongArrowAltRight 
+  // FaLongArrowAltLeft, FaLongArrowAltRight 
 } from "react-icons/fa"
 import { IoIosChatboxes } from "react-icons/io"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
@@ -43,6 +43,7 @@ import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
 import { PCG_SERVICES } from "@/Constants/pcgservices"
 import vacio from '@/assets/vacio.png'
+import { calcularIVA } from "@/Utils/calcularIVA"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -143,7 +144,7 @@ const { setLocked } = useCartPCGFlowCtx()
     }
   }, [draftKey])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const writeDraft = (state: DraftState) => {
     try {
       localStorage.setItem(draftKey, JSON.stringify(state))
@@ -824,7 +825,7 @@ useEffect(() => {
                   <div key={index} className="carPCPanel-content__list">
                     <div className="carPCPanel-content__list-imgContainer">
                       <img
-                        src={vacio}
+                        src={detail.imagen ?? vacio}
                         aria-label="product image"
                         className="carPCPanel-content__list-image"
                       />
@@ -840,7 +841,9 @@ useEffect(() => {
                       </p>
 
                       <p className="carPCPanel-content__list-price">
-                        C$ {detail.precioV.toFixed(2)}
+                        {/* C$ {detail.precioV.toFixed(2)} */}
+
+                        {calcularIVA(detail.precioV).toString() }
                       </p>
                     </div>
 
@@ -1010,7 +1013,7 @@ useEffect(() => {
 
       <div className="carPCPanel-bottom">
         
-        <div className="carPCPanel-stepActions">
+        {/* <div className="carPCPanel-stepActions">
           <button
             className="carPCPanel-stepBtn"
             disabled={activeStep === 1}
@@ -1026,9 +1029,9 @@ useEffect(() => {
           >
             <FaLongArrowAltRight />
           </button>
-        </div>
+        </div> */}
 
-        {/* <div className="carPCPanel-steps">
+        <div className="carPCPanel-steps">
         <button
           type="button"
           className={`carPCPanel-step ${activeStep === 1 ? "carPCPanel-step--active" : ""}`}
@@ -1046,7 +1049,7 @@ useEffect(() => {
         >
           2
         </button>
-      </div> */}
+      </div>
 
         <div className="productTab-content-footer carPCPanel-totals">
           {invoiceTotalsDto?.subTotal != null && invoiceTotalsDto.subTotal > 0 && (
@@ -1072,6 +1075,15 @@ useEffect(() => {
               <p className="productTab-content-footer__title">IVA:</p>
               <span className="productTab-content-footer__value">
                 C$ {invoiceTotalsDto.iva ?? ""}
+              </span>
+            </div>
+          )}
+
+          {transCost > 0 && (
+            <div className="productTab-content__container">
+              <p className="productTab-content-footer__title">Transporte:</p>
+              <span className="productTab-content-footer__value">
+                C$ {transCost ?? 0}
               </span>
             </div>
           )}
@@ -1158,238 +1170,5 @@ useEffect(() => {
     </section>
   </div>
 )
-  // return (
-  //   <div className="carPCPanel-container">
-  //     <header className="carPCPanel-header">
-  //       <h5 className="productTab-content-header__title">Carrito {`- Sucursal ${currentLog?.branchName}`}</h5>
-  //       <Input
-  //         id="searchProduct"
-  //         name="searchProduct"
-  //         value={search}
-  //         placeholder="Buscar categoria o producto"
-  //         onChange={(e) => setSearch(e.target.value)}
-  //       />
-  //     </header>
-
-  //     <section className="carPCPanel-content">
-
-  //     {/* Si se elimina el producto principal, se debe de eliminar las opciones */}
-  //       {filteredDetails.map(({ detail }, index) => {
-  //         if (detail.tipoComponente === "P") {
-  //           return (
-  //             <div key={index} className="carPCPanel-content__list">
-  //               <div className="carPCPanel-content__list-imgContainer">
-  //                 <img
-  //                   src={vacio}
-  //                   aria-label="product image"
-  //                   className="carPCPanel-content__list-image"
-  //                 />
-  //                 <p className="carPCPanel-content__list-flootingQuantity">{detail.cantidad}</p>
-  //               </div>
-
-  //               <div className="carPCPanel-content__list-info">
-  //                 <p className="carPCPanel-content__list-text">{detail.descripcion}</p>
-  //                 <p className="carPCPanel-content__list-price">C$ {detail.precioV.toFixed(2)}</p>
-  //               </div>
-
-  //               {/* Aqui se debe de eliminar las opciones y no solo el producto */}
-  //               <MdDelete
-  //                 fontSize={24}
-  //                 onClick={() => handleRemoveItem(cart.idUsuario ?? 0, detail.noPedido, '', detail.unico!)}
-  //                 className="carPCPanel-content__removeIcon"
-  //               />
-  //             </div>
-  //           );
-  //         }
-  //         if (detail.tipoComponente === 'O') {
-  //           return (
-  //             <div key={index} className="carPCPanel-content__list__opcion">
-  //               <div className="carPCPanel-content__list-imgContainer">
-  //               <p className="carPCPanel-content__list-flootingQuantity-opcion">{detail.cantidad}</p>
-  //               </div>
-                
-  //               <div className="carPCPanel-content__list-info-opcion">
-  //                 <p className="carPCPanel-content__list-opcion">{detail.descripcion}</p>
-  //                 <p className="carPCPanel-content__list-price">C$ {detail.precioV.toFixed(2)}</p>
-  //               </div>
-  //             </div>
-  //           );
-  //         }
-
-  //         return null; // Es importante retornar null si no coincide con ningún tipo
-  //       })}
-
-  //       <div className="productTab-content-footer">
-  //         <div className="productTab-content__inputContaner">
-  //           <div className="productTab-content__inputs">
-  //             <textarea
-  //               rows={5}
-  //               name="observation"
-  //               id="observation"
-  //               className="productTab-content__input"
-  //               placeholder="observación"
-  //               value={observation}
-  //               onChange={(e) => setObservation(e.target.value)}
-  //             />
-
-  //             <textarea
-  //               rows={5}
-  //               name="descripcion"
-  //               id="descripcion"
-  //               className="productTab-content__input"
-  //               placeholder="dirección"
-  //               value={addDescription}
-  //               disabled={addressInputsDisabled}
-  //               onChange={(e) => {
-  //                 if (addressInputsDisabled) return
-  //                 setAddDescription(e.target.value)
-  //               }}
-  //             />
-
-  //             <div className="transportationCost__input">
-  //               <input
-  //                 type="number"
-  //                 min={0}
-  //                 name="shipment"
-  //                 id="shipment"
-  //                 placeholder="C$ transporte "
-  //                 value={transCost}
-  //                 disabled={transportDisabled}
-  //                 onChange={(e) => {
-  //                   if (transportDisabled) return
-  //                   setTransCost(e.target.value === "" ? 0 : Number(e.target.value))
-  //                 }}
-  //                 className="productTab-content__input transportationCost"
-  //               />
-  //             </div>
-
-  //             <div className="transportationCost__checkbox">
-  //               <input
-  //                 type="checkbox"
-  //                 id="retiraSucursal"
-  //                 checked={retiraSucursal === "S"}
-  //                 disabled={pickupDisabled}
-  //                 onChange={(e) => setRetiraSucursal(e.target.checked ? "S" : "N")}
-  //               />
-  //               <label htmlFor="retiraSucursal">Retira en sucursal</label>
-  //             </div>
-  //           </div>
-  //         </div>
-
-  //         {invoiceTotalsDto?.subTotal != null && invoiceTotalsDto.subTotal > 0 && (
-  //           <div className="productTab-content__container">
-  //             <p className="productTab-content-footer__title">Subtotal:</p>
-  //             <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.subTotal ?? ""}</span>
-  //           </div>
-  //         )}
-
-  //         {invoiceTotalsDto?.descuento != null && invoiceTotalsDto.descuento > 0 && (
-  //           <div className="productTab-content__container">
-  //             <p className="productTab-content-footer__title">Descuento:</p>
-  //             <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.descuento ?? ""}</span>
-  //           </div>
-  //         )}
-
-  //         {invoiceTotalsDto?.iva != null && invoiceTotalsDto.iva > 0 && (
-  //           <div className="productTab-content__container">
-  //             <p className="productTab-content-footer__title">IVA:</p>
-  //             <span className="productTab-content-footer__value">C$ {invoiceTotalsDto.iva ?? ""}</span>
-  //           </div>
-  //         )}
-
-  //         {invoiceTotalsDto?.total && invoiceTotalsDto.total > 0 && (
-  //           <div className="productTab-content__container">
-  //             <p className="productTab-content-footer__title">
-  //               {`Total${retiraSucursal === "N" &&
-  //                   selectedAddressId == null &&
-  //                   addDescription.trim().length === 0
-  //                   ? " Más envío"
-  //                   : ""
-  //                 }:`}
-  //             </p>
-  //             <span className="productTab-content-footer__totalValue">C$ {invoiceTotalsDto.total}</span>
-  //           </div>
-  //         )}
-  //       </div>
-
-  //       {showAddressModal && (
-  //         <div className="addressMenu">
-  //           <div className="addressMenu__header">
-  //             <strong>Direcciones</strong>
-
-  //             <button className="addressMenu-close" onClick={() => setShowAddressModal(false)}>
-  //               Cerrar
-  //             </button>
-  //           </div>
-
-  //           <div className="addressMenu__content">
-  //             <input
-  //               type="text"
-  //               className="addressMenu-search"
-  //               placeholder="Buscar dirección..."
-  //               value={addressSearch}
-  //               onChange={(e) => setAddressSearch(e.target.value)}
-  //             />
-
-  //             {addressLoading && <p>Cargando direcciones...</p>}
-
-  //             {!addressLoading && filteredAddresses.length === 0 && (
-  //               <p>{addresses.length === 0 ? "No hay direcciones registradas" : "No hay resultados"}</p>
-  //             )}
-
-  //             {!addressLoading &&
-  //               filteredAddresses.map((a) => (
-  //                 <div
-  //                   key={a.idDireccion}
-  //                   className={`addressMenu-item ${selectedAddressId === a.idDireccion ? "addressMenu-item--active" : ""}`}
-  //                   onClick={async () => {
-  //                     if (retiraSucursal === "S") return
-  //                     await applySelectedAddressToLog(Number(a.idDireccion))
-  //                     setShowAddressModal(false)
-  //                   }}
-  //                 >
-  //                   <strong>{a.nombre}</strong>
-  //                   <p>{a.descripcion}</p>
-  //                   <small>{a.referencia}</small>
-  //                 </div>
-  //               ))}
-  //           </div>
-  //         </div>
-  //       )}
-
-  //       <div className="productTab-footer__payment">
-  //         {showAddressButton && (
-  //           <Button
-  //             className="carPanel-btn"
-  //             disabled={actionsDisabled}
-  //             onClick={async () => {
-  //               await loadAddresses()
-  //               setShowAddressModal(true)
-  //             }}
-  //           >
-  //             <p className="productTab-footer__address">Direcciones</p>
-  //           </Button>
-  //         )}
-
-  //         <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartPdf}>
-  //           {sending ? <AiOutlineLoading3Quarters fontSize={18} /> : <FaFilePdf fontSize={18} />}
-  //         </Button>
-
-  //         <Button className="carPanel-btn" disabled={actionsDisabled} onClick={handleSendCartChat}>
-  //           {sendChatoading ? <AiOutlineLoading3Quarters fontSize={18} /> : <IoIosChatboxes fontSize={18} />}
-  //         </Button>
-
-  //         <Button className="cancelPanel-btn" disabled={actionsDisabled} onClick={Cancel}>
-  //           {cancelLoading ? <AiOutlineLoading3Quarters fontSize={18} /> : <MdOutlineCancelScheduleSend fontSize={18} />}
-  //         </Button>
-
-  //         <Button className="payment-btn" disabled={actionsDisabled} onClick={async () => await handleSendLink(false)}>
-  //           {loadingCart ? <AiOutlineLoading3Quarters fontSize={18} /> : <IoSend fontSize={16} />}
-  //         </Button>
-  //       </div>
-  //     </section>
-  //   </div>
-  // )
 }
-
 export default CarPCPanelTab

@@ -70,15 +70,15 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
     ]);
 
     // Descomentar al usar con asana
-    // for (const op of item.Opciones ?? []) {
-    //   carritoRows.push([
-    //     `   ${safeText(op.Descripcion)}`,
-    //     // safeText(op.Cantidad.toString()),
-    //     safeText(op.UnidadMedida),
-    //     money(op.Precio ?? 0),
-    //     money(op.TotalMenu ?? 0),
-    //   ]);
-    // }
+    for (const op of item.Opciones ?? []) {
+      carritoRows.push([
+        `   ${safeText(op.Descripcion)}`,
+        safeText(op.Cantidad.toString()),
+        safeText(op.UnidadMedida),
+        money(op.Precio ?? 0),
+        money(op.TotalMenu ?? 0),
+      ]);
+    }
   }
 
   const startCarritoY = yDir + 24;

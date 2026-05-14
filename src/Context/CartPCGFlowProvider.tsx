@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo } from "react"
 import type { ReactNode } from "react"
+
 import { useCartPCGFlow } from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 import type {
   AddProductParams,
@@ -16,37 +17,40 @@ type CartPCGFlowContextValue = {
   pickerProps: SucursalPickerProps
 }
 
-const CartPCGFlowContext = createContext<CartPCGFlowContextValue | null>(null)
-
 type CartPCGFlowProviderProps = {
   conversationId: number
   contactId: number
   children: ReactNode
 }
 
+const CartPCGFlowContext = createContext<CartPCGFlowContextValue | null>(null)
+
 export const CartPCGFlowProvider = ({
   conversationId,
   contactId,
   children,
 }: CartPCGFlowProviderProps) => {
-  const flow = useCartPCGFlow(conversationId, contactId)
+  const { locked, setLocked, addProduct, pickerProps } = useCartPCGFlow(
+    conversationId,
+    contactId
+  )
 
   const value = useMemo<CartPCGFlowContextValue>(
     () => ({
       conversationId,
       contactId,
-      locked: flow.locked,
-      setLocked: flow.setLocked,
-      addProduct: flow.addProduct,
-      pickerProps: flow.pickerProps,
+      locked,
+      setLocked,
+      addProduct,
+      pickerProps,
     }),
     [
       conversationId,
       contactId,
-      flow.locked,
-      flow.setLocked,
-      flow.addProduct,
-      flow.pickerProps,
+      locked,
+      setLocked,
+      addProduct,
+      pickerProps,
     ]
   )
 
@@ -57,10 +61,10 @@ export const CartPCGFlowProvider = ({
   )
 }
 
-export const useCartPCGFlowCtx = () => {
+export const useCartPCGFlowCtx = (): CartPCGFlowContextValue => {
   const context = useContext(CartPCGFlowContext)
 
-  if (!context) {
+  if (context === null) {
     throw new Error(
       "useCartPCGFlowCtx debe usarse dentro de CartPCGFlowProvider."
     )

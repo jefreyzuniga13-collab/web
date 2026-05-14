@@ -5,7 +5,7 @@ import { useMenus } from '@/Hooks/Auth/useMenus';
 import MenuItem from '@/Components/Auth/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '@/Context/Slices/Auth/authSlice';
+// import { logout } from '@/Context/Slices/Auth/authSlice';
 // import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Auth/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
@@ -16,9 +16,12 @@ import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 import { useAuth } from '@/Hooks/Auth/useAuth'
 import Profile from '@/assets/img/profile.png'
 import { selectCompanyImageUrl } from '@/Context/Slices/Auth/authSlice';
+import { logoutThunk } from '@/Context/Slices/Auth/authThunks';
+import type { AppDispatch } from '@/Context';
 interface NavbarProps {
   id: number;
 }
+export const useAppDispatch: () => AppDispatch = useDispatch;
 
 const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, error } = useMenus();
@@ -26,8 +29,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-
+  // const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
     //llega en null, no debria por que esta pesistido incluso
   const CompanyImageUrl = useSelector(selectCompanyImageUrl);
 
@@ -53,7 +56,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
       try { await presenceConnection?.stop(); } catch {}
 
       await logoutAuth();
-      dispatch(logout());
+      // dispatch(logout());
+      dispatch(logoutThunk());
       navigate('/login', { replace: true });
     } else {
       navigate(`/${url}`);
@@ -119,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           </div>
         )}
         
-        <p className="navbar__copyright">© 2025 PC Group S.A.</p>
+        <p className="navbar__copyright">© {new Date().getFullYear()} PC Group S.A.</p>
 
     </nav>
   );

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { FaShoppingCart } from "react-icons/fa"
 import { IoMdSend } from "react-icons/io"
@@ -6,17 +5,15 @@ import { MdInventory } from "react-icons/md"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md"
 import { toast } from "react-toastify"
-
 import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
-
 import type {
   listaOpciones,
   ProductoModificadorPCGInterface,
   ProductoPCGInterface,
 } from "@/Interfaces/Chat/ProductPCGInterface"
-import type { SelectedInterface } from "./ProductTab"
+import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
 
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"
@@ -43,14 +40,44 @@ interface Props {
 type SelectedOptionsMap = Record<string, string[]>
 type OptionQtyMap = Record<string, number>
 
+type BranchPayload = Partial<
+  Pick<
+    AddProductParams,
+    "branch" | "branchName" | "wherehouse" | "wherehouseCode" | "serie"
+  >
+>
+type IndexedOption = listaOpciones & {
+  codModificador: string
+}
+
 const clampQty = (n: number) => {
   if (!Number.isFinite(n) || n <= 0) return 1
   if (n > 1000) return 1000
   return Math.floor(n)
 }
 
+const cleanText = (value: string | number | boolean | null | undefined) => {
+  return String(value ?? "").trim()
+}
+
 const esSi = (value?: string | boolean | null) => {
   return value === true || value === "S"
+}
+
+const getMaximoSeleccion = (modifier: ProductoModificadorPCGInterface) => {
+  const max = Number(modifier.maximoSel ?? 0)
+  return Number.isFinite(max) && max > 0 ? Math.floor(max) : 0
+}
+
+const getLimiteRealModificador = (
+  modifier: ProductoModificadorPCGInterface,
+  cantidadProducto: number
+) => {
+  const maxSel = getMaximoSeleccion(modifier)
+
+  if (maxSel <= 0) return 0
+
+  return clampQty(cantidadProducto) * maxSel
 }
 
 const DetailPCGProduct = ({
@@ -63,9 +90,7 @@ const DetailPCGProduct = ({
   canNext,
   onPrev,
   onNext,
-  // onBack,
 }: Props) => {
-
   const [cantidad, setCantidad] = useState(1)
   const [observacion, setObservacion] = useState("")
   const [total, setTotal] = useState(0)
@@ -143,7 +168,8 @@ const DetailPCGProduct = ({
 
     productModifiers.forEach((mod) => {
       const key = String(mod.codModificador)
-      const maxSel = Number(mod.maximoSel ?? 0)
+      const maxSel = getMaximoSeleccion(mod)
+      const multiple = esSi(mod.esMultipleSeleccion)
 
       const defaults =
         mod.listOpciones
@@ -152,7 +178,11 @@ const DetailPCGProduct = ({
 
       if (!defaults.length) return
 
-      const limited = maxSel > 0 ? defaults.slice(0, maxSel) : defaults
+      const limited = multiple
+        ? maxSel > 0
+          ? defaults.slice(0, maxSel)
+          : defaults
+        : defaults.slice(0, 1)
 
       initialSelected[key] = limited
 
@@ -187,7 +217,7 @@ const DetailPCGProduct = ({
   }, [branchRows, locked])
 
   const optionIndex = useMemo(() => {
-    const map = new Map<string, listaOpciones & { codModificador?: string }>()
+    const map = new Map<string, IndexedOption>()
 
     productModifiers?.forEach((mod) => {
       mod.listOpciones?.forEach((op) => {
@@ -222,11 +252,62 @@ const DetailPCGProduct = ({
     [selectedOptions]
   )
 
+  useEffect(() => {
+    if (!detail.tieneOpcion || !productModifiers?.length) return
+
+    const nextSelected: SelectedOptionsMap = {}
+    const nextQuantities: OptionQtyMap = {}
+
+    productModifiers.forEach((mod) => {
+      const key = String(mod.codModificador)
+      const selected = selectedOptions[key] ?? []
+
+      if (!selected.length) return
+
+      const multiple = esSi(mod.esMultipleSeleccion)
+      const limiteReal = getLimiteRealModificador(mod, cantidad)
+      const selectedAllowed = multiple ? selected : selected.slice(0, 1)
+
+      let remaining = limiteReal > 0 ? limiteReal : 1000
+      const finalSelected: string[] = []
+
+      selectedAllowed.forEach((id) => {
+        if (remaining <= 0) return
+
+        const currentQty = clampQty(optionQuantities[id] ?? 1)
+        const safeQty = Math.min(currentQty, remaining)
+
+        finalSelected.push(id)
+        nextQuantities[id] = safeQty
+        remaining -= safeQty
+      })
+
+      if (finalSelected.length > 0) {
+        nextSelected[key] = finalSelected
+      }
+    })
+
+    const selectedChanged =
+      JSON.stringify(nextSelected) !== JSON.stringify(selectedOptions)
+
+    const quantitiesChanged =
+      JSON.stringify(nextQuantities) !== JSON.stringify(optionQuantities)
+
+    if (selectedChanged) setSelectedOptions(nextSelected)
+    if (quantitiesChanged) setOptionQuantities(nextQuantities)
+  }, [
+    cantidad,
+    detail.tieneOpcion,
+    productModifiers,
+    selectedOptions,
+    optionQuantities,
+  ])
+
   const handleToggleOption = useCallback(
     (modifier: ProductoModificadorPCGInterface, codOpcion: string) => {
       const key = String(modifier.codModificador)
       const optionId = String(codOpcion)
-      const maxSel = Number(modifier.maximoSel ?? 0)
+      const limiteReal = getLimiteRealModificador(modifier, cantidad)
       const multiple = esSi(modifier.esMultipleSeleccion)
 
       setSelectedOptions((prev) => {
@@ -269,9 +350,9 @@ const DetailPCGProduct = ({
           return sum + clampQty(optionQuantities[id] ?? 1)
         }, 0)
 
-        if (maxSel > 0 && currentTotal + 1 > maxSel) {
+        if (limiteReal > 0 && currentTotal + 1 > limiteReal) {
           toast.warning(
-            `No puede seleccionar más de ${maxSel} en "${modifier.descripcionMod}".`
+            `No puede seleccionar más de ${limiteReal} en "${modifier.descripcionMod}".`
           )
           return prev
         }
@@ -287,7 +368,7 @@ const DetailPCGProduct = ({
         }
       })
     },
-    [optionQuantities]
+    [cantidad, optionQuantities]
   )
 
   const handleOptionQuantityChange = useCallback(
@@ -305,17 +386,17 @@ const DetailPCGProduct = ({
 
       if (!selected.includes(optionId)) return
 
-      const maxSel = Number(modifier.maximoSel ?? 0)
+      const limiteReal = getLimiteRealModificador(modifier, cantidad)
       const otherTotal = getSelectedQtyByModifier(modifier, optionId)
 
       let safe = clampQty(value)
 
-      if (maxSel > 0) {
-        const remaining = maxSel - otherTotal
+      if (limiteReal > 0) {
+        const remaining = limiteReal - otherTotal
 
         if (remaining <= 0) {
           toast.warning(
-            `Ya alcanzó el máximo de ${maxSel} en "${modifier.descripcionMod}".`
+            `Ya alcanzó el máximo de ${limiteReal} en "${modifier.descripcionMod}".`
           )
           return
         }
@@ -331,7 +412,7 @@ const DetailPCGProduct = ({
         [optionId]: safe,
       }))
     },
-    [selectedOptions, getSelectedQtyByModifier]
+    [cantidad, selectedOptions, getSelectedQtyByModifier]
   )
 
   useEffect(() => {
@@ -345,7 +426,7 @@ const DetailPCGProduct = ({
         const qty = clampQty(optionQuantities[String(id)] ?? 1)
 
         if (op) {
-          optionsTotal += qty * clampQty(cantidad) * Number(op.precioVenta ?? 0)
+          optionsTotal += qty * Number(op.precioVenta ?? 0)
         }
       })
     })
@@ -353,34 +434,53 @@ const DetailPCGProduct = ({
     setTotal(base + optionsTotal)
   }, [cantidad, selectedOptions, optionQuantities, optionIndex, detail.precio])
 
-  const validateRequiredModifiers = useCallback(() => {
-    if (!detail.tieneOpcion) return true
-    if (!productModifiers?.length) return true
+const validateRequiredModifiers = useCallback(() => {
+  if (!detail.tieneOpcion) return true
+  if (!productModifiers?.length) return true
 
-    for (const mod of productModifiers) {
-      const key = String(mod.codModificador)
-      const selected = selectedOptions[key] ?? []
-      const maxSel = Number(mod.maximoSel ?? 0)
+  for (const mod of productModifiers) {
+    const key = String(mod.codModificador)
+    const selected = selectedOptions[key] ?? []
+    const multiple = esSi(mod.esMultipleSeleccion)
+    const limiteReal = getLimiteRealModificador(mod, cantidad)
 
-      const totalQty = selected.reduce((sum, id) => {
-        return sum + clampQty(optionQuantities[id] ?? 1)
-      }, 0)
+    const totalQty = selected.reduce((sum, id) => {
+      return sum + clampQty(optionQuantities[id] ?? 1)
+    }, 0)
 
-      if (mod.esRequerido === "S" && selected.length === 0) {
-        toast.warning(`Seleccione al menos una opción en "${mod.descripcionMod}".`)
-        return false
-      }
-
-      if (maxSel > 0 && totalQty > maxSel) {
-        toast.warning(`No puede superar ${maxSel} en "${mod.descripcionMod}".`)
-        return false
-      }
+    if (mod.esRequerido === "S" && selected.length === 0) {
+      toast.warning(`Seleccione al menos una opción en "${mod.descripcionMod}".`)
+      return false
     }
 
-    return true
-  }, [detail.tieneOpcion, productModifiers, selectedOptions, optionQuantities])
+    if (!multiple && selected.length > 1) {
+      toast.warning(`Solo puede seleccionar una opción en "${mod.descripcionMod}".`)
+      return false
+    }
 
-  const resolveBranchPayload = useCallback(() => {
+    if (limiteReal > 0 && totalQty > limiteReal) {
+      toast.warning(`No puede superar ${limiteReal} en "${mod.descripcionMod}".`)
+      return false
+    }
+
+    if (mod.esRequerido === "S" && limiteReal > 0 && totalQty < limiteReal) {
+      toast.warning(
+        `Debe completar ${limiteReal} selección${limiteReal === 1 ? "" : "es"} en "${mod.descripcionMod}". Actualmente tiene ${totalQty}.`
+      )
+      return false
+    }
+  }
+
+  return true
+}, [
+  cantidad,
+  detail.tieneOpcion,
+  productModifiers,
+  selectedOptions,
+  optionQuantities,
+])
+
+  const resolveBranchPayload = useCallback((): BranchPayload => {
     if (branchUiSelected && wherehouseCodeUiSelected) {
       return {
         branch: branchUiSelected,
@@ -411,94 +511,99 @@ const DetailPCGProduct = ({
     serieUiSelected,
   ])
 
-const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => {
-  if (!detail.tieneOpcion || !productModifiers?.length) return []
+  const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => {
+    if (!detail.tieneOpcion || !productModifiers?.length) return []
 
-  const result: SelectedModifierOption[] = []
+    const result: SelectedModifierOption[] = []
 
-  productModifiers.forEach((mod) => {
-    const key = String(mod.codModificador)
-    const selected = selectedOptions[key] ?? []
+    productModifiers.forEach((mod) => {
+      const key = String(mod.codModificador)
+      const selected = selectedOptions[key] ?? []
 
-    selected.forEach((id) => {
-      const op = mod.listOpciones?.find(
-        (x) => String(x.codOpcion) === String(id)
-      )
+      selected.forEach((id) => {
+        const op = mod.listOpciones?.find(
+          (x) => String(x.codOpcion) === String(id)
+        )
 
-      if (!op) return
+        if (!op) return
 
-      const codOpcion = String(op.codOpcion)
-      const quantity = clampQty(optionQuantities[codOpcion] ?? 1)
+        const codOpcion = String(op.codOpcion)
+        const quantity = clampQty(optionQuantities[codOpcion] ?? 1)
 
-      const item: SelectedModifierOption = {
-        codTipoModificador: String(
-          mod.codTipoModificador ?? op.codTipoModificador ?? ""
-        ),
-        codModificador: String(mod.codModificador),
-        descripcionMod: String(mod.descripcionMod ?? ""),
-        codOpcion,
-        descripcionOp: String(op.descripcionOp ?? ""),
-        codPrecio: String(op.codPrecio ?? "01"),
-        precioVenta: Number(op.precioVenta ?? 0),
-        cantidad: quantity,
-        codUm: String(op.codUm ?? ""),
-        aplicaIva: String(op.aplicaIva ?? ""),
-      }
-
-      result.push(item)
+        result.push({
+          codTipoModificador: cleanText(
+            mod.codTipoModificador ?? op.codTipoModificador
+          ),
+          codModificador: String(mod.codModificador),
+          descripcionMod: cleanText(mod.descripcionMod),
+          codOpcion,
+          descripcionOp: cleanText(op.descripcionOp),
+          codPrecio: cleanText(op.codPrecio) || "01",
+          precioVenta: Number(op.precioVenta ?? 0),
+          cantidad: quantity,
+          codUm: cleanText(op.codUm),
+          aplicaIva: cleanText(op.aplicaIva),
+        })
+      })
     })
-  })
 
-  return result
-}, [
-  detail.tieneOpcion,
-  productModifiers,
-  selectedOptions,
-  optionQuantities,
-])
-
-  const handleAddToCart = useCallback(async () => {
-    if (addLockRef.current) return
-
-    addLockRef.current = true
-
-    try {
-      const qty = clampQty(cantidad)
-
-      if (qty <= 0) {
-        toast.warning("La cantidad debe ser al menos 1.")
-        return
-      }
-
-      if (!validateRequiredModifiers()) return
-
-      const payload: AddProductParams & any = {
-        product: detail,
-        qty,
-        observacion,
-        modifierOptions: buildModifierOptionsPayload(),
-        ...resolveBranchPayload(),
-      }
-
-      await addProduct(payload)
-
-      setCantidad(1)
-      setselectedCategory(null)
-      setDetailProduct(null)
-    } finally {
-      addLockRef.current = false
-    }
+    return result
   }, [
-    addProduct,
-    cantidad,
-    observacion,
-    detail,
-    resolveBranchPayload,
-    buildModifierOptionsPayload,
-    validateRequiredModifiers,
-    setDetailProduct,
-    setselectedCategory,
+    detail.tieneOpcion,
+    productModifiers,
+    selectedOptions,
+    optionQuantities,
   ])
+
+const handleAddToCart = useCallback(async () => {
+  if (addLockRef.current) return
+
+  addLockRef.current = true
+
+  try {
+    const qty = clampQty(cantidad)
+
+    if (qty <= 0) {
+      toast.warning("La cantidad debe ser al menos 1.")
+      return
+    }
+
+    if (!validateRequiredModifiers()) return
+
+    const branchPayload = resolveBranchPayload()
+
+    const payload: AddProductParams = {
+      product: detail,
+      qty,
+      observacion,
+      modifierOptions: buildModifierOptionsPayload(),
+      onDoneUiReset: true,
+      branch: branchPayload.branch ?? "",
+      branchName: branchPayload.branchName ?? "",
+      wherehouse: branchPayload.wherehouse ?? "",
+      wherehouseCode: branchPayload.wherehouseCode ?? "",
+      serie: branchPayload.serie ?? "",
+    }
+
+    await addProduct(payload)
+
+    setCantidad(1)
+    setselectedCategory(null)
+    setDetailProduct(null)
+  } finally {
+    addLockRef.current = false
+  }
+}, [
+  addProduct,
+  cantidad,
+  observacion,
+  detail,
+  resolveBranchPayload,
+  buildModifierOptionsPayload,
+  validateRequiredModifiers,
+  setDetailProduct,
+  setselectedCategory,
+])
 
   const handleSendMessage = useCallback(async () => {
     if (sendLockRef.current) return
@@ -516,13 +621,12 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
     }
   }, [conversationId, detail, observacion, sendProductMessage])
 
-  const actionsDisabled = sending
+  const actionsDisabled = sending || addLockRef.current
   const canPickBranch = !locked
 
   return (
     <section className="detail-product__container">
       <header className="detail-product__stickyHeader detail-product__carouselHeader">
-
         <span>
           {currentIndex} / {totalCount}
         </span>
@@ -552,7 +656,7 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
         </div>
       </header>
 
-      <section ref={bodyRef as any} className="detail-product__scrollBody">
+      <section ref={bodyRef} className="detail-product__scrollBody">
         <section className="detail-product__section">
           <div className="detail-product__image">
             <button
@@ -574,7 +678,8 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
               {detail.codProducto} {detail.descripcion}
             </p>
 
-            <p className="detail-product__price">C$ {detail.precio}</p>
+            <p className="detail-product__price">C$ {detail.precio.toString() }</p>
+
 
             <p className="detail-product__descriptions-marca">
               {detail.marca ?? ""}
@@ -596,7 +701,8 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
                   {productModifiers.map((mod) => {
                     const key = String(mod.codModificador)
                     const selected = selectedOptions[key] ?? []
-                    const maxSel = Number(mod.maximoSel ?? 0)
+                    const maxSel = getMaximoSeleccion(mod)
+                    const limiteReal = getLimiteRealModificador(mod, cantidad)
 
                     const selectedQty = selected.reduce((sum, id) => {
                       return sum + clampQty(optionQuantities[id] ?? 1)
@@ -610,7 +716,7 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
                           {maxSel > 0 && (
                             <small className="product-modifiers__limit">
                               {" "}
-                              {selectedQty}/{maxSel}
+                              {selectedQty}/{limiteReal}
                             </small>
                           )}
                         </p>
@@ -620,6 +726,15 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
                             const optionId = String(op.codOpcion)
                             const selectedOption = isOptionSelected(mod, optionId)
                             const currentQty = optionQuantities[optionId] ?? 1
+                            const otherTotal = getSelectedQtyByModifier(
+                              mod,
+                              optionId
+                            )
+
+                            const maxOptionQty =
+                              limiteReal > 0
+                                ? Math.max(1, limiteReal - otherTotal)
+                                : 1000
 
                             return (
                               <div
@@ -644,13 +759,8 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
 
                                   {Number(op.precioVenta ?? 0) > 0 && (
                                     <span className="product-modifiers__option__price">
-                                      C$ {Number(op.precioVenta).toFixed(2)}
-                                    </span>
-                                  )}
-
-                                  {Number(op.precioVenta ?? 0) <= 0 && (
-                                    <span className="product-modifiers__option__price">
-                                      Precio incluido
+                                      {/* C$ {Number(op.precioVenta).toFixed(2)} */}
+                                      {op.precioVenta.toString() }
                                     </span>
                                   )}
                                 </label>
@@ -660,7 +770,7 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
                                     type="number"
                                     className="product-modifiers__option__qty"
                                     min={1}
-                                    max={maxSel > 0 ? maxSel : 1000}
+                                    max={maxOptionQty}
                                     value={currentQty}
                                     onChange={(e) =>
                                       handleOptionQuantityChange(
@@ -731,9 +841,9 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
 
                       <div className="detail-product__branchItemMeta">
                         {b.existencia > 0 && (
-                        <span className="detail-product__branchStock">
-                          {b.existencia} {b.medida}
-                        </span>
+                          <span className="detail-product__branchStock">
+                            {b.existencia} {b.medida}
+                          </span>
                         )}
 
                         <span
@@ -769,7 +879,8 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
                 <p className="productDetail-total">
                   Total:{" "}
                   <span className="productDetail-total__value">
-                    C$ {total.toFixed(2)}
+                    {/* C$ {total.toFixed(2)} */}
+                    C$ {total}
                   </span>
                 </p>
               )}
@@ -789,17 +900,17 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
             className="detail-product__inputNumber"
           />
 
-          <button
+          <Button
             type="button"
             className="productTab-buyButton"
             onClick={handleAddToCart}
             disabled={actionsDisabled}
           >
-            <FaShoppingCart />
-          </button>
+             {actionsDisabled ? <AiOutlineLoading3Quarters fontSize={14}/> : <FaShoppingCart fontSize={14}/>}
+          </Button>
 
           <Button disabled={actionsDisabled} onClick={handleSendMessage}>
-            {actionsDisabled ? <AiOutlineLoading3Quarters /> : <IoMdSend />}
+            {actionsDisabled ? <AiOutlineLoading3Quarters fontSize={14}/> : <IoMdSend fontSize={14}/>}
           </Button>
         </div>
       </footer>
@@ -828,6 +939,7 @@ const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => 
           />
         </div>
       )}
+
     </section>
   )
 }

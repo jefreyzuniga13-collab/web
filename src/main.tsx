@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
        <PersistGate loading={null} persistor={persistor}>
       <QueryClientProvider client={queryClient}>
       <BrowserRouter
-      //  basename="/crm"
+       basename="/crm"
        >
         <App />
       </BrowserRouter>

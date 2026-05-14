@@ -144,11 +144,15 @@ const SupportPage: React.FC = () => {
       if (cancelled) return;
 
       const arr = Array.isArray(cart) ? cart : [];
-      const count =
-        arr[0]?.listDetalle?.reduce(
-          (sum, d) => sum + Number(d.cantidad ?? 0),
-          0
-        ) ?? 0;
+
+          const count = arr[0]?.listDetalle?.reduce((sum, d) => {
+        // Solo sumamos si tipoComponente NO es "O"
+        if (d.tipoComponente !== "O") {
+          return sum + Number(d.cantidad ?? 0);
+        }
+        // Si es "O", retornamos el acumulador tal cual
+        return sum;
+      }, 0) ?? 0;
 
       dispatch(
         setContactCartBadge({

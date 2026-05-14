@@ -123,32 +123,32 @@ export function useSupportPage() {
       fetchPolicy();
     }, []);
 
-  const handleAfterAssign = async () => {
-    if (!convId) return;
-    try {
-      const res = await getConversation(convId);
-      setConversation(res.data.data);
-    } catch (error) {
-      console.error("Error al actualizar conversación:", error);
-    }
-  };
+  // const handleAfterAssign = async () => {
+  //   if (!convId) return;
+  //   try {
+  //     const res = await getConversation(convId);
+  //     setConversation(res.data.data);
+  //   } catch (error) {
+  //     console.error("Error al actualizar conversación:", error);
+  //   }
+  // };
 
   const handleAssignClick = async () => {
     if (!convId || !conversation) return;
 
     // Seguimos la misma lógica que el botón:
-    if (canAssign) {
+    // if (canAssign) {
       // Si es Admin o tiene la política activa -> Abre Modal
       dispatch(openAssignModal(conversation));
-    } else {
-      // Si no es Admin Y la política está inactiva -> Cierra directamente
-      try {
-        await closeConversation(convId);
-        handleAfterAssign();
-      } catch (error) {
-        console.error("Error al cerrar conversación:", error);
-      }
-    }
+    // } else {
+    //   // Si no es Admin Y la política está inactiva -> Cierra directamente
+    //   try {
+    //     await closeConversation(convId);
+    //     handleAfterAssign();
+    //   } catch (error) {
+    //     console.error("Error al cerrar conversación:", error);
+    //   }
+    // }
   };
 
     const handleAfterActionRefresh = useCallback(() => {

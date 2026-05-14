@@ -36,7 +36,7 @@
 .login__brand-content {
   position: relative;
   z-index: 3;
-  max-width: 80rem;
+  max-width: 100rem;
   padding: clamp(4rem, 5vw, 8rem);
   display: flex;
   flex-direction: column;
@@ -46,9 +46,9 @@
 }
 
 .login__brand-logo {
-  width: clamp(24rem, 20vw, 32rem);
+  width: 32rem !important;
   border-radius: 10%;
-  
+  user-select: none;
   height: auto;
   object-fit: contain;
   margin-bottom: var(--space-xl);
@@ -101,6 +101,11 @@
   color: var(--text-white);
   background: rgba(255, 255, 255, 0.16);
   border: 0.1rem solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
 }
 
 .login__form-panel {
@@ -134,12 +139,14 @@
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   letter-spacing: -0.03em;
+  text-align: left;
 }
 
 .login__card-header p {
   margin: var(--space-sm) 0 var(--space-xl);
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+  text-align: left;
 }
 
 .login__field {

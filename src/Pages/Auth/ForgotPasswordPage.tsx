@@ -2,8 +2,12 @@ import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
-import { FaArrowLeft, FaEnvelope } from "react-icons/fa";
-import logo from "@/assets/img/pcgroup.png";
+import { FaArrowLeft } from "react-icons/fa";
+import logo from "@/assets/img/logoinicio.png";
+import { FaUserLock } from "react-icons/fa";
+import { MdOutlineSecurity } from "react-icons/md";
+import { FaKeycdn } from "react-icons/fa";
+import { FaFingerprint } from "react-icons/fa";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
 
 export default function ForgotPasswordPresentation() {
@@ -29,11 +33,13 @@ export default function ForgotPasswordPresentation() {
               necesarias para restablecer tu contraseña.
             </p>
 
+
+
             <div className="forgot-password__features">
-              <span>Seguro</span>
-              <span>Rápido</span>
-              <span>Verificado</span>
-              <span>Confiable</span>
+              <span><FaUserLock /> Seguro</span>
+              <span><FaFingerprint /> Rápido</span>
+              <span><FaKeycdn /> Verificado</span>
+              <span><MdOutlineSecurity /> Confiable</span>
             </div>
           </div>
 
@@ -45,10 +51,6 @@ export default function ForgotPasswordPresentation() {
             >
               <div className="forgot-password__mobile-logo">
                 <img src={logo} alt="Logo" />
-              </div>
-
-              <div className="forgot-password__icon">
-                <FaEnvelope />
               </div>
 
               <div className="forgot-password__card-header">
@@ -106,7 +108,7 @@ export default function ForgotPasswordPresentation() {
               </form>
 
               <p className="forgot-password__copyright">
-                © 2026 PC GROUP S.A. Todos los derechos reservados.
+                © {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.
               </p>
             </section>
           </main>

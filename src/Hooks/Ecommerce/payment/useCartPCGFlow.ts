@@ -22,14 +22,14 @@ import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
-import { selectCompanySistema } from '@/Context/Slices/Auth/authSlice';
+import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
 
 export type LockedInfo = {
   branch: string
   branchName: string
   wherehouse: string
   wherehouseCode: string
-  serie?: string
+  serie: string
 }
 
 export type SelectedModifierOption = {
@@ -42,10 +42,23 @@ export type SelectedModifierOption = {
   precioVenta: number
   cantidad: number
   codUm: string
-  aplicaIva?: string
+  aplicaIva: string
 }
 
 export type AddProductParams = {
+  product: ProductoPCGInterface
+  qty: number
+  observacion: string
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
+  modifierOptions: SelectedModifierOption[]
+  onDoneUiReset: boolean
+}
+
+type AddProductInput = {
   product: ProductoPCGInterface
   qty: number
   observacion?: string
@@ -61,9 +74,9 @@ export type AddProductParams = {
 type PickerSelectValue = {
   codsucursal: string
   sucursal: string
-  nombodega?: string
-  codBodega?: string
-  serie?: string
+  nombodega: string
+  codBodega: string
+  serie: string
 }
 
 export type SucursalPickerProps = {
@@ -97,6 +110,10 @@ const clampQty = (n: number) => {
   if (!Number.isFinite(n) || n <= 0) return 1
   if (n > 1000) return 1000
   return Math.floor(n)
+}
+
+const cleanText = (value: string | null | undefined) => {
+  return String(value ?? "").trim()
 }
 
 const getErrorMessage = (error: unknown) => {
@@ -143,15 +160,14 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   const [pendingProduct, setPendingProduct] =
     useState<ProductoPCGInterface | null>(null)
 
-  const [pendingQuantity, setPendingQuantity] = useState<number>(1)
-  const [pendingObservacion, setPendingObservacion] = useState<string>("")
+  const [pendingQuantity, setPendingQuantity] = useState(1)
+  const [pendingObservacion, setPendingObservacion] = useState("")
   const [pendingModifiers, setPendingModifiers] = useState<
     SelectedModifierOption[]
   >([])
 
+  const companySistema = useSelector(selectCompanySistema)
 
-  const companySistema = useSelector(selectCompanySistema);
-    
   const hydratedRef = useRef(false)
   const addLockRef = useRef(false)
 
@@ -170,10 +186,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       if (existingLog?.branch && existingLog?.orderId) {
         setLocked({
           branch: existingLog.branch,
-          branchName: existingLog.branchName ?? "",
-          wherehouse: existingLog.wherehouse ?? "",
-          wherehouseCode: existingLog.wherehouseCode ?? "",
-          serie: existingLog.serie ?? "",
+          branchName: cleanText(existingLog.branchName),
+          wherehouse: cleanText(existingLog.wherehouse),
+          wherehouseCode: cleanText(existingLog.wherehouseCode),
+          serie: cleanText(existingLog.serie),
         })
       }
     }
@@ -190,18 +206,16 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       noPedido: string,
       observacion: string
     ): DetalleFacturaTempoRequest => {
-
-      // Propiedades de unico, tipo componente, y cod mofificador son para vertical de restaurantes
       return {
         sucursal: branch,
         usuario: String(contactId),
         maquina: `CRM-${contactId}`,
         fecha: dayjs().format("YYYYMMDD"),
-        codproducto: (product.codProducto ?? "").trim(),
+        codproducto: cleanText(product.codProducto),
         codprecio: "01",
         precio: Number(product.precio ?? 0),
-        bodega: (wherehouseCode ?? "").trim(),
-        cantidadmovimiento: qty,
+        bodega: cleanText(wherehouseCode),
+        cantidadmovimiento: clampQty(qty),
         medidamovimiento: "",
         nofactura: noPedido,
         tipo: "1",
@@ -213,7 +227,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         codvendedor: "004",
         codcliente: "00000",
         autorizado: "N",
-        producto: (product.descripcion ?? "").trim(),
+        producto: cleanText(product.descripcion),
         tabla: "det_factura_tempo",
         vincularse: "N",
         servicioventa: 1,
@@ -224,21 +238,19 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         observacion,
         iddescuentolineal: 0,
         vienedebusquedaprioridadproducto: "S",
-        pol_Sumacant: "N",
-
-        codModificador: '00000',
-        tipoComponente:'P',
-        unico:'',
-        sistema: String(companySistema)
+        pol_Sumacant: "S",
+        codModificador: "00000",
+        tipoComponente: "P",
+        unico: "",
+        sistema: String(companySistema),
       }
     },
-    [contactId]
+    [contactId, companySistema]
   )
 
   const buildModifierCartRequest = useCallback(
     (
       option: SelectedModifierOption,
-      parentQty: number,
       branch: string,
       wherehouseCode: string,
       noPedido: string,
@@ -251,11 +263,11 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         maquina: `CRM-${contactId}`,
         fecha: dayjs().format("YYYYMMDD"),
         codproducto: option.codOpcion.trim(),
-        codprecio: option.codPrecio?.trim() || "01",
+        codprecio: option.codPrecio.trim() || "01",
         precio: Number(option.precioVenta),
-        bodega: (wherehouseCode ?? "").trim(),
-        cantidadmovimiento: clampQty(option.cantidad) * clampQty(parentQty),
-        medidamovimiento: option.codUm?.trim() ?? "",
+        bodega: cleanText(wherehouseCode),
+        cantidadmovimiento: clampQty(option.cantidad),
+        medidamovimiento: option.codUm.trim(),
         nofactura: noPedido,
         tipo: "1",
         tipodesc: "N",
@@ -274,17 +286,17 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         lote: "Sin Lote",
         vencimiento: "20260116",
         vienedelabusqueda: "N",
-        observacion: option.descripcionMod,
+        observacion: option.descripcionMod.trim(),
         iddescuentolineal: 0,
         vienedebusquedaprioridadproducto: "S",
-        pol_Sumacant: "N",
-        codModificador: codModificador,
-        tipoComponente:'O',
-        unico: unico,
-        sistema: String(companySistema)
+        pol_Sumacant: "S",
+        codModificador,
+        tipoComponente: "O",
+        unico,
+        sistema: String(companySistema),
       }
     },
-    [contactId]
+    [contactId, companySistema]
   )
 
   const cleanupFacturaTempo = useCallback(async () => {
@@ -310,16 +322,13 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         })
       ).unwrap()
 
-      const arr = Array.isArray(updated) ? updated : []
+      const rows = Array.isArray(updated) ? updated : []
 
-      const count = arr[0]?.listDetalle?.reduce((sum, d) => {
-        // Solo sumamos si tipoComponente NO es "O"
-        if (d.tipoComponente !== "O") {
-          return sum + Number(d.cantidad ?? 0);
-        }
-        // Si es "O", retornamos el acumulador tal cual
-        return sum;
-      }, 0) ?? 0;
+      const count =
+        rows[0]?.listDetalle?.reduce((sum, detalle) => {
+          if (detalle.tipoComponente === "O") return sum
+          return sum + Number(detalle.cantidad ?? 0)
+        }, 0) ?? 0
 
       dispatch(
         setContactCartBadge({
@@ -341,10 +350,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           existingLog,
           noPedido: String(existingLog.orderId),
           branch: existingLog.branch,
-          branchName: existingLog.branchName ?? "",
-          wherehouse: existingLog.wherehouse ?? "",
-          wherehouseCode: existingLog.wherehouseCode ?? "",
-          serie: existingLog.serie ?? "",
+          branchName: cleanText(existingLog.branchName),
+          wherehouse: cleanText(existingLog.wherehouse),
+          wherehouseCode: cleanText(existingLog.wherehouseCode),
+          serie: cleanText(existingLog.serie),
         }
       }
 
@@ -451,13 +460,12 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
       const mainPayload = buildCartRequest(
         product,
-        qty,
+        clampQty(qty),
         lockInfo.branch,
         lockInfo.wherehouseCode,
         order.noPedido,
         observacion
       )
-
 
       let createdLog: LogCartResponseDto | null = null
 
@@ -468,26 +476,30 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           order.existingLog
         )
 
-        // Se recupera el unico
-        const resProduct: DetalleFacturaTempoData = await dispatch(addProductTempoAsync(mainPayload)).unwrap()
+        const resProduct: DetalleFacturaTempoData = await dispatch(
+          addProductTempoAsync(mainPayload)
+        ).unwrap()
 
-         const modifierPayloads = modifierOptions.map((option) =>
-            buildModifierCartRequest(
-              option,
-              qty,
-              lockInfo.branch,
-              lockInfo.wherehouseCode,
-              order.noPedido,
-              option.codModificador,
-              //Se envia el mismo unico a los modificadores, de esta forma se agrupan
-              resProduct.detalle[0].unico
-            )
+        const [createdDetail] = resProduct.detalle
+
+        if (!createdDetail || !createdDetail.unico) {
+          throw new Error("No se pudo obtener el identificador del producto.")
+        }
+
+        const modifierPayloads = modifierOptions.map((option) =>
+          buildModifierCartRequest(
+            option,
+            lockInfo.branch,
+            lockInfo.wherehouseCode,
+            order.noPedido,
+            option.codModificador,
+            createdDetail.unico
           )
+        )
 
         for (const payload of modifierPayloads) {
           await dispatch(addProductTempoAsync(payload)).unwrap()
         }
-
       } catch (error) {
         if (createdLog?.id) {
           await rollbackCreatedLog(createdLog)
@@ -518,14 +530,14 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       modifierOptions: SelectedModifierOption[]
     ) => {
       setPendingProduct(product)
-      setPendingQuantity(qty)
+      setPendingQuantity(clampQty(qty))
       setPendingObservacion(observacion)
       setPendingModifiers(modifierOptions)
       setOpenSucursalModal(true)
       setLoadingSucursalItems(true)
 
       try {
-        const cod = (product.codProducto ?? "").trim()
+        const cod = cleanText(product.codProducto)
 
         if (!cod) {
           setSucursalItems([])
@@ -546,7 +558,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   )
 
   const addProductCore = useCallback(
-    async (args: AddProductParams, options?: { skipPicker?: boolean }) => {
+    async (args: AddProductInput, options?: { skipPicker?: boolean }) => {
       if (addLockRef.current) return
       addLockRef.current = true
 
@@ -555,17 +567,15 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           product,
           qty,
           observacion = "",
-          branch,
-          branchName,
-          wherehouse,
-          wherehouseCode,
-          serie,
+          branch = "",
+          branchName = "",
+          wherehouse = "",
+          wherehouseCode = "",
+          serie = "",
           modifierOptions = [],
         } = args
 
-        const safeQty = Number(qty)
-
-        if (!product) return
+        const safeQty = clampQty(Number(qty))
 
         if (!safeQty || safeQty <= 0) {
           toast.warning("La cantidad debe ser al menos 1.")
@@ -574,7 +584,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
         if (locked) {
           const order = await resolveOrder(locked.branch)
-
           await commitProductToCart(
             product,
             safeQty,
@@ -592,10 +601,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
           const lockInfo: LockedInfo = {
             branch: order.branch,
-            branchName: (branchName ?? order.branchName ?? "").trim(),
-            wherehouse: (wherehouse ?? order.wherehouse ?? "").trim(),
-            wherehouseCode: (wherehouseCode ?? order.wherehouseCode ?? "").trim(),
-            serie: (serie ?? order.serie ?? "").trim(),
+            branchName: cleanText(branchName || order.branchName),
+            wherehouse: cleanText(wherehouse || order.wherehouse),
+            wherehouseCode: cleanText(wherehouseCode || order.wherehouseCode),
+            serie: cleanText(serie || order.serie),
           }
 
           await commitProductToCart(
@@ -615,10 +624,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         if (existingLog?.branch && existingLog?.orderId) {
           const lockInfo: LockedInfo = {
             branch: existingLog.branch,
-            branchName: existingLog.branchName ?? "",
-            wherehouse: existingLog.wherehouse ?? "",
-            wherehouseCode: existingLog.wherehouseCode ?? "",
-            serie: existingLog.serie ?? "",
+            branchName: cleanText(existingLog.branchName),
+            wherehouse: cleanText(existingLog.wherehouse),
+            wherehouseCode: cleanText(existingLog.wherehouseCode),
+            serie: cleanText(existingLog.serie),
           }
 
           const order: ResolveOrderResult = {
@@ -628,7 +637,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
             branchName: lockInfo.branchName,
             wherehouse: lockInfo.wherehouse,
             wherehouseCode: lockInfo.wherehouseCode,
-            serie: lockInfo.serie ?? "",
+            serie: lockInfo.serie,
           }
 
           await commitProductToCart(
@@ -671,7 +680,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   )
 
   const addProduct = useCallback(
-    async (args: AddProductParams) => {
+    async (args: AddProductInput) => {
       await addProductCore(args)
     },
     [addProductCore]
@@ -693,9 +702,9 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       const lockInfo: LockedInfo = {
         branch: value.codsucursal,
         branchName: value.sucursal,
-        wherehouse: value.nombodega ?? "",
-        wherehouseCode: value.codBodega ?? "",
-        serie: value.serie ?? "",
+        wherehouse: value.nombodega,
+        wherehouseCode: value.codBodega,
+        serie: value.serie,
       }
 
       await addProductCore(

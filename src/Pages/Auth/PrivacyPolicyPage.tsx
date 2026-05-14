@@ -85,7 +85,7 @@ const PrivacyPolicy: React.FC = () => {
         </section>
 
         <footer className="privacy-policy__footer" aria-label="Pie de página">
-          <p className="privacy-policy__footer-text">© 2025 PC Group S.A. Todos los derechos reservados.</p>
+          <p className="privacy-policy__footer-text">© {new Date().getFullYear()} PC Group S.A. Todos los derechos reservados.</p>
         </footer>
       </article>
     </main>

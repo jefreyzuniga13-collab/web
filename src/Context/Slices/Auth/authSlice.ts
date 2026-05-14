@@ -11,7 +11,7 @@ interface AuthState {
   roles: string[];
   empresaId: string;
   companyImageUrl: string;
-  companySistema: string
+  companySistema: string;
 }
 
 const initialState: AuthState = {
@@ -22,7 +22,7 @@ const initialState: AuthState = {
   roles: [],
   empresaId: '',
   companyImageUrl: '',
-  companySistema:''
+  companySistema: ''
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -63,7 +63,16 @@ const limpiarSesion = (state: AuthState) => {
   state.roles = [];
   state.empresaId = '';
   state.companyImageUrl = '';
-  state.companySistema = ''
+  state.companySistema = '';
+};
+
+const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
+  state.isAuthenticated = true;
+  state.userId = String(payload.userId);
+  state.empresaId = String(payload.empresaId ?? '');
+  state.companyImageUrl = payload.companyImageUrl ?? '';
+  state.companySistema = payload.companySistema ?? '';
+  state.checkingSession = false;
 };
 
 const authSlice = createSlice({
@@ -71,24 +80,18 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
-      const creds = action.payload;
-
-      state.isAuthenticated = true;
-      state.userId = String(creds.userId);
-      state.expiresAt = creds.expiresAt;
-      state.empresaId = String(creds.empresaId ?? '');
-      state.companyImageUrl = creds.companyImageUrl ?? '';
-      state.checkingSession = false;
-      state.companySistema = creds.companySistema
+      aplicarSesion(state, action.payload);
+      state.expiresAt = action.payload.expiresAt;
     },
 
     setAuthenticated(state, action: PayloadAction<boolean>) {
-      state.isAuthenticated = action.payload;
-      state.checkingSession = false;
-
-      if (!action.payload) {
-        limpiarSesion(state);
+      if (action.payload) {
+        state.isAuthenticated = true;
+        state.checkingSession = false;
+        return;
       }
+
+      limpiarSesion(state);
     },
 
     startCheckingSession(state) {
@@ -105,42 +108,33 @@ const authSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(refreshTokenThunk.pending, (state) => {
-      state.checkingSession = true;
-    });
+    builder
+      .addCase(refreshTokenThunk.pending, (state) => {
+        state.checkingSession = true;
+      })
 
-    builder.addCase(refreshTokenThunk.fulfilled, (state, { payload }) => {
-      state.isAuthenticated = true;
-      state.userId = String(payload.userId);
-      state.expiresAt = payload.expiresAt;
-      state.empresaId = String(payload.empresaId ?? '');
-      state.companyImageUrl = payload.companyImageUrl ?? '';
-      state.checkingSession = false;
-      state.companySistema = payload.companySistema
-    });
+      .addCase(refreshTokenThunk.fulfilled, (state, { payload }) => {
+        aplicarSesion(state, payload);
+        state.expiresAt = payload.expiresAt;
+      })
 
-    builder.addCase(refreshTokenThunk.rejected, (state) => {
-      limpiarSesion(state);
-    });
+      .addCase(refreshTokenThunk.rejected, (state) => {
+        limpiarSesion(state);
+      })
 
-    builder.addCase(checkSessionThunk.pending, (state) => {
-      state.checkingSession = true;
-    });
+      .addCase(checkSessionThunk.pending, (state) => {
+        state.checkingSession = true;
+      })
 
-    builder.addCase(checkSessionThunk.fulfilled, (state, { payload }) => {
-      state.isAuthenticated = true;
-      state.userId = String(payload.userId);
-      state.expiresAt = null;
-      state.roles = payload.roles ?? [];
-      state.empresaId = String(payload.empresaId ?? '');
-      state.companyImageUrl = payload.companyImageUrl ?? '';
-      state.checkingSession = false;
-      state.companySistema = payload.companySistema
-    });
+      .addCase(checkSessionThunk.fulfilled, (state, { payload }) => {
+        aplicarSesion(state, payload);
+        state.expiresAt = null;
+        state.roles = payload.roles ?? [];
+      })
 
-    builder.addCase(checkSessionThunk.rejected, (state) => {
-      limpiarSesion(state);
-    });
+      .addCase(checkSessionThunk.rejected, (state) => {
+        limpiarSesion(state);
+      });
   }
 });
 

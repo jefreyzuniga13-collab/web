@@ -336,6 +336,8 @@ export const selectCartItemsCount = (state: RootState): number => {
   if (!Array.isArray(carPCG) || carPCG.length === 0) return 0;
 
   return carPCG.reduce((acc, cart) => {
+    
+    //No cotar los tipoComponene  'O', por qyue son opciones de los principlae no productos princiaples
     const count =
       cart.listDetalle?.reduce((sum, d) => sum + d.cantidad, 0) ?? 0;
     return acc + count;

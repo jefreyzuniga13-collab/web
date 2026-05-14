@@ -1,11 +1,14 @@
 import { useCallback } from "react"
-import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
+import type { ChangeEvent, MouseEvent } from "react"
 import Tooltip from "@mui/material/Tooltip"
-import Button from "@/Components/Common/Button"
 import { IoMdSend } from "react-icons/io"
 import { MdInventory } from "react-icons/md"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
+import { toast } from "react-toastify"
+
+import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
+import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
@@ -16,8 +19,14 @@ interface Props {
   onClick?: (product: ProductoPCGInterface) => void
   conversationId: number
   simpleQuantity: number
-  handleChangeSimpleQuantity: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleChangeSimpleQuantity: (e: ChangeEvent<HTMLInputElement>) => void
   cartLoading: boolean
+}
+
+const clampQty = (n: number) => {
+  if (!Number.isFinite(n) || n <= 0) return 1
+  if (n > 1000) return 1000
+  return Math.floor(n)
 }
 
 export const ProductPCGTab = ({
@@ -28,24 +37,45 @@ export const ProductPCGTab = ({
   handleChangeSimpleQuantity,
   cartLoading,
 }: Props) => {
-
-  const { addProduct} = useCartPCGFlowCtx()
+  const { addProduct } = useCartPCGFlowCtx()
   const { sending, sendProductMessage } = useProductMessageComposer()
-  
+
   const handleOpenDetail = useCallback(() => {
     if (onClick) onClick(prod)
   }, [onClick, prod])
 
   const handleSimpleAdd = useCallback(async () => {
+    const qty = clampQty(Number(simpleQuantity))
+
+    if (qty <= 0) {
+      toast.warning("La cantidad debe ser al menos 1.")
+      return
+    }
+
+    if (prod.tieneOpcion) {
+      toast.info(
+        "Este producto tiene modificadores. Debe abrir el detalle para seleccionar las opciones."
+      )
+      handleOpenDetail()
+      return
+    }
+
     await addProduct({
       product: prod,
-      qty: simpleQuantity,
+      qty,
+      observacion: "",
+      modifierOptions: [],
       onDoneUiReset: false,
+      branch: "",
+      branchName: "",
+      wherehouse: "",
+      wherehouseCode: "",
+      serie: "",
     })
-  }, [addProduct, prod, simpleQuantity])
+  }, [addProduct, prod, simpleQuantity, handleOpenDetail])
 
   const handleSendMessage = useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
+    async (e: MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation()
       e.preventDefault()
 
@@ -56,11 +86,6 @@ export const ProductPCGTab = ({
     },
     [sendProductMessage, prod, conversationId]
   )
-
-  // addProduct, mismo metodo usado en el DetailPCGProduct, 
-  //con las modificadores, validar las opciones por defceto y demas logica que es la misma
-  //aqui no se muestran los modificadoe solo el producto en si, por lo que es probable que no seleccione o se debe de lanzar un mensaje de error y no procgiuir por ejemplo
-  //cando una opcion de los modificadores es obligatoria y desde este listad o general no se selecciona, asi el usuario navegaria o tendria que ir al detalle para ver los modificadors y selecciona, etc
 
   return (
     <div className="productPCG-row">
@@ -99,7 +124,8 @@ export const ProductPCGTab = ({
           </span>
 
           <span className="product-row__description-text-price">
-            {prod.precio > 0 ? `C$ ${prod.precio}` : ""}
+            {/* {prod.precio > 0 ? `C$ ${prod.precio}` : ""} */}
+            {prod.precio > 0 ? `C$ ${(prod.precio).toString() }` : ""}
           </span>
         </div>
       </div>
@@ -120,12 +146,16 @@ export const ProductPCGTab = ({
             className="productTab-buyButton__general"
             onClick={handleSimpleAdd}
             disabled={simpleQuantity <= 0 || cartLoading}
+            title={
+              prod.tieneOpcion
+                ? "Abrir detalle para seleccionar opciones"
+                : "Agregar al carrito"
+            }
           >
             <FaShoppingCart fontSize={12} />
           </button>
         </div>
 
-            
         <Button
           variant="tertiary"
           className="product-row__btn"

@@ -26,7 +26,7 @@ const buildBaseCaption = (p: ProductoPCGInterface): string => {
   if (p.descripcion) parts.push(`*Producto:* ${p.descripcion}`)
   if (p.contenido) parts.push(`*Contenido:* ${p.contenido}`)
   if (p.precio && Number(p.precio) > 0) {
-    parts.push(`*Precio:* C$ ${Number(p.precio).toFixed(2)}`)
+    parts.push(`*Precio:* C$ ${(p.precio)}`)
   }
   return parts.join("\n").trim()
 }

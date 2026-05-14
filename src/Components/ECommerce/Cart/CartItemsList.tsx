@@ -2,6 +2,7 @@ import React, { useMemo } from "react"
 import { MdDelete } from "react-icons/md"
 import noimageavailable from "@/assets/img/noimageavailable.webp"
 import type { CarDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+import { calcularIVA } from "@/Utils/calcularIVA"
 
 type Row = { cart: CarDto; detail: ListDetalleCarrito }
 
@@ -43,7 +44,10 @@ export function CartItemsList({ carPCG, search, onRemove }: Props) {
 
           <div className="carPCPanel-content__list-info">
             <p className="carPCPanel-content__list-text">{detail.descripcion}</p>
-            <p className="carPCPanel-content__list-price">C$ {detail.precioV.toFixed(2)}</p>
+            <p className="carPCPanel-content__list-price">
+              {/* C$ {detail.precioV.toFixed(2)} */}
+              {calcularIVA(detail.precioV).toString() }
+              </p>
           </div>
 
           <div className="carPCPanel-listaOpciones">

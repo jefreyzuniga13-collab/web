@@ -142,7 +142,7 @@ export default function ResetPasswordPresentation() {
               </form>
 
               <p className="reset-password__copyright">
-                © 2026 PC GROUP S.A. Todos los derechos reservados.
+                © {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.
               </p>
             </section>
           </main>

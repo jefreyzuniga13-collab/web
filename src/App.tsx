@@ -76,7 +76,10 @@ export default function App() {
   // Registrar service worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      // navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .catch(() => {});
     }
   }, []);
 
@@ -138,7 +141,8 @@ export default function App() {
     if (!lastEvent) return;
 
     try {
-      const audio = new Audio("/notification.mp3");
+      // const audio = new Audio("/notification.mp3");
+      const audio = new Audio(`${import.meta.env.BASE_URL}notification.mp3`);
       audio.play().catch(() => {});
     } catch {}
   }, [lastEvent]);
@@ -146,15 +150,18 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <SessionBootstrap>
+
         <ToastContainer
           position="top-right"
-          autoClose={500}
+          autoClose={3000}
           hideProgressBar={false}
-          newestOnTop={false}
+          newestOnTop
           closeOnClick
           pauseOnHover
           draggable
           theme="colored"
+          toastClassName="custom-toast"
+          className="custom-toast-body"
         />
 
         {isAuthenticated ? (

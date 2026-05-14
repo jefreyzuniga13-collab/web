@@ -9,6 +9,7 @@ import { AssignmentForcedPopup } from "@/Components/Hub/AssignmentForcedPopup";
 import ContactValidatorHub from "@/Components/Hub/ContactValidatorHub";
 import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
 import { GlobalSoundNotifier } from "@/Components/Common/GlobalSoundNotifier";
+import { NotificationsPopupBridge } from '@/Components/Chat/NotificationsPopupBridge';
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -31,6 +32,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   return (
     <>
       <GlobalSoundNotifier />
+       <NotificationsPopupBridge />
       <SupportRequestedPopup />
       <ConversationAssignedPopup />
       <AssignmentResponsePopup />

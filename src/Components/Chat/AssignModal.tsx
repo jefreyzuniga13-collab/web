@@ -57,18 +57,19 @@ export const AssignModal: React.FC = () => {
                 const isLoading =
                   loadingAgentId === agent.userId
 
-                const isDisabled =
-                  loadingAgentId !== null || isAssigned
+                // const isDisabled =
+                //   loadingAgentId !== null || isAssigned
 
                 return (
                   <button
                     key={agent.userId}
                     type="button"
-                    className={`assign-modal__agent-button ${
-                      isAssigned ? 'assign-modal__agent-button--assigned' : ''
-                    }`}
+                    className={`assign-modal__agent-button 
+                     
+                    `
+                  }
                     onClick={() => handleAssignAgent(agent.userId)}
-                    disabled={isDisabled}
+                    // disabled={isDisabled}
                   >
                     <AgentCard agent={agent} />
 
