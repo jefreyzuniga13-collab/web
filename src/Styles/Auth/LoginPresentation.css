@@ -27,9 +27,18 @@
 .login__brand-overlay {
   position: absolute;
   inset: 0;
-  background:
+  /* background:
     linear-gradient(135deg, rgba(36, 34, 134, 0.9), rgba(49, 71, 137, 0.58)),
-    linear-gradient(to top, rgba(19, 20, 24, 0.55), transparent);
+    linear-gradient(to top, rgba(19, 20, 24, 0.55), transparent); */
+
+  /* background:
+    linear-gradient(135deg, rgba(214, 214, 218, 0.9), rgba(36, 34, 134, 0.9)),
+    linear-gradient(to top, rgba(1, 52, 255, 0.55), transparent); */
+background: 
+  /* Capa superior: El tinte azul central */
+  radial-gradient(circle, rgba(47, 67, 148, 0.8) 0%, transparent 70%),
+  /* Capa base: El degradado bitono original */
+  linear-gradient(135deg, rgba(214, 214, 218, 0.9), rgba(6, 4, 145, 0.9));
   z-index: 1;
 }
 
@@ -46,7 +55,8 @@
 }
 
 .login__brand-logo {
-  width: 32rem !important;
+  /* width: 42rem !important; */
+    width: clamp(32rem, 32vw, 32rem);
   border-radius: 10%;
   user-select: none;
   height: auto;
@@ -347,7 +357,7 @@
   width: 100%;
   height: clamp(7rem, 8vw, 14rem);
   z-index: 2;
-  fill: #fff;
+  fill: #2c3ab6e6;
   pointer-events: none;
 }
 
@@ -501,7 +511,7 @@
   }
 
   .login__mobile-logo img {
-    width: 11rem;
+    width: 18rem;
     height: auto;
     object-fit: contain;
   }

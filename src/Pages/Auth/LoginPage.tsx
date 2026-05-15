@@ -10,7 +10,7 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useLoginForm from "@/Hooks/Auth/useLoginForm";
 import { ActivationSesionModal } from "@/Components/Auth/ActivationSesionModal";
-import logo from "@/assets/img/logoinicio.png"
+import logo from "@/assets/img/logoinicio2.png"
 import { BiSolidContact } from "react-icons/bi";
 import { MdSupportAgent } from "react-icons/md";
 import { BiSupport } from "react-icons/bi";
@@ -163,9 +163,9 @@ export default function LoginPresentation() {
             </div>
           </main>
 
-          <svg className="login__wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+          {/* <svg className="login__wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
             <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
-          </svg>
+          </svg> */}
         </aside>
       </div>
 

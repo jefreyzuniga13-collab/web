@@ -115,6 +115,7 @@ export interface ExistenciaSucursalItem {
   medida: string;
   nombodega: string;
   codbodega:string
+  precio: string
 }
 
 

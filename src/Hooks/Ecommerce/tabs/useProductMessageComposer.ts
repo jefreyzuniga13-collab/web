@@ -1,8 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
-import type {
-  ProductoPCGInterface,
-  ProductoModificadorPCGInterface,
-} from "@/Interfaces/Chat/ProductPCGInterface"
+import type {ProductoPCGInterface, ProductoModificadorPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
 import { buildModifiersText } from "@/Utils/ECommerce/buildModifiersText"
 import { SendMediaECommerceFromUrlAsync } from "@/Services/chat/MessageService"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
@@ -10,6 +7,7 @@ import { toast } from "react-toastify"
 import { selectUserId } from '@/Context/Slices/Auth/authSlice';
 import { useSelector } from "react-redux"
 import vacio from '@/assets/vacio.png'
+import { formatearDecimales } from "@/Utils/calcularIVA"
 
 type SendProductMessageArgs = {
   product: ProductoPCGInterface
@@ -26,7 +24,8 @@ const buildBaseCaption = (p: ProductoPCGInterface): string => {
   if (p.descripcion) parts.push(`*Producto:* ${p.descripcion}`)
   if (p.contenido) parts.push(`*Contenido:* ${p.contenido}`)
   if (p.precio && Number(p.precio) > 0) {
-    parts.push(`*Precio:* C$ ${(p.precio)}`)
+    // parts.push(`*Precio:* C$ ${(p.precio)}`)
+    parts.push(`*Precio:* C$ ${formatearDecimales(p.precio)}`)
   }
   return parts.join("\n").trim()
 }

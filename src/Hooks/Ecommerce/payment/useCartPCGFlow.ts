@@ -1,3 +1,5 @@
+
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dayjs from "dayjs"
 import { useDispatch, useSelector } from "react-redux"
@@ -30,6 +32,7 @@ export type LockedInfo = {
   wherehouse: string
   wherehouseCode: string
   serie: string
+  codPrecio: string
 }
 
 export type SelectedModifierOption = {
@@ -54,6 +57,7 @@ export type AddProductParams = {
   wherehouse: string
   wherehouseCode: string
   serie: string
+  codPrecio: string
   modifierOptions: SelectedModifierOption[]
   onDoneUiReset: boolean
 }
@@ -67,6 +71,7 @@ type AddProductInput = {
   wherehouse?: string
   wherehouseCode?: string
   serie?: string
+  codPrecio?: string
   modifierOptions?: SelectedModifierOption[]
   onDoneUiReset?: boolean
 }
@@ -77,6 +82,9 @@ type PickerSelectValue = {
   nombodega: string
   codBodega: string
   serie: string
+  codPrecio?: string | null
+  codprecio?: string | null
+  CodPrecio?: string | null
 }
 
 export type SucursalPickerProps = {
@@ -97,6 +105,7 @@ type ResolveOrderResult = {
   wherehouse: string
   wherehouseCode: string
   serie: string
+  codPrecio: string
 }
 
 type CartServiceWithCleanup = typeof CartService & {
@@ -106,14 +115,25 @@ type CartServiceWithCleanup = typeof CartService & {
   ) => Promise<unknown>
 }
 
+type WithCodPrecio = {
+  codPrecio?: string | null
+  codprecio?: string | null
+  CodPrecio?: string | null
+}
+
 const clampQty = (n: number) => {
   if (!Number.isFinite(n) || n <= 0) return 1
   if (n > 1000) return 1000
   return Math.floor(n)
 }
 
-const cleanText = (value: string | null | undefined) => {
+const cleanText = (value: string | number | null | undefined) => {
   return String(value ?? "").trim()
+}
+
+const getCodPrecio = (value: unknown) => {
+  const item = value as WithCodPrecio | null
+  return cleanText(item?.codPrecio ?? item?.codprecio ?? item?.CodPrecio)
 }
 
 const getErrorMessage = (error: unknown) => {
@@ -151,7 +171,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     UpdatedStatus,
   } = useLogCart()
 
-  const [locked, setLocked] = useState<LockedInfo | null>(null)
+  const [locked, setLockedState] = useState<LockedInfo | null>(null)
+  const [codPrecioActivo, setCodPrecioActivoState] = useState("")
 
   const [openSucursalModal, setOpenSucursalModal] = useState(false)
   const [sucursalItems, setSucursalItems] = useState<ExistenciaSucursalItem[]>([])
@@ -170,6 +191,18 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
   const hydratedRef = useRef(false)
   const addLockRef = useRef(false)
+
+  const setCodPrecioActivo = useCallback(
+    (value: string | null | undefined) => {
+      setCodPrecioActivoState(cleanText(value))
+    },
+    []
+  )
+
+  const setLocked = useCallback((value: LockedInfo | null) => {
+    setLockedState(value)
+    setCodPrecioActivoState(cleanText(value?.codPrecio))
+  }, [])
 
   useEffect(() => {
     hydratedRef.current = false
@@ -190,12 +223,13 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           wherehouse: cleanText(existingLog.wherehouse),
           wherehouseCode: cleanText(existingLog.wherehouseCode),
           serie: cleanText(existingLog.serie),
+          codPrecio: getCodPrecio(existingLog),
         })
       }
     }
 
     void run()
-  }, [contactId, fetchByContactId])
+  }, [contactId, fetchByContactId, setLocked])
 
   const buildCartRequest = useCallback(
     (
@@ -204,7 +238,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       branch: string,
       wherehouseCode: string,
       noPedido: string,
-      observacion: string
+      observacion: string,
+      codPrecio: string
     ): DetalleFacturaTempoRequest => {
       return {
         sucursal: branch,
@@ -212,7 +247,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         maquina: `CRM-${contactId}`,
         fecha: dayjs().format("YYYYMMDD"),
         codproducto: cleanText(product.codProducto),
-        codprecio: "01",
+        codprecio: cleanText(codPrecio) || "01",
         precio: Number(product.precio ?? 0),
         bodega: cleanText(wherehouseCode),
         cantidadmovimiento: clampQty(qty),
@@ -255,7 +290,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       wherehouseCode: string,
       noPedido: string,
       codModificador: string,
-      unico: string
+      unico: string,
+      codPrecio: string
     ): DetalleFacturaTempoRequest => {
       return {
         sucursal: branch,
@@ -263,7 +299,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         maquina: `CRM-${contactId}`,
         fecha: dayjs().format("YYYYMMDD"),
         codproducto: option.codOpcion.trim(),
-        codprecio: option.codPrecio.trim() || "01",
+        codprecio: option.codPrecio.trim() || cleanText(codPrecio) || "01",
         precio: Number(option.precioVenta),
         bodega: cleanText(wherehouseCode),
         cantidadmovimiento: clampQty(option.cantidad),
@@ -342,7 +378,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   )
 
   const resolveOrder = useCallback(
-    async (branch: string): Promise<ResolveOrderResult> => {
+    async (branch: string, codPrecio: string): Promise<ResolveOrderResult> => {
       const existingLog = await fetchByContactId(contactId)
 
       if (existingLog?.orderId && existingLog?.branch) {
@@ -354,6 +390,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           wherehouse: cleanText(existingLog.wherehouse),
           wherehouseCode: cleanText(existingLog.wherehouseCode),
           serie: cleanText(existingLog.serie),
+          codPrecio: getCodPrecio(existingLog) || cleanText(codPrecio),
         }
       }
 
@@ -377,6 +414,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         wherehouse: "",
         wherehouseCode: "",
         serie: "",
+        codPrecio: cleanText(codPrecio),
       }
     },
     [contactId, fetchByContactId]
@@ -404,6 +442,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         wherehouse: info.wherehouse,
         wherehouseCode: info.wherehouseCode,
         serie: info.serie,
+        codPrecio: info.codPrecio,
       }
 
       const created = await createLogCart(logOrderRequest)
@@ -458,13 +497,17 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         return
       }
 
+      const codPrecioFinal =
+        cleanText(lockInfo.codPrecio) || cleanText(order.codPrecio) || "01"
+
       const mainPayload = buildCartRequest(
         product,
         clampQty(qty),
         lockInfo.branch,
         lockInfo.wherehouseCode,
         order.noPedido,
-        observacion
+        observacion,
+        codPrecioFinal
       )
 
       let createdLog: LogCartResponseDto | null = null
@@ -472,7 +515,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       try {
         createdLog = await createLogIfNeeded(
           noPedido,
-          lockInfo,
+          {
+            ...lockInfo,
+            codPrecio: codPrecioFinal,
+          },
           order.existingLog
         )
 
@@ -493,7 +539,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
             lockInfo.wherehouseCode,
             order.noPedido,
             option.codModificador,
-            createdDetail.unico
+            createdDetail.unico,
+            codPrecioFinal
           )
         )
 
@@ -509,7 +556,11 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         return
       }
 
-      setLocked(lockInfo)
+      setLocked({
+        ...lockInfo,
+        codPrecio: codPrecioFinal,
+      })
+
       await refreshBadge(noPedido)
     },
     [
@@ -519,6 +570,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       dispatch,
       refreshBadge,
       rollbackCreatedLog,
+      setLocked,
     ]
   )
 
@@ -572,10 +624,12 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
           wherehouse = "",
           wherehouseCode = "",
           serie = "",
+          codPrecio = "",
           modifierOptions = [],
         } = args
 
         const safeQty = clampQty(Number(qty))
+        const safeCodPrecio = cleanText(codPrecio)
 
         if (!safeQty || safeQty <= 0) {
           toast.warning("La cantidad debe ser al menos 1.")
@@ -583,7 +637,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         }
 
         if (locked) {
-          const order = await resolveOrder(locked.branch)
+          const order = await resolveOrder(locked.branch, locked.codPrecio)
+
           await commitProductToCart(
             product,
             safeQty,
@@ -597,7 +652,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         }
 
         if (branch && wherehouseCode) {
-          const order = await resolveOrder(branch)
+          const order = await resolveOrder(branch, safeCodPrecio)
 
           const lockInfo: LockedInfo = {
             branch: order.branch,
@@ -605,6 +660,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
             wherehouse: cleanText(wherehouse || order.wherehouse),
             wherehouseCode: cleanText(wherehouseCode || order.wherehouseCode),
             serie: cleanText(serie || order.serie),
+            codPrecio: safeCodPrecio || order.codPrecio || "01",
           }
 
           await commitProductToCart(
@@ -628,6 +684,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
             wherehouse: cleanText(existingLog.wherehouse),
             wherehouseCode: cleanText(existingLog.wherehouseCode),
             serie: cleanText(existingLog.serie),
+            codPrecio: getCodPrecio(existingLog) || "01",
           }
 
           const order: ResolveOrderResult = {
@@ -638,6 +695,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
             wherehouse: lockInfo.wherehouse,
             wherehouseCode: lockInfo.wherehouseCode,
             serie: lockInfo.serie,
+            codPrecio: lockInfo.codPrecio,
           }
 
           await commitProductToCart(
@@ -705,7 +763,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         wherehouse: value.nombodega,
         wherehouseCode: value.codBodega,
         serie: value.serie,
+        codPrecio: getCodPrecio(value) || "01",
       }
+
+      setCodPrecioActivo(lockInfo.codPrecio)
 
       await addProductCore(
         {
@@ -724,6 +785,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       pendingQuantity,
       pendingObservacion,
       pendingModifiers,
+      setCodPrecioActivo,
     ]
   )
 
@@ -753,7 +815,9 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
 
   return {
     locked,
+    codPrecioActivo,
     setLocked,
+    setCodPrecioActivo,
     addProduct,
     pickerProps,
   }

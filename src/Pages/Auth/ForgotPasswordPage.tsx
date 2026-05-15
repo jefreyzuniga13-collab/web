@@ -3,7 +3,7 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import useForgotPasswordForm from "@/Hooks/Auth/useForgotPasswordForm";
 import { FaArrowLeft } from "react-icons/fa";
-import logo from "@/assets/img/logoinicio.png";
+import logo from "@/assets/img/logoinicio2.png";
 import { FaUserLock } from "react-icons/fa";
 import { MdOutlineSecurity } from "react-icons/md";
 import { FaKeycdn } from "react-icons/fa";
@@ -26,7 +26,7 @@ export default function ForgotPasswordPresentation() {
               Recuperación de acceso CRM
             </span>
 
-            <h1>Recuperá el acceso</h1>
+            <h1 className="forgot-password__title">RECUPERA EL ACCESO</h1>
 
             <p>
               Ingresá tu correo electrónico y te enviaremos las instrucciones
@@ -113,13 +113,13 @@ export default function ForgotPasswordPresentation() {
             </section>
           </main>
 
-          <svg
+          {/* <svg
             className="forgot-password__wave"
             viewBox="0 0 1440 320"
             preserveAspectRatio="none"
           >
             <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
-          </svg>
+          </svg> */}
         </aside>
       </div>
     </section>

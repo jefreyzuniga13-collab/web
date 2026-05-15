@@ -9,6 +9,7 @@ import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSectio
 import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection";
 import { safeStr } from "@/Utils/ECommerce/formatters";
 import '@/Styles/Ecommerce/Payment/PaymentMethodComponent.css';
+import { formatearDecimales } from "@/Utils/calcularIVA";
 
 export interface Props {
   step: CheckoutStep;
@@ -144,21 +145,22 @@ export const PaymentMethodComponent = ({
               <div className="checkout-summary__subtitle">
                 <p className="checkout-summary__p">Subtotal: </p>
                 <strong className="checkout-summary__strong">
-                  {existingLog?.subTotal}
+                  {formatearDecimales(existingLog?.subTotal ?? 0)}
                 </strong>
               </div>
 
               <div className="checkout-summary__subtitle">
                 <p className="checkout-summary__p">IVA: </p>
                 <strong className="checkout-summary__strong">
-                  {existingLog?.ivaPantalla}
+                  {formatearDecimales(existingLog?.ivaPantalla ?? 0)}
                 </strong>
               </div>
+
 
               <div className="checkout-summary__subtitle">
                 <p className="checkout-summary__p">Transporte: </p>
                 <strong className="checkout-summary__strong">
-                  {transpCost || existingLog?.transCost}
+                  {formatearDecimales(transpCost ?? 0) || formatearDecimales(existingLog?.transCost ?? 0)}
                 </strong>
               </div>
 
@@ -166,8 +168,8 @@ export const PaymentMethodComponent = ({
                 <p className="checkout-summary__p">Total :</p>
                 <strong className="checkout-summary__strong">
                   C${" "}
-                  {(existingLog?.totalEnPantalla ?? 0) +
-                    (transpCost > 0 ? transpCost : 0)}
+                  {formatearDecimales((existingLog?.totalEnPantalla ?? 0) +
+                    (transpCost > 0 ? transpCost : 0)) ?? 0}
                 </strong>
               </div>
 

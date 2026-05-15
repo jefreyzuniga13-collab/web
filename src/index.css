@@ -298,3 +298,15 @@ body {
   font-size: 18px;
   opacity: 0.9;
 }
+
+@keyframes latido {
+  0% {
+    transform: scale(1); 
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

@@ -12,7 +12,9 @@ type CartPCGFlowContextValue = {
   conversationId: number
   contactId: number
   locked: LockedInfo | null
+  codPrecioActivo: string
   setLocked: (value: LockedInfo | null) => void
+  setCodPrecioActivo: (value: string | null | undefined) => void
   addProduct: (args: AddProductParams) => Promise<void>
   pickerProps: SucursalPickerProps
 }
@@ -30,17 +32,23 @@ export const CartPCGFlowProvider = ({
   contactId,
   children,
 }: CartPCGFlowProviderProps) => {
-  const { locked, setLocked, addProduct, pickerProps } = useCartPCGFlow(
-    conversationId,
-    contactId
-  )
+  const {
+    locked,
+    codPrecioActivo,
+    setLocked,
+    setCodPrecioActivo,
+    addProduct,
+    pickerProps,
+  } = useCartPCGFlow(conversationId, contactId)
 
   const value = useMemo<CartPCGFlowContextValue>(
     () => ({
       conversationId,
       contactId,
       locked,
+      codPrecioActivo,
       setLocked,
+      setCodPrecioActivo,
       addProduct,
       pickerProps,
     }),
@@ -48,7 +56,9 @@ export const CartPCGFlowProvider = ({
       conversationId,
       contactId,
       locked,
+      codPrecioActivo,
       setLocked,
+      setCodPrecioActivo,
       addProduct,
       pickerProps,
     ]

@@ -10,6 +10,7 @@ export type SucursalPickerValue = {
   medida: string
   nombodega: string
   codBodega: string
+  codPrecio: string
 }
 
 interface Props {
@@ -30,6 +31,7 @@ type NormalizedRow = {
   medida: string
   nombodega: string
   codBodega: string
+  precio: string
 }
 
 const buildKey = (r: { codsucursal: string; serie: string }) => `${r.codsucursal}__${r.serie}`
@@ -44,6 +46,7 @@ export function SucursalPickerModal({
   onSelect,
 }: Props) {
   const rows = useMemo<NormalizedRow[]>(() => {
+
     const arr = Array.isArray(items) ? items : []
 
     const normalized = arr.map((r) => {
@@ -58,6 +61,7 @@ export function SucursalPickerModal({
         medida: String(r.medida ?? "").trim(),
         nombodega: String((r as unknown as { nombodega?: string }).nombodega ?? "").trim(),
         codBodega,
+        precio: r.precio,
       }
     })
 
@@ -141,6 +145,10 @@ export function SucursalPickerModal({
                             {r.existencia} {r.medida}
                           </span>
                         </div>
+
+                        <div className="spmMeta">
+                          <span className="spmChip">CodPrecio {r.precio}</span>
+                        </div>
                       </div>
                       <span className="spmRadio" aria-hidden="true">
                         {isActive ? "●" : "○"}
@@ -174,6 +182,7 @@ export function SucursalPickerModal({
                 medida: selected.medida,
                 nombodega: selected.nombodega,
                 codBodega: selected.codBodega,
+                codPrecio: selected.precio
               })
               onClose()
             }}

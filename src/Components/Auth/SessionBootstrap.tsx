@@ -15,6 +15,9 @@ const PUBLIC_ROUTES = new Set([
   "/payment-result",
   "/payment-hosted",
   "/successOrder",
+  
+  "/login",
+  "/login/",
   "/login",
   "/signup",
   "/check-email",
@@ -23,6 +26,7 @@ const PUBLIC_ROUTES = new Set([
   "/verify-account",
   "/privacy-policy",
   "/unauthorized",
+  "/",
 ]);
 
 function normalizePath(pathname: string) {
@@ -45,6 +49,7 @@ export default function SessionBootstrap({ children }: Props) {
 
   const isPublicRoute = PUBLIC_ROUTES.has(normalizedPath);
 
+  
   useEffect(() => {
     if (isPublicRoute) return;
     dispatch(checkSessionThunk());

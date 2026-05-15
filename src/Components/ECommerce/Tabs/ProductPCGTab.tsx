@@ -6,13 +6,13 @@ import { MdInventory } from "react-icons/md"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { toast } from "react-toastify"
-
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
 import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
+import { formatearDecimales } from "@/Utils/calcularIVA"
 
 interface Props {
   prod: ProductoPCGInterface
@@ -71,6 +71,7 @@ export const ProductPCGTab = ({
       wherehouse: "",
       wherehouseCode: "",
       serie: "",
+      codPrecio:""
     })
   }, [addProduct, prod, simpleQuantity, handleOpenDetail])
 
@@ -124,8 +125,7 @@ export const ProductPCGTab = ({
           </span>
 
           <span className="product-row__description-text-price">
-            {/* {prod.precio > 0 ? `C$ ${prod.precio}` : ""} */}
-            {prod.precio > 0 ? `C$ ${(prod.precio).toString() }` : ""}
+            {prod.precio > 0 ? `C$ ${formatearDecimales(prod.precio) }` : ""}
           </span>
         </div>
       </div>
@@ -135,7 +135,7 @@ export const ProductPCGTab = ({
           <input
             type="number"
             min={1}
-            max={1000}
+            max={100}
             value={simpleQuantity}
             onChange={handleChangeSimpleQuantity}
             className="productTab-simpleAddBar__input"

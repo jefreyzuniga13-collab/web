@@ -9,6 +9,7 @@ export type BranchPick = {
   medida: string
   nombodega: string
   codbodega: string
+  precio: string
 }
 
 type UseBranchesByProductOptions = {

@@ -5,92 +5,70 @@ import type {
   ProductoPCGInterface,
 } from "@/Interfaces/Chat/ProductPCGInterface";
 import type { ApiPCGResponse } from "@/Interfaces/Common/GlobalPCGInterface";
-
-import type { AxiosError } from "axios";
-
-function formatError(error: unknown): Error {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const axiosError = error as AxiosError<ApiPCGResponse<any>>;
-  const message = axiosError.response?.data?.message ?? axiosError.message;
-  return new Error(message);
-}
-
 class ProductPCGServ {
 
   async getAll(
+    codPrecio: string = "01",
     page: number,
     pageSize: number,
     descripcion?: string,
   ): Promise<ProductoPCGInterface[]> {
-    try {
-      //pendiente paginación
+    
+    const activePrecio = (codPrecio && codPrecio.length > 0) ? codPrecio : "01";
+
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}/BD/T`
+        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}/BD/T`,
+         {
+          params: {
+            codPrecio: activePrecio 
+          }
+        }
      );
       return data.data;
-    } catch (error) {
-      throw formatError(error);
-    }
   }
 
-  async GetByCategory(
-    codGrupo: string,
-    page: number,
-    pageSize: number,
-  ): Promise<ProductoPCGInterface[]> {
-    try {
+    async GetByCategory(
+      codCategoria: string,
+      codPrecio: string = "01",
+      page: number,
+      pageSize: number
+    ): Promise<ProductoPCGInterface[]> {
+      
+      const activePrecio = (codPrecio && codPrecio.length > 0) ? codPrecio : "01";
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ProductosPorCategoria/${codGrupo}/${page}/${pageSize}`,
+        `Catalogos/ProductosPorCategoria/${codCategoria}/${page}/${pageSize}`, 
+        {
+          params: {
+            codPrecio: activePrecio
+          }
+        }
       );
 
       return data.data ?? [];
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      // Si backend manda 400 porque no hay registros → devolver vacío
-      if (error?.response?.status === 400) {
-        return [];
-      }
-
-      throw formatError(error);
     }
-  }
 
   async GetByCode(codProducto: string): Promise<ProductoPCGInterface[]> {
-    try {
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
         `Catalogos/ProductoPorCodigo/${codProducto}`,
       );
 
       return data.data;
-    } catch (error) {
-      throw formatError(error);
-    }
   }
   async getProductModifiers(
     codProducto: string,
   ): Promise<ProductoModificadorPCGInterface[]> {
-    try {
       const { data } = await apiPCG.get<
         ApiPCGResponse<ProductoModificadorPCGInterface[]>
       >(`Catalogos/ModificadorOpcion/${codProducto}`);
       return data.data;
 
-
-    } catch (error) {
-      throw formatError(error);
-    }
   }
 
   async GetCategories(): Promise<CategoriaPCGInterface[]> {
-    try {
       const { data } = await apiPCG.get<
         ApiPCGResponse<CategoriaPCGInterface[]>
       >("Catalogos/ListaCategoria");
       return data.data;
-    } catch (error) {
-      throw formatError(error);
-    }
   }
 }
 

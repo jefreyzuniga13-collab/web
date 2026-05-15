@@ -50,5 +50,6 @@ export const limpiarAlmacenamientoCliente = async () => {
     }
   } catch {}
 
-  window.location.replace("/crm/login");
+  // Recargar y navegar a la pagina de inicio
+  // window.location.replace("/login");
 };

@@ -252,8 +252,8 @@ const useLogCart = (logCartId?: number) => {
           logCartService.GetByContactAndStatus(contactId),
       })
 
-      setSelectedData(res.data ?? null)
-      return res.data ?? null
+      setSelectedData(res.data)
+      return res.data
     },
     [queryClient]
   )

@@ -5,3 +5,8 @@ export const calcularIVA = (monto: number): string => {
 
   return totalCalculado.toFixed(2)
 };
+
+
+export const formatearDecimales = (monto: number): string => {
+  return monto.toFixed(2)
+};

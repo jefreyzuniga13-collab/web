@@ -1,4 +1,5 @@
 import type { ProductoModificadorPCGInterface, listaOpciones } from "@/Interfaces/Chat/ProductPCGInterface"
+import { formatearDecimales } from "@/Utils/calcularIVA"
 
 type BuildModifiersTextOptions = {
   maxLen?: number
@@ -31,7 +32,7 @@ export const buildModifiersText = (
     const opciones = (mod.listOpciones ?? [])
       .map((op: listaOpciones) => {
         const precio =
-          includePrices && Number(op.precioVenta ?? 0) > 0 ? ` - ${currencyPrefix}${Number(op.precioVenta).toFixed(2)}` : ""
+          includePrices && Number(op.precioVenta ?? 0) > 0 ? ` - ${currencyPrefix}${formatearDecimales(op.precioVenta)}` : ""
         return `• ${op.descripcionOp ?? ""}${precio}`
       })
       .join("\n")

@@ -15,6 +15,7 @@ import { format } from "date-fns"
 import { FaFilePdf, 
   // FaLongArrowAltLeft, FaLongArrowAltRight 
 } from "react-icons/fa"
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { IoIosChatboxes } from "react-icons/io"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
@@ -43,8 +44,7 @@ import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
 import { PCG_SERVICES } from "@/Constants/pcgservices"
 import vacio from '@/assets/vacio.png'
-import { calcularIVA } from "@/Utils/calcularIVA"
-
+import { calcularIVA, formatearDecimales } from "@/Utils/calcularIVA"
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
@@ -87,7 +87,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const [debouncedTransCost, setDebouncedTransCost] = useState<number>(0)
   const totalsReqRef = useRef(0)
-const { setLocked } = useCartPCGFlowCtx()
+  const { setLocked } = useCartPCGFlowCtx()
   const dispatch = useAppDispatch()
   const carPCG = useAppSelector(selectCarPCG)
   const loading = useAppSelector(selectCartLoading)
@@ -611,10 +611,10 @@ useEffect(() => {
     })
 
     const total =
-      (invoiceTotalsDto?.total ?? 0)
+      (formatearDecimales(invoiceTotalsDto?.total ?? 0))
 
     if (retiraSucursal === "S") {
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(Number(total))}`)
       lines.push("🏬 Retira en sucursal")
       if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
     } else {
@@ -623,7 +623,7 @@ useEffect(() => {
 
       if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
       // lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+      lines.push(`*🪙 Total:* ${formatCurrencyNIO(Number(total))}`)
 
       if (hasSelectedAddress) {
         const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
@@ -841,9 +841,7 @@ useEffect(() => {
                       </p>
 
                       <p className="carPCPanel-content__list-price">
-                        {/* C$ {detail.precioV.toFixed(2)} */}
-
-                        {calcularIVA(detail.precioV).toString() }
+                       {detail.precioV > 0 ? " C$ " + formatearDecimales(detail.precioV) : ""}
                       </p>
                     </div>
 
@@ -873,7 +871,9 @@ useEffect(() => {
                       </p>
 
                       <p className="carPCPanel-content__list-price">
-                        C$ {detail.precioV.toFixed(2)}
+                        
+                         {/* {detail.precioV.toFixed(2)} */}
+                        {(detail.precioV ?? 0) > 0 ? "C$ " + calcularIVA(detail.precioV) : ""}
                       </p>
                     </div>
 
@@ -1044,7 +1044,7 @@ useEffect(() => {
 
         <button
           type="button"
-          className={`carPCPanel-step ${activeStep === 2 ? "carPCPanel-step--active" : ""}`}
+          className={`carPCPanel-step ${activeStep === 2 ? "carPCPanel-step--active" : "carPCPanel-step--inactive"}`}
           onClick={() => setActiveStep(2)}
         >
           2
@@ -1056,7 +1056,9 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Subtotal:</p>
               <span className="productTab-content-footer__value">
-                C$ {invoiceTotalsDto.subTotal ?? ""}
+                C$ 
+                {/* {invoiceTotalsDto.subTotal ?? ""} */}
+                {formatearDecimales(invoiceTotalsDto.subTotal)}
               </span>
             </div>
           )}
@@ -1065,7 +1067,9 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Descuento:</p>
               <span className="productTab-content-footer__value">
-                C$ {invoiceTotalsDto.descuento ?? ""}
+                C$ 
+                {/* {invoiceTotalsDto.descuento ?? ""} */}
+                 {formatearDecimales(invoiceTotalsDto.descuento)}
               </span>
             </div>
           )}
@@ -1074,7 +1078,9 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">IVA:</p>
               <span className="productTab-content-footer__value">
-                C$ {invoiceTotalsDto.iva ?? ""}
+                C$
+                 {/* {invoiceTotalsDto.iva ?? ""} */}
+                 {formatearDecimales(invoiceTotalsDto.iva)}
               </span>
             </div>
           )}
@@ -1083,7 +1089,9 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Transporte:</p>
               <span className="productTab-content-footer__value">
-                C$ {transCost ?? 0}
+                C$ 
+                {/* {transCost ?? 0} */}
+                {formatearDecimales(transCost)}
               </span>
             </div>
           )}
@@ -1101,7 +1109,9 @@ useEffect(() => {
               </p>
 
               <span className="productTab-content-footer__totalValue">
-                C$ {invoiceTotalsDto.total}
+                C$ 
+                {/* {invoiceTotalsDto.total} */}
+                 {formatearDecimales(invoiceTotalsDto.total)}
               </span>
             </div>
           )}
@@ -1118,7 +1128,7 @@ useEffect(() => {
                 setActiveStep(2)
               }}
             >
-              <p className="productTab-footer__address">Direcciones</p>
+              <FaMapMarkerAlt size={12}/>
             </Button>
           )}
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -41,7 +41,8 @@ export default function App() {
     return document.visibilityState === "hidden" || !document.hasFocus();
   }
 
-  function mapNotificationPayload(evt: any) {
+  // Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons: 1. You might have mismatching versions of React and the renderer (such as React DOM) 2. You might be breaking the Rules of Hooks 3. You might have more than one copy of React in the same app See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+  const mapNotificationPayload = useCallback((evt: any) => {
     const title = evt?.title ?? "Nueva notificación";
     const body =
       evt?.body ??
@@ -49,13 +50,12 @@ export default function App() {
       "Tienes una nueva notificación";
 
     const rawUrl = evt?.url;
-
     const url = sanitizeExternalUrl(String(rawUrl));
 
     return { title, body, url };
-  }
+  }, []);
 
-  async function showDesktopNotification(evt: any) {
+  const showDesktopNotification = useCallback(async (evt: any) => {
     if (!("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
@@ -71,17 +71,17 @@ export default function App() {
       renotify: true,
       data: { url },
     } as NotificationOptions & { renotify: boolean });
-  }
-
-  // Registrar service worker
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      // navigator.serviceWorker.register("/sw.js").catch(() => {});
-      navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`)
-      .catch(() => {});
-    }
-  }, []);
+  }, [mapNotificationPayload]);
+    
+    // Registrar service worker
+    useEffect(() => {
+      if ("serviceWorker" in navigator) {
+        // navigator.serviceWorker.register("/sw.js").catch(() => {});
+        navigator.serviceWorker
+        .register(`${import.meta.env.BASE_URL}sw.js`)
+        .catch(() => {});
+      }
+    }, []);
 
   // Permiso de notificaciones
   useEffect(() => {
@@ -125,6 +125,45 @@ export default function App() {
       navigator.serviceWorker.removeEventListener("message", handler);
   }, [navigate]);
 
+
+  /**ERROR
+   * 
+   * installHook.js:1 The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [, (action) => {
+    if (isActionCreator2(action)) {
+      console.warn(getMessage(action.type));
+    }
+    return next(action);
+  }, async function showDesktopNotification(evt) {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    const { title, body, url } = mapNotificationPayload(evt);
+    const reg = await navigator.serviceWorker.getRegistration();
+    await reg?.showNotification(title, {
+      body,
+      icon: "/logopcg.png",
+      badge: "/logopcg.png",
+      requireInteraction: true,
+      tag: "latest-message",
+      renotify: true,
+      data: { url }
+    });
+  }]
+Incoming: [, (action) => {
+    if (isActionCreator2(action)) {
+      console.warn(getMessage(action.type));
+    }
+    return next(action);
+  }]
+overrideMethod	@	installHook.js:1
+(anonymous)	@	App.tsx:129
+S.scheduleRefresh	@	installHook.js:1
+(anonymous)	@	@react-refresh:228
+performReactRefresh	@	@react-refresh:217
+(anonymous)	@	@react-refresh:586
+
+   */
   // Notificaciones en tiempo real
   useEffect(() => {
     if (!lastEvent) return;

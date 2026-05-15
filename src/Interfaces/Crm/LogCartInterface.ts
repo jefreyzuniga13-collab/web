@@ -17,10 +17,8 @@ export interface LogCartResponseDto {
   branch: string;
   branchName?: string;
   serie?: string;
-
   addressId?: number
   transCost?: number;
-
   //validar datos
   Exonerado?: string
   DescuentoPantalla?: number
@@ -28,13 +26,13 @@ export interface LogCartResponseDto {
   ivaPantalla?: number
   subTotal?: number
   propina?: number
-  
   retiraSucursal?: string;
   observacion?: string;
   wherehouse?: string;
   wherehouseCode?: string;
   destinationBranchCode?: string
   destinationWherehouseCode?: string
+  codPrecio: string
 }
 
 export interface LogCartRequestDto {
@@ -44,10 +42,8 @@ export interface LogCartRequestDto {
   statusId: number
   branch?: string;
   branchName?: string;
-
   addressId?: number
   transCost?: number;
-
   //validar datos
   Exonerado?: string
   DescuentoPantalla?: number
@@ -55,7 +51,6 @@ export interface LogCartRequestDto {
   ivaPantalla?: number
   subTotal?: number
   propina?: number
-
   serie?: string;
   retiraSucursal?: string;
   observacion?: string
@@ -63,6 +58,7 @@ export interface LogCartRequestDto {
   wherehouseCode?: string;
   destinationBranchCode?: string
   destinationWherehouseCode?: string
+  codPrecio: string
 }
 
 export interface LogCartFormValues {
@@ -91,6 +87,8 @@ export interface LogCartFormValues {
   wherehouseCode?: string;
   destinationBranchCode?: string
   destinationWherehouseCode?: string
+
+   codPrecio: string
 }
 
 

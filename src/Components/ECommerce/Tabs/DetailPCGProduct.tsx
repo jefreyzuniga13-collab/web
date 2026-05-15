@@ -8,13 +8,13 @@ import { toast } from "react-toastify"
 import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
+import "@/Styles/Ecommerce/ModifierAccordion.css"
 import type {
   listaOpciones,
   ProductoModificadorPCGInterface,
   ProductoPCGInterface,
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
-
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
@@ -23,6 +23,8 @@ import type {
   AddProductParams,
   SelectedModifierOption,
 } from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
+import { formatearDecimales } from "@/Utils/calcularIVA"
+import ModifierAccordion from "@/Components/ECommerce/Tabs/ModifierAccordion"
 
 interface Props {
   detail: ProductoPCGInterface
@@ -43,9 +45,15 @@ type OptionQtyMap = Record<string, number>
 type BranchPayload = Partial<
   Pick<
     AddProductParams,
-    "branch" | "branchName" | "wherehouse" | "wherehouseCode" | "serie"
+    | "branch"
+    | "branchName"
+    | "wherehouse"
+    | "wherehouseCode"
+    | "serie"
+    | "codPrecio"
   >
 >
+
 type IndexedOption = listaOpciones & {
   codModificador: string
 }
@@ -80,6 +88,7 @@ const getLimiteRealModificador = (
   return clampQty(cantidadProducto) * maxSel
 }
 
+
 const DetailPCGProduct = ({
   detail,
   setDetailProduct,
@@ -99,6 +108,7 @@ const DetailPCGProduct = ({
   const [wherehouseUiSelected, setWherehouseUiSelected] = useState("")
   const [wherehouseCodeUiSelected, setWherehouseCodeUiSelected] = useState("")
   const [serieUiSelected, setSerieCodeUiSelected] = useState("")
+  const [codPrecioUiSelected, setCodPrecioUiSelected] = useState("")
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptionsMap>({})
   const [optionQuantities, setOptionQuantities] = useState<OptionQtyMap>({})
@@ -108,7 +118,14 @@ const DetailPCGProduct = ({
   const addLockRef = useRef(false)
   const bodyRef = useRef<HTMLElement | null>(null)
 
-  const { conversationId, locked, addProduct } = useCartPCGFlowCtx()
+  const {
+    conversationId,
+    locked,
+    codPrecioActivo,
+    setCodPrecioActivo,
+    addProduct,
+  } = useCartPCGFlowCtx()
+
   const { sending, sendProductMessage } = useProductMessageComposer()
   const { productModifiers, getProductModifiers } = useProductPCG()
 
@@ -139,6 +156,7 @@ const DetailPCGProduct = ({
     setWherehouseUiSelected("")
     setWherehouseCodeUiSelected("")
     setSerieCodeUiSelected("")
+    setCodPrecioUiSelected(codPrecioActivo)
 
     requestAnimationFrame(() => {
       bodyRef.current?.scrollTo({ top: 0 })
@@ -202,19 +220,23 @@ const DetailPCGProduct = ({
       setWherehouseUiSelected(locked.wherehouse ?? "")
       setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
       setSerieCodeUiSelected((locked.serie ?? "").trim())
+      setCodPrecioUiSelected((locked.codPrecio ?? "").trim())
+      setCodPrecioActivo(locked.codPrecio)
       return
     }
 
     if (!branchRows.length) return
 
     const first = branchRows[0]
+    // const firstCodPrecio = getCodPrecioFromBranch(first)
 
     setBranchUiSelected(first.codsucursal)
     setBranchNameUiSelected(first.sucursal ?? "")
     setWherehouseUiSelected(first.nombodega ?? "")
     setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
     setSerieCodeUiSelected((first.serie ?? "").trim())
-  }, [branchRows, locked])
+    setCodPrecioUiSelected(first.precio)
+  }, [branchRows, locked, setCodPrecioActivo])
 
   const optionIndex = useMemo(() => {
     const map = new Map<string, IndexedOption>()
@@ -242,14 +264,6 @@ const DetailPCGProduct = ({
       }, 0)
     },
     [selectedOptions, optionQuantities]
-  )
-
-  const isOptionSelected = useCallback(
-    (modifier: ProductoModificadorPCGInterface, codOpcion: string) => {
-      const key = String(modifier.codModificador)
-      return (selectedOptions[key] ?? []).includes(String(codOpcion))
-    },
-    [selectedOptions]
   )
 
   useEffect(() => {
@@ -434,51 +448,53 @@ const DetailPCGProduct = ({
     setTotal(base + optionsTotal)
   }, [cantidad, selectedOptions, optionQuantities, optionIndex, detail.precio])
 
-const validateRequiredModifiers = useCallback(() => {
-  if (!detail.tieneOpcion) return true
-  if (!productModifiers?.length) return true
+  const validateRequiredModifiers = useCallback(() => {
+    if (!detail.tieneOpcion) return true
+    if (!productModifiers?.length) return true
 
-  for (const mod of productModifiers) {
-    const key = String(mod.codModificador)
-    const selected = selectedOptions[key] ?? []
-    const multiple = esSi(mod.esMultipleSeleccion)
-    const limiteReal = getLimiteRealModificador(mod, cantidad)
+    for (const mod of productModifiers) {
+      const key = String(mod.codModificador)
+      const selected = selectedOptions[key] ?? []
+      const multiple = esSi(mod.esMultipleSeleccion)
+      const limiteReal = getLimiteRealModificador(mod, cantidad)
 
-    const totalQty = selected.reduce((sum, id) => {
-      return sum + clampQty(optionQuantities[id] ?? 1)
-    }, 0)
+      const totalQty = selected.reduce((sum, id) => {
+        return sum + clampQty(optionQuantities[id] ?? 1)
+      }, 0)
 
-    if (mod.esRequerido === "S" && selected.length === 0) {
-      toast.warning(`Seleccione al menos una opción en "${mod.descripcionMod}".`)
-      return false
+      if (mod.esRequerido === "S" && selected.length === 0) {
+        toast.warning(`Seleccione al menos una opción en "${mod.descripcionMod}".`)
+        return false
+      }
+
+      if (!multiple && selected.length > 1) {
+        toast.warning(`Solo puede seleccionar una opción en "${mod.descripcionMod}".`)
+        return false
+      }
+
+      if (limiteReal > 0 && totalQty > limiteReal) {
+        toast.warning(`No puede superar ${limiteReal} en "${mod.descripcionMod}".`)
+        return false
+      }
+
+      if (mod.esRequerido === "S" && limiteReal > 0 && totalQty < limiteReal) {
+        toast.warning(
+          `Debe completar ${limiteReal} selección${
+            limiteReal === 1 ? "" : "es"
+          } en "${mod.descripcionMod}". Actualmente tiene ${totalQty}.`
+        )
+        return false
+      }
     }
 
-    if (!multiple && selected.length > 1) {
-      toast.warning(`Solo puede seleccionar una opción en "${mod.descripcionMod}".`)
-      return false
-    }
-
-    if (limiteReal > 0 && totalQty > limiteReal) {
-      toast.warning(`No puede superar ${limiteReal} en "${mod.descripcionMod}".`)
-      return false
-    }
-
-    if (mod.esRequerido === "S" && limiteReal > 0 && totalQty < limiteReal) {
-      toast.warning(
-        `Debe completar ${limiteReal} selección${limiteReal === 1 ? "" : "es"} en "${mod.descripcionMod}". Actualmente tiene ${totalQty}.`
-      )
-      return false
-    }
-  }
-
-  return true
-}, [
-  cantidad,
-  detail.tieneOpcion,
-  productModifiers,
-  selectedOptions,
-  optionQuantities,
-])
+    return true
+  }, [
+    cantidad,
+    detail.tieneOpcion,
+    productModifiers,
+    selectedOptions,
+    optionQuantities,
+  ])
 
   const resolveBranchPayload = useCallback((): BranchPayload => {
     if (branchUiSelected && wherehouseCodeUiSelected) {
@@ -488,6 +504,7 @@ const validateRequiredModifiers = useCallback(() => {
         wherehouse: wherehouseUiSelected,
         wherehouseCode: wherehouseCodeUiSelected,
         serie: serieUiSelected,
+        codPrecio: codPrecioUiSelected,
       }
     }
 
@@ -498,6 +515,7 @@ const validateRequiredModifiers = useCallback(() => {
         wherehouse: locked.wherehouse,
         wherehouseCode: locked.wherehouseCode,
         serie: locked.serie,
+        codPrecio: locked.codPrecio,
       }
     }
 
@@ -509,6 +527,7 @@ const validateRequiredModifiers = useCallback(() => {
     wherehouseUiSelected,
     wherehouseCodeUiSelected,
     serieUiSelected,
+    codPrecioUiSelected,
   ])
 
   const buildModifierOptionsPayload = useCallback((): SelectedModifierOption[] => {
@@ -538,7 +557,8 @@ const validateRequiredModifiers = useCallback(() => {
           descripcionMod: cleanText(mod.descripcionMod),
           codOpcion,
           descripcionOp: cleanText(op.descripcionOp),
-          codPrecio: cleanText(op.codPrecio) || "01",
+          codPrecio:
+            cleanText(op.codPrecio) || cleanText(codPrecioUiSelected) || "01",
           precioVenta: Number(op.precioVenta ?? 0),
           cantidad: quantity,
           codUm: cleanText(op.codUm),
@@ -553,57 +573,59 @@ const validateRequiredModifiers = useCallback(() => {
     productModifiers,
     selectedOptions,
     optionQuantities,
+    codPrecioUiSelected,
   ])
 
-const handleAddToCart = useCallback(async () => {
-  if (addLockRef.current) return
+  const handleAddToCart = useCallback(async () => {
+    if (addLockRef.current) return
 
-  addLockRef.current = true
+    addLockRef.current = true
 
-  try {
-    const qty = clampQty(cantidad)
+    try {
+      const qty = clampQty(cantidad)
 
-    if (qty <= 0) {
-      toast.warning("La cantidad debe ser al menos 1.")
-      return
+      if (qty <= 0) {
+        toast.warning("La cantidad debe ser al menos 1.")
+        return
+      }
+
+      if (!validateRequiredModifiers()) return
+
+      const branchPayload = resolveBranchPayload()
+
+      const payload: AddProductParams = {
+        product: detail,
+        qty,
+        observacion,
+        modifierOptions: buildModifierOptionsPayload(),
+        onDoneUiReset: true,
+        branch: branchPayload.branch ?? "",
+        branchName: branchPayload.branchName ?? "",
+        wherehouse: branchPayload.wherehouse ?? "",
+        wherehouseCode: branchPayload.wherehouseCode ?? "",
+        serie: branchPayload.serie ?? "",
+        codPrecio: branchPayload.codPrecio ?? "",
+      }
+
+      await addProduct(payload)
+
+      setCantidad(1)
+      setselectedCategory(null)
+      setDetailProduct(null)
+    } finally {
+      addLockRef.current = false
     }
-
-    if (!validateRequiredModifiers()) return
-
-    const branchPayload = resolveBranchPayload()
-
-    const payload: AddProductParams = {
-      product: detail,
-      qty,
-      observacion,
-      modifierOptions: buildModifierOptionsPayload(),
-      onDoneUiReset: true,
-      branch: branchPayload.branch ?? "",
-      branchName: branchPayload.branchName ?? "",
-      wherehouse: branchPayload.wherehouse ?? "",
-      wherehouseCode: branchPayload.wherehouseCode ?? "",
-      serie: branchPayload.serie ?? "",
-    }
-
-    await addProduct(payload)
-
-    setCantidad(1)
-    setselectedCategory(null)
-    setDetailProduct(null)
-  } finally {
-    addLockRef.current = false
-  }
-}, [
-  addProduct,
-  cantidad,
-  observacion,
-  detail,
-  resolveBranchPayload,
-  buildModifierOptionsPayload,
-  validateRequiredModifiers,
-  setDetailProduct,
-  setselectedCategory,
-])
+  }, [
+    addProduct,
+    cantidad,
+    observacion,
+    detail,
+    resolveBranchPayload,
+    buildModifierOptionsPayload,
+    validateRequiredModifiers,
+    setDetailProduct,
+    setselectedCategory,
+  ])
 
   const handleSendMessage = useCallback(async () => {
     if (sendLockRef.current) return
@@ -678,8 +700,9 @@ const handleAddToCart = useCallback(async () => {
               {detail.codProducto} {detail.descripcion}
             </p>
 
-            <p className="detail-product__price">C$ {detail.precio.toString() }</p>
-
+            <p className="detail-product__price">
+              C$ {formatearDecimales(detail.precio)}
+            </p>
 
             <p className="detail-product__descriptions-marca">
               {detail.marca ?? ""}
@@ -697,109 +720,31 @@ const handleAddToCart = useCallback(async () => {
 
             {detail.tieneOpcion && productModifiers.length > 0 && (
               <div className="product-modifiers">
-                <header className="product-modifiers__content">
-                  {productModifiers.map((mod) => {
-                    const key = String(mod.codModificador)
-                    const selected = selectedOptions[key] ?? []
-                    const maxSel = getMaximoSeleccion(mod)
-                    const limiteReal = getLimiteRealModificador(mod, cantidad)
-
-                    const selectedQty = selected.reduce((sum, id) => {
-                      return sum + clampQty(optionQuantities[id] ?? 1)
-                    }, 0)
-
-                    return (
-                      <div className="product-modifiers__product" key={key}>
-                        <p className="product-modifiers__product__title">
-                          {mod.descripcionMod}
-                          {mod.esRequerido === "S" && <span> *</span>}
-                          {maxSel > 0 && (
-                            <small className="product-modifiers__limit">
-                              {" "}
-                              {selectedQty}/{limiteReal}
-                            </small>
-                          )}
-                        </p>
-
-                        <div className="product-modifiers__option__container">
-                          {mod.listOpciones?.map((op) => {
-                            const optionId = String(op.codOpcion)
-                            const selectedOption = isOptionSelected(mod, optionId)
-                            const currentQty = optionQuantities[optionId] ?? 1
-                            const otherTotal = getSelectedQtyByModifier(
-                              mod,
-                              optionId
-                            )
-
-                            const maxOptionQty =
-                              limiteReal > 0
-                                ? Math.max(1, limiteReal - otherTotal)
-                                : 1000
-
-                            return (
-                              <div
-                                className="product-modifiers__options"
-                                key={optionId}
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="product-modifiers__checkout"
-                                  id={`${key}-${optionId}`}
-                                  checked={selectedOption}
-                                  onChange={() =>
-                                    handleToggleOption(mod, optionId)
-                                  }
-                                />
-
-                                <label
-                                  htmlFor={`${key}-${optionId}`}
-                                  className="product-modifiers__option"
-                                >
-                                  {op.descripcionOp}
-
-                                  {Number(op.precioVenta ?? 0) > 0 && (
-                                    <span className="product-modifiers__option__price">
-                                      {/* C$ {Number(op.precioVenta).toFixed(2)} */}
-                                      {op.precioVenta.toString() }
-                                    </span>
-                                  )}
-                                </label>
-
-                                {selectedOption && (
-                                  <input
-                                    type="number"
-                                    className="product-modifiers__option__qty"
-                                    min={1}
-                                    max={maxOptionQty}
-                                    value={currentQty}
-                                    onChange={(e) =>
-                                      handleOptionQuantityChange(
-                                        mod,
-                                        optionId,
-                                        Number(e.target.value)
-                                      )
-                                    }
-                                  />
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </header>
+                {productModifiers.map((mod) => (
+                  <ModifierAccordion
+                    key={String(mod.codModificador)}
+                    modifier={mod}
+                    selectedOptions={selectedOptions}
+                    optionQuantities={optionQuantities}
+                    cantidadProducto={cantidad}
+                    onToggleOption={handleToggleOption}
+                    onQuantityChange={handleOptionQuantityChange}
+                  />
+                ))}
               </div>
             )}
 
+            {/*El precio se actualiza automaticamente, pero el css es decir la clase de detail-product__branchItem--active, solo se agregar al hacer dos click en el mismo
+            o similar, si hago click se actualiza la lista de precio, pero sin la clase de detail-product__branchItem--active
+            es por que al seleccionar se refreca y se pierde la clase selecionada y los modificadores seleccionados
+            */}
             {!loadingBranches && (
               <div className="detail-product__branchList">
                 {branchRows.map((b) => {
                   const whCode = (b.codbodega ?? "").trim()
 
                   const isActive =
-                    branchUiSelected === b.codsucursal &&
-                    wherehouseCodeUiSelected === whCode
+                    branchUiSelected === b.codsucursal && wherehouseCodeUiSelected === whCode
 
                   const isDisabled = !!locked && !isActive
 
@@ -823,6 +768,8 @@ const handleAddToCart = useCallback(async () => {
                         setWherehouseUiSelected(b.nombodega ?? "")
                         setWherehouseCodeUiSelected(whCode)
                         setSerieCodeUiSelected((b.serie ?? "").trim())
+                        setCodPrecioUiSelected(b.precio)
+                        setCodPrecioActivo(b.precio)
                       }}
                     >
                       <div className="detail-product__branchItemMain">
@@ -879,8 +826,7 @@ const handleAddToCart = useCallback(async () => {
                 <p className="productDetail-total">
                   Total:{" "}
                   <span className="productDetail-total__value">
-                    {/* C$ {total.toFixed(2)} */}
-                    C$ {total}
+                    C$ {formatearDecimales(total)}
                   </span>
                 </p>
               )}
@@ -906,11 +852,19 @@ const handleAddToCart = useCallback(async () => {
             onClick={handleAddToCart}
             disabled={actionsDisabled}
           >
-             {actionsDisabled ? <AiOutlineLoading3Quarters fontSize={14}/> : <FaShoppingCart fontSize={14}/>}
+            {actionsDisabled ? (
+              <AiOutlineLoading3Quarters fontSize={14} />
+            ) : (
+              <FaShoppingCart fontSize={14} />
+            )}
           </Button>
 
           <Button disabled={actionsDisabled} onClick={handleSendMessage}>
-            {actionsDisabled ? <AiOutlineLoading3Quarters fontSize={14}/> : <IoMdSend fontSize={14}/>}
+            {actionsDisabled ? (
+              <AiOutlineLoading3Quarters fontSize={14} />
+            ) : (
+              <IoMdSend fontSize={14} />
+            )}
           </Button>
         </div>
       </footer>
@@ -939,9 +893,14 @@ const handleAddToCart = useCallback(async () => {
           />
         </div>
       )}
-
     </section>
   )
 }
 
 export default DetailPCGProduct
+
+
+        {/*El precio se actualiza automaticamente, pero el css es decir la clase de detail-product__branchItem--active, solo se agregar al hacer dos click en el mismo
+            o similar, si hago click se actualiza la lista de precio, pero sin la clase de detail-product__branchItem--active
+            es por que al seleccionar se refreca y se pierde la clase selecionada y los modificadores seleccionados
+            */}

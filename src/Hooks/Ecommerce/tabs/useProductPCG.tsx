@@ -16,6 +16,10 @@ interface UseProductPCGOptions {
   initialPageSize?: number
 }
 
+const normalizarTexto = (value: string | null | undefined) => {
+  return String(value ?? "").trim()
+}
+
 export function useProductPCG(options?: UseProductPCGOptions) {
   const queryClient = useQueryClient()
   const initialPageSize = options?.initialPageSize ?? 50
@@ -26,32 +30,65 @@ export function useProductPCG(options?: UseProductPCGOptions) {
   const [lastSearch, setLastSearch] = useState<string | null>(null)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [modifierCode, setModifierCode] = useState<string | null>(null)
+  const [codPrecio, setCodPrecioState] = useState<string>("")
 
   const listEnabled =
     mode === "category" ||
     mode === "search" ||
     mode === "all"
 
-  const listQuery = useInfiniteQuery<
-    ProductoPCGInterface[],
-    Error
-  >({
-    queryKey: ["product-pcg-list", mode, lastCategory, lastSearch, pageSize],
+  const normalizedCodPrecio = useMemo(() => {
+    return normalizarTexto(codPrecio)
+  }, [codPrecio])
+
+  const setCodPrecio = useCallback((value: string | null | undefined) => {
+    setCodPrecioState(normalizarTexto(value))
+  }, [])
+
+  const listQuery = useInfiniteQuery<ProductoPCGInterface[], Error>({
+    queryKey: [
+      "product-pcg-list",
+      mode,
+      lastCategory,
+      lastSearch,
+      pageSize,
+      normalizedCodPrecio,
+    ],
     enabled: listEnabled,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       const page = Number(pageParam)
 
       if (mode === "category" && lastCategory) {
-        return (await ProductPCGService.GetByCategory(lastCategory, page, pageSize)) ?? []
+        return (
+          (await ProductPCGService.GetByCategory(
+            lastCategory,
+            normalizedCodPrecio,
+            page,
+            pageSize
+          )) ?? []
+        )
       }
 
       if (mode === "search" && lastSearch) {
-        return (await ProductPCGService.getAll(page, pageSize, lastSearch)) ?? []
+        return (
+          (await ProductPCGService.getAll(
+            normalizedCodPrecio,
+            page,
+            pageSize,
+            lastSearch
+          )) ?? []
+        )
       }
 
       if (mode === "all") {
-        return (await ProductPCGService.getAll(page, pageSize, "")) ?? []
+        return (
+          (await ProductPCGService.getAll(
+            normalizedCodPrecio,
+            page,
+            pageSize
+          )) ?? []
+        )
       }
 
       return []
@@ -60,12 +97,15 @@ export function useProductPCG(options?: UseProductPCGOptions) {
       if (!lastPage?.length || lastPage.length < pageSize) return undefined
       return allPages.length
     },
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: false,
   })
 
-  const codeQuery = useQuery<ProductoPCGInterface | ProductoPCGInterface[] | null, Error>({
+  const codeQuery = useQuery<
+    ProductoPCGInterface | ProductoPCGInterface[] | null,
+    Error
+  >({
     queryKey: ["product-pcg-code", selectedCode],
     enabled: mode === "code" && !!selectedCode,
     queryFn: async () => {
@@ -155,44 +195,56 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     setModifierCode(null)
   }, [])
 
-  const GetAll = useCallback((descripcion: string) => {
-    const term = (descripcion ?? "").trim()
-    if (!term) {
-      reset()
-      return
-    }
+  const GetAll = useCallback(
+    (descripcion: string) => {
+      const term = normalizarTexto(descripcion)
 
-    setSelectedCode(null)
-    setLastCategory(null)
-    setLastSearch(term)
-    setMode("search")
-  }, [reset])
+      if (!term) {
+        reset()
+        return
+      }
 
-  const GetByCategory = useCallback((codGrupo: string) => {
-    const category = (codGrupo ?? "").trim()
-    if (!category) {
-      reset()
-      return
-    }
+      setSelectedCode(null)
+      setLastCategory(null)
+      setLastSearch(term)
+      setMode("search")
+    },
+    [reset]
+  )
 
-    setSelectedCode(null)
-    setLastSearch(null)
-    setLastCategory(category)
-    setMode("category")
-  }, [reset])
+  const GetByCategory = useCallback(
+    (codGrupo: string) => {
+      const category = normalizarTexto(codGrupo)
 
-  const GetByCode = useCallback((codProducto: string) => {
-    const code = (codProducto ?? "").trim()
-    if (!code) {
-      reset()
-      return
-    }
+      if (!category) {
+        reset()
+        return
+      }
 
-    setLastCategory(null)
-    setLastSearch(null)
-    setSelectedCode(code)
-    setMode("code")
-  }, [reset])
+      setSelectedCode(null)
+      setLastSearch(null)
+      setLastCategory(category)
+      setMode("category")
+    },
+    [reset]
+  )
+
+  const GetByCode = useCallback(
+    (codProducto: string) => {
+      const code = normalizarTexto(codProducto)
+
+      if (!code) {
+        reset()
+        return
+      }
+
+      setLastCategory(null)
+      setLastSearch(null)
+      setSelectedCode(code)
+      setMode("code")
+    },
+    [reset]
+  )
 
   const GetEverything = useCallback(() => {
     setSelectedCode(null)
@@ -209,68 +261,37 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     await listQuery.fetchNextPage()
   }, [listEnabled, listQuery])
 
-//   const getProductModifiers = useCallback(
-//   async (codProducto: string) => {
-//     const code = (codProducto ?? "").trim()
+  const getProductModifiers = useCallback(
+    async (codProducto: string) => {
+      const code = normalizarTexto(codProducto)
 
-//     if (!code) {
-//       setModifierCode(null)
-//       return []
-//     }
+      if (!code) {
+        setModifierCode(null)
+        return []
+      }
 
-//     const queryKey = ["product-pcg-modifiers", code]
+      const queryKey = ["product-pcg-modifiers", code]
 
-//     await queryClient.invalidateQueries({ queryKey })
+      const data = await ProductPCGService.getProductModifiers(code)
 
-//     console.log("Ante de await queryClient.fetchQuery")
-//     // const data = await queryClient.fetchQuery<ProductoModificadorPCGInterface[]>({
-//     //   queryKey,
-//     //   queryFn: async () => {
-//     //     return (await ProductPCGService.getProductModifiers(code)) ?? []
-//     //   },
-//     //   staleTime: 0,
-//     // })
+      queryClient.setQueryData<ProductoModificadorPCGInterface[]>(
+        queryKey,
+        data ?? []
+      )
 
-//     const data = await ProductPCGService.getProductModifiers(code)
-// //aqui hace la peticion sin probkleas
-//     console.log("Luego de await queryClient.fetchQuery")
-//     setModifierCode(code)
+      setModifierCode(code)
 
-//     // Este return no no haace nada por que el componente detailPCgProducto, pinta los modificadore que viene desd ele productModifiers, y este returno no hago nada con la informacion
-//     return data;
-    
-//   },
-//   [queryClient]
-// )
+      return data ?? []
+    },
+    [queryClient]
+  )
 
-const getProductModifiers = useCallback(
-  async (codProducto: string) => {
-    const code = (codProducto ?? "").trim()
-
-    if (!code) {
-      setModifierCode(null)
-      return []
-    }
-
-    const queryKey = ["product-pcg-modifiers", code]
-
-    const data = await ProductPCGService.getProductModifiers(code)
-
-    queryClient.setQueryData<ProductoModificadorPCGInterface[]>(
-      queryKey,
-      data ?? []
-    )
-
-    setModifierCode(code)
-
-    return data ?? []
-  },
-  [queryClient]
-)
   const isSearching = mode === "search"
   const isCategory = mode === "category"
 
   return {
+    codPrecio,
+    setCodPrecio,
     productPcg,
     productModifiers,
     loadingProductPcg,

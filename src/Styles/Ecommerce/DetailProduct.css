@@ -285,6 +285,7 @@
 .product-modifiers__product__title{
     margin: 0;
 }
+
 .product-modifiers__option__container{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -450,8 +451,10 @@
 }
 
 .detail-product__branchSerie {
-  opacity: 0.8;
-  font-size: 12px;
+    color: var(--text-secondary) !important;
+    font-weight: 450;
+    text-transform: lowercase;
+    font-size: var(--font-size-sm);
 }
 
 .detail-product__branchItemMeta {
@@ -523,12 +526,6 @@
   opacity: 0.95;
 }
 
-.detail-product__branchSerie{
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* Meta derecha */
 .detail-product__branchItemMeta{
   display: flex;
   align-items: center;
@@ -540,7 +537,6 @@
   font-weight: 700;
 }
 
-/* CHECK */
 .detail-product__branchCheck{
   width: 18px;
   height: 18px;

@@ -21,6 +21,7 @@ import type { RootState, AppDispatch } from "@/Context"
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+import { calcularIVA } from "@/Utils/calcularIVA"
 
 interface CarPageProps {
   payload: TempLinkResolveResponseDto
@@ -209,7 +210,8 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                       </td>
 
                       <td className="cart-table__cell cart-table__cell--price">
-                        {formatMoney(product.precioV)}
+                        {/* {formatMoney(product.precioV)} */}
+                        {product.precioV > 0 ? " C$ " + calcularIVA(product.precioV) : ""}
                       </td>
 
                       <td className="cart-table__cell cart-table__cell--qty">
@@ -255,7 +257,8 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--price cart-table__cell--option">
-                          {formatMoney(option.precioV)}
+                          {/* {formatMoney(option.precioV)} */}
+                          {option.precioV > 0 ? " C$ " + calcularIVA(option.precioV) : ""}
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--qty cart-table__cell--option">

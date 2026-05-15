@@ -83,6 +83,10 @@
   color: var(--text-white);
 }
 
+.carPCPanel-step--inactive{
+  animation: latido 2s ease-in-out infinite;
+}
+
 .carPCPanel-stepLine {
   width: 60px;
   height: 2px;
