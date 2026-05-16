@@ -133,7 +133,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: '0 var(--space-md);
+  margin-bottom: 0 var(--space-md);
 }
 
 .sp-modal__title {

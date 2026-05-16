@@ -91,6 +91,7 @@
   align-items: center;
   gap: 12px;
 }
+
 .assign-button,
 .contact-detail-button,
 .close-btn{
@@ -595,5 +596,99 @@
 @media (min-width: 1600px) {
   .support-layout {
     --edge-w: clamp(250px, 22vw, 400px);
+  }
+}
+
+.inbox-list__menu-button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.inbox-list__item--isblocked{
+  background-color: #c07676;
+}
+.inbox-list__item:hover .inbox-list__menu-button,
+.inbox-list__item--selected .inbox-list__menu-button {
+  opacity: 1;
+}
+
+.inbox-list__menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary, #111827);
+}
+
+.inbox-list__menu-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inbox-list__menu {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+  padding: 6px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inbox-list__menu-item {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary, #111827);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.inbox-list__menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.inbox-list__menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inbox-list__menu-item--danger {
+  color: #dc2626;
+}
+
+.inbox-list__menu-item--danger:hover {
+  background-color: rgba(220, 38, 38, 0.08);
+}
+
+@media (max-width: 768px) {
+  .inbox-list__menu-button {
+    opacity: 1;
+  }
+
+  .inbox-list__menu {
+    right: 4px;
+    min-width: 170px;
   }
 }

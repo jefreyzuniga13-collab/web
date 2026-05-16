@@ -110,26 +110,25 @@ export function sendMedia(
       }
     }
   )
-  
 }
 
 export function blockWhatsapp(waId: string) {
   return api.post(
-    `/Webhook/whatsapp/blocks/${encodeURIComponent(waId)}`
+    `/Webhook/blocks/${encodeURIComponent(waId)}`
   );
 }
 
 export function unblockWhatsapp(waId: string) {
   return api.delete(
-    `/Webhook/whatsapp/blocks/${encodeURIComponent(waId)}`
+    `/Webhook/blocks/${encodeURIComponent(waId)}`
   );
 }
 
-export function getWhatsappBlocks() {
-  return api.get<{ data: string[] }>(
-    `/Webhook/whatsapp/blocks`
-  );
-}
+// export function getWhatsappBlocks() {
+//   return api.get<{ data: string[] }>(
+//     `/Webhook/blocks`
+//   );
+// }
 
 export function blockMessenger(psid: string) {
   return api.post(

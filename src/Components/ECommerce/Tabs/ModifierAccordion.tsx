@@ -5,7 +5,8 @@ import type {
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import  '@/Styles/Ecommerce/ModifierAccordion.css'
-
+import { LuChevronsDown } from "react-icons/lu";
+import { FiChevronsUp } from "react-icons/fi";
 type SelectedOptionsMap = Record<string, string[]>
 type OptionQtyMap = Record<string, number>
 
@@ -164,7 +165,7 @@ const ModifierAccordion = ({
           </span>
 
           <span className="modifierAccordion__arrow">
-            {open ? "⌃" : "⌄"}
+            {open ? <FiChevronsUp size={12} /> : <LuChevronsDown size={12} />}
           </span>
         </div>
       </button>
@@ -202,14 +203,11 @@ const ModifierAccordion = ({
                 >
                   <span className="modifierAccordion__desc">{op.descripcionOp}</span>
 
-                <span className="modifierAccordion__price">
-                                    C$ {formatearDecimales(op.precioVenta)}
-                                    </span>
-                  {/* {Number(op.precioVenta ?? 0) > 0 && (
+                  {Number(op.precioVenta ?? 0) > 0 && (
                     <span className="modifierAccordion__price">
                       C$ {formatearDecimales(op.precioVenta)}
                     </span>
-                  )} */}
+                  )}
                 </label>
 
                 {selectedOption && (

@@ -49,7 +49,7 @@ export interface ContactLogInterface {
 
 
     //Messenger usar el mismo para el instagram al bloquear
-    pSID?: string;
+    psid?: string;
 
     messengerPsid?: string;
     messengerFirstName?: string;

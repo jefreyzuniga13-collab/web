@@ -7,11 +7,11 @@ export type MessageType =
   | 'Document'
   | 'Interactive'
   | 'Bot'
-  | 'Contact'
+  | 'Contact';
 
-export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed'
-export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete' | "Paused"
-export type NotificationType = 'NewContact' | 'HumanSupport' | 'ConversationAssigned' | 'MessageReceived'
+export type MessageStatus = 'Sent' | 'Delivered' | 'Read' | 'Failed';
+export type ConversationStatus = 'New' | 'Bot' | 'Waiting' | 'Human' | 'Closed' | 'Incomplete' | "Paused";
+export type NotificationType = 'NewContact' | 'HumanSupport' | 'ConversationAssigned' | 'MessageReceived';
 
 export interface ConversationDto {
   contactNumber: string
@@ -62,10 +62,10 @@ export interface ConversationDto {
   SystemDefinedCompanyName?: string;
   isHalted?: boolean; 
   isItemsInCart?: boolean
-
-
   // Whatsapp = 1, messenger = 2, instagrams = 3
    metaChannelId: number;
+
+   isBlocked: boolean
 }
 
 export interface UpdateConversationRequest {
@@ -77,6 +77,7 @@ export interface UpdateConversationRequest {
   tags?: string[]
   isArchived?: boolean
 }
+
 export interface MessageDto {
   messageId: number;
   conversationId: number;
@@ -212,7 +213,6 @@ export interface MenuItemProps {
   onClick?: () => void;
   selectedOption: string;
 }
-
 
 export interface MenuDto {
   menuId: number;

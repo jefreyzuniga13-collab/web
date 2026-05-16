@@ -1,12 +1,12 @@
 /* eslint-disable no-empty */
 import { persistor } from "@/Context";
 import { queryClient } from "@/Utils/Https/reactQuery";
-import api from "@/Utils/ApiConfig";
+// import api from "@/Utils/ApiConfig";
 
 export const limpiarAlmacenamientoCliente = async () => {
-  try {
-    await api.post("/Auth/logout");
-  } catch {}
+  // try {
+  //   await api.post("/Auth/logout");
+  // } catch {}
 
   try {
     queryClient.clear();
