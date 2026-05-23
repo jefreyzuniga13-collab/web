@@ -1,14 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query"
+import { useMutation, useQuery,useQueryClient} from "@tanstack/react-query"
 import { toast } from "react-toastify"
-import type {
-  LogCartFormValues,
-  LogCartResponseDto,
-} from "@/Interfaces/Crm/LogCartInterface"
+import type {LogCartFormValues, LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces"
 import { logCartService } from "@/Services/Crm/LogCartService"
 
@@ -21,6 +14,10 @@ export const LOG_CART_MODAL_MODE = {
 export type ModalMode =
   (typeof LOG_CART_MODAL_MODE)[keyof typeof LOG_CART_MODAL_MODE]
 
+type UseLogCartOptions = {
+  enabledList?: boolean
+}
+
 const queryKeys = {
   all: ["log-cart"] as const,
   lists: () => [...queryKeys.all, "list"] as const,
@@ -30,8 +27,12 @@ const queryKeys = {
     [...queryKeys.all, "contact-status", contactId] as const,
 }
 
-const useLogCart = (logCartId?: number) => {
+const useLogCart = (
+  logCartId?: number,
+  options?: UseLogCartOptions
+) => {
   const queryClient = useQueryClient()
+  const enabledList = options?.enabledList ?? false
 
   const [selectedData, setSelectedData] =
     useState<LogCartResponseDto | null>(null)
@@ -51,6 +52,7 @@ const useLogCart = (logCartId?: number) => {
   } = useQuery<ApiResponse<LogCartResponseDto[]>, Error>({
     queryKey: queryKeys.lists(),
     queryFn: () => logCartService.getAllAsync(),
+    enabled: enabledList,
   })
 
   const listData = useMemo(
@@ -76,8 +78,13 @@ const useLogCart = (logCartId?: number) => {
       id?: number
       orderId?: number
       contactId?: number
+      invalidateList?: boolean
     }) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.all })
+      if (params?.invalidateList) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.lists(),
+        })
+      }
 
       if (params?.id && params.id > 0) {
         await queryClient.invalidateQueries({
@@ -113,6 +120,7 @@ const useLogCart = (logCartId?: number) => {
         id: response.data?.id,
         orderId: response.data?.orderId,
         contactId: response.data?.contactId,
+        invalidateList: enabledList,
       })
     },
     onError: (err) => {
@@ -139,6 +147,7 @@ const useLogCart = (logCartId?: number) => {
         id: variables.id,
         orderId: response.data?.orderId,
         contactId: response.data?.contactId,
+        invalidateList: enabledList,
       })
 
       toast.success(response.message)
@@ -166,6 +175,7 @@ const useLogCart = (logCartId?: number) => {
         id,
         orderId: response.data?.orderId,
         contactId: response.data?.contactId,
+        invalidateList: enabledList,
       })
 
       toast.success(response.message)
@@ -194,6 +204,7 @@ const useLogCart = (logCartId?: number) => {
         id: variables.id,
         orderId: response.data?.orderId,
         contactId: response.data?.contactId,
+        invalidateList: enabledList,
       })
     },
     onError: (err) => {
@@ -250,10 +261,34 @@ const useLogCart = (logCartId?: number) => {
         queryKey: queryKeys.byContact(contactId),
         queryFn: () =>
           logCartService.GetByContactAndStatus(contactId),
+        staleTime: 0,
       })
 
-      setSelectedData(res.data)
-      return res.data
+      setSelectedData(res.data ?? null)
+      return res.data ?? null
+    },
+    [queryClient]
+  )
+
+  const removeByContactCache = useCallback(
+    async (contactId: number) => {
+      if (!contactId || contactId <= 0) return
+
+      await queryClient.removeQueries({
+        queryKey: queryKeys.byContact(contactId),
+        exact: true,
+      })
+    },
+    [queryClient]
+  )
+
+  const invalidateByContact = useCallback(
+    async (contactId: number) => {
+      if (!contactId || contactId <= 0) return
+
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.byContact(contactId),
+      })
     },
     [queryClient]
   )
@@ -374,6 +409,8 @@ const useLogCart = (logCartId?: number) => {
     fetchById,
     fetchByOrderId,
     fetchByContactId,
+    removeByContactCache,
+    invalidateByContact,
 
     create,
     update,

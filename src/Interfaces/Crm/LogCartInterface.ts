@@ -19,6 +19,7 @@ export interface LogCartResponseDto {
   serie?: string;
   addressId?: number
   transCost?: number;
+  companyId?: number
   //validar datos
   Exonerado?: string
   DescuentoPantalla?: number

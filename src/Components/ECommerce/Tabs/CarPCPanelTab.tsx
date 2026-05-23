@@ -123,6 +123,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     const cartClearedRef = useRef(false)
 
+
+    useEffect(() => {
+  cartClearedRef.current = false
+}, [contactId, conversationId])
+
 const resetCartPanelUi = useCallback(() => {
   cartClearedRef.current = true
 
@@ -178,7 +183,6 @@ useEffect(() => {
     window.removeEventListener("CartClearedForActiveContact", onCleared)
   }
 }, [contactId, resetCartPanelUi])
-
 
   const readDraft = useCallback((): DraftState | null => {
     try {
@@ -341,73 +345,112 @@ useEffect(() => {
     return () => clearTimeout(t)
   }, [transCost])
 
-  useEffect(() => {
-    if (!contactId) return
-    void calcTotals({ cost: debouncedTransCost, pickup: retiraSucursal === "S" })
-  }, [contactId, debouncedTransCost, retiraSucursal, selectedAddressId, addDescription, calcTotals])
+ useEffect(() => {
+  if (!contactId) return
+  if (cartClearedRef.current) return
+
+  void calcTotals({
+    cost: debouncedTransCost,
+    pickup: retiraSucursal === "S",
+  })
+}, [
+  contactId,
+  debouncedTransCost,
+  retiraSucursal,
+  selectedAddressId,
+  addDescription,
+  calcTotals,
+])
 
   useEffect(() => {
     if (!contactId || !conversationId) return
     const myReq = ++reqRef.current
 
-    const loadCart = async () => {
-      const log = await fetchByContactId(contactId)
-      if (myReq !== reqRef.current) return
+const loadCart = async () => {
+  if (cartClearedRef.current) return
 
-      setCurrentLog(log ?? null)
+  const log = await fetchByContactId(contactId)
 
-      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
-      setOrderId(noPedido > 0 ? noPedido : null)
+  if (cartClearedRef.current) return
+  if (myReq !== reqRef.current) return
 
-      const draft = readDraft()
+  setCurrentLog(log ?? null)
 
-      if (draft?.selectedAddressId != null) setSelectedAddressId(draft.selectedAddressId)
-      else if (log?.addressId != null) setSelectedAddressId(Number(log.addressId))
+  const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
+  setOrderId(noPedido > 0 ? noPedido : null)
 
-      if (draft?.transCost != null) setTransCost(Number(draft.transCost ?? 0))
-      else if (log?.transCost != null) setTransCost(Number(log.transCost ?? 0))
+  const draft = readDraft()
 
-      if (draft?.retiraSucursal === "S" || draft?.retiraSucursal === "N") setRetiraSucursal(draft.retiraSucursal)
-      else if (log?.retiraSucursal === "S" || log?.retiraSucursal === "N") setRetiraSucursal(log.retiraSucursal)
+  if (cartClearedRef.current) return
 
-      if (draft?.addDescription != null && String(draft.addDescription).trim().length > 0) {
-        setAddDescription(String(draft.addDescription))
-      }
+  if (draft?.selectedAddressId != null) {
+    setSelectedAddressId(draft.selectedAddressId)
+  } else if (log?.addressId != null) {
+    setSelectedAddressId(Number(log.addressId))
+  }
 
-      if (draft?.observation != null && String(draft.observation).trim().length > 0) {
-        setObservation(String(draft.observation))
-      } else {
-        const obs = (log)?.observacion
-        if (String(obs ?? "").trim().length > 0) setObservation(String(obs))
-      }
+  if (draft?.transCost != null) {
+    setTransCost(Number(draft.transCost ?? 0))
+  } else if (log?.transCost != null) {
+    setTransCost(Number(log.transCost ?? 0))
+  }
 
-      const updated = await dispatch(getProductFromCarAsync({ codCliente: contactId, noPedido })).unwrap()
-      if (myReq !== reqRef.current) return
+  if (draft?.retiraSucursal === "S" || draft?.retiraSucursal === "N") {
+    setRetiraSucursal(draft.retiraSucursal)
+  } else if (log?.retiraSucursal === "S" || log?.retiraSucursal === "N") {
+    setRetiraSucursal(log.retiraSucursal)
+  }
 
-      const arr = Array.isArray(updated) ? updated : []
+  if (
+    draft?.addDescription != null &&
+    String(draft.addDescription).trim().length > 0
+  ) {
+    setAddDescription(String(draft.addDescription))
+  }
 
-      const count = arr[0]?.listDetalle?.reduce((sum, d) => {
-        // Solo sumamos si tipoComponente NO es "O"
-        if (d.tipoComponente !== "O") {
-          return sum + Number(d.cantidad ?? 0);
-        }
-        // Si es "O", retornamos el acumulador tal cual
-        return sum;
-      }, 0) ?? 0;
-      
-      dispatch(setContactCartBadge({ contactId, hasCart: count > 0, count }))
-
-      const calcTrans = Number(draft?.transCost ?? log?.transCost ?? transCost ?? 0)
-      setDebouncedTransCost(calcTrans)
-      void calcTotals({
-        cost: calcTrans,
-        pickup: (draft?.retiraSucursal ?? log?.retiraSucursal ?? retiraSucursal) === "S",
-        silent: true
-      })
+  if (
+    draft?.observation != null &&
+    String(draft.observation).trim().length > 0
+  ) {
+    setObservation(String(draft.observation))
+  } else {
+    const obs = log?.observacion
+    if (String(obs ?? "").trim().length > 0) {
+      setObservation(String(obs))
     }
+  }
+
+  if (cartClearedRef.current) return
+
+  const updated = await dispatch(
+    getProductFromCarAsync({ codCliente: contactId, noPedido })
+  ).unwrap()
+
+  if (cartClearedRef.current) return
+  if (myReq !== reqRef.current) return
+
+  const arr = Array.isArray(updated) ? updated : []
+
+  const count =
+    arr[0]?.listDetalle?.reduce((sum, d) => {
+      if (d.tipoComponente !== "O") {
+        return sum + Number(d.cantidad ?? 0)
+      }
+
+      return sum
+    }, 0) ?? 0
+
+  dispatch(setContactCartBadge({ contactId, hasCart: count > 0, count }))
+}
 
     void loadCart()
-  }, [contactId, conversationId, dispatch, fetchByContactId, draftKey, readDraft, transCost, calcTotals, retiraSucursal])
+  }, [
+  contactId,
+  conversationId,
+  dispatch,
+  fetchByContactId,
+  readDraft
+])
 
   const ensureEcommerceUser = async (): Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> => {
     if (ensureEcommerceRef.current) return ensureEcommerceRef.current
@@ -751,6 +794,7 @@ useEffect(() => {
   const orderId = opts?.orderId ?? cart.noPedido ?? "N/D"
   const existingLog = opts?.existingLog ?? null
 
+  
   lines.push(`🛍️ Pedido No. ${orderId}`)
 
   if (existingLog?.branch) {
@@ -773,16 +817,28 @@ useEffect(() => {
 
     if (!title) return
 
-    // Para producto principal "tipoComponente": "P"
-    if(d.tipoComponente == 'P'){
-        lines.push(`${index + 1}. *${title}*`)
-        lines.push(`   Cantidad: ${qty}`)
-    }
-    // Para opciones del producto princiapl "tipoComponente": "O",
-    if(d.tipoComponente == 'O'){
-        lines.push(`- ${title}`)
-        lines.push(`      Cantidad: ${qty}`)
-    }
+   // Para producto principal "tipoComponente": "P"
+      if (d.tipoComponente === 'P') {
+          const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
+              ? `C$ ${formatearDecimales(d.precioV)}` 
+              : '';
+
+          lines.push(`${index + 1}. *${title} - ${precioFormateado}*`);
+          lines.push(`   Cantidad: ${qty}`);
+      }
+
+      // Para opciones del producto principal "tipoComponente": "O"
+      if (d.tipoComponente === 'O') {
+       const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
+              ? `C$ ${formatearDecimales(d.precioV)}` 
+              : 'Incluido';
+
+          lines.push(`${index + 1}. *${title} - ${precioFormateado}*`);
+          lines.push(`   Cantidad: ${qty}`);
+          
+          lines.push(`- ${title}`);
+          lines.push(`      Cantidad: ${qty}`);
+      }
 
 
     lines.push("")
@@ -811,7 +867,7 @@ useEffect(() => {
       const selected = addresses.find(
         (a) => Number(a.idDireccion) === Number(selectedAddressId)
       )
-
+      
       const addrName = String(selected?.nombre ?? "").trim()
       const addrDesc = String(selected?.descripcion ?? "").trim()
       const addrRef = String(selected?.referencia ?? "").trim()
@@ -833,6 +889,7 @@ useEffect(() => {
   }
   return lines.join("\n").trim()
 }
+
   const handleSendLink = async (returnLink: boolean = false) => {
     setSendChatoading(true)
     try {
@@ -1286,7 +1343,7 @@ useEffect(() => {
           </Button>
          </Tooltip>
 
-          <Tooltip title="Cancelear links"
+          <Tooltip title="Cancelar links"
           slotProps={{
               tooltip: {
                 sx: {

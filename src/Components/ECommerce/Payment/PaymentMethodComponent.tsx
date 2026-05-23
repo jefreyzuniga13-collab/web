@@ -160,7 +160,7 @@ export const PaymentMethodComponent = ({
               <div className="checkout-summary__subtitle">
                 <p className="checkout-summary__p">Transporte: </p>
                 <strong className="checkout-summary__strong">
-                  {formatearDecimales(transpCost ?? 0) || formatearDecimales(existingLog?.transCost ?? 0)}
+                 {formatearDecimales(transpCost || existingLog?.transCost || 0)}
                 </strong>
               </div>
 

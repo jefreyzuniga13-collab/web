@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { useDispatch } from "react-redux"
+import { useQueryClient } from "@tanstack/react-query"
 import type { AppDispatch } from "@/Context"
 import { clearCart } from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
@@ -12,6 +13,7 @@ type Props = {
 
 export function CartFlowSignalCleaner({ contactId, conversationId }: Props) {
   const dispatch = useDispatch<AppDispatch>()
+  const queryClient = useQueryClient()
   const { resetCartFlow } = useCartPCGFlowCtx()
 
   useEffect(() => {
@@ -29,6 +31,16 @@ export function CartFlowSignalCleaner({ contactId, conversationId }: Props) {
 
       localStorage.removeItem(draftKey)
       sessionStorage.removeItem(draftKey)
+
+      queryClient.removeQueries({
+        queryKey: ["log-cart", "contact-status", contactId],
+        exact: true,
+      })
+
+      queryClient.removeQueries({
+        queryKey: ["log-cart"],
+        exact: false,
+      })
 
       dispatch(clearCart())
 
@@ -48,7 +60,13 @@ export function CartFlowSignalCleaner({ contactId, conversationId }: Props) {
     return () => {
       window.removeEventListener("CartClearedForActiveContact", onCleared)
     }
-  }, [contactId, conversationId, dispatch, resetCartFlow])
+  }, [
+    contactId,
+    conversationId,
+    dispatch,
+    queryClient,
+    resetCartFlow,
+  ])
 
   return null
 }
