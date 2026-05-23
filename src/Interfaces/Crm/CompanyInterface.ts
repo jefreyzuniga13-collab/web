@@ -4,3 +4,4 @@ export interface CompanyInterface{
     address?: string;
     createdAt?: string | null;
 }
+

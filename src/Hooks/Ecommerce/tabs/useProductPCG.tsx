@@ -29,7 +29,10 @@ export function useProductPCG(options?: UseProductPCGOptions) {
   const [lastCategory, setLastCategory] = useState<string | null>(null)
   const [lastSearch, setLastSearch] = useState<string | null>(null)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+
   const [modifierCode, setModifierCode] = useState<string | null>(null)
+  const [modifierCodPrecio, setModifierCodPrecio] = useState<string>("")
+
   const [codPrecio, setCodPrecioState] = useState<string>("")
 
   const listEnabled =
@@ -117,13 +120,20 @@ export function useProductPCG(options?: UseProductPCGOptions) {
   })
 
   const modifiersQuery = useQuery<ProductoModificadorPCGInterface[], Error>({
-    queryKey: ["product-pcg-modifiers", modifierCode],
-    enabled: !!modifierCode,
+    queryKey: ["product-pcg-modifiers", modifierCode, modifierCodPrecio],
+    enabled: !!modifierCode && !!modifierCodPrecio,
     queryFn: async () => {
-      if (!modifierCode) return []
-      return (await ProductPCGService.getProductModifiers(modifierCode)) ?? []
+      if (!modifierCode || !modifierCodPrecio) return []
+
+      return (
+        await ProductPCGService.getProductModifiers(
+          modifierCode,
+          modifierCodPrecio
+        )
+      ) ?? []
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnWindowFocus: false,
   })
 
@@ -141,6 +151,7 @@ export function useProductPCG(options?: UseProductPCGOptions) {
       for (const item of page ?? []) {
         const key = String(item.codProducto ?? "")
         if (!key) continue
+
         if (!map.has(key)) {
           map.set(key, item)
         }
@@ -193,6 +204,7 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     setLastSearch(null)
     setSelectedCode(null)
     setModifierCode(null)
+    setModifierCodPrecio("")
   }, [])
 
   const GetAll = useCallback(
@@ -262,28 +274,36 @@ export function useProductPCG(options?: UseProductPCGOptions) {
   }, [listEnabled, listQuery])
 
   const getProductModifiers = useCallback(
-    async (codProducto: string) => {
+    async (codProducto: string, codPrecioParam?: string) => {
       const code = normalizarTexto(codProducto)
+      const precio = normalizarTexto(codPrecioParam || normalizedCodPrecio)
 
-      if (!code) {
+      if (!code || !precio) {
         setModifierCode(null)
+        setModifierCodPrecio("")
         return []
       }
 
-      const queryKey = ["product-pcg-modifiers", code]
-
-      const data = await ProductPCGService.getProductModifiers(code)
-
-      queryClient.setQueryData<ProductoModificadorPCGInterface[]>(
-        queryKey,
-        data ?? []
-      )
+      const queryKey = ["product-pcg-modifiers", code, precio]
 
       setModifierCode(code)
+      setModifierCodPrecio(precio)
 
-      return data ?? []
+      const data =
+        (await queryClient.fetchQuery({
+          queryKey,
+          queryFn: async () => {
+            return (
+              await ProductPCGService.getProductModifiers(code, precio)
+            ) ?? []
+          },
+          staleTime: 0,
+          gcTime: 0,
+        })) ?? []
+
+      return data
     },
-    [queryClient]
+    [queryClient, normalizedCodPrecio]
   )
 
   const isSearching = mode === "search"
@@ -317,6 +337,7 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     refetch: async () => {
       if (mode === "code") return await codeQuery.refetch()
       if (listEnabled) return await listQuery.refetch()
+      if (modifierCode && modifierCodPrecio) return await modifiersQuery.refetch()
       return null
     },
   }

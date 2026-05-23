@@ -314,6 +314,12 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
 
       if (activeContactId === payload.contactId) {
         store.dispatch(clearCart());
+
+        window.dispatchEvent(
+          new CustomEvent("CartClearedForActiveContact", {
+            detail: payload,
+          })
+        );
       }
     }
   );

@@ -38,7 +38,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   subCliente: "",
   numeroExoneracion: "",
   noPreventa: "0",
-  codEmpresa: "01",
+  codEmpresa: "",
   direccionCte: "",
   telefonoCte: "",
   tipoDocumentoLlamado: 1,

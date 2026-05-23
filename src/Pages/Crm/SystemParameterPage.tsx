@@ -119,8 +119,6 @@ export default function SystemParamsPage() {
         </div>
       </div>
 
-      {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
-
       <div className='table-contaner__search-filter__container'>
         <TextField
           label="Filtrar"
@@ -132,6 +130,7 @@ export default function SystemParamsPage() {
           className='table-contaner__search-filter'
         />
       </div>
+      
       <CustomTable<SystemParamResponseDto>
         columns={columns}
         rows={systemParams}

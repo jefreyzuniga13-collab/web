@@ -7,16 +7,14 @@ import { toast } from "react-toastify"
 import "@/Styles/Ecommerce/cardPCGTab.css"
 import Button from "@/Components/Common/Button"
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
-// import noimageavailable from "@/assets/img/noimageavailable.webp"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import { MdDelete } from "react-icons/md"
 import { selectCarPCG, selectCartError, selectCartLoading, getProductFromCarAsync, updateCarAsync, setActiveContactId } from "@/Context/Slices/Ecommerce/cartSlice"
 import { format } from "date-fns"
-import { FaFilePdf, 
-  // FaLongArrowAltLeft, FaLongArrowAltRight 
-} from "react-icons/fa"
+import { FaFilePdf} from "react-icons/fa"
+import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { IoIosChatboxes } from "react-icons/io"
+import { IoIosChatboxes, IoMdArrowRoundBack, IoMdArrowRoundForward } from "react-icons/io"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
@@ -45,6 +43,7 @@ import Lottie from "lottie-react";
 import { PCG_SERVICES } from "@/Constants/pcgservices"
 import vacio from '@/assets/vacio.png'
 import { calcularIVA, formatearDecimales } from "@/Utils/calcularIVA"
+import { Tooltip } from "@mui/material"
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
@@ -94,6 +93,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const error = useAppSelector(selectCartError)
   const badgeMap = useAppSelector(selectCartBadgeByContactId)
   const contactHasCart = badgeMap?.[contactId] ?? { hasCart: false, count: 0 }
+  const companySistema = useAppSelector(selectCompanySistema)
 
   const ensureEcommerceRef = useRef<Promise<{ ecommerceUserId: number; contact: ContactLogInterface | null }> | null>(null)
   const reqRef = useRef(0)
@@ -120,6 +120,65 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const pickupDisabled = hasSelectedAddress || hasManualAddress
 
   const showAddressButton = !isPickup && !hasManualAddress
+
+    const cartClearedRef = useRef(false)
+
+const resetCartPanelUi = useCallback(() => {
+  cartClearedRef.current = true
+
+  setSearch("")
+  setOrderId(null)
+  setCancelLoading(false)
+  setSendChatoading(false)
+  setActiveStep(1)
+
+  setAddDescription("")
+  setRetiraSucursal("N")
+  setTransCost(0)
+  setDebouncedTransCost(0)
+
+  setInvoiceTotalsDto(null)
+  setTotalsLoading(false)
+
+  setShowAddressModal(false)
+  setAddresses([])
+  setAddressLoading(false)
+  setObservation("")
+
+  setSelectedAddressId(null)
+  setAddressSearch("")
+  setCurrentLog(null)
+
+  setLocked(null)
+
+  try {
+    localStorage.removeItem(draftKey)
+    sessionStorage.removeItem(draftKey)
+  } catch {}
+}, [draftKey, setLocked])
+
+
+useEffect(() => {
+  const onCleared = (e: Event) => {
+    const detail = (e as CustomEvent<{
+      contactId: number
+      orderId: number
+      conversationId: number
+    }>).detail
+
+    if (!detail) return
+    if (Number(detail.contactId) !== Number(contactId)) return
+
+    resetCartPanelUi()
+  }
+
+  window.addEventListener("CartClearedForActiveContact", onCleared)
+
+  return () => {
+    window.removeEventListener("CartClearedForActiveContact", onCleared)
+  }
+}, [contactId, resetCartPanelUi])
+
 
   const readDraft = useCallback((): DraftState | null => {
     try {
@@ -382,8 +441,6 @@ useEffect(() => {
         const res = await createAsync(createUserEcommerce)
         const ecommerceUserId = Number(res)
 
-        //accede aqui aunque realmente si se crea y da
-        console.log()
         if (!ecommerceUserId || Number.isNaN(ecommerceUserId) || ecommerceUserId <= 0) {
           toast.error("No se pudo crear el usuario ecommerce")
           return { ecommerceUserId: 0, contact }
@@ -561,87 +618,6 @@ useEffect(() => {
     )
   }
 
-  const handleSendCartPdf = async () => {
-    if (!cart || sending) return
-    const contact = await getById(contactId)
-    if (!contact) {
-      toast.error("No se pudo obtener el contacto")
-      return
-    }
-
-    const selected = selectedAddressId != null ? addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId)) : null
-    const addressName = String(selected?.nombre ?? "").trim()
-    const addressText = hasSelectedAddress
-      ? [String(selected?.descripcion ?? "").trim(), String(selected?.referencia ?? "").trim()].filter(Boolean).join(" | ")
-      : addDescription.trim()
-
-    const file = generateCartPdfFile(cart, invoiceTotalsDto, contact, {
-      retiraSucursal,
-      transCost,
-      addressName: addressName.length > 0 ? addressName : null,
-      addressText: addressText.length > 0 ? addressText : null,
-      finalTotal: invoiceTotalsDto?.total
-    })
-
-    setFile(file)
-    setText("Resumen de carrito")
-    await handleSend()
-  }
-
-  const buildCartChatMessage = (cart: CarDto, opts?: { orderId?: number | null; deliveryDate?: string | null }) => {
-    const lines: string[] = []
-    lines.push(`🛍️ Pedido No ${opts?.orderId ?? cart.noPedido ?? "N/D"}`)
-    lines.push("")
-    lines.push("🛒 Artículos:")
-    lines.push("")
-
-    cart.listDetalle?.forEach((d) => {
-      const qty = d.cantidad ?? 0
-      const title = (d.descripcion ?? "").trim() + " - " + d.observaciones
-      if (!title) return
-      lines.push(`*${title}* - ${qty}`)
-
-      const opciones =
-        d.listOpciones
-          ?.map((o) => (o.descripcionOp.trim() + " - " + o.cantidad.toString().trim()).trim())
-          .filter(Boolean) ?? []
-
-      opciones.forEach((op) => lines.push(`   ${op}`))
-      lines.push("")
-    })
-
-    const total =
-      (formatearDecimales(invoiceTotalsDto?.total ?? 0))
-
-    if (retiraSucursal === "S") {
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(Number(total))}`)
-      lines.push("🏬 Retira en sucursal")
-      if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
-    } else {
-      const envio = effectiveShipping
-      const hasEnvio = Number.isFinite(envio) && envio > 0
-
-      if (hasEnvio) lines.push(`🚚 Envío: C$ ${envio.toFixed(2)}`)
-      // lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}${hasEnvio ? " | *Más envío*" : ""}`)
-      lines.push(`*🪙 Total:* ${formatCurrencyNIO(Number(total))}`)
-
-      if (hasSelectedAddress) {
-        const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
-        const addrName = String(selected?.nombre ?? "").trim()
-        const addrDesc = String(selected?.descripcion ?? "").trim()
-        const addrRef = String(selected?.referencia ?? "").trim()
-        const best = [addrName, addrDesc, addrRef].filter((x) => x.length > 0).join(" | ")
-        if (best.length > 0) lines.push(`📍 Dirección: ${best}`)
-      } else if (addDescription.trim().length > 0) {
-        lines.push(`📍 Dirección: ${addDescription.trim()}`)
-      }
-
-      if (observation.trim().length > 0) lines.push(`📝 Observación: ${observation.trim()}`)
-    }
-
-    if (opts?.deliveryDate) lines.push(`🗓️ Fecha de entrega: ${opts.deliveryDate}`)
-    return lines.join("\n").trim()
-  }
 
   const handlePersistLog = async (log: LogCartResponseDto, ecommerceUserId: number) => {
     if (!log?.id) return log
@@ -712,6 +688,151 @@ useEffect(() => {
     return log
   }
 
+  //#region Metodos de envio menasje
+
+
+  const handleSendCartPdf = async () => {
+
+  if (!cart || sending) return
+
+  const contact = await getById(contactId)
+
+  if (!contact) {
+    toast.error("No se pudo obtener el contacto")
+    return
+  }
+
+  const selected =
+    selectedAddressId != null
+      ? addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
+      : null
+
+  const addressName = String(selected?.nombre ?? "").trim()
+
+  const addressText = hasSelectedAddress
+    ? [
+        String(selected?.descripcion ?? "").trim(),
+        String(selected?.referencia ?? "").trim()
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    : addDescription.trim()
+
+      const pdfFile = generateCartPdfFile(
+        cart,
+        invoiceTotalsDto,
+        contact,
+        {
+          retiraSucursal,
+          transCost,
+          addressName: addressName.length > 0 ? addressName : null,
+          addressText: addressText.length > 0 ? addressText : null,
+          finalTotal: invoiceTotalsDto?.total
+        },
+        currentLog?.branchName
+      )
+
+      setFile(pdfFile)
+      setText("Resumen de carrito")
+
+      await handleSend(pdfFile, "Resumen de carrito")
+}
+
+  const buildCartChatMessage = (
+  cart: CarDto,
+  opts?: {
+    orderId?: number | null
+    deliveryDate?: string | null
+    existingLog?: LogCartResponseDto | null
+  }
+) => {
+  const lines: string[] = []
+
+  const orderId = opts?.orderId ?? cart.noPedido ?? "N/D"
+  const existingLog = opts?.existingLog ?? null
+
+  lines.push(`🛍️ Pedido No. ${orderId}`)
+
+  if (existingLog?.branch) {
+    lines.push(`🏬 Sucursal: ${existingLog.branchName ?? ""}`)
+  }
+
+  lines.push("")
+  lines.push("🛒 Artículos:")
+  lines.push("")
+
+  cart.listDetalle?.forEach((d, index) => {
+    const qty = Number(d.cantidad ?? 0)
+
+    const descripcion = String(d.descripcion ?? "").trim()
+    const observacion = String(d.observaciones ?? "").trim()
+
+    const title = [descripcion, observacion]
+      .filter((x) => x.length > 0)
+      .join(" - ")
+
+    if (!title) return
+
+    // Para producto principal "tipoComponente": "P"
+    if(d.tipoComponente == 'P'){
+        lines.push(`${index + 1}. *${title}*`)
+        lines.push(`   Cantidad: ${qty}`)
+    }
+    // Para opciones del producto princiapl "tipoComponente": "O",
+    if(d.tipoComponente == 'O'){
+        lines.push(`- ${title}`)
+        lines.push(`      Cantidad: ${qty}`)
+    }
+
+
+    lines.push("")
+  })
+
+  const total = Number(formatearDecimales(invoiceTotalsDto?.total ?? 0))
+
+  if (retiraSucursal === "S") {
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+    lines.push("🏬 Retira en sucursal")
+
+    if (observation.trim().length > 0) {
+      lines.push(`📝 Observación: ${observation.trim()}`)
+    }
+  } else {
+    const envio = Number(effectiveShipping ?? 0)
+    const hasEnvio = Number.isFinite(envio) && envio > 0
+
+    if (hasEnvio) {
+      lines.push(`🚚 Envío: ${formatCurrencyNIO(envio)}`)
+    }
+
+    lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
+
+    if (hasSelectedAddress) {
+      const selected = addresses.find(
+        (a) => Number(a.idDireccion) === Number(selectedAddressId)
+      )
+
+      const addrName = String(selected?.nombre ?? "").trim()
+      const addrDesc = String(selected?.descripcion ?? "").trim()
+      const addrRef = String(selected?.referencia ?? "").trim()
+
+      const addressText = [addrName, addrDesc, addrRef]
+        .filter((x) => x.length > 0)
+        .join(" | ")
+
+      if (addressText.length > 0) {
+        lines.push(`📍 Dirección cliente: ${addressText}`)
+      }
+    } else if (addDescription.trim().length > 0) {
+      lines.push(`📍 Dirección cliente: ${addDescription.trim()}`)
+    }
+
+    if (observation.trim().length > 0) {
+      lines.push(`📝 Observación: ${observation.trim()}`)
+    }
+  }
+  return lines.join("\n").trim()
+}
   const handleSendLink = async (returnLink: boolean = false) => {
     setSendChatoading(true)
     try {
@@ -767,10 +888,12 @@ useEffect(() => {
     const { ecommerceUserId } = await ensureEcommerceUser()
     if (!ecommerceUserId) return
 
-    const msg = buildCartChatMessage(cart, { orderId, deliveryDate: format(cart.fecha, "dd/MM/yyyy") })
+    const existingLog = await fetchByContactId(contactId)
+
+    
+    const msg = buildCartChatMessage(cart, { orderId, deliveryDate: format(cart.fecha, "dd/MM/yyyy"), existingLog})
     if (!msg) return
 
-    const existingLog = await fetchByContactId(contactId)
     if (existingLog?.orderId) await handlePersistLog(existingLog, ecommerceUserId)
 
     const req: SendInteractiveMessajeRequestDto = { conversationId, contactId, body: msg }
@@ -796,6 +919,9 @@ useEffect(() => {
       setCancelLoading(false)
     }
   }
+
+  // #endregion
+  
 
   const actionsDisabled = loadingCart || loading || sending || sendChatoading || cancelLoading || totalsLoading
 
@@ -851,7 +977,7 @@ useEffect(() => {
                         handleRemoveItem(
                           cart.idUsuario ?? 0,
                           detail.noPedido,
-                          "",
+                          String(companySistema) === "P" ? detail.codProducto : "",
                           detail.unico!
                         )
                       }
@@ -1012,32 +1138,13 @@ useEffect(() => {
       )}
 
       <div className="carPCPanel-bottom">
-        
-        {/* <div className="carPCPanel-stepActions">
-          <button
-            className="carPCPanel-stepBtn"
-            disabled={activeStep === 1}
-            onClick={() => setActiveStep(1)}
-          >
-           <FaLongArrowAltLeft />
-          </button>
-
-          <button
-            className="carPCPanel-stepBtn"
-            disabled={activeStep === 2}
-            onClick={() => setActiveStep(2)}
-          >
-            <FaLongArrowAltRight />
-          </button>
-        </div> */}
-
         <div className="carPCPanel-steps">
         <button
           type="button"
           className={`carPCPanel-step ${activeStep === 1 ? "carPCPanel-step--active" : ""}`}
           onClick={() => setActiveStep(1)}
         >
-          1
+         <IoMdArrowRoundBack fontSize={12} />
         </button>
 
         <div className="carPCPanel-stepLine" />
@@ -1047,7 +1154,7 @@ useEffect(() => {
           className={`carPCPanel-step ${activeStep === 2 ? "carPCPanel-step--active" : "carPCPanel-step--inactive"}`}
           onClick={() => setActiveStep(2)}
         >
-          2
+        <IoMdArrowRoundForward  fontSize={12}/>
         </button>
       </div>
 
@@ -1056,9 +1163,7 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Subtotal:</p>
               <span className="productTab-content-footer__value">
-                C$ 
-                {/* {invoiceTotalsDto.subTotal ?? ""} */}
-                {formatearDecimales(invoiceTotalsDto.subTotal)}
+                C$ {formatearDecimales(invoiceTotalsDto.subTotal)}
               </span>
             </div>
           )}
@@ -1067,9 +1172,7 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Descuento:</p>
               <span className="productTab-content-footer__value">
-                C$ 
-                {/* {invoiceTotalsDto.descuento ?? ""} */}
-                 {formatearDecimales(invoiceTotalsDto.descuento)}
+                C$ {formatearDecimales(invoiceTotalsDto.descuento)}
               </span>
             </div>
           )}
@@ -1078,9 +1181,7 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">IVA:</p>
               <span className="productTab-content-footer__value">
-                C$
-                 {/* {invoiceTotalsDto.iva ?? ""} */}
-                 {formatearDecimales(invoiceTotalsDto.iva)}
+                C$ {formatearDecimales(invoiceTotalsDto.iva)}
               </span>
             </div>
           )}
@@ -1089,9 +1190,7 @@ useEffect(() => {
             <div className="productTab-content__container">
               <p className="productTab-content-footer__title">Transporte:</p>
               <span className="productTab-content-footer__value">
-                C$ 
-                {/* {transCost ?? 0} */}
-                {formatearDecimales(transCost)}
+                C$ {formatearDecimales(transCost)}
               </span>
             </div>
           )}
@@ -1110,7 +1209,6 @@ useEffect(() => {
 
               <span className="productTab-content-footer__totalValue">
                 C$ 
-                {/* {invoiceTotalsDto.total} */}
                  {formatearDecimales(invoiceTotalsDto.total)}
               </span>
             </div>
@@ -1119,7 +1217,17 @@ useEffect(() => {
 
         <div className="productTab-footer__payment">
           {showAddressButton && (
-            <Button
+           <Tooltip title="Listar direcciones"
+              slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1.2rem',
+                  padding: '10px', 
+                },
+              },
+            }}
+           >
+             <Button
               className="carPanel-btn"
               disabled={actionsDisabled}
               onClick={async () => {
@@ -1130,12 +1238,23 @@ useEffect(() => {
             >
               <FaMapMarkerAlt size={12}/>
             </Button>
+           </Tooltip>
           )}
 
-          <Button
+          <Tooltip title="Enviar PDF"
+          slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1.2rem',
+                  padding: '10px', 
+                },
+              },
+            }}>
+            <Button
             className="carPanel-btn"
             disabled={actionsDisabled}
             onClick={handleSendCartPdf}
+            
           >
             {sending ? (
               <AiOutlineLoading3Quarters fontSize={18} />
@@ -1143,8 +1262,18 @@ useEffect(() => {
               <FaFilePdf fontSize={18} />
             )}
           </Button>
+          </Tooltip>
 
-          <Button
+         <Tooltip title="Confirmar carrito"
+          slotProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '1.2rem',
+                    padding: '10px', 
+                  },
+                },
+              }}>
+           <Button
             className="carPanel-btn"
             disabled={actionsDisabled}
             onClick={handleSendCartChat}
@@ -1155,16 +1284,37 @@ useEffect(() => {
               <IoIosChatboxes fontSize={18} />
             )}
           </Button>
+         </Tooltip>
 
-          <Button className="cancelPanel-btn" disabled={actionsDisabled} onClick={Cancel}>
-            {cancelLoading ? (
-              <AiOutlineLoading3Quarters fontSize={18} />
-            ) : (
-              <MdOutlineCancelScheduleSend fontSize={18} />
-            )}
-          </Button>
+          <Tooltip title="Cancelear links"
+          slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1.2rem',
+                  padding: '10px', 
+                },
+              },
+            }}>
+                  <Button className="cancelPanel-btn" disabled={actionsDisabled} onClick={Cancel}>
+                  {cancelLoading ? (
+                    <AiOutlineLoading3Quarters fontSize={18} />
+                  ) : (
+                    <MdOutlineCancelScheduleSend fontSize={18} />
+                  )}
+                </Button>
+          </Tooltip>
 
-          <Button
+
+          <Tooltip title="Enviar link"
+          slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1.2rem',
+                  padding: '10px', 
+                },
+              },
+            }}>
+                      <Button
             className="payment-btn"
             disabled={actionsDisabled}
             onClick={async () => await handleSendLink(false)}
@@ -1175,6 +1325,7 @@ useEffect(() => {
               <IoSend fontSize={16} />
             )}
           </Button>
+          </Tooltip>
         </div>
       </div>
     </section>

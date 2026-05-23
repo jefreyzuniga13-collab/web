@@ -141,10 +141,10 @@ export const ProductPCGTab = ({
             className="productTab-simpleAddBar__input"
           />
 
-          <button
+          <Button
             type="button"
-            className="productTab-buyButton__general"
             onClick={handleSimpleAdd}
+            className="productTab-simpleAddBar__btn simpleAddBar-secondary"
             disabled={simpleQuantity <= 0 || cartLoading}
             title={
               prod.tieneOpcion
@@ -153,24 +153,24 @@ export const ProductPCGTab = ({
             }
           >
             <FaShoppingCart fontSize={12} />
-          </button>
-        </div>
+          </Button>
 
         <Button
-          variant="tertiary"
-          className="product-row__btn"
+          variant="primary"
           disabled={sending}
           onClick={handleSendMessage}
+          className="productTab-simpleAddBar__btn"
         >
           {sending ? (
             <AiOutlineLoading3Quarters
               fontSize={12}
-              className="product-row__iconBtn"
+
             />
           ) : (
-            <IoMdSend fontSize={12} className="product-row__iconBtn" />
+            <IoMdSend fontSize={12}  />
           )}
         </Button>
+        </div>
       </div>
     </div>
   )

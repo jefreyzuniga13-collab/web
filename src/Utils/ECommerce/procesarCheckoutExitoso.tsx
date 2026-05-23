@@ -118,40 +118,6 @@ export async function procesarCheckoutExitoso({
     PCG_SERVICES.CRM,
   );
 
-  // if (resPrintPDF) {
-
-  //   //si el usarPdfPagoElectronico es true, se deven de generar y enviar ambos pdf
-  //   const pdfBlob = usarPdfPagoElectronico
-  //       ? generatePagoElectronicoPDFFile({
-  //           orderFac: resPrintPDF.data,
-  //           transactionIdentifier,
-  //           telefono: "+505 7545 4150",
-  //           existingLog
-  //         })
-  //       : generateOrdeFacPDFFile(resPrintPDF.data);
-  
-
-  //   if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
-  //     throw new Error("El PDF generado está vacío o inválido.");
-  //   }
-
-  //   const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
-  //   const magic = String.fromCharCode(...head);
-
-  //   if (magic !== "%PDF-") {
-  //     throw new Error(`El archivo no parece PDF válido (magic=${magic}).`);
-  //   }
-
-  //   const noFactura = String(
-  //     resPrintPDF.data.DatosGenerales?.NoFactura ?? "",
-  //   ).trim();
-
-  //   const fileName = `Pedido-${noFactura || "SN"}.pdf`;
-  //   const mime = pdfBlob.type || "application/pdf";
-  //   const file = new File([pdfBlob], fileName, { type: mime });
-  //   await sendMediaEcommerce(payload.conversationId, file, "");
-  // }
-
     if (resPrintPDF) {
     const archivos: File[] = [];
 
@@ -178,7 +144,7 @@ export async function procesarCheckoutExitoso({
       });
     };
 
-    const pdfPedido = generateOrdeFacPDFFile(resPrintPDF.data);
+    const pdfPedido = generateOrdeFacPDFFile(resPrintPDF.data, existingLog);
     archivos.push(await validarPdf(pdfPedido, `${nombreBase}.pdf`));
 
     if (usarPdfPagoElectronico) {

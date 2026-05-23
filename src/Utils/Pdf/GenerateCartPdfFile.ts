@@ -30,7 +30,8 @@ const sanitizeMoney = (v: any): number => {
   return n
 }
 
-export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotalsDto | null, contact: ContactLogInterface, opts?: CartPdfOptions): File => {
+export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotalsDto | null, 
+  contact: ContactLogInterface, opts?: CartPdfOptions, branchName?: string | undefined): File => {
   const doc = new jsPDF()
 
   const date = new Date()
@@ -48,18 +49,20 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
   const addressName = String(opts?.addressName ?? "").trim()
   const hasAddress = !isPickup && (addressText.length > 0 || addressName.length > 0)
 
-  const shipping = !isPickup && hasAddress ? sanitizeMoney(opts?.transCost) : 0
+  const shipping = !isPickup && hasAddress ? sanitizeMoney(opts?.transCost) : invoiceTotalsDto?.transporte ?? 0
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
   doc.text(`Resumen de N.º Pedido ${cart.noPedido}`, marginX, marginY + 5)
 
   doc.setFontSize(10)
-  doc.text(`A nombre de: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 15)
   doc.setFont("helvetica", "normal")
-  doc.text(`Fecha: ${time}`, marginX, marginY + 25)
+  doc.text(`Sucursal : ${branchName}`, marginX, marginY + 15)
+  doc.text(`A nombre de: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 22)
+  doc.setFont("helvetica", "normal")
+  doc.text(`Fecha: ${time}`, marginX, marginY + 29)
 
-  let infoY = marginY + 33
+  let infoY = marginY + 36
   doc.setFont("helvetica", "bold")
   doc.text("Entrega:", marginX, infoY)
 
@@ -75,10 +78,6 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
       infoY += 3
       doc.text(`Referencia: ${descLine}`, marginX, infoY)
     }
-    // if (shipping > 0) {
-    //   infoY += 6
-    //   doc.text(`Costo de envío: C$ ${shipping.toFixed(2)}`, marginX, infoY)
-    // }
   } else {
     doc.text("Pendiente de dirección", marginX + 18, infoY)
   }
@@ -95,11 +94,11 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
     headStyles: { fillColor: [49, 86, 168], textColor: 255, fontStyle: "bold" },
     alternateRowStyles: { fillColor: [249, 250, 251] },
     columnStyles: {
-      0: { cellWidth: 30 },
+      0: { cellWidth: 45 },
       1: { halign: "left", cellWidth: 15 },
       2: { halign: "left", cellWidth: 22 },
       3: { halign: "left", cellWidth: 24 },
-      4: { cellWidth: 80 }
+      4: { cellWidth: 65 }
     }
   })
 
@@ -127,10 +126,10 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
   const labelX = boxX + 4
   const valueX = boxX + boxWidth - 4
 
-const subtotal = sanitizeMoney(invoiceTotalsDto?.subTotal ?? 0)
-const descuento = sanitizeMoney(invoiceTotalsDto?.descuento ?? 0)
-const iva = sanitizeMoney(invoiceTotalsDto?.iva ?? 0)
-const totalBase = sanitizeMoney(opts?.finalTotal ?? 0)
+  const subtotal = sanitizeMoney(invoiceTotalsDto?.subTotal ?? 0)
+  const descuento = sanitizeMoney(invoiceTotalsDto?.descuento ?? 0)
+  const iva = sanitizeMoney(invoiceTotalsDto?.iva ?? 0)
+  const totalBase = sanitizeMoney(opts?.finalTotal ?? 0)
 
 
   let lineY = y + 6

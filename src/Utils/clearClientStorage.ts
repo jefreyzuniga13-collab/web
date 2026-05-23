@@ -24,18 +24,32 @@ export const limpiarAlmacenamientoCliente = async () => {
   } catch {}
 
   try {
-    document.cookie.split(";").forEach(cookie => {
-      const nombre = cookie.split("=")[0].trim();
+    // todas las cookies visibles para JavaScript
+    if (document.cookie) {
+      document.cookie.split(";").forEach(cookie => {
+        // Separar el nombre (manejando el caso de cookies vacías o extrañas)
+        const partes = cookie.split("=");
+        const nombre = partes[0].trim();
+        
+        if (nombre) {
+          // borrar la cookie en la ruta raíz y subrutas
+          document.cookie = `${nombre}=; Max-Age=0; path=/;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm;`;
 
-      document.cookie = `${nombre}=; Max-Age=0; path=/;`;
-      document.cookie = `${nombre}=; Max-Age=0; path=/crm;`;
-      document.cookie = `${nombre}=; Max-Age=0; path=/; domain=orbitrachat.com;`;
-      document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=orbitrachat.com;`;
-      document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.orbitrachat.com;`;
-      document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.orbitrachat.com;`;
-    });
-  } catch {}
+          // borrar la cookie especificando el dominio exacto
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=crmdelipollo.com;`;
 
+          // borrar la cookie para todos los subdominios (si aplica)
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.crmdelipollo.com;`;
+        }
+      });
+    }
+  }  catch {}
+
+
+  //
   try {
     if ("caches" in window) {
       const cacheNames = await caches.keys();
@@ -51,5 +65,5 @@ export const limpiarAlmacenamientoCliente = async () => {
   } catch {}
 
   // Recargar y navegar a la pagina de inicio
-  // window.location.replace("/login");
+  window.location.replace("/crm/login");
 };

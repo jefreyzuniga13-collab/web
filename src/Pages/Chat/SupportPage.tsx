@@ -20,6 +20,7 @@ import "@/Styles/Chat/SupportPage.css";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import { MdContacts } from "react-icons/md";
 import { IoMdCloseCircleOutline } from "react-icons/io";
+import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
@@ -177,17 +178,7 @@ const SupportPage: React.FC = () => {
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
 
-            <div>
-              {/* <button
-                className="sort-button"
-                onClick={()=> {
-                  
-                }}
-                title="Filtrar por empresa"
-                >
-                  <BiSolidBuildingHouse  className="sort-button-icon" />
-                </button> */}
-                
+            <div>                
                 <button
                   className="sort-button"
                   onClick={() => setOrderModalVisible(true)}
@@ -293,7 +284,8 @@ const SupportPage: React.FC = () => {
           <DetailPanel
             contactId={activeConversation?.clientContactId}
             selectedParam={selectedParam}
-            conversationId={convId ?? undefined}
+            conversationId={convId ?? 0}
+           metaChannel={activeConversation?.metaChannelId === CHANNEL.Whatsapp ? "WhatsApp" : activeConversation?.metaChannelId === CHANNEL.Messenger ? "Messenger" : "Instagram"}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
             isAdmin={isAdmin}

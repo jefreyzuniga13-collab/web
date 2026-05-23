@@ -43,6 +43,7 @@ export default function UsersPage() {
   const columns: Column<User>[] = useMemo(
     () => [
       { id: 'fullName', label: 'Nombre', minWidth: 110 },
+      { id: 'codReferenciaPCG', label: 'Código referencia PCG', minWidth: 50 },
       { id: 'email', label: 'Correo', minWidth: 120 },
       {
         id: 'roles',

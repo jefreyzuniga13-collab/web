@@ -1,7 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-/* Configuración base: 1rem = 10px para facilitar cálculos */
 html {
   font-size: 62.5%; /* 10px base */
 }

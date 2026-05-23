@@ -114,7 +114,7 @@
 }
 
 .table-contaner__search-filter__container{
-  max-width: 50%;
+  /* max-width: 50%; */
   text-align:left;
   padding: var(--space-sm) 0  var(--space-sm) 0;
   margin: 0;

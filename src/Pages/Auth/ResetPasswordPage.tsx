@@ -1,5 +1,4 @@
 import { FaEye, FaEyeSlash, FaLock, FaArrowLeft } from "react-icons/fa";
-import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
@@ -8,7 +7,6 @@ import logo from "@/assets/img/logoinicio2.png";
 import "@/Styles/Auth/ResetPasswordPresentation.css";
 
 export default function ResetPasswordPresentation() {
-  const { t } = useTranslation();
 
   const {
     formik,
@@ -131,8 +129,8 @@ export default function ResetPasswordPresentation() {
                   className="reset-password__submit-button"
                 >
                   {loading
-                    ? t("resetPassword.submitting") || "Guardando..."
-                    : t("resetPassword.submit") || "Guardar contraseña"}
+                    ? 'Guardando...'
+                    :"Guardar contraseña"}
                 </Button>
 
                 <Link to="/login" className="reset-password__back-link">

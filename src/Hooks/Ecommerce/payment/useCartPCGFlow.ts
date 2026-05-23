@@ -1,30 +1,19 @@
 
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import dayjs from "dayjs"
 import { useDispatch, useSelector } from "react-redux"
 import { toast } from "react-toastify"
-
 import type { AppDispatch } from "@/Context"
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
-import type {
-  DetalleFacturaTempoData,
-  DetalleFacturaTempoRequest,
-  FaloteRequestDto,
-} from "@/Interfaces/Crm/CartPCGInterface"
-import type {
-  LogCartRequestDto,
-  LogCartResponseDto,
-} from "@/Interfaces/Crm/LogCartInterface"
-import {
-  addProductTempoAsync,
-  getProductFromCarAsync,
-} from "@/Context/Slices/Ecommerce/cartSlice"
+import type {DetalleFacturaTempoData,DetalleFacturaTempoRequest,FaloteRequestDto} from "@/Interfaces/Crm/CartPCGInterface"
+import type {LogCartRequestDto,LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
+import {addProductTempoAsync, getProductFromCarAsync} from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
-import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
+import { selectCompanySistema, selectCodReferenciaPCG } from "@/Context/Slices/Auth/authSlice"
+import { FechaManagua } from "@/Utils/FechaManagua"
 
 export type LockedInfo = {
   branch: string
@@ -162,7 +151,7 @@ const getErrorMessage = (error: unknown) => {
   )
 }
 
-export const useCartPCGFlow = (conversationId: number, contactId: number) => {
+export const useCartPCGFlow = (conversationId: number, contactId: number, metaChannel: string) => {
   const dispatch = useDispatch<AppDispatch>()
 
   const {
@@ -188,6 +177,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
   >([])
 
   const companySistema = useSelector(selectCompanySistema)
+  const codReferenciaPCG = useSelector(selectCodReferenciaPCG)
 
   const hydratedRef = useRef(false)
   const addLockRef = useRef(false)
@@ -231,6 +221,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     void run()
   }, [contactId, fetchByContactId, setLocked])
 
+
   const buildCartRequest = useCallback(
     (
       product: ProductoPCGInterface,
@@ -239,15 +230,16 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       wherehouseCode: string,
       noPedido: string,
       observacion: string,
-      codPrecio: string
+      codPrecio: string,
+      metaChannel: string
     ): DetalleFacturaTempoRequest => {
       return {
         sucursal: branch,
         usuario: String(contactId),
         maquina: `CRM-${contactId}`,
-        fecha: dayjs().format("YYYYMMDD"),
+        fecha: FechaManagua.obtenerFormatoLimpio(),
         codproducto: cleanText(product.codProducto),
-        codprecio: cleanText(codPrecio) || "01",
+        codprecio: cleanText(codPrecio),
         precio: Number(product.precio ?? 0),
         bodega: cleanText(wherehouseCode),
         cantidadmovimiento: clampQty(qty),
@@ -278,9 +270,11 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         tipoComponente: "P",
         unico: "",
         sistema: String(companySistema),
+        ordenServicio: codReferenciaPCG,
+        tipoFac: metaChannel
       }
     },
-    [contactId, companySistema]
+    [contactId, companySistema, codReferenciaPCG]
   )
 
   const buildModifierCartRequest = useCallback(
@@ -293,13 +287,16 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
       unico: string,
       codPrecio: string
     ): DetalleFacturaTempoRequest => {
+      
+      console.log("Cod Precio insertado en modificadores.", codPrecio)
+
       return {
         sucursal: branch,
         usuario: String(contactId),
         maquina: `CRM-${contactId}`,
-        fecha: dayjs().format("YYYYMMDD"),
+        fecha: FechaManagua.obtenerFormatoLimpio(),
         codproducto: option.codOpcion.trim(),
-        codprecio: option.codPrecio.trim() || cleanText(codPrecio) || "01",
+        codprecio: cleanText(codPrecio) || "01",
         precio: Number(option.precioVenta),
         bodega: cleanText(wherehouseCode),
         cantidadmovimiento: clampQty(option.cantidad),
@@ -330,9 +327,11 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         tipoComponente: "O",
         unico,
         sistema: String(companySistema),
+        ordenServicio: codReferenciaPCG,
+        tipoFac: metaChannel
       }
     },
-    [contactId, companySistema]
+    [contactId, companySistema, codReferenciaPCG]
   )
 
   const cleanupFacturaTempo = useCallback(async () => {
@@ -456,6 +455,23 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     [contactId, conversationId, createLogCart]
   )
 
+  const resetCartFlow = useCallback(() => {
+    setLockedState(null)
+    setCodPrecioActivoState("")
+
+    setOpenSucursalModal(false)
+    setSucursalItems([])
+    setLoadingSucursalItems(false)
+
+    setPendingProduct(null)
+    setPendingQuantity(1)
+    setPendingObservacion("")
+    setPendingModifiers([])
+
+    hydratedRef.current = false
+    addLockRef.current = false
+  }, [])
+
   const rollbackCreatedLog = useCallback(
     async (createdLog: LogCartResponseDto | null) => {
       if (!createdLog?.id) return
@@ -507,7 +523,8 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
         lockInfo.wherehouseCode,
         order.noPedido,
         observacion,
-        codPrecioFinal
+        codPrecioFinal,
+        metaChannel
       )
 
       let createdLog: LogCartResponseDto | null = null
@@ -820,5 +837,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number) => {
     setCodPrecioActivo,
     addProduct,
     pickerProps,
+    resetCartFlow,
   }
 }

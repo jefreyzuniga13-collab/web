@@ -262,30 +262,43 @@ useEffect(() => {
 }
 
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(
+  async (fileOverride?: File | null, textOverride?: string) => {
     if (!conversationId || sending) return
+
     setSending(true)
+
     try {
-      const msg = text.trim()
+      const fileToSend = fileOverride ?? file
+      const msg = (textOverride ?? text).trim()
       const quick = (selectedOptionRef.current ?? "").trim()
-      if (!file && !msg && !quick) return
+
+      if (!fileToSend && !msg && !quick) return
+
       const replyExternalId = replyTo?.externalId || null
       const repliedParentMessageId = replyTo?.messageId ?? null
-      if (file) {
-        await sendMedia(conversationId, file, msg || undefined, replyExternalId, repliedParentMessageId)
+
+      if (fileToSend) {
+        await sendMedia(
+          conversationId,
+          fileToSend,
+          msg || undefined,
+          replyExternalId,
+          repliedParentMessageId
+        )
+
         setFile(null)
         setText("")
-        if (fileInputRef.current) fileInputRef.current.value = ""
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+
         setReplyTo(null)
         return
       }
+
       if (quick) {
         await sendText({
           conversationId,
@@ -295,10 +308,12 @@ useEffect(() => {
           externalId: replyExternalId,
           repliedParentMessageId
         })
+
         setSelectedOption(null)
         setReplyTo(null)
         return
       }
+
       if (msg) {
         await sendText({
           conversationId,
@@ -308,13 +323,69 @@ useEffect(() => {
           externalId: replyExternalId,
           repliedParentMessageId
         })
+
         setText("")
         setReplyTo(null)
       }
     } finally {
       setSending(false)
     }
-  }, [conversationId, file, sending, text, userId, replyTo])
+  },
+  [conversationId, file, sending, text, userId, replyTo]
+)
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+  // const handleSend = useCallback(async () => {
+  //   if (!conversationId || sending) return
+  //   setSending(true)
+  //   try {
+  //     const msg = text.trim()
+  //     const quick = (selectedOptionRef.current ?? "").trim()
+  //     if (!file && !msg && !quick) return
+  //     const replyExternalId = replyTo?.externalId || null
+  //     const repliedParentMessageId = replyTo?.messageId ?? null
+  //     if (file) {
+  //       await sendMedia(conversationId, file, msg || undefined, replyExternalId, repliedParentMessageId)
+  //       setFile(null)
+  //       setText("")
+  //       if (fileInputRef.current) fileInputRef.current.value = ""
+  //       setReplyTo(null)
+  //       return
+  //     }
+  //     if (quick) {
+  //       await sendText({
+  //         conversationId,
+  //         senderId: userId,
+  //         content: quick,
+  //         messageType: "Text",
+  //         externalId: replyExternalId,
+  //         repliedParentMessageId
+  //       })
+  //       setSelectedOption(null)
+  //       setReplyTo(null)
+  //       return
+  //     }
+  //     if (msg) {
+  //       await sendText({
+  //         conversationId,
+  //         senderId: userId,
+  //         content: msg,
+  //         messageType: "Text",
+  //         externalId: replyExternalId,
+  //         repliedParentMessageId
+  //       })
+  //       setText("")
+  //       setReplyTo(null)
+  //     }
+  //   } finally {
+  //     setSending(false)
+  //   }
+  // }, [conversationId, file, sending, text, userId, replyTo])
 
   const handleDownload = async (fileName: string) => {
     try {

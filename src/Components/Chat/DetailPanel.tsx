@@ -12,11 +12,13 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/Context";
 import { CartPCGFlowProvider } from "@/Context/CartPCGFlowProvider";
+import { CartFlowSignalCleaner } from "@/Hooks/Ecommerce/tabs/CartFlowSignalCleaner";
 
 type Props = {
   contactId?: number;
   conversationId?: number;
   selectedParam?: unknown;
+  metaChannel: string
   isAdmin?: boolean;
   onSendNow?: (txt: string) => void | Promise<void>;
 };
@@ -24,6 +26,7 @@ type Props = {
 const DetailPanel: React.FC<Props> = ({
   contactId,
   conversationId,
+  metaChannel,
   selectedParam,
   onSendNow,
   isAdmin
@@ -94,7 +97,13 @@ const DetailPanel: React.FC<Props> = ({
         <CartPCGFlowProvider
             conversationId={Number(conversationId)}
             contactId={Number(contactId)}
+            metaChannel={String(metaChannel)}
           >
+            <CartFlowSignalCleaner
+              contactId={Number(contactId)}
+              conversationId={Number(conversationId)}
+            />
+
             {optionMenu === 1 && (
               <ProductTab
                 conversationId={Number(conversationId)}

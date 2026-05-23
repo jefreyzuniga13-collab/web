@@ -45,6 +45,7 @@ export default function PaymentHostedPage() {
 
   useEffect(() => {
     if (!redirectData) {
+      console.log("redirectData PaymentHostedPage", )
       navigate("/unauthorized", { replace: true });
       return;
     }
@@ -54,6 +55,7 @@ export default function PaymentHostedPage() {
     }
 
     if (!orderId) {
+      console.log("orderId PaymentHostedPage")
       navigate("/unauthorized", { replace: true });
       return;
     }
@@ -94,6 +96,7 @@ export default function PaymentHostedPage() {
         const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
 
         if (!threeDsCompleted) {
+          console.log("threeDsCompleted PaymentHostedPage", )
           navigate("/unauthorized", { replace: true });
           return;
         }
@@ -107,6 +110,7 @@ export default function PaymentHostedPage() {
           replace: true
         });
       } catch {
+        console.log("catch  PaymentHostedPage")
         navigate("/unauthorized", { replace: true });
       }
     }, 4000);

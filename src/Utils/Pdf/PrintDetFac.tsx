@@ -1,3 +1,4 @@
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -15,14 +16,14 @@ const fmtDate = (isoOrText: string) => {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    // hour: "2-digit",
-    // minute: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(d);
 };
 
 const safeText = (v?: string) => (v ?? "").toString().trim();
 
-export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Blob => {
+export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, existingLog: LogCartResponseDto | null): Blob => {
   const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDoc;
 
   const marginX = 14;
@@ -54,7 +55,8 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw): Bl
   // doc.setFont("helvetica", "normal");
   // doc.text(`Nombre: ${safeText(orderFac.DatosDireccion?.Nombre)}`, marginX, yDir + 6);
   // doc.text(`Cantidad: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 12);
-  doc.text(`Dirección: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 10);
+  doc.text(`Sucursal: ${safeText(existingLog?.branchName ?? "")}`, marginX, yDir + 10);
+  doc.text(`Dirección: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 15);
   // doc.text(`Referencia: ${safeText(orderFac.DatosDireccion?.Referencia)}`, marginX, yDir + 18);
 
   // Tabla del carrito

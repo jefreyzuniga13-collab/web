@@ -102,7 +102,7 @@ export default function App() {
 
     window.addEventListener("DesktopNotify", onDesktopNotify);
     return () => window.removeEventListener("DesktopNotify", onDesktopNotify);
-  }, []);
+  }, [showDesktopNotification]);
 
   // Manejo de navegación desde SW
   useEffect(() => {

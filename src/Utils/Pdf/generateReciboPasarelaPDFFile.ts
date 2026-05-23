@@ -15,29 +15,29 @@ const money = (v: number) =>
     currency: "NIO",
   }).format(v ?? 0);
 
-    const fmtDate = (isoOrText: string) => {
-    const d = new Date(isoOrText);
-    if (Number.isNaN(d.getTime())) return isoOrText;
+const fmtDate = (isoOrText: string) => {
+  const d = new Date(isoOrText);
+  if (Number.isNaN(d.getTime())) return isoOrText;
 
-    return new Intl.DateTimeFormat("es-NI", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        // hour: "2-digit",
-        // minute: "2-digit",
-    }).format(d);
-    };
+  return new Intl.DateTimeFormat("es-NI", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+};
 
 const safeText = (v?: string | number | null) => (v ?? "").toString().trim();
 
 export const generatePagoElectronicoPDFFile = ({
   orderFac,
   transactionIdentifier,
-  telefono = "+505 7545 4150",
+  telefono = "",
   existingLog,
 }: GeneratePagoElectronicoPDFParams): Blob => {
   const pageWidth = 80;
-  const pageHeight = 220;
+  const pageHeight = 180;
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -64,35 +64,16 @@ export const generatePagoElectronicoPDFFile = ({
   const propina = orderFac.DetallePago?.Propina ?? 0;
   const total = orderFac.DetallePago?.Valor_Pagar ?? 0;
 
-  const addText = (
-    label: string,
-    value: string,
-    options?: { boldValue?: boolean; gapAfter?: number }
+  const addCentered = (
+    text: string,
+    size = 10,
+    style: "normal" | "bold" = "normal"
   ) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(label, marginX, y);
-
-    y += 4;
-
-    doc.setFont("helvetica", options?.boldValue ? "bold" : "normal");
-    doc.setFontSize(9);
-    const lines = doc.splitTextToSize(value || "SN", maxWidth);
-    doc.text(lines, marginX, y);
-
-    y += lines.length * 4 + (options?.gapAfter ?? 2);
-  };
-
-  const addDivider = () => {
-    doc.setDrawColor(180);
-    doc.line(marginX, y, pageWidth - marginX, y);
-    y += 4;
-  };
-
-  const addCentered = (text: string, size = 10, style: "normal" | "bold" = "normal") => {
     doc.setFont("helvetica", style);
     doc.setFontSize(size);
+
     const lines = doc.splitTextToSize(text, maxWidth);
+
     lines.forEach((line: string) => {
       const textWidth = doc.getTextWidth(line);
       const x = (pageWidth - textWidth) / 2;
@@ -101,18 +82,47 @@ export const generatePagoElectronicoPDFFile = ({
     });
   };
 
+  const addDivider = () => {
+    y += 1;
+    doc.setDrawColor(180);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 4;
+  };
+
+  const addText = (
+    label: string,
+    value: string,
+    options?: { boldValue?: boolean; gapAfter?: number }
+  ) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(label, marginX, y);
+
+    y += 3.8;
+
+    doc.setFont("helvetica", options?.boldValue ? "bold" : "normal");
+    doc.setFontSize(8.5);
+
+    const lines = doc.splitTextToSize(value || "SN", maxWidth);
+    doc.text(lines, marginX, y);
+
+    y += lines.length * 3.8 + (options?.gapAfter ?? 2);
+  };
+
   const addAmountLine = (label: string, value: string, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(bold ? 10 : 9);
+
     doc.text(label, marginX, y);
+
     const valueWidth = doc.getTextWidth(value);
     doc.text(value, pageWidth - marginX - valueWidth, y);
-    y += 5;
+
+    y += bold ? 6 : 5;
   };
 
   addCentered("COMPROBANTE DE PAGO", 12, "bold");
   addCentered("Pago electrónico", 10, "normal");
-  y += 2;
 
   addDivider();
 
@@ -137,7 +147,6 @@ export const generatePagoElectronicoPDFFile = ({
 
   addAmountLine("TOTAL PAGADO", money(total), true);
 
-  y += 3;
   addDivider();
 
   addText(
@@ -146,13 +155,12 @@ export const generatePagoElectronicoPDFFile = ({
     { gapAfter: 3 }
   );
 
-  addText("Contacto", `Atención al cliente: ${telefono}`);
+  if (telefono.trim()) {
+    addText("Contacto", `Atención al cliente: ${telefono}`, { gapAfter: 3 });
+  }
 
-  y += 4;
+  y += 2;
   addCentered("Gracias por su compra", 9, "bold");
-
-  const finalHeight = Math.max(y + 10, 120);
-  doc.internal.pageSize.height = finalHeight;
 
   return doc.output("blob");
 };

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
 import "@/Styles/Ecommerce/CartPage.css"
-import noimageavailable from "@/assets/img/noimageavailable.webp"
+import noimageavailable from '@/assets/vacio.png'
 import { useNavigate } from "react-router-dom"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import CustomLoader from "@/Components/Common/CustomLoader"
@@ -222,9 +222,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </div>
                       </td>
 
-                      <td className="cart-table__cell cart-table__cell--total">
-                        Producto principal
-                      </td>
                     </tr>
 
                     {options.map((option, optionIndex) => (
@@ -237,11 +234,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                             <div className="cart-item__option-indicator" />
 
                             <div className="cart-item__image-wrapper cart-item__image-wrapper--option">
-                              {/* <img
-                                src={getImage(option.imagen)}
-                                className="cart-item__image"
-                                alt={option.descripcion ?? "Opción"}
-                              /> */}
                             </div>
 
                             <div className="cart-item__info cart-item__info--option">
@@ -258,7 +250,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                         <td className="cart-table__cell cart-table__cell--price cart-table__cell--option">
                           {/* {formatMoney(option.precioV)} */}
-                          {option.precioV > 0 ? " C$ " + calcularIVA(option.precioV) : ""}
+                          {option.precioV > 0 ? " C$ " + calcularIVA(option.precioV) : "Incluido"}
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--qty cart-table__cell--option">

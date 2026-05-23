@@ -12,6 +12,7 @@ interface AuthState {
   empresaId: string;
   companyImageUrl: string;
   companySistema: string;
+  codReferenciaPCG: string
 }
 
 const initialState: AuthState = {
@@ -22,7 +23,8 @@ const initialState: AuthState = {
   roles: [],
   empresaId: '',
   companyImageUrl: '',
-  companySistema: ''
+  companySistema: '',
+  codReferenciaPCG:'',
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -64,6 +66,7 @@ const limpiarSesion = (state: AuthState) => {
   state.empresaId = '';
   state.companyImageUrl = '';
   state.companySistema = '';
+  state.codReferenciaPCG = ''
 };
 
 const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
@@ -73,6 +76,7 @@ const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.companyImageUrl = payload.companyImageUrl ?? '';
   state.companySistema = payload.companySistema ?? '';
   state.checkingSession = false;
+  state.codReferenciaPCG = payload.codReferenciaPCG ?? ''
 };
 
 const authSlice = createSlice({
@@ -164,6 +168,9 @@ export const selectCompanyImageUrl = (state: RootState) =>
 
 export const selectCompanySistema = (state: RootState) =>
   state.auth.companySistema;
+
+export const selectCodReferenciaPCG = (state: RootState) =>
+  state.auth.codReferenciaPCG;
 
 export const selectIsAuthenticated = (state: RootState) =>
   state.auth.isAuthenticated;

@@ -6,7 +6,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { userService, type CompanyOption, type RoleOption } from "@/Services/auth/UserService";
+import {
+  userService,
+  type CompanyOption,
+  type RoleOption,
+} from "@/Services/auth/UserService";
 import type {
   ApiResponse,
   PaginatedUsers,
@@ -33,11 +37,38 @@ type UsersListParams = {
 
 const userKeys = {
   all: ["users"] as const,
+
+  lists: () => [...userKeys.all, "list"] as const,
+
   list: (params: UsersListParams) =>
-    ["users", "list", params.globalFilter, params.page, params.pageSize] as const,
-  detail: (id: number) => ["users", "detail", id] as const,
-  roles: ["users", "roles"] as const,
-  companies: ["users", "companies"] as const,
+    [
+      ...userKeys.lists(),
+      params.globalFilter,
+      params.page,
+      params.pageSize,
+    ] as const,
+
+  detail: (id: number) => [...userKeys.all, "detail", id] as const,
+
+  detailIdle: () => [...userKeys.all, "detail", "idle"] as const,
+
+  roles: () => [...userKeys.all, "roles"] as const,
+
+  companies: () => [...userKeys.all, "companies"] as const,
+};
+
+const isPaginatedUsersResponse = (
+  response: ApiResponse<PaginatedUsers> | undefined | null
+): response is ApiResponse<PaginatedUsers> => {
+  return (
+    response !== undefined &&
+    response !== null &&
+    response.data !== undefined &&
+    response.data !== null &&
+    Array.isArray(response.data.items) &&
+    response.data.meta !== undefined &&
+    response.data.meta !== null
+  );
 };
 
 const updateUserInCachedLists = (
@@ -45,12 +76,17 @@ const updateUserInCachedLists = (
   updatedUser: User
 ): void => {
   const cachedQueries = queryClient.getQueriesData<ApiResponse<PaginatedUsers>>({
-    queryKey: userKeys.all,
+    queryKey: userKeys.lists(),
   });
 
   cachedQueries.forEach(([queryKey, cachedResponse]) => {
-    if (cachedResponse === null || cachedResponse === undefined) return;
-    if (cachedResponse.data === null || cachedResponse.data === undefined) return;
+    if (!isPaginatedUsersResponse(cachedResponse)) return;
+
+    const existsUser = cachedResponse.data.items.some(
+      (item) => item.userId === updatedUser.userId
+    );
+
+    if (!existsUser) return;
 
     const updatedItems = cachedResponse.data.items.map((item) =>
       item.userId === updatedUser.userId ? updatedUser : item
@@ -71,22 +107,22 @@ const prependUserToFirstPageIfMatches = (
   createdUser: User
 ): void => {
   const cachedQueries = queryClient.getQueriesData<ApiResponse<PaginatedUsers>>({
-    queryKey: ["users", "list"],
+    queryKey: userKeys.lists(),
   });
 
   cachedQueries.forEach(([queryKey, cachedResponse]) => {
-    if (cachedResponse === null || cachedResponse === undefined) return;
-    if (cachedResponse.data === null || cachedResponse.data === undefined) return;
+    if (!isPaginatedUsersResponse(cachedResponse)) return;
 
     const typedKey = queryKey as ReturnType<typeof userKeys.list>;
     const [, , filterValue, pageValue, pageSizeValue] = typedKey;
 
     if (pageValue !== 1) return;
 
-    const normalizedFilter = filterValue.trim().toLowerCase();
-    const fullName = createdUser.fullName
+    const normalizedFilter = String(filterValue ?? "")
       .trim()
       .toLowerCase();
+
+    const fullName = createdUser.fullName.trim().toLowerCase();
     const email = (createdUser.email ?? "").trim().toLowerCase();
 
     const matchesFilter =
@@ -102,7 +138,10 @@ const prependUserToFirstPageIfMatches = (
 
     if (exists) return;
 
-    const updatedItems = [createdUser, ...cachedResponse.data.items].slice(0, pageSizeValue);
+    const updatedItems = [createdUser, ...cachedResponse.data.items].slice(
+      0,
+      pageSizeValue
+    );
 
     queryClient.setQueryData<ApiResponse<PaginatedUsers>>(queryKey, {
       ...cachedResponse,
@@ -116,10 +155,6 @@ const prependUserToFirstPageIfMatches = (
       },
     });
   });
-};
-
-const removeSelectedUserState = (): User | null => {
-  return null;
 };
 
 const useClasicUser = (userId: number | null = null) => {
@@ -154,7 +189,7 @@ const useClasicUser = (userId: number | null = null) => {
   });
 
   const userByIdQuery = useQuery<ApiResponse<User>, Error>({
-    queryKey: userId !== null ? userKeys.detail(userId) : ["users", "detail", "idle"],
+    queryKey: userId !== null ? userKeys.detail(userId) : userKeys.detailIdle(),
     queryFn: () => {
       if (userId === null) {
         throw new Error("Se requiere un userId válido.");
@@ -167,14 +202,14 @@ const useClasicUser = (userId: number | null = null) => {
   });
 
   const rolesQuery = useQuery<ApiResponse<RoleOption[]>, Error>({
-    queryKey: userKeys.roles,
+    queryKey: userKeys.roles(),
     queryFn: () => userService.getRolesAsync(),
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
   });
 
   const companiesQuery = useQuery<ApiResponse<CompanyOption[]>, Error>({
-    queryKey: userKeys.companies,
+    queryKey: userKeys.companies(),
     queryFn: () => userService.getCompaniesAsync(),
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
@@ -182,6 +217,7 @@ const useClasicUser = (userId: number | null = null) => {
 
   const createMutation = useMutation<ApiResponse<User>, Error, FormData>({
     mutationFn: (formData: FormData) => userService.createUserAsync(formData),
+
     onSuccess: (response: ApiResponse<User>) => {
       const createdUser = response.data;
 
@@ -193,11 +229,13 @@ const useClasicUser = (userId: number | null = null) => {
       prependUserToFirstPageIfMatches(queryClient, createdUser);
 
       toast.success(response.message || "Usuario creado");
+
       setModalOpen(false);
-      setSelectedUser(removeSelectedUserState());
+      setSelectedUser(null);
       setModalMode("create");
       setPage(1);
     },
+
     onError: (error: Error) => {
       toast.error(error.message || "Error al crear usuario");
     },
@@ -210,6 +248,7 @@ const useClasicUser = (userId: number | null = null) => {
   >({
     mutationFn: ({ id, data }: UpdateUserMutationRequest) =>
       userService.updateUserAsync(id, data),
+
     onSuccess: (response: ApiResponse<User>) => {
       const updatedUser = response.data;
 
@@ -225,10 +264,12 @@ const useClasicUser = (userId: number | null = null) => {
       }
 
       toast.success(response.message || "Usuario actualizado");
+
       setModalOpen(false);
-      setSelectedUser(removeSelectedUserState());
+      setSelectedUser(null);
       setModalMode("create");
     },
+
     onError: (error: Error) => {
       toast.error(error.message || "Error al actualizar usuario");
     },
@@ -239,7 +280,9 @@ const useClasicUser = (userId: number | null = null) => {
     Error,
     ToggleUserMutationRequest
   >({
-    mutationFn: ({ id }: ToggleUserMutationRequest) => userService.toggleUserAsync(id),
+    mutationFn: ({ id }: ToggleUserMutationRequest) =>
+      userService.toggleUserAsync(id),
+
     onSuccess: (response: ApiResponse<User>) => {
       const updatedUser = response.data;
 
@@ -256,6 +299,7 @@ const useClasicUser = (userId: number | null = null) => {
 
       toast.success(response.message || "Estado de usuario actualizado");
     },
+
     onError: (error: Error) => {
       toast.error(error.message || "Error al cambiar estado");
     },
@@ -263,7 +307,9 @@ const useClasicUser = (userId: number | null = null) => {
 
   const fetchById = useCallback(
     async (id: number): Promise<ApiResponse<User>> => {
-      const cached = queryClient.getQueryData<ApiResponse<User>>(userKeys.detail(id));
+      const cached = queryClient.getQueryData<ApiResponse<User>>(
+        userKeys.detail(id)
+      );
 
       if (cached !== undefined && cached !== null) {
         setSelectedUser(cached.data);
@@ -387,6 +433,7 @@ const useClasicUser = (userId: number | null = null) => {
       toggleMutation.isPending,
 
     loadingList: usersQuery.isFetching,
+
     loadingItem:
       userByIdQuery.isFetching ||
       createMutation.isPending ||

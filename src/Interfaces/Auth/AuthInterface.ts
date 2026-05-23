@@ -13,6 +13,7 @@ export interface AuthData {
   empresaId: string
   companyImageUrl?: string;
   companySistema: string
+  codReferenciaPCG?: string
 }
 
 export interface LoginRequest {
@@ -106,4 +107,5 @@ export interface AuthMe {
   empresaId: string;
   companyImageUrl?: string;
   companySistema: string;
+  codReferenciaPCG?: string
 }

@@ -112,6 +112,7 @@ gap: var(--space-sm);
     display: none;
     background-color: var(--color-gray-800) !important;
 }
+
 .productTab-simpleAddBar{
      /* display: none; */
      gap: var(--space-sm);
@@ -123,24 +124,23 @@ gap: var(--space-sm);
     position: absolute;
     top: 0;
     right: 0;
-
     max-width: fit-content;
     opacity: .9;
-    /* background-color: var(--color-gray-800); */
 }
 
-.productPCG-row:hover .productTab-simpleAddBar-cart {
+.productPCG-row:hover 
+.productTab-simpleAddBar-cart {
   display: flex;
   flex-direction: row;
   position: absolute;
   top: 0;
   right: 0;
   max-width: fit-content;
-  opacity: 0.9;
   z-index: 2;
 }
 
-.productPCG-row:hover .product-row__btn {
+.productPCG-row:hover 
+.product-row__btn {
   display: block;
   position: absolute;
   top: 36px;

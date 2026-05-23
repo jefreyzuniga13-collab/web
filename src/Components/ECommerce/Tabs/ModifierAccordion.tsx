@@ -34,10 +34,6 @@ const clampQty = (n: number) => {
   return Math.floor(n)
 }
 
-// const esSi = (value?: string | boolean | null) => {
-//   return value === true || value === "S"
-// }
-
 const getMaximoSeleccion = (modifier: ProductoModificadorPCGInterface) => {
   const max = Number(modifier.maximoSel ?? 0)
   return Number.isFinite(max) && max > 0 ? Math.floor(max) : 0

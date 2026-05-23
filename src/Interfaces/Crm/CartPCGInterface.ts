@@ -98,6 +98,8 @@ export interface DetalleFacturaTempoRequest {
   unico: string
   codModificador: string
   sistema: string
+  ordenServicio: string
+  tipoFac: string
 }
 
 

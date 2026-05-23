@@ -732,7 +732,7 @@ export const ChatWindow: React.FC<Props> = ({
 
         <button
           className="chat-window__composer-send"
-          onClick={handleSend}
+          onClick={async()=> await handleSend()}
           disabled={!conversationId || sending || (!text.trim() && !file) || conversationStatus === "Closed" || isRecording}
           aria-label="Enviar mensaje"
         >

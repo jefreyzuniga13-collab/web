@@ -56,10 +56,11 @@ class ProductPCGServ {
   }
   async getProductModifiers(
     codProducto: string,
+    codPrecio: string
   ): Promise<ProductoModificadorPCGInterface[]> {
       const { data } = await apiPCG.get<
         ApiPCGResponse<ProductoModificadorPCGInterface[]>
-      >(`Catalogos/ModificadorOpcion/${codProducto}`);
+      >(`Catalogos/ModificadorOpcion/${codProducto}/${codPrecio}`);
       return data.data;
 
   }

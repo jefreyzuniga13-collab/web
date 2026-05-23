@@ -177,8 +177,10 @@
 
 .detail-product__footer{
   display:flex;
+  align-items: center;
   justify-content: end;
   gap: var(--space-sm);
+  /* max-width: 50px; */
 }
 
 .product-modifiers__options {
@@ -230,10 +232,20 @@
   font-size: 13px;
 }
 
-.productTab-buyButton{
+.detail-product__stickyFooter{
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  /* max-height: 50px; */
+  /* overflow: hidden; */
+}
+
+
+.productTab-buyButton,
+.productTab-buyButton__sendMessage{
     display: flex;
     gap: 12px;
-    padding: 10px 15px;
+    padding: 12px 12px;
     margin: 0 ;
     font-size: var(--font-size-base);
     transition: all ease-in-out .1s;

@@ -181,7 +181,7 @@ const ProfileCard: React.FC = () => {
                       <Label>Imagen de perfil</Label>
                       <FileInput
                         onFileSelect={handleFileSelect}
-                        currentImage={currentUser.imageUrl || undefined}
+                        currentImage={currentUser.imageUrl || ''}
                         accept="image/*"
                         maxSize={5 * 1024 * 1024}
                       />

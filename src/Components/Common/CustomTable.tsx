@@ -84,6 +84,7 @@ export default function CustomTable<T>({
     return orderBy ? [...result].sort(comparator) : result
   }, [rows, columns, colFilters, orderBy, order])
 
+  console.log("rows", rows)
   return (
     <Paper className="table__container">
 

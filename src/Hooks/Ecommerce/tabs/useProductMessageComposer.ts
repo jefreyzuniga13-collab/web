@@ -16,6 +16,7 @@ type SendProductMessageArgs = {
   maxLen?: number
   fallbackMediaUrl?: string 
   includeModifiers?: boolean
+  codPrecio?: string
 }
 
 
@@ -44,6 +45,7 @@ export const useProductMessageComposer = () => {
       maxLen = 1024,
       fallbackMediaUrl,
       includeModifiers = true,
+      codPrecio
     }: SendProductMessageArgs) => {
       if (sending) return
       if (!conversationId) return
@@ -57,9 +59,11 @@ export const useProductMessageComposer = () => {
 
         let modsText = ""
         if (includeModifiers && product.tieneOpcion) {
+          
           const mods = (await getProductModifiers(
-            product.codProducto
-          )) as ProductoModificadorPCGInterface[] | null
+          product.codProducto,
+          codPrecio || "01"
+        )) as ProductoModificadorPCGInterface[] | null
 
           modsText = buildModifiersText(mods, {
             maxLen,

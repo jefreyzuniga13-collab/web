@@ -52,6 +52,7 @@ import type {
 import type {TarjetaModelInterface} from '@/Interfaces/Ecommerce/TarjetaInterface'
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi";
+import { FechaManagua } from "@/Utils/FechaManagua";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -247,6 +248,8 @@ const payWithTokenMutation = usePayWithToken({
       navigate(`/payment-result?${params.toString()}`, { replace: true });
       return;
     }
+
+    console.log("payWithTokenMutation")
 
     navigate("/unauthorized", { replace: true });
   }
@@ -934,7 +937,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         toast.error(`(${errores[fallo.key]})`);
         return;
       }
-
+      
       const invoiceReqBase: FacturaTempo = {
         ...facturaBase,
         nombreCliente:
@@ -944,7 +947,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         direccionCte: String(finalLocation.descripcion ?? "").trim(),
         usuario: String(payload?.contactId),
         maquina: `CRM-${payload?.contactId}`,
-        fechaFactura: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
+        fechaFactura: FechaManagua.obtenerFormatoLimpio(),
         tasaCambio: 36.6243,
         sucursal: codSucursalFactura,
         numero: Number(dataconse?.data?.consecutivo ?? 0),

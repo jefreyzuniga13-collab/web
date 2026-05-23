@@ -161,18 +161,28 @@ const DetailPCGProduct = ({
     requestAnimationFrame(() => {
       bodyRef.current?.scrollTo({ top: 0 })
     })
-  }, [detail.codProducto])
+  }, [ detail.codProducto])
 
-  useEffect(() => {
-    if (!detail.tieneOpcion) {
-      getProductModifiers("")
-      setSelectedOptions({})
-      setOptionQuantities({})
-      return
-    }
+useEffect(() => {
+  if (!detail.tieneOpcion) {
+    getProductModifiers("", "")
+    setSelectedOptions({})
+    setOptionQuantities({})
+    return
+  }
 
-    getProductModifiers(detail.codProducto)
-  }, [detail.codProducto, detail.tieneOpcion, getProductModifiers])
+  const codPrecioFinal = (codPrecioUiSelected || codPrecioActivo || "").trim()
+
+  if (!codPrecioFinal) return
+
+  getProductModifiers(detail.codProducto, codPrecioFinal)
+}, [
+  detail.codProducto,
+  detail.tieneOpcion,
+  codPrecioActivo,
+  codPrecioUiSelected,
+  getProductModifiers,
+])
 
   useEffect(() => {
     if (!detail.tieneOpcion || !productModifiers?.length) {
@@ -213,30 +223,33 @@ const DetailPCGProduct = ({
     setOptionQuantities(initialQuantities)
   }, [detail.tieneOpcion, productModifiers])
 
-  useEffect(() => {
-    if (locked) {
-      setBranchUiSelected(locked.branch ?? null)
-      setBranchNameUiSelected(locked.branchName ?? "")
-      setWherehouseUiSelected(locked.wherehouse ?? "")
-      setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
-      setSerieCodeUiSelected((locked.serie ?? "").trim())
-      setCodPrecioUiSelected((locked.codPrecio ?? "").trim())
-      setCodPrecioActivo(locked.codPrecio)
-      return
-    }
+useEffect(() => {
+  if (locked) {
+    const lockedCodPrecio = (locked.codPrecio ?? "").trim()
 
-    if (!branchRows.length) return
+    setBranchUiSelected(locked.branch ?? null)
+    setBranchNameUiSelected(locked.branchName ?? "")
+    setWherehouseUiSelected(locked.wherehouse ?? "")
+    setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
+    setSerieCodeUiSelected((locked.serie ?? "").trim())
+    setCodPrecioUiSelected(lockedCodPrecio)
+    setCodPrecioActivo(lockedCodPrecio)
+    return
+  }
 
-    const first = branchRows[0]
-    // const firstCodPrecio = getCodPrecioFromBranch(first)
+  if (!branchRows.length) return
 
-    setBranchUiSelected(first.codsucursal)
-    setBranchNameUiSelected(first.sucursal ?? "")
-    setWherehouseUiSelected(first.nombodega ?? "")
-    setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
-    setSerieCodeUiSelected((first.serie ?? "").trim())
-    setCodPrecioUiSelected(first.precio)
-  }, [branchRows, locked, setCodPrecioActivo])
+  const first = branchRows[0]
+  const firstCodPrecio = (first.precio ?? "").trim()
+
+  setBranchUiSelected(first.codsucursal)
+  setBranchNameUiSelected(first.sucursal ?? "")
+  setWherehouseUiSelected(first.nombodega ?? "")
+  setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
+  setSerieCodeUiSelected((first.serie ?? "").trim())
+  setCodPrecioUiSelected(firstCodPrecio)
+  setCodPrecioActivo(firstCodPrecio)
+}, [branchRows, locked, setCodPrecioActivo])
 
   const optionIndex = useMemo(() => {
     const map = new Map<string, IndexedOption>()
@@ -734,10 +747,6 @@ const DetailPCGProduct = ({
               </div>
             )}
 
-            {/*El precio se actualiza automaticamente, pero el css es decir la clase de detail-product__branchItem--active, solo se agregar al hacer dos click en el mismo
-            o similar, si hago click se actualiza la lista de precio, pero sin la clase de detail-product__branchItem--active
-            es por que al seleccionar se refreca y se pierde la clase selecionada y los modificadores seleccionados
-            */}
             {!loadingBranches && (
               <div className="detail-product__branchList">
                 {branchRows.map((b) => {
@@ -853,17 +862,21 @@ const DetailPCGProduct = ({
             disabled={actionsDisabled}
           >
             {actionsDisabled ? (
-              <AiOutlineLoading3Quarters fontSize={14} />
+              <AiOutlineLoading3Quarters fontSize={12} />
             ) : (
-              <FaShoppingCart fontSize={14} />
+              <FaShoppingCart fontSize={12} />
             )}
           </Button>
 
-          <Button disabled={actionsDisabled} onClick={handleSendMessage}>
+          <Button 
+          type="button"
+          variant="primary"
+           className="productTab-buyButton__sendMessage"
+          disabled={actionsDisabled} onClick={handleSendMessage}>
             {actionsDisabled ? (
-              <AiOutlineLoading3Quarters fontSize={14} />
+              <AiOutlineLoading3Quarters fontSize={12} />
             ) : (
-              <IoMdSend fontSize={14} />
+              <IoMdSend fontSize={12} />
             )}
           </Button>
         </div>
@@ -899,8 +912,5 @@ const DetailPCGProduct = ({
 
 export default DetailPCGProduct
 
-
-        {/*El precio se actualiza automaticamente, pero el css es decir la clase de detail-product__branchItem--active, solo se agregar al hacer dos click en el mismo
-            o similar, si hago click se actualiza la lista de precio, pero sin la clase de detail-product__branchItem--active
-            es por que al seleccionar se refreca y se pierde la clase selecionada y los modificadores seleccionados
-            */}
+// Cuando se accede, se selecciona la primera sucursal pero el producto no se manda a obtener por el codPrecio de sa sucursal,
+//actualmente cuado accedo no recupera el producto con la lista de precio de la primer sucursal cuando esta esta seleccionada por defecto

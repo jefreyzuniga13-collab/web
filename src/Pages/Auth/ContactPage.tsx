@@ -61,7 +61,7 @@ export default function ContactPage() {
       label: 'Fuente',
       minWidth: 100,
       render: row=>{
-        if(row.clienteCodigo == null) return "No espesificado"
+        if(row.clienteCodigo == null) return "No especificado"
         if(Number(row.clienteCodigo)  < 50000) return "INNOVA"
         if(Number(row.clienteCodigo) >= 50000) return "PC GROUP"
       }

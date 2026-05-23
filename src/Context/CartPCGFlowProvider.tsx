@@ -1,6 +1,5 @@
 import { createContext, useContext, useMemo } from "react"
 import type { ReactNode } from "react"
-
 import { useCartPCGFlow } from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 import type {
   AddProductParams,
@@ -17,11 +16,13 @@ type CartPCGFlowContextValue = {
   setCodPrecioActivo: (value: string | null | undefined) => void
   addProduct: (args: AddProductParams) => Promise<void>
   pickerProps: SucursalPickerProps
+   resetCartFlow: () => void
 }
 
 type CartPCGFlowProviderProps = {
   conversationId: number
   contactId: number
+  metaChannel: string
   children: ReactNode
 }
 
@@ -30,6 +31,7 @@ const CartPCGFlowContext = createContext<CartPCGFlowContextValue | null>(null)
 export const CartPCGFlowProvider = ({
   conversationId,
   contactId,
+  metaChannel,
   children,
 }: CartPCGFlowProviderProps) => {
   const {
@@ -39,7 +41,8 @@ export const CartPCGFlowProvider = ({
     setCodPrecioActivo,
     addProduct,
     pickerProps,
-  } = useCartPCGFlow(conversationId, contactId)
+    resetCartFlow
+  } = useCartPCGFlow(conversationId, contactId, metaChannel)
 
   const value = useMemo<CartPCGFlowContextValue>(
     () => ({
@@ -51,6 +54,7 @@ export const CartPCGFlowProvider = ({
       setCodPrecioActivo,
       addProduct,
       pickerProps,
+      resetCartFlow,
     }),
     [
       conversationId,
@@ -61,6 +65,7 @@ export const CartPCGFlowProvider = ({
       setCodPrecioActivo,
       addProduct,
       pickerProps,
+      resetCartFlow,
     ]
   )
 

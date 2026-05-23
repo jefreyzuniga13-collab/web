@@ -102,13 +102,17 @@
   max-height: 20rem;
   overflow-y: auto;
   margin-top: var(--spacing-xs);
+    /* background-color: var(--bg-secondary); */
+  background-color: aliceblue;
+    min-height: 100px;
+    position: 1000;
 }
 
 .multi-select__option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--space-xs);
   cursor: pointer;
   transition: background-color var(--transition-fast);
   font-size: var(--font-size-base);
@@ -137,6 +141,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  padding: var(--spacing-md) !important;
 }
 
 .multi-select__empty {

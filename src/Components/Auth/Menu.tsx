@@ -100,7 +100,6 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
                     text={m.name}
                     onClick={() => onClick(m.url, m.name)}
                     selected={isSelected}
-                    //badge={showBadge ? unreadCount : undefined}
                     className = {collapsed ? 'collapsed-styles' : ''}
                     collapsed={collapsed}
                   />

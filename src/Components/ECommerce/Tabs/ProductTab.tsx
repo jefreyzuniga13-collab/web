@@ -29,13 +29,10 @@ export interface SelectedInterface {
 
 export const ProductTab = ({ conversationId }: Props) => {
   const [search, setSearch] = useState("")
-  const [selectedCategory, setselectedCategory] =
-    useState<SelectedInterface | null>(null)
-  const [detailProduct, setDetailProduct] =
-    useState<ProductoPCGInterface | null>(null)
+  const [selectedCategory, setselectedCategory] = useState<SelectedInterface | null>(null)
+  const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null)
   const [detailIndex, setDetailIndex] = useState<number>(-1)
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1)
-
   const { pickerProps, codPrecioActivo } = useCartPCGFlowCtx()
 
   const cartLoading = useSelector((state: RootState) => selectCartLoading(state))

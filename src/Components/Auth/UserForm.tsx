@@ -43,7 +43,8 @@ export default function UserForm({
     isActive: true,
     roleIds: [] as number[],
     sendWelcomeEmail: false,
-    incognitoMode: false
+    incognitoMode: false,
+    codReferenciaPCG: ''
   })
 
 
@@ -64,7 +65,8 @@ export default function UserForm({
       imageUrl: initialData.imageUrl || '',
       roleIds: initialData.roles.map(r => r.roleId),
       sendWelcomeEmail: false,
-      incognitoMode: initialData.incognitoMode
+      incognitoMode: initialData.incognitoMode,
+      codReferenciaPCG: initialData.codReferenciaPCG ?? ''
     });
   }
 }, [initialData]);
@@ -74,6 +76,7 @@ export default function UserForm({
     const newErrors: Record<string, string> = {}
 
     if (!formData.fullName.trim()) newErrors.fullName = 'El nombre completo es obligatorio'
+    if (formData.codReferenciaPCG.trim().length > 3) newErrors.codReferenciaPCG = 'El código de referencia PCG debe tener un máximo de 3 caracteres.'
     if (!formData.email.trim()) newErrors.email = 'El correo electrónico es obligatorio'
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Formato de correo inválido'
     if (!isEditing && !formData.password) newErrors.password = 'La contraseña es obligatoria'
@@ -127,6 +130,7 @@ export default function UserForm({
     payload.append('isActive', String(formData.isActive))
     payload.append('sendWelcomeEmail', String(formData.sendWelcomeEmail))
     payload.append('incognitoMode', String(formData.incognitoMode))
+    payload.append('codReferenciaPCG', String(formData.codReferenciaPCG))
     formData.roleIds.forEach(id => payload.append('roleIds', String(id)))
     if (selectedFile) payload.append('imageFile', selectedFile)
     onSubmit(payload)
@@ -186,6 +190,22 @@ export default function UserForm({
               />
               {errors.fullName && <span className="user-form__error">{errors.fullName}</span>}
             </div>
+
+            <div className="user-form__field">
+              <Label htmlFor="fullName">Código  PCG </Label>
+              <Input
+                id="codReferenciaPCG"
+                name="codReferenciaPCG"
+                value={formData.codReferenciaPCG}
+                onChange={handleInputChange}
+                disabled={isViewing}
+                className={errors.codReferenciaPCG ? 'user-form__input--error' : ''}
+                placeholder="Ingrese el código  de referencia PCG"
+              />
+              {errors.codReferenciaPCG && <span className="user-form__error">{errors.codReferenciaPCG}</span>}
+            </div>
+
+
             <div className="user-form__field">
               <Label htmlFor="email">Correo electrónico *</Label>
               <Input

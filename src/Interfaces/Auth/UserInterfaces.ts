@@ -14,6 +14,7 @@ export interface User {
   lastOnline: string | null;
   isOnline: boolean;
   incognitoMode: boolean
+  codReferenciaPCG? : string
   roles: Role[];
 }
 
@@ -51,6 +52,7 @@ export interface CreateUserRequest {
   imageUrl?: string;
   sendWelcomeEmail?: boolean;
   incognitoMode?: boolean
+  codReferenciaPCG? : string
 }
 
 export interface UpdateUserRequest {
@@ -64,6 +66,7 @@ export interface UpdateUserRequest {
   imageUrl?: string;
   roleIds: number[];
   incognitoMode?: boolean
+    codReferenciaPCG? : string
 }
 
 export interface UserHistoryItem {
