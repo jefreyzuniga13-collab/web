@@ -1,4 +1,3 @@
-// import { useState } from "react";
 import Button from "@/Components/Common/Button";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -6,6 +5,7 @@ import { toast } from "react-toastify";
 import type { Dayjs } from "dayjs";
 import { IoClose } from "react-icons/io5";
 import '@/Styles/Chat/FilterOrderModal.css'
+// import {useCompany} from '@/Hooks/crm/useCompany'
 
 interface FormInterface {
   validFrom: Date | null;
@@ -49,20 +49,6 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   handleOptionChange,
   filter
 }) => {
-  // const [order, setOrder] = useState<string[]>(currentOrder);
-  // const [dragIndex, setDragIndex] = useState<number | null>(null);
-
-  // const handleDragStart = (idx: number) => setDragIndex(idx);
-  // const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  // const handleDrop = (idx: number) => {
-  //   if (dragIndex === null) return;
-  //   const newOrder = [...order];
-  //   const [moved] = newOrder.splice(dragIndex, 1);
-  //   newOrder.splice(idx, 0, moved);
-  //   setOrder(newOrder);
-  //   setDragIndex(null);
-  // };
-
   const handleSave = () => {
     // onSave(order);
 
@@ -110,26 +96,6 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
             Seleccione el estado y el rango de fechas que desea consultar.
           </p>
         </div>
-
-        {/* <ul className="order-list">
-          {order.map((val, idx) => {
-            const opt = options.find((o) => o.value === val);
-            if (!opt) return null;
-            return (
-              <li
-                key={val}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(idx)}
-                className="order-item"
-              >
-                ☰ {opt.content}
-              </li>
-            );
-          })} */}
-
-        {/* </ul> */}
 
         <section className="filter-modal__section">
           <span className="filter-modal__label">Estado de conversación</span>

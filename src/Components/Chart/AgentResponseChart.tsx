@@ -3,9 +3,8 @@ import type { ResponseAgentAverageClienteDataResponseDto, FilterForm } from '@/I
 import { BarChart } from '@mui/x-charts/BarChart';
 import { ConversationService } from '@/Services/chat/ConversationService';
 import { formatoNicaragua } from '@/Utils/ECommerce/formatters';
-import '@/Styles/Dashboard/CustomBarChart.css';
-
 import { useUsers } from '@/Hooks/Auth/useUsers';
+import '@/Styles/Dashboard/CustomBarChart.css';
 
 const getInitialFilters = (): FilterForm => {
   const saved = localStorage.getItem('dashboardFilters');

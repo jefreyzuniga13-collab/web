@@ -9,6 +9,8 @@ interface AuthState {
   expiresAt: string | null;
   checkingSession: boolean;
   roles: string[];
+
+  // Este empresa id no es el companId, es otro que se usa paa otra api.
   empresaId: string;
   companyImageUrl: string;
   companySistema: string;

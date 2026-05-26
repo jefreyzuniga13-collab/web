@@ -151,6 +151,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
     <main className="cart-page">
       <header className="cart-page__header">
         <h1 className="cart-page__title">Carrito de compra</h1>
+        <h3 className="cart-page__subtitle">Sucursal: {existingLog?.branchName ?? ""}</h3>
       </header>
 
       {hasItems ? (

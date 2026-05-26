@@ -428,6 +428,7 @@ export const ChatWindow: React.FC<Props> = ({
                     </div>
                   )}
 
+
                   <div
                     className={getMessageClassName(m)}
                     {...(isIncomingFromContact
@@ -442,6 +443,7 @@ export const ChatWindow: React.FC<Props> = ({
                       m.messageSourceId === 1 ? { backgroundColor: m.messageSourceColor ?? "#fff", color: "#fff" } : undefined
                     }
                   >
+
                     <div className="chat-window__message-content">
                       {rm && (
                         <button

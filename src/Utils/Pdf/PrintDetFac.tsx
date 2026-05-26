@@ -44,6 +44,7 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, exi
   // Espera un date pero es un string, 
   // doc.text(`Fecha: ${orderFac.DatosGenerales?.FechaFactura}`, marginX, yInfo + 6);
   doc.text(`Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`, marginX, yInfo + 6);
+  
   // Separador
   doc.setDrawColor(180);
   doc.line(marginX, yInfo + 10, pageWidth - marginX, yInfo + 10);

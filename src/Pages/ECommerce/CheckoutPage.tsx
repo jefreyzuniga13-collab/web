@@ -47,15 +47,34 @@ import { LocationSection } from "@/Components/ECommerce/Payment/LocationSection"
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface";
 import type {
   PowertranzBrowserInfoDto,
-  PowertranzPayWithTokenRequestDto,
+  PowertranzPayWithTokenRequestDto
 } from "@/Interfaces/Ecommerce/powertranzInterface";
-import type {TarjetaModelInterface} from '@/Interfaces/Ecommerce/TarjetaInterface'
+import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi";
 import { FechaManagua } from "@/Utils/FechaManagua";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+type CheckoutPaymentMethod = PaymentMethod | "manualCard";
+
+type ManualCardFormState = {
+  tarjeta: string;
+  ultDigito: string;
+  tarjetahabiente: string;
+  autorizacion: string;
+  termId: string;
+  afiliado: string;
+  fechaVence: string;
+};
+
+type BranchLike = {
+  codSucursal: string | number;
+  sucursal?: string | null;
+  latitud: number | string;
+  longitud: number | string;
+};
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const from = turf.point([lon1, lat1]);
@@ -83,13 +102,6 @@ function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   };
 }
 
-type BranchLike = {
-  codSucursal: string | number;
-  sucursal?: string | null;
-  latitud: number | string;
-  longitud: number | string;
-};
-
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,24 +113,8 @@ const CheckoutPage: React.FC = () => {
   const [userFullName, setUserFullName] = useState<string>("");
   const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
 
-  useEffect(() => {
-    if (!payload) {
-      navigate("/unauthorized");
-      return;
-    }
-
-    if (new Date(payload.expiresAtUtc).getTime() < Date.now()) {
-      navigate("/unauthorized");
-      return;
-    }
-
-    setEcommerceUserId(payload.ecommerceUserId);
-    setOrderId(payload.orderId);
-    setUserFullName(payload.fullName);
-  }, [payload, navigate]);
-
   const [step, setStep] = useState<CheckoutStep | string>("");
-  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [method, setMethod] = useState<CheckoutPaymentMethod>("card");
 
   const [billingForm, setBillingForm] = useState<BillingFormState>({
     firstName: "",
@@ -138,6 +134,16 @@ const CheckoutPage: React.FC = () => {
 
   const [transferAmount, setTransferAmount] = useState<number>(0);
   const [transferRef, setTransferRef] = useState<string>("");
+
+  const [manualCardData, setManualCardData] = useState<ManualCardFormState>({
+    tarjeta: "",
+    ultDigito: "",
+    tarjetahabiente: "",
+    autorizacion: "",
+    termId: "",
+    afiliado: "",
+    fechaVence: ""
+  });
 
   const [locationMode, setLocationMode] = useState<LocationMode>("new");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -165,13 +171,14 @@ const CheckoutPage: React.FC = () => {
   const carPCG = useAppSelector(selectCarPCG);
 
   const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
+
   const totalPagar = useMemo(
     () => round2(cartTotal + normalizeNumber(transpCost) + normalizeNumber(tip)),
     [cartTotal, transpCost, tip]
   );
 
-    const { mutateAsync: completeFpiAsync } = useCompleteFpi();
-  
+  const { mutateAsync: completeFpiAsync } = useCompleteFpi();
+
   const {
     currency,
     GetCurrencyAsync,
@@ -184,77 +191,90 @@ const CheckoutPage: React.FC = () => {
   const { fetchByContactId, UpdatedStatus } = useLogCart();
   const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation();
 
-const iniciarPagoMutation = useIniciarPago({
-  onSuccess: (response) => {
-    navigate("/payment-hosted", {
-      state: {
-        payment: {
-          redirectData: response.data.redirectData,
-          spiToken: response.data.spiToken,
-          orderId: response.data.orderId,
-          mode: "hosted"
-        }
-      }
-    });
-  }
-});
-
-const payWithTokenMutation = usePayWithToken({
-  onSuccess: async (response) => {
-    const data = response.data;
-
-    const redirectData =
-      data.riskManagement?.threeDSecure?.redirectData ??
-      data.redirectData ??
-      "";
-
-    const authStatus = data.riskManagement?.threeDSecure?.authenticationStatus ?? "";
-    const isoCode = data.isoResponseCode ?? "";
-    const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
-
-    if (redirectData) {
+  const iniciarPagoMutation = useIniciarPago({
+    onSuccess: (response) => {
       navigate("/payment-hosted", {
         state: {
           payment: {
-            redirectData,
-            spiToken: data.spiToken,
-            orderId: data.orderIdentifier,
-            mode: "token-3ds"
+            redirectData: response.data.redirectData,
+            spiToken: response.data.spiToken,
+            orderId: response.data.orderId,
+            mode: "hosted"
           }
         }
       });
+    }
+  });
+
+  const payWithTokenMutation = usePayWithToken({
+    onSuccess: async (response) => {
+      const data = response.data;
+
+      const redirectData =
+        data.riskManagement?.threeDSecure?.redirectData ??
+        data.redirectData ??
+        "";
+
+      const authStatus = data.riskManagement?.threeDSecure?.authenticationStatus ?? "";
+      const isoCode = data.isoResponseCode ?? "";
+      const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
+
+      if (redirectData) {
+        navigate("/payment-hosted", {
+          state: {
+            payment: {
+              redirectData,
+              spiToken: data.spiToken,
+              orderId: data.orderIdentifier,
+              mode: "token-3ds"
+            }
+          }
+        });
+        return;
+      }
+
+      if (threeDsCompleted) {
+        const completeRes = await completeFpiAsync({
+          spiToken: data.spiToken ?? "",
+          orderId: data.orderIdentifier ?? ""
+        });
+
+        const payment = completeRes.data.payment;
+
+        const params = new URLSearchParams({
+          approved: String(completeRes.data.approved ?? false),
+          orderId: payment?.orderIdentifier ?? "",
+          transactionIdentifier: payment?.transactionIdentifier ?? "",
+          panToken: payment?.panToken ?? "",
+          cardBrand: payment?.cardBrand ?? "",
+          cardSuffix: payment?.cardSuffix ?? "",
+          code: completeRes.data.isoResponseCode ?? "",
+          message: completeRes.data.responseMessage ?? ""
+        });
+
+        navigate(`/payment-result?${params.toString()}`, { replace: true });
+        return;
+      }
+
+      navigate("/unauthorized", { replace: true });
+    }
+  });
+
+  useEffect(() => {
+    if (!payload) {
+      navigate("/unauthorized");
       return;
     }
 
-    if (threeDsCompleted) {
-      const completeRes = await completeFpiAsync({
-        spiToken: data.spiToken ?? "",
-        orderId: data.orderIdentifier ?? ""
-      });
-
-      const payment = completeRes.data.payment;
-
-      const params = new URLSearchParams({
-        approved: String(completeRes.data.approved ?? false),
-        orderId: payment?.orderIdentifier ?? "",
-        transactionIdentifier: payment?.transactionIdentifier ?? "",
-        panToken: payment?.panToken ?? "",
-        cardBrand: payment?.cardBrand ?? "",
-        cardSuffix: payment?.cardSuffix ?? "",
-        code: completeRes.data.isoResponseCode ?? "",
-        message: completeRes.data.responseMessage ?? "",
-      });
-
-      navigate(`/payment-result?${params.toString()}`, { replace: true });
+    if (new Date(payload.expiresAtUtc).getTime() < Date.now()) {
+      navigate("/unauthorized");
       return;
     }
 
-    console.log("payWithTokenMutation")
-
-    navigate("/unauthorized", { replace: true });
-  }
-});
-
+    setEcommerceUserId(payload.ecommerceUserId);
+    setOrderId(payload.orderId);
+    setUserFullName(payload.fullName);
+  }, [payload, navigate]);
 
   useEffect(() => {
     if (!payload?.contactId) return;
@@ -309,9 +329,11 @@ const payWithTokenMutation = usePayWithToken({
         await dispatch(
           getProductFromCarAsync({ codCliente: payload.contactId, noPedido: payload.orderId })
         ).unwrap();
+
         if (cancelled) return;
 
         const log = await fetchByContactId(payload.contactId);
+
         if (cancelled) return;
 
         const isPickup = log?.retiraSucursal === "S";
@@ -324,21 +346,21 @@ const payWithTokenMutation = usePayWithToken({
         setLockedAddressId(hasLockedAddress ? logAddressId : null);
 
         const logTrans = log?.transCost != null ? Number(log.transCost) : null;
+
         setLockedTranspCost(
           isPickup ? 0 : logTrans != null && !Number.isNaN(logTrans) ? logTrans : null
         );
 
         setLocationLockedByLog(isPickup || hasLockedAddress);
 
-        if (isPickup) {
-          setStep("currency");
-        } else if (hasLockedAddress) {
+        if (isPickup || hasLockedAddress) {
           setStep("currency");
         } else {
           setStep("location");
         }
 
         await GetCurrencyAsync();
+
         if (cancelled) return;
 
         await GetAsync(ecommerceUserId);
@@ -367,7 +389,9 @@ const payWithTokenMutation = usePayWithToken({
 
   useEffect(() => {
     if (!userFullName) return;
+
     const parts = userFullName.split(" ");
+
     setBillingForm((prev) => ({
       ...prev,
       firstName: parts[0] ?? "",
@@ -407,8 +431,10 @@ const payWithTokenMutation = usePayWithToken({
   useEffect(() => {
     if (addressList.length > 0 && !selectedAddressId && locationMode === "existing" && !locationLockedByLog) {
       const first = addressList[0];
+
       setSelectedAddressId(Number(first.idDireccion));
       setSelectedCoords({ latitud: Number(first.latitud), longitud: Number(first.longitud) });
+
       setBillingForm((prev) => ({
         ...prev,
         address: first.descripcion ?? prev.address
@@ -426,19 +452,26 @@ const payWithTokenMutation = usePayWithToken({
     let cancelled = false;
 
     const fetchAddress = async () => {
-      const { latitud, longitud } = selectedCoords;
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitud}&lon=${longitud}&format=json&addressdetails=1`
-      );
-      const data = await res.json();
-      if (cancelled) return;
+      try {
+        const { latitud, longitud } = selectedCoords;
 
-      setBillingForm((prev) => ({
-        ...prev,
-        country: data.address?.country ?? prev.country,
-        city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
-        address: data.display_name ?? prev.address
-      }));
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitud}&lon=${longitud}&format=json&addressdetails=1`
+        );
+
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        setBillingForm((prev) => ({
+          ...prev,
+          country: data.address?.country ?? prev.country,
+          city: data.address?.city ?? data.address?.town ?? data.address?.village ?? prev.city,
+          address: data.display_name ?? prev.address
+        }));
+      } catch {
+        if (cancelled) return;
+      }
     };
 
     void fetchAddress();
@@ -463,9 +496,11 @@ const payWithTokenMutation = usePayWithToken({
 
   useEffect(() => {
     if (payNowCooldown <= 0) return;
+
     const t = window.setInterval(() => {
       setPayNowCooldown((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
+
     return () => window.clearInterval(t);
   }, [payNowCooldown]);
 
@@ -483,65 +518,76 @@ const payWithTokenMutation = usePayWithToken({
 
   const normalize = (v: string) => v.toLowerCase().trim();
 
-  const resolveMethod = (item: Currencyto): "cash" | "transfer" | "card" => {
+  const resolveMethod = (item: Currencyto): CheckoutPaymentMethod => {
+    const codPago = safeStr(item?.codPago).toUpperCase();
     const desc = normalize(safeStr(item?.descripcion_Pago));
     const moneda = normalize(safeStr(item?.moneda_Fija));
-    if (desc.includes("efectivo") || moneda.includes("efectivo")) return "cash";
-    if (desc.includes("transfer") || desc.includes("transferencia") || moneda.includes("transfer")) return "transfer";
-    return "card";
+
+    if (codPago === "1" || desc.includes("efectivo") || moneda.includes("efectivo")) return "cash";
+    if (codPago === "STR" || desc.includes("transfer") || desc.includes("transferencia") || moneda.includes("transfer")) return "transfer";
+    if (codPago === "STA" || desc === "tarjeta") return "manualCard";
+    if (codPago === "PAS") return "card";
+
+    return "cash";
   };
 
-const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
-  return {
-    codigo: "0",
-    formulario: "1-",
-    opcion: safeStr(item?.codPago)
+  const isGatewayCard = method === "card";
+  const isManualCard = method === "manualCard";
+  const isAnyCard = isGatewayCard || isManualCard;
+
+  const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
+    return {
+      codigo: "0",
+      formulario: "1-",
+      opcion: safeStr(item?.codPago)
+    };
   };
-};
 
-const loadDivisaIfNeeded = async (item: Currencyto) => {
-  setDivisaLoading(true);
+  const loadDivisaIfNeeded = async (item: Currencyto) => {
+    setDivisaLoading(true);
 
-  try {
-    const req = getDivisaConfig(item);
-    const resp = await CartService.GetDivisaPagosTipoAsync(req);
+    try {
+      const req = getDivisaConfig(item);
+      const resp = await CartService.GetDivisaPagosTipoAsync(req);
 
-    const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
+      const list = Array.isArray(resp?.data) ? (resp.data as any[]) : resp?.data ? [resp.data] : [];
 
-    const fixed: ObtenerDivisaPagosTipoRes[] = list
-      .filter(Boolean)
-      .map((x: ObtenerDivisaPagosTipoRes) => ({
-        nombre: safeStr(x?.nombre),
-        codigo: safeStr(x?.codigo),
-        codigoExterno: safeStr(x?.codigoExterno),
-        tipo: safeStr(x?.tipo),
-        banco: safeStr(x?.banco),
-        aCambio: safeStr(x?.aCambio)
-      }))
-      .filter((x) => x.codigo || x.codigoExterno || x.nombre);
+      const fixed: ObtenerDivisaPagosTipoRes[] = list
+        .filter(Boolean)
+        .map((x: ObtenerDivisaPagosTipoRes) => ({
+          nombre: safeStr(x?.nombre),
+          codigo: safeStr(x?.codigo),
+          codigoExterno: safeStr(x?.codigoExterno),
+          tipo: safeStr(x?.tipo),
+          banco: safeStr(x?.banco),
+          aCambio: safeStr(x?.aCambio)
+        }))
+        .filter((x) => x.codigo || x.codigoExterno || x.nombre);
 
-    setDivisaOpts(fixed);
-    setDivisaSelected(fixed.length > 0 ? fixed[0] : null);
-  } catch {
+      setDivisaOpts(fixed);
+      setDivisaSelected(fixed.length > 0 ? fixed[0] : null);
+    } catch {
+      setDivisaOpts([]);
+      setDivisaSelected(null);
+    } finally {
+      setDivisaLoading(false);
+    }
+  };
+
+  const handleSelectCurrency = (item: Currencyto) => {
+    setSelectedCurrency(item);
+
+    const next = resolveMethod(item);
+
+    setMethod(next);
+    setSelectedSavedCard(null);
     setDivisaOpts([]);
     setDivisaSelected(null);
-  } finally {
-    setDivisaLoading(false);
-  }
-};
-const handleSelectCurrency = (item: Currencyto) => {
-  setSelectedCurrency(item);
 
-  const next = resolveMethod(item);
-  setMethod(next);
-
-  setDivisaOpts([]);
-  setDivisaSelected(null);
-
-  if (next === "card" || next === "transfer") {
-    void loadDivisaIfNeeded(item);
-  }
-};
+    if (next === "card" || next === "manualCard" || next === "transfer") {
+      void loadDivisaIfNeeded(item);
+    }
+  };
 
   const getCoordsForFlow = (): Coords | null => {
     const addr = selectedAddress ?? addressList[0] ?? null;
@@ -557,13 +603,18 @@ const handleSelectCurrency = (item: Currencyto) => {
     }
 
     if (!selectedCoords) return null;
-    return { latitud: Number(selectedCoords.latitud), longitud: Number(selectedCoords.longitud) };
+
+    return {
+      latitud: Number(selectedCoords.latitud),
+      longitud: Number(selectedCoords.longitud)
+    };
   };
 
   const coordsKey = (c: Coords) => `${Number(c.latitud).toFixed(6)}|${Number(c.longitud).toFixed(6)}`;
 
   const getLockedBranch = async (): Promise<BranchLike | null> => {
     const code = String(lockedBranchCode ?? "").trim();
+
     if (!code) return null;
 
     const res = await CartService.getBranchByCod(code);
@@ -586,16 +637,17 @@ const handleSelectCurrency = (item: Currencyto) => {
   const computeTransportPreview = async (coords: Coords) => {
     if (locationLockedByLog) {
       const locked = await getLockedBranch();
+
       if (!locked) return null;
 
-      const km = (() => {
-        const lat1 = Number(coords.latitud);
-        const lon1 = Number(coords.longitud);
-        const lat2 = Number(locked.latitud);
-        const lon2 = Number(locked.longitud);
-        if ([lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))) return 0;
-        return calculateDistance(lat1, lon1, lat2, lon2);
-      })();
+      const lat1 = Number(coords.latitud);
+      const lon1 = Number(coords.longitud);
+      const lat2 = Number(locked.latitud);
+      const lon2 = Number(locked.longitud);
+
+      const km = [lat1, lon1, lat2, lon2].some((v) => Number.isNaN(v))
+        ? 0
+        : calculateDistance(lat1, lon1, lat2, lon2);
 
       const cost = Number(lockedTranspCost ?? 0);
 
@@ -617,10 +669,15 @@ const handleSelectCurrency = (item: Currencyto) => {
     let nearest: any | null = null;
 
     const locked = await getLockedBranch();
+
     if (locked) {
       nearest = locked;
     } else {
-      const branchReq: NearestBranchRequestDto = { latitud: coords.latitud, longitud: coords.longitud };
+      const branchReq: NearestBranchRequestDto = {
+        latitud: coords.latitud,
+        longitud: coords.longitud
+      };
+
       const branchResp = await GetNearestBranchAsync(branchReq);
       nearest = Array.isArray(branchResp) && branchResp.length > 0 ? branchResp[0] : branchResp;
     }
@@ -655,11 +712,14 @@ const handleSelectCurrency = (item: Currencyto) => {
     if (!validateBillingForm(billingForm, locationMode)) return;
 
     const coords = getCoordsForFlow();
+
     if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
     try {
       const preview = await computeTransportPreview(coords);
+
       if (!preview) return void toastError("No fue posible calcular el costo de transporte.");
+
       setStep("currency");
     } catch {
       toastError("No fue posible calcular el costo de transporte.");
@@ -674,7 +734,40 @@ const handleSelectCurrency = (item: Currencyto) => {
 
     if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
     if (!validateBillingForm(billingForm, locationMode)) return;
+
     setStep("paymentMethod");
+  };
+
+  const getTotalFactura = () => {
+    const totalBase = Number(existingLog?.totalEnPantalla ?? carPCG?.[0]?.total ?? 0);
+    const transporte = Number(transpCost ?? existingLog?.transCost ?? 0);
+    return round2(totalBase + transporte + Number(tip ?? 0));
+  };
+
+  const validateManualCard = () => {
+
+    console.log("Datos manualCardData",manualCardData)
+    if (!safeStr(manualCardData.tarjetahabiente)) {
+      return toastError("El tarjetahabiente es requerido.");
+    }
+
+    // if (!safeStr(manualCardData.tarjeta)) {
+    //   return toastError("La tarjeta es requerida.");
+    // }
+
+    // if (!safeStr(manualCardData.ultDigito)) {
+    //   return toastError("Los últimos dígitos son requeridos.");
+    // }
+
+    // if (!safeStr(manualCardData.autorizacion)) {
+    //   return toastError("La autorización es requerida.");
+    // }
+
+    if (!safeStr(manualCardData.fechaVence)) {
+      return toastError("La fecha de vencimiento es requerida.");
+    }
+
+    return true;
   };
 
   const buildPagoGenerico = (
@@ -684,15 +777,13 @@ const handleSelectCurrency = (item: Currencyto) => {
     const moneda = safeStr(invoiceReq.moneda) || "1";
     const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
 
-    const cart = carPCG?.[0];
-    const baseTotal = Number(cart?.total ?? 0);
-    const totalCalculado = round2(baseTotal + Number(transpCost ?? 0) + Number(tip ?? 0));
-
     const isCash = method === "cash";
-    const isCard = method === "card";
     const isTransfer = method === "transfer";
+    const isGateway = method === "card";
+    const isManual = method === "manualCard";
 
     const selected = divisaSelected;
+    const total = getTotalFactura();
 
     const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
     const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
@@ -700,16 +791,10 @@ const handleSelectCurrency = (item: Currencyto) => {
     const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
     const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
 
-    let monto = totalCalculado;
+    let monto = total;
     let referencia = "";
     let numeroTransaccion = "";
     let fechaOVence = "";
-
-    const total: number = Number(
-      (existingLog?.totalEnPantalla ?? 0) +
-      (transpCost && transpCost > 0 ? transpCost : 0) +
-      tip
-    );
 
     if (isCash) {
       monto = total;
@@ -722,21 +807,30 @@ const handleSelectCurrency = (item: Currencyto) => {
       fechaOVence = new Date().toISOString().slice(0, 10);
     }
 
-    if (isCard) {
+    if (isGateway) {
       monto = total;
     }
 
-    const tipoPago = isCash ? "" : safeStr(tipo);
+    if (isManual) {
+      monto = total;
+      referencia = safeStr(manualCardData.autorizacion);
+      numeroTransaccion = safeStr(manualCardData.autorizacion);
+      fechaOVence = safeStr(manualCardData.fechaVence);
+    }
+
+    const concepto = isCash
+      ? "Efectivo"
+      : isTransfer
+        ? descripcionPago || "Transferencia"
+        : isManual
+          ? descripcionPago || "Tarjeta manual"
+          : descripcionPago || "Tarjeta";
 
     return {
       numPago: "1",
-      concepto: isCash
-        ? "Efectivo"
-        : isTransfer
-          ? descripcionPago || "Transferencia"
-          : descripcionPago || "Tarjeta",
+      concepto,
       codPago,
-      tipoPago,
+      tipoPago: isCash ? "" : tipo,
       aplicaCambio: "True",
       codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
       banco: banco || (isCash ? "00" : ""),
@@ -745,18 +839,18 @@ const handleSelectCurrency = (item: Currencyto) => {
       montoA: isCash ? Number(cashAmount) : monto,
       cambio: isCash ? Number(cashAmount - monto) : 0,
       tasaCambio: Number(tasaCambio),
-      Fecha_o_Vence: isCard ? fechaOVence : "",
+      Fecha_o_Vence: fechaOVence,
       Dll: "",
       Numero: "",
       referencia,
       numeroTransaccion,
       cuentaContable: "",
-      ultDigito: "",
-      tarjeta: "",
-      tarjetahabiente: "",
-      autorizacion: "",
-      termId: "",
-      afiliado: "",
+      ultDigito: isManual ? safeStr(manualCardData.ultDigito) : "",
+      tarjeta: isManual ? safeStr(manualCardData.tarjeta) : "",
+      tarjetahabiente: isManual ? safeStr(manualCardData.tarjetahabiente) : "",
+      autorizacion: isManual ? safeStr(manualCardData.autorizacion) : "",
+      termId: isManual ? safeStr(manualCardData.termId) : "",
+      afiliado: isManual ? safeStr(manualCardData.afiliado) : "",
       CodStrCadsaccion: "",
       Codtransaccion: "",
       CuentaHabiente: "",
@@ -780,6 +874,9 @@ const handleSelectCurrency = (item: Currencyto) => {
     setPayNowLock(true);
     setPayNowCooldown(5);
 
+
+    console.log("handlePayNow")
+
     try {
       if (!carPCG || carPCG.length === 0) return void toastError("El carrito está vacío.");
       if (!selectedCurrency) return void toastError("Debe seleccionar un método de pago.");
@@ -789,16 +886,17 @@ const handleSelectCurrency = (item: Currencyto) => {
         if (!validateLocation(locationMode, selectedAddressId, selectedCoords)) return;
       }
 
-      const cart = carPCG[0];
-      const total = Number(cart.total ?? 0);
+      const totalFactura = getTotalFactura();
 
       if (method === "cash") {
         if (cashAmount <= 0) return void toastError("El monto en efectivo debe ser mayor a 0.");
         if (tip > cashAmount) return void toastError("La propina no puede ser mayor al monto ingresado.");
+
         const disponible = cashAmount - tip;
-        if (disponible < total) {
+
+        if (disponible < totalFactura) {
           return void toastError(
-            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${totalFactura}.`
           );
         }
       }
@@ -806,17 +904,21 @@ const handleSelectCurrency = (item: Currencyto) => {
       if (method === "transfer") {
         if (transferAmount <= 0) return void toastError("El monto debe ser mayor a 0.");
         if (!safeStr(transferRef)) return void toastError("La referencia es requerida.");
+
         const disponible = transferAmount - tip;
-        if (disponible < total) {
+
+        if (disponible < totalFactura) {
           return void toastError(
-            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${total}.`
+            `Monto insuficiente. Te quedan C$${disponible} disponibles y el total es C$${totalFactura}.`
           );
         }
       }
 
-      if ((method === "card" || method === "transfer") && !divisaSelected) {
+      if ((method === "card" || method === "manualCard" || method === "transfer") && !divisaSelected) {
         return void toastError("Debe seleccionar el banco / forma de pago.");
       }
+
+      if (method === "manualCard" && !validateManualCard()) return;
 
       const isPickup = existingLog?.retiraSucursal === "S";
       let nearest: any | null = null;
@@ -826,12 +928,15 @@ const handleSelectCurrency = (item: Currencyto) => {
 
       if (isPickup) {
         nearest = await getLockedBranch();
+
         if (!nearest) return void toastError("No fue posible determinar la sucursal para retiro.");
+
         transporte = Number(existingLog?.transCost ?? 0);
       } else {
         if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
         const preview = await computeTransportPreview(coords);
+
         if (!preview?.nearest) return void toastError("No hay sucursal disponible.");
 
         nearest = preview.nearest;
@@ -853,6 +958,7 @@ const handleSelectCurrency = (item: Currencyto) => {
       } else if (locationLockedByLog) {
         const addr =
           selectedAddress ?? addressList.find((a) => a.idDireccion === lockedAddressId) ?? addressList[0];
+
         if (!addr) return void toastError("No hay dirección bloqueada disponible.");
 
         finalLocation = {
@@ -866,6 +972,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         };
       } else if (locationMode === "existing") {
         const addr = selectedAddress ?? addressList[0];
+
         if (!addr) return void toastError("No hay dirección seleccionada.");
 
         finalLocation = {
@@ -891,7 +998,9 @@ const handleSelectCurrency = (item: Currencyto) => {
         };
 
         const newLocation = await createLocationAsync(locationPayload);
+
         if (!newLocation) return void toastError("No fue posible guardar la nueva dirección.");
+
         finalLocation = newLocation;
       }
 
@@ -899,10 +1008,15 @@ const handleSelectCurrency = (item: Currencyto) => {
 
       const facturaBase = await loadFacturaTempo();
 
-      const codSucursalFactura = String(nearest.codSucursal ?? nearest.codsucursal ?? "").trim();
+      const codSucursalFactura = existingLog?.branch;
+
       if (!codSucursalFactura) return void toastError("No fue posible determinar la sucursal de factura.");
 
-      const falote: FaloteRequestDto = { codSucursal: codSucursalFactura, documento: "OrdenFactura" };
+      const falote: FaloteRequestDto = {
+        codSucursal: codSucursalFactura,
+        documento: "OrdenFactura"
+      };
+
       const dataconse = await CartService.GetConsecDocAsync(falote);
 
       const TotalesPantallaReq: TotalesPantallaReqDTO = {
@@ -910,7 +1024,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         exonerado: "N",
         ivaPantalla: existingLog?.ivaPantalla ?? 0,
         maquina: `CRM-${payload?.contactId}`,
-        sucursal: existingLog!.branch,
+        sucursal: existingLog?.branch ?? codSucursalFactura,
         tabla: "det_factura_tempo",
         totalEnPantalla: existingLog?.subTotal ?? 0,
         usuario: payload!.contactId.toString()
@@ -937,7 +1051,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         toast.error(`(${errores[fallo.key]})`);
         return;
       }
-      
+
       const invoiceReqBase: FacturaTempo = {
         ...facturaBase,
         nombreCliente:
@@ -964,21 +1078,19 @@ const handleSelectCurrency = (item: Currencyto) => {
 
       const pagoGenerico: PagoGenerico = buildPagoGenerico(invoiceReqBase, codSucursalFactura);
 
-      const detallePago: PagoGenerico[] = [pagoGenerico];
-
       const invoiceReqFinal: FacturaTempo = {
         ...invoiceReqBase,
-        detallePago
+        detallePago: [pagoGenerico]
       } as FacturaTempo;
 
-  if (method === "card") {
-    const totalMonto = Number(existingLog?.totalEnPantalla ?? 0);
+      if (method === "card") {
+        const totalMonto = getTotalFactura();
 
-    sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
-    sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
-    sessionStorage.setItem(ECOMMERCEUSERID_KEY, JSON.stringify(ecommerceUserId));
+        sessionStorage.setItem(CHECKOUT_INVOICE_KEY, JSON.stringify(invoiceReqFinal));
+        sessionStorage.setItem(CHECKOUT_PAYLOAD_KEY, JSON.stringify(payload));
+        sessionStorage.setItem(ECOMMERCEUSERID_KEY, JSON.stringify(ecommerceUserId));
 
-  if (selectedSavedCard?.panToken) {
+        if (selectedSavedCard?.panToken) {
           const requestToken: PowertranzPayWithTokenRequestDto = {
             transactionIdentifier: null,
             orderId: String(dataconse?.data?.consecutivo ?? ""),
@@ -1012,7 +1124,7 @@ const handleSelectCurrency = (item: Currencyto) => {
         invoiceReqFinal,
         payload: payload!,
         orderId,
-        transactionIdentifier: "",
+        transactionIdentifier: method === "manualCard" ? safeStr(manualCardData.autorizacion) : "",
         usarPdfPagoElectronico: false,
         codSucursalFactura,
         consecutivo: Number(dataconse?.data?.consecutivo ?? 0),
@@ -1077,7 +1189,7 @@ const handleSelectCurrency = (item: Currencyto) => {
                 <div>Cargando...</div>
               ) : (
                 <PaymentMethodComponent
-                  step={step}
+                  step={step as CheckoutStep}
                   setStep={setStep}
                   method={method}
                   distanceKm={distanceKm}
@@ -1102,6 +1214,11 @@ const handleSelectCurrency = (item: Currencyto) => {
                   existingLog={existingLog}
                   ecommerceUserId={payload.ecommerceUserId}
                   onSelectCard={setSelectedSavedCard}
+                  manualCardData={manualCardData}
+                  setManualCardData={setManualCardData}
+                  isGatewayCard={isGatewayCard}
+                  isManualCard={isManualCard}
+                  isAnyCard={isAnyCard}
                 />
               ))}
           </div>

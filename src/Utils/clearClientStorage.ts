@@ -1,12 +1,8 @@
 /* eslint-disable no-empty */
 import { persistor } from "@/Context";
 import { queryClient } from "@/Utils/Https/reactQuery";
-// import api from "@/Utils/ApiConfig";
 
 export const limpiarAlmacenamientoCliente = async () => {
-  // try {
-  //   await api.post("/Auth/logout");
-  // } catch {}
 
   try {
     queryClient.clear();
@@ -37,19 +33,17 @@ export const limpiarAlmacenamientoCliente = async () => {
           document.cookie = `${nombre}=; Max-Age=0; path=/crm;`;
 
           // borrar la cookie especificando el dominio exacto
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=crmdelipollo.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=orbitrachat.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=orbitrachat.com;`;
 
           // borrar la cookie para todos los subdominios (si aplica)
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.crmdelipollo.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.orbitrachat.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.orbitrachat.com;`;
         }
       });
     }
   }  catch {}
 
-
-  //
   try {
     if ("caches" in window) {
       const cacheNames = await caches.keys();

@@ -92,6 +92,7 @@ export interface MessageDto {
   externalId: string;
   messageType: MessageType;
   interactiveId?: string;
+  isAutoSend:boolean
   interactiveTitle?: string;
   status: MessageStatus;
   sentAt: string;

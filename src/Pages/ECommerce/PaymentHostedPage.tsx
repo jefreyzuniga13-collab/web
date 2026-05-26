@@ -15,7 +15,6 @@ type PaymentHostedState = {
 
 function buildResultParamsFromProcess(data: PowertranzProcessPaymentResultDto): string {
   const payment = data.payment;
-
   const params = new URLSearchParams({
     approved: String(data.approved ?? false),
     orderId: payment?.orderIdentifier ?? "",
@@ -73,11 +72,11 @@ export default function PaymentHostedPage() {
 
         const authData = authRes.data;
         const threeDS = authData.riskManagement?.threeDSecure;
-
         const challengeRedirectData = threeDS?.redirectData ?? "";
         const authStatus = threeDS?.authenticationStatus ?? "";
         const isoCode = authData.isoResponseCode ?? "";
 
+        
         if (challengeRedirectData) {
           navigate("/payment-hosted", {
             replace: true,
@@ -141,3 +140,4 @@ export default function PaymentHostedPage() {
     />
   );
 }
+

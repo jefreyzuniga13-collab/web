@@ -8,9 +8,9 @@ import FileInput from '@/Components/Common/FileInput'
 import MultiSelect from '@/Components/Common/MultiSelect'
 import { useRoles } from '@/Hooks/Auth/useRoles'
 import type { User } from '@/Interfaces/Auth/UserInterfaces'
-import '@/Styles/Auth/UserForm.css'
 import { userService } from '@/Services/auth/UserService'
 import { toast } from 'react-toastify'
+import '@/Styles/Auth/UserForm.css'
 
 interface UserFormProps {
   initialData?: User

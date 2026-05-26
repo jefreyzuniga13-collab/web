@@ -7,14 +7,27 @@ import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterf
 import CashPaymentSection from "@/Components/ECommerce/Payment/CashPaymentSection";
 import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSection";
 import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection";
+import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection";
 import { safeStr } from "@/Utils/ECommerce/formatters";
-import '@/Styles/Ecommerce/Payment/PaymentMethodComponent.css';
+import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 import { formatearDecimales } from "@/Utils/calcularIVA";
+
+export type CheckoutPaymentMethod = PaymentMethod | "manualCard";
+
+export type ManualCardFormState = {
+  tarjeta: string;
+  ultDigito: string;
+  tarjetahabiente: string;
+  autorizacion: string;
+  termId: string;
+  afiliado: string;
+  fechaVence: string;
+};
 
 export interface Props {
   step: CheckoutStep;
-  setStep: (step: CheckoutStep) => void;
-  method: PaymentMethod;
+  setStep: (step: CheckoutStep | string) => void;
+  method: CheckoutPaymentMethod;
   transpCost: number;
   distanceKm: number;
   tip: number;
@@ -37,12 +50,18 @@ export interface Props {
   existingLog: LogCartResponseDto | null;
   ecommerceUserId: number;
   onSelectCard?: (card: TarjetaModelInterface | null) => void;
+  manualCardData: ManualCardFormState;
+  setManualCardData: React.Dispatch<React.SetStateAction<ManualCardFormState>>;
+  isGatewayCard?: boolean;
+  isManualCard?: boolean;
+  isAnyCard?: boolean;
 }
 
-function methodLabel(m: PaymentMethod): string {
+function methodLabel(m: CheckoutPaymentMethod): string {
   if (m === "cash") return "Efectivo";
-  if (m === "card") return "Tarjeta";
-  return "Transferencia";
+  if (m === "transfer") return "Transferencia";
+  if (m === "manualCard") return "Tarjeta manual";
+  return "Tarjeta débito / crédito";
 }
 
 export const PaymentMethodComponent = ({
@@ -67,10 +86,16 @@ export const PaymentMethodComponent = ({
   existingLog,
   ecommerceUserId,
   onSelectCard,
+  manualCardData,
+  setManualCardData,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isGatewayCard,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isManualCard,
 }: Props) => {
   const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
 
-  const showDivisaSelect = method === "card" || method === "transfer";
+  const showDivisaSelect = method === "card" || method === "manualCard" || method === "transfer";
 
   useEffect(() => {
     if (method === "transfer") {
@@ -78,23 +103,50 @@ export const PaymentMethodComponent = ({
     }
   }, [method, totalPagar, setTransferAmount]);
 
+  useEffect(() => {
+    if (method !== "card") {
+      setSelectedSavedCard(null);
+      onSelectCard?.(null);
+    }
+  }, [method, onSelectCard]);
+
   const transferRefOk = useMemo(() => {
     if (method !== "transfer") return true;
+
     const ref = safeStr(transfer);
+
     if (!ref) return false;
+
     return /^[A-Za-z0-9-]{4,40}$/.test(ref);
   }, [method, transfer]);
+
+  const manualCardOk = useMemo(() => {
+    if (method !== "manualCard") return true;
+
+    return (
+      !!safeStr(manualCardData.tarjetahabiente) &&
+      !!safeStr(manualCardData.tarjeta) &&
+      !!safeStr(manualCardData.ultDigito) &&
+      !!safeStr(manualCardData.fechaVence)
+    );
+  }, [method, manualCardData]);
 
   const canPay =
     !payNowDisabled &&
     !payNowLock &&
     (showDivisaSelect ? !!divisaSelected : true) &&
-    (method === "transfer" ? transferRefOk : true);
-
+    (method === "transfer" ? transferRefOk : true) &&
+    (method === "manualCard" ? manualCardOk : true);
   const handleSelectCard = (card: TarjetaModelInterface | null) => {
     setSelectedSavedCard(card);
     onSelectCard?.(card);
   };
+
+  const totalResumen = useMemo(() => {
+    const totalBase = Number(existingLog?.totalEnPantalla ?? 0);
+    const transporte = Number(transpCost > 0 ? transpCost : existingLog?.transCost ?? 0);
+    return totalBase + transporte;
+  }, [existingLog?.totalEnPantalla, existingLog?.transCost, transpCost]);
 
   return (
     <>
@@ -107,9 +159,11 @@ export const PaymentMethodComponent = ({
           {showDivisaSelect && (
             <div className="checkout-field checkout-field--full">
               <label className="checkout-label" htmlFor="payType">
-                {method === "card"
-                  ? "Tipo de tarjeta / banco *"
-                  : "Tipo de transferencia / banco *"}
+                {method === "transfer"
+                  ? "Tipo de transferencia / banco *"
+                  : method === "manualCard"
+                    ? "Tipo de tarjeta / banco manual *"
+                    : "Tipo de tarjeta / banco *"}
               </label>
 
               <select
@@ -137,47 +191,52 @@ export const PaymentMethodComponent = ({
             </div>
           )}
 
-
           {carPCG && carPCG.length > 0 && (
             <aside className="checkout-summary">
               <p className="checkout-summary__title">Resumen</p>
 
               <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Subtotal: </p>
+                <p className="checkout-summary__p">Subtotal:</p>
                 <strong className="checkout-summary__strong">
                   {formatearDecimales(existingLog?.subTotal ?? 0)}
                 </strong>
               </div>
 
               <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">IVA: </p>
+                <p className="checkout-summary__p">IVA:</p>
                 <strong className="checkout-summary__strong">
                   {formatearDecimales(existingLog?.ivaPantalla ?? 0)}
                 </strong>
               </div>
 
-
               <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Transporte: </p>
+                <p className="checkout-summary__p">Transporte:</p>
                 <strong className="checkout-summary__strong">
-                 {formatearDecimales(transpCost || existingLog?.transCost || 0)}
+                  {formatearDecimales(transpCost || existingLog?.transCost || 0)}
                 </strong>
               </div>
 
               <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Total :</p>
+                <p className="checkout-summary__p">Total:</p>
                 <strong className="checkout-summary__strong">
-                  C${" "}
-                  {formatearDecimales((existingLog?.totalEnPantalla ?? 0) +
-                    (transpCost > 0 ? transpCost : 0)) ?? 0}
+                  C$ {formatearDecimales(totalResumen)}
                 </strong>
               </div>
 
               {method === "card" && selectedSavedCard && (
                 <div className="checkout-summary__subtitle">
-                  <p className="checkout-summary__p">Tarjeta:</p>
+                  <p className="checkout-summary__p">Tarjeta guardada:</p>
                   <strong className="checkout-summary__strong">
                     **** {safeStr(selectedSavedCard.ultimos4)}
+                  </strong>
+                </div>
+              )}
+
+              {method === "manualCard" && safeStr(manualCardData.ultDigito) && (
+                <div className="checkout-summary__subtitle">
+                  <p className="checkout-summary__p">Tarjeta manual:</p>
+                  <strong className="checkout-summary__strong">
+                    **** {safeStr(manualCardData.ultDigito)}
                   </strong>
                 </div>
               )}
@@ -198,6 +257,13 @@ export const PaymentMethodComponent = ({
             />
           )}
 
+          {method === "manualCard" && (
+            <ManualCardPaymentSection
+              value={manualCardData}
+              onChange={setManualCardData}
+            />
+          )}
+
           {method === "transfer" && (
             <TransferPaymentSection
               totalPagar={totalPagar}
@@ -209,6 +275,7 @@ export const PaymentMethodComponent = ({
 
           <div className="checkout-actionBtn">
             <button
+              type="button"
               className="checkout-paybtn__back"
               onClick={() => setStep("currency")}
             >
@@ -216,6 +283,7 @@ export const PaymentMethodComponent = ({
             </button>
 
             <button
+              type="button"
               className="checkout-paybtn"
               onClick={handlePayNow}
               disabled={!canPay}

@@ -10,10 +10,10 @@ import SystemParamForm from '@/Components/Crm/SystemParamForm'
 import { useSystemParams } from '@/Hooks/Crm/useSystemParams'
 import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import '@/Styles/Crm/SystemParamsPage.css'
 import type { NameTranslation, TypeTranslation } from '@/Interfaces/Crm/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
 import { TextField } from '@mui/material'
+import '@/Styles/Crm/SystemParamsPage.css'
 
 const typeTranslations: Record<TypeTranslation, string> = {
   Prompts: "Mensaje",

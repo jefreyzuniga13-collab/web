@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import SavedCards from "./SavedCards";
+import SavedCards from "@/Components/ECommerce/Payment/SavedCards";
 import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import { SAVE_CARD_AFTER_PAYMENT_KEY } from "@/Utils/ECommerce/keys";
-import '@/Styles/Ecommerce/Payment/CardPaymentSection.css';
+import "@/Styles/Ecommerce/Payment/CardPaymentSection.css";
 
 interface Props {
   onSelectCard?: (card: TarjetaModelInterface | null) => void;
@@ -13,7 +13,9 @@ export default function CardPaymentSection({
   ecommerceUserId,
   onSelectCard,
 }: Props) {
-  const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
+  const [selectedSavedCard, setSelectedSavedCard] =
+    useState<TarjetaModelInterface | null>(null);
+
   const [saveCard, setSaveCard] = useState<boolean>(false);
 
   useEffect(() => {
@@ -28,6 +30,11 @@ export default function CardPaymentSection({
   const handleSelectCard = (card: TarjetaModelInterface | null) => {
     setSelectedSavedCard(card);
     onSelectCard?.(card);
+
+    if (card) {
+      setSaveCard(false);
+      sessionStorage.setItem(SAVE_CARD_AFTER_PAYMENT_KEY, "N");
+    }
   };
 
   const handleChangeSaveCard = (checked: boolean) => {
@@ -56,8 +63,15 @@ export default function CardPaymentSection({
             onChange={(e) => handleChangeSaveCard(e.target.checked)}
             disabled={!!selectedSavedCard}
           />
+
           <span>Guardar tarjeta para futuras compras</span>
         </label>
+
+        {selectedSavedCard && (
+          <small className="checkout-card-save-option__hint">
+            Ya seleccionaste una tarjeta guardada. No es necesario guardarla otra vez.
+          </small>
+        )}
       </div>
     </div>
   );

@@ -791,11 +791,14 @@ const loadCart = async () => {
 ) => {
   const lines: string[] = []
 
-  const orderId = opts?.orderId ?? cart.noPedido ?? "N/D"
+  // const orderId = opts?.orderId ?? cart.noPedido ?? "N/D"
   const existingLog = opts?.existingLog ?? null
 
   
-  lines.push(`🛍️ Pedido No. ${orderId}`)
+
+  // if(existingLog?.companyId != 3){
+  //     lines.push(`🛍️ Pedido No. ${orderId}`)
+  // }
 
   if (existingLog?.branch) {
     lines.push(`🏬 Sucursal: ${existingLog.branchName ?? ""}`)
