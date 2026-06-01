@@ -38,7 +38,8 @@ export default function ContactPage() {
     closeModal,
     handleSubmit,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loading
   } = useContact();
 
   const columns: Column<ContactLogInterface>[] = useMemo(() => [
@@ -183,7 +184,7 @@ export default function ContactPage() {
         <TextField
           label="Filtrar"
           variant="outlined"
-          size="small"
+          size="medium"
           fullWidth
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
@@ -210,6 +211,7 @@ export default function ContactPage() {
         data={selectedData}
         onClose={closeModal}
         onSubmit={handleSubmit}
+        loading={loading}
       />
     </div>
   );

@@ -209,7 +209,6 @@ const CheckoutPage: React.FC = () => {
   const payWithTokenMutation = usePayWithToken({
     onSuccess: async (response) => {
       const data = response.data;
-
       const redirectData =
         data.riskManagement?.threeDSecure?.redirectData ??
         data.redirectData ??
@@ -219,6 +218,7 @@ const CheckoutPage: React.FC = () => {
       const isoCode = data.isoResponseCode ?? "";
       const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
 
+      // Nanega al 
       if (redirectData) {
         navigate("/payment-hosted", {
           state: {

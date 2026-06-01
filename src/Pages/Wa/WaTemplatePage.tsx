@@ -7,12 +7,12 @@ import WaTemplateForm from '@/Components/Wh/WaTemplateForm'
 import { useWaTemplate } from '@/Hooks/Wh/useWaTemplate'
 import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import '@/Styles/Crm/SystemParamsPage.css'
 import SendIcon from '@mui/icons-material/Send';
 import WaTemplateSendModal from '@/Components/Wh/WaTemplateSendModal'
 import { TextField } from '@mui/material'
 import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
 import { templateCategoryTranslations } from '@/Utils/Translation/categoryTemplateTranslation'
+import '@/Styles/Crm/SystemParamsPage.css'
 
 export default function WaTemplatesPage() {
 
@@ -144,7 +144,7 @@ export default function WaTemplatesPage() {
         <TextField
           label="Filtrar"
           variant="outlined"
-          size="small"
+          size="medium"
           fullWidth
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}

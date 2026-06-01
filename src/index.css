@@ -17,6 +17,7 @@ html, body, #root {
   box-sizing: border-box;
   background-color: var(--bg-primary);
   font-size: 55%;
+  position: relative;
 }
 
 #root {
@@ -50,6 +51,7 @@ body {
   --bg-tertiary: #f9fafb;
   --bg-secondary-hover: #e5e7eb;
   --bg-tertiary-hover: #f9fafb;
+  --bg-warning: #e14747;
   
   --text-primary: #131418;
   --text-secondary: #374151;

@@ -14,6 +14,12 @@ export interface AuthData {
   companyImageUrl?: string;
   companySistema: string
   codReferenciaPCG?: string
+  isRoot:boolean
+  isAdmin: boolean
+
+  // Licencia de usuario
+  licenseExpireAt: string
+  showLicenseWarning: boolean
 }
 
 export interface LoginRequest {
@@ -108,4 +114,8 @@ export interface AuthMe {
   companyImageUrl?: string;
   companySistema: string;
   codReferenciaPCG?: string
+  isRoot: boolean
+  isAdmin: boolean
+  licenseExpireAt: string
+  showLicenseWarning: boolean
 }

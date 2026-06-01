@@ -7,19 +7,18 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import Button from '@/Components/Common/Button'
 import CustomTable from '@/Components/Common/CustomTable'
 import type { Column } from '@/Interfaces/Common/CustomTable'
-import type { CompanySystemParamProj } from '@/Interfaces/Crm/CompanySystemParams'
+import { metaChannels, type CompanySystemParamProj } from '@/Interfaces/Crm/CompanySystemParams'
 import { useCompanySystemParams } from '@/Hooks/Crm/useCompanySystemParams'
 import type { NameTranslation } from '@/Interfaces/Crm/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
-import '@/Styles/Crm/SystemParamsPage.css'
 import CompanySystemParamForm from '@/Components/Crm/CompanySystemParamForm'
+import '@/Styles/Crm/CompanySystemParamsPage.css'
 
 export default function CompanySystemParamsPage() {
 const {
   items,
   companies,
   systemParams,
-  metaChannels,
   // loading,
   error,
   page,
@@ -27,8 +26,6 @@ const {
   totalCount,
   globalFilter,
   companyId,
-  systemParamId,
-  metaChannelId,
   selectedItem,
   modalMode,
   isModalOpen,
@@ -36,8 +33,6 @@ const {
   setPageSize,
   setGlobalFilter,
   setCompanyId,
-  setSystemParamId,
-  setMetaChannelId,
   openCreate,
   openEdit,
   openView,
@@ -155,11 +150,10 @@ const {
         <TextField
           label="Buscar"
           variant="outlined"
-          size="small"
+          size="medium"
           fullWidth
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className="table-contaner__search-filter"
         />
 
         <TextField
@@ -170,48 +164,11 @@ const {
           fullWidth
           value={companyId ?? ''}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : null)}
-          className="table-contaner__search-filter"
         >
           <MenuItem value="">Todas</MenuItem>
           {companies.map((company) => (
             <MenuItem key={company.companyId ?? 0} value={company.companyId ?? 0}>
               {company.name}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          label="Parámetro"
-          variant="outlined"
-          size="small"
-          select
-          fullWidth
-          value={systemParamId ?? ''}
-          onChange={(e) => setSystemParamId(e.target.value ? Number(e.target.value) : null)}
-          className="table-contaner__search-filter"
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {systemParams.map((param) => (
-            <MenuItem key={param.id} value={param.id}>
-              {getParamName(param.name)}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          label="Canal"
-          variant="outlined"
-          size="small"
-          select
-          fullWidth
-          value={metaChannelId ?? ''}
-          onChange={(e) => setMetaChannelId(e.target.value ? Number(e.target.value) : null)}
-          className="table-contaner__search-filter"
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {metaChannels.map((channel) => (
-            <MenuItem key={channel.id} value={channel.id}>
-              {channel.name}
             </MenuItem>
           ))}
         </TextField>

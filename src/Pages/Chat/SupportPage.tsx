@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
 import { ContactDetail } from "@/Components/Chat/ContactDetail";
-import { FaFilter, FaPhoneAlt, FaUserAlt } from "react-icons/fa";
-// import { BiSolidBuildingHouse } from "react-icons/bi";
+import { FaBuilding, FaFilter, FaPhoneAlt, FaUserAlt } from "react-icons/fa";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
+import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
 import { Sticker } from "lucide-react";
@@ -19,8 +19,10 @@ import type { AppDispatch } from "@/Context";
 import "@/Styles/Chat/SupportPage.css";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import { MdContacts } from "react-icons/md";
-import { IoMdCloseCircleOutline } from "react-icons/io";
+import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
+import { store } from "@/Context";
+import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
@@ -28,7 +30,10 @@ const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
   const dispatch = useAppDispatch();
-
+  const state = store.getState();
+  const isRoot = state.auth?.isRoot;
+  const licenseExpireAt = state.auth?.licenseExpireAt;
+  const showLicenseWarning = state.auth?.showLicenseWarning;
   const { fetchById, selectedData: contact } = useContact();
   const { fetchByContactId } = useLogCart();
 
@@ -52,10 +57,11 @@ const SupportPage: React.FC = () => {
     setConvId,
     filter,
     userId,
-    // extraerNumero,
     selectedParam,
     label,
     canAssign,
+    showCompanyModal,
+    setShowCompanyModal
   } = useSupportPage();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,7 +184,17 @@ const SupportPage: React.FC = () => {
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
 
-            <div>                
+            <div>   
+              {isRoot && (
+                <button
+                  className="sort-button"
+                  onClick={() => setShowCompanyModal(true)}
+                  title="Company filters"
+                >
+                  <FaBuilding  className="sort-button-icon" />
+                </button>
+              )}
+
                 <button
                   className="sort-button"
                   onClick={() => setOrderModalVisible(true)}
@@ -214,8 +230,20 @@ const SupportPage: React.FC = () => {
       </aside>
 
       <main className="main-content">
+         {/* Mostrar si licencia esta por vencer */}
+          {showLicenseWarning && (
+            <div className="main-license__container">
+              <IoMdHourglass fontSize={12} className="main-license__icon"/>
+
+              <span className="main-license__text">
+                {getLicenseMessage(licenseExpireAt)}
+              </span>
+            </div>
+          )}
+
         <header className="main-header">
           <h2 className="main-title">
+
             {/* Empresa */}
             {convId != null && activeConversation?.systemDefinedCompanyName != null ? 
                <span style={{ marginLeft: '5px', marginRight: '5px' }} className="main_header-text" >
@@ -318,21 +346,28 @@ const SupportPage: React.FC = () => {
 
       {orderModalVisible && (
         <FilterOrderModal
-          currentOrder={filterOrder}
-          options={DEFAULT_OPTIONS}
-          onSave={(newOrder) => {
-            saveOrder(newOrder);
-            setOrderModalVisible(false);
-          }}
-          onClose={() => setOrderModalVisible(false)}
-          form={convHook.form}
-          handleDate={convHook.handleDate}
-          applyDateFilter={convHook.applyDateFilter}
-          clearFilter={convHook.clearFilter}
-          handleOptionChange={handleOptionChange}
-          sortedOptions={sortedOptions}
-          filter={filter}
-        />
+            currentOrder={filterOrder}
+            options={DEFAULT_OPTIONS}
+            onSave={(newOrder) => {
+              saveOrder(newOrder);
+              setOrderModalVisible(false);
+            }}
+
+            onClose={() => setOrderModalVisible(false)}
+            form={convHook.form}
+            handleDate={convHook.handleDate}
+            applyDateFilter={convHook.applyDateFilter}
+            clearFilter={convHook.clearFilter}
+            handleOptionChange={handleOptionChange}
+            sortedOptions={sortedOptions}
+            filter={filter}
+          />
+      )}
+
+       {showCompanyModal && (
+        <CompanyModalFilter
+            onClose={() => setShowCompanyModal(false)}
+          />
       )}
 
       {ticketOpen &&

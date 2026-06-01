@@ -4,8 +4,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
 import type { Dayjs } from "dayjs";
 import { IoClose } from "react-icons/io5";
-import '@/Styles/Chat/FilterOrderModal.css'
-// import {useCompany} from '@/Hooks/crm/useCompany'
+import "@/Styles/Chat/FilterOrderModal.css";
 
 interface FormInterface {
   validFrom: Date | null;
@@ -13,7 +12,12 @@ interface FormInterface {
 }
 
 type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
-type FilterOption = { label: string; value: string; content: string };
+
+type FilterOption = {
+  label: string;
+  value: string;
+  content: string;
+};
 
 interface FilterOrderModalProps {
   currentOrder: string[];
@@ -30,16 +34,12 @@ interface FilterOrderModalProps {
   filter: string;
 }
 
-// Helper para convertir PickerValue (Date | Dayjs | null) a Date | null
 const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
   if (!value) return null;
   return value instanceof Date ? value : (value as Dayjs).toDate();
 };
 
 const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
-  // currentOrder,
-  // options,
-  // onSave,
   onClose,
   form,
   handleDate,
@@ -47,11 +47,9 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   clearFilter,
   sortedOptions,
   handleOptionChange,
-  filter
+  filter,
 }) => {
   const handleSave = () => {
-    // onSave(order);
-
     if (form.validTo != null && form.validFrom == null) {
       toast.warn(
         "Para seleccionar una fecha final, seleccione una fecha de inicio."
@@ -93,7 +91,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         <div className="filter-modal__header">
           <h3 className="filter-modal__title">Filtrar conversaciones</h3>
           <p className="filter-modal__subtitle">
-            Seleccione el estado y el rango de fechas que desea consultar.
+            Filtros aplicados a la app
           </p>
         </div>
 
@@ -107,7 +105,9 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
               return (
                 <label
                   key={opt.value}
-                  className={`filter-modal__status ${checked ? "filter-modal__status--active" : ""}`}
+                  className={`filter-modal__status ${
+                    checked ? "filter-modal__status--active" : ""
+                  }`}
                 >
                   <input
                     id={opt.value}
@@ -118,6 +118,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
                     onChange={handleOptionChange}
                     className="filter-modal__status-input"
                   />
+
                   {opt.content}
                 </label>
               );

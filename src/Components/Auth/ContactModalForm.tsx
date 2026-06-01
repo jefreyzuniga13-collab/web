@@ -5,6 +5,7 @@ import Button from '@/Components/Common/Button'
 import { useContactForm } from '@/Hooks/Auth/UseContactForm'
 import '@/Styles/Auth/ContactModal.css'
 import type { ContactFormValues, ContactLogInterface } from '@/Interfaces/Auth/ContactInterface'
+import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 // import CustomAutocomplete  from '@/Components/Common/CustomAutocomplete'
 
 interface ContactModalProps {
@@ -13,6 +14,7 @@ interface ContactModalProps {
   data?: ContactLogInterface | null
   onClose: () => void
   onSubmit: (values: ContactFormValues) => void
+  loading:boolean
 }
 
 const idTypeOptions = [
@@ -31,7 +33,7 @@ const statusOptions = [
   { value: 'Completed', label: 'Completado' },
 ]
 
-export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit }: ContactModalProps) {
+export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit, loading }: ContactModalProps) {
   const { form, 
     errors, 
     isView, 
@@ -60,32 +62,6 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
         <form className="cm-modal__body" onSubmit={handleSubmit}>
           <div className="cm-modal__grid">
 
-            {/* <div className="cm-modal__col">
-              <Label htmlFor="clientId">Cliente *</Label>
-
-              <CustomAutocomplete
-                label="Cliente"
-                placeholder="Escribe para buscar…"
-
-                value={
-                  (() => {
-                    const sel = clients?.find(c => String(c.clientId) === String(form.clientId))
-                    return sel ? { label: sel.clientName ?? '', value: String(sel.clientId) } : null
-                  })()
-                }
-                options={clients?.map(c => ({
-                  label: c.clientName ?? '',
-                  value: String(c.clientId),
-                })) || []}
-                onChange={(opt) => {
-                  handleSelect('clientId', opt?.value ?? '')
-                }}
-                disabled={isView}
-                error={Boolean(errors.clientId)}
-                helperText={errors.clientId}
-              />
-            </div> */}
-
             <div className="cm-modal__col">
               <Label htmlFor="fullName">Nombre Contacto Completo *</Label>
               <Input
@@ -98,27 +74,6 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               {errors.fullName && <div className="cm-modal__error">{errors.fullName}</div>}
             </div>
 
-            {/* <div className="cm-modal__col">
-              <Label htmlFor="waName">Nombre WhatsApp *</Label>
-              <Input
-                id="waName"
-                name="waName"
-                value={form.waName || ''}
-                onChange={handleChange}
-                disabled={isView}
-              />
-              {errors.waName && <div className="cm-modal__error">{errors.waName}</div>}
-            </div> */}
-            {/* <div className="cm-modal__col">
-              <Label htmlFor="waId">ID WhatsApp</Label>
-              <Input
-                id="waId"
-                name="waId"
-                value={form.waId || ''}
-                onChange={handleChange}
-                disabled={isView}
-              />
-            </div> */}
             <div className="cm-modal__col">
               <Label htmlFor="phone">Teléfono *</Label>
               <Input
@@ -181,15 +136,6 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               </div>
             )}
 
-            {/* <div className="cm-modal__col">
-              <Label htmlFor="companyName">Nombre Empresa</Label>
-              <Input
-                id="companyName"
-                name="companyName"
-                value={form.companyName ?? ''}
-                disabled
-              />
-            </div> */}
             <div className="cm-modal__col">
               <Label htmlFor="status">Estado</Label>
               <Select
@@ -228,8 +174,10 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               Cancelar
             </Button>
             {!isView && (
-              <Button variant="primary" type="submit" className='cm-modal__footer__btn'>
-                {mode === 'create' ? 'Crear' : 'Guardar'}
+              <Button variant="primary" type="submit" className='cm-modal__footer__btn' disabled={loading}>
+                {loading ? <AiOutlineLoading3Quarters /> :
+                  
+                mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}
           </footer>

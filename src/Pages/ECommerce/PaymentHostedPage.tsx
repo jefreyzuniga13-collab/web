@@ -15,6 +15,8 @@ type PaymentHostedState = {
 
 function buildResultParamsFromProcess(data: PowertranzProcessPaymentResultDto): string {
   const payment = data.payment;
+
+  // Construir los parámetros que se enviarán a la pantalla final del pago.
   const params = new URLSearchParams({
     approved: String(data.approved ?? false),
     orderId: payment?.orderIdentifier ?? "",
@@ -37,24 +39,27 @@ export default function PaymentHostedPage() {
   const { mutateAsync: completeFpiAsync } = useCompleteFpi();
 
   const state = location.state as PaymentHostedState | null;
+
+  // Datos enviados desde el checkout al navegar hacia esta página.
   const redirectData = state?.payment?.redirectData ?? "";
   const spiToken = state?.payment?.spiToken ?? "";
   const orderId = state?.payment?.orderId ?? "";
   const mode = state?.payment?.mode ?? null;
 
   useEffect(() => {
+    // Si no viene HTML de PowerTranz, no hay formulario que mostrar.
     if (!redirectData) {
-      console.log("redirectData PaymentHostedPage", )
+      console.log("redirectData PaymentHostedPage");
       navigate("/unauthorized", { replace: true });
       return;
     }
 
+    // Si no es flujo de token con 3DS, solo se muestra el iframe.
     if (mode !== "token-3ds") {
       return;
     }
 
     if (!orderId) {
-      console.log("orderId PaymentHostedPage")
       navigate("/unauthorized", { replace: true });
       return;
     }
@@ -63,11 +68,16 @@ export default function PaymentHostedPage() {
       return;
     }
 
+    // Continuar el flujo 3DS desde el frontend.
+    // Si PowerTranz devuelve otro redirectData, se muestra el nuevo challenge.
+    // Si el 3DS ya viene completado sin challenge, se llama completeFpi.
+    // Ojo: cuando el usuario completa un challenge en el iframe,
+    // PowerTranz redirige al merchant-response y el backend completa el pago.
     const timer = window.setTimeout(async () => {
       try {
         const authRes = await authenticate3dsAsync({
           spiToken,
-          orderId
+          orderId,
         });
 
         const authData = authRes.data;
@@ -76,7 +86,8 @@ export default function PaymentHostedPage() {
         const authStatus = threeDS?.authenticationStatus ?? "";
         const isoCode = authData.isoResponseCode ?? "";
 
-        
+        // Si viene otro redirectData, todavía hay challenge 3DS que mostrar.
+        // No se debe completar el pago aquí.
         if (challengeRedirectData) {
           navigate("/payment-hosted", {
             replace: true,
@@ -85,31 +96,32 @@ export default function PaymentHostedPage() {
                 redirectData: challengeRedirectData,
                 spiToken: null,
                 orderId: authData.orderIdentifier ?? orderId,
-                mode: "token-3ds"
-              }
-            }
+                mode: "token-3ds",
+              },
+            },
           });
           return;
         }
 
+        // Si PowerTranz indica que 3DS ya fue completado, se puede completar desde frontend.
         const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
 
         if (!threeDsCompleted) {
-          console.log("threeDsCompleted PaymentHostedPage", )
           navigate("/unauthorized", { replace: true });
           return;
         }
 
+        // Completar el pago solo cuando no hay challenge pendiente.
         const completeRes = await completeFpiAsync({
           spiToken: authData.spiToken ?? spiToken,
-          orderId: authData.orderIdentifier ?? orderId
+          orderId: authData.orderIdentifier ?? orderId,
         });
 
         navigate(`/payment-result?${buildResultParamsFromProcess(completeRes.data)}`, {
-          replace: true
+          replace: true,
         });
       } catch {
-        console.log("catch  PaymentHostedPage")
+        console.log("catch PaymentHostedPage");
         navigate("/unauthorized", { replace: true });
       }
     }, 4000);
@@ -122,13 +134,18 @@ export default function PaymentHostedPage() {
     mode,
     navigate,
     authenticate3dsAsync,
-    completeFpiAsync
+    completeFpiAsync,
   ]);
 
   if (!redirectData) {
     return null;
   }
 
+
+
+
+  // Evitar que cuando se refresque s pierda la informacion, en este caso en el redirecTData hay un html, de una hostedPage?
+  // Mostrar el formulario HTML que devuelve PowerTranz.
   return (
     <iframe
       srcDoc={redirectData}
@@ -140,4 +157,3 @@ export default function PaymentHostedPage() {
     />
   );
 }
-

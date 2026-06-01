@@ -37,3 +37,14 @@ export interface CompanySystemParamProj {
     value: string;
 }
 
+
+export type MetaChannelOption = {
+  id: number
+  name: string
+}
+
+export const metaChannels: MetaChannelOption[] = [
+  { id: 1, name: 'WhatsApp' },
+  { id: 2, name: 'Messenger' },
+  { id: 3, name: 'Instagram' },
+]

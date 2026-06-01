@@ -17,6 +17,7 @@ import type { RootState } from "@/Context";
 import { theme } from "@/Utils/materialTheme";
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
+import { LicenseExpiredModalWatcher } from "./Components/Auth/LicenseExpiredModalWatcher";
 
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
@@ -126,44 +127,6 @@ export default function App() {
   }, [navigate]);
 
 
-  /**ERROR
-   * 
-   * installHook.js:1 The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
-
-Previous: [, (action) => {
-    if (isActionCreator2(action)) {
-      console.warn(getMessage(action.type));
-    }
-    return next(action);
-  }, async function showDesktopNotification(evt) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-    const { title, body, url } = mapNotificationPayload(evt);
-    const reg = await navigator.serviceWorker.getRegistration();
-    await reg?.showNotification(title, {
-      body,
-      icon: "/logopcg.png",
-      badge: "/logopcg.png",
-      requireInteraction: true,
-      tag: "latest-message",
-      renotify: true,
-      data: { url }
-    });
-  }]
-Incoming: [, (action) => {
-    if (isActionCreator2(action)) {
-      console.warn(getMessage(action.type));
-    }
-    return next(action);
-  }]
-overrideMethod	@	installHook.js:1
-(anonymous)	@	App.tsx:129
-S.scheduleRefresh	@	installHook.js:1
-(anonymous)	@	@react-refresh:228
-performReactRefresh	@	@react-refresh:217
-(anonymous)	@	@react-refresh:586
-
-   */
   // Notificaciones en tiempo real
   useEffect(() => {
     if (!lastEvent) return;
@@ -203,17 +166,19 @@ performReactRefresh	@	@react-refresh:217
           className="custom-toast-body"
         />
 
-        {isAuthenticated ? (
-          <SignalRProvider>
-            {!online && (
-              <OfflineBanner onRetry={() => window.location.reload()} />
-            )}
-            <ReLoginModal />
-            <AppRouter />
-          </SignalRProvider>
-        ) : (
+      {isAuthenticated ? (
+        <SignalRProvider>
+          {!online && (
+            <OfflineBanner onRetry={() => window.location.reload()} />
+          )}
+
+          <ReLoginModal />
+          <LicenseExpiredModalWatcher />
           <AppRouter />
-        )}
+        </SignalRProvider>
+      ) : (
+        <AppRouter />
+      )}
       </SessionBootstrap>
     </ThemeProvider>
   );

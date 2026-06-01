@@ -39,28 +39,31 @@ export default function useLoginForm() {
     validationSchema,
     validateOnBlur: true,
     validateOnChange: true,
-    onSubmit: async (values, { setStatus, setSubmitting }) => {
-      setStatus(null);
+  onSubmit: async (values, { setStatus, setSubmitting }) => {
+  setStatus(null);
 
-      try {
-        await login({
-          email: values.email,
-          password: values.password
-        });
+  try {
+    await login({
+      email: values.email,
+      password: values.password
+    });
 
-        await saveFacturaTempo();
-        dispatch(closeActiveSesionModal());
-      } catch (err) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "No se pudo iniciar sesión. Verifica tus credenciales.";
+    await saveFacturaTempo();
+    dispatch(closeActiveSesionModal());
+  } catch (err) {
+    localStorage.removeItem("showLicenseModalAfterLogin");
 
-        setStatus(msg);
-      } finally {
-        setSubmitting(false);
-      }
-    },
+    const msg =
+      err instanceof Error
+        ? err.message
+        : "No se pudo iniciar sesión. Verifica tus credenciales.";
+
+    setStatus(msg);
+  } finally {
+    setSubmitting(false);
+  }
+}
+
   });
 
   const confirmLogin = async () => {

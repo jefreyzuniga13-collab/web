@@ -165,6 +165,35 @@ function buildConnection(url: string): signalR.HubConnection {
     .build();
 }
 
+function getActiveCompanyId(): number | null {
+  const state = store.getState();
+
+  const activeCompanyId = state.company?.activeCompanyId;
+  const isRoot = state.auth?.isRoot
+  if (!isRoot) {
+    return null;
+  }
+
+  if (!activeCompanyId || Number(activeCompanyId) <= 0) {
+    return null;
+  }
+
+  return Number(activeCompanyId);
+}
+
+function buildHubUrl(path: string): string {
+  const companyId = getActiveCompanyId();
+
+  if (!companyId) {
+    return `${HUB_BASE}${path}`;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${HUB_BASE}${path}${separator}companyId=${encodeURIComponent(
+    String(companyId)
+  )}`;
+}
+
 function isConnected(connection: signalR.HubConnection | null): boolean {
   return connection?.state === signalR.HubConnectionState.Connected;
 }
@@ -482,7 +511,7 @@ export async function createHubConnection() {
     }
 
     if (!chatConnection) {
-      chatConnection = buildConnection(`${HUB_BASE}/hubs/chat`);
+      chatConnection = buildConnection(buildHubUrl("/hubs/chat"));
 
       chatConnection.onreconnecting((err) =>
         console.warn("[CHAT] Reconectando...", err)
@@ -498,7 +527,7 @@ export async function createHubConnection() {
     }
 
     if (!userConeccion) {
-      userConeccion = buildConnection(`${HUB_BASE}/hubs/users`);
+      userConeccion = buildConnection(buildHubUrl("/hubs/users"));
 
       userConeccion.onreconnecting((err) =>
         console.warn("[USER] Reconectando...", err)
@@ -510,7 +539,7 @@ export async function createHubConnection() {
     }
 
     if (!notificationsConnection) {
-      notificationsConnection = buildConnection(`${HUB_BASE}/hubs/notifications`);
+      notificationsConnection = buildConnection(buildHubUrl("/hubs/notifications"));
 
       notificationsConnection.onreconnecting((err) =>
         console.warn("[NOTIFICATIONS] Reconectando...", err)
@@ -529,7 +558,7 @@ export async function createHubConnection() {
     }
 
     if (!presenceConnection) {
-      presenceConnection = buildConnection(`${HUB_BASE}/hubs/presence`);
+      presenceConnection = buildConnection(buildHubUrl("/hubs/presence"));
 
       presenceConnection.off("UserIsOnline");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -594,6 +623,11 @@ export async function stopHubConnection(): Promise<void> {
   presenceConnection = null;
   userConeccion = null;
   startPromise = null;
+}
+
+export async function restartHubConnection(): Promise<void> {
+  await stopHubConnection();
+  await createHubConnection();
 }
 
 export async function joinConversation(conversationId: number) {

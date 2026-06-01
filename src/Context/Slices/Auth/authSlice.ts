@@ -1,20 +1,21 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { authService } from '@/Services/auth/AuthService';
-import type { AuthData, AuthMe } from '@/Interfaces/Auth/AuthInterface';
-import type { RootState } from '@/Context/index';
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { authService } from "@/Services/auth/AuthService";
+import type { AuthData, AuthMe } from "@/Interfaces/Auth/AuthInterface";
+import type { RootState } from "@/Context/index";
 
 interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
   expiresAt: string | null;
   checkingSession: boolean;
-  roles: string[];
-
-  // Este empresa id no es el companId, es otro que se usa paa otra api.
+  isRoot: boolean;
+  isAdmin: boolean
   empresaId: string;
   companyImageUrl: string;
   companySistema: string;
-  codReferenciaPCG: string
+  codReferenciaPCG: string;
+  licenseExpireAt:string;
+  showLicenseWarning: boolean
 }
 
 const initialState: AuthState = {
@@ -22,11 +23,14 @@ const initialState: AuthState = {
   userId: null,
   expiresAt: null,
   checkingSession: false,
-  roles: [],
-  empresaId: '',
-  companyImageUrl: '',
-  companySistema: '',
-  codReferenciaPCG:'',
+  isRoot: false,
+  isAdmin: false,
+  empresaId: "",
+  companyImageUrl: "",
+  companySistema: "",
+  codReferenciaPCG: "",
+  licenseExpireAt:"",
+  showLicenseWarning:false,
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -34,12 +38,12 @@ export const refreshTokenThunk = createAsyncThunk<
   void,
   { rejectValue: string }
 >(
-  'auth/refreshToken',
+  "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
       return await authService.refreshTokenAsync();
     } catch {
-      return rejectWithValue('No se pudo renovar token');
+      return rejectWithValue("No se pudo renovar token");
     }
   }
 );
@@ -49,12 +53,12 @@ export const checkSessionThunk = createAsyncThunk<
   void,
   { rejectValue: string }
 >(
-  'auth/checkSession',
+  "auth/checkSession",
   async (_, { rejectWithValue }) => {
     try {
       return await authService.meAsync();
     } catch {
-      return rejectWithValue('No hay sesión activa');
+      return rejectWithValue("No hay sesión activa");
     }
   }
 );
@@ -64,25 +68,32 @@ const limpiarSesion = (state: AuthState) => {
   state.userId = null;
   state.expiresAt = null;
   state.checkingSession = false;
-  state.roles = [];
-  state.empresaId = '';
-  state.companyImageUrl = '';
-  state.companySistema = '';
-  state.codReferenciaPCG = ''
+  state.isRoot = false;
+  state.isAdmin = false;
+  state.empresaId = "";
+  state.companyImageUrl = "";
+  state.companySistema = "";
+  state.codReferenciaPCG = "";
+  state.licenseExpireAt = "";
+  state.showLicenseWarning = false;
 };
 
 const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.isAuthenticated = true;
   state.userId = String(payload.userId);
-  state.empresaId = String(payload.empresaId ?? '');
-  state.companyImageUrl = payload.companyImageUrl ?? '';
-  state.companySistema = payload.companySistema ?? '';
+  state.empresaId = String(payload.empresaId ?? "");
+  state.companyImageUrl = payload.companyImageUrl ?? "";
+  state.companySistema = payload.companySistema ?? "";
+  state.codReferenciaPCG = payload.codReferenciaPCG ?? "";
+  state.isRoot = payload.isRoot;
+  state.isAdmin = payload.isAdmin;
   state.checkingSession = false;
-  state.codReferenciaPCG = payload.codReferenciaPCG ?? ''
+  state.licenseExpireAt = payload.licenseExpireAt;
+  state.showLicenseWarning = payload.showLicenseWarning;
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
@@ -110,7 +121,7 @@ const authSlice = createSlice({
 
     logout(state) {
       limpiarSesion(state);
-    }
+    },
   },
 
   extraReducers: (builder) => {
@@ -135,13 +146,12 @@ const authSlice = createSlice({
       .addCase(checkSessionThunk.fulfilled, (state, { payload }) => {
         aplicarSesion(state, payload);
         state.expiresAt = null;
-        state.roles = payload.roles ?? [];
       })
 
       .addCase(checkSessionThunk.rejected, (state) => {
         limpiarSesion(state);
       });
-  }
+  },
 });
 
 export const {
@@ -149,15 +159,15 @@ export const {
   setAuthenticated,
   startCheckingSession,
   finishCheckingSession,
-  logout
+  logout,
 } = authSlice.actions;
 
 export const selectIsAdmin = (state: RootState) =>
-  state.auth.roles.some(
-    role =>
-      role.toLowerCase() === 'admin' ||
-      role.toLowerCase() === 'root'
-  );
+  state.auth.isAdmin;
+
+
+export const selectIsRoot = (state: RootState) =>
+  state.auth.isRoot
 
 export const selectUserId = (state: RootState) =>
   Number(state.auth.userId);
@@ -174,10 +184,14 @@ export const selectCompanySistema = (state: RootState) =>
 export const selectCodReferenciaPCG = (state: RootState) =>
   state.auth.codReferenciaPCG;
 
+export const selectLicenseExpireAt = (state: RootState) =>
+  state.auth.licenseExpireAt;
+
+export const selectShowLicenseWarning = (state: RootState) =>
+  state.auth.showLicenseWarning;
+
 export const selectIsAuthenticated = (state: RootState) =>
   state.auth.isAuthenticated;
 
-export const selectRoles = (state: RootState) =>
-  state.auth.roles;
 
 export default authSlice.reducer;

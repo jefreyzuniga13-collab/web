@@ -26,7 +26,6 @@ const contactKeys = {
 const useContact = (contactId?: number) => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(null)
   const [contactByClient, setContactByClient] = useState<ContactLogInterface[]>([])
   const [modalMode, setModalMode] = useState<ModalMode>('create')

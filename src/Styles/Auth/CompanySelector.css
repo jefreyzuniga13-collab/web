@@ -1,0 +1,36 @@
+.company-selector {
+  /* width: 100%; */
+  min-width: 220px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.company-selector__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.company-selector__control {
+  position: relative;
+  width: 100%;
+}
+
+.company-selector__loading {
+  position: absolute;
+  top: 50%;
+  right: 2.4rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .company-selector {
+    max-width: 100%;
+  }
+}

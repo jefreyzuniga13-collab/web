@@ -120,7 +120,7 @@ const handleSubmit = async (data: any) => {
         <TextField
           label="Filtrar"
           variant="outlined"
-          size="small"
+          size="medium"
           fullWidth
           value={globalFilter}
           onChange={e => setGlobalFilter(e.target.value)}

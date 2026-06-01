@@ -8,6 +8,8 @@ import activeSesionModalReducer from "@/Context/Slices/Chat/activeSesionModalSli
 import cartReducer from "@/Context/Slices/Ecommerce/cartSlice";
 import cartBadgeReducer from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import powerTranzReducer from "@/Context/Slices/Ecommerce/powertranzSlice";
+import companyReducer from "@/Context/Slices/Auth/companySlice";
+
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import {
   persistStore,
@@ -25,7 +27,7 @@ const persistConfig = {
   key: "root",
   version: 1,
   storage,
-  whitelist: ["auth", "cart"],
+  whitelist: ["auth", "cart", "company"],
 };
 
 const rootReducer = combineReducers({
@@ -39,6 +41,7 @@ const rootReducer = combineReducers({
   cart: cartReducer,
   cartBadge: cartBadgeReducer,
   powerTranz: powerTranzReducer,
+  company: companyReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

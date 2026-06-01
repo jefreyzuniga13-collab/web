@@ -1,160 +1,45 @@
-import { useMemo } from "react"
-import { useWorkShift } from "@/Hooks/Crm/useWorkShift"
-import type { WorkShiftInterface } from "@/Interfaces/Crm/WorkShiftInterface"
-import type { Column } from "@/Interfaces/Common/CustomTable"
-import Button from "@/Components/Common/Button"
-import CustomTable from "@/Components/Common/CustomTable"
-import IconButton from "@mui/material/IconButton"
-import VisibilityIcon from "@mui/icons-material/Visibility"
-import ToggleOffIcon from "@mui/icons-material/ToggleOff"
-import ToggleOnIcon from "@mui/icons-material/ToggleOn"
-import { EditIcon } from "lucide-react"
-import "@/Styles/Crm/OpeningHourPage.css"
-import "@/Styles/Crm/WorkShiftPage.css"
-import WorkShiftModal from "@/Components/Crm/WorkShiftModal"
-import { format, parseISO } from "date-fns"
-import { TextField } from "@mui/material"
-// import Spinner from "@/Components/Common/Spinner"
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/Context";
+import { LicenseExpiredModal } from "@/Components/Auth/LicenseExpiredModal";
 
-export default function WorkShiftPage() {
+export function LicenseExpiredModalWatcher() {
+  const [open, setOpen] = useState(false);
+
   const {
-    workShifts,
-    // loading,
-    error,
-    page,
-    pageSize,
-    totalCount,
-    setPage,
-    setPageSize,
-    toggleStatus,
-    openCreate,
-    openEdit,
-    openView,
-    closeModal,
-    handleSubmit,
-    isModalOpen,
-    modalMode,
-    selectedWorkShift,
-    globalFilter,
-    setGlobalFilter
-  } = useWorkShift()
+    isAuthenticated,
+    checkingSession,
+    licenseExpireAt,
+    showLicenseWarning,
+  } = useSelector((state: RootState) => state.auth);
 
-  const columns: Column<WorkShiftInterface>[] = useMemo(() => [
-    {
-      id: "openingHour",
-      label: "Horario",
-      minWidth: 150,
-      render: row => row.openingHour.name,
-    },
-    {
-      id: "assignedUser",
-      label: "Asignado a",
-      minWidth: 150,
-      render: row => row.assignedUser.fullName,
-    },
-    {
-      id: "isActive",
-      label: "Activo",
-      minWidth: 90,
-      render: row => (
-        <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
-           {row.isActive ? 'Activo' : 'Inactivo'}
-        </span>
-      )
-    },
-    {
-      id: "validFrom",
-      label: "Vigencia Desde",
-      minWidth: 110,
-      render: row => {
-        if(!row.validFrom) return '-';
-        const date = parseISO(row.validFrom);
-        return <span>{format(date, 'dd/MM/yyyy')}</span>
-      }
-    },
-    {
-      id: "validTo",
-      label: "Vigencia Hasta",
-      minWidth: 110,
-      render: row => {
-        if(!row.validTo) return '-';
-        const date = parseISO(row.validTo)
-        return <span>{format(date, 'dd/MM/yyyy')}</span>
-      }
-    },
-    {
-      id: "actions",
-      label: "Acciones",
-      minWidth: 130,
-      align: "center",
-      render: row => (
-        <>
-          <IconButton size="small" onClick={() => openView(row.id)}>
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => openEdit(row.id)}>
-            <EditIcon size={16} />
-          </IconButton>
-          <IconButton size="small" onClick={() => toggleStatus(row.id)}>
-            {row.isActive ? (
-              <ToggleOnIcon fontSize="small" color="success"/>
-            ) : (
-              <ToggleOffIcon fontSize="small" />
-            )}
-          </IconButton>
-        </>
-      ),
-    },
-  ], [openView, openEdit, toggleStatus])
+  useEffect(() => {
+    if (checkingSession) return;
+    if (!isAuthenticated) return;
+
+    const flag = localStorage.getItem("showLicenseModalAfterLogin");
+
+    if (flag !== "1") return;
+
+    if (!showLicenseWarning) {
+      localStorage.removeItem("showLicenseModalAfterLogin");
+      return;
+    }
+
+    setOpen(true);
+  }, [checkingSession, isAuthenticated, showLicenseWarning]);
+
+  const handleClose = () => {
+    localStorage.removeItem("showLicenseModalAfterLogin");
+    setOpen(false);
+  };
+
+  if (!open) return null;
 
   return (
-    <div className="ws-page__container">
-      <div className="ws-page__header">
-        <div className="ws-page__header-content">
-          <h1 className="ws-page__title">Gestión Asignación de Turnos</h1>
-          <p className="ws-page__subtitle">
-            Administración de turnos según horarios de turnos y feriados.
-          </p>
-        </div>
-        <div className="ws-page__btnContainer">
-          <Button variant="primary" onClick={openCreate} className="ws-page__btn">
-          Nuevo Turno
-        </Button>
-        </div>
-      </div>
-
-     <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
-      </div> 
-      {/* {loading && <div className="ws-page__loading"><Spinner/></div>} */}
-      {error && <p className="ws-page__error">Error: {error.message}</p>}
-
-      <CustomTable<WorkShiftInterface>
-        columns={columns}
-        rows={workShifts}
-        count={totalCount}
-        page={page - 1}
-        rowsPerPage={pageSize}
-        rowsPerPageOptions={[20, 30, 50]}
-        onPageChange={(_, newPage) => setPage(newPage + 1)}
-        onRowsPerPageChange={e => setPageSize(parseInt(e.target.value, 10))}
-      />
-
-        <WorkShiftModal
-          mode={modalMode}
-          isOpen={isModalOpen}
-          data={selectedWorkShift}
-          onClose={closeModal}
-          onSubmit={handleSubmit}
-        />
-    </div>
-  )
+    <LicenseExpiredModal
+      licenseExpireAt={licenseExpireAt}
+      onClose={handleClose}
+    />
+  );
 }

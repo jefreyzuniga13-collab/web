@@ -37,7 +37,8 @@ const WaTemplatesPage = lazy(() => import("@/Pages/Wa/WaTemplatePage"));
 const ProductCatalogPage = lazy(() => import("@/Pages/Wa/ProductCatalogPage"));
 const DynamicParamPage = lazy(() => import("@/Pages/Crm/DynamicParamPage"));
 const ClientManagementPanel = lazy(() => import("@/Pages/Crm/ClientManagementPanel"),);
-
+const LicensePage = lazy(() => import("@/Pages/Crm/LicensePage"),);
+const CompaniesLicensePage = lazy(() => import("@/Pages/Crm/CompaniesLicensePage"));
 export function AppRouter() {
   return (
     <Suspense fallback={<CustomLoader />}>
@@ -74,6 +75,8 @@ export function AppRouter() {
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="system-params" element={<SystemParameterPage />} />
           <Route path="companysystem-params" element={<CompanySystemParamsPage />} />
+          <Route path="license" element={<LicensePage />} />
+          <Route path="companieslicense" element={<CompaniesLicensePage />} />
           <Route
             path="templates-categories"
             element={<TemplateCategoryPage />}

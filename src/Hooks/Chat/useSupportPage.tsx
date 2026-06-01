@@ -8,7 +8,7 @@ import {
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
 import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
-import { selectIsAdmin, selectUserId } from '@/Context/Slices/Auth/authSlice';
+import { selectIsAdmin, selectUserId, selectIsRoot } from '@/Context/Slices/Auth/authSlice';
 type FilterOption = { label: string; value: string; content: string };
 import { CompanySystemParamsService } from "@/Services/Crm/CompanySystemParamsService";
 import { SystemParamType } from "@/Utils/systemParam";
@@ -34,11 +34,13 @@ export function useSupportPage() {
   );
   
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [contactDetailToggle, setContactDetailToggle] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const { selectedParam, fetchByName } = useSystemParams();
   const [companySystemParam, setCompanySystemParam] = useState<CompanySystemParamsInterface | null>(null);
    const isAdmin = useSelector(selectIsAdmin);
+   const isRoot = useSelector(selectIsRoot);
    const userId = useSelector(selectUserId);
   let DEFAULT_OPTIONS: FilterOption[];
 
@@ -104,7 +106,7 @@ export function useSupportPage() {
   
 
       // Lógica de permisos
-    const canAssign = isAdmin || (companySystemParam?.isActive === true);
+    const canAssign = isAdmin || isRoot || (companySystemParam?.isActive === true);
     const label = canAssign ? "Asignar" : "Cerrar";
     
     //Obtener la policica, para verificar si los agentes, pueden o no asignar conversaciones
@@ -220,6 +222,8 @@ export function useSupportPage() {
     handleSetHaltedConversation,
     label,
     canAssign,
-    handleCloseClick
+    handleCloseClick,
+    showCompanyModal,
+    setShowCompanyModal
   };
 }

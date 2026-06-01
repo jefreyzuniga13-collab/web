@@ -62,3 +62,6 @@ export const MODAL_MODE = {
   EDIT: "EDIT",
   VIEW: "VIEW",
 } as const;
+
+
+export type ModalMode = 'create' | 'edit' | 'view'

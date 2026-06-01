@@ -1,3 +1,5 @@
+import { format, differenceInCalendarDays } from 'date-fns';
+
 export function round2(n: number): number {
   return Math.round((Number(n ?? 0) + Number.EPSILON) * 100) / 100;
 }
@@ -139,23 +141,35 @@ export function normalizePath(pathname: string) {
   return normalized === "" ? "/" : normalized;
 }
 
-// export const obtenerFechaNica = () => {
-//   return new Intl.DateTimeFormat('es-NI', {
-//     timeZone: 'America/Managua',
-//     year: 'numeric',
-//     month: '2-digit',
-//     day: '2-digit',
-//    hour: "2-digit",
-//      minute: "2-digit",
-//   })
-//   .format(new Date())
-//   .split('/')
-//   .reverse()
-//   .join('');
-// };
-
 export function methodLabel(m: PaymentMethod): string {
   if (m === "cash") return "Efectivo";
   if (m === "card") return "Tarjeta";
   return "Transferencia";
 }
+
+
+export const getLicenseMessage = (expiryDateString: string) => {
+  if (!expiryDateString) return '';
+
+  const expiryDate = new Date(expiryDateString);
+  const today = new Date();
+  const daysLeft = differenceInCalendarDays(expiryDate, today);
+  if (daysLeft < 0) {
+    return `Tu licencia ha expirado el ${format(expiryDate, 'dd/MM/yyyy')}. Para seguir disfrutando de todas las funcionalidades del servicio sin interrupciones, por favor gestiona tu renovación o ponte en contacto con nuestro equipo de soporte técnico.`;
+  }
+
+  if (daysLeft === 0) {
+    return 'Atención: Tu licencia de uso vence hoy. Para evitar la suspensión de tu cuenta y mantener el acceso a tus datos, te recomendamos realizar la renovación lo antes posible.';
+  }
+
+
+  if (daysLeft === 1) {
+    return 'Urgente: Tu licencia vence mañana. Asegura la continuidad de tu servicio renovando tu suscripción hoy mismo.';
+  }
+
+  if (daysLeft > 1 && daysLeft <= 7) {
+    return `Tu licencia SaaS vencerá en ${daysLeft} días (el ${format(expiryDate, 'dd/MM/yyyy')}). Te sugerimos planificar tu renovación con anticipación para evitar cortes en el servicio.`;
+  }
+  
+  return `Información de tu suscripción: Tu licencia actual está activa y vencerá el ${format(expiryDate, 'dd/MM/yyyy')}. No es necesario realizar ninguna acción por el momento.`;
+};

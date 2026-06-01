@@ -8,6 +8,20 @@
   animation: filter-modal-enter 0.18s ease-out;
 }
 
+
+.filter-modal__company {
+  width: 100%;
+}
+
+.filter-modal__company .company-selector {
+  max-width: 100%;
+}
+
+.filter-modal__company .company-selector__label {
+  display: none;
+}
+
+
 @keyframes filter-modal-enter {
   from {
     opacity: 0;

@@ -8,9 +8,9 @@ import type {CompanySystemParamProj, CompanySystemParamRequest} from '@/Interfac
 import type { NameTranslation } from '@/Interfaces/Crm/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
 import { useCompanySystemParamForm } from '@/Hooks/Crm/useCompanySystemParamForm'
-import type { MetaChannelOption } from '@/Hooks/Crm/useCompanySystemParams'
+import type { MetaChannelOption } from '@/Interfaces/Crm/CompanySystemParams'
 import '@/Styles/Crm/CompanySystemParamForm.css'
-
+import { IoMdClose } from 'react-icons/io'
 interface CompanySystemParamFormProps {
   mode: 'create' | 'edit' | 'view'
   isOpen: boolean
@@ -70,7 +70,7 @@ export default function CompanySystemParamForm({
             className="company-param-modal__close"
             onClick={onClose}
           >
-            ×
+            <IoMdClose />
           </button>
         </header>
 
@@ -158,14 +158,6 @@ export default function CompanySystemParamForm({
                 <span />
               </label>
             </div>
-
-
-            {/*
-              Los parametros son de tiempo, mensaje, lapabras clave 
-              (que son aquellas que se guarda en formato jso, para ir guardan uno por uno)
-              por ejemplo para opciones que se envian en mensajes en interactive messages
-            */}
-
 
             <div className="company-param-modal__col company-param-modal__col--full">
               <Label htmlFor="value" className="company-param-modal__label">

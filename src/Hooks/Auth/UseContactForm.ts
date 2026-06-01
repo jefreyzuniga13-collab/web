@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react'
 import type { ContactLogInterface, ContactFormValues } from '@/Interfaces/Auth/ContactInterface'
-// import { useInnova } from '@/Hooks/Crm/useInnova'
-
 type Mode = 'create' | 'edit' | 'view'
 
 interface UseContactFormArgs {
@@ -23,17 +21,6 @@ interface FormErrors {
 
 export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
   const isView = mode === 'view'
-
-  // const {
-  //   data: clients,
-  //   loading: clientsLoading,
-  //   error: clientsError,
-  //   getAllAsync,
-  // } = useInnova()
-
-  // useEffect(() => {
-  //   getAllAsync()
-  // }, [])
 
   const [form, setForm] = useState<ContactFormValues>({
     waName: null,
@@ -104,35 +91,12 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
 
   const validate = useCallback(() => {
     const errs: FormErrors = {}
-   // if (!form.waName?.trim()) errs.waName = 'Nombre WhatsApp es obligatorio'
     if (!form.fullName?.trim()) errs.fullName = 'Nombre completo es obligatorio'
     if (!form.phone.trim()) {
       errs.phone = 'Número de teléfono obligatorio'
     } else if (!/^505\d{8}$/.test(form.phone)) {
       errs.phone = 'Formato inválido (505 + 8 dígitos)'
     }
-    // if (form.idType === 'NationalCard') {
-    //   if (!form.idCard?.trim()) {
-    //     errs.idCard = 'Cédula es obligatoria'
-    //   } else if (!/^(?:\d{3}-\d{6}-\d{4}[A-Z]|\d{13}[A-Z])$/.test(form.idCard)) {
-    //     errs.idCard = 'Formato de cédula inválido (XXX-XXXXXX-XXXXL o XXXXXXXXXXXXXL)'
-    //   }
-    // }
-    // if (form.idType === 'Passport') {
-    //   if (!form.passport?.trim()) {
-    //     errs.passport = 'Pasaporte es obligatorio'
-    //   } else if (!/^[A-Z]{1,2}\d{7}$/.test(form.passport)) {
-    //     errs.passport = 'Formato de pasaporte inválido (Letra + 7 dígitos)'
-    //   }
-    // }
-    // if (form.idType === 'ResidenceCard') {
-    //   if (!form.residenceCard?.trim()) {
-    //     errs.residenceCard = 'Residencia es obligatoria'
-    //   } else if (!/^(?:[A-Z]{1,2}\d{7}|\d{1,12})$/.test(form.residenceCard)) {
-    //     errs.residenceCard = 'Formato de residencia inválido (1 o  2Letra + 7 dígitos o  12 dígitos)'
-    //   }
-    // }
-    // if (!form.clientId) errs.clientId = 'Debe seleccionar un cliente'
     
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -150,10 +114,6 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     (field: keyof ContactFormValues, value: any) => {
       setForm(f => {
         const next = { ...f, [field]: value }
-        // if (field === 'clientId' && Array.isArray(clients) && clients.length) {
-        //   const v = String(value)
-        //   const selected = clients.find((c: any) => String(c.clientId) === v)
-        //   next.companyName = selected?.clientId ?? ''
         // }
         return next
       })
@@ -182,9 +142,6 @@ export function useContactForm({ mode, data, onSubmit }: UseContactFormArgs) {
     form,
     errors,
     isView,
-    // clients,
-    // clientsLoading,
-    // clientsError,
     handleChange,
     handleSelect,
     handleCheckbox,

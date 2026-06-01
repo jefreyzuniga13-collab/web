@@ -28,6 +28,47 @@
   margin: 0;
 }
 
+.main-license__container {
+  padding: var(--space-md) var(--space-2xl);
+  background-color: #f52f2f;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.main-license__text {
+  font-size: var(--font-size-base);
+  color: var(--text-white);
+  font-weight: 400;
+}
+
+.main-license__icon {
+  font-size: calc(var(--font-size-base) * 1.2);
+  color: var(--text-white);
+  display: inline-block;
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@keyframes pulse-subtle {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+  
 .main_header-text{
    color: var(--color-gray-600);
 }

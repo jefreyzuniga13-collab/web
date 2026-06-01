@@ -1,36 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {useState, useEffect} from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { CompanyInterface } from '@/Interfaces/Crm/CompanyInterface'
-import {CompanyService} from '@/Services/Crm/CompanyService'
+import { CompanyService } from '@/Services/Crm/CompanyService'
 
 export const useCompany = () => {
-
-    const [companies, setCompanies] = useState<CompanyInterface[] | null>(null)
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<Error | null>(null)
-
-    useEffect(() => {
-         getAllAsync();
-    }, [])
-    
-    const getAllAsync = async()=>{
-        setLoading(true)
-        setError(null)
-        try{
-            const data = await CompanyService.getAllAsync();
-            setCompanies(data);
-        }catch(err: any){
-            setError(err)
-            console.error("Error. Company request.")
-        }finally{
-            setLoading(false)
-        }
-    }
+  const {
+    data: companies = null,
+    isLoading: loading,
+    error,
+    refetch: getAllAsync,
+  } = useQuery<CompanyInterface[], Error>({
+    queryKey: ['companies'],
+    queryFn: CompanyService.getAllAsync,
+    staleTime: 1000 * 60 * 5,
+  })
 
   return {
     error,
     loading,
     companies,
-    getAllAsync
+    getAllAsync,
   }
 }

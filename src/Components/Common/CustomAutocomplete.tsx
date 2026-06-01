@@ -1,26 +1,26 @@
-import { Autocomplete, TextField, CircularProgress } from '@mui/material'
-import React, { useCallback } from 'react'
+import { Autocomplete, TextField, CircularProgress } from "@mui/material";
+import React, { useCallback } from "react";
 
-interface Option {
-  label: string
-  value: string | number
+export interface BaseAutocompleteOption {
+  label: string;
+  value: string | number;
 }
 
-interface Props {
-  label?: string
-  placeholder?: string
-  options: Option[]
-  value: Option | null
-  onChange: (value: Option | null) => void
-  disabled?: boolean
-  error?: boolean
-  helperText?: string
-  hasMore?: boolean
-  loading?: boolean
-  onLoadMore?: () => void
+interface Props<TOption extends BaseAutocompleteOption> {
+  label?: string;
+  placeholder?: string;
+  options: TOption[];
+  value: TOption | null;
+  onChange: (value: TOption | null) => void;
+  disabled?: boolean;
+  error?: boolean;
+  helperText?: string;
+  hasMore?: boolean;
+  loading?: boolean;
+  onLoadMore?: () => void;
 }
 
-const CustomAutocomplete: React.FC<Props> = ({
+function CustomAutocomplete<TOption extends BaseAutocompleteOption>({
   label,
   placeholder,
   options,
@@ -32,22 +32,26 @@ const CustomAutocomplete: React.FC<Props> = ({
   hasMore = false,
   loading = false,
   onLoadMore,
-}) => {
-  // Detectar scroll al final del popup
+}: Props<TOption>) {
   const handleScroll = useCallback(
     (event: React.SyntheticEvent) => {
-      if (!onLoadMore || !hasMore || loading) return
-      const listboxNode = event.currentTarget as HTMLElement
+      if (!onLoadMore || !hasMore || loading) return;
+
+      const listboxNode = event.currentTarget as HTMLElement;
+
       const nearBottom =
         listboxNode.scrollTop + listboxNode.clientHeight >=
-        listboxNode.scrollHeight - 40
-      if (nearBottom) onLoadMore()
+        listboxNode.scrollHeight - 40;
+
+      if (nearBottom) {
+        onLoadMore();
+      }
     },
     [onLoadMore, hasMore, loading]
-  )
+  );
 
   return (
-    <Autocomplete
+    <Autocomplete<TOption, false, false, false>
       disablePortal
       options={options}
       value={value}
@@ -58,7 +62,7 @@ const CustomAutocomplete: React.FC<Props> = ({
       loading={loading}
       ListboxProps={{
         onScroll: handleScroll,
-        style: { maxHeight: 250, overflow: 'auto' },
+        style: { maxHeight: 250, overflow: "auto" },
       }}
       renderInput={(params) => (
         <TextField
@@ -72,7 +76,10 @@ const CustomAutocomplete: React.FC<Props> = ({
             ...params.InputProps,
             endAdornment: (
               <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                {loading ? (
+                  <CircularProgress color="inherit" size={20} />
+                ) : null}
+
                 {params.InputProps.endAdornment}
               </>
             ),
@@ -81,7 +88,7 @@ const CustomAutocomplete: React.FC<Props> = ({
       )}
       fullWidth
     />
-  )
+  );
 }
 
-export default CustomAutocomplete
+export default CustomAutocomplete;

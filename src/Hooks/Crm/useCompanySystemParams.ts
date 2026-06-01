@@ -9,17 +9,6 @@ import type {
   CompanySystemParamRequest,
 } from '@/Interfaces/Crm/CompanySystemParams'
 
-export type MetaChannelOption = {
-  id: number
-  name: string
-}
-
-const metaChannels: MetaChannelOption[] = [
-  { id: 1, name: 'WhatsApp' },
-  { id: 2, name: 'Messenger' },
-  { id: 3, name: 'Instagram' },
-]
-
 export function useCompanySystemParams() {
   const [items, setItems] = useState<CompanySystemParamProj[]>([])
   const [companies, setCompanies] = useState<CompanyInterface[]>([])
@@ -32,8 +21,6 @@ export function useCompanySystemParams() {
 
   const [globalFilter, setGlobalFilterState] = useState('')
   const [companyId, setCompanyIdState] = useState<number | null>(null)
-  const [systemParamId, setSystemParamIdState] = useState<number | null>(null)
-  const [metaChannelId, setMetaChannelIdState] = useState<number | null>(null)
 
   const [loadingList, setLoadingList] = useState(false)
   const [loadingCatalogs, setLoadingCatalogs] = useState(false)
@@ -73,8 +60,6 @@ export function useCompanySystemParams() {
       s = pageSize,
       filter = globalFilter,
       cId = companyId,
-      spId = systemParamId,
-      chId = metaChannelId
     ) => {
       setLoadingList(true)
       setError(null)
@@ -85,8 +70,6 @@ export function useCompanySystemParams() {
           p,
           s,
           cId,
-          spId,
-          chId
         )
         setItems(resp.items)
         setTotalCount(resp.meta?.totalCount)
@@ -98,7 +81,7 @@ export function useCompanySystemParams() {
         setLoadingList(false)
       }
     },
-    [page, pageSize, globalFilter, companyId, systemParamId, metaChannelId]
+    [page, pageSize, globalFilter, companyId]
   )
 
   const create = useCallback(
@@ -229,15 +212,6 @@ export function useCompanySystemParams() {
     setPageState(1)
   }, [])
 
-  const setSystemParamId = useCallback((value: number | null) => {
-    setSystemParamIdState(value)
-    setPageState(1)
-  }, [])
-
-  const setMetaChannelId = useCallback((value: number | null) => {
-    setMetaChannelIdState(value)
-    setPageState(1)
-  }, [])
 
   useEffect(() => {
     loadCatalogs()
@@ -249,13 +223,12 @@ export function useCompanySystemParams() {
     }, 350)
 
     return () => window.clearTimeout(timeout)
-  }, [globalFilter, companyId, systemParamId, metaChannelId, pageSize, fetchPage])
+  }, [globalFilter, companyId, pageSize, fetchPage])
 
   return {
     items,
     companies,
     systemParams,
-    metaChannels,
     selectedItem,
     loading,
     error,
@@ -264,16 +237,12 @@ export function useCompanySystemParams() {
     totalCount,
     globalFilter,
     companyId,
-    systemParamId,
-    metaChannelId,
     modalMode,
     isModalOpen,
     setPage,
     setPageSize,
     setGlobalFilter,
     setCompanyId,
-    setSystemParamId,
-    setMetaChannelId,
     fetchPage,
     openCreate,
     openEdit,

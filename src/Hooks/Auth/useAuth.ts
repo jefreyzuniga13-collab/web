@@ -6,16 +6,7 @@ import { toast } from "react-toastify";
 import type { AppDispatch } from "@/Context";
 import { setCredentials, logout as clearAuth } from "@/Context/Slices/Auth/authSlice";
 import { QUERY_KEYS } from "@/Constants/queryKeys";
-import type {
-  ApiResponse,
-  AuthData,
-  ForgotPasswordRequest,
-  LoginRequest,
-  RegisterRequest,
-  ResetPasswordRequest,
-  VerifyEmailRequest,
-  LogOutAtResponseDto,
-} from "@/Interfaces/Auth/AuthInterface";
+import type { ApiResponse, AuthData, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, VerifyEmailRequest, LogOutAtResponseDto,} from "@/Interfaces/Auth/AuthInterface";
 import { authService } from "@/Services/auth/AuthService";
 import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage";
 
@@ -39,19 +30,21 @@ export function useAuth(): UseAuthHook {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const loginMutation = useMutation({
-    mutationFn: (payload: LoginRequest) => authService.loginAsync(payload),
+const loginMutation = useMutation({
+  mutationFn: (payload: LoginRequest) => authService.loginAsync(payload),
 
     onSuccess: (response) => {
-      
       dispatch(setCredentials(response.data));
 
+      if (response.data.showLicenseWarning) {
+        localStorage.setItem("showLicenseModalAfterLogin", "1");
+      } else {
+        localStorage.removeItem("showLicenseModalAfterLogin");
+      }
+
       toast.success(response.message);
+
       navigate("/chat", { replace: true });
-    },
-    
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
     },
   });
 
