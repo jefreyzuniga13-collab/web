@@ -1,16 +1,23 @@
+import { useEffect, useMemo, useState } from 'react'
 import { MenuItem, TextField } from '@mui/material'
 import Button from '@/Components/Common/Button'
 import { Label } from '@/Components/Common/Label'
-import { Textarea } from '@/Components/Common/Textarea'
 import type { CompanyInterface } from '@/Interfaces/Crm/CompanyInterface'
 import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
-import type {CompanySystemParamProj, CompanySystemParamRequest} from '@/Interfaces/Crm/CompanySystemParams'
+import type {
+  CompanySystemParamProj,
+  CompanySystemParamRequest,
+  MetaChannelOption,
+  SystemParamType,
+} from '@/Interfaces/Crm/CompanySystemParams'
 import type { NameTranslation } from '@/Interfaces/Crm/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
 import { useCompanySystemParamForm } from '@/Hooks/Crm/useCompanySystemParamForm'
-import type { MetaChannelOption } from '@/Interfaces/Crm/CompanySystemParams'
+import { SystemParamService } from '@/Services/Crm/SystemParamService'
+import CompanySystemParamValueField from '@/Components/Crm/CompanySystemParamValueField'
 import '@/Styles/Crm/CompanySystemParamForm.css'
 import { IoMdClose } from 'react-icons/io'
+
 interface CompanySystemParamFormProps {
   mode: 'create' | 'edit' | 'view'
   isOpen: boolean
@@ -32,6 +39,13 @@ export default function CompanySystemParamForm({
   onClose,
   onSubmit,
 }: CompanySystemParamFormProps) {
+  const [selectedSystemParam, setSelectedSystemParam] =
+    useState<SystemParamResponseDto | null>(null)
+
+  const [loadingSystemParam, setLoadingSystemParam] = useState(false)
+
+  const systemParamType = selectedSystemParam?.type as SystemParamType | undefined
+
   const {
     form,
     errors,
@@ -40,12 +54,77 @@ export default function CompanySystemParamForm({
     handleSelectNumber,
     handleValueChange,
     handleActiveChange,
+    handleConditionalValueChange,
     handleSubmit,
   } = useCompanySystemParamForm({
     mode,
     data: data || null,
+    systemParamType,
     onSubmit,
   })
+
+  const selectedSystemParamName = useMemo(() => {
+    if (selectedSystemParam?.name) {
+      return nameTranslations[selectedSystemParam.name as NameTranslation] ?? selectedSystemParam.name
+    }
+
+    const param = systemParams.find((item) => item.id === form.systemParamId)
+
+    if (!param) return ''
+
+    return nameTranslations[param.name as NameTranslation] ?? param.name
+  }, [form.systemParamId, selectedSystemParam, systemParams])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedSystemParam(null)
+      setLoadingSystemParam(false)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    if (!form.systemParamId || form.systemParamId <= 0) {
+      setSelectedSystemParam(null)
+      setLoadingSystemParam(false)
+      return
+    }
+
+    let ignore = false
+
+    const cachedParam = systemParams.find((item) => item.id === form.systemParamId) || null
+
+    if (cachedParam) {
+      setSelectedSystemParam(cachedParam)
+    }
+
+    const loadSystemParam = async () => {
+      setLoadingSystemParam(true)
+
+      try {
+        const resp = await SystemParamService.getByIdAsync(form.systemParamId)
+
+        if (!ignore) {
+          setSelectedSystemParam(resp)
+        }
+      } catch {
+        if (!ignore) {
+          setSelectedSystemParam(cachedParam)
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingSystemParam(false)
+        }
+      }
+    }
+
+    loadSystemParam()
+
+    return () => {
+      ignore = true
+    }
+  }, [isOpen, form.systemParamId, systemParams])
 
   if (!isOpen) return null
 
@@ -160,22 +239,20 @@ export default function CompanySystemParamForm({
             </div>
 
             <div className="company-param-modal__col company-param-modal__col--full">
-              <Label htmlFor="value" className="company-param-modal__label">
-                Valor *
-              </Label>
-
-              <Textarea
-                id="value"
-                name="value"
-                rows={7}
+              <CompanySystemParamValueField
                 value={form.value}
-                disabled={isView}
-                onChange={(e) => handleValueChange(e.target.value)}
-                className="company-param-modal__textarea"
+                type={systemParamType}
+                disabled={isView || loadingSystemParam || !form.systemParamId}
+                error={errors.value}
+                systemParamName={selectedSystemParamName}
+                onChange={handleValueChange}
+                onConditionalChange={handleConditionalValueChange}
               />
 
-              {errors.value && (
-                <div className="company-param-modal__error">{errors.value}</div>
+              {loadingSystemParam && (
+                <div className="company-param-modal__help">
+                  Cargando tipo de parámetro...
+                </div>
               )}
             </div>
 
@@ -206,7 +283,7 @@ export default function CompanySystemParamForm({
               <Button
                 type="submit"
                 variant="primary"
-                disabled={loading}
+                disabled={loading || loadingSystemParam}
                 className="company-param-modal__btn"
               >
                 {loading ? 'Guardando...' : mode === 'create' ? 'Crear' : 'Guardar'}

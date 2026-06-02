@@ -9,7 +9,7 @@ import { useSelector } from "react-redux"
 import vacio from '@/assets/vacio.png'
 import { formatearDecimales } from "@/Utils/calcularIVA"
 
-type SendProductMessageArgs = {
+type Props = {
   product: ProductoPCGInterface
   conversationId: number
   observation?: string
@@ -46,7 +46,7 @@ export const useProductMessageComposer = () => {
       fallbackMediaUrl,
       includeModifiers = true,
       codPrecio
-    }: SendProductMessageArgs) => {
+    }: Props) => {
       if (sending) return
       if (!conversationId) return
 

@@ -13,6 +13,7 @@ import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
 import { formatearDecimales } from "@/Utils/calcularIVA"
+import { clampQty } from "@/Utils/ECommerce/formatters"
 
 interface Props {
   prod: ProductoPCGInterface
@@ -21,12 +22,6 @@ interface Props {
   simpleQuantity: number
   handleChangeSimpleQuantity: (e: ChangeEvent<HTMLInputElement>) => void
   cartLoading: boolean
-}
-
-const clampQty = (n: number) => {
-  if (!Number.isFinite(n) || n <= 0) return 1
-  if (n > 1000) return 1000
-  return Math.floor(n)
 }
 
 export const ProductPCGTab = ({

@@ -14,14 +14,13 @@ import TicketModal from "@/Components/Crm/TicketModal";
 import useContact from "@/Hooks/Auth/useContact";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/Context";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/Context";
 import "@/Styles/Chat/SupportPage.css";
 import useLogCart from "@/Hooks/Crm/useLogCard";
 import { MdContacts } from "react-icons/md";
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
-import { store } from "@/Context";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
@@ -29,11 +28,13 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
+
   const dispatch = useAppDispatch();
-  const state = store.getState();
-  const isRoot = state.auth?.isRoot;
-  const licenseExpireAt = state.auth?.licenseExpireAt;
-  const showLicenseWarning = state.auth?.showLicenseWarning;
+
+  const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
+    (state: RootState) => state.auth
+  );
+
   const { fetchById, selectedData: contact } = useContact();
   const { fetchByContactId } = useLogCart();
 
@@ -61,7 +62,7 @@ const SupportPage: React.FC = () => {
     label,
     canAssign,
     showCompanyModal,
-    setShowCompanyModal
+    setShowCompanyModal,
   } = useSupportPage();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,6 +84,7 @@ const SupportPage: React.FC = () => {
 
   useEffect(() => {
     if (!activeConversation?.clientContactId) return;
+
     fetchById(activeConversation.clientContactId);
   }, [activeConversation?.clientContactId, fetchById]);
 
@@ -128,6 +130,7 @@ const SupportPage: React.FC = () => {
           noPedido: 0,
         })
       );
+
       return;
     }
 
@@ -137,6 +140,7 @@ const SupportPage: React.FC = () => {
 
     const loadCart = async () => {
       const log = await fetchByContactId(contact.id);
+
       if (cancelled) return;
 
       const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
@@ -152,14 +156,14 @@ const SupportPage: React.FC = () => {
 
       const arr = Array.isArray(cart) ? cart : [];
 
-          const count = arr[0]?.listDetalle?.reduce((sum, d) => {
-        // Solo sumamos si tipoComponente NO es "O"
-        if (d.tipoComponente !== "O") {
-          return sum + Number(d.cantidad ?? 0);
-        }
-        // Si es "O", retornamos el acumulador tal cual
-        return sum;
-      }, 0) ?? 0;
+      const count =
+        arr[0]?.listDetalle?.reduce((sum, d) => {
+          if (d.tipoComponente !== "O") {
+            return sum + Number(d.cantidad ?? 0);
+          }
+
+          return sum;
+        }, 0) ?? 0;
 
       dispatch(
         setContactCartBadge({
@@ -184,28 +188,28 @@ const SupportPage: React.FC = () => {
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
 
-            <div>   
+            <div>
               {isRoot && (
                 <button
                   className="sort-button"
                   onClick={() => setShowCompanyModal(true)}
                   title="Company filters"
+                  type="button"
                 >
-                  <FaBuilding  className="sort-button-icon" />
+                  <FaBuilding className="sort-button-icon" />
                 </button>
               )}
 
-                <button
-                  className="sort-button"
-                  onClick={() => setOrderModalVisible(true)}
-                  title="Ordenar filtros"
-                >
-                  <FaFilter className="sort-button-icon" />
-                </button>
+              <button
+                className="sort-button"
+                onClick={() => setOrderModalVisible(true)}
+                title="Ordenar filtros"
+                type="button"
+              >
+                <FaFilter className="sort-button-icon" />
+              </button>
             </div>
           </div>
-
-       
 
           <div className="inbox-title-container__filter">
             <Input
@@ -230,67 +234,86 @@ const SupportPage: React.FC = () => {
       </aside>
 
       <main className="main-content">
-         {/* Mostrar si licencia esta por vencer */}
-          {showLicenseWarning && (
-            <div className="main-license__container">
-              <IoMdHourglass fontSize={12} className="main-license__icon"/>
+        {showLicenseWarning && (
+          <div className="main-license__container">
+            <IoMdHourglass fontSize={12} className="main-license__icon" />
 
-              <span className="main-license__text">
-                {getLicenseMessage(licenseExpireAt)}
-              </span>
-            </div>
-          )}
+            <span className="main-license__text">
+              {getLicenseMessage(licenseExpireAt)}
+            </span>
+          </div>
+        )}
 
         <header className="main-header">
           <h2 className="main-title">
+            {convId != null && activeConversation?.systemDefinedCompanyName != null ? (
+              <span
+                style={{ marginLeft: "5px", marginRight: "5px" }}
+                className="main_header-text"
+              >
+                <MdContacts fontSize={12} className="main_header-icon" />{" "}
+                {activeConversation.systemDefinedCompanyName}
+              </span>
+            ) : (
+              ""
+            )}
 
-            {/* Empresa */}
-            {convId != null && activeConversation?.systemDefinedCompanyName != null ? 
-               <span style={{ marginLeft: '5px', marginRight: '5px' }} className="main_header-text" >
-                <MdContacts fontSize={12} className="main_header-icon" /> {activeConversation.systemDefinedCompanyName}
-              </span>  : ""}
-            
-            {/* Contacto */}
-            {convId != null && activeConversation?.clientContactName != null ? 
-              <span style={{ marginLeft: '5px', marginRight: '5px' }}  className="main_header-text">
-                <MdContacts fontSize={12}  className="main_header-icon"/> {activeConversation.clientContactName}
-              </span> 
-              : ""}
-            
-            {/* Telefono */}
-            {convId != null && activeConversation?.contactNumber != null ? 
-              <span style={{ marginLeft: '5px', marginRight: '5px',  }}  className="main_header-text">
-                 <FaPhoneAlt fontSize={12} className="main_header-icon" /> {activeConversation.contactNumber}
-              </span> 
-              : ""}
+            {convId != null && activeConversation?.clientContactName != null ? (
+              <span
+                style={{ marginLeft: "5px", marginRight: "5px" }}
+                className="main_header-text"
+              >
+                <MdContacts fontSize={12} className="main_header-icon" />{" "}
+                {activeConversation.clientContactName}
+              </span>
+            ) : (
+              ""
+            )}
+
+            {convId != null && activeConversation?.contactNumber != null ? (
+              <span
+                style={{ marginLeft: "5px", marginRight: "5px" }}
+                className="main_header-text"
+              >
+                <FaPhoneAlt fontSize={12} className="main_header-icon" />{" "}
+                {activeConversation.contactNumber}
+              </span>
+            ) : (
+              ""
+            )}
           </h2>
-
 
           <div className="btn-container">
             {convId && contact?.clienteCodigo && (
               <button
                 className="crearTicket-button"
                 onClick={() => setTicketOpen(true)}
+                type="button"
               >
                 <Sticker size={16} /> Crear Ticket
               </button>
             )}
+
             {convId && (
-              
               <div className={`inbox-list__action ${isClosed ? "btnDisabled" : ""}`}>
-              <button className={`close-btn`} onClick={handleCloseClick}>
-                <IoMdCloseCircleOutline size={14} /> Cerrar
-              </button>
-            
+                <button
+                  className="close-btn"
+                  onClick={handleCloseClick}
+                  type="button"
+                >
+                  <IoMdCloseCircleOutline size={14} /> Cerrar
+                </button>
 
-              <button
-                className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${isClosed ? "btnDisabled" : ""}`}
-                onClick={handleAssignClick}
-                disabled={isClosed}
-              >
-                <FaUserAlt size={16} /> {label}
-              </button>
-
+                <button
+                  className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${
+                    isClosed ? "btnDisabled" : ""
+                  }`}
+                  onClick={handleAssignClick}
+                  disabled={isClosed}
+                  type="button"
+                >
+                  <FaUserAlt size={16} /> {label}
+                </button>
               </div>
             )}
           </div>
@@ -313,7 +336,13 @@ const SupportPage: React.FC = () => {
             contactId={activeConversation?.clientContactId}
             selectedParam={selectedParam}
             conversationId={convId ?? 0}
-           metaChannel={activeConversation?.metaChannelId === CHANNEL.Whatsapp ? "WhatsApp" : activeConversation?.metaChannelId === CHANNEL.Messenger ? "Messenger" : "Instagram"}
+            metaChannel={
+              activeConversation?.metaChannelId === CHANNEL.Whatsapp
+                ? "WhatsApp"
+                : activeConversation?.metaChannelId === CHANNEL.Messenger
+                  ? "Messenger"
+                  : "Instagram"
+            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
             isAdmin={isAdmin}
@@ -323,7 +352,9 @@ const SupportPage: React.FC = () => {
 
       <button
         type="button"
-        className={`detail-aside__handle ${detailToggle ? "is-open" : "is-closed"}`}
+        className={`detail-aside__handle ${
+          detailToggle ? "is-open" : "is-closed"
+        }`}
         onClick={() => setDetailToggle((t) => !t)}
         disabled={!convId}
         aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
@@ -346,28 +377,25 @@ const SupportPage: React.FC = () => {
 
       {orderModalVisible && (
         <FilterOrderModal
-            currentOrder={filterOrder}
-            options={DEFAULT_OPTIONS}
-            onSave={(newOrder) => {
-              saveOrder(newOrder);
-              setOrderModalVisible(false);
-            }}
-
-            onClose={() => setOrderModalVisible(false)}
-            form={convHook.form}
-            handleDate={convHook.handleDate}
-            applyDateFilter={convHook.applyDateFilter}
-            clearFilter={convHook.clearFilter}
-            handleOptionChange={handleOptionChange}
-            sortedOptions={sortedOptions}
-            filter={filter}
-          />
+          currentOrder={filterOrder}
+          options={DEFAULT_OPTIONS}
+          onSave={(newOrder) => {
+            saveOrder(newOrder);
+            setOrderModalVisible(false);
+          }}
+          onClose={() => setOrderModalVisible(false)}
+          form={convHook.form}
+          handleDate={convHook.handleDate}
+          applyDateFilter={convHook.applyDateFilter}
+          clearFilter={convHook.clearFilter}
+          handleOptionChange={handleOptionChange}
+          sortedOptions={sortedOptions}
+          filter={filter}
+        />
       )}
 
-       {showCompanyModal && (
-        <CompanyModalFilter
-            onClose={() => setShowCompanyModal(false)}
-          />
+      {showCompanyModal && (
+        <CompanyModalFilter onClose={() => setShowCompanyModal(false)} />
       )}
 
       {ticketOpen &&

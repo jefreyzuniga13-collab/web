@@ -7,6 +7,7 @@ import type { AppDispatch } from "@/Context";
 import { useDispatch } from "react-redux";
 import { closeActiveSesionModal } from "@/Context/Slices/Chat/activeSesionModalSlice";
 import { saveFacturaTempo } from "@/Utils/facturaTempoStorage";
+import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage";
 
 interface LoginFormValues extends LoginRequest {
   remember: boolean;
@@ -39,42 +40,37 @@ export default function useLoginForm() {
     validationSchema,
     validateOnBlur: true,
     validateOnChange: true,
-  onSubmit: async (values, { setStatus, setSubmitting }) => {
-  setStatus(null);
 
-  try {
-    await login({
-      email: values.email,
-      password: values.password
-    });
+    onSubmit: async (values, { setStatus, setSubmitting }) => {
+      setStatus(null);
 
-    await saveFacturaTempo();
-    dispatch(closeActiveSesionModal());
-  } catch (err) {
-    localStorage.removeItem("showLicenseModalAfterLogin");
+      try {
+        await login({
+          email: values.email,
+          password: values.password,
+        });
 
-    const msg =
-      err instanceof Error
-        ? err.message
-        : "No se pudo iniciar sesión. Verifica tus credenciales.";
-
-    setStatus(msg);
-  } finally {
-    setSubmitting(false);
-  }
-}
-
+        await saveFacturaTempo();
+        dispatch(closeActiveSesionModal());
+      } catch (err) {
+        setStatus(formatErrorMessage(err));
+      } finally {
+        setSubmitting(false);
+      }
+    },
   });
 
   const confirmLogin = async () => {
-    if (!pendingLogin) {
-      return;
-    }
+    if (!pendingLogin) return;
 
-    await login(pendingLogin);
-    dispatch(closeActiveSesionModal());
-    setShowModal(false);
-    setPendingLogin(null);
+    try {
+      await login(pendingLogin);
+      dispatch(closeActiveSesionModal());
+      setShowModal(false);
+      setPendingLogin(null);
+    } catch (err) {
+      formik.setStatus(formatErrorMessage(err));
+    }
   };
 
   const cancelLogin = () => {
@@ -96,6 +92,6 @@ export default function useLoginForm() {
     formError: formik.status as string | undefined,
     showModal,
     confirmLogin,
-    cancelLogin
+    cancelLogin,
   };
 }

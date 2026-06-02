@@ -33,20 +33,14 @@ export function useAuth(): UseAuthHook {
 const loginMutation = useMutation({
   mutationFn: (payload: LoginRequest) => authService.loginAsync(payload),
 
-    onSuccess: (response) => {
-      dispatch(setCredentials(response.data));
+  onSuccess: (response) => {
+    dispatch(setCredentials(response.data));
 
-      if (response.data.showLicenseWarning) {
-        localStorage.setItem("showLicenseModalAfterLogin", "1");
-      } else {
-        localStorage.removeItem("showLicenseModalAfterLogin");
-      }
+    toast.success(response.message);
 
-      toast.success(response.message);
-
-      navigate("/chat", { replace: true });
-    },
-  });
+    navigate("/chat", { replace: true });
+  },
+});
 
   const registerMutation = useMutation({
     mutationFn: (payload: RegisterRequest) => authService.registerAsync(payload),

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { TextField } from '@mui/material'
+import { TextField, Tooltip } from '@mui/material'
 import IconButton from '@mui/material/IconButton'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
@@ -135,34 +135,50 @@ export default function CompaniesLicensePage() {
       render: row => (
         <>
           <IconButton size="medium" onClick={() => openView(row)}>
-            <VisibilityIcon fontSize="medium" />
+            <Tooltip title='Ver'>
+               <VisibilityIcon fontSize="medium" />
+            </Tooltip>
           </IconButton>
 
           <IconButton size="medium" onClick={() => openEdit(row)}>
-            <EditIcon fontSize="medium" />
+          <Tooltip title="editar">
+              <EditIcon fontSize="medium" />
+          </Tooltip>
           </IconButton>
 
           <IconButton size="medium" onClick={() => toggle(row.id)}>
             {row.isActive ? (
-              <ToggleOnIcon fontSize="medium" color="success" />
+             <Tooltip title='Desactivar'>
+               <ToggleOnIcon fontSize="medium" color="success" />
+             </Tooltip>
             ) : (
-              <ToggleOffIcon fontSize="medium" />
+             <Tooltip title="Activar">
+               <ToggleOffIcon fontSize="medium" />
+             </Tooltip>
+            )}
+          </IconButton>
+
+            <IconButton size="medium" onClick={() => toggleSuspend(row.id)}>
+            {row.isSuspended ? (
+             <Tooltip title="Suspender">
+               <PauseCircleIcon fontSize="medium" color="warning" />
+             </Tooltip>
+            ) : (
+             <Tooltip title="Reactivar">
+               <PlayCircleIcon fontSize="medium" />
+             </Tooltip>
             )}
           </IconButton>
 
           <IconButton size="medium" onClick={() => toggleLocked(row.id)}>
             {row.isLocked ? (
-              <LockIcon fontSize="medium" color="error" />
+             <Tooltip title="Bloquear">
+                 <LockIcon fontSize="medium" color="error" />
+             </Tooltip>
             ) : (
-              <LockOpenIcon fontSize="medium" />
-            )}
-          </IconButton>
-
-          <IconButton size="medium" onClick={() => toggleSuspend(row.id)}>
-            {row.isSuspended ? (
-              <PauseCircleIcon fontSize="medium" color="warning" />
-            ) : (
-              <PlayCircleIcon fontSize="medium" />
+             <Tooltip title="Desbloquear">
+               <LockOpenIcon fontSize="medium" />
+             </Tooltip>
             )}
           </IconButton>
         </>

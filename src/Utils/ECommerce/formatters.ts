@@ -14,7 +14,6 @@ export const normalizeNumber = (v: unknown, fallback = 0) => {
   return n
 }
 
-
 export function toNumberNoLeadingZeros(raw: string): number {
   const s = String(raw ?? "").trim();
   if (!s) return 0;
@@ -173,3 +172,41 @@ export const getLicenseMessage = (expiryDateString: string) => {
   
   return `Información de tu suscripción: Tu licencia actual está activa y vencerá el ${format(expiryDate, 'dd/MM/yyyy')}. No es necesario realizar ninguna acción por el momento.`;
 };
+
+
+export const clampQty = (n: number) => {
+  if (!Number.isFinite(n) || n <= 0) return 1
+  if (n > 100) return 100
+  return Math.floor(n)
+}
+
+export const cleanText = (value: string | number | null | undefined) => {
+  return String(value ?? "").trim()
+}
+
+
+export const getErrorMessage = (error: unknown) => {
+  if (typeof error === "string") return error
+  if (error instanceof Error) return error.message
+
+  const payload = error as {
+    message?: string
+    response?: {
+      data?: {
+        message?: string
+        data?: {
+          header?: {
+            msj?: string
+          }
+        }
+      }
+    }
+  }
+
+  return (
+    payload.response?.data?.data?.header?.msj ||
+    payload.response?.data?.message ||
+    payload.message ||
+    "No se pudo agregar el producto."
+  )
+}

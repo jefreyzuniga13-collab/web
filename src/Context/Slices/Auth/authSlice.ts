@@ -9,13 +9,14 @@ interface AuthState {
   expiresAt: string | null;
   checkingSession: boolean;
   isRoot: boolean;
-  isAdmin: boolean
+  isAdmin: boolean;
   empresaId: string;
   companyImageUrl: string;
   companySistema: string;
   codReferenciaPCG: string;
-  licenseExpireAt:string;
-  showLicenseWarning: boolean
+  licenseExpireAt: string;
+  showLicenseWarning: boolean;
+  showLicenseModalOnLogin: boolean;
 }
 
 const initialState: AuthState = {
@@ -29,8 +30,9 @@ const initialState: AuthState = {
   companyImageUrl: "",
   companySistema: "",
   codReferenciaPCG: "",
-  licenseExpireAt:"",
-  showLicenseWarning:false,
+  licenseExpireAt: "",
+  showLicenseWarning: false,
+  showLicenseModalOnLogin: false,
 };
 
 export const refreshTokenThunk = createAsyncThunk<
@@ -76,6 +78,7 @@ const limpiarSesion = (state: AuthState) => {
   state.codReferenciaPCG = "";
   state.licenseExpireAt = "";
   state.showLicenseWarning = false;
+  state.showLicenseModalOnLogin = false;
 };
 
 const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
@@ -85,11 +88,11 @@ const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.companyImageUrl = payload.companyImageUrl ?? "";
   state.companySistema = payload.companySistema ?? "";
   state.codReferenciaPCG = payload.codReferenciaPCG ?? "";
-  state.isRoot = payload.isRoot;
-  state.isAdmin = payload.isAdmin;
+  state.isRoot = Boolean(payload.isRoot);
+  state.isAdmin = Boolean(payload.isAdmin);
   state.checkingSession = false;
-  state.licenseExpireAt = payload.licenseExpireAt;
-  state.showLicenseWarning = payload.showLicenseWarning;
+  state.licenseExpireAt = payload.licenseExpireAt ?? "";
+  state.showLicenseWarning = Boolean(payload.showLicenseWarning);
 };
 
 const authSlice = createSlice({
@@ -99,6 +102,11 @@ const authSlice = createSlice({
     setCredentials(state, action: PayloadAction<AuthData>) {
       aplicarSesion(state, action.payload);
       state.expiresAt = action.payload.expiresAt;
+      state.showLicenseModalOnLogin = Boolean(action.payload.showLicenseWarning);
+    },
+
+    markLicenseModalShown(state) {
+      state.showLicenseModalOnLogin = false;
     },
 
     setAuthenticated(state, action: PayloadAction<boolean>) {
@@ -160,14 +168,14 @@ export const {
   startCheckingSession,
   finishCheckingSession,
   logout,
+  markLicenseModalShown,
 } = authSlice.actions;
 
 export const selectIsAdmin = (state: RootState) =>
   state.auth.isAdmin;
 
-
 export const selectIsRoot = (state: RootState) =>
-  state.auth.isRoot
+  state.auth.isRoot;
 
 export const selectUserId = (state: RootState) =>
   Number(state.auth.userId);
@@ -190,8 +198,10 @@ export const selectLicenseExpireAt = (state: RootState) =>
 export const selectShowLicenseWarning = (state: RootState) =>
   state.auth.showLicenseWarning;
 
+export const selectShowLicenseModalOnLogin = (state: RootState) =>
+  state.auth.showLicenseModalOnLogin;
+
 export const selectIsAuthenticated = (state: RootState) =>
   state.auth.isAuthenticated;
-
 
 export default authSlice.reducer;

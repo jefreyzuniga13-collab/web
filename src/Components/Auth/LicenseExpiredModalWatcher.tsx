@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/Context";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/Context";
 import { LicenseExpiredModal } from "@/Components/Auth/LicenseExpiredModal";
+import { markLicenseModalShown } from "@/Context/Slices/Auth/authSlice";
 
 export function LicenseExpiredModalWatcher() {
+  const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
 
   const {
@@ -11,28 +13,23 @@ export function LicenseExpiredModalWatcher() {
     checkingSession,
     licenseExpireAt,
     showLicenseWarning,
+    showLicenseModalOnLogin,
   } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (checkingSession) return;
     if (!isAuthenticated) return;
+    if (!showLicenseWarning) return;
+    if (!showLicenseModalOnLogin) return;
 
-    const flag = localStorage.getItem("showLicenseModalAfterLogin");
-
-    if (flag !== "1") return;
-
-    if (!showLicenseWarning) {
-      localStorage.removeItem("showLicenseModalAfterLogin");
-      return;
-    }
-
-    localStorage.removeItem("showLicenseModalAfterLogin");
     setOpen(true);
+    dispatch(markLicenseModalShown());
   }, [
     checkingSession,
     isAuthenticated,
-    licenseExpireAt,
     showLicenseWarning,
+    showLicenseModalOnLogin,
+    dispatch,
   ]);
 
   if (!open) return null;

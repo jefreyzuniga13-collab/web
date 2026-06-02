@@ -30,11 +30,11 @@ export const limpiarAlmacenamientoCliente = async () => {
           document.cookie = `${nombre}=; Max-Age=0; path=/;`;
           document.cookie = `${nombre}=; Max-Age=0; path=/crm;`;
 
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=crmdelipollo.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=orbitrachat.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=orbitrachat.com;`;
 
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.crmdelipollo.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.crmdelipollo.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.orbitrachat.com;`;
+          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.orbitrachat.com;`;
         }
       });
     }

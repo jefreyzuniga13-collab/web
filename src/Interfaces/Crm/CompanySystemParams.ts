@@ -1,3 +1,21 @@
+export type SystemParamType = 'Prompts' | 'Temp' | 'Keywords' | 'Conditional'
+
+export interface CompanySystemParamFormErrors {
+  companyId?: string
+  systemParamId?: string
+  metaChannelId?: string
+  value?: string
+}
+
+export type CompanySystemParamValueEditorProps = {
+  value: string
+  type?: SystemParamType | string
+  disabled?: boolean
+  error?: string
+  systemParamName?: string
+  onChange: (value: string) => void
+}
+
 export interface CompanySystemParamsInterface{
     companyId: number;
     systemParamId: number;

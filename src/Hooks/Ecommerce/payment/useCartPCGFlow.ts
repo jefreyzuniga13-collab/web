@@ -1,10 +1,8 @@
-
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { toast } from "react-toastify"
 import type { AppDispatch } from "@/Context"
-import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
+import type { AddProductInput, LockedInfo, PickerSelectValue, ProductoPCGInterface, ResolveOrderResult, SelectedModifierOption, SucursalPickerProps } from "@/Interfaces/Chat/ProductPCGInterface"
 import type {DetalleFacturaTempoData,DetalleFacturaTempoRequest,FaloteRequestDto} from "@/Interfaces/Crm/CartPCGInterface"
 import type {LogCartRequestDto,LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
 import {addProductTempoAsync, getProductFromCarAsync} from "@/Context/Slices/Ecommerce/cartSlice"
@@ -14,88 +12,7 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
 import { selectCompanySistema, selectCodReferenciaPCG } from "@/Context/Slices/Auth/authSlice"
 import { FechaManagua } from "@/Utils/FechaManagua"
-
-export type LockedInfo = {
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-}
-
-export type SelectedModifierOption = {
-  codTipoModificador: string
-  codModificador: string
-  descripcionMod: string
-  codOpcion: string
-  descripcionOp: string
-  codPrecio: string
-  precioVenta: number
-  cantidad: number
-  codUm: string
-  aplicaIva: string
-}
-
-export type AddProductParams = {
-  product: ProductoPCGInterface
-  qty: number
-  observacion: string
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-  modifierOptions: SelectedModifierOption[]
-  onDoneUiReset: boolean
-}
-
-type AddProductInput = {
-  product: ProductoPCGInterface
-  qty: number
-  observacion?: string
-  branch?: string
-  branchName?: string
-  wherehouse?: string
-  wherehouseCode?: string
-  serie?: string
-  codPrecio?: string
-  modifierOptions?: SelectedModifierOption[]
-  onDoneUiReset?: boolean
-}
-
-type PickerSelectValue = {
-  codsucursal: string
-  sucursal: string
-  nombodega: string
-  codBodega: string
-  serie: string
-  codPrecio?: string | null
-  codprecio?: string | null
-  CodPrecio?: string | null
-}
-
-export type SucursalPickerProps = {
-  open: boolean
-  loading: boolean
-  codProducto: string
-  items: ExistenciaSucursalItem[]
-  selectedCodSucursal: string | null
-  onClose: () => void
-  onSelect: (v: PickerSelectValue) => void | Promise<void>
-}
-
-type ResolveOrderResult = {
-  existingLog: LogCartResponseDto | null
-  noPedido: string
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-}
+import { clampQty, cleanText, getErrorMessage } from "@/Utils/ECommerce/formatters"
 
 type CartServiceWithCleanup = typeof CartService & {
   LimpiarFacturaTempo?: (
@@ -110,45 +27,11 @@ type WithCodPrecio = {
   CodPrecio?: string | null
 }
 
-const clampQty = (n: number) => {
-  if (!Number.isFinite(n) || n <= 0) return 1
-  if (n > 1000) return 1000
-  return Math.floor(n)
-}
 
-const cleanText = (value: string | number | null | undefined) => {
-  return String(value ?? "").trim()
-}
 
 const getCodPrecio = (value: unknown) => {
   const item = value as WithCodPrecio | null
   return cleanText(item?.codPrecio ?? item?.codprecio ?? item?.CodPrecio)
-}
-
-const getErrorMessage = (error: unknown) => {
-  if (typeof error === "string") return error
-  if (error instanceof Error) return error.message
-
-  const payload = error as {
-    message?: string
-    response?: {
-      data?: {
-        message?: string
-        data?: {
-          header?: {
-            msj?: string
-          }
-        }
-      }
-    }
-  }
-
-  return (
-    payload.response?.data?.data?.header?.msj ||
-    payload.response?.data?.message ||
-    payload.message ||
-    "No se pudo agregar el producto."
-  )
 }
 
 export const useCartPCGFlow = (conversationId: number, contactId: number, metaChannel: string) => {

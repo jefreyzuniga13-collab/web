@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import type {CompanySystemParamProj, CompanySystemParamRequest} from '@/Interfaces/Crm/CompanySystemParams'
+import type {
+  CompanySystemParamProj,
+  CompanySystemParamRequest,
+  SystemParamType,
+} from '@/Interfaces/Crm/CompanySystemParams'
 
 interface UseCompanySystemParamFormParams {
   mode: 'create' | 'edit' | 'view'
   data?: CompanySystemParamProj | null
+  systemParamType?: SystemParamType | string
   onSubmit: (values: CompanySystemParamRequest) => void | Promise<void>
 }
 
@@ -15,9 +20,32 @@ const initialForm: CompanySystemParamRequest = {
   value: '',
 }
 
+const parseKeywords = (raw: string): string[] => {
+  if (!raw.trim()) return []
+
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => typeof item === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
+
+const isValidJsonArrayString = (raw: string) => {
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')
+  } catch {
+    return false
+  }
+}
+
 export function useCompanySystemParamForm({
   mode,
   data,
+  systemParamType,
   onSubmit,
 }: UseCompanySystemParamFormParams) {
   const isView = mode === 'view'
@@ -35,6 +63,7 @@ export function useCompanySystemParamForm({
         isActive: data.isActive,
         value: data.value ?? '',
       })
+
       setErrors({})
       return
     }
@@ -44,6 +73,34 @@ export function useCompanySystemParamForm({
       setErrors({})
     }
   }, [mode, data])
+
+  useEffect(() => {
+    if (!systemParamType) return
+    if (mode !== 'create') return
+
+    setForm((prev) => {
+      if (systemParamType === 'Conditional') {
+        return {
+          ...prev,
+          value: '',
+        }
+      }
+
+      if (systemParamType === 'Keywords') {
+        return {
+          ...prev,
+          value: '[]',
+        }
+      }
+
+      return prev
+    })
+
+    setErrors((prev) => ({
+      ...prev,
+      value: '',
+    }))
+  }, [systemParamType, mode])
 
   const validate = useCallback(() => {
     const newErrors: Record<string, string> = {}
@@ -60,13 +117,51 @@ export function useCompanySystemParamForm({
       newErrors.metaChannelId = 'El canal es obligatorio'
     }
 
-    if (!form.value.trim()) {
-      newErrors.value = 'El valor es obligatorio'
+    if (!systemParamType) {
+      newErrors.value = 'No se pudo identificar el tipo del parámetro'
+    }
+
+    if (systemParamType === 'Prompts') {
+      if (!form.value.trim()) {
+        newErrors.value = 'El mensaje es obligatorio'
+      }
+    }
+
+    if (systemParamType === 'Temp') {
+      if (!form.value.trim()) {
+        newErrors.value = 'El tiempo es obligatorio'
+      } else if (!/^[1-9]\d*$/.test(form.value.trim())) {
+        newErrors.value = 'El tiempo debe ser un número mayor que 0'
+      }
+    }
+
+    if (systemParamType === 'Keywords') {
+      const keywords = parseKeywords(form.value)
+
+      if (!form.value.trim()) {
+        newErrors.value = 'Debe agregar al menos una palabra clave'
+      } else if (!isValidJsonArrayString(form.value)) {
+        newErrors.value = 'El formato de palabras clave no es válido'
+      } else if (keywords.length === 0) {
+        newErrors.value = 'Debe agregar al menos una palabra clave'
+      } else if (keywords.length > 10) {
+        newErrors.value = 'Solo se permiten hasta 10 palabras clave'
+      } else if (keywords.some((keyword) => keyword.trim().length > 20)) {
+        newErrors.value = 'Cada palabra clave debe tener máximo 20 caracteres'
+      } else if (keywords.some((keyword) => !keyword.trim())) {
+        newErrors.value = 'No se permiten palabras clave vacías'
+      }
+    }
+
+    if (systemParamType === 'Conditional') {
+      if (form.value !== '' && form.value !== 'true') {
+        newErrors.value = 'El valor condicional solo puede ser activo o vacío'
+      }
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [form])
+  }, [form, systemParamType])
 
   const setField = useCallback(
     <K extends keyof CompanySystemParamRequest>(
@@ -103,6 +198,13 @@ export function useCompanySystemParamForm({
     [setField]
   )
 
+  const handleConditionalValueChange = useCallback(
+    (checked: boolean) => {
+      setField('value', checked ? 'true' : '')
+    },
+    [setField]
+  )
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
@@ -113,7 +215,11 @@ export function useCompanySystemParamForm({
       setLoading(true)
 
       try {
-        await onSubmit(form)
+        await onSubmit({
+          ...form,
+          value: form.value ?? '',
+        })
+
         setErrors({})
       } finally {
         setLoading(false)
@@ -131,6 +237,7 @@ export function useCompanySystemParamForm({
     handleSelectNumber,
     handleValueChange,
     handleActiveChange,
+    handleConditionalValueChange,
     handleSubmit,
   }
 }

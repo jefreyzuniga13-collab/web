@@ -10,19 +10,17 @@ import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
 import "@/Styles/Ecommerce/ModifierAccordion.css"
 import type {
+  AddProductParams,
   listaOpciones,
   ProductoModificadorPCGInterface,
   ProductoPCGInterface,
+  SelectedModifierOption,
 } from "@/Interfaces/Chat/ProductPCGInterface"
 import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
-import type {
-  AddProductParams,
-  SelectedModifierOption,
-} from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import ModifierAccordion from "@/Components/ECommerce/Tabs/ModifierAccordion"
 

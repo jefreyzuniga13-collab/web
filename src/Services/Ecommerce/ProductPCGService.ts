@@ -5,6 +5,7 @@ import type {
   ProductoPCGInterface,
 } from "@/Interfaces/Chat/ProductPCGInterface";
 import type { ApiPCGResponse } from "@/Interfaces/Common/GlobalPCGInterface";
+import { PCG_SERVICES } from "@/Constants/pcgservices";
 class ProductPCGServ {
 
   async getAll(
@@ -15,9 +16,12 @@ class ProductPCGServ {
   ): Promise<ProductoPCGInterface[]> {
     
     const activePrecio = (codPrecio && codPrecio.length > 0) ? codPrecio : "01";
+    const codTipoServicio =  PCG_SERVICES.CRM;
+    const opcion = 'BD';
+    const codLinea = 'T'
 
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}/BD/T`,
+        `Catalogos/ListaProducto/${page}/${pageSize}/${descripcion}/${opcion}/${codLinea}/${codTipoServicio}`,
          {
           params: {
             codPrecio: activePrecio 
@@ -35,8 +39,10 @@ class ProductPCGServ {
     ): Promise<ProductoPCGInterface[]> {
       
       const activePrecio = (codPrecio && codPrecio.length > 0) ? codPrecio : "01";
+      const codTipoServicio = PCG_SERVICES.CRM;
+      
       const { data } = await apiPCG.get<ApiPCGResponse<ProductoPCGInterface[]>>(
-        `Catalogos/ProductosPorCategoria/${codCategoria}/${page}/${pageSize}`, 
+        `Catalogos/ProductosPorCategoria/${codCategoria}/${page}/${pageSize}/${codTipoServicio}`, 
         {
           params: {
             codPrecio: activePrecio
@@ -58,9 +64,11 @@ class ProductPCGServ {
     codProducto: string,
     codPrecio: string
   ): Promise<ProductoModificadorPCGInterface[]> {
+    const codTipoServicio = PCG_SERVICES.CRM;
+
       const { data } = await apiPCG.get<
         ApiPCGResponse<ProductoModificadorPCGInterface[]>
-      >(`Catalogos/ModificadorOpcion/${codProducto}/${codPrecio}`);
+      >(`Catalogos/ModificadorOpcion/${codProducto}/${codTipoServicio}/${codPrecio}`);
       return data.data;
 
   }
