@@ -16,7 +16,10 @@ interface FormErrors {
 const initialForm: LicenseRequest = {
   name: '',
   description: '',
-  isActive: true
+  isActive: true,
+  benefits: [], // Se inicializa como un array de strings vacío
+  isRecurrent: true,
+  duration: 1 
 }
 
 const initialErrors: FormErrors = {
@@ -35,7 +38,10 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
       setForm({
         name: data.name ?? '',
         description: data.description ?? '',
-        isActive: data.isActive ?? true
+        isActive: data.isActive ?? true,
+        benefits: Array.isArray(data.benefits) ? data.benefits : [],
+        isRecurrent: data.isRecurrent ?? false,
+        duration: data.duration ?? 1
       })
     } else {
       setForm(initialForm)
@@ -60,13 +66,15 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
     setErrors(errs)
 
     return !errs.name && !errs.description
-  }, [form])
+  }, [form.name, form.description])
 
+  // Manejador para inputs estándar de texto
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm(f => ({ ...f, [name]: value }))
   }, [])
 
+  // Manejador para los checkboxes booleanos
   const handleCheckbox = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target
     setForm(f => ({ ...f, [name]: checked }))
@@ -91,6 +99,7 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
     isView,
     handleChange,
     handleCheckbox,
-    handleSubmit
+    handleSubmit,
+    setForm
   }
 }

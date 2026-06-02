@@ -2,6 +2,9 @@ export interface LicenseRequest {
     name: string;
     description: string;
     isActive: boolean;
+    isRecurrent: boolean;
+    duration?: number; // Solo se requiere si isRecurrent es true
+    benefits: string[]; // Lista de beneficios
 }
 
 export interface CompaniesLicenseRequest {
@@ -27,6 +30,9 @@ export interface LicenseProj {
     updatedById: number;
     updatedByName: string;
     updatedAt: string;
+    isRecurrent: boolean;
+    duration?: number; // Solo se requiere si isRecurrent es true
+    benefits: string[]; // Lista de beneficios
 }
 
 export interface CompaniesLicenseProj {
