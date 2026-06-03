@@ -3,43 +3,48 @@ import Input from '@/Components/Common/Input'
 import { Label } from '@/Components/Common/Label'
 import Button from '@/Components/Common/Button'
 import { useLicenseForm } from '@/Hooks/Crm/License/useLicenseForm'
-import type { LicenseRequest } from '@/Interfaces/Crm/LicenseInterfaz'
+import type { LicensePeriodProj, LicenseProj, LicenseRequest } from '@/Interfaces/Crm/LicenseInterfaz'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import '@/Styles/Crm/LicenseModal.css'
 
 interface Props {
   mode: 'create' | 'edit' | 'view'
   isOpen: boolean
-  data?: LicenseRequest | null
+  data?: LicenseProj | null
+  licensePeriods: LicensePeriodProj[]
   onClose: () => void
   onSubmit: (values: LicenseRequest) => void
   loading: boolean
 }
 
-export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit, loading }: Props) {
-  // Nota: Asegúrate de que tu hook useLicenseForm exponga "setForm" con el tipo correcto:
-  // Dispatch<SetStateAction<LicenseRequest>>
-  const { form, 
-    errors, 
-    isView, 
-    handleChange, 
-    handleCheckbox, 
+export default function LicenseModalForm({
+  mode,
+  isOpen,
+  data,
+  licensePeriods,
+  onClose,
+  onSubmit,
+  loading
+}: Props) {
+  const {
+    form,
+    errors,
+    isView,
+    handleChange,
+    handleCheckbox,
     handleSubmit,
-    setForm 
+    setForm
   } = useLicenseForm({ mode, data, onSubmit })
 
-  // Estado local para el texto del beneficio que se está escribiendo
-  const [newBenefit, setNewBenefit] = useState<string>('')
+  const [newBenefit, setNewBenefit] = useState('')
 
   if (!isOpen) return null
 
-  // Obtener de forma segura los beneficios asegurando que es un array de strings
   const getBenefitsArray = (): string[] => {
     if (!form.benefits) return []
     if (Array.isArray(form.benefits)) return form.benefits
-    
+
     try {
-      // Por si acaso el backend o el estado inicial lo maneja como un JSON string
       const parsed = JSON.parse(form.benefits)
       return Array.isArray(parsed) ? parsed : []
     } catch {
@@ -47,7 +52,17 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
     }
   }
 
-  // Agregar un beneficio al array
+  const handlePeriodChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const licensePeriodId = Number(e.target.value)
+    const selectedPeriod = licensePeriods.find(period => period.id === licensePeriodId)
+
+    setForm(prev => ({
+      ...prev,
+      licensePeriodId,
+      duration: selectedPeriod?.months ?? 1
+    }))
+  }
+
   const handleAddBenefit = (): void => {
     const trimmedBenefit = newBenefit.trim()
     if (!trimmedBenefit) return
@@ -55,39 +70,27 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
     const currentBenefits = getBenefitsArray()
 
     if (!currentBenefits.includes(trimmedBenefit)) {
-      const updatedBenefits = [...currentBenefits, trimmedBenefit]
-      
-      if (setForm) {
-        setForm((prev: LicenseRequest) => ({ ...prev, benefits: updatedBenefits }))
-      } else {
-        // En caso de que uses estrictamente el handleChange del hook simulando el evento
-        const syntheticEvent = {
-          target: { name: 'benefits', value: updatedBenefits }
-        } as unknown as ChangeEvent<HTMLInputElement>
-        handleChange(syntheticEvent)
-      }
+      setForm((prev: LicenseRequest) => ({
+        ...prev,
+        benefits: [...currentBenefits, trimmedBenefit]
+      }))
     }
-    setNewBenefit('') // Limpiar el input
+
+    setNewBenefit('')
   }
 
-  // Eliminar un beneficio del array por su índice
   const handleRemoveBenefit = (indexToRemove: number): void => {
     const updatedBenefits = getBenefitsArray().filter((_, index) => index !== indexToRemove)
 
-    if (setForm) {
-      setForm((prev: LicenseRequest) => ({ ...prev, benefits: updatedBenefits }))
-    } else {
-      const syntheticEvent = {
-        target: { name: 'benefits', value: updatedBenefits }
-      } as unknown as ChangeEvent<HTMLInputElement>
-      handleChange(syntheticEvent)
-    }
+    setForm((prev: LicenseRequest) => ({
+      ...prev,
+      benefits: updatedBenefits
+    }))
   }
 
-  // Manejar el "Enter" en el input de beneficios
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
-      e.preventDefault() // Evita que el formulario se envíe de golpe
+      e.preventDefault()
       handleAddBenefit()
     }
   }
@@ -101,13 +104,14 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             {mode === 'edit' && 'Editar Licencia'}
             {mode === 'view' && 'Detalle Licencia'}
           </h2>
+
           <button type="button" className="cm-modal__close" onClick={onClose}>
             ×
           </button>
         </header>
+
         <form className="cm-modal__body" onSubmit={handleSubmit}>
           <div className="cm-modal__grid">
-
             <div className="cm-modal__col">
               <Label htmlFor="name">Nombre *</Label>
               <Input
@@ -141,25 +145,39 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 onChange={handleCheckbox}
                 disabled={isView}
               />
-              <Label htmlFor="isRecurrent" className="label-checkbox">Renovable / Recurrente</Label>
+              <Label htmlFor="isRecurrent" className="label-checkbox">
+                Renovable / Recurrente
+              </Label>
             </div>
 
             {form.isRecurrent && (
               <div className="cm-modal__col">
-                <Label htmlFor="duration">Duración</Label>
-                <Input
-                  id="duration"
-                  name="duration"
-                  value={form.duration || ''}
-                  onChange={handleChange}
+                <Label htmlFor="licensePeriodId">Periodo *</Label>
+                <select
+                  id="licensePeriodId"
+                  name="licensePeriodId"
+                  value={form.licensePeriodId || 0}
+                  onChange={handlePeriodChange}
                   disabled={isView}
-                />
+                  className="cm-modal__select"
+                >
+                  <option value={0}>Seleccione un periodo</option>
+                  {licensePeriods.map(period => (
+                    <option key={period.id} value={period.id}>
+                      {period.name} - {period.months} mes(es)
+                    </option>
+                  ))}
+                </select>
+
+                {errors.licensePeriodId && (
+                  <div className="cm-modal__error">{errors.licensePeriodId}</div>
+                )}
               </div>
             )}
 
-            <div className="cm-modal__col cm-modal__col">
-              <Label htmlFor="newBenefit">Beneficios (Enter para guardar)</Label>
-              
+            <div className="cm-modal__col">
+              <Label htmlFor="newBenefit">Beneficios</Label>
+
               {!isView && (
                 <div className="cm-modal__benefit-input-group">
                   <Input
@@ -170,6 +188,14 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                     onChange={(e) => setNewBenefit(e.target.value)}
                     onKeyDown={handleKeyDown}
                   />
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleAddBenefit}
+                  >
+                    Agregar
+                  </Button>
                 </div>
               )}
 
@@ -177,10 +203,11 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 {getBenefitsArray().map((benefit, index) => (
                   <span key={`${benefit}-${index}`} className="cm-modal__chip">
                     {benefit}
+
                     {!isView && (
-                      <button 
-                        type="button" 
-                        className="cm-modal__chip-remove" 
+                      <button
+                        type="button"
+                        className="cm-modal__chip-remove"
                         onClick={() => handleRemoveBenefit(index)}
                       >
                         ×
@@ -189,10 +216,9 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                   </span>
                 ))}
               </div>
-
             </div>
 
-          <div className="cm-modal__col cm-modal__col--checkbox">
+            <div className="cm-modal__col cm-modal__col--checkbox">
               <input
                 type="checkbox"
                 id="isActive"
@@ -201,18 +227,36 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 onChange={handleCheckbox}
                 disabled={isView}
               />
-              <Label htmlFor="isActive" className="label-checkbox">Activo</Label>
+              <Label htmlFor="isActive" className="label-checkbox">
+                Activo
+              </Label>
             </div>
           </div>
+
           <footer className="cm-modal__footer">
-            <Button variant="secondary" onClick={onClose} className="cm-modal__footer__btn">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              className="cm-modal__footer__btn"
+            >
               Cancelar
             </Button>
+
             {!isView && (
-              <Button variant="primary" type="submit" className="cm-modal__footer__btn" disabled={loading}>
-                {loading ? <AiOutlineLoading3Quarters fontSize={16} className="animate-spin" /> :
-                  mode === 'create' ? 'Crear' : 'Guardar'
-                }
+              <Button
+                variant="primary"
+                type="submit"
+                className="cm-modal__footer__btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <AiOutlineLoading3Quarters fontSize={16} className="animate-spin" />
+                ) : mode === 'create' ? (
+                  'Crear'
+                ) : (
+                  'Guardar'
+                )}
               </Button>
             )}
           </footer>

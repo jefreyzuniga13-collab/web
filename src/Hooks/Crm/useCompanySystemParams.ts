@@ -46,7 +46,7 @@ export function useCompanySystemParams() {
       ])
 
       setCompanies(companiesData ?? [])
-      setSystemParams(paramsData.items ?? [])
+      setSystemParams(paramsData?.items ?? [])
     } catch (err) {
       setError(err as Error)
     } finally {
@@ -56,10 +56,10 @@ export function useCompanySystemParams() {
 
   const fetchPage = useCallback(
     async (
-      p = page,
-      s = pageSize,
-      filter = globalFilter,
-      cId = companyId,
+      p: number,
+      s: number,
+      filter: string,
+      cId: number | null
     ) => {
       setLoadingList(true)
       setError(null)
@@ -69,19 +69,20 @@ export function useCompanySystemParams() {
           filter,
           p,
           s,
-          cId,
+          cId
         )
-        setItems(resp.items)
-        setTotalCount(resp.meta?.totalCount)
-        setPageState(resp.meta?.currentPage ?? p)
-        setPageSizeState(resp.meta?.pageSize ?? s)
+
+        setItems(resp?.items ?? [])
+        setTotalCount(resp?.meta?.totalCount ?? 0)
+        setPageState(resp?.meta?.currentPage ?? p)
+        setPageSizeState(resp?.meta?.pageSize ?? s)
       } catch (err) {
         setError(err as Error)
       } finally {
         setLoadingList(false)
       }
     },
-    [page, pageSize, globalFilter, companyId]
+    []
   )
 
   const create = useCallback(
@@ -91,14 +92,14 @@ export function useCompanySystemParams() {
 
       try {
         await CompanySystemParamsService.createAsync(values)
-        await fetchPage()
+        await fetchPage(page, pageSize, globalFilter, companyId)
       } catch (err) {
         setError(err as Error)
       } finally {
         setLoadingItem(false)
       }
     },
-    [fetchPage]
+    [fetchPage, page, pageSize, globalFilter, companyId]
   )
 
   const update = useCallback(
@@ -108,14 +109,14 @@ export function useCompanySystemParams() {
 
       try {
         await CompanySystemParamsService.updateAsync(values)
-        await fetchPage()
+        await fetchPage(page, pageSize, globalFilter, companyId)
       } catch (err) {
         setError(err as Error)
       } finally {
         setLoadingItem(false)
       }
     },
-    [fetchPage]
+    [fetchPage, page, pageSize, globalFilter, companyId]
   )
 
   const toggle = useCallback(
@@ -132,8 +133,8 @@ export function useCompanySystemParams() {
 
         const updated = resp.data
 
-        setItems((prev) =>
-          prev.map((item) =>
+        setItems(prev =>
+          prev.map(item =>
             item.companyId === updated.companyId &&
             item.systemParamId === updated.systemParamId &&
             item.metaChannelId === updated.metaChannelId
@@ -171,6 +172,7 @@ export function useCompanySystemParams() {
   const closeModal = useCallback(() => {
     setModalOpen(false)
     setSelectedItem(null)
+    setModalMode('create')
   }, [])
 
   const handleSubmit = useCallback(
@@ -188,19 +190,14 @@ export function useCompanySystemParams() {
     [modalMode, create, update, closeModal]
   )
 
-  const setPage = useCallback(
-    (p: number) => {
-      fetchPage(p, pageSize)
-    },
-    [fetchPage, pageSize]
-  )
+  const setPage = useCallback((p: number) => {
+    setPageState(p)
+  }, [])
 
-  const setPageSize = useCallback(
-    (s: number) => {
-      fetchPage(1, s)
-    },
-    [fetchPage]
-  )
+  const setPageSize = useCallback((s: number) => {
+    setPageSizeState(s)
+    setPageState(1)
+  }, [])
 
   const setGlobalFilter = useCallback((value: string) => {
     setGlobalFilterState(value)
@@ -212,38 +209,44 @@ export function useCompanySystemParams() {
     setPageState(1)
   }, [])
 
-
   useEffect(() => {
     loadCatalogs()
   }, [loadCatalogs])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      fetchPage(1, pageSize)
+      fetchPage(page, pageSize, globalFilter, companyId)
     }, 350)
 
     return () => window.clearTimeout(timeout)
-  }, [globalFilter, companyId, pageSize, fetchPage])
+  }, [page, pageSize, globalFilter, companyId, fetchPage])
 
   return {
     items,
     companies,
     systemParams,
     selectedItem,
+
     loading,
     error,
+
     page,
     pageSize,
     totalCount,
+
     globalFilter,
     companyId,
+
     modalMode,
     isModalOpen,
+
     setPage,
     setPageSize,
     setGlobalFilter,
     setCompanyId,
+
     fetchPage,
+
     openCreate,
     openEdit,
     openView,

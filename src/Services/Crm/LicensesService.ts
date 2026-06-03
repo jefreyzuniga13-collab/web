@@ -1,6 +1,7 @@
 import api from '@/Utils/ApiConfig'
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
 import type {
+  LicensePeriodProj,
     LicenseProj,
     LicenseRequest
 } from '@/Interfaces/Crm/LicenseInterfaz'
@@ -56,6 +57,14 @@ class LicensesServ {
       )
 
       return data
+  }
+
+   async getAllLicensePeriodsAsync(): Promise<LicensePeriodProj[]> {
+    const { data } = await api.get<ApiResponse<LicensePeriodProj[]>>(
+      '/License/periods'
+    )
+
+    return data.data ?? []
   }
 }
 

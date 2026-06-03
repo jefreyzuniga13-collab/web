@@ -745,7 +745,7 @@
   padding: var(--space-md) var(--space-lg);
   display: flex;
   align-items: flex-end;
-  gap: var(--space-md);
+  gap: var(--space-xs);
   flex-shrink: 0;
   height: 15%;
   padding-top: 0 !important;
@@ -787,6 +787,11 @@
   background-color: var(--color-gray-100);
   color: var(--color-gray-700);
   transform: scale(1.05);
+}
+
+
+.chat-window__audio-icons{
+    color: var(--color-gray-700);
 }
 
 .chat-window__composer-file-input {
@@ -1090,8 +1095,12 @@ color: var(--bg-primary);
   font-size: 12px;
   opacity: 0.8;
   text-align: right;
+  display: none;
 }
 
+.audio-timer__recording{
+  display: block;
+}
 .chat-window__audio-btn {
   width: 34px;
   height: 34px;
@@ -1109,6 +1118,7 @@ color: var(--bg-primary);
 .chat-window__audio-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.18);
+  opacity: 0.8;
 }
 
 .chat-window__audio-btn:active {
@@ -1542,4 +1552,52 @@ color: var(--bg-primary);
   .chat-window__message-text {
     font-size: var(--font-size-sm);
   }
+}
+
+/* Icono */
+.chat-window__composer-input {
+  min-height: 38px;
+  max-height: 120px;
+  resize: none;
+  overflow-y: hidden;
+  line-height: 20px;
+}
+
+.chat-window__emoji-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-window__emoji-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-700);
+}
+
+.chat-window__emoji-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-window__emoji-picker {
+  position: absolute;
+  right: 0;
+  bottom: 44px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  border-radius: 12px;
+  overflow: hidden;
+    color: var(--color-gray-700);
+}
+
+.chat-window__emoji-btn:hover{
+  opacity: .8;
 }

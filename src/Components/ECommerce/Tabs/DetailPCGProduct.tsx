@@ -9,18 +9,13 @@ import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
 import "@/Styles/Ecommerce/ModifierAccordion.css"
-import type {
-  AddProductParams,
-  listaOpciones,
-  ProductoModificadorPCGInterface,
-  ProductoPCGInterface,
-  SelectedModifierOption,
-} from "@/Interfaces/Chat/ProductPCGInterface"
+import type {listaOpciones, ProductoModificadorPCGInterface, ProductoPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
 import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
+import type {AddProductParams, SelectedModifierOption} from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import ModifierAccordion from "@/Components/ECommerce/Tabs/ModifierAccordion"
 
@@ -169,7 +164,7 @@ useEffect(() => {
     return
   }
 
-  const codPrecioFinal = (codPrecioUiSelected || codPrecioActivo || "").trim()
+  const codPrecioFinal = (codPrecioUiSelected || codPrecioActivo || "").trim() || '01'
 
   if (!codPrecioFinal) return
 
@@ -909,6 +904,3 @@ useEffect(() => {
 }
 
 export default DetailPCGProduct
-
-// Cuando se accede, se selecciona la primera sucursal pero el producto no se manda a obtener por el codPrecio de sa sucursal,
-//actualmente cuado accedo no recupera el producto con la lista de precio de la primer sucursal cuando esta esta seleccionada por defecto

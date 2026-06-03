@@ -1,30 +1,48 @@
 import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react'
-import type { LicenseRequest } from '@/Interfaces/Crm/LicenseInterfaz'
+import type { LicenseProj, LicenseRequest } from '@/Interfaces/Crm/LicenseInterfaz'
 import type { ModalMode } from '@/Interfaces/Common/GlobalInterface'
 
 interface Args {
   mode: ModalMode
-  data?: LicenseRequest | null
+  data?: LicenseProj | null
   onSubmit: (values: LicenseRequest) => void
 }
 
 interface FormErrors {
   name: string
   description: string
+  licensePeriodId: string
 }
 
 const initialForm: LicenseRequest = {
   name: '',
   description: '',
   isActive: true,
-  benefits: [], // Se inicializa como un array de strings vacío
+  benefits: [],
   isRecurrent: true,
-  duration: 1 
+  licensePeriodId: 0,
+  duration: 1
 }
 
 const initialErrors: FormErrors = {
   name: '',
-  description: ''
+  description: '',
+  licensePeriodId: ''
+}
+
+const normalizeBenefits = (benefits: unknown): string[] => {
+  if (Array.isArray(benefits)) return benefits
+
+  if (typeof benefits === 'string') {
+    try {
+      const parsed = JSON.parse(benefits)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  return []
 }
 
 export function useLicenseForm({ mode, data, onSubmit }: Args) {
@@ -39,8 +57,9 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
         name: data.name ?? '',
         description: data.description ?? '',
         isActive: data.isActive ?? true,
-        benefits: Array.isArray(data.benefits) ? data.benefits : [],
-        isRecurrent: data.isRecurrent ?? false,
+        benefits: normalizeBenefits(data.benefits),
+        isRecurrent: data.isRecurrent ?? true,
+        licensePeriodId: data.licensePeriodId ?? 0,
         duration: data.duration ?? 1
       })
     } else {
@@ -52,7 +71,8 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
   const validate = useCallback(() => {
     const errs: FormErrors = {
       name: '',
-      description: ''
+      description: '',
+      licensePeriodId: ''
     }
 
     if (!form.name.trim()) {
@@ -63,21 +83,42 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
       errs.description = 'La descripción es obligatoria'
     }
 
+    if (form.isRecurrent && (!form.licensePeriodId || form.licensePeriodId <= 0)) {
+      errs.licensePeriodId = 'El periodo de licencia es obligatorio'
+    }
+
     setErrors(errs)
 
-    return !errs.name && !errs.description
-  }, [form.name, form.description])
+    return !errs.name && !errs.description && !errs.licensePeriodId
+  }, [form.name, form.description, form.isRecurrent, form.licensePeriodId])
 
-  // Manejador para inputs estándar de texto
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }, [])
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target
 
-  // Manejador para los checkboxes booleanos
+      setForm(prev => ({
+        ...prev,
+        [name]: name === 'duration' || name === 'licensePeriodId'
+          ? Number(value)
+          : value
+      }))
+    },
+    []
+  )
+
   const handleCheckbox = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target
-    setForm(f => ({ ...f, [name]: checked }))
+
+    setForm(prev => ({
+      ...prev,
+      [name]: checked,
+      ...(name === 'isRecurrent' && !checked
+        ? {
+            licensePeriodId: 0,
+            duration: 1
+          }
+        : {})
+    }))
   }, [])
 
   const handleSubmit = useCallback(
@@ -87,7 +128,12 @@ export function useLicenseForm({ mode, data, onSubmit }: Args) {
       if (isView) return
 
       if (validate()) {
-        onSubmit(form)
+        onSubmit({
+          ...form,
+          benefits: normalizeBenefits(form.benefits),
+          licensePeriodId: form.isRecurrent ? form.licensePeriodId : 0,
+          duration: form.duration && form.duration > 0 ? form.duration : 1
+        })
       }
     },
     [form, isView, onSubmit, validate]

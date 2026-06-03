@@ -28,13 +28,11 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
-
+  
   const dispatch = useAppDispatch();
-
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth
   );
-
   const { fetchById, selectedData: contact } = useContact();
   const { fetchByContactId } = useLogCart();
 
@@ -193,7 +191,7 @@ const SupportPage: React.FC = () => {
                 <button
                   className="sort-button"
                   onClick={() => setShowCompanyModal(true)}
-                  title="Company filters"
+                  title="Seleccionar Empresa"
                   type="button"
                 >
                   <FaBuilding className="sort-button-icon" />

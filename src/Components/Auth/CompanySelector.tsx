@@ -24,6 +24,7 @@ export default function CompanySelector() {
     return null;
   }
 
+  // No seleccionar todos, seleccionar la primera empresa por defecto
   const options: CompanyOption[] = [
     {
       label: "Todas las empresas",

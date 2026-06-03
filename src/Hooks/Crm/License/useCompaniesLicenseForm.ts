@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react'
-import type { CompaniesLicenseProj, CompaniesLicenseRequest, FormErrors } from '@/Interfaces/Crm/LicenseInterfaz'
+import type {
+  CompaniesLicenseProj,
+  CompaniesLicenseRequest,
+  FormErrors
+} from '@/Interfaces/Crm/LicenseInterfaz'
 import type { ModalMode } from '@/Interfaces/Common/GlobalInterface'
 
 interface Args {
@@ -8,7 +12,7 @@ interface Args {
   onSubmit: (values: CompaniesLicenseRequest) => void
 }
 
-const formatDate = (value?: string | null) => {
+const formatDate = (value?: string | null): string => {
   if (!value) return ''
   return value.substring(0, 10)
 }
@@ -17,19 +21,18 @@ export const initialForm: CompaniesLicenseRequest = {
   companyId: 0,
   licencesId: 0,
   validFrom: '',
-  validTo: '',
-  isActive: true,
-  isSuspended: false,
-  isLocked: false,
-  observation: ''
+  statusId: 0,
+  observation: '',
+  licenseExpirationWarningDays: 0
 }
 
 const initialErrors: FormErrors = {
   companyId: '',
   licencesId: '',
   validFrom: '',
-  validTo: '',
-  observation: ''
+  statusId: '',
+  observation: '',
+  licenseExpirationWarningDays: 0
 }
 
 export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
@@ -44,16 +47,17 @@ export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
         companyId: data.companyId ?? 0,
         licencesId: data.licencesId ?? 0,
         validFrom: formatDate(data.validFrom),
-        validTo: formatDate(data.validTo),
-        isActive: data.isActive ?? true,
-        isSuspended: data.isSuspended ?? false,
-        isLocked: data.isLocked ?? false,
-        observation: data.observation ?? ''
+        statusId: data.statusId ?? 0,
+        observation: data.observation ?? '',
+        licenseExpirationWarningDays: data.licenseExpirationWarningDays ?? 0
       })
-    } else {
-      setForm(initialForm)
+
       setErrors(initialErrors)
+      return
     }
+
+    setForm(initialForm)
+    setErrors(initialErrors)
   }, [mode, data])
 
   const validate = useCallback(() => {
@@ -61,8 +65,9 @@ export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
       companyId: '',
       licencesId: '',
       validFrom: '',
-      validTo: '',
-      observation: ''
+      statusId: '',
+      observation: '',
+      licenseExpirationWarningDays: 0
     }
 
     if (!form.companyId || form.companyId <= 0) {
@@ -77,38 +82,46 @@ export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
       errs.validFrom = 'La fecha inicial es obligatoria'
     }
 
-    if (!form.validTo) {
-      errs.validTo = 'La fecha final es obligatoria'
+    if (!form.statusId || form.statusId <= 0) {
+      errs.statusId = 'El estado es obligatorio'
     }
 
-    if (form.validFrom && form.validTo && new Date(form.validTo) < new Date(form.validFrom)) {
-      errs.validTo = 'La fecha final no puede ser menor que la fecha inicial'
+    if (form.observation && form.observation.length > 1000) {
+      errs.observation = 'La observación no puede superar los 1000 caracteres'
     }
+
+    if (form.licenseExpirationWarningDays < 0) {
+      errs.statusId = 'No puede ser menor a 0'
+    }
+
 
     setErrors(errs)
 
-    return !errs.companyId && !errs.licencesId && !errs.validFrom && !errs.validTo
+    return (
+      !errs.companyId &&
+      !errs.licencesId &&
+      !errs.validFrom &&
+      !errs.statusId &&
+      !errs.observation
+    )
   }, [form])
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target
 
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'number' || name === 'companyId' || name === 'licencesId'
-        ? Number(value)
-        : value
-    }))
-  }, [])
-
-  const handleCheckbox = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target
-
-    setForm(prev => ({
-      ...prev,
-      [name]: checked
-    }))
-  }, [])
+      setForm(prev => ({
+        ...prev,
+        [name]:
+          name === 'companyId' ||
+          name === 'licencesId' ||
+          name === 'statusId'
+            ? Number(value)
+            : value
+      }))
+    },
+    []
+  )
 
   const handleSubmit = useCallback(
     (e: FormEvent) => {
@@ -116,9 +129,16 @@ export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
 
       if (isView) return
 
-      if (validate()) {
-        onSubmit(form)
-      }
+      if (!validate()) return
+
+      onSubmit({
+        companyId: form.companyId,
+        licencesId: form.licencesId,
+        validFrom: form.validFrom,
+        statusId: form.statusId,
+        observation: form.observation?.trim() ?? '',
+        licenseExpirationWarningDays: form.licenseExpirationWarningDays ?? 0
+      })
     },
     [form, isView, onSubmit, validate]
   )
@@ -128,7 +148,7 @@ export function useCompaniesLicenseForm({ mode, data, onSubmit }: Args) {
     errors,
     isView,
     handleChange,
-    handleCheckbox,
-    handleSubmit
+    handleSubmit,
+    setForm
   }
 }

@@ -1,17 +1,42 @@
-import type { Column } from '@/Interfaces/Common/CustomTable';
-import IconButton from "@mui/material/IconButton";
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
-import ToggleOffIcon from '@mui/icons-material/ToggleOff';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useMemo } from "react";
-import EditIcon from '@mui/icons-material/Edit';
-import Button from "@/Components/Common/Button";
-import CustomTable from "@/Components/Common/CustomTable";
-import LicenseModalForm from "@/Components/Crm/LicenseModalForm";
-import { TextField } from "@mui/material";
-import '@/Styles/Auth/ContactPage.css';
-import type { LicenseProj } from "@/Interfaces/Crm/LicenseInterfaz";
-import useLicenses from "@/Hooks/Crm/License/useLicenses";
+import type { Column } from '@/Interfaces/Common/CustomTable'
+import IconButton from '@mui/material/IconButton'
+import ToggleOnIcon from '@mui/icons-material/ToggleOn'
+import ToggleOffIcon from '@mui/icons-material/ToggleOff'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import EditIcon from '@mui/icons-material/Edit'
+import { useMemo } from 'react'
+import { TextField } from '@mui/material'
+import Button from '@/Components/Common/Button'
+import CustomTable from '@/Components/Common/CustomTable'
+import LicenseModalForm from '@/Components/Crm/LicenseModalForm'
+import type { LicenseProj } from '@/Interfaces/Crm/LicenseInterfaz'
+import useLicenses from '@/Hooks/Crm/License/useLicenses'
+import '@/Styles/Auth/ContactPage.css'
+
+const normalizeBenefits = (benefits: unknown): string[] => {
+  if (Array.isArray(benefits)) return benefits
+
+  if (typeof benefits === 'string') {
+    try {
+      const parsed = JSON.parse(benefits)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  return []
+}
+
+const formatDate = (value?: string): string => {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleDateString('es-NI')
+}
 
 export default function LicensePage() {
   const {
@@ -33,21 +58,53 @@ export default function LicensePage() {
     handleSubmit,
     globalFilter,
     setGlobalFilter,
-    loading
-  } = useLicenses();
+    loading,
+    licensePeriods
+  } = useLicenses()
 
   const columns: Column<LicenseProj>[] = useMemo(() => [
     {
       id: 'name',
       label: 'Nombre',
-      minWidth: 80,
+      minWidth: 100,
       render: row => row.name
     },
     {
       id: 'description',
       label: 'Descripción',
+      minWidth: 140,
+      render: row => row.description
+    },
+    {
+      id: 'benefits',
+      label: 'Beneficios',
+      minWidth: 160,
+      render: row => {
+        const benefits = normalizeBenefits(row.benefits)
+        return benefits.length ? benefits.join(', ') : ''
+      }
+    },
+    {
+      id: 'licensePeriodName',
+      label: 'Periodo',
+      minWidth: 100,
+      render: row => row.isRecurrent ? row.licensePeriodName || '' : 'No recurrente'
+    },
+    {
+      id: 'licensePeriodMonths',
+      label: 'Meses',
       minWidth: 80,
-      render: row => row.name
+      render: row => row.isRecurrent ? row.licensePeriodMonths ?? '' : ''
+    },
+    {
+      id: 'isRecurrent',
+      label: 'Recurrente',
+      minWidth: 100,
+      render: row => (
+        <span className={row.isRecurrent ? 'status status--active' : 'status status--inactive'}>
+          {row.isRecurrent ? 'Sí' : 'No'}
+        </span>
+      )
     },
     {
       id: 'isActive',
@@ -59,29 +116,29 @@ export default function LicensePage() {
         </span>
       )
     },
-     {
+    {
       id: 'createdByName',
       label: 'Creado Por',
-      minWidth: 80,
+      minWidth: 120,
       render: row => row.createdByName
     },
-     {
+    {
       id: 'updatedByName',
       label: 'Actualizado Por',
-      minWidth: 80,
+      minWidth: 120,
       render: row => row.updatedByName
     },
     {
       id: 'createdAt',
       label: 'Creado',
       minWidth: 110,
-      render: row => new Date(row.createdAt!).toLocaleDateString('es-NI')
+      render: row => formatDate(row.createdAt)
     },
     {
       id: 'updatedAt',
       label: 'Actualizado',
       minWidth: 110,
-      render: row => new Date(row.updatedAt!).toLocaleDateString('es-NI')
+      render: row => formatDate(row.updatedAt)
     },
     {
       id: 'actions',
@@ -92,10 +149,12 @@ export default function LicensePage() {
           <IconButton size="medium" onClick={() => openView(row)}>
             <VisibilityIcon fontSize="medium" />
           </IconButton>
+
           <IconButton size="medium" onClick={() => openEdit(row)}>
             <EditIcon fontSize="medium" />
           </IconButton>
-          <IconButton size="medium" onClick={() => toggle(row.id as number)}>
+
+          <IconButton size="medium" onClick={() => toggle(row.id)}>
             {row.isActive ? (
               <ToggleOnIcon fontSize="medium" color="success" />
             ) : (
@@ -105,25 +164,26 @@ export default function LicensePage() {
         </>
       )
     }
-  ], [openView, openEdit, toggle]);
+  ], [openView, openEdit, toggle])
 
   return (
     <div className="contact-page__container">
       <div className="contact-page__header">
         <div className="contact-page__content">
-          <h1 className="contact-page__title">Gestión de Catalogo Licencias</h1>
+          <h1 className="contact-page__title">Gestión de Catálogo de Licencias</h1>
           <p className="contact-page__subtitle">
-            Listado del catalogo de licencias.
+            Listado del catálogo de licencias.
           </p>
         </div>
+
         <div className="contact-page__buttons">
           <Button variant="primary" onClick={openCreate} className="contact-page__btn">
-            Nuevo Contacto
+            Nueva Licencia
           </Button>
         </div>
       </div>
 
-      <div className='table-contaner__search-filter__container'>
+      <div className="table-contaner__search-filter__container">
         <TextField
           label="Filtrar"
           variant="outlined"
@@ -131,11 +191,11 @@ export default function LicensePage() {
           fullWidth
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
+          className="table-contaner__search-filter"
         />
-      </div> 
-      {error && <p className="contact-page__error">Error: {error.message}</p>}
+      </div>
 
+      {error && <p className="contact-page__error">Error: {error.message}</p>}
 
       <CustomTable<LicenseProj>
         columns={columns}
@@ -152,10 +212,11 @@ export default function LicensePage() {
         mode={modalMode}
         isOpen={isModalOpen}
         data={selectedData}
+        licensePeriods={licensePeriods}
         onClose={closeModal}
         onSubmit={handleSubmit}
         loading={loading}
       />
     </div>
-  );
+  )
 }

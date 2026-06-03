@@ -1,14 +1,8 @@
 import { useMemo } from 'react'
 import { TextField, Tooltip } from '@mui/material'
 import IconButton from '@mui/material/IconButton'
-import ToggleOnIcon from '@mui/icons-material/ToggleOn'
-import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
-import LockIcon from '@mui/icons-material/Lock'
-import LockOpenIcon from '@mui/icons-material/LockOpen'
-import PauseCircleIcon from '@mui/icons-material/PauseCircle'
-import PlayCircleIcon from '@mui/icons-material/PlayCircle'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import type { CompaniesLicenseProj } from '@/Interfaces/Crm/LicenseInterfaz'
 import Button from '@/Components/Common/Button'
@@ -18,14 +12,25 @@ import useCompaniesLicenses from '@/Hooks/Crm/License/useCompaniesLicenses'
 import '@/Styles/Auth/ContactPage.css'
 import { formatDate } from '@/Utils/formatters'
 
+const getStatusClass = (statusName: string, isExpired: boolean) => {
+  if (isExpired) return 'status status--inactive'
+
+  const normalized = statusName.toLowerCase()
+
+  if (normalized.includes('activa')) return 'status status--active'
+  if (normalized.includes('suspendida')) return 'status status--inactive'
+  if (normalized.includes('bloqueada')) return 'status status--inactive'
+  if (normalized.includes('vencida')) return 'status status--inactive'
+  if (normalized.includes('cancelada')) return 'status status--inactive'
+
+  return 'status'
+}
+
 export default function CompaniesLicensePage() {
   const {
     openView,
     openCreate,
     openEdit,
-    toggle,
-    toggleLocked,
-    toggleSuspend,
     error,
     data,
     page,
@@ -40,7 +45,9 @@ export default function CompaniesLicensePage() {
     handleSubmit,
     globalFilter,
     setGlobalFilter,
-    loading
+    loading,
+    companyLicenseStatuses,
+    changeStatus
   } = useCompaniesLicenses()
 
   const columns: Column<CompaniesLicenseProj>[] = useMemo(() => [
@@ -57,10 +64,14 @@ export default function CompaniesLicensePage() {
       render: row => row.licenseName
     },
     {
-      id: 'observation',
-      label: 'Observación',
-      minWidth: 160,
-      render: row => row.observation
+      id: 'statusName',
+      label: 'Estado',
+      minWidth: 170,
+      render: row => (
+        <span className={getStatusClass(row.statusName, row.isExpired)}>
+          {row.isExpired ? 'Licencia Vencida' : row.statusName}
+        </span>
+      )
     },
     {
       id: 'validFrom',
@@ -75,34 +86,16 @@ export default function CompaniesLicensePage() {
       render: row => formatDate(row.validTo)
     },
     {
-      id: 'isActive',
-      label: 'Estado',
-      minWidth: 100,
-      render: row => (
-        <span className={row.isActive ? 'status status--active' : 'status status--inactive'}>
-          {row.isActive ? 'Activa' : 'Inactiva'}
-        </span>
-      )
-    },
-    {
-      id: 'isSuspended',
-      label: 'Suspensión',
+      id: 'remainingDays',
+      label: 'Días restantes',
       minWidth: 120,
-      render: row => (
-        <span className={row.isSuspended ? 'status status--inactive' : 'status status--active'}>
-          {row.isSuspended ? 'Suspendida' : 'Disponible'}
-        </span>
-      )
+      render: row => row.remainingDays
     },
     {
-      id: 'isLocked',
-      label: 'Bloqueo',
-      minWidth: 110,
-      render: row => (
-        <span className={row.isLocked ? 'status status--inactive' : 'status status--active'}>
-          {row.isLocked ? 'Bloqueada' : 'Libre'}
-        </span>
-      )
+      id: 'observation',
+      label: 'Observación',
+      minWidth: 160,
+      render: row => row.observation
     },
     {
       id: 'createdByName',
@@ -131,60 +124,37 @@ export default function CompaniesLicensePage() {
     {
       id: 'actions',
       label: 'Acciones',
-      minWidth: 230,
+      minWidth: 280,
       render: row => (
         <>
           <IconButton size="medium" onClick={() => openView(row)}>
-            <Tooltip title='Ver'>
-               <VisibilityIcon fontSize="medium" />
+            <Tooltip title="Ver">
+              <VisibilityIcon fontSize="medium" />
             </Tooltip>
           </IconButton>
 
           <IconButton size="medium" onClick={() => openEdit(row)}>
-          <Tooltip title="editar">
+            <Tooltip title="Editar">
               <EditIcon fontSize="medium" />
-          </Tooltip>
+            </Tooltip>
           </IconButton>
 
-          <IconButton size="medium" onClick={() => toggle(row.id)}>
-            {row.isActive ? (
-             <Tooltip title='Desactivar'>
-               <ToggleOnIcon fontSize="medium" color="success" />
-             </Tooltip>
-            ) : (
-             <Tooltip title="Activar">
-               <ToggleOffIcon fontSize="medium" />
-             </Tooltip>
-            )}
-          </IconButton>
-
-            <IconButton size="medium" onClick={() => toggleSuspend(row.id)}>
-            {row.isSuspended ? (
-             <Tooltip title="Suspender">
-               <PauseCircleIcon fontSize="medium" color="warning" />
-             </Tooltip>
-            ) : (
-             <Tooltip title="Reactivar">
-               <PlayCircleIcon fontSize="medium" />
-             </Tooltip>
-            )}
-          </IconButton>
-
-          <IconButton size="medium" onClick={() => toggleLocked(row.id)}>
-            {row.isLocked ? (
-             <Tooltip title="Bloquear">
-                 <LockIcon fontSize="medium" color="error" />
-             </Tooltip>
-            ) : (
-             <Tooltip title="Desbloquear">
-               <LockOpenIcon fontSize="medium" />
-             </Tooltip>
-            )}
-          </IconButton>
+          <select
+            value={row.statusId}
+            onChange={e => changeStatus(row.id, Number(e.target.value))}
+            className="table-status-select"
+            disabled={loading || companyLicenseStatuses.length === 0}
+          >
+            {companyLicenseStatuses.map(status => (
+              <option key={status.id} value={status.id}>
+                {status.name}
+              </option>
+            ))}
+          </select>
         </>
       )
     }
-  ], [openView, openEdit, toggle, toggleLocked, toggleSuspend])
+  ], [openView, openEdit, companyLicenseStatuses, changeStatus, loading])
 
   return (
     <div className="contact-page__container">
@@ -192,7 +162,7 @@ export default function CompaniesLicensePage() {
         <div className="contact-page__content">
           <h1 className="contact-page__title">Gestión de Licencias por Empresa</h1>
           <p className="contact-page__subtitle">
-            Relación de empresas con sus licencias, vigencias, bloqueos y suspensiones.
+            Relación de empresas con sus licencias, vigencias y estados.
           </p>
         </div>
 

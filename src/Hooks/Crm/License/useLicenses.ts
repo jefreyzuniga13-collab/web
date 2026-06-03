@@ -2,7 +2,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import type { LicenseProj, LicenseRequest } from '@/Interfaces/Crm/LicenseInterfaz'
+import type {
+  LicensePeriodProj,
+  LicenseProj,
+  LicenseRequest
+} from '@/Interfaces/Crm/LicenseInterfaz'
 import { LicensesService } from '@/Services/Crm/LicensesService'
 import type { ModalMode, PagedResponse } from '@/Interfaces/Common/GlobalInterface'
 import type { ApiResponse } from '@/Interfaces/Auth/AuthInterface'
@@ -12,10 +16,9 @@ const licenseKeys = {
   list: (filter: string, page: number, pageSize: number) =>
     [...licenseKeys.all, 'list', filter, page, pageSize] as const,
   detail: (id: number) => [...licenseKeys.all, 'detail', id] as const,
+  periods: () => [...licenseKeys.all, 'periods'] as const,
 }
 
-
-// Api, obtiene la informacion pero o se muestra en la web
 const emptyPagedLicense: PagedResponse<LicenseProj> = {
   items: [],
   meta: {
@@ -23,7 +26,7 @@ const emptyPagedLicense: PagedResponse<LicenseProj> = {
     page: 1,
     pageSize: 30,
     totalPages: 0,
-    currentPage:1
+    currentPage: 1
   },
 } as PagedResponse<LicenseProj>
 
@@ -53,6 +56,19 @@ const useLicenses = (licenseId?: number) => {
   })
 
   const {
+    data: licensePeriods = [],
+    isLoading: loadingPeriods,
+    isFetching: fetchingPeriods,
+    error: periodsError,
+  } = useQuery<LicensePeriodProj[], Error>({
+    queryKey: licenseKeys.periods(),
+    queryFn: async () => {
+      return await LicensesService.getAllLicensePeriodsAsync()
+    },
+    staleTime: 1000 * 60 * 10,
+  })
+
+  const {
     data: detailData,
     isLoading: loadingDetail,
     isFetching: fetchingDetail,
@@ -61,6 +77,7 @@ const useLicenses = (licenseId?: number) => {
     queryKey: licenseKeys.detail(licenseId ?? 0),
     queryFn: async () => {
       if (!licenseId || licenseId <= 0) return null
+
       const response = await LicensesService.getByIdAsync(licenseId)
       return response ?? null
     },
@@ -70,9 +87,10 @@ const useLicenses = (licenseId?: number) => {
 
   const createMutation = useMutation<ApiResponse<LicenseProj>, Error, LicenseRequest>({
     mutationFn: async values => {
-      return await LicensesService.createAsync(values as LicenseProj)
+      return await LicensesService.createAsync(values)
     },
     onSuccess: async () => {
+      toast.success('Licencia creada correctamente')
       await queryClient.invalidateQueries({ queryKey: licenseKeys.all })
     },
     onError: err => {
@@ -86,13 +104,7 @@ const useLicenses = (licenseId?: number) => {
     { id: number; values: LicenseRequest }
   >({
     mutationFn: async ({ id, values }) => {
-      const payload = {
-        ...(selectedData ?? {}),
-        ...values,
-        id,
-      } as LicenseProj
-
-      return await LicensesService.updateAsync(id, payload)
+      return await LicensesService.updateAsync(id, values)
     },
     onSuccess: async (updatedItem, variables) => {
       const licenseData = updatedItem.data ?? null
@@ -109,6 +121,7 @@ const useLicenses = (licenseId?: number) => {
         prev?.id === variables.id ? licenseData : prev
       )
 
+      toast.success('Licencia actualizada correctamente')
       await queryClient.invalidateQueries({ queryKey: licenseKeys.all })
     },
     onError: err => {
@@ -116,11 +129,13 @@ const useLicenses = (licenseId?: number) => {
     },
   })
 
-  const toggleMutation = useMutation<void, Error, number>({
+  const toggleMutation = useMutation<ApiResponse<LicenseProj>, Error, number>({
     mutationFn: async id => {
-      await LicensesService.toggleAsync(id)
+      return await LicensesService.toggleAsync(id)
     },
-    onSuccess: async (_, id) => {
+    onSuccess: async (response, id) => {
+      const updated = response.data
+
       queryClient.setQueriesData<PagedResponse<LicenseProj>>(
         { queryKey: licenseKeys.all },
         old => {
@@ -130,7 +145,7 @@ const useLicenses = (licenseId?: number) => {
             ...old,
             items: old.items.map(item =>
               item.id === id
-                ? { ...item, isActive: !item.isActive }
+                ? updated ?? { ...item, isActive: !item.isActive }
                 : item
             ),
           }
@@ -138,7 +153,9 @@ const useLicenses = (licenseId?: number) => {
       )
 
       setSelectedData(prev =>
-        prev?.id === id ? { ...prev, isActive: !prev.isActive } : prev
+        prev?.id === id
+          ? updated ?? { ...prev, isActive: !prev.isActive }
+          : prev
       )
 
       await queryClient.invalidateQueries({ queryKey: licenseKeys.all })
@@ -156,7 +173,6 @@ const useLicenses = (licenseId?: number) => {
       const result = await queryClient.fetchQuery<PagedResponse<LicenseProj>>({
         queryKey: licenseKeys.list(globalFilter, p, s),
         queryFn: async () => {
-
           const response = await LicensesService.getAllAsync(globalFilter, p, s)
           return response ?? emptyPagedLicense
         },
@@ -296,6 +312,8 @@ const useLicenses = (licenseId?: number) => {
     fetchingList ||
     loadingDetail ||
     fetchingDetail ||
+    loadingPeriods ||
+    fetchingPeriods ||
     loadingMutations
 
   const error = useMemo(
@@ -305,6 +323,7 @@ const useLicenses = (licenseId?: number) => {
       toggleMutation.error ||
       detailError ||
       listError ||
+      periodsError ||
       null,
     [
       createMutation.error,
@@ -312,6 +331,7 @@ const useLicenses = (licenseId?: number) => {
       toggleMutation.error,
       detailError,
       listError,
+      periodsError,
     ]
   )
 
@@ -326,6 +346,7 @@ const useLicenses = (licenseId?: number) => {
     isModalOpen,
     modalMode,
     globalFilter,
+    licensePeriods,
     refetchPage,
 
     setPage: (p: number) => {

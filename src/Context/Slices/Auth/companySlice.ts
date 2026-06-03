@@ -8,7 +8,9 @@ import type {
 const initialState: CompanyState = {
   companies: [],
   activeCompanyId: null,
-  activeCompanyName: "Todas las empresas",
+  activeCompanyImage: '',
+  whatsAppPhone:'',
+  activeCompanyName: "",
   isGlobalMode: true,
 };
 
@@ -23,7 +25,9 @@ const companySlice = createSlice({
     setActiveCompany(state, action: PayloadAction<CompanySelectorItem | null>) {
       if (!action.payload) {
         state.activeCompanyId = null;
-        state.activeCompanyName = "Todas las empresas";
+        state.activeCompanyName = "";
+        state.activeCompanyImage = ''
+        state.whatsAppPhone = ''
         state.isGlobalMode = true;
         return;
       }
@@ -31,19 +35,25 @@ const companySlice = createSlice({
       state.activeCompanyId = action.payload.companyId;
       state.activeCompanyName = action.payload.name;
       state.isGlobalMode = false;
+      state.activeCompanyImage = action.payload.imageUrl ?? '';
+      state.whatsAppPhone = action.payload.whatsAppPhone ?? "";
     },
 
     clearActiveCompany(state) {
       state.activeCompanyId = null;
-      state.activeCompanyName = "Todas las empresas";
+      state.activeCompanyName = "";
       state.isGlobalMode = true;
+      state.activeCompanyImage = '';
+      state.whatsAppPhone = '';
     },
 
     clearCompanyState(state) {
       state.companies = [];
       state.activeCompanyId = null;
-      state.activeCompanyName = "Todas las empresas";
+      state.activeCompanyName = "";
       state.isGlobalMode = true;
+      state.activeCompanyImage = ''
+     state.whatsAppPhone = ''
     },
   },
 });
@@ -62,6 +72,12 @@ export const selectActiveCompanyId = (state: RootState) =>
 
 export const selectActiveCompanyName = (state: RootState) =>
   state.company.activeCompanyName;
+
+export const selectActiveCompanyWhPhone = (state: RootState) =>
+  state.company.whatsAppPhone;
+
+export const selectActiveCompanyImage = (state: RootState) =>
+  state.company.activeCompanyImage;
 
 export const selectIsGlobalCompanyMode = (state: RootState) =>
   state.company.isGlobalMode;

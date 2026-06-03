@@ -1,12 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import * as Icons from 'lucide-react';
 import { useMenus } from '@/Hooks/Auth/useMenus';
 import MenuItem from '@/Components/Auth/MenuItem';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-// import { logout } from '@/Context/Slices/Auth/authSlice';
-// import { useNotifications } from '@/Hooks/useNotifications';
 import '@/Styles/Auth/Navbar.css';
 import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
 import { useUsers } from '@/Hooks/Auth/useUsers';
@@ -15,9 +12,9 @@ import { markOffline } from '@/Hooks/Auth/useUserPresence';
 import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
 import { useAuth } from '@/Hooks/Auth/useAuth'
 import Profile from '@/assets/img/profile.png'
-import { selectCompanyImageUrl } from '@/Context/Slices/Auth/authSlice';
 import { logoutThunk } from '@/Context/Slices/Auth/authThunks';
 import type { AppDispatch } from '@/Context';
+import { selectActiveCompanyImage, selectActiveCompanyName, selectActiveCompanyWhPhone } from '@/Context/Slices/Auth/companySlice';
 interface NavbarProps {
   id: number;
 }
@@ -25,14 +22,14 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 
 const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const { menus, error } = useMenus();
-  // const { unreadCount } = useNotifications();
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  // const dispatch = useDispatch();
   const dispatch = useAppDispatch();
-    //llega en null, no debria por que esta pesistido incluso
-  const CompanyImageUrl = useSelector(selectCompanyImageUrl);
+  const activeCompanyImage = useSelector(selectActiveCompanyImage);
+  const activeCompanyName = useSelector(selectActiveCompanyName);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const activeCompanyWhPhone = useSelector(selectActiveCompanyWhPhone);
 
   const { currentUser, loading: userLoading, fetchOne } = useUsers();
 
@@ -69,11 +66,11 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
     <nav className={`navbar ${collapsed ? 'navbar--collapsed' : ''}`}>
       <div className="navbar__header">
         <img
-          src={CompanyImageUrl ?? ''}
+          src={activeCompanyImage ?? currentUser?.imageUrl ?? ''}
           alt="Logo"
           className="navbar__logo"
         />
-        
+        <p>{activeCompanyName + ' - ' + activeCompanyWhPhone}</p>
         <button 
           className="navbar__collapse-btn" 
           onClick={() => setCollapsed(!collapsed)}
@@ -90,10 +87,8 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const Icon = (Icons as any)[m.icon] ?? Icons.Menu;
           const isSelected = selectedUrl === m.url;
-          //const showBadge = m.url === 'notifications' && unreadCount > 0;
-          
+      
           return (
-
                  <MenuItem
                     key={m.menuId}
                     icon={<Icon size={20} />}

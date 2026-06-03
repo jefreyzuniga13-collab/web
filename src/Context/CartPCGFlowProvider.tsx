@@ -1,7 +1,11 @@
 import { createContext, useContext, useMemo } from "react"
 import type { ReactNode } from "react"
 import { useCartPCGFlow } from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
-import type { AddProductParams, LockedInfo, SucursalPickerProps } from "@/Interfaces/Chat/ProductPCGInterface"
+import type {
+  AddProductParams,
+  LockedInfo,
+  SucursalPickerProps,
+} from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 
 type CartPCGFlowContextValue = {
   conversationId: number

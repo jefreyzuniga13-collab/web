@@ -51,3 +51,86 @@
 .MuiFormLabel-root{
   font-size: var(--font-size-xm) !important;
 }
+
+
+
+
+/* Licencia empresa */
+.table-status-select {
+  height: 34px;
+  min-width: 170px;
+  padding: 0 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #344054;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.table-status-select:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+.table-status-select:disabled {
+  background-color: #f5f5f5;
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.cm-modal__hint {
+  display: block;
+  margin-top: 6px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cm-modal__select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #344054;
+  font-size: 14px;
+  outline: none;
+}
+
+.cm-modal__select:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+.cm-modal__select:disabled {
+  background-color: #f5f5f5;
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.cm-modal__textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 14px;
+  color: #344054;
+  outline: none;
+}
+
+.cm-modal__textarea:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+.cm-modal__textarea:disabled {
+  background-color: #f5f5f5;
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+

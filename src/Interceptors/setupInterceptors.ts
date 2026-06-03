@@ -5,22 +5,26 @@ import { AxiosHeaders } from "axios";
 
 export function setupEmpresaInterceptor(instance: AxiosInstance) {
   instance.interceptors.request.use((config) => {
-    const state = store.getState();
+    const state = store.getState()
+
+    const selectedCompany = state.company.companies.find(
+      company => Number(company.companyId) === Number(state.company.activeCompanyId)
+    )
 
     const empresaId = state.auth.isRoot
-      ? state.company.activeCompanyId ?? state.auth.empresaId
-      : state.auth.empresaId;
+      ? selectedCompany?.empresaId ?? state.auth.empresaId
+      : state.auth.empresaId
 
     if (!config.headers) {
-      config.headers = new AxiosHeaders();
+      config.headers = new AxiosHeaders()
     }
 
-    if (String(empresaId).trim()) {
-      config.headers.set("empresa", String(empresaId));
+    if (String(empresaId ?? '').trim()) {
+      config.headers.set('empresa', String(empresaId))
     }
 
-    return config;
-  });
+    return config
+  })
 }
 
 export function setupNetworkInterceptor(instance: AxiosInstance) {
