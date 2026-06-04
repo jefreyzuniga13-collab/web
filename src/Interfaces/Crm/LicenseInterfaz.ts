@@ -48,6 +48,7 @@ export interface CompaniesLicenseRequest {
   licencesId: number
   companyId: number
   validFrom: string
+  validTo?: string
   statusId: number
   observation: string
   licenseExpirationWarningDays: number
@@ -88,7 +89,8 @@ export interface FormErrors {
   companyId: string
   licencesId: string
   validFrom: string
+  validTo: string
   statusId: string
   observation: string
-  licenseExpirationWarningDays: number
+  licenseExpirationWarningDays: string
 }

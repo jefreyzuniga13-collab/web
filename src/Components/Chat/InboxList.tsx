@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { MessageSquareOff, MoreVertical } from "lucide-react"
 import "@/Styles/Chat/InboxList.css"
-import { format } from "date-fns"
+import { format, isToday, isYesterday, parseISO, isValid } from "date-fns"
+import { es } from "date-fns/locale/es"
 import { toast } from "react-toastify"
 import { markConversationRead } from "@/Services/chat/ConversationService"
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces"
@@ -33,6 +34,12 @@ type MenuState = {
   conversationId: number
 } | null
 
+type ConversationGroup = {
+  key: string
+  label: string
+  conversations: ConversationDto[]
+}
+
 const formatDuration = (ms: number): string => {
   const totalMinutes = Math.floor(ms / 60000)
   const hours = Math.floor(totalMinutes / 60)
@@ -61,15 +68,49 @@ const getChannel = (channelId?: number | null): ChannelType | null => {
   return null
 }
 
-const getConversationIdentifier = async (conversation: ConversationDto): Promise<string> => {
-
+const getConversationIdentifier = async (
+  conversation: ConversationDto
+): Promise<string> => {
   const res = await contactService.getById(conversation.clientContactId)
 
-  if(res.data.metaChannelId == CHANNEL.Whatsapp) return res.data.waId ?? ""
-  if(res.data.metaChannelId == CHANNEL.Messenger) return res.data.psid ?? ""
-  if(res.data.metaChannelId == CHANNEL.Instagram) return res.data.psid ?? ""
+  if (res.data.metaChannelId === CHANNEL.Whatsapp) return res.data.waId ?? ""
+  if (res.data.metaChannelId === CHANNEL.Messenger) return res.data.psid ?? ""
+  if (res.data.metaChannelId === CHANNEL.Instagram) return res.data.psid ?? ""
 
-   return ""
+  return ""
+}
+
+const getConversationDateValue = (conversation: ConversationDto): string => {
+  return (
+    conversation.lastActivity ||
+    conversation.clientLastMessageAt ||
+    conversation.updatedAt ||
+    conversation.createdAt ||
+    ""
+  )
+}
+
+const parseConversationDate = (value?: string | null): Date | null => {
+  if (!value) return null
+
+  const parsed = parseISO(value)
+
+  if (isValid(parsed)) return parsed
+
+  const fallback = new Date(value)
+
+  return isValid(fallback) ? fallback : null
+}
+
+const getConversationGroupLabel = (date: Date): string => {
+  if (isToday(date)) return "Hoy"
+  if (isYesterday(date)) return "Ayer"
+
+  return format(date, "EEEE d 'de' MMMM", { locale: es })
+}
+
+const getConversationGroupKey = (date: Date): string => {
+  return format(date, "yyyy-MM-dd")
 }
 
 export const InboxList: React.FC<Props> = ({
@@ -86,12 +127,8 @@ export const InboxList: React.FC<Props> = ({
   const loaderRef = useRef<HTMLLIElement>(null)
   const pressTimerRef = useRef<number | null>(null)
 
-  const {
-    blockContact,
-    unblockContact,
-    isBlocking,
-    isUnblocking
-  } = useContactBlock()
+  const { blockContact, unblockContact, isBlocking, isUnblocking } =
+    useContactBlock()
 
   const [now, setNow] = useState(Date.now())
   const [menuState, setMenuState] = useState<MenuState>(null)
@@ -100,6 +137,30 @@ export const InboxList: React.FC<Props> = ({
   const badgeMap = useSelector(selectCartBadgeByContactId)
 
   const actionLoading = isBlocking || isUnblocking
+
+  const groupedConversations = useMemo<ConversationGroup[]>(() => {
+    const groups = new Map<string, ConversationGroup>()
+
+    conversations.forEach(conversation => {
+      const rawDate = getConversationDateValue(conversation)
+      const date = parseConversationDate(rawDate)
+
+      const key = date ? getConversationGroupKey(date) : "sin-fecha"
+      const label = date ? getConversationGroupLabel(date) : "Sin fecha"
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label,
+          conversations: [],
+        })
+      }
+
+      groups.get(key)?.conversations.push(conversation)
+    })
+
+    return Array.from(groups.values())
+  }, [conversations])
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -204,7 +265,7 @@ export const InboxList: React.FC<Props> = ({
   const executeBlockAction = async (
     event: React.MouseEvent<HTMLButtonElement>,
     conversation: ConversationDto,
-    action: "block" | "unblock" | "spam"
+    action: "block" | "unblock"
   ) => {
     event.preventDefault()
     event.stopPropagation()
@@ -263,169 +324,191 @@ export const InboxList: React.FC<Props> = ({
 
   return (
     <ul ref={listRef} className="inbox-list">
-      {conversations.map(conversation => {
-        const isSelected = conversation.conversationId === selectedId
-        const isMenuOpen = menuState?.conversationId === conversation.conversationId
-        const statusClass = conversation.status?.toLowerCase() ?? ""
+      {groupedConversations.map(group => (
+        <React.Fragment key={group.key}>
+          {group.label !== "Hoy" && (
+            <li className="inbox-list__date-group">
+              <span>{group.label}</span>
+            </li>
+          )}
 
-        const statusTextMap: Record<string, string> = {
-          bot: "Bot",
-          waiting: "Pendiente",
-          human: "Asignado",
-          closed: "Cerrado",
-          incomplete: "Incompleta",
-          paused: "Pausada",
-        }
+          {group.conversations.map(conversation => {
+            const isSelected = conversation.conversationId === selectedId
+            const isMenuOpen =
+              menuState?.conversationId === conversation.conversationId
 
-        const statusText =
-          statusTextMap[conversation.status] ?? conversation.status ?? "Pendiente"
+            const statusClass = conversation.status?.toLowerCase() ?? ""
+            const normalizedStatus = conversation.status?.toLowerCase() ?? ""
 
-        const unread =
-          userId === conversation.assignedAgentId
-            ? conversation.unreadForAgent ?? 0
-            : userId === conversation.assignedByUserId
-              ? conversation.unreadForAssigner ?? 0
-              : 0
-
-        const hasUnread = unread > 0
-
-        let timeSinceRequest = ""
-
-        if (!conversation.assignedAt && conversation.requestedAgentAt) {
-          timeSinceRequest = formatDuration(
-            now - new Date(conversation.requestedAgentAt).getTime()
-          )
-        }
-
-        const clientLast = formatTime(conversation.clientLastMessageAt)
-        let previewText = `Cliente últ. msj: ${clientLast}`
-
-        if (!conversation.assignedAt && conversation.requestedAgentAt) {
-          previewText += ` · Desde solicitud: ${timeSinceRequest}`
-        }
-
-        const contactId = conversation.clientContactId ?? 0
-        const badge = contactId > 0 ? badgeMap?.[contactId] : null
-
-        const hasCart =
-          contactId > 0
-            ? badge?.hasCart ?? conversation.isItemsInCart
-            : conversation.isItemsInCart
-
-        return (
-          <li
-            key={conversation.conversationId}
-            role="button"
-            tabIndex={0}
-            aria-pressed={isSelected}
-            onClick={() => handleSelect(conversation.conversationId)}
-            onKeyDown={event =>
-              event.key === "Enter" && handleSelect(conversation.conversationId)
+            const statusTextMap: Record<string, string> = {
+              new: "Nueva",
+              bot: "Bot",
+              waiting: "Pendiente",
+              human: "Asignado",
+              closed: "Cerrado",
+              incomplete: "Incompleta",
+              paused: "Pausada",
             }
-            onContextMenu={event =>
-              handleContextMenu(event, conversation.conversationId)
+
+            const statusText =
+              statusTextMap[normalizedStatus] ??
+              conversation.status ??
+              "Pendiente"
+
+            const unread =
+              userId === conversation.assignedAgentId
+                ? conversation.unreadForAgent ?? 0
+                : userId === conversation.assignedByUserId
+                  ? conversation.unreadForAssigner ?? 0
+                  : 0
+
+            const hasUnread = unread > 0
+
+            let timeSinceRequest = ""
+
+            if (!conversation.assignedAt && conversation.requestedAgentAt) {
+              timeSinceRequest = formatDuration(
+                now - new Date(conversation.requestedAgentAt).getTime()
+              )
             }
-            onPointerDown={() => handlePointerDown(conversation.conversationId)}
-            onPointerUp={handlePointerEnd}
-            onPointerLeave={handlePointerEnd}
-            onPointerCancel={handlePointerEnd}
-            className={`inbox-list__item${isSelected ? " inbox-list__item--selected" : ""}  ${conversation.isBlocked ? "inbox-list__item--isblocked" : ""}`}
-          >
-            <div className="inbox-list__top">
-              <div className="inbox-list__details">
-                <div className="inbox-list__name-row">
-                  <span className="inbox-list__name">
-                    <span className="inbox-list-icon_conversation">
-                      {getChannelIcon(conversation.metaChannelId)}
-                    </span>
 
-                    {conversation.systemDefinedCompanyName ?? ""}
+            const clientLast = formatTime(conversation.clientLastMessageAt)
+            let previewText = `Cliente últ. msj: ${clientLast}`
 
-                    <span>
-                      {conversation.clientContactId != null
-                        ? ` (${conversation.clientContactName})`
-                        : ""}
-                    </span>
+            if (!conversation.assignedAt && conversation.requestedAgentAt) {
+              previewText += ` · Desde solicitud: ${timeSinceRequest}`
+            }
 
-                    {hasCart && (
-                      <span className="inbox-list__isItemsInCart">
-                        <FaCartFlatbedSuitcase fontSize={16} />
+            const contactId = conversation.clientContactId ?? 0
+            const badge = contactId > 0 ? badgeMap?.[contactId] : null
+
+            const hasCart =
+              contactId > 0
+                ? badge?.hasCart ?? conversation.isItemsInCart
+                : conversation.isItemsInCart
+
+            return (
+              <li
+                key={conversation.conversationId}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                onClick={() => handleSelect(conversation.conversationId)}
+                onKeyDown={event =>
+                  event.key === "Enter" &&
+                  handleSelect(conversation.conversationId)
+                }
+                onContextMenu={event =>
+                  handleContextMenu(event, conversation.conversationId)
+                }
+                onPointerDown={() =>
+                  handlePointerDown(conversation.conversationId)
+                }
+                onPointerUp={handlePointerEnd}
+                onPointerLeave={handlePointerEnd}
+                onPointerCancel={handlePointerEnd}
+                className={`inbox-list__item${
+                  isSelected ? " inbox-list__item--selected" : ""
+                } ${
+                  conversation.isBlocked ? "inbox-list__item--isblocked" : ""
+                }`}
+              >
+                <div className="inbox-list__top">
+                  <div className="inbox-list__details">
+                    <div className="inbox-list__name-row">
+                      <span className="inbox-list__name">
+                        <span className="inbox-list-icon_conversation">
+                          {getChannelIcon(conversation.metaChannelId)}
+                        </span>
+
+                        {conversation.systemDefinedCompanyName ?? ""}
+
+                        <span>
+                          {conversation.clientContactId != null
+                            ? ` (${conversation.clientContactName})`
+                            : ""}
+                        </span>
+
+                        {hasCart && (
+                          <span className="inbox-list__isItemsInCart">
+                            <FaCartFlatbedSuitcase fontSize={16} />
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-
-                  <button
-                    type="button"
-                    className="inbox-list__menu-button"
-                    onClick={event => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      openMenu(conversation.conversationId)
-                    }}
-                    disabled={actionLoading}
-                    title="Opciones"
-                    aria-label="Opciones de conversación"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                </div>
-
-                {conversation.assignedAgentName && (
-                  <div className="inbox-list__agent">
-                    Agente: <strong>{conversation.assignedAgentName}</strong>
-                  </div>
-                )}
-
-                <span className="inbox-list__preview">{previewText}</span>
-              </div>
-
-              <div className="inbox-list__bottom">
-                <div className="inbox-list__bottom_text">
-                  <span
-                    className={`inbox-list__status inbox-list__status--${statusClass}`}
-                  >
-                    {statusText}
-                  </span>
-                </div>
-
-                {hasUnread && (
-                  <span className="inbox-list__unread-badge">{unread}</span>
-                )}
-
-                                  {isMenuOpen && (
-                    <div
-                      className="inbox-list__menu"
-                      onClick={event => event.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        className="inbox-list__menu-item"
-                        disabled={actionLoading}
-                        onClick={event =>
-                          executeBlockAction(event, conversation, "block")
-                        }
-                      >
-                        Bloquear contacto
-                      </button>
 
                       <button
                         type="button"
-                        className="inbox-list__menu-item"
+                        className="inbox-list__menu-button"
+                        onClick={event => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          openMenu(conversation.conversationId)
+                        }}
                         disabled={actionLoading}
-                        onClick={event =>
-                          executeBlockAction(event, conversation, "unblock")
-                        }
+                        title="Opciones"
+                        aria-label="Opciones de conversación"
                       >
-                        Desbloquear contacto
+                        <MoreVertical size={16} />
                       </button>
                     </div>
-                  )}
 
-              </div>
-            </div>
-          </li>
-        )
-      })}
+                    {conversation.assignedAgentName && (
+                      <div className="inbox-list__agent">
+                        Agente: <strong>{conversation.assignedAgentName}</strong>
+                      </div>
+                    )}
+
+                    <span className="inbox-list__preview">{previewText}</span>
+                  </div>
+
+                  <div className="inbox-list__bottom">
+                    <div className="inbox-list__bottom_text">
+                      <span
+                        className={`inbox-list__status inbox-list__status--${statusClass}`}
+                      >
+                        {statusText}
+                      </span>
+                    </div>
+
+                    {hasUnread && (
+                      <span className="inbox-list__unread-badge">{unread}</span>
+                    )}
+
+                    {isMenuOpen && (
+                      <div
+                        className="inbox-list__menu"
+                        onClick={event => event.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className="inbox-list__menu-item"
+                          disabled={actionLoading}
+                          onClick={event =>
+                            executeBlockAction(event, conversation, "block")
+                          }
+                        >
+                          Bloquear contacto
+                        </button>
+
+                        <button
+                          type="button"
+                          className="inbox-list__menu-item"
+                          disabled={actionLoading}
+                          onClick={event =>
+                            executeBlockAction(event, conversation, "unblock")
+                          }
+                        >
+                          Desbloquear contacto
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </React.Fragment>
+      ))}
 
       {loading && <CustomLoader />}
 

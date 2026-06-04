@@ -147,32 +147,54 @@ export function methodLabel(m: PaymentMethod): string {
 }
 
 
-export const getLicenseMessage = (expiryDateString: string) => {
-  if (!expiryDateString) return '';
+export const getLicenseMessage = (
+  expiryDateString: string,
+  customMessage?: string
+) => {
+  if (!expiryDateString) return ''
 
-  const expiryDate = new Date(expiryDateString);
-  const today = new Date();
-  const daysLeft = differenceInCalendarDays(expiryDate, today);
+  const expiryDate = new Date(expiryDateString)
+  const today = new Date()
+  const daysLeft = differenceInCalendarDays(expiryDate, today)
+  const expiryDateFormatted = format(expiryDate, 'dd/MM/yyyy')
+
+  let statusText = ''
+
   if (daysLeft < 0) {
-    return `Tu licencia ha expirado el ${format(expiryDate, 'dd/MM/yyyy')}. Para seguir disfrutando de todas las funcionalidades del servicio sin interrupciones, por favor gestiona tu renovación o ponte en contacto con nuestro equipo de soporte técnico.`;
+    statusText = 'Tu licencia ha expirado'
+  } else if (daysLeft === 0) {
+    statusText = 'Tu licencia vence hoy'
+  } else if (daysLeft === 1) {
+    statusText = 'Tu licencia vence mañana'
+  } else {
+    statusText = `Tu licencia vencerá en ${daysLeft} días`
+  }
+
+  if (customMessage?.trim()) {
+    return customMessage
+      .replace(/\{daysLeft\}/g, String(daysLeft))
+      .replace(/\{expiryDate\}/g, expiryDateFormatted)
+      .replace(/\{statusText\}/g, statusText)
+  }
+
+  if (daysLeft < 0) {
+    return `Tu licencia ha expirado el ${expiryDateFormatted}. Para seguir disfrutando de todas las funcionalidades del servicio sin interrupciones, por favor gestiona tu renovación o ponte en contacto con nuestro equipo de soporte técnico.`
   }
 
   if (daysLeft === 0) {
-    return 'Atención: Tu licencia de uso vence hoy. Para evitar la suspensión de tu cuenta y mantener el acceso a tus datos, te recomendamos realizar la renovación lo antes posible.';
+    return 'Atención: Tu licencia de uso vence hoy. Para evitar la suspensión de tu cuenta y mantener el acceso a tus datos, te recomendamos realizar la renovación lo antes posible.'
   }
 
-
   if (daysLeft === 1) {
-    return 'Urgente: Tu licencia vence mañana. Asegura la continuidad de tu servicio renovando tu suscripción hoy mismo.';
+    return 'Urgente: Tu licencia vence mañana. Asegura la continuidad de tu servicio renovando tu suscripción hoy mismo.'
   }
 
   if (daysLeft > 1 && daysLeft <= 7) {
-    return `Tu licencia SaaS vencerá en ${daysLeft} días (el ${format(expiryDate, 'dd/MM/yyyy')}). Te sugerimos planificar tu renovación con anticipación para evitar cortes en el servicio.`;
+    return `Tu licencia SaaS vencerá en ${daysLeft} días, el ${expiryDateFormatted}. Te sugerimos planificar tu renovación con anticipación para evitar cortes en el servicio.`
   }
-  
-  return `Información de tu suscripción: Tu licencia actual está activa y vencerá el ${format(expiryDate, 'dd/MM/yyyy')}. No es necesario realizar ninguna acción por el momento.`;
-};
 
+  return `Información de tu suscripción: Tu licencia actual está activa y vencerá el ${expiryDateFormatted}. No es necesario realizar ninguna acción por el momento.`
+}
 
 export const clampQty = (n: number) => {
   if (!Number.isFinite(n) || n <= 0) return 1

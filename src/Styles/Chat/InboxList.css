@@ -54,6 +54,26 @@
   animation: pulse-subtle 2s infinite ease-in-out;
 }
 
+.inbox-list__date-group {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 8px;
+  padding: 0;
+  pointer-events: none;
+}
+
+.inbox-list__date-group span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6b7a;
+  /* background: #eef2f7; */
+  /* border: 1px solid #d9e1ec; */
+  border-radius: 999px;
+  padding: 4px 10px;
+  text-transform: capitalize;
+}
+
 @keyframes pulse-subtle {
   0% {
     transform: scale(1);

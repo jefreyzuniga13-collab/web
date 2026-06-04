@@ -28,7 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const dispatch = useAppDispatch();
   const activeCompanyImage = useSelector(selectActiveCompanyImage);
   const activeCompanyName = useSelector(selectActiveCompanyName);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const activeCompanyWhPhone = useSelector(selectActiveCompanyWhPhone);
 
   const { currentUser, loading: userLoading, fetchOne } = useUsers();

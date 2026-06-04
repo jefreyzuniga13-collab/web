@@ -9,7 +9,7 @@ import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
 import { Sticker } from "lucide-react";
-import { useConversations } from "@/Hooks/Chat/useConversations";
+import { useConversations } from "@/Hooks/Chat/useConversations"; 
 import TicketModal from "@/Components/Crm/TicketModal";
 import useContact from "@/Hooks/Auth/useContact";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
@@ -22,6 +22,8 @@ import { MdContacts } from "react-icons/md";
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
+import { useCompanySystemParamValue } from '@/Hooks/Crm/useCompanySystemParamValue'
+import {LICENSE_WARNING_MESSAGE_PARAM_ID} from '@/Constants/systemParams'
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
@@ -62,6 +64,13 @@ const SupportPage: React.FC = () => {
     showCompanyModal,
     setShowCompanyModal,
   } = useSupportPage();
+
+  const {
+  value: licenseWarningMessageParam
+} = useCompanySystemParamValue(
+  LICENSE_WARNING_MESSAGE_PARAM_ID,
+  showLicenseWarning
+)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
@@ -179,6 +188,10 @@ const SupportPage: React.FC = () => {
     };
   }, [convId, contact?.id, dispatch, fetchByContactId]);
 
+  const licenseWarningMessage = useMemo(() => {
+  return getLicenseMessage(licenseExpireAt, licenseWarningMessageParam)
+}, [licenseExpireAt, licenseWarningMessageParam])
+
   return (
     <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
       <aside className="sidebar">
@@ -237,7 +250,8 @@ const SupportPage: React.FC = () => {
             <IoMdHourglass fontSize={12} className="main-license__icon" />
 
             <span className="main-license__text">
-              {getLicenseMessage(licenseExpireAt)}
+              {/* {getLicenseMessage(licenseExpireAt)} */}
+              {licenseWarningMessage}
             </span>
           </div>
         )}

@@ -98,6 +98,13 @@ class CompanySystemParamsServ {
 
       return data
   }
+  async getBySystemParamAsync(systemParamId: number): Promise<CompanySystemParamProj | null> {
+  const { data } = await api.get<ApiResponse<CompanySystemParamProj>>(
+    `/CompanySystemParam/${systemParamId}`
+  )
+
+  return data.data ?? null
+}
 }
 
 export const CompanySystemParamsService = new CompanySystemParamsServ()

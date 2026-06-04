@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import Input from '@/Components/Common/Input'
@@ -8,11 +8,14 @@ import { useCompany } from '@/Hooks/Crm/useCompany'
 import { LicensesService } from '@/Services/Crm/LicensesService'
 import { StatusService } from '@/Services/Crm/StatusService'
 import { useCompaniesLicenseForm } from '@/Hooks/Crm/License/useCompaniesLicenseForm'
-import type {CompaniesLicenseProj, CompaniesLicenseRequest, LicenseProj} from '@/Interfaces/Crm/LicenseInterfaz'
+import type {
+  CompaniesLicenseProj,
+  CompaniesLicenseRequest,
+  LicenseProj
+} from '@/Interfaces/Crm/LicenseInterfaz'
 import type { StatusResponseDto } from '@/Interfaces/Crm/StatusInterface'
 import type { ModalMode } from '@/Interfaces/Common/GlobalInterface'
 import '@/Styles/Auth/ContactModal.css'
-import { formatDate } from '@/Utils/formatters'
 
 interface Props {
   mode: ModalMode
@@ -32,6 +35,19 @@ const addMonths = (dateValue: string, months: number): string => {
   return date.toISOString().substring(0, 10)
 }
 
+const addDays = (dateValue: string, days: number): string => {
+  if (!dateValue || days <= 0) return ''
+
+  const date = new Date(`${dateValue}T00:00:00`)
+  date.setDate(date.getDate() + days)
+
+  return date.toISOString().substring(0, 10)
+}
+
+const normalizeText = (value?: string | null): string => {
+  return value?.trim().toLowerCase() ?? ''
+}
+
 export default function CompaniesLicenseModalForm({
   mode,
   isOpen,
@@ -40,17 +56,23 @@ export default function CompaniesLicenseModalForm({
   onSubmit,
   loading
 }: Props) {
+  const [freeLicenseDays, setFreeLicenseDays] = useState<number>(0)
+
   const {
     form,
     errors,
     isView,
     handleChange,
-    handleSubmit
+    handleSubmit,
+    setForm
   } = useCompaniesLicenseForm({ mode, data, onSubmit })
 
   const { companies = [], loading: loadingCompanies } = useCompany()
 
-  const { data: licenses = [], isLoading: loadingLicenses } = useQuery<LicenseProj[], Error>({
+  const {
+    data: licenses = [],
+    isLoading: loadingLicenses
+  } = useQuery<LicenseProj[], Error>({
     queryKey: ['licenses-select'],
     queryFn: async () => {
       const res = await LicensesService.getAllAsync('', 1, 1000)
@@ -75,27 +97,130 @@ export default function CompaniesLicenseModalForm({
     [licenses, form.licencesId]
   )
 
-  const estimatedValidTo = useMemo(() => {
-    if (mode === 'view' || mode === 'edit') {
-      return formatDate(data?.validTo)
+  const isFreeLicense = useMemo(() => {
+    const code = normalizeText(selectedLicense?.licensePeriodCode)
+    const name = normalizeText(selectedLicense?.licensePeriodName)
+
+    return code === 'libre' || name === 'libre'
+  }, [selectedLicense])
+
+  const calculatedValidTo = useMemo(() => {
+    if (!form.validFrom) return ''
+
+    const months =
+      selectedLicense?.duration ??
+      selectedLicense?.licensePeriodMonths ??
+      0
+
+    return addMonths(form.validFrom, months)
+  }, [selectedLicense, form.validFrom])
+
+  const validToValue = useMemo(() => {
+    if (isFreeLicense) {
+      return form.validTo ?? ''
     }
 
-    const months = selectedLicense?.duration ?? selectedLicense?.licensePeriodMonths ?? 0
-    return addMonths(form.validFrom, months)
-  }, [mode, data?.validTo, selectedLicense, form.validFrom])
+    if (mode === 'edit' || mode === 'view') {
+      return form.validTo ?? ''
+    }
+
+    return calculatedValidTo
+  }, [isFreeLicense, mode, form.validTo, calculatedValidTo])
 
   const licenseDescription = useMemo(() => {
     if (!selectedLicense) return ''
+
+    if (isFreeLicense) {
+      return 'Licencia libre - rango manual o duración en días'
+    }
 
     if (!selectedLicense.isRecurrent) {
       return 'Licencia no recurrente'
     }
 
     const periodName = selectedLicense.licensePeriodName || 'Periodo'
-    const months = selectedLicense.licensePeriodMonths || selectedLicense.duration || 0
+    const months =
+      selectedLicense.licensePeriodMonths ||
+      selectedLicense.duration ||
+      0
 
     return `${periodName} - ${months} mes(es)`
-  }, [selectedLicense])
+  }, [selectedLicense, isFreeLicense])
+
+  const handleFreeLicenseDaysChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    const days = Number(e.target.value)
+
+    setFreeLicenseDays(days)
+
+    if (!isFreeLicense) return
+
+    if (!form.validFrom || days <= 0) {
+      return
+    }
+
+    setForm(prev => ({
+      ...prev,
+      validTo: addDays(prev.validFrom, days)
+    }))
+  }
+
+  const handleValidToChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    setFreeLicenseDays(0)
+    handleChange(e)
+  }
+
+  useEffect(() => {
+    if (!selectedLicense) return
+
+    if (!isFreeLicense) {
+      setFreeLicenseDays(0)
+    }
+  }, [selectedLicense, isFreeLicense])
+
+  useEffect(() => {
+    if (!selectedLicense) return
+    if (mode === 'edit' || mode === 'view') return
+    if (isFreeLicense) return
+
+    setForm(prev => ({
+      ...prev,
+      validTo: calculatedValidTo
+    }))
+  }, [
+    selectedLicense,
+    mode,
+    isFreeLicense,
+    calculatedValidTo,
+    setForm
+  ])
+
+  useEffect(() => {
+    if (!isFreeLicense) return
+    if (mode === 'view') return
+    if (!form.validFrom) return
+    if (freeLicenseDays <= 0) return
+
+    setForm(prev => ({
+      ...prev,
+      validTo: addDays(prev.validFrom, freeLicenseDays)
+    }))
+  }, [
+    isFreeLicense,
+    mode,
+    form.validFrom,
+    freeLicenseDays,
+    setForm
+  ])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFreeLicenseDays(0)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -118,6 +243,7 @@ export default function CompaniesLicenseModalForm({
           <div className="cm-modal__grid">
             <div className="cm-modal__col">
               <Label htmlFor="companyId">Empresa *</Label>
+
               <select
                 id="companyId"
                 name="companyId"
@@ -148,6 +274,7 @@ export default function CompaniesLicenseModalForm({
 
             <div className="cm-modal__col">
               <Label htmlFor="licencesId">Licencia *</Label>
+
               <select
                 id="licencesId"
                 name="licencesId"
@@ -175,8 +302,10 @@ export default function CompaniesLicenseModalForm({
                 </small>
               )}
             </div>
+
             <div className="cm-modal__col">
               <Label htmlFor="validFrom">Válida desde *</Label>
+
               <Input
                 id="validFrom"
                 name="validFrom"
@@ -190,28 +319,57 @@ export default function CompaniesLicenseModalForm({
                 <div className="cm-modal__error">{errors.validFrom}</div>
               )}
             </div>
+
+            {isFreeLicense && !isView && (
+              <div className="cm-modal__col">
+                <Label htmlFor="freeLicenseDays">
+                  Duración libre en días
+                </Label>
+
+                <Input
+                  id="freeLicenseDays"
+                  name="freeLicenseDays"
+                  type="number"
+                  min={0}
+                  value={freeLicenseDays}
+                  onChange={handleFreeLicenseDaysChange}
+                  disabled={isView || !form.validFrom}
+                />
+
+                <small className="cm-modal__hint">
+                  Si ingresas días, la fecha final se calculará automáticamente.
+                </small>
+              </div>
+            )}
+
             <div className="cm-modal__col">
-              <Label htmlFor="estimatedValidTo">Válida hasta</Label>
+              <Label htmlFor="validTo">
+                Válida hasta {isFreeLicense ? '*' : ''}
+              </Label>
+
               <Input
-                id="estimatedValidTo"
-                name="estimatedValidTo"
+                id="validTo"
+                name="validTo"
                 type="date"
-                value={estimatedValidTo}
-                 onChange={(e) => {
-                  if (selectedLicense?.licensePeriodCode !== 'Libre') {
-                    handleChange(e);
-                  }
-                }}
-                disabled={selectedLicense?.licensePeriodCode !== 'Libre'}
+                value={validToValue}
+                onChange={handleValidToChange}
+                disabled={isView || !isFreeLicense}
               />
 
+              {errors.validTo && (
+                <div className="cm-modal__error">{errors.validTo}</div>
+              )}
+
               <small className="cm-modal__hint">
-                La fecha final se calcula automáticamente según la licencia.
+                {isFreeLicense
+                  ? 'Puedes seleccionar una fecha final manualmente o calcularla con duración en días.'
+                  : 'La fecha final se calcula automáticamente según la licencia.'}
               </small>
             </div>
 
             <div className="cm-modal__col">
               <Label htmlFor="statusId">Estado *</Label>
+
               <select
                 id="statusId"
                 name="statusId"
@@ -237,6 +395,7 @@ export default function CompaniesLicenseModalForm({
             {(mode === 'view' || mode === 'edit') && (
               <div className="cm-modal__col">
                 <Label htmlFor="remainingDays">Días restantes</Label>
+
                 <Input
                   id="remainingDays"
                   name="remainingDays"
@@ -245,24 +404,36 @@ export default function CompaniesLicenseModalForm({
                 />
               </div>
             )}
-            
-             <div className="cm-modal__col">
-                <Label htmlFor="licenseExpirationWarningDays">Días Mostrar Alertas</Label>
-                <Input
-                  id="licenseExpirationWarningDays"
-                  name="licenseExpirationWarningDays"
-                  type='number'
-                  value={data?.licenseExpirationWarningDays}
-                  disabled={isView ? true : false}
-                />
 
-                {errors.licenseExpirationWarningDays && (
-                <div className="cm-modal__error">{errors.licenseExpirationWarningDays}</div>
+            <div className="cm-modal__col">
+              <Label htmlFor="licenseExpirationWarningDays">
+                Días antes para mostrar alerta *
+              </Label>
+
+              <Input
+                id="licenseExpirationWarningDays"
+                name="licenseExpirationWarningDays"
+                type="number"
+                min={0}
+                value={form.licenseExpirationWarningDays}
+                onChange={handleChange}
+                disabled={isView}
+              />
+
+              {errors.licenseExpirationWarningDays && (
+                <div className="cm-modal__error">
+                  {errors.licenseExpirationWarningDays}
+                </div>
               )}
-              </div>
 
-            <div className="cm-modal__col cm-modal__col">
+              <small className="cm-modal__hint">
+                Indica cuántos días antes del vencimiento se mostrará la alerta.
+              </small>
+            </div>
+
+            <div className="cm-modal__col">
               <Label htmlFor="observation">Observación</Label>
+
               <textarea
                 id="observation"
                 name="observation"
@@ -303,7 +474,10 @@ export default function CompaniesLicenseModalForm({
                 disabled={loading}
               >
                 {loading ? (
-                  <AiOutlineLoading3Quarters fontSize={16} className="animate-spin" />
+                  <AiOutlineLoading3Quarters
+                    fontSize={16}
+                    className="animate-spin"
+                  />
                 ) : mode === 'create' ? (
                   'Asignar'
                 ) : (
