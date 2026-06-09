@@ -157,9 +157,10 @@ export default function LoginPresentation() {
                 </a>
               </div>
 
-              <p className="login__copyright">
-                © 2026 PC GROUP S.A. Todos los derechos reservados.
-              </p>
+              <div className="login__copyright">
+                <span>© {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.</span>
+                <span>Versión 26061</span>
+              </div>
             </div>
           </main>
 

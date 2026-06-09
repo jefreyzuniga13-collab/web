@@ -2,6 +2,7 @@ import api from "@/Utils/ApiConfig";
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 import type { SendLinkRequestDto } from "@/Interfaces/Ecommerce/SendLinkInterface";
 import type { SendOrderMessage } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
 
 class CartServ {
   async SendMessageLink(req: SendLinkRequestDto): Promise<ApiResponse<boolean>> {
@@ -17,6 +18,18 @@ class CartServ {
   async sendOrderMessage(req: SendOrderMessage): Promise<ApiResponse<boolean>> {
     const { data } = await api.post<ApiResponse<boolean>>(`/Cart/SendOrderMessage`, req);
     return data;
+  }
+
+  async resolveToken(token: string): Promise<ApiResponse<TempLinkResolveResponseDto>> {
+    const { data } = await api.post<ApiResponse<TempLinkResolveResponseDto>>(
+            `/Auth/TempLink/Resolve`,
+            token,
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+          );
+
+        return data
   }
 }
 

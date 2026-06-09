@@ -15,7 +15,6 @@ type ReplyTarget = {
   preview: string
 }
 
-
 type UseChatWindowArgs = {
   conversationId?: number
   userId?: number
@@ -35,12 +34,10 @@ export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date |
   const [text, setText] = useState("")
   const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)
   const selectedOptionRef = useRef<string | null>(null)
-
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-
   const hasMedia = (m: MessageDto) => (m.attachments?.length ?? 0) > 0
   const hasText = (m: MessageDto) => typeof m.content === "string" && m.content.trim().length > 0
 
@@ -58,14 +55,10 @@ export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date |
   const longPressTimerRef = useRef<number | null>(null)
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
-
   const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [highlightedId, setHighlightedId] = useState<number | null>(null)
-
-const [searchTerm, setSearchTerm] = useState<string>((args.highlightTerm ?? "").trim());
-useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.highlightTerm]);
-
-//const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const [searchTerm, setSearchTerm] = useState<string>((args.highlightTerm ?? "").trim());
+  useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.highlightTerm]);
 
   const registerMessageRef = (id: number) => (el: HTMLDivElement | null) => {
     if (el) messageRefs.current.set(id, el)

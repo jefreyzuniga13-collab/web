@@ -887,6 +887,9 @@ export const ChatWindow: React.FC<Props> = ({
               className="chat-window__composer-input"
               placeholder={isRecording ? "Grabando..." : "Escribe un mensaje…"}
               value={text}
+              autoCapitalize="sentences"
+              lang="es"
+              spellCheck={true}
               autoFocus
               disabled={isRecording}
               onChange={(e) => {

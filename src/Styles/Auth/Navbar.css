@@ -14,6 +14,11 @@
     width: 10rem;
   }
 
+  .navbar__header-container{
+    display: flex;
+    gap: 12px;
+    flex-direction: row;
+  }
   .navbar__header {
     display: flex;
     flex-wrap: wrap;
@@ -24,6 +29,9 @@
     min-height: 6rem;
   }
 
+  .navbar__header__text{
+    font-size: var(--font-size-xl);
+  }
   .navbar__logo {
     user-select: none;
     pointer-events: none;

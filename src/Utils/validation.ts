@@ -25,7 +25,7 @@ export const validateBillingForm = (billingForm: BillingFormState,
     locationMode: LocationMode
 ) => {
     if (!billingForm.firstName.trim()) return toastError("El nombre es obligatorio.");
-    if (!billingForm.lastName.trim()) return toastError("Los apellidos son obligatorios.");
+    // if (!billingForm.lastName.trim()) return toastError("Los apellidos son obligatorios.");
     if (!billingForm.city.trim()) return toastError("La ciudad es obligatoria.");
     if (!billingForm.address.trim()) return toastError("La dirección es obligatoria.");
     if (locationMode === "new" && !billingForm.addressName.trim())

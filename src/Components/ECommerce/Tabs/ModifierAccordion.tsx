@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
-import type {
-  listaOpciones,
-  ProductoModificadorPCGInterface,
-} from "@/Interfaces/Chat/ProductPCGInterface"
+import { LuChevronsDown } from "react-icons/lu"
+import { FiChevronsUp } from "react-icons/fi"
+import type {listaOpciones, ProductoModificadorPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
 import { formatearDecimales } from "@/Utils/calcularIVA"
-import  '@/Styles/Ecommerce/ModifierAccordion.css'
-import { LuChevronsDown } from "react-icons/lu";
-import { FiChevronsUp } from "react-icons/fi";
+import "@/Styles/Ecommerce/ModifierAccordion.css"
+
 type SelectedOptionsMap = Record<string, string[]>
 type OptionQtyMap = Record<string, number>
 
@@ -15,6 +13,7 @@ type Props = {
   selectedOptions: SelectedOptionsMap
   optionQuantities: OptionQtyMap
   cantidadProducto: number
+  productCode?: string
   onToggleOption: (
     modifier: ProductoModificadorPCGInterface,
     codOpcion: string
@@ -69,7 +68,7 @@ const getEstadoModificador = (
     return "Incompleto"
   }
 
-  if (!requerido && selectedQty > 0) {
+  if (selectedQty > 0) {
     return "Completado"
   }
 
@@ -96,6 +95,7 @@ const ModifierAccordion = ({
   selectedOptions,
   optionQuantities,
   cantidadProducto,
+  productCode = "product",
   onToggleOption,
   onQuantityChange,
 }: Props) => {
@@ -103,6 +103,7 @@ const ModifierAccordion = ({
 
   const key = String(modifier.codModificador)
   const selected = selectedOptions[key] ?? []
+
   const maxSel = getMaximoSeleccion(modifier)
   const limiteReal = getLimiteRealModificador(modifier, cantidadProducto)
   const requerido = modifier.esRequerido === "S"
@@ -118,12 +119,14 @@ const ModifierAccordion = ({
   }, [modifier, selectedQty, limiteReal])
 
   useEffect(() => {
-    if (estado === "Completado") {
-      setOpen(false)
-    }
-
+    // Abrir si falta completar
     if (estado === "Incompleto") {
       setOpen(true)
+      return
+    }
+
+    if (estado === "Completado") {
+      setOpen(false)
     }
   }, [estado])
 
@@ -173,6 +176,8 @@ const ModifierAccordion = ({
             const selectedOption = isOptionSelected(optionId)
             const currentQty = optionQuantities[optionId] ?? 1
 
+            const inputId = `${productCode}-${key}-${optionId}`
+
             const otherTotal = getSelectedQtyByModifier(
               modifier,
               selectedOptions,
@@ -188,16 +193,15 @@ const ModifierAccordion = ({
                 <input
                   type="checkbox"
                   className="modifierAccordion__checkbox"
-                  id={`${key}-${optionId}`}
+                  id={inputId}
                   checked={selectedOption}
                   onChange={() => onToggleOption(modifier, optionId)}
                 />
 
-                <label
-                  htmlFor={`${key}-${optionId}`}
-                  className="modifierAccordion__label"
-                >
-                  <span className="modifierAccordion__desc">{op.descripcionOp}</span>
+                <label htmlFor={inputId} className="modifierAccordion__label">
+                  <span className="modifierAccordion__desc">
+                    {op.descripcionOp}
+                  </span>
 
                   {Number(op.precioVenta ?? 0) > 0 && (
                     <span className="modifierAccordion__price">
@@ -227,4 +231,4 @@ const ModifierAccordion = ({
   )
 }
 
-export default ModifierAccordion;
+export default ModifierAccordion

@@ -34,7 +34,6 @@ const useMessages = (validFrom?: Date | null, validTo?: Date | null, conversatio
         return
       }
 
-      //  notificationSound.play()
 
       // 3) Si es media pero no vino con attachments -> recargamos todos los mensajes
       try {

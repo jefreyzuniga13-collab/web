@@ -15,119 +15,116 @@ import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
 import type { RootState } from "@/Context";
 import { theme } from "@/Utils/materialTheme";
+import { LicenseExpiredModalWatcher } from "@/Components/Auth/LicenseExpiredModalWatcher";
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
-import { LicenseExpiredModalWatcher } from "./Components/Auth/LicenseExpiredModalWatcher";
 
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
-function sanitizeExternalUrl(url: string): string {
-  if (isExternalUrl(url)) return url;
-  return `https://${String(url).replace(/^\/+/, "")}`;
-}
+function sanitizeExternalUrl(url?: string | null): string {
+  const rawUrl = String(url ?? "").trim();
 
-export default function App() {
-  const online = useOnline();
-  const dispatch = useDispatch();
-  const lastEvent = useNotificationsHub();
-  const navigate = useNavigate();
-
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
-
-  function shouldShowDesktopNotification() {
-    return document.visibilityState === "hidden" || !document.hasFocus();
+  if (!rawUrl) {
+    return "/chat";
   }
 
-  // Error: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons: 1. You might have mismatching versions of React and the renderer (such as React DOM) 2. You might be breaking the Rules of Hooks 3. You might have more than one copy of React in the same app See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+  if (isExternalUrl(rawUrl)) {
+    return rawUrl;
+  }
+
+  if (rawUrl.startsWith("/")) {
+    return rawUrl;
+  }
+
+  return `https://${rawUrl.replace(/^\/+/, "")}`;
+}
+
+function shouldShowDesktopNotification() {
+  return document.visibilityState === "hidden" || !document.hasFocus();
+}
+
+function AppRealtimeEffects() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const lastEvent = useNotificationsHub();
+
   const mapNotificationPayload = useCallback((evt: any) => {
     const title = evt?.title ?? "Nueva notificación";
+
     const body =
       evt?.body ??
       (evt?.content && String(evt.content).trim()) ??
       "Tienes una nueva notificación";
 
-    const rawUrl = evt?.url;
-    const url = sanitizeExternalUrl(String(rawUrl));
+    const url = sanitizeExternalUrl(evt?.url ?? "/chat");
 
     return { title, body, url };
   }, []);
 
-  const showDesktopNotification = useCallback(async (evt: any) => {
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
+  const showDesktopNotification = useCallback(
+    async (evt: any) => {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
 
-    const { title, body, url } = mapNotificationPayload(evt);
-    const reg = await navigator.serviceWorker.getRegistration();
+      const { title, body, url } = mapNotificationPayload(evt);
+      const reg = await navigator.serviceWorker.getRegistration();
 
-    await reg?.showNotification(title, {
-      body,
-      icon: "/logopcg.png",
-      badge: "/logopcg.png",
-      requireInteraction: true,
-      tag: "latest-message",
-      renotify: true,
-      data: { url },
-    } as NotificationOptions & { renotify: boolean });
-  }, [mapNotificationPayload]);
-    
-    // Registrar service worker
-    useEffect(() => {
-      if ("serviceWorker" in navigator) {
-        // navigator.serviceWorker.register("/sw.js").catch(() => {});
-        navigator.serviceWorker
-        .register(`${import.meta.env.BASE_URL}sw.js`)
-        .catch(() => {});
-      }
-    }, []);
+      await reg?.showNotification(title, {
+        body,
+        icon: "/logopcg.png",
+        badge: "/logopcg.png",
+        requireInteraction: true,
+        tag: "latest-message",
+        renotify: true,
+        data: { url },
+      } as NotificationOptions & { renotify: boolean });
+    },
+    [mapNotificationPayload]
+  );
 
-  // Permiso de notificaciones
-  useEffect(() => {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "default") {
-      Notification.requestPermission().catch(() => {});
-    }
-  }, []);
-
-  // Escuchar eventos de notificación
   useEffect(() => {
     const onDesktopNotify = (e: Event) => {
       const evt = (e as CustomEvent).detail;
+
       if (shouldShowDesktopNotification()) {
         showDesktopNotification(evt).catch(() => {});
       }
     };
 
     window.addEventListener("DesktopNotify", onDesktopNotify);
-    return () => window.removeEventListener("DesktopNotify", onDesktopNotify);
+
+    return () => {
+      window.removeEventListener("DesktopNotify", onDesktopNotify);
+    };
   }, [showDesktopNotification]);
 
-  // Manejo de navegación desde SW
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === "NAVIGATE" && e.data?.url) {
-        const url = String(e.data.url);
-
-        if (isExternalUrl(url)) {
-          window.open(sanitizeExternalUrl(url), "_blank", "noopener,noreferrer");
-        } else {
-          navigate(url);
-        }
+      if (e.data?.type !== "NAVIGATE" || !e.data?.url) {
+        return;
       }
+
+      const url = String(e.data.url);
+
+      if (isExternalUrl(url)) {
+        window.open(sanitizeExternalUrl(url), "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      navigate(url);
     };
 
     navigator.serviceWorker.addEventListener("message", handler);
-    return () =>
+
+    return () => {
       navigator.serviceWorker.removeEventListener("message", handler);
+    };
   }, [navigate]);
 
-
-  // Notificaciones en tiempo real
   useEffect(() => {
     if (!lastEvent) return;
 
@@ -136,23 +133,60 @@ export default function App() {
     if (shouldShowDesktopNotification()) {
       showDesktopNotification(lastEvent).catch(() => {});
     }
-  }, [lastEvent, dispatch]);
+  }, [lastEvent, dispatch, showDesktopNotification]);
 
-  // Sonido
   useEffect(() => {
     if (!lastEvent) return;
 
     try {
-      // const audio = new Audio("/notification.mp3");
       const audio = new Audio(`${import.meta.env.BASE_URL}notification.mp3`);
       audio.play().catch(() => {});
     } catch {}
   }, [lastEvent]);
 
+  return null;
+}
+
+function AuthenticatedAppContent() {
+  const online = useOnline();
+
+  return (
+    <SignalRProvider>
+      <AppRealtimeEffects />
+
+      {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
+
+      <ReLoginModal />
+      <LicenseExpiredModalWatcher />
+      <AppRouter />
+    </SignalRProvider>
+  );
+}
+
+export default function App() {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <SessionBootstrap>
-
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -166,19 +200,7 @@ export default function App() {
           className="custom-toast-body"
         />
 
-      {isAuthenticated ? (
-        <SignalRProvider>
-          {!online && (
-            <OfflineBanner onRetry={() => window.location.reload()} />
-          )}
-
-          <ReLoginModal />
-          <LicenseExpiredModalWatcher />
-          <AppRouter />
-        </SignalRProvider>
-      ) : (
-        <AppRouter />
-      )}
+        {isAuthenticated ? <AuthenticatedAppContent /> : <AppRouter />}
       </SessionBootstrap>
     </ThemeProvider>
   );

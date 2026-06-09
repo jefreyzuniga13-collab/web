@@ -39,7 +39,6 @@ export function GlobalSoundNotifier() {
       notificationSound.play();
     },
     [myUserId
-      // , soundEnabled
     ]
   );
 

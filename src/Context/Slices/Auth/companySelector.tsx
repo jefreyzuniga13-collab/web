@@ -26,7 +26,7 @@ export default function CompanySelector() {
 
   const options: CompanyOption[] = [
     {
-      label: "Todas las empresas",
+      label: "",
       value: "global",
       company: null,
     },

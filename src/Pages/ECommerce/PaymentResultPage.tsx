@@ -118,9 +118,6 @@ export default function PaymentResultPage() {
 
         sessionStorage.removeItem(SAVE_CARD_AFTER_PAYMENT_KEY);
       } catch (err: unknown) {
-        
-        console.log("catch PaymentResultPage")
-
         navigate("/unauthorized", { replace: true });
 
         if (err instanceof Error) {

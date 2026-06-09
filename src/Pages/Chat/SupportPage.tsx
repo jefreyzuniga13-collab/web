@@ -24,6 +24,8 @@ import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
 import { useCompanySystemParamValue } from '@/Hooks/Crm/useCompanySystemParamValue'
 import {LICENSE_WARNING_MESSAGE_PARAM_ID} from '@/Constants/systemParams'
+import {selectCompanySistema} from "@/Context/Slices/Auth/authSlice"
+import { isValidSaleCompany } from "@/Utils/isValidSaleCompany";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 
@@ -71,7 +73,7 @@ const SupportPage: React.FC = () => {
   LICENSE_WARNING_MESSAGE_PARAM_ID,
   showLicenseWarning
 )
-
+  const companySistema = useSelector(selectCompanySistema)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const convHook = useConversations(filter as any, searchConversation);
 
@@ -130,7 +132,7 @@ const SupportPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (!convId) {
+    if (!convId && isValidSaleCompany(companySistema)) {
       void dispatch(
         getProductFromCarAsync({
           codCliente: contact?.id ?? 0,
@@ -343,7 +345,7 @@ const SupportPage: React.FC = () => {
       </main>
 
       <aside className="detail-aside">
-        {detailToggle && convId && (
+        {detailToggle && convId && isValidSaleCompany(companySistema) &&(
           <DetailPanel
             contactId={activeConversation?.clientContactId}
             selectedParam={selectedParam}
@@ -362,24 +364,26 @@ const SupportPage: React.FC = () => {
         )}
       </aside>
 
-      <button
-        type="button"
-        className={`detail-aside__handle ${
-          detailToggle ? "is-open" : "is-closed"
-        }`}
-        onClick={() => setDetailToggle((t) => !t)}
-        disabled={!convId}
-        aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-        title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
-      >
-        {detailToggle ? "›" : "‹"}
-      </button>
+      {isValidSaleCompany(companySistema) && (
+        <button
+          type="button"
+          className={`detail-aside__handle ${
+            detailToggle ? "is-open" : "is-closed"
+          }`}
+          onClick={() => setDetailToggle((t) => !t)}
+          disabled={!convId}
+          aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+          title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
+        >
+          {detailToggle ? "›" : "‹"}
+        </button>
+      )}
 
       {contactDetailToggle && (
         <div className="modal-overlay">
           <aside className="info-sidebar">
             <ContactDetail
-              conversationId={convId ?? undefined}
+              conversationId={convId ?? 0}
               contactDetailToggle={contactDetailToggle}
               setContactDetailToggle={setContactDetailToggle}
             />

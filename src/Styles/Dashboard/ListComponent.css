@@ -31,8 +31,8 @@
             .MuiAutocomplete-tagSizeMedium
             .MuiAutocomplete-tag
             .MuiAutocomplete-tagSizeSmall{
-    font-size: var(--font-size-sm) !important;
-    size: var(--font-size-base);
+    font-size: var(--font-size-lg) !important;
+    size: var(--font-size-lg);
 }
 
 
@@ -142,7 +142,7 @@
 }
 
 .MuiTableCell-root{
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--font-size-base) !important;
   pad: var(--space-sm) 0 !important;
 }
 

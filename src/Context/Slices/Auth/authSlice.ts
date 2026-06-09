@@ -35,35 +35,35 @@ const initialState: AuthState = {
   showLicenseModalOnLogin: false,
 };
 
+/**
+ * Renovar token usando cookie refresh.
+ */
 export const refreshTokenThunk = createAsyncThunk<
   AuthData,
   void,
   { rejectValue: string }
->(
-  "auth/refreshToken",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await authService.refreshTokenAsync();
-    } catch {
-      return rejectWithValue("No se pudo renovar token");
-    }
+>("auth/refreshToken", async (_, { rejectWithValue }) => {
+  try {
+    return await authService.refreshTokenAsync();
+  } catch {
+    return rejectWithValue("No se pudo renovar token");
   }
-);
+});
 
+/**
+ * Validar sesión actual desde backend.
+ */
 export const checkSessionThunk = createAsyncThunk<
   AuthMe,
   void,
   { rejectValue: string }
->(
-  "auth/checkSession",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await authService.meAsync();
-    } catch {
-      return rejectWithValue("No hay sesión activa");
-    }
+>("auth/checkSession", async (_, { rejectWithValue }) => {
+  try {
+    return await authService.meAsync();
+  } catch {
+    return rejectWithValue("No hay sesión activa");
   }
-);
+});
 
 const limpiarSesion = (state: AuthState) => {
   state.isAuthenticated = false;
@@ -83,7 +83,7 @@ const limpiarSesion = (state: AuthState) => {
 
 const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.isAuthenticated = true;
-  state.userId = String(payload.userId);
+  state.userId = String(payload.userId ?? "");
   state.empresaId = String(payload.empresaId ?? "");
   state.companyImageUrl = payload.companyImageUrl ?? "";
   state.companySistema = payload.companySistema ?? "";
@@ -171,17 +171,13 @@ export const {
   markLicenseModalShown,
 } = authSlice.actions;
 
-export const selectIsAdmin = (state: RootState) =>
-  state.auth.isAdmin;
+export const selectIsAdmin = (state: RootState) => state.auth.isAdmin;
 
-export const selectIsRoot = (state: RootState) =>
-  state.auth.isRoot;
+export const selectIsRoot = (state: RootState) => state.auth.isRoot;
 
-export const selectUserId = (state: RootState) =>
-  Number(state.auth.userId);
+export const selectUserId = (state: RootState) => Number(state.auth.userId ?? 0);
 
-export const selectEmpresaId = (state: RootState) =>
-  state.auth.empresaId;
+export const selectEmpresaId = (state: RootState) => state.auth.empresaId;
 
 export const selectCompanyImageUrl = (state: RootState) =>
   state.auth.companyImageUrl || null;

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import api from "@/Utils/ApiConfig";
 import NotFound from "@/Pages/Auth/NotFound";
 import CarPage from "@/Pages/ECommerce/CarPage";
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
+import { CartService } from "@/Services/Ecommerce/CartService";
 
 type Status = "loading" | "ok" | "unauthorized";
 
@@ -21,34 +21,22 @@ const ProtectedCartRoute = () => {
       }
 
       try {
-        const { data } = await api.post<{ data: TempLinkResolveResponseDto }>(
-          `/Auth/TempLink/Resolve`,
-          token,
-          {
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        const { data } = await CartService.resolveToken(token)
 
-        const resolvedPayload = data.data;
+        const resolvedPayload = data;
 
         setPayload(resolvedPayload);
-
-        console.log("Datos del resolve", JSON.stringify(data));
 
         const empresaId = resolvedPayload?.empresaId?.trim() ?? "";
 
         if (empresaId) {
           sessionStorage.setItem("EmpresaId", empresaId);
-          localStorage.setItem("EmpresaId", empresaId);
-          console.log("EmpresaId guardado:", empresaId);
         } else {
           sessionStorage.removeItem("EmpresaId");
           localStorage.removeItem("EmpresaId");
           console.warn("empresaId no vino en el payload");
         }
 
-        console.log("sessionStorage EmpresaId:", sessionStorage.getItem("EmpresaId"));
-        console.log("localStorage EmpresaId:", localStorage.getItem("EmpresaId"));
 
         setStatus("ok");
       } catch (error) {

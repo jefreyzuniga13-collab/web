@@ -5,7 +5,6 @@ import "@/Styles/Chat/FilterOrderModal.css";
 interface FilterOrderModalProps {
   onClose: () => void;
 }
-
 const CompanyModalFilter: React.FC<FilterOrderModalProps> = ({
   onClose
 }) => {

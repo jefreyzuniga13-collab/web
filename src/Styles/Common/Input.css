@@ -26,9 +26,10 @@
   }
   .input-icon {
     position: absolute;
-    right: 0.75rem;
+    right: 3rem;
     cursor: pointer;
     display: flex;
+    font-size: var(--font-size-sm);
     align-items: center;
   }
   .input-error-message {

@@ -5,13 +5,22 @@ import type {
   CompanyState,
 } from "@/Interfaces/Auth/CompanyInterface";
 
+/**
+ * Estado de empresas para usuario Root.
+ *
+ * Responsabilidades:
+ * - Guardar empresas disponibles.
+ * - Guardar empresa activa real.
+ * - Evitar modo global para SignalR.
+ * - Mantener imagen, nombre y WhatsApp de la empresa activa.
+ */
 const initialState: CompanyState = {
   companies: [],
   activeCompanyId: null,
-  activeCompanyImage: '',
-  whatsAppPhone:'',
+  activeCompanyImage: "",
+  whatsAppPhone: "",
   activeCompanyName: "",
-  isGlobalMode: true,
+  isGlobalMode: false,
 };
 
 const companySlice = createSlice({
@@ -26,34 +35,34 @@ const companySlice = createSlice({
       if (!action.payload) {
         state.activeCompanyId = null;
         state.activeCompanyName = "";
-        state.activeCompanyImage = ''
-        state.whatsAppPhone = ''
-        state.isGlobalMode = true;
+        state.activeCompanyImage = "";
+        state.whatsAppPhone = "";
+        state.isGlobalMode = false;
         return;
       }
 
-      state.activeCompanyId = action.payload.companyId;
-      state.activeCompanyName = action.payload.name;
-      state.isGlobalMode = false;
-      state.activeCompanyImage = action.payload.imageUrl ?? '';
+      state.activeCompanyId = Number(action.payload.companyId);
+      state.activeCompanyName = action.payload.name ?? "";
+      state.activeCompanyImage = action.payload.imageUrl ?? "";
       state.whatsAppPhone = action.payload.whatsAppPhone ?? "";
+      state.isGlobalMode = false;
     },
 
     clearActiveCompany(state) {
       state.activeCompanyId = null;
       state.activeCompanyName = "";
-      state.isGlobalMode = true;
-      state.activeCompanyImage = '';
-      state.whatsAppPhone = '';
+      state.activeCompanyImage = "";
+      state.whatsAppPhone = "";
+      state.isGlobalMode = false;
     },
 
     clearCompanyState(state) {
       state.companies = [];
       state.activeCompanyId = null;
       state.activeCompanyName = "";
-      state.isGlobalMode = true;
-      state.activeCompanyImage = ''
-     state.whatsAppPhone = ''
+      state.activeCompanyImage = "";
+      state.whatsAppPhone = "";
+      state.isGlobalMode = false;
     },
   },
 });

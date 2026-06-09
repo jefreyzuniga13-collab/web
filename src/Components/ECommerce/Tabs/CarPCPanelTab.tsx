@@ -42,7 +42,7 @@ import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 import Lottie from "lottie-react";
 import { PCG_SERVICES } from "@/Constants/pcgservices"
 import vacio from '@/assets/vacio.png'
-import { calcularIVA, formatearDecimales } from "@/Utils/calcularIVA"
+import {formatearDecimales } from "@/Utils/calcularIVA"
 import { Tooltip } from "@mui/material"
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -808,7 +808,12 @@ const loadCart = async () => {
   lines.push("🛒 Artículos:")
   lines.push("")
 
-  cart.listDetalle?.forEach((d, index) => {
+
+// 1. Declarar el contador FUERA del bucle para que mantenga su valor entre iteraciones
+let productoContador = 0;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+cart.listDetalle?.forEach((d, index) => {
     const qty = Number(d.cantidad ?? 0)
 
     const descripcion = String(d.descripcion ?? "").trim()
@@ -820,33 +825,30 @@ const loadCart = async () => {
 
     if (!title) return
 
-   // Para producto principal "tipoComponente": "P"
-      if (d.tipoComponente === 'P') {
-          const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
-              ? `C$ ${formatearDecimales(d.precioV)}` 
-              : '';
+    // Para producto principal "tipoComponente": "P"
+    if (d.tipoComponente === 'P') {
+        // 2. Incrementar el contador global
+        productoContador++; 
 
-          lines.push(`${index + 1}. *${title} - ${precioFormateado}*`);
-          lines.push(`   Cantidad: ${qty}`);
-      }
+        const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
+            ? `C$ ${formatearDecimales(d.precioV)}` 
+            : '';
 
-      // Para opciones del producto principal "tipoComponente": "O"
-      if (d.tipoComponente === 'O') {
-       const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
-              ? `C$ ${formatearDecimales(d.precioV)}` 
-              : 'Incluido';
+        lines.push(`${productoContador}. *${title} - ${precioFormateado}*`);
+        lines.push(`   Cantidad: ${qty}`);
+    }
 
-          lines.push(`${index + 1}. *${title} - ${precioFormateado}*`);
-          lines.push(`   Cantidad: ${qty}`);
-          
-          lines.push(`- ${title}`);
-          lines.push(`      Cantidad: ${qty}`);
-      }
-
-
+    // Para componentes opcionales "tipoComponente": "O"
+    if (d.tipoComponente === 'O') {
+        const precioFormateado = (d.precioV && Number(d.precioV) !== 0) 
+            ? `C$ ${formatearDecimales(d.precioV)}` 
+            : 'Incluido';
+        lines.push(`-  ${title.toLocaleLowerCase()} - ${precioFormateado}`);
+        lines.push(`   cantidad: ${qty}`);
+    }
+    
     lines.push("")
-  })
-
+})
   const total = Number(formatearDecimales(invoiceTotalsDto?.total ?? 0))
 
   if (retiraSucursal === "S") {
@@ -1059,7 +1061,7 @@ const loadCart = async () => {
                       <p className="carPCPanel-content__list-price">
                         
                          {/* {detail.precioV.toFixed(2)} */}
-                        {(detail.precioV ?? 0) > 0 ? "C$ " + calcularIVA(detail.precioV) : ""}
+                        {(detail.precioV ?? 0) > 0 ? "C$ " + formatearDecimales(detail.precioV) : ""}
                       </p>
                     </div>
 

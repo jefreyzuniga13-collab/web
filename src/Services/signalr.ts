@@ -168,8 +168,9 @@ function buildConnection(url: string): signalR.HubConnection {
 function getActiveCompanyId(): number | null {
   const state = store.getState();
 
+  const isRoot = state.auth?.isRoot;
   const activeCompanyId = state.company?.activeCompanyId;
-  const isRoot = state.auth?.isRoot
+
   if (!isRoot) {
     return null;
   }
@@ -181,6 +182,24 @@ function getActiveCompanyId(): number | null {
   return Number(activeCompanyId);
 }
 
+function shouldStartHubs(): boolean {
+  const state = store.getState();
+
+  const isAuthenticated = state.auth?.isAuthenticated;
+  const isRoot = state.auth?.isRoot;
+  const activeCompanyId = state.company?.activeCompanyId;
+
+  if (!isAuthenticated) {
+    return false;
+  }
+
+  if (isRoot && (!activeCompanyId || Number(activeCompanyId) <= 0)) {
+    return false;
+  }
+
+  return true;
+}
+
 function buildHubUrl(path: string): string {
   const companyId = getActiveCompanyId();
 
@@ -189,6 +208,7 @@ function buildHubUrl(path: string): string {
   }
 
   const separator = path.includes("?") ? "&" : "?";
+
   return `${HUB_BASE}${path}${separator}companyId=${encodeURIComponent(
     String(companyId)
   )}`;
@@ -258,7 +278,12 @@ function emitDesktopNotify(detail: {
 function normalizeSoundDto(payload: unknown): SoundDto {
   const value = payload as Partial<SoundDto>;
 
-  const kind = String(value?.kind ?? "message") as SoundDto["kind"];
+  const rawKind = String(value?.kind ?? "message");
+
+  const kind: SoundDto["kind"] =
+    rawKind === "new_conversation" || rawKind === "close" || rawKind === "message"
+      ? rawKind
+      : "message";
 
   return {
     conversationId: Number(value?.conversationId ?? 0),
@@ -266,10 +291,7 @@ function normalizeSoundDto(payload: unknown): SoundDto {
     senderUserId: value?.senderUserId != null ? Number(value.senderUserId) : null,
     senderContactId:
       value?.senderContactId != null ? Number(value.senderContactId) : null,
-    kind:
-      kind === "new_conversation" || kind === "close" || kind === "message"
-        ? kind
-        : "message",
+    kind,
     at: value?.at != null ? String(value.at) : null,
   };
 }
@@ -493,6 +515,17 @@ function rebindRegisteredHandlers() {
 }
 
 export async function createHubConnection() {
+  if (!shouldStartHubs()) {
+    await stopHubConnection();
+
+    return {
+      chatConnection: null,
+      notificationsConnection: null,
+      presenceConnection: null,
+      userConeccion: null,
+    };
+  }
+
   if (startPromise) return startPromise;
 
   startPromise = (async () => {
@@ -522,7 +555,7 @@ export async function createHubConnection() {
       });
 
       chatConnection.onclose((err) => {
-        console.warn("[CHAT] Conexión cerrada", err);
+        if (err) console.warn("[CHAT] Conexión cerrada", err);
       });
     }
 
@@ -534,7 +567,7 @@ export async function createHubConnection() {
       );
 
       userConeccion.onclose((err) => {
-        console.warn("[USER] Conexión cerrada", err);
+        if (err) console.warn("[USER] Conexión cerrada", err);
       });
     }
 
@@ -551,7 +584,7 @@ export async function createHubConnection() {
       });
 
       notificationsConnection.onclose((err) => {
-        console.warn("[NOTIFICATIONS] Conexión cerrada", err);
+        if (err) console.warn("[NOTIFICATIONS] Conexión cerrada", err);
       });
 
       bindNotificationBridgeHandlers(notificationsConnection);
@@ -573,7 +606,7 @@ export async function createHubConnection() {
       );
 
       presenceConnection.onclose((err) => {
-        console.warn("[PRESENCE] Conexión cerrada", err);
+        if (err) console.warn("[PRESENCE] Conexión cerrada", err);
       });
     }
 

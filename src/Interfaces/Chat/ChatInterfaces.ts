@@ -107,8 +107,6 @@ export interface MessageDto {
   //relacion recursiva para respuestas
   repliedMessageId?: number;
   repliedMessage?: MessageDto | null;
-
-
   messageSourceId?: number | null
   messageSourceName?: string | null
   messageSourceColor?: string | null

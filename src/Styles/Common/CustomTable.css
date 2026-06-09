@@ -109,7 +109,7 @@
 }
 
 .MuiTableCell-root{
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--font-size-base) !important;
   pad: var(--space-sm) 0 !important;
 }
 

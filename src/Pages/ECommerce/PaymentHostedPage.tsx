@@ -49,7 +49,6 @@ export default function PaymentHostedPage() {
   useEffect(() => {
     // Si no viene HTML de PowerTranz, no hay formulario que mostrar.
     if (!redirectData) {
-      console.log("redirectData PaymentHostedPage");
       navigate("/unauthorized", { replace: true });
       return;
     }

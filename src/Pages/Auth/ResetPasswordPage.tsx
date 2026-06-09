@@ -139,9 +139,10 @@ export default function ResetPasswordPresentation() {
                 </Link>
               </form>
 
-              <p className="reset-password__copyright">
-                © {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.
-              </p>
+              <div className="login__copyright">
+                <span>© {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.</span>
+                <span>Versión 26061</span>
+              </div>
             </section>
           </main>
 

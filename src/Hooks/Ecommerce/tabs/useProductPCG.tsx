@@ -1,14 +1,8 @@
 import { useCallback, useMemo, useState } from "react"
-import {
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query"
-import type {
-  ProductoModificadorPCGInterface,
-  ProductoPCGInterface,
-} from "@/Interfaces/Chat/ProductPCGInterface"
+import {useInfiniteQuery, useQuery, useQueryClient} from "@tanstack/react-query"
+import type { ProductoModificadorPCGInterface, ProductoPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
 import { ProductPCGService } from "@/Services/Ecommerce/ProductPCGService"
+import { cleanText } from "@/Utils/ECommerce/formatters"
 
 type Mode = "idle" | "category" | "search" | "all" | "code"
 
@@ -16,23 +10,16 @@ interface UseProductPCGOptions {
   initialPageSize?: number
 }
 
-const normalizarTexto = (value: string | null | undefined) => {
-  return String(value ?? "").trim()
-}
-
 export function useProductPCG(options?: UseProductPCGOptions) {
   const queryClient = useQueryClient()
   const initialPageSize = options?.initialPageSize ?? 50
-
   const [pageSize, setPageSize] = useState<number>(initialPageSize)
   const [mode, setMode] = useState<Mode>("idle")
   const [lastCategory, setLastCategory] = useState<string | null>(null)
   const [lastSearch, setLastSearch] = useState<string | null>(null)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
-
   const [modifierCode, setModifierCode] = useState<string | null>(null)
   const [modifierCodPrecio, setModifierCodPrecio] = useState<string>("")
-
   const [codPrecio, setCodPrecioState] = useState<string>("")
 
   const listEnabled =
@@ -41,11 +28,11 @@ export function useProductPCG(options?: UseProductPCGOptions) {
     mode === "all"
 
   const normalizedCodPrecio = useMemo(() => {
-    return normalizarTexto(codPrecio)
+    return cleanText(codPrecio)
   }, [codPrecio])
 
   const setCodPrecio = useCallback((value: string | null | undefined) => {
-    setCodPrecioState(normalizarTexto(value))
+    setCodPrecioState(cleanText(value))
   }, [])
 
   const listQuery = useInfiniteQuery<ProductoPCGInterface[], Error>({
@@ -209,13 +196,12 @@ export function useProductPCG(options?: UseProductPCGOptions) {
 
   const GetAll = useCallback(
     (descripcion: string) => {
-      const term = normalizarTexto(descripcion)
+      const term = cleanText(descripcion)
 
       if (!term) {
         reset()
         return
       }
-
       setSelectedCode(null)
       setLastCategory(null)
       setLastSearch(term)
@@ -226,13 +212,12 @@ export function useProductPCG(options?: UseProductPCGOptions) {
 
   const GetByCategory = useCallback(
     (codGrupo: string) => {
-      const category = normalizarTexto(codGrupo)
+      const category = cleanText(codGrupo)
 
       if (!category) {
         reset()
         return
       }
-
       setSelectedCode(null)
       setLastSearch(null)
       setLastCategory(category)
@@ -243,13 +228,12 @@ export function useProductPCG(options?: UseProductPCGOptions) {
 
   const GetByCode = useCallback(
     (codProducto: string) => {
-      const code = normalizarTexto(codProducto)
+      const code = cleanText(codProducto)
 
       if (!code) {
         reset()
         return
       }
-
       setLastCategory(null)
       setLastSearch(null)
       setSelectedCode(code)
@@ -275,8 +259,8 @@ export function useProductPCG(options?: UseProductPCGOptions) {
 
   const getProductModifiers = useCallback(
     async (codProducto: string, codPrecioParam?: string) => {
-      const code = normalizarTexto(codProducto)
-      const precio = normalizarTexto(codPrecioParam || normalizedCodPrecio)
+      const code = cleanText(codProducto)
+      const precio = cleanText(codPrecioParam || normalizedCodPrecio)
 
       if (!code || !precio) {
         setModifierCode(null)

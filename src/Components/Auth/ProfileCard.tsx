@@ -151,7 +151,7 @@ const ProfileCard: React.FC = () => {
                     />
                   ) : (
                     <span className="profile-card__value">
-                      {currentUser.phone || "No especificado"}
+                      {currentUser.phone || "No específicado"}
                     </span>
                   )}
                 </div>

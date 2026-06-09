@@ -3,7 +3,7 @@ import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo";
 
 export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   noFactura: "00000000",
-  serie: "F",
+  serie: "",
   tipo: "1",
   modo: "E",
   moneda: "1",

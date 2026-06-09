@@ -6,16 +6,24 @@ import "@/Styles/Auth/CompanySelector.css";
 
 type CompanyOption = {
   label: string;
-  value: number | string;
-  company: CompanySelectorItem | null;
+  value: number;
+  company: CompanySelectorItem;
 };
 
+/**
+ * Selector de empresa activa para usuarios Root.
+ *
+ * Responsabilidades:
+ * - Mostrar solo empresas reales.
+ * - Evitar la opción global para SignalR.
+ * - Cambiar la empresa activa mediante useCompanySelector.
+ * - Permitir que SignalR reconecte usando companyId.
+ */
 export default function CompanySelector() {
   const {
     isRoot,
     companies,
     selectedCompany,
-    isGlobalMode,
     loading,
     changeCompany,
   } = useCompanySelector();
@@ -24,32 +32,26 @@ export default function CompanySelector() {
     return null;
   }
 
-  // No seleccionar todos, seleccionar la primera empresa por defecto
-  const options: CompanyOption[] = [
-    {
-      label: "Todas las empresas",
-      value: "global",
-      company: null,
-    },
-    ...companies.map((company) => ({
-      label: company.name,
-      value: company.companyId,
-      company,
-    })),
-  ];
+  const options: CompanyOption[] = companies.map((company) => ({
+    label: company.name,
+    value: Number(company.companyId),
+    company,
+  }));
 
-  const value: CompanyOption | null = isGlobalMode
-    ? options[0]
-    : selectedCompany
-      ? {
-          label: selectedCompany.name,
-          value: selectedCompany.companyId,
-          company: selectedCompany,
-        }
-      : options[0];
+  const value: CompanyOption | null = selectedCompany
+    ? {
+        label: selectedCompany.name,
+        value: Number(selectedCompany.companyId),
+        company: selectedCompany,
+      }
+    : null;
 
   const handleChange = (option: CompanyOption | null) => {
-    changeCompany(option?.company ?? null);
+    if (!option?.company) {
+      return;
+    }
+
+    changeCompany(option.company);
   };
 
   return (
@@ -58,11 +60,17 @@ export default function CompanySelector() {
 
       <div className="company-selector__control">
         <CustomAutocomplete<CompanyOption>
-          placeholder="Seleccione empresa"
+          placeholder={
+            loading
+              ? "Cargando empresas..."
+              : options.length > 0
+                ? "Seleccione empresa"
+                : "No hay empresas disponibles"
+          }
           options={options}
           value={value}
           onChange={handleChange}
-          disabled={loading}
+          disabled={loading || options.length === 0}
           loading={loading}
         />
 

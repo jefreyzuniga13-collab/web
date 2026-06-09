@@ -15,6 +15,7 @@ import Profile from '@/assets/img/profile.png'
 import { logoutThunk } from '@/Context/Slices/Auth/authThunks';
 import type { AppDispatch } from '@/Context';
 import { selectActiveCompanyImage, selectActiveCompanyName, selectActiveCompanyWhPhone } from '@/Context/Slices/Auth/companySlice';
+import { selectCompanyImageUrl } from '@/Context/Slices/Auth/authSlice';
 interface NavbarProps {
   id: number;
 }
@@ -29,6 +30,7 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   const activeCompanyImage = useSelector(selectActiveCompanyImage);
   const activeCompanyName = useSelector(selectActiveCompanyName);
   const activeCompanyWhPhone = useSelector(selectActiveCompanyWhPhone);
+  const CompanyImageUrl = useSelector(selectCompanyImageUrl);
 
   const { currentUser, loading: userLoading, fetchOne } = useUsers();
 
@@ -61,15 +63,20 @@ const Navbar: React.FC<NavbarProps> = ({ id }) => {
   };
   if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
+  const companyImageSrc = activeCompanyImage || CompanyImageUrl;
   return (
     <nav className={`navbar ${collapsed ? 'navbar--collapsed' : ''}`}>
       <div className="navbar__header">
-        <img
-          src={activeCompanyImage ?? currentUser?.imageUrl ?? ''}
-          alt="Logo"
-          className="navbar__logo"
-        />
-        <p>{activeCompanyName + ' - ' + activeCompanyWhPhone}</p>
+       <div className='navbar__header-container'>
+         {companyImageSrc && (
+            <img
+              src={companyImageSrc}
+              alt="Logo de la empresa"
+            className="navbar__logo"
+            />
+          )}
+        <p className='navbar__header__text'>{activeCompanyName + ' - ' + activeCompanyWhPhone}</p>
+       </div>
         <button 
           className="navbar__collapse-btn" 
           onClick={() => setCollapsed(!collapsed)}

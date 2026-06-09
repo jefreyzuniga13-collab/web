@@ -1,21 +1,30 @@
 import Input from "@/Components/Common/Input"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import Tooltip from "@mui/material/Tooltip"
+import { toast } from "react-toastify"
+import { TiArrowBack } from "react-icons/ti"
+import { FaShoppingCart } from "react-icons/fa"
+import { AiOutlineLoading3Quarters } from "react-icons/ai"
+import { MdClear, MdSelectAll } from "react-icons/md"
+import { useSelector } from "react-redux"
+import Lottie from "lottie-react"
 import { useCategoryPCG } from "@/Hooks/Ecommerce/tabs/useCategoryPCG"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { CategoryTab } from "@/Components/ECommerce/Tabs/CategoryTab"
 import { ProductPCGTab } from "@/Components/ECommerce/Tabs/ProductPCGTab"
 import DetailPCGProduct from "@/Components/ECommerce/Tabs/DetailPCGProduct"
-import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
-import { TiArrowBack } from "react-icons/ti"
-import { useSelector } from "react-redux"
-import type { RootState } from "@/Context"
-import { selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
 import { SucursalPickerModal } from "@/Components/ECommerce/Tabs/SucursalPickerModal"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
+import type { RootState } from "@/Context"
+import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
+import { selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
 import { KEY_SCROLL } from "@/Utils/ECommerce/keys"
+import { clampQty } from "@/Utils/ECommerce/formatters"
 import EmptyPlayer from "@/assets/lottie/Empty.json"
-import Lottie from "lottie-react"
+
 import "@/Styles/Ecommerce/ProductTab.css"
+import "@/Styles/Ecommerce/ProductPCGList.css"
+import type { AddProductParams, SelectedModifierOption } from "@/Interfaces/Crm/CartPCGInterface"
 
 interface Props {
   conversationId: number
@@ -27,15 +36,47 @@ export interface SelectedInterface {
   grupo?: string | null
 }
 
+type SelectedBatchProduct = {
+  product: ProductoPCGInterface
+  qty: number
+  configured: boolean
+  observacion: string
+  modifierOptions: SelectedModifierOption[]
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
+  codPrecio: string
+}
+
+const getProductKey = (product: ProductoPCGInterface) => {
+  return String(product.codProducto ?? "").trim()
+}
+
+const getProductName = (product: ProductoPCGInterface) => {
+  const code = String(product.codProducto ?? "").trim()
+  const desc = String(product.descripcion ?? "").trim()
+
+  return `${code} ${desc}`.trim()
+}
+
 export const ProductTab = ({ conversationId }: Props) => {
   const [search, setSearch] = useState("")
-  const [selectedCategory, setselectedCategory] = useState<SelectedInterface | null>(null)
-  const [detailProduct, setDetailProduct] = useState<ProductoPCGInterface | null>(null)
+  const [selectedCategory, setselectedCategory] =
+    useState<SelectedInterface | null>(null)
+  const [detailProduct, setDetailProduct] =
+    useState<ProductoPCGInterface | null>(null)
   const [detailIndex, setDetailIndex] = useState<number>(-1)
   const [simpleQuantity, setSimpleQuantity] = useState<number>(1)
-  const { pickerProps, codPrecioActivo } = useCartPCGFlowCtx()
-
-  const cartLoading = useSelector((state: RootState) => selectCartLoading(state))
+  const [selectedProducts, setSelectedProducts] = useState<
+    Record<string, SelectedBatchProduct>
+  >({})
+  const [addingSelected, setAddingSelected] = useState(false)
+  const { pickerProps, codPrecioActivo, addProducts } = useCartPCGFlowCtx()
+  const cartLoading = useSelector((state: RootState) =>
+    selectCartLoading(state)
+  )
 
   const {
     GetAll: GetAllCategories,
@@ -71,6 +112,16 @@ export const ProductTab = ({ conversationId }: Props) => {
       (c.grupo || "").toLowerCase().includes(normalizedSearch)
     )
   }, [categoryPcg, normalizedSearch])
+
+  const selectedItems = useMemo(() => {
+    return Object.values(selectedProducts)
+  }, [selectedProducts])
+
+  const selectedCount = selectedItems.length
+
+  const firstPendingProduct = useMemo(() => {
+    return selectedItems.find((item) => !item.configured) ?? null
+  }, [selectedItems])
 
   const showCategories = !selectedCategory && !normalizedSearch
   const showProducts = !!selectedCategory || !!normalizedSearch
@@ -114,11 +165,17 @@ export const ProductTab = ({ conversationId }: Props) => {
 
     if (idx < 0) return
 
-    const updatedProduct = productPcg[idx]
-
-    setDetailProduct(updatedProduct)
+    setDetailProduct(productPcg[idx])
     setDetailIndex(idx)
   }, [productPcg, detailProduct?.codProducto])
+
+  const getSelectedProduct = useCallback(
+    (product: ProductoPCGInterface) => {
+      const key = getProductKey(product)
+      return selectedProducts[key] ?? null
+    },
+    [selectedProducts]
+  )
 
   const handleOpenDetail = useCallback(
     (prod: ProductoPCGInterface) => {
@@ -175,6 +232,162 @@ export const ProductTab = ({ conversationId }: Props) => {
     },
     []
   )
+
+  const buildSelectedProduct = useCallback(
+    (product: ProductoPCGInterface): SelectedBatchProduct => {
+      const requiresDetailConfig = !!product.tieneOpcion
+
+      return {
+        product,
+        qty: 1,
+        configured: !requiresDetailConfig,
+        observacion: "",
+        modifierOptions: [],
+        branch: "",
+        branchName: "",
+        wherehouse: "",
+        wherehouseCode: "",
+        serie: "",
+        codPrecio: "",
+      }
+    },
+    []
+  )
+
+  const toggleProductSelection = useCallback(
+    (product: ProductoPCGInterface) => {
+      const key = getProductKey(product)
+
+      if (!key) return
+
+      setSelectedProducts((prev) => {
+        if (prev[key]) {
+          const next = { ...prev }
+          delete next[key]
+          return next
+        }
+
+        return {
+          ...prev,
+          [key]: buildSelectedProduct(product),
+        }
+      })
+    },
+    [buildSelectedProduct]
+  )
+
+  const selectVisibleProducts = useCallback(() => {
+    if (!productPcg.length) {
+      toast.warning("No hay productos para seleccionar.")
+      return
+    }
+
+    setSelectedProducts((prev) => {
+      const next = { ...prev }
+
+      productPcg.forEach((product) => {
+        const key = getProductKey(product)
+
+        if (!key) return
+        if (next[key]) return
+
+        next[key] = buildSelectedProduct(product)
+      })
+
+      return next
+    })
+  }, [productPcg, buildSelectedProduct])
+
+  const clearSelection = useCallback(() => {
+    setSelectedProducts({})
+  }, [])
+
+  const changeBatchQuantity = useCallback(
+    (product: ProductoPCGInterface, qtyValue: number) => {
+      const key = getProductKey(product)
+      const qty = clampQty(Number(qtyValue))
+
+      if (!key) return
+
+      setSelectedProducts((prev) => {
+        const current = prev[key]
+
+        if (!current) return prev
+
+        return {
+          ...prev,
+          [key]: {
+            ...current,
+            qty,
+          },
+        }
+      })
+    },
+    []
+  )
+
+  const saveConfiguredProduct = useCallback(
+    (payload: AddProductParams) => {
+      const key = getProductKey(payload.product)
+
+      if (!key) return
+
+      setSelectedProducts((prev) => ({
+        ...prev,
+        [key]: {
+          product: payload.product,
+          qty: clampQty(payload.qty),
+          configured: true,
+          observacion: payload.observacion ?? "",
+          modifierOptions: payload.modifierOptions ?? [],
+          branch: "",
+          branchName: "",
+          wherehouse: "",
+          wherehouseCode: "",
+          serie: "",
+          codPrecio: "",
+        },
+      }))
+
+      handleBackToList()
+    },
+    [handleBackToList]
+  )
+
+  const addSelectedProducts = useCallback(async () => {
+    if (addingSelected) return
+
+    const items = Object.values(selectedProducts)
+
+    if (!items.length) {
+      toast.warning("Seleccione al menos un producto.")
+      return
+    }
+
+    const pending = items.find((item) => !item.configured)
+
+    if (pending) {
+      toast.warning(`Falta configurar: ${getProductName(pending.product)}`)
+      handleOpenDetail(pending.product)
+      return
+    }
+
+    setAddingSelected(true)
+
+    try {
+      await addProducts(
+        items.map((item) => ({
+          product: item.product,
+          qty: item.qty,
+          observacion: item.observacion,
+          modifierOptions: item.modifierOptions,
+          onDoneUiReset: false,
+        }))
+      )
+    } finally {
+      setAddingSelected(false)
+    }
+  }, [addProducts, addingSelected, selectedProducts, handleOpenDetail])
 
   const resetToCategories = useCallback(() => {
     setSearch("")
@@ -254,6 +467,8 @@ export const ProductTab = ({ conversationId }: Props) => {
   }
 
   if (detailProduct) {
+    const selectedDetailProduct = getSelectedProduct(detailProduct)
+
     return (
       <section className="productTab-card">
         <header className="productTab-product__header">
@@ -261,7 +476,8 @@ export const ProductTab = ({ conversationId }: Props) => {
             onClick={handleBackToList}
             className="productTab-content-header__titleDetail"
           >
-            <TiArrowBack fontSize={18} />
+            <TiArrowBack fontSize={20} />
+
             {selectedCategory?.grupo
               ? `${selectedCategory.grupo}\\${detailProduct.descripcion}\\detalle`
               : `${detailProduct.descripcion}\\detalle`}
@@ -279,6 +495,10 @@ export const ProductTab = ({ conversationId }: Props) => {
           onPrev={handlePrevDetail}
           onNext={handleNextDetail}
           onBack={handleBackToList}
+          batchMode
+          onSaveBatchConfig={saveConfiguredProduct}
+          isSelected={!!selectedDetailProduct}
+          onToggleSelect={toggleProductSelection}
         />
       </section>
     )
@@ -297,11 +517,79 @@ export const ProductTab = ({ conversationId }: Props) => {
               className="productTab-content-header__titleCategory"
               onClick={resetToCategories}
             >
-              <TiArrowBack fontSize={18} />
+              <TiArrowBack fontSize={20} />
               {selectedCategory?.grupo ?? "Productos"}
             </span>
           )}
         </h5>
+
+        {showProducts && (
+          <div className="productPCGList__actions productPCGList__actions--header">
+            <Tooltip title={`${selectedCount} seleccionados`}>
+              <div className="productPCGList__summaryIcon">
+                <FaShoppingCart fontSize={20} />
+                <strong>{selectedCount}</strong>
+              </div>
+            </Tooltip>
+
+            {firstPendingProduct && (
+              <Tooltip
+                title={`Falta configurar: ${getProductName(
+                  firstPendingProduct.product
+                )}`}
+              >
+                <span className="productPCGList__warning">Pendiente</span>
+              </Tooltip>
+            )}
+
+            <div className="productPCGList__buttons">
+              <Tooltip title="Seleccionar visibles">
+                <span>
+                  <button
+                    type="button"
+                    className="productPCGList__iconBtn productPCGList__iconBtn--select"
+                    onClick={selectVisibleProducts}
+                    disabled={productPcg.length === 0 || addingSelected}
+                  >
+                    <MdSelectAll fontSize={20} />
+                  </button>
+                </span>
+              </Tooltip>
+
+              <Tooltip title="Limpiar selección">
+                <span>
+                  <button
+                    type="button"
+                    className="productPCGList__iconBtn productPCGList__iconBtn--clear"
+                    onClick={clearSelection}
+                    disabled={selectedCount === 0 || addingSelected}
+                  >
+                    <MdClear fontSize={20} />
+                  </button>
+                </span>
+              </Tooltip>
+
+              <Tooltip title="Agregar seleccionados">
+                <span>
+                  <button
+                    type="button"
+                    className="productPCGList__iconBtn productPCGList__iconBtn--add"
+                    onClick={addSelectedProducts}
+                    disabled={
+                      selectedCount === 0 || addingSelected || cartLoading
+                    }
+                  >
+                    {addingSelected ? (
+                      <AiOutlineLoading3Quarters fontSize={20} />
+                    ) : (
+                      <FaShoppingCart fontSize={20} />
+                    )}
+                  </button>
+                </span>
+              </Tooltip>
+            </div>
+          </div>
+        )}
       </header>
 
       <section className="productTab-clientHeaderActions">
@@ -347,21 +635,31 @@ export const ProductTab = ({ conversationId }: Props) => {
                   No hay productos disponibles.
                 </div>
               ) : (
-                productPcg.map((e) => (
-                  <div
-                    key={e.codProducto}
-                    className="productTab-productRowWrapper"
-                  >
-                    <ProductPCGTab
-                      prod={e}
-                      conversationId={conversationId}
-                      simpleQuantity={simpleQuantity}
-                      handleChangeSimpleQuantity={handleChangeSimpleQuantity}
-                      cartLoading={cartLoading}
-                      onClick={handleOpenDetail}
-                    />
-                  </div>
-                ))
+                productPcg.map((e) => {
+                  const selected = getSelectedProduct(e)
+
+                  return (
+                    <div
+                      key={e.codProducto}
+                      className="productTab-productRowWrapper"
+                    >
+                      <ProductPCGTab
+                        prod={e}
+                        conversationId={conversationId}
+                        simpleQuantity={selected?.qty ?? simpleQuantity}
+                        handleChangeSimpleQuantity={handleChangeSimpleQuantity}
+                        cartLoading={cartLoading || addingSelected}
+                        onClick={handleOpenDetail}
+                        batchMode
+                        selectedCount={selected ? 1 : 0}
+                        isSelected={!!selected}
+                        isConfigured={selected?.configured ?? false}
+                        onToggleSelect={toggleProductSelection}
+                        onChangeBatchQuantity={changeBatchQuantity}
+                      />
+                    </div>
+                  )
+                })
               )}
 
               <div ref={sentinelRef} style={{ height: 1 }} />

@@ -1,101 +1,19 @@
-
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { toast } from "react-toastify"
 import type { AppDispatch } from "@/Context"
-import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
-import type {DetalleFacturaTempoData,DetalleFacturaTempoRequest,FaloteRequestDto} from "@/Interfaces/Crm/CartPCGInterface"
-import type {LogCartRequestDto,LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
+import type { LockedInfo, ProductoPCGInterface, WithCodPrecio } from "@/Interfaces/Chat/ProductPCGInterface"
+import type {AddProductInput, AddProductsInput, DetalleFacturaTempoData, DetalleFacturaTempoRequest, FaloteRequestDto, 
+  PickerSelectValue, ResolveOrderResult, SelectedModifierOption, SucursalPickerProps,} from "@/Interfaces/Crm/CartPCGInterface"
+import type {LogCartRequestDto, LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
 import {addProductTempoAsync, getProductFromCarAsync} from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
-import { selectCompanySistema, selectCodReferenciaPCG } from "@/Context/Slices/Auth/authSlice"
+import {selectCompanySistema, selectCodReferenciaPCG} from "@/Context/Slices/Auth/authSlice"
 import { FechaManagua } from "@/Utils/FechaManagua"
-
-export type LockedInfo = {
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-}
-
-export type SelectedModifierOption = {
-  codTipoModificador: string
-  codModificador: string
-  descripcionMod: string
-  codOpcion: string
-  descripcionOp: string
-  codPrecio: string
-  precioVenta: number
-  cantidad: number
-  codUm: string
-  aplicaIva: string
-}
-
-export type AddProductParams = {
-  product: ProductoPCGInterface
-  qty: number
-  observacion: string
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-  modifierOptions: SelectedModifierOption[]
-  onDoneUiReset: boolean
-}
-
-type AddProductInput = {
-  product: ProductoPCGInterface
-  qty: number
-  observacion?: string
-  branch?: string
-  branchName?: string
-  wherehouse?: string
-  wherehouseCode?: string
-  serie?: string
-  codPrecio?: string
-  modifierOptions?: SelectedModifierOption[]
-  onDoneUiReset?: boolean
-}
-
-type PickerSelectValue = {
-  codsucursal: string
-  sucursal: string
-  nombodega: string
-  codBodega: string
-  serie: string
-  codPrecio?: string | null
-  codprecio?: string | null
-  CodPrecio?: string | null
-}
-
-export type SucursalPickerProps = {
-  open: boolean
-  loading: boolean
-  codProducto: string
-  items: ExistenciaSucursalItem[]
-  selectedCodSucursal: string | null
-  onClose: () => void
-  onSelect: (v: PickerSelectValue) => void | Promise<void>
-}
-
-type ResolveOrderResult = {
-  existingLog: LogCartResponseDto | null
-  noPedido: string
-  branch: string
-  branchName: string
-  wherehouse: string
-  wherehouseCode: string
-  serie: string
-  codPrecio: string
-}
+import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
 
 type CartServiceWithCleanup = typeof CartService & {
   LimpiarFacturaTempo?: (
@@ -103,23 +21,6 @@ type CartServiceWithCleanup = typeof CartService & {
     maquina: string
   ) => Promise<unknown>
 }
-
-type WithCodPrecio = {
-  codPrecio?: string | null
-  codprecio?: string | null
-  CodPrecio?: string | null
-}
-
-const clampQty = (n: number) => {
-  if (!Number.isFinite(n) || n <= 0) return 1
-  if (n > 1000) return 1000
-  return Math.floor(n)
-}
-
-const cleanText = (value: string | number | null | undefined) => {
-  return String(value ?? "").trim()
-}
-
 const getCodPrecio = (value: unknown) => {
   const item = value as WithCodPrecio | null
   return cleanText(item?.codPrecio ?? item?.codprecio ?? item?.CodPrecio)
@@ -151,7 +52,11 @@ const getErrorMessage = (error: unknown) => {
   )
 }
 
-export const useCartPCGFlow = (conversationId: number, contactId: number, metaChannel: string) => {
+export const useCartPCGFlow = (
+  conversationId: number,
+  contactId: number,
+  metaChannel: string
+) => {
   const dispatch = useDispatch<AppDispatch>()
 
   const {
@@ -160,27 +65,25 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     UpdatedStatus,
   } = useLogCart()
 
+  const companySistema = useSelector(selectCompanySistema)
+  const codReferenciaPCG = useSelector(selectCodReferenciaPCG)
   const [locked, setLockedState] = useState<LockedInfo | null>(null)
   const [codPrecioActivo, setCodPrecioActivoState] = useState("")
-
   const [openSucursalModal, setOpenSucursalModal] = useState(false)
   const [sucursalItems, setSucursalItems] = useState<ExistenciaSucursalItem[]>([])
   const [loadingSucursalItems, setLoadingSucursalItems] = useState(false)
-
   const [pendingProduct, setPendingProduct] =
     useState<ProductoPCGInterface | null>(null)
-
   const [pendingQuantity, setPendingQuantity] = useState(1)
   const [pendingObservacion, setPendingObservacion] = useState("")
   const [pendingModifiers, setPendingModifiers] = useState<
     SelectedModifierOption[]
   >([])
-
-  const companySistema = useSelector(selectCompanySistema)
-  const codReferenciaPCG = useSelector(selectCodReferenciaPCG)
-
+  const [pendingBatchItems, setPendingBatchItems] =
+    useState<AddProductsInput>([])
   const hydratedRef = useRef(false)
   const addLockRef = useRef(false)
+  const batchLockRef = useRef(false)
 
   const setCodPrecioActivo = useCallback(
     (value: string | null | undefined) => {
@@ -221,7 +124,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     void run()
   }, [contactId, fetchByContactId, setLocked])
 
-
   const buildCartRequest = useCallback(
     (
       product: ProductoPCGInterface,
@@ -231,7 +133,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       noPedido: string,
       observacion: string,
       codPrecio: string,
-      metaChannel: string
+      metaChannelValue: string
     ): DetalleFacturaTempoRequest => {
       return {
         sucursal: branch,
@@ -271,7 +173,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         unico: "",
         sistema: String(companySistema),
         ordenServicio: codReferenciaPCG,
-        tipoFac: metaChannel
+        tipoFac: metaChannelValue,
       }
     },
     [contactId, companySistema, codReferenciaPCG]
@@ -287,20 +189,17 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       unico: string,
       codPrecio: string
     ): DetalleFacturaTempoRequest => {
-      
-      console.log("Cod Precio insertado en modificadores.", codPrecio)
-
       return {
         sucursal: branch,
         usuario: String(contactId),
         maquina: `CRM-${contactId}`,
         fecha: FechaManagua.obtenerFormatoLimpio(),
-        codproducto: option.codOpcion.trim(),
+        codproducto: cleanText(option.codOpcion),
         codprecio: cleanText(codPrecio) || "01",
         precio: Number(option.precioVenta),
         bodega: cleanText(wherehouseCode),
         cantidadmovimiento: clampQty(option.cantidad),
-        medidamovimiento: option.codUm.trim(),
+        medidamovimiento: cleanText(option.codUm),
         nofactura: noPedido,
         tipo: "1",
         tipodesc: "N",
@@ -311,7 +210,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         codvendedor: "004",
         codcliente: "00000",
         autorizado: "N",
-        producto: option.descripcionOp.trim(),
+        producto: cleanText(option.descripcionOp),
         tabla: "det_factura_tempo",
         vincularse: "N",
         servicioventa: 1,
@@ -319,7 +218,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         lote: "Sin Lote",
         vencimiento: "20260116",
         vienedelabusqueda: "N",
-        observacion: option.descripcionMod.trim(),
+        observacion: cleanText(option.descripcionMod),
         iddescuentolineal: 0,
         vienedebusquedaprioridadproducto: "S",
         pol_Sumacant: "S",
@@ -328,10 +227,10 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         unico,
         sistema: String(companySistema),
         ordenServicio: codReferenciaPCG,
-        tipoFac: metaChannel
+        tipoFac: metaChannel,
       }
     },
-    [contactId, companySistema, codReferenciaPCG]
+    [contactId, companySistema, codReferenciaPCG, metaChannel]
   )
 
   const cleanupFacturaTempo = useCallback(async () => {
@@ -401,7 +300,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       const conse = await CartService.GetConsecDocAsync(falote)
       const consecutivo = Number(conse.data.consecutivo)
 
-      if (!consecutivo || consecutivo <= 0) {
+      if (!consecutivo || consecutivo < 0) {
         throw new Error("No se pudo obtener el consecutivo del pedido.")
       }
 
@@ -467,9 +366,11 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     setPendingQuantity(1)
     setPendingObservacion("")
     setPendingModifiers([])
+    setPendingBatchItems([])
 
     hydratedRef.current = false
     addLockRef.current = false
+    batchLockRef.current = false
   }, [])
 
   const rollbackCreatedLog = useCallback(
@@ -498,19 +399,19 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     ) => {
       if (!lockInfo.branch) {
         toast.error("Debe seleccionar una sucursal válida.")
-        return
+        return false
       }
 
       if (!lockInfo.wherehouseCode) {
         toast.error("Debe seleccionar una bodega válida.")
-        return
+        return false
       }
 
       const noPedido = Number(order.noPedido)
 
       if (!noPedido || noPedido <= 0) {
         toast.error("No se pudo obtener el número de pedido.")
-        return
+        return false
       }
 
       const codPrecioFinal =
@@ -570,7 +471,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         }
 
         toast.error(getErrorMessage(error))
-        return
+        return false
       }
 
       setLocked({
@@ -579,12 +480,15 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       })
 
       await refreshBadge(noPedido)
+
+      return true
     },
     [
       buildCartRequest,
       buildModifierCartRequest,
       createLogIfNeeded,
       dispatch,
+      metaChannel,
       refreshBadge,
       rollbackCreatedLog,
       setLocked,
@@ -596,12 +500,14 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       product: ProductoPCGInterface,
       qty: number,
       observacion: string,
-      modifierOptions: SelectedModifierOption[]
+      modifierOptions: SelectedModifierOption[],
+      batchItems: AddProductsInput = []
     ) => {
       setPendingProduct(product)
       setPendingQuantity(clampQty(qty))
       setPendingObservacion(observacion)
       setPendingModifiers(modifierOptions)
+      setPendingBatchItems(batchItems)
       setOpenSucursalModal(true)
       setLoadingSucursalItems(true)
 
@@ -626,9 +532,46 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     []
   )
 
+  const resolveExistingOrderAsLock = useCallback(
+    async (): Promise<{
+      lockInfo: LockedInfo
+      order: ResolveOrderResult
+    } | null> => {
+      const existingLog = await fetchByContactId(contactId)
+
+      if (!existingLog?.branch || !existingLog?.orderId) return null
+
+      const lockInfo: LockedInfo = {
+        branch: existingLog.branch,
+        branchName: cleanText(existingLog.branchName),
+        wherehouse: cleanText(existingLog.wherehouse),
+        wherehouseCode: cleanText(existingLog.wherehouseCode),
+        serie: cleanText(existingLog.serie),
+        codPrecio: getCodPrecio(existingLog) || "01",
+      }
+
+      const order: ResolveOrderResult = {
+        existingLog,
+        noPedido: String(existingLog.orderId),
+        branch: lockInfo.branch,
+        branchName: lockInfo.branchName,
+        wherehouse: lockInfo.wherehouse,
+        wherehouseCode: lockInfo.wherehouseCode,
+        serie: lockInfo.serie,
+        codPrecio: lockInfo.codPrecio,
+      }
+
+      return {
+        lockInfo,
+        order,
+      }
+    },
+    [contactId, fetchByContactId]
+  )
+
   const addProductCore = useCallback(
     async (args: AddProductInput, options?: { skipPicker?: boolean }) => {
-      if (addLockRef.current) return
+      if (addLockRef.current) return false
       addLockRef.current = true
 
       try {
@@ -650,13 +593,13 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
 
         if (!safeQty || safeQty <= 0) {
           toast.warning("La cantidad debe ser al menos 1.")
-          return
+          return false
         }
 
         if (locked) {
           const order = await resolveOrder(locked.branch, locked.codPrecio)
 
-          await commitProductToCart(
+          return await commitProductToCart(
             product,
             safeQty,
             observacion,
@@ -664,8 +607,6 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
             order,
             modifierOptions
           )
-
-          return
         }
 
         if (branch && wherehouseCode) {
@@ -680,7 +621,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
             codPrecio: safeCodPrecio || order.codPrecio || "01",
           }
 
-          await commitProductToCart(
+          return await commitProductToCart(
             product,
             safeQty,
             observacion,
@@ -688,58 +629,34 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
             order,
             modifierOptions
           )
-
-          return
         }
 
-        const existingLog = await fetchByContactId(contactId)
+        const existing = await resolveExistingOrderAsLock()
 
-        if (existingLog?.branch && existingLog?.orderId) {
-          const lockInfo: LockedInfo = {
-            branch: existingLog.branch,
-            branchName: cleanText(existingLog.branchName),
-            wherehouse: cleanText(existingLog.wherehouse),
-            wherehouseCode: cleanText(existingLog.wherehouseCode),
-            serie: cleanText(existingLog.serie),
-            codPrecio: getCodPrecio(existingLog) || "01",
-          }
-
-          const order: ResolveOrderResult = {
-            existingLog,
-            noPedido: String(existingLog.orderId),
-            branch: lockInfo.branch,
-            branchName: lockInfo.branchName,
-            wherehouse: lockInfo.wherehouse,
-            wherehouseCode: lockInfo.wherehouseCode,
-            serie: lockInfo.serie,
-            codPrecio: lockInfo.codPrecio,
-          }
-
-          await commitProductToCart(
+        if (existing) {
+          return await commitProductToCart(
             product,
             safeQty,
             observacion,
-            lockInfo,
-            order,
-            modifierOptions
-          )
-
-          return
-        }
-
-        if (!branch) {
-          if (options?.skipPicker) {
-            toast.error("Debe seleccionar una sucursal.")
-            return
-          }
-
-          await openBranchPickerForProduct(
-            product,
-            safeQty,
-            observacion,
+            existing.lockInfo,
+            existing.order,
             modifierOptions
           )
         }
+
+        if (options?.skipPicker) {
+          toast.error("Debe seleccionar una sucursal.")
+          return false
+        }
+
+        await openBranchPickerForProduct(
+          product,
+          safeQty,
+          observacion,
+          modifierOptions
+        )
+
+        return false
       } finally {
         addLockRef.current = false
       }
@@ -748,8 +665,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       locked,
       resolveOrder,
       commitProductToCart,
-      fetchByContactId,
-      contactId,
+      resolveExistingOrderAsLock,
       openBranchPickerForProduct,
     ]
   )
@@ -761,18 +677,81 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
     [addProductCore]
   )
 
+  const addProducts = useCallback(
+    async (items: AddProductsInput) => {
+      if (batchLockRef.current) return
+
+      if (!items.length) {
+        toast.warning("No hay productos seleccionados.")
+        return
+      }
+
+      batchLockRef.current = true
+
+      try {
+        if (!locked) {
+          const existing = await resolveExistingOrderAsLock()
+
+          if (!existing) {
+            const first = items[0]
+
+            await openBranchPickerForProduct(
+              first.product,
+              first.qty,
+              first.observacion ?? "",
+              first.modifierOptions ?? [],
+              items
+            )
+
+            return
+          }
+        }
+
+        let addedCount = 0
+
+        for (const item of items) {
+          const added = await addProductCore(
+            {
+              ...item,
+              onDoneUiReset: false,
+            },
+            { skipPicker: true }
+          )
+
+          if (added) addedCount += 1
+        }
+
+        if (addedCount > 0) {
+          toast.success(
+            `${addedCount} producto${addedCount === 1 ? "" : "s"} agregado${
+              addedCount === 1 ? "" : "s"
+            } al carrito.`
+          )
+        }
+      } finally {
+        batchLockRef.current = false
+      }
+    },
+    [
+      locked,
+      addProductCore,
+      resolveExistingOrderAsLock,
+      openBranchPickerForProduct,
+    ]
+  )
+
   const onSelectSucursal = useCallback(
     async (value: PickerSelectValue) => {
       const product = pendingProduct
       const qty = pendingQuantity
       const observacion = pendingObservacion
       const modifierOptions = pendingModifiers
+      const batchItems = pendingBatchItems
 
       setOpenSucursalModal(false)
       setPendingProduct(null)
       setPendingModifiers([])
-
-      if (!product) return
+      setPendingBatchItems([])
 
       const lockInfo: LockedInfo = {
         branch: value.codsucursal,
@@ -784,6 +763,35 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       }
 
       setCodPrecioActivo(lockInfo.codPrecio)
+
+      if (batchItems.length > 0) {
+        let addedCount = 0
+
+        for (const item of batchItems) {
+          const added = await addProductCore(
+            {
+              ...item,
+              ...lockInfo,
+              onDoneUiReset: false,
+            },
+            { skipPicker: true }
+          )
+
+          if (added) addedCount += 1
+        }
+
+        if (addedCount > 0) {
+          toast.success(
+            `${addedCount} producto${addedCount === 1 ? "" : "s"} agregado${
+              addedCount === 1 ? "" : "s"
+            } al carrito.`
+          )
+        }
+
+        return
+      }
+
+      if (!product) return
 
       await addProductCore(
         {
@@ -802,6 +810,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
       pendingQuantity,
       pendingObservacion,
       pendingModifiers,
+      pendingBatchItems,
       setCodPrecioActivo,
     ]
   )
@@ -817,6 +826,7 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
         setOpenSucursalModal(false)
         setPendingProduct(null)
         setPendingModifiers([])
+        setPendingBatchItems([])
       },
       onSelect: onSelectSucursal,
     }),
@@ -833,9 +843,13 @@ export const useCartPCGFlow = (conversationId: number, contactId: number, metaCh
   return {
     locked,
     codPrecioActivo,
+
     setLocked,
     setCodPrecioActivo,
+
     addProduct,
+    addProducts,
+
     pickerProps,
     resetCartFlow,
   }

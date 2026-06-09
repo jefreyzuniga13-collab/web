@@ -348,6 +348,9 @@ background:
   text-align: center;
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .login__wave {

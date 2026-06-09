@@ -27,14 +27,6 @@ export const fetchNotifications = createAsyncThunk(
   }
 )
 
-// export const fetchUnreadCount = createAsyncThunk(
-//   'notifications/fetchCount',
-//   async () => {
-//     const res = await getUnreadCount()
-//     return res.data
-//   }
-// )
-
 const slice = createSlice({
   name: 'notifications',
   initialState,
@@ -63,17 +55,6 @@ const slice = createSlice({
         state.loadingList = false
         state.error = action.error.message
       })
-      // contador
-      // .addCase(fetchUnreadCount.pending, state => {
-      //   state.loadingCount = true
-      // })
-      // .addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<number>) => {
-      //   state.loadingCount = false
-      //   state.unreadCount = action.payload
-      // })
-      // .addCase(fetchUnreadCount.rejected, state => {
-      //   state.loadingCount = false
-      // })
   }
 })
 

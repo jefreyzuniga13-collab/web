@@ -102,6 +102,7 @@ function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   };
 }
 
+
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -172,9 +173,19 @@ const CheckoutPage: React.FC = () => {
 
   const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
 
+    const getTransporteFactura = () => {
+  const stateTransp = Number(transpCost ?? 0);
+  const logTransp = Number(existingLog?.transCost ?? 0);
+
+  if (stateTransp > 0) return stateTransp;
+  if (logTransp > 0) return logTransp;
+
+  return 0;
+};
+
   const totalPagar = useMemo(
-    () => round2(cartTotal + normalizeNumber(transpCost) + normalizeNumber(tip)),
-    [cartTotal, transpCost, tip]
+    () => round2(cartTotal + getTransporteFactura() + normalizeNumber(tip)),
+    [cartTotal, transpCost, existingLog?.transCost, tip]
   );
 
   const { mutateAsync: completeFpiAsync } = useCompleteFpi();
@@ -205,6 +216,7 @@ const CheckoutPage: React.FC = () => {
       });
     }
   });
+
 
   const payWithTokenMutation = usePayWithToken({
     onSuccess: async (response) => {
@@ -740,13 +752,11 @@ const CheckoutPage: React.FC = () => {
 
   const getTotalFactura = () => {
     const totalBase = Number(existingLog?.totalEnPantalla ?? carPCG?.[0]?.total ?? 0);
-    const transporte = Number(transpCost ?? existingLog?.transCost ?? 0);
-    return round2(totalBase + transporte + Number(tip ?? 0));
-  };
 
+    return round2(totalBase + Number(tip ?? 0));
+  };
   const validateManualCard = () => {
 
-    console.log("Datos manualCardData",manualCardData)
     if (!safeStr(manualCardData.tarjetahabiente)) {
       return toastError("El tarjetahabiente es requerido.");
     }
@@ -874,9 +884,6 @@ const CheckoutPage: React.FC = () => {
     setPayNowLock(true);
     setPayNowCooldown(5);
 
-
-    console.log("handlePayNow")
-
     try {
       if (!carPCG || carPCG.length === 0) return void toastError("El carrito está vacío.");
       if (!selectedCurrency) return void toastError("Debe seleccionar un método de pago.");
@@ -926,13 +933,14 @@ const CheckoutPage: React.FC = () => {
 
       const coords = !isPickup ? getCoordsForFlow() : null;
 
-      if (isPickup) {
-        nearest = await getLockedBranch();
+    if (isPickup) {
+      nearest = await getLockedBranch();
 
-        if (!nearest) return void toastError("No fue posible determinar la sucursal para retiro.");
+      if (!nearest) return void toastError("No fue posible determinar la sucursal para retiro.");
 
-        transporte = Number(existingLog?.transCost ?? 0);
-      } else {
+      transporte = Number(existingLog?.transCost ?? 0);
+    } 
+      else {
         if (!coords) return void toastError("Debes seleccionar la ubicación.");
 
         const preview = await computeTransportPreview(coords);
@@ -940,7 +948,7 @@ const CheckoutPage: React.FC = () => {
         if (!preview?.nearest) return void toastError("No hay sucursal disponible.");
 
         nearest = preview.nearest;
-        transporte = Number(preview.cost ?? 0);
+        transporte = Number(preview.cost ?? getTransporteFactura());
       }
 
       let finalLocation: ClientLocationDto | null = null;
@@ -1210,7 +1218,10 @@ const CheckoutPage: React.FC = () => {
                   divisaSelected={divisaSelected}
                   setDivisaSelected={setDivisaSelected}
                   carPCG={carPCG}
+
+                  // AQUI
                   totalPagar={totalPagar}
+                  
                   existingLog={existingLog}
                   ecommerceUserId={payload.ecommerceUserId}
                   onSelectCard={setSelectedSavedCard}

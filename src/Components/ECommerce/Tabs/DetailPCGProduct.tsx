@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { FaShoppingCart } from "react-icons/fa"
 import { IoMdSend } from "react-icons/io"
-import { MdInventory } from "react-icons/md"
+import { MdInventory, MdAddTask, MdCheckCircle } from "react-icons/md"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md"
 import { toast } from "react-toastify"
@@ -9,15 +9,19 @@ import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
 import "@/Styles/Ecommerce/ModifierAccordion.css"
-import type {listaOpciones, ProductoModificadorPCGInterface, ProductoPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
+import type {
+  listaOpciones,
+  ProductoModificadorPCGInterface,
+  ProductoPCGInterface,
+} from "@/Interfaces/Chat/ProductPCGInterface"
 import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
-import type {AddProductParams, SelectedModifierOption} from "@/Hooks/Ecommerce/payment/useCartPCGFlow"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import ModifierAccordion from "@/Components/ECommerce/Tabs/ModifierAccordion"
+import type { AddProductParams, SelectedModifierOption } from "@/Interfaces/Crm/CartPCGInterface"
 
 interface Props {
   detail: ProductoPCGInterface
@@ -30,6 +34,11 @@ interface Props {
   onPrev: () => void
   onNext: () => void
   onBack: () => void
+
+  batchMode?: boolean
+  onSaveBatchConfig?: (payload: AddProductParams) => void
+  isSelected?: boolean
+  onToggleSelect?: (product: ProductoPCGInterface) => void
 }
 
 type SelectedOptionsMap = Record<string, string[]>
@@ -81,7 +90,6 @@ const getLimiteRealModificador = (
   return clampQty(cantidadProducto) * maxSel
 }
 
-
 const DetailPCGProduct = ({
   detail,
   setDetailProduct,
@@ -92,23 +100,31 @@ const DetailPCGProduct = ({
   canNext,
   onPrev,
   onNext,
+  batchMode = false,
+  onSaveBatchConfig,
+  isSelected = false,
+  onToggleSelect,
 }: Props) => {
   const [cantidad, setCantidad] = useState(1)
   const [observacion, setObservacion] = useState("")
   const [total, setTotal] = useState(0)
+
   const [branchUiSelected, setBranchUiSelected] = useState<string | null>(null)
   const [branchNameUiSelected, setBranchNameUiSelected] = useState("")
   const [wherehouseUiSelected, setWherehouseUiSelected] = useState("")
   const [wherehouseCodeUiSelected, setWherehouseCodeUiSelected] = useState("")
   const [serieUiSelected, setSerieCodeUiSelected] = useState("")
   const [codPrecioUiSelected, setCodPrecioUiSelected] = useState("")
+  const [branchSearch, setBranchSearch] = useState("")
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptionsMap>({})
   const [optionQuantities, setOptionQuantities] = useState<OptionQtyMap>({})
   const [openImg, setOpenImg] = useState(false)
+  const [processing, setProcessing] = useState(false)
 
   const sendLockRef = useRef(false)
   const addLockRef = useRef(false)
+  const configLockRef = useRef(false)
   const bodyRef = useRef<HTMLElement | null>(null)
 
   const {
@@ -127,6 +143,38 @@ const DetailPCGProduct = ({
   )
 
   const imageSrc = useMemo(() => detail.imagen || vacio, [detail.imagen])
+
+  const filteredBranchRows = useMemo(() => {
+    const term = branchSearch.trim().toLowerCase()
+
+    if (!term) return branchRows
+
+    return branchRows.filter((b) => {
+      return (
+        String(b.codsucursal ?? "").toLowerCase().includes(term) ||
+        String(b.sucursal ?? "").toLowerCase().includes(term) ||
+        String(b.nombodega ?? "").toLowerCase().includes(term) ||
+        String(b.codbodega ?? "").toLowerCase().includes(term) ||
+        String(b.serie ?? "").toLowerCase().includes(term) ||
+        String(b.precio ?? "").toLowerCase().includes(term)
+      )
+    })
+  }, [branchRows, branchSearch])
+
+  const optionIndex = useMemo(() => {
+    const map = new Map<string, IndexedOption>()
+
+    productModifiers?.forEach((mod) => {
+      mod.listOpciones?.forEach((op) => {
+        map.set(String(op.codOpcion), {
+          ...op,
+          codModificador: String(mod.codModificador),
+        })
+      })
+    })
+
+    return map
+  }, [productModifiers])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -150,32 +198,32 @@ const DetailPCGProduct = ({
     setWherehouseCodeUiSelected("")
     setSerieCodeUiSelected("")
     setCodPrecioUiSelected(codPrecioActivo)
+    setBranchSearch("")
 
     requestAnimationFrame(() => {
       bodyRef.current?.scrollTo({ top: 0 })
     })
-  }, [ detail.codProducto])
+  }, [detail.codProducto])
 
-useEffect(() => {
-  if (!detail.tieneOpcion) {
-    getProductModifiers("", "")
-    setSelectedOptions({})
-    setOptionQuantities({})
-    return
-  }
+  useEffect(() => {
+    if (!detail.tieneOpcion) {
+      getProductModifiers("", "")
+      setSelectedOptions({})
+      setOptionQuantities({})
+      return
+    }
 
-  const codPrecioFinal = (codPrecioUiSelected || codPrecioActivo || "").trim() || '01'
+    const codPrecioFinal =
+      (codPrecioUiSelected || codPrecioActivo || "").trim() || "01"
 
-  if (!codPrecioFinal) return
-
-  getProductModifiers(detail.codProducto, codPrecioFinal)
-}, [
-  detail.codProducto,
-  detail.tieneOpcion,
-  codPrecioActivo,
-  codPrecioUiSelected,
-  getProductModifiers,
-])
+    getProductModifiers(detail.codProducto, codPrecioFinal)
+  }, [
+    detail.codProducto,
+    detail.tieneOpcion,
+    codPrecioActivo,
+    codPrecioUiSelected,
+    getProductModifiers,
+  ])
 
   useEffect(() => {
     if (!detail.tieneOpcion || !productModifiers?.length) {
@@ -216,48 +264,33 @@ useEffect(() => {
     setOptionQuantities(initialQuantities)
   }, [detail.tieneOpcion, productModifiers])
 
-useEffect(() => {
-  if (locked) {
-    const lockedCodPrecio = (locked.codPrecio ?? "").trim()
+  useEffect(() => {
+    if (locked) {
+      const lockedCodPrecio = (locked.codPrecio ?? "").trim()
 
-    setBranchUiSelected(locked.branch ?? null)
-    setBranchNameUiSelected(locked.branchName ?? "")
-    setWherehouseUiSelected(locked.wherehouse ?? "")
-    setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
-    setSerieCodeUiSelected((locked.serie ?? "").trim())
-    setCodPrecioUiSelected(lockedCodPrecio)
-    setCodPrecioActivo(lockedCodPrecio)
-    return
-  }
+      setBranchUiSelected(locked.branch ?? null)
+      setBranchNameUiSelected(locked.branchName ?? "")
+      setWherehouseUiSelected(locked.wherehouse ?? "")
+      setWherehouseCodeUiSelected((locked.wherehouseCode ?? "").trim())
+      setSerieCodeUiSelected((locked.serie ?? "").trim())
+      setCodPrecioUiSelected(lockedCodPrecio)
+      setCodPrecioActivo(lockedCodPrecio)
+      return
+    }
 
-  if (!branchRows.length) return
+    if (!branchRows.length) return
 
-  const first = branchRows[0]
-  const firstCodPrecio = (first.precio ?? "").trim()
+    const first = branchRows[0]
+    const firstCodPrecio = (first.precio ?? "").trim()
 
-  setBranchUiSelected(first.codsucursal)
-  setBranchNameUiSelected(first.sucursal ?? "")
-  setWherehouseUiSelected(first.nombodega ?? "")
-  setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
-  setSerieCodeUiSelected((first.serie ?? "").trim())
-  setCodPrecioUiSelected(firstCodPrecio)
-  setCodPrecioActivo(firstCodPrecio)
-}, [branchRows, locked, setCodPrecioActivo])
-
-  const optionIndex = useMemo(() => {
-    const map = new Map<string, IndexedOption>()
-
-    productModifiers?.forEach((mod) => {
-      mod.listOpciones?.forEach((op) => {
-        map.set(String(op.codOpcion), {
-          ...op,
-          codModificador: String(mod.codModificador),
-        })
-      })
-    })
-
-    return map
-  }, [productModifiers])
+    setBranchUiSelected(first.codsucursal)
+    setBranchNameUiSelected(first.sucursal ?? "")
+    setWherehouseUiSelected(first.nombodega ?? "")
+    setWherehouseCodeUiSelected((first.codbodega ?? "").trim())
+    setSerieCodeUiSelected((first.serie ?? "").trim())
+    setCodPrecioUiSelected(firstCodPrecio)
+    setCodPrecioActivo(firstCodPrecio)
+  }, [branchRows, locked, setCodPrecioActivo])
 
   const getSelectedQtyByModifier = useCallback(
     (modifier: ProductoModificadorPCGInterface, exceptCodOpcion?: string) => {
@@ -322,6 +355,24 @@ useEffect(() => {
     selectedOptions,
     optionQuantities,
   ])
+
+  useEffect(() => {
+    const base = clampQty(cantidad) * Number(detail.precio ?? 0)
+    let optionsTotal = 0
+
+    Object.entries(selectedOptions).forEach(([, ids]) => {
+      ids.forEach((id) => {
+        const op = optionIndex.get(String(id))
+        const qty = clampQty(optionQuantities[String(id)] ?? 1)
+
+        if (op) {
+          optionsTotal += qty * Number(op.precioVenta ?? 0)
+        }
+      })
+    })
+
+    setTotal(base + optionsTotal)
+  }, [cantidad, selectedOptions, optionQuantities, optionIndex, detail.precio])
 
   const handleToggleOption = useCallback(
     (modifier: ProductoModificadorPCGInterface, codOpcion: string) => {
@@ -434,25 +485,6 @@ useEffect(() => {
     },
     [cantidad, selectedOptions, getSelectedQtyByModifier]
   )
-
-  useEffect(() => {
-    const base = clampQty(cantidad) * Number(detail.precio ?? 0)
-
-    let optionsTotal = 0
-
-    Object.entries(selectedOptions).forEach(([, ids]) => {
-      ids.forEach((id) => {
-        const op = optionIndex.get(String(id))
-        const qty = clampQty(optionQuantities[String(id)] ?? 1)
-
-        if (op) {
-          optionsTotal += qty * Number(op.precioVenta ?? 0)
-        }
-      })
-    })
-
-    setTotal(base + optionsTotal)
-  }, [cantidad, selectedOptions, optionQuantities, optionIndex, detail.precio])
 
   const validateRequiredModifiers = useCallback(() => {
     if (!detail.tieneOpcion) return true
@@ -582,36 +614,52 @@ useEffect(() => {
     codPrecioUiSelected,
   ])
 
+  const buildProductPayload = useCallback((): AddProductParams | null => {
+    const qty = clampQty(cantidad)
+
+    if (qty <= 0) {
+      toast.warning("La cantidad debe ser al menos 1.")
+      return null
+    }
+
+    if (!validateRequiredModifiers()) return null
+
+    const branchPayload = resolveBranchPayload()
+
+    return {
+      product: detail,
+      qty,
+      observacion,
+      modifierOptions: buildModifierOptionsPayload(),
+      onDoneUiReset: !batchMode,
+      branch: branchPayload.branch ?? "",
+      branchName: branchPayload.branchName ?? "",
+      wherehouse: branchPayload.wherehouse ?? "",
+      wherehouseCode: branchPayload.wherehouseCode ?? "",
+      serie: branchPayload.serie ?? "",
+      codPrecio: branchPayload.codPrecio ?? "",
+    }
+  }, [
+    cantidad,
+    detail,
+    observacion,
+    batchMode,
+    resolveBranchPayload,
+    buildModifierOptionsPayload,
+    validateRequiredModifiers,
+  ])
+
   const handleAddToCart = useCallback(async () => {
     if (addLockRef.current) return
+    if (isSelected) return
 
     addLockRef.current = true
+    setProcessing(true)
 
     try {
-      const qty = clampQty(cantidad)
+      const payload = buildProductPayload()
 
-      if (qty <= 0) {
-        toast.warning("La cantidad debe ser al menos 1.")
-        return
-      }
-
-      if (!validateRequiredModifiers()) return
-
-      const branchPayload = resolveBranchPayload()
-
-      const payload: AddProductParams = {
-        product: detail,
-        qty,
-        observacion,
-        modifierOptions: buildModifierOptionsPayload(),
-        onDoneUiReset: true,
-        branch: branchPayload.branch ?? "",
-        branchName: branchPayload.branchName ?? "",
-        wherehouse: branchPayload.wherehouse ?? "",
-        wherehouseCode: branchPayload.wherehouseCode ?? "",
-        serie: branchPayload.serie ?? "",
-        codPrecio: branchPayload.codPrecio ?? "",
-      }
+      if (!payload) return
 
       await addProduct(payload)
 
@@ -620,18 +668,37 @@ useEffect(() => {
       setDetailProduct(null)
     } finally {
       addLockRef.current = false
+      setProcessing(false)
     }
   }, [
     addProduct,
-    cantidad,
-    observacion,
-    detail,
-    resolveBranchPayload,
-    buildModifierOptionsPayload,
-    validateRequiredModifiers,
+    buildProductPayload,
+    isSelected,
     setDetailProduct,
     setselectedCategory,
   ])
+
+  const handleSaveBatchConfig = useCallback(() => {
+    if (configLockRef.current) return
+
+    configLockRef.current = true
+    setProcessing(true)
+
+    try {
+      const payload = buildProductPayload()
+
+      if (!payload) return
+
+      if (!onSaveBatchConfig) return
+
+      onSaveBatchConfig(payload)
+      toast.success("Configuración guardada.")
+      setDetailProduct(null)
+    } finally {
+      configLockRef.current = false
+      setProcessing(false)
+    }
+  }, [buildProductPayload, onSaveBatchConfig, setDetailProduct])
 
   const handleSendMessage = useCallback(async () => {
     if (sendLockRef.current) return
@@ -649,8 +716,33 @@ useEffect(() => {
     }
   }, [conversationId, detail, observacion, sendProductMessage])
 
-  const actionsDisabled = sending || addLockRef.current
+  const handleToggleSelection = useCallback(() => {
+    onToggleSelect?.(detail)
+  }, [onToggleSelect, detail])
+
+  const handleSelectBranch = useCallback(
+    (b: (typeof branchRows)[number]) => {
+      if (locked) return
+
+      const whCode = (b.codbodega ?? "").trim()
+      const codPrecio = (b.precio ?? "").trim()
+
+      setBranchUiSelected(b.codsucursal)
+      setBranchNameUiSelected(b.sucursal ?? "")
+      setWherehouseUiSelected(b.nombodega ?? "")
+      setWherehouseCodeUiSelected(whCode)
+      setSerieCodeUiSelected((b.serie ?? "").trim())
+      setCodPrecioUiSelected(codPrecio)
+      setCodPrecioActivo(codPrecio)
+    },
+    [locked, setCodPrecioActivo]
+  )
+
+  const actionsDisabled = sending || processing
   const canPickBranch = !locked
+  const canSaveBatchConfig =
+    batchMode && !!onSaveBatchConfig && isSelected && detail.tieneOpcion
+  const addCartDisabled = actionsDisabled || isSelected
 
   return (
     <section className="detail-product__container">
@@ -740,19 +832,30 @@ useEffect(() => {
               </div>
             )}
 
+            {!loadingBranches && branchRows.length > 0 && (
+              <input
+                type="text"
+                className="detail-product__branchSearch"
+                placeholder="Buscar sucursal, bodega, serie o precio..."
+                value={branchSearch}
+                onChange={(e) => setBranchSearch(e.target.value)}
+              />
+            )}
+
             {!loadingBranches && (
               <div className="detail-product__branchList">
-                {branchRows.map((b) => {
+                {filteredBranchRows.map((b) => {
                   const whCode = (b.codbodega ?? "").trim()
 
                   const isActive =
-                    branchUiSelected === b.codsucursal && wherehouseCodeUiSelected === whCode
+                    branchUiSelected === b.codsucursal &&
+                    wherehouseCodeUiSelected === whCode
 
                   const isDisabled = !!locked && !isActive
 
                   return (
                     <button
-                      key={`${b.codsucursal}-${b.codbodega}`}
+                      key={`${b.codsucursal}-${b.codbodega}-${b.serie}`}
                       className={`detail-product__branchItem ${
                         isActive ? "detail-product__branchItem--active" : ""
                       } ${
@@ -762,17 +865,7 @@ useEffect(() => {
                       }`}
                       type="button"
                       disabled={!canPickBranch && !isActive}
-                      onClick={() => {
-                        if (!canPickBranch) return
-
-                        setBranchUiSelected(b.codsucursal)
-                        setBranchNameUiSelected(b.sucursal ?? "")
-                        setWherehouseUiSelected(b.nombodega ?? "")
-                        setWherehouseCodeUiSelected(whCode)
-                        setSerieCodeUiSelected((b.serie ?? "").trim())
-                        setCodPrecioUiSelected(b.precio)
-                        setCodPrecioActivo(b.precio)
-                      }}
+                      onClick={() => handleSelectBranch(b)}
                     >
                       <div className="detail-product__branchItemMain">
                         <span className="detail-product__branchCode">
@@ -806,6 +899,12 @@ useEffect(() => {
                     </button>
                   )
                 })}
+
+                {branchRows.length > 0 && filteredBranchRows.length === 0 && (
+                  <div className="detail-product__branchListEmpty">
+                    No se encontraron sucursales con ese filtro.
+                  </div>
+                )}
               </div>
             )}
 
@@ -848,28 +947,69 @@ useEffect(() => {
             className="detail-product__inputNumber"
           />
 
+          {batchMode && onToggleSelect && (
+            <Button
+              type="button"
+              className={`productTab-simpleAddBar__btn simpleAddBar-select ${
+                isSelected ? "simpleAddBar-select--active" : ""
+              }`}
+              onClick={handleToggleSelection}
+              disabled={actionsDisabled}
+              title={isSelected ? "Deseleccionar producto" : "Agregar a selección"}
+            >
+              {isSelected ? (
+                <MdCheckCircle fontSize={20} />
+              ) : (
+                <MdAddTask fontSize={20} />
+              )}
+            </Button>
+          )}
+
+          {canSaveBatchConfig && (
+            <Button
+              type="button"
+              className="productTab-simpleAddBar__btn simpleAddBar-secondary"
+              onClick={handleSaveBatchConfig}
+              disabled={actionsDisabled}
+              title="Guardar configuración"
+            >
+              {actionsDisabled ? (
+                <AiOutlineLoading3Quarters fontSize={20} />
+              ) : (
+                <MdCheckCircle fontSize={20} />
+              )}
+            </Button>
+          )}
+
           <Button
             type="button"
-            className="productTab-buyButton"
+            className="productTab-simpleAddBar__btn simpleAddBar-secondary"
             onClick={handleAddToCart}
-            disabled={actionsDisabled}
+            disabled={addCartDisabled}
+            title={
+              isSelected
+                ? "Este producto ya está en la selección"
+                : "Agregar al carrito"
+            }
           >
             {actionsDisabled ? (
-              <AiOutlineLoading3Quarters fontSize={12} />
+              <AiOutlineLoading3Quarters fontSize={20} />
             ) : (
-              <FaShoppingCart fontSize={12} />
+              <FaShoppingCart fontSize={20} />
             )}
           </Button>
 
-          <Button 
-          type="button"
-          variant="primary"
-           className="productTab-buyButton__sendMessage"
-          disabled={actionsDisabled} onClick={handleSendMessage}>
+          <Button
+            type="button"
+            variant="primary"
+            className="productTab-simpleAddBar__btn"
+            disabled={actionsDisabled}
+            onClick={handleSendMessage}
+          >
             {actionsDisabled ? (
-              <AiOutlineLoading3Quarters fontSize={12} />
+              <AiOutlineLoading3Quarters fontSize={20} />
             ) : (
-              <IoMdSend fontSize={12} />
+              <IoMdSend fontSize={20} />
             )}
           </Button>
         </div>

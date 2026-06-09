@@ -34,17 +34,6 @@ const DetailPanelCurrentConversationTab: React.FC<Props> = ({
     // toggleHaltedLocal,
   } = useContactDetail(Number(conversationId));
 
-  // const handleSetHaltedConversation = useCallback(async () => {
-  //   if (!conv?.conversationId) return;
-  //   try {
-  //     await SetHaltedConversation(conv.conversationId);
-  //     toggleHaltedLocal();
-  //     setShowConversationOptions(false);
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // }, [conv, toggleHaltedLocal]);
-
   const handleSetHaltedConversation = useCallback(async () => {
   if (!conv?.conversationId) return;
 

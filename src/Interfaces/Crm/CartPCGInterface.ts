@@ -1,3 +1,7 @@
+import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface";
+import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+
 export interface CarDto{
     idUsuario?: number;
     fecha: string;
@@ -242,4 +246,97 @@ export interface InvoiceTotalsDto {
   transporte: number;
   total: number;
   totaldolar: number;
+}
+
+
+
+// Lista de productos e inserta tempo.
+export type LockedInfo = {
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
+  codPrecio: string
+}
+
+export type SelectedModifierOption = {
+  codTipoModificador: string
+  codModificador: string
+  descripcionMod: string
+  codOpcion: string
+  descripcionOp: string
+  codPrecio: string
+  precioVenta: number
+  cantidad: number
+  codUm: string
+  aplicaIva: string
+}
+
+export type AddProductParams = {
+  product: ProductoPCGInterface
+  qty: number
+  observacion: string
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
+  codPrecio: string
+  modifierOptions: SelectedModifierOption[]
+  onDoneUiReset: boolean
+}
+
+export type AddProductInput = {
+  product: ProductoPCGInterface
+  qty: number
+  observacion?: string
+  branch?: string
+  branchName?: string
+  wherehouse?: string
+  wherehouseCode?: string
+  serie?: string
+  codPrecio?: string
+  modifierOptions?: SelectedModifierOption[]
+  onDoneUiReset?: boolean
+}
+
+export type AddProductsInput = AddProductInput[]
+
+export type PickerSelectValue = {
+  codsucursal: string
+  sucursal: string
+  nombodega: string
+  codBodega: string
+  serie: string
+  codPrecio?: string | null
+  codprecio?: string | null
+  CodPrecio?: string | null
+}
+
+export type SucursalPickerProps = {
+  open: boolean
+  loading: boolean
+  codProducto: string
+  items: ExistenciaSucursalItem[]
+  selectedCodSucursal: string | null
+  onClose: () => void
+  onSelect: (v: PickerSelectValue) => void | Promise<void>
+}
+
+export type ResolveOrderResult = {
+  existingLog: LogCartResponseDto | null
+  noPedido: string
+  branch: string
+  branchName: string
+  wherehouse: string
+  wherehouseCode: string
+  serie: string
+  codPrecio: string
+}
+
+export type WithCodPrecio = {
+  codPrecio?: string | null
+  codprecio?: string | null
+  CodPrecio?: string | null
 }
