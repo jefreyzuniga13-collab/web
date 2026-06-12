@@ -3,7 +3,7 @@
   display: grid;
   max-height: 100vh;
   grid-template-rows: auto auto 1fr;
-  gap: var(--space-lg);
+  gap: var(--space-xs);
 
 }
 

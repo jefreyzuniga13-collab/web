@@ -421,13 +421,17 @@ export const InboxList: React.FC<Props> = ({
                           {getChannelIcon(conversation.metaChannelId)}
                         </span>
 
-                        {conversation.systemDefinedCompanyName ?? ""}
-
-                        <span>
+                        <div className="inbox-list__namecontactClassification">
+                          <span>
                           {conversation.clientContactId != null
                             ? ` (${conversation.clientContactName})`
                             : ""}
                         </span>
+
+                         <span className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}>
+                         {conversation.contactClassificationName}
+                       </span>
+                        </div>
 
                         {hasCart && (
                           <span className="inbox-list__isItemsInCart">
@@ -452,11 +456,12 @@ export const InboxList: React.FC<Props> = ({
                       </button>
                     </div>
 
-                    {conversation.assignedAgentName && (
-                      <div className="inbox-list__agent">
-                        Agente: <strong>{conversation.assignedAgentName}</strong>
+                  
+                      <div className="inbox-list__names">
+                      {conversation.assignedAgentName && (
+                        <span> Agente: <strong>{conversation.assignedAgentName}</strong></span>
+                      )}
                       </div>
-                    )}
 
                     <span className="inbox-list__preview">{previewText}</span>
                   </div>

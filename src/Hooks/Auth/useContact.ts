@@ -47,16 +47,16 @@ const useContact = (contactId?: number) => {
     staleTime: 1000 * 60 * 5,
   })
 
-  const {
-    data: verifiedPagedContacts,
-    isLoading: loadingVerified,
-    isFetching: fetchingVerified,
-    error: verifiedError,
-  } = useQuery<PagedResponse<ContactLogInterface>, Error>({
-    queryKey: contactKeys.verified(page, pageSize),
-    queryFn: () => contactService.getAllVerifiedAsync(page, pageSize),
-    staleTime: 1000 * 60 * 5,
-  })
+  // const {
+  //   data: verifiedPagedContacts,
+  //   isLoading: loadingVerified,
+  //   isFetching: fetchingVerified,
+  //   error: verifiedError,
+  // } = useQuery<PagedResponse<ContactLogInterface>, Error>({
+  //   queryKey: contactKeys.verified(page, pageSize),
+  //   queryFn: () => contactService.getAllVerifiedAsync(page, pageSize),
+  //   staleTime: 1000 * 60 * 5,
+  // })
 
   const {
     data: detailData,
@@ -158,11 +158,11 @@ const useContact = (contactId?: number) => {
         staleTime: 1000 * 60 * 5,
       })
 
-      await queryClient.prefetchQuery({
-        queryKey: contactKeys.verified(p, s),
-        queryFn: () => contactService.getAllVerifiedAsync(p, s),
-        staleTime: 1000 * 60 * 5,
-      })
+      // await queryClient.prefetchQuery({
+      //   queryKey: contactKeys.verified(p, s),
+      //   queryFn: () => contactService.getAllVerifiedAsync(p, s),
+      //   staleTime: 1000 * 60 * 5,
+      // })
 
       return result
     },
@@ -384,10 +384,10 @@ const useContact = (contactId?: number) => {
   }, [contactId, detailData])
 
   const data = useMemo(() => pagedContacts?.items ?? [], [pagedContacts])
-  const verifiedContact = useMemo(
-    () => verifiedPagedContacts?.items ?? [],
-    [verifiedPagedContacts]
-  )
+  // const verifiedContact = useMemo(
+  //   () => verifiedPagedContacts?.items ?? [],
+  //   [verifiedPagedContacts]
+  // )
 
   const totalCount = pagedContacts?.meta.totalCount ?? 0
 
@@ -400,8 +400,8 @@ const useContact = (contactId?: number) => {
   const loading =
     loadingList ||
     fetchingList ||
-    loadingVerified ||
-    fetchingVerified ||
+    // loadingVerified ||
+    // fetchingVerified ||
     loadingDetail ||
     fetchingDetail ||
     loadingMutations
@@ -413,7 +413,7 @@ const useContact = (contactId?: number) => {
       toggleMutation.error ||
       updateEcommerceUserMutation.error ||
       detailError ||
-      verifiedError ||
+      // verifiedError ||
       listError ||
       null,
     [
@@ -422,14 +422,14 @@ const useContact = (contactId?: number) => {
       toggleMutation.error,
       updateEcommerceUserMutation.error,
       detailError,
-      verifiedError,
+      // verifiedError,
       listError,
     ]
   )
 
   return {
     data,
-    verifiedContact,
+    // verifiedContact,
     selectedData,
     loading,
     error,

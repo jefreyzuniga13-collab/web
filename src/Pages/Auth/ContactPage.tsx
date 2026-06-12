@@ -5,8 +5,6 @@ import IconButton from "@mui/material/IconButton";
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import { useMemo } from "react";
 import EditIcon from '@mui/icons-material/Edit';
 import Button from "@/Components/Common/Button";
@@ -57,6 +55,12 @@ export default function ContactPage() {
         : row.metaChannelId == 2 ? <RiMessengerLine size={18} className="messenger-icon"/> 
         : <FaInstagram size={16} className="instagram-icon"/>,
       },
+     {
+      id: 'contactClassificationName',
+      label: 'Tipificación',
+      minWidth: 80,
+      render: row => row.contactClassificationName ?? '-'
+    },
     {
       id: 'clienteCodigo',
       label: 'Fuente',
@@ -152,13 +156,13 @@ export default function ContactPage() {
               <ToggleOffIcon fontSize="medium" />
             )}
           </IconButton>
-          <IconButton size="medium" onClick={() => verify(row.id)}>
+          {/* <IconButton size="medium" onClick={() => verify(row.id)}>
             {row.isVerified ? (
               <CheckBoxIcon fontSize="medium" color="success" />
             ) : (
               <CheckBoxOutlineBlankIcon fontSize="medium" />
             )}
-          </IconButton>
+          </IconButton> */}
         </>
       )
     }

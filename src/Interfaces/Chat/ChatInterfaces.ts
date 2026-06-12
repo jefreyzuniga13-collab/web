@@ -66,6 +66,12 @@ export interface ConversationDto {
    metaChannelId: number;
 
    isBlocked: boolean
+
+   contactClassification?: string
+   contactClassificationId?: number;
+   contactClassificationName?: string;
+   contactClassificationIcono?: string
+   contactClassificationBgColor?: string
 }
 
 export interface UpdateConversationRequest {

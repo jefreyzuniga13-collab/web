@@ -7,6 +7,7 @@ import type {
 
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces";
 import type { PagedResponse } from "@/Interfaces/Common/GlobalInterface";
+import type { ContactClassificationGroupProj, ContactLogProj } from "@/Interfaces/Auth/ContactLogProj";
 
 class ContactService {
   async getAllAsync(
@@ -158,6 +159,66 @@ class ContactService {
 
       return data.data;
     }
+
+    // contactos por clasificación, paginado global
+      async getContactClassification(
+        filter: string,
+        page: number,
+        pageSize: number
+      ): Promise<PagedResponse<ContactLogProj>> {
+        const { data } = await api.get<ApiResponse<PagedResponse<ContactLogProj>>>(
+          "/ContactLogs/getContactClassification",
+          {
+            params: {
+              globalFilter: filter,
+              PageNumber: page,
+              PageSize: pageSize,
+            },
+          }
+        );
+
+        return data.data;
+      }
+
+       //Kanban inicial: columnas con primeros N contactos por clasificación
+      async getContactClassificationKanban(
+        filter: string,
+        itemsPerColumn: number
+      ): Promise<ContactClassificationGroupProj[]> {
+        const { data } = await api.get<ApiResponse<ContactClassificationGroupProj[]>>(
+          "/ContactLogs/getContactClassificationKanban",
+          {
+            params: {
+              globalFilter: filter,
+              itemsPerColumn,
+            },
+          }
+        );
+
+        return data.data;
+      }
+
+       //Kanban cargar más: solo una columna/clasificación
+      async getContactClassificationKanbanItems(
+        filter: string,
+        contactClassificationId: number,
+        page: number,
+        pageSize: number
+      ): Promise<PagedResponse<ContactLogProj>> {
+        const { data } = await api.get<ApiResponse<PagedResponse<ContactLogProj>>>(
+          "/ContactLogs/getContactClassificationKanbanItems",
+          {
+            params: {
+              globalFilter: filter,
+              contactClassificationId,
+              PageNumber: page,
+              PageSize: pageSize,
+            },
+          }
+        );
+
+        return data.data;
+      }
 }
 
 export const contactService = new ContactService();

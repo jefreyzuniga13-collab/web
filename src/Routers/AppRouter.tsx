@@ -33,12 +33,14 @@ const WorkShiftPage = lazy(() => import("@/Pages/Crm/WorkShiftPage"));
 const ContactPage = lazy(() => import("@/Pages/Auth/ContactPage"));
 const ConversationsPage = lazy(() => import("@/Pages/Chat/ConversationsPage"));
 const TemplateCategoryPage = lazy(() => import("@/Pages/Chat/TemplateCategoryPage"),);
-const WaTemplatesPage = lazy(() => import("@/Pages/Wa/WaTemplatePage"));
 const ProductCatalogPage = lazy(() => import("@/Pages/Wa/ProductCatalogPage"));
 const DynamicParamPage = lazy(() => import("@/Pages/Crm/DynamicParamPage"));
 const ClientManagementPanel = lazy(() => import("@/Pages/Crm/ClientManagementPanel"),);
 const LicensePage = lazy(() => import("@/Pages/Crm/LicensePage"),);
 const CompaniesLicensePage = lazy(() => import("@/Pages/Crm/CompaniesLicensePage"));
+const ContactKanbanPage = lazy(() => import("@/Pages/Auth/ContactKanbanPage"));
+const PerformanceDashboardPage = lazy(() => import("@/Pages/Dashboard/PerformanceDashboardPage"));
+
 export function AppRouter() {
   return (
     <Suspense fallback={<CustomLoader />}>
@@ -71,6 +73,7 @@ export function AppRouter() {
           <Route path="chat" element={<SupportPage />} />
           <Route path="UserSessions" element={<UserSessionPage />} />
           <Route path="contacts" element={<ContactPage />} />
+          <Route path="contact-typification" element={<ContactKanbanPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="system-params" element={<SystemParameterPage />} />
@@ -89,6 +92,10 @@ export function AppRouter() {
             path="conversation/status/:state"
             element={<ConversationsPage />}
           />
+           <Route
+            path="performaceDashboard"
+            element={<PerformanceDashboardPage />}
+          />
           <Route
             path="conversation/rating/:rating/:selectedAgentId"
             element={<ConversationsPage />}
@@ -97,7 +104,7 @@ export function AppRouter() {
             path="whatsapp-productcatalogs"
             element={<ProductCatalogPage />}
           />
-          <Route path="templates-management" element={<WaTemplatesPage />} />
+          {/* <Route path="templates-management" element={<WaTemplatesPage />} /> */}
           <Route path="clients" element={<ClientPage />} />
           <Route
             path="clientManagementPanel/:id"

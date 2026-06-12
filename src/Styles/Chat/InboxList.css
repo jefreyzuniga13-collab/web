@@ -29,7 +29,7 @@
 }
 
 .main-license__container {
-  padding: var(--space-md) var(--space-2xl);
+  padding: var(--space-xs) var(--space-2xl);
   background-color: #f52f2f;
   display: flex;
   flex-direction: row;

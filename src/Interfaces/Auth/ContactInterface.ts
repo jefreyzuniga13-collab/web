@@ -61,6 +61,13 @@ export interface ContactLogInterface {
     instegramName?: string;
     instegramUsername?: string;
     instegramProfilePic?: string;
+
+
+  contactClassification?: string
+   contactClassificationId?: number;
+   contactClassificationName?: string;
+   contactClassificationIcono?: string
+   contactClassificationBgColor?: string
 }
 
 export interface ContactFormValues {

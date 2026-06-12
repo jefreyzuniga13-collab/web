@@ -48,9 +48,11 @@
 
 .filter-subtitle{
     margin: var(--space-lg);
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-  text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    text-align: center;
+    text-align: left;
+    margin: 8px;
 }
 .filter__select{
     margin-bottom: 1rem;

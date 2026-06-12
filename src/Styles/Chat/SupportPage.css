@@ -127,11 +127,38 @@
   text-overflow: ellipsis;
   color: var(--color-gray-800);
   margin-right: var(--space-sm);
+  display: flex;
+}
+
+.inbox-list__namecontactClassification{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.potencial{
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.seguimiento{
+  color: var(--greenColor);
+    font-weight: 700;
+}
+
+.venta{
+  color: var(--color-secondary);
+    font-weight: 700;
+}
+
+.sinclasificar{
+  color: var(--color-gray-400);
+    font-weight: 700;
 }
 
 .inbox-list__client_name {
   font-size: var(--font-size-xs);
-  font-weight: var(--fo);
+  font-weight: var(--font-weight-bold);
 }
 
 .inbox-list__time {
@@ -140,11 +167,35 @@
   flex-shrink: 0;
 }
 
-.inbox-list__agent {
+.inbox-list__names{
   font-size: var(--font-size-sm);
   color: var(--color-gray-600);
   margin-bottom: 0.4rem;
   text-align: left;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inbox-list__contactClassification{
+  font-size: var(--font-size-sm);
+}
+
+.inbox-list__contactClassification 
+.potencial{
+  color: var(--bg-primary);
+}
+
+.inbox-list__contactClassification .sinclasificar{
+  color: var(--bg-primary);
+}
+
+.inbox-list__contactClassification .seguimiento{
+ color: var(--greenColor);
+}
+
+.inbox-list__contactClassification .venta{
+  color: var(--color-secondary);
 }
 
 .inbox-list__preview {
@@ -286,7 +337,7 @@
 
 @media (max-width: 1239px) {
   .inbox-list__name,
-  .inbox-list__agent,
+  .inbox-list__names,
   .inbox-list__preview,
   .inbox-list__status,
   .inbox-list__unread-badge {

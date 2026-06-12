@@ -25,7 +25,6 @@ const DashboardPage: React.FC = () => {
     averageAssignmentTime,
     adminAvgAssignmentTime,
     waitingClient,
-    // responseAgentAverage,
     conversationClient,
     page,
     setPage,

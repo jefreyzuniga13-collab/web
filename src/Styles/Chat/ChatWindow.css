@@ -749,7 +749,9 @@
   flex-shrink: 0;
   height: 15%;
   padding-top: 0 !important;
-  padding-bottom: var(--space-md) !important;
+  padding-top: var(--space-md) !important;
+  margin-bottom: 3rem;
+  padding-bottom: 3rem;
 }
 
 .custom-message__container {

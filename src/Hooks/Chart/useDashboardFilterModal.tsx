@@ -44,65 +44,6 @@ const useDashboardFilterModal = () => {
     setForm(f => ({ ...f, [name]: checked }));
   };
 
-  // const handleSelectChange =
-  //   (name: keyof FilterForm, label: keyof FilterForm) =>
-  //   (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //     const val = e.target.value;
-
-  //     const selectedIndex = e.target.selectedIndex;
-  //     const selectedOption = e.target.options[selectedIndex]
-
-  //     // Si viene cadena vacía => null, si no => número
-  //     const parsed =
-  //       val === ""
-  //         ? null
-  //         : Number(val);
-
-  //     setForm(f => ({ ...f, [name]: parsed }));
-  //     setForm(f => ({ ...f, [label]: selectedOption.textContent}));
-  //   };
-
-  // dentro de useDashboardFilterModal
-
-// const handleAutoChange =
-//   (name: keyof FilterForm, label: keyof FilterForm) =>
-//   (opt: { label: string; value: string } | null) => {
-//     const toNumber = (s: string | null) =>
-//       s == null || s === '' ? null : Number(s);
-
-//     const isClientId =
-//       name === 'clientId' || name === 'contactId' ? true : false;
-
-//     setForm((f) => ({
-//       ...f,
-//       [name]: opt
-//         ? isClientId
-//           ? (opt.value as any)
-//           : (toNumber(opt.value) as any)
-//         : null,
-//       [label]: opt ? (opt.label as any) : null,
-//     }));
-//   };
-
-  // const handleSelectChange =
-  // (name: keyof FilterForm, label: keyof FilterForm) =>
-  // (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const val = e.target.value;
-  //   const selectedIndex = e.target.selectedIndex;
-  //   const selectedOption = e.target.options[selectedIndex];
-
-  //   const isClientId = name === 'clientId';
-
-  //   const parsed = val === ""
-  //     ? null
-  //     : isClientId
-  //     ? val
-  //     : Number(val);
-
-  //   setForm(f => ({ ...f, [name]: parsed }));
-  //   setForm(f => ({ ...f, [label]: selectedOption.textContent }));
-  // };
-
    const handleSelectOption =
   (idKey: keyof FilterForm, nameKey: keyof FilterForm, isClientId = false) =>
   (opt: Option | null) => {
@@ -147,11 +88,9 @@ const useDashboardFilterModal = () => {
     form,
     setForm,
     handleCheckbox,
-    // handleSelectChange,
     handleClear,
     handleTimeChange,
     handleSelectOption
-    // handleAutoChange
   };
 };
 
