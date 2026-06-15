@@ -168,7 +168,7 @@ class ConversationServ {
   ): Promise<ConversationStatusCountResponseDto[]> {
     const params = this.normalizeFilters(filters);
     const { data } = await api.get<ApiResponse<ConversationStatusCountResponseDto[]>>(
-      "/Conversations/dateRange",
+      "/PerformaceDashboard/dateRange",
       { params }
     );
     return data.data;
@@ -298,7 +298,7 @@ class ConversationServ {
       PageSize: pageSize
     };
     const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-      "/Conversations/getConversationByClient",
+      "/PerformaceDashboard/getConversationByClient",
       { params }
     );
     return data.data;

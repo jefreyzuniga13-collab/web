@@ -10,10 +10,15 @@ export const theme = createTheme(
       MuiTooltip: {
         styleOverrides: {
           tooltip: {
-            fontSize: '1.3rem', // Cambia este valor al tamaño que desees (ej: '14px', '1.2rem')
+            fontSize: '1.5rem',
           },
         },
       },
+       MuiTypography: {
+        defaultProps: {
+          fontSize: '1.5rem', 
+        },
+    },
     },
   },
   esES,

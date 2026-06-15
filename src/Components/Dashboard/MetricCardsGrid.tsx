@@ -2,23 +2,16 @@ import React from "react";
 import { BsChatDotsFill } from "react-icons/bs";
 import { FaCartShopping, FaFileInvoiceDollar, FaUserClock } from "react-icons/fa6";
 import { IoSyncCircle } from "react-icons/io5";
-import { MdAttachMoney, MdTimer } from "react-icons/md";
+import { MdAttachMoney, MdTimer,MdTimelapse } from "react-icons/md";
 import MetricCard from "./MetricCard";
 import type { DashboardIndicatorsProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatCurrencyNIO, formatDateTimeNI } from "@/Utils/ECommerce/formatters";
 
 interface MetricCardsGridProps {
   indicators: DashboardIndicatorsProj | null;
   loading?: boolean;
 }
-
-const formatMoney = (value?: number) => {
-  return new Intl.NumberFormat("es-NI", {
-    style: "currency",
-    currency: "NIO",
-    minimumFractionDigits: 2,
-  }).format(value ?? 0);
-};
 
 const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({ indicators, loading }) => {
   if (loading) {
@@ -41,12 +34,12 @@ const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({ indicators, loading }
         variant="blue"
       />
 
-      <MetricCard
-        title="Nivel de servicio"
-        value={`${indicators?.nivelServicio ?? 0}%`}
-        subtitle="Proformas / Conversaciones"
-        icon={<FaFileInvoiceDollar />}
-        variant="green"
+     <MetricCard
+        title="Últ. Conversación"
+        value={formatDateTimeNI(indicators?.lastConversationCreatedAt)}
+        subtitle="Última conversación"
+        icon={<MdTimelapse />}
+        variant="pink"
       />
 
       <MetricCard
@@ -83,10 +76,18 @@ const MetricCardsGrid: React.FC<MetricCardsGridProps> = ({ indicators, loading }
 
       <MetricCard
         title="Venta total"
-        value={formatMoney(indicators?.ventaTotal)}
+        value={formatCurrencyNIO(indicators?.ventaTotal)}
         subtitle="En dinero"
         icon={<MdAttachMoney />}
         variant="money"
+      />
+
+      <MetricCard
+        title="Nivel de servicio"
+        value={`${indicators?.nivelServicio ?? 0}%`}
+        subtitle="Proformas / Conversaciones"
+        icon={<FaFileInvoiceDollar />}
+        variant="green"
       />
     </section>
   );

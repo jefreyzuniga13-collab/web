@@ -1,6 +1,7 @@
 import api from "@/Utils/ApiConfig";
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces";
 import type {
+  DashboardAgentAverageResponseByAgentProj,
   DashboardAgentAverageResponseTopClientProj,
   DashboardAssignmentResponseTimeByAdminProj,
   DashboardAssignmentResponseTimeGlobalProj,
@@ -19,15 +20,7 @@ class PerformanceDashboardService {
     return {
       from: filters?.from ?? null,
       to: filters?.to ?? null,
-      startTime: filters?.startTime ?? null,
-      endTime: filters?.endTime ?? null,
-      agentId: filters?.agentId ?? null,
-      adminUserId: filters?.adminUserId ?? null,
-      contactId: filters?.contactId ?? null,
-      clientId: filters?.clientId ?? null,
-      today: filters?.today ?? false,
-      yesterday: filters?.yesterday ?? false,
-      tomorrow: filters?.tomorrow ?? false,
+      agentId: filters?.agentId ?? null
     };
   }
 
@@ -186,6 +179,18 @@ class PerformanceDashboardService {
 
     return data.data;
   }
+  async getDashboardAgentAverageResponseByAgent(
+  filters: FilterDashboard
+): Promise<DashboardAgentAverageResponseByAgentProj[]> {
+  const { data } = await api.get<
+    ApiResponse<DashboardAgentAverageResponseByAgentProj[]>
+  >(`${this.baseUrl}/getDashboardAgentAverageResponseByAgent`, {
+    params: this.buildFilterParams(filters),
+  });
+
+  console.log("getDashboardAgentAverageResponseByAgent", data)
+  return data.data ?? [];
+}
 }
 
 export const performanceDashboardService = new PerformanceDashboardService();

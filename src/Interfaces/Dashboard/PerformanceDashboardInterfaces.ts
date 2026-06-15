@@ -1,16 +1,11 @@
 export interface FilterDashboard {
-    from: string | null;
-    to: string | null;
-    startTime: string | null;
-    endTime: string | null;
-    agentId: number | null;
-    adminUserId: number | null;
-    clientId: string | null;
-    contactId: number | null;
-    today: boolean | null;
-    yesterday: boolean | null;
-    tomorrow: boolean | null;
+  from: string | null;
+  to: string | null;
+  agentId: number | null;
+  agentName?: string | null;
 }
+
+
 export interface DashboardIndicatorsProj {
   conversacionesCantidad: number;
   proformasEnviadas: number;
@@ -20,6 +15,7 @@ export interface DashboardIndicatorsProj {
   clienteSeguimientoCantidad: number;
   clienteVentaCantidad: number;
   ventaTotal: number;
+  lastConversationCreatedAt: string
 }
 
 export interface DashboardIndicatorsByAgentProj extends DashboardIndicatorsProj {
@@ -68,4 +64,13 @@ export interface DashboardAgentAverageResponseTopClientProj {
   clientName?: string | null;
   averageSeconds: number;
   conversationCount: number;
+}
+
+export interface DashboardAgentAverageResponseByAgentProj {
+  agentId: number;
+  agentName: string;
+  averageSeconds: number;
+  averageMinutes: number;
+  conversationCount: number;
+  responseCount: number;
 }

@@ -1,4 +1,5 @@
 import { format, differenceInCalendarDays } from 'date-fns';
+import { format as formatz, toZonedTime } from "date-fns-tz";
 
 export function round2(n: number): number {
   return Math.round((Number(n ?? 0) + Number.EPSILON) * 100) / 100;
@@ -83,7 +84,6 @@ export   const formatCurrencyNIO = (value?: number | null) => {
   return result
 }
 
-
 export const formatoNicaragua = (fecha: Date) => {
     const dia = fecha.getDate();
     const mes = fecha.getMonth() + 1;
@@ -109,6 +109,25 @@ export const formatTimeNI = (iso?: string) => {
     hour12: false,
   }).format(d);
 };
+
+export const normalizeDate = (value?: string | Date | null) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return format(value, "yyyy-MM-dd");
+  }
+
+  return String(value).slice(0, 10);
+};
+
+
+export const getManaguaToday = () => {
+  const zone = "America/Managua";
+  const today = toZonedTime(new Date(), zone);
+
+  return formatz(today, "yyyy-MM-dd", { timeZone: zone });
+};
+
 
 export const formatDateTimeNI = (iso?: string) => {
   if (!iso) return "";
@@ -232,3 +251,27 @@ export const getErrorMessage = (error: unknown) => {
     "No se pudo agregar el producto."
   )
 }
+
+
+export const formatDateInput = (value?: string | Date | null) => {
+  if (!value) return "";
+
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  return String(value).slice(0, 10);
+};
+
+export const formatNumber = (value?: number | null) => {
+  return new Intl.NumberFormat("es-NI", {
+    maximumFractionDigits: 0,
+  }).format(value ?? 0);
+};
+
+export const formatMinutes = (value?: number | null) => {
+  return `${new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value ?? 0)} min`;
+};

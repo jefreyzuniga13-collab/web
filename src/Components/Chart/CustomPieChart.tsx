@@ -44,9 +44,9 @@ export default function CustomPieChart({
   fetchRatingByAgent,
   typePieChart
 }: Props) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const {getAgents, agents } = useUsers();
+  const { getAgents, agents } = useUsers();
 
   useEffect(() => {
     if (filterableByAgent) {
@@ -126,7 +126,7 @@ export default function CustomPieChart({
           fill="white"
           textAnchor={xPercent > cx ? "start" : "end"}
           dominantBaseline="central"
-          fontSize={12}
+          fontSize={18} 
         >
           {`${(percent * 100).toFixed(0)}%`}
         </text>
@@ -136,7 +136,7 @@ export default function CustomPieChart({
           fill={COLORS[index % COLORS.length]}
           textAnchor={xName > cx ? "start" : "end"}
           dominantBaseline="central"
-          fontSize={12}
+          fontSize={18}
         >
           {stateTranslations[payload.name as StateTranslation] || payload.name}
         </text>
@@ -147,13 +147,11 @@ export default function CustomPieChart({
   const handleClick = (entry: any) => {
     if (!enableNavigation) return;
 
-    if(typePieChart === 'status'){
+    if (typePieChart === 'status') {
       const status = entry.name;
       navigate(`/conversation/status/${encodeURIComponent(status)}`);
-    }else if(typePieChart === 'rating'){
-
-      const value = entry.name === 'Excelente' ? '3': entry.name === 'Regular' ? 2 : entry.name === 'Negativo' ? 1 : 0
-      
+    } else if (typePieChart === 'rating') {
+      const value = entry.name === 'Excelente' ? '3' : entry.name === 'Regular' ? 2 : entry.name === 'Negativo' ? 1 : 0;
       navigate(`/conversation/rating/${value}/${selectedAgentId}`);
     }
   };
@@ -161,20 +159,18 @@ export default function CustomPieChart({
   return (
     <div className="pieChart__container">
       {filterableByAgent && (
-        <FormControl fullWidth size="small" style={{ marginBottom: "1rem" }}>
-
+        <FormControl fullWidth size="medium" style={{ marginBottom: "2em" }}>
           <InputLabel>Agente</InputLabel>
           <Select
-          value={selectedAgentId !== null ? selectedAgentId.toString() : ""}
-          label="Agente"
+            value={selectedAgentId !== null ? selectedAgentId.toString() : ""}
+            label="Agente"
             onChange={(e) => {
               const value = e.target.value as string;
               const selected = value === "" ? null : parseInt(value, 10);
               setSelectedAgentId?.(selected ?? 0);
               fetchRatingByAgent?.(selected ?? 0, 1, 100);
             }}
-
-            sx={{ maxWidth: "40%", maxHeight: "40px", minHeight: "40px" }}
+            sx={{ maxWidth: "60%", maxHeight: "60px", minHeight: "60px" }}
             MenuProps={{
               PaperProps: {
                 style: {
@@ -183,11 +179,11 @@ export default function CustomPieChart({
               },
             }}
           >
-            <MenuItem value="" sx={{ fontSize: "1.2rem" }}>
+            <MenuItem value="" sx={{ fontSize: "2rem" }}>
               Todos
             </MenuItem>
             {agents.slice(0, 5).map((agent) => (
-              <MenuItem key={agent.userId} value={agent.userId.toString()} sx={{ fontSize: "1.2rem" }}>
+              <MenuItem key={agent.userId} value={agent.userId.toString()} sx={{ fontSize: "2rem" }}>
                 {agent.fullName}
               </MenuItem>
             ))}
@@ -214,7 +210,12 @@ export default function CustomPieChart({
                 <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(val: number) => [`${val}`, "Cantidad"]} />
+            <Tooltip 
+              formatter={(val: number) => [`${val}`, "Cantidad"]} 
+              contentStyle={{ fontSize: "18px" }}
+              itemStyle={{ fontSize: "18px" }} 
+              labelStyle={{ fontSize: "18px" }} 
+            />
           </PieChart>
         </ResponsiveContainer>
       ) : (

@@ -1,11 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { PieChart } from "@mui/x-charts/PieChart";
 import DashboardPanel from "./DashboardPanel";
 import type { DashboardIndicatorsProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
@@ -15,25 +9,57 @@ interface ClassificationDonutChartProps {
   loading?: boolean;
 }
 
-const COLORS = ["#f97316", "#0ea5e9", "#14b8a6"];
+interface ClassificationItem {
+  id: number;
+  label: string;
+  value: number;
+  color: string;
+}
+
+const COLORS = {
+  potential: "#f59e0b",
+  tracking: "#0070B4",
+  sale: "#10b981",
+};
+
+const formatNumber = (value?: number | null) => {
+  return new Intl.NumberFormat("es-NI", {
+    maximumFractionDigits: 0,
+  }).format(value ?? 0);
+};
+
+const formatPercent = (value: number, total: number) => {
+  if (!total) return "0.0%";
+
+  return `${new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format((value * 100) / total)}%`;
+};
 
 const ClassificationDonutChart: React.FC<ClassificationDonutChartProps> = ({
   indicators,
   loading = false,
 }) => {
-  const data = useMemo(() => {
+  const data = useMemo<ClassificationItem[]>(() => {
     return [
       {
-        name: "Potencial",
+        id: 1,
+        label: "Potencial",
         value: indicators?.clientePotencialCantidad ?? 0,
+        color: COLORS.potential,
       },
       {
-        name: "Seguimiento",
+        id: 2,
+        label: "Seguimiento",
         value: indicators?.clienteSeguimientoCantidad ?? 0,
+        color: COLORS.tracking,
       },
       {
-        name: "En venta",
+        id: 3,
+        label: "En venta",
         value: indicators?.clienteVentaCantidad ?? 0,
+        color: COLORS.sale,
       },
     ];
   }, [indicators]);
@@ -52,63 +78,54 @@ const ClassificationDonutChart: React.FC<ClassificationDonutChartProps> = ({
       ) : total === 0 ? (
         <div className="dashboard-chart-empty">No hay datos para mostrar.</div>
       ) : (
-        <div className="donut-layout">
-          <div className="donut-chart">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Tooltip
-                  formatter={(value: number, name: string) => [
-                    value,
-                    name,
-                  ]}
-                />
+        <div className="dashboard-mui-pie-layout">
+          <div className="dashboard-mui-pie">
+            <PieChart
+              width={300}
+              height={300}
+              hideLegend
+              series={[
+                {
+                  data,
+                  innerRadius: 55,
+                  outerRadius: 105,
+                  paddingAngle: 1,
+                  cornerRadius: 0,
+                  startAngle: 0,
+                  endAngle: 360,
+                  cx: 150,
+                  cy: 150,
+                  valueFormatter: (item) =>
+                    `${formatNumber(item.value)} (${formatPercent(
+                      item.value,
+                      total
+                    )})`,
+                },
+              ]}
+            />
 
-                <Pie
-                  data={data}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={72}
-                  outerRadius={108}
-                  paddingAngle={3}
-                  stroke="#ffffff"
-                  strokeWidth={4}
-                >
-                  {data.map((item, index) => (
-                    <Cell
-                      key={item.name}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-
-            <div className="donut-center">
-              <strong>{total}</strong>
-              <span>Total clientes</span>
+            <div className="dashboard-mui-pie__center">
+              <span>Total: </span>
+              <strong>{formatNumber(total)}</strong>
             </div>
           </div>
 
-          <div className="donut-legend">
-            {data.map((item, index) => {
-              const percent =
-                total > 0 ? ((item.value * 100) / total).toFixed(1) : "0.0";
+          <div className="dashboard-mui-pie-legend">
+            {data.map((item) => (
+              <div key={item.id} className="dashboard-mui-pie-legend__item">
+                <span
+                  className="dashboard-mui-pie-legend__color"
+                  style={{ backgroundColor: item.color }}
+                />
 
-              return (
-                <div key={item.name} className="donut-legend__item">
-                  <span
-                    className="donut-legend__color"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
+                <span>{item.label}</span>
 
-                  <span>{item.name}</span>
-
-                  <strong>
-                    {item.value} ({percent}%)
-                  </strong>
-                </div>
-              );
-            })}
+                <strong>
+                  {formatNumber(item.value)}
+                  <small>{formatPercent(item.value, total)}</small>
+                </strong>
+              </div>
+            ))}
           </div>
         </div>
       )}

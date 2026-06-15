@@ -72,6 +72,7 @@ export interface ConversationDto {
    contactClassificationName?: string;
    contactClassificationIcono?: string
    contactClassificationBgColor?: string
+   
 }
 
 export interface UpdateConversationRequest {

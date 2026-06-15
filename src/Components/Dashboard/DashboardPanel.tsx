@@ -6,6 +6,7 @@ interface DashboardPanelProps {
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  loading?: boolean;
 }
 
 const DashboardPanel: React.FC<DashboardPanelProps> = ({
@@ -13,6 +14,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
   subtitle,
   children,
   className = "",
+  loading = false,
 }) => {
   return (
     <section className={`dashboard-panel ${className}`}>
@@ -23,7 +25,13 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
         </div>
       </header>
 
-      <div className="dashboard-panel__body">{children}</div>
+      <div className="dashboard-panel__body">
+        {loading ? (
+          <div className="dashboard-chart-empty">Cargando información...</div>
+        ) : (
+          children
+        )}
+      </div>
     </section>
   );
 };

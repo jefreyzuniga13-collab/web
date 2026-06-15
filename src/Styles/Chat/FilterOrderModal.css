@@ -118,7 +118,6 @@
 .filter-modal__status--active {
   background-color: var(--color-primary);
   color: var(--text-white);
-  box-shadow: 0 0.6rem 1.4rem rgba(37, 99, 235, 0.22);
 }
 
 .filter-modal__status-input {

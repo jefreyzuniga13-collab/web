@@ -1,15 +1,5 @@
-import React from "react";
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import React, { useMemo } from "react";
+import { BarChart } from "@mui/x-charts/BarChart";
 import DashboardPanel from "@/Components/Dashboard/DashboardPanel";
 import type { DashboardIndicatorsByAgentProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
@@ -19,60 +9,141 @@ interface AgentIndicatorsChartProps {
   loading?: boolean;
 }
 
-const AgentIndicatorsChart: React.FC<AgentIndicatorsChartProps> = ({ data, loading }) => {
+const CHART_COLORS = {
+  conversations: "#0070B4",
+  proformas: "#4354f4",
+  service: "#10b981",
+  response: "#f59e0b",
+};
+
+const formatNumber = (value?: number | null) => {
+  return new Intl.NumberFormat("es-NI", {
+    maximumFractionDigits: 0,
+  }).format(value ?? 0);
+};
+
+const formatDecimal = (value?: number | null) => {
+  return new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value ?? 0);
+};
+
+const formatAgentName = (value?: string | null) => {
+  if (!value) return "Sin agente";
+
+  const clean = value.trim();
+
+  if (clean.length <= 18) return clean;
+
+  return `${clean.slice(0, 17)}…`;
+};
+
+const AgentIndicatorsChart: React.FC<AgentIndicatorsChartProps> = ({
+  data,
+  loading = false,
+}) => {
+  const chartData = useMemo(() => {
+    return [...(data ?? [])]
+      .filter((item) => item.agentId)
+      .map((item) => ({
+        agentName: item.agentName || "Sin agente",
+        agentLabel: formatAgentName(item.agentName),
+        conversacionesCantidad: item.conversacionesCantidad ?? 0,
+        proformasEnviadas: item.proformasEnviadas ?? 0,
+        nivelServicio: item.nivelServicio ?? 0,
+        tiempoPrimeraRespuestaMinutos:
+          item.tiempoPrimeraRespuestaMinutos ?? 0,
+      }));
+  }, [data]);
+
+  const labels = useMemo(() => {
+    return chartData.map((item) => item.agentLabel);
+  }, [chartData]);
+
+  const conversaciones = useMemo(() => {
+    return chartData.map((item) => item.conversacionesCantidad);
+  }, [chartData]);
+
+  const proformas = useMemo(() => {
+    return chartData.map((item) => item.proformasEnviadas);
+  }, [chartData]);
+
+  const nivelServicio = useMemo(() => {
+    return chartData.map((item) => item.nivelServicio);
+  }, [chartData]);
+
+  const respuestaMinutos = useMemo(() => {
+    return chartData.map((item) => item.tiempoPrimeraRespuestaMinutos);
+  }, [chartData]);
+
   return (
     <DashboardPanel
       title="Indicadores por agente"
-      subtitle="Comparativo de conversaciones, servicio, respuesta y ventas"
+      subtitle="Comparativo de conversaciones, servicio y primera respuesta"
       className="dashboard-panel--large"
     >
       {loading ? (
         <div className="dashboard-chart-empty">Cargando indicadores...</div>
-      ) : data.length === 0 ? (
+      ) : chartData.length === 0 ? (
         <div className="dashboard-chart-empty">No hay datos para mostrar.</div>
       ) : (
-        <div className="dashboard-chart">
-          <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="agentName" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Bar
-                yAxisId="left"
-                dataKey="conversacionesCantidad"
-                name="Conversaciones"
-                radius={[8, 8, 0, 0]}
-                fill="#3b82f6"
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="nivelServicio"
-                name="Nivel servicio (%)"
-                stroke="#22c55e"
-                strokeWidth={3}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="tiempoPrimeraRespuestaMinutos"
-                name="Respuesta (min)"
-                stroke="#9333ea"
-                strokeWidth={3}
-              />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="ventaTotal"
-                name="Ventas"
-                stroke="#f59e0b"
-                strokeWidth={3}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+        <div className="dashboard-mui-chart">
+          <BarChart
+            height={330}
+            xAxis={[
+              {
+                scaleType: "band",
+                data: labels,
+                tickLabelStyle: {
+                  fontSize: 11,
+                },
+              },
+            ]}
+            yAxis={[
+              {
+                width: 60,
+                valueFormatter: (value: number | null) =>
+                  formatNumber(value ?? 0),
+              },
+            ]}
+            series={[
+              {
+                data: conversaciones,
+                label: "Conversaciones",
+                color: CHART_COLORS.conversations,
+                valueFormatter: (value: number | null) =>
+                  formatNumber(value ?? 0),
+              },
+              {
+                data: proformas,
+                label: "Proformas",
+                color: CHART_COLORS.proformas,
+                valueFormatter: (value: number | null) =>
+                  formatNumber(value ?? 0),
+              },
+              {
+                data: nivelServicio,
+                label: "Nivel servicio %",
+                color: CHART_COLORS.service,
+                valueFormatter: (value: number | null) =>
+                  `${formatDecimal(value ?? 0)}%`,
+              },
+              {
+                data: respuestaMinutos,
+                label: "Respuesta min.",
+                color: CHART_COLORS.response,
+                valueFormatter: (value: number | null) =>
+                  `${formatDecimal(value ?? 0)} min`,
+              },
+            ]}
+            margin={{
+              top: 35,
+              right: 20,
+              bottom: 35,
+              left: 10,
+            }}
+          />
         </div>
       )}
     </DashboardPanel>

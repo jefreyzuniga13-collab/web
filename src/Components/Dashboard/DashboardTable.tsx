@@ -4,8 +4,10 @@ import "@/Styles/Dashboard/PerformanceDashboard.css";
 export interface DashboardTableColumn<T> {
   key: keyof T | string;
   title: string;
-  render?: (row: T) => React.ReactNode;
+  render?: (row: T, index: number) => React.ReactNode;
   align?: "left" | "center" | "right";
+  width?: string;
+  className?: string;
 }
 
 interface DashboardTableProps<T> {
@@ -13,16 +15,34 @@ interface DashboardTableProps<T> {
   rows: T[];
   loading?: boolean;
   emptyText?: string;
+  loadingText?: string;
+  rowKey?: (row: T, index: number) => React.Key;
+  className?: string;
+  compact?: boolean;
 }
 
-function DashboardTable<T extends Record<string, unknown>>({
+const getValue = <T,>(row: T, key: keyof T | string) => {
+  if (typeof row !== "object" || row === null) return "-";
+
+  const value = (row as Record<string, unknown>)[String(key)];
+
+  if (value === null || value === undefined || value === "") return "-";
+
+  return String(value);
+};
+
+function DashboardTable<T>({
   columns,
   rows,
-  loading,
+  loading = false,
   emptyText = "No hay datos para mostrar.",
+  loadingText = "Cargando información...",
+  rowKey,
+  className = "",
+  compact = false,
 }: DashboardTableProps<T>) {
   if (loading) {
-    return <div className="dashboard-table-empty">Cargando información...</div>;
+    return <div className="dashboard-table-empty">{loadingText}</div>;
   }
 
   if (!rows.length) {
@@ -30,12 +50,16 @@ function DashboardTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className="dashboard-table-wrap">
-      <table className="dashboard-table">
+    <div className={`dashboard-table-wrap ${className}`}>
+      <table className={`dashboard-table ${compact ? "dashboard-table--compact" : ""}`}>
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={String(column.key)} className={`text-${column.align ?? "left"}`}>
+              <th
+                key={String(column.key)}
+                className={`text-${column.align ?? "left"} ${column.className ?? ""}`}
+                style={{ width: column.width }}
+              >
                 {column.title}
               </th>
             ))}
@@ -44,12 +68,15 @@ function DashboardTable<T extends Record<string, unknown>>({
 
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+            <tr key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
               {columns.map((column) => (
-                <td key={String(column.key)} className={`text-${column.align ?? "left"}`}>
+                <td
+                  key={String(column.key)}
+                  className={`text-${column.align ?? "left"} ${column.className ?? ""}`}
+                >
                   {column.render
-                    ? column.render(row)
-                    : String(row[column.key as keyof T] ?? "-")}
+                    ? column.render(row, rowIndex)
+                    : getValue(row, column.key)}
                 </td>
               ))}
             </tr>

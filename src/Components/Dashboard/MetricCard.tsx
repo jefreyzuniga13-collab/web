@@ -6,7 +6,7 @@ interface MetricCardProps {
   value: string | number;
   subtitle?: string;
   icon: React.ReactNode;
-  variant?: "blue" | "green" | "purple" | "orange" | "cyan" | "teal" | "money";
+  variant?: "blue" | "green" | "purple" | "orange" | "cyan" | "teal" | "money" | 'pink';
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({

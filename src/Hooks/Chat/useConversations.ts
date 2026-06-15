@@ -196,6 +196,7 @@ export function useConversations(
           c.agentLastMessageAt ??
           c.updatedAt ??
           c.createdAt,
+          contactClassificationName: c.contactClassificationName,
         unreadCount: c.unreadCount ?? 0,
       };
 
@@ -205,6 +206,7 @@ export function useConversations(
         status: normalized.status,
         lastActivity: normalized.lastActivity,
         unreadCount: normalized.unreadCount,
+      contactClassificationName: normalized.contactClassificationName,
       });
 
       return normalized;
@@ -237,6 +239,7 @@ export function useConversations(
           current?.updatedAt ??
           current?.createdAt ??
           updated.createdAt,
+         contactClassificationName: updated.contactClassificationName,
         unreadCount: updated.unreadCount ?? current?.unreadCount ?? 0,
       } as ConversationDto;
 
