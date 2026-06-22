@@ -14,6 +14,7 @@ import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo
 import {selectCompanySistema, selectCodReferenciaPCG} from "@/Context/Slices/Auth/authSlice"
 import { FechaManagua } from "@/Utils/FechaManagua"
 import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
+import { GENERAL_STATUS } from "@/Constants/status"
 
 type CartServiceWithCleanup = typeof CartService & {
   LimpiarFacturaTempo?: (
@@ -378,7 +379,7 @@ export const useCartPCGFlow = (
       if (!createdLog?.id) return
 
       try {
-        await UpdatedStatus(createdLog.id, 3)
+        await UpdatedStatus(createdLog.id, GENERAL_STATUS.Cancelada)
       } catch {
         toast.warning("No se pudo cancelar el LogCart creado.")
       }

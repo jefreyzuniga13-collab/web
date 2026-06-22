@@ -86,7 +86,13 @@ function validarRespuestaComplete(
 export const powertranzService = {
   async iniciarPago(payload: InitPaymentRequest) {
     try {
-      const res = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload);
+      const res = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload,
+        {
+          params:{
+            codReferencia: '01'
+          }
+        }
+      );
       return validarRespuestaInit(res.data);
     } catch (e) {
       throw new Error(JSON.stringify(obtenerMensajeError(e, "Error init")));
@@ -97,7 +103,12 @@ export const powertranzService = {
     try {
       const res = await apiPCG.post<ApiResponse<PowertranzFpiResponseDto>>(
         "/powertranz/pay-with-token",
-        payload
+        payload,
+        {
+          params:{
+            codReferencia: '01'
+          }
+        }
       );
       return validarRespuestaToken(res.data);
     } catch (e) {
@@ -121,7 +132,12 @@ export const powertranzService = {
     try {
       const res = await apiPCG.post<ApiResponse<PowertranzProcessPaymentResultDto>>(
         "/powertranz/fpi/complete",
-        payload
+        payload,
+        {
+          params:{
+            codReferencia: '01'
+          }
+        }
       );
       return validarRespuestaComplete(res.data);
     } catch (e) {

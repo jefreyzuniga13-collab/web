@@ -24,12 +24,7 @@ import "@/styles/Chat/ChatWindow.css";
 import "@/Styles/Chat/custom-messages-flyout.css";
 import { BsEmojiLaughing } from "react-icons/bs";
 import { IoCloseSharp } from "react-icons/io5";
-
-const formatTime = (iso?: string) => {
-  if (!iso) return "";
-  const match = iso.match(/T(\d{2}:\d{2})/);
-  return match ? match[1] : "";
-};
+import { formatTime } from "@/Utils/ECommerce/formatters";
 
 interface Props {
   conversationId?: number;
@@ -683,7 +678,9 @@ export const ChatWindow: React.FC<Props> = ({
                                   src={m.attachments[0].mediaUrl}
                                   alt={m.attachments[0].fileName || "Imagen"}
                                   className="chat-window__image"
-                                  loading="lazy"
+                                    loading="lazy"
+                                    decoding="async"
+                                    draggable={false}
                                   onClick={() =>
                                     openImagePreview(
                                       m.attachments![0].mediaUrl!

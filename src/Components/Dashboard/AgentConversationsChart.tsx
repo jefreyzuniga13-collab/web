@@ -3,17 +3,12 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import DashboardPanel from "@/Components/Dashboard/DashboardPanel";
 import type { DashboardIndicatorsByAgentProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatNumber } from "@/Utils/ECommerce/formatters";
 
 interface AgentConversationsChartProps {
   rows: DashboardIndicatorsByAgentProj[];
   loading?: boolean;
 }
-
-const formatNumber = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
-};
 
 const AgentConversationsChart: React.FC<AgentConversationsChartProps> = ({
   rows,

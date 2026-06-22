@@ -104,6 +104,15 @@
   color: #ffffff;
 }
 
+.productPCGList__iconBtn--send{
+  background: #227ec5;
+  color: #ffffff;
+}
+
+.productPCGList__iconBtn--send:hover{
+  background: #2981c4;
+  color: #ffffff;
+}
 .productPCGList__iconBtn--add:hover:not(:disabled) {
   background: #16a34a;
 }

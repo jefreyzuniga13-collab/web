@@ -1,12 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
-import { DownloadMedia, sendMedia, sendText } from "@/Services/chat/MessageService"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react"
 import { Check, CheckCheck } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
+import { toast } from "react-toastify"
+import type { MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
+import {
+  DownloadMedia,
+  sendMedia,
+  sendText,
+} from "@/Services/chat/MessageService"
 import useMessages from "@/Hooks/Chat/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder"
-import { toast } from "react-toastify"
-import React from "react"
 
 type ReplyTarget = {
   messageId: number
@@ -23,56 +33,74 @@ type UseChatWindowArgs = {
   highlightTerm?: string
 }
 
-export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date | null, validTo?: Date | null) => {
+export const useChatWindow = (
+  args: UseChatWindowArgs = {},
+  validFrom?: Date | null,
+  validTo?: Date | null
+) => {
   const LONG_PRESS_MS = 400
 
-  const [conversationId, setConversationId] = useState<number>(Number(args.conversationId ?? 0))
+  const [conversationId, setConversationId] = useState<number>(
+    Number(args.conversationId ?? 0)
+  )
   const [userId, setUserId] = useState<number>(Number(args.userId ?? 0))
-  
+
   const messages = useMessages(validFrom, validTo, conversationId)
 
   const [text, setText] = useState("")
   const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)
   const selectedOptionRef = useRef<string | null>(null)
+
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-  const hasMedia = (m: MessageDto) => (m.attachments?.length ?? 0) > 0
-  const hasText = (m: MessageDto) => typeof m.content === "string" && m.content.trim().length > 0
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const { isRecording, audioBlob, 
-    recordingTime, startRecording, 
-    stopRecording, clearRecording } = useAudioRecorder()
-
-  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
-  const [quickMenuPos, setQuickMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
-  const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null)
-
   const longPressTimerRef = useRef<number | null>(null)
   const popoverRef = useRef<HTMLDivElement | null>(null)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
   const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
+  const [quickMenuPos, setQuickMenuPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  })
+  const [quickMenuMsg, setQuickMenuMsg] = useState<MessageDto | null>(null)
+
   const [highlightedId, setHighlightedId] = useState<number | null>(null)
-  const [searchTerm, setSearchTerm] = useState<string>((args.highlightTerm ?? "").trim());
-  useEffect(() => { setSearchTerm((args.highlightTerm ?? "").trim()) }, [args.highlightTerm]);
+  const [searchTerm, setSearchTerm] = useState<string>(
+    (args.highlightTerm ?? "").trim()
+  )
+  const [matchIndex, setMatchIndex] = useState(0)
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
 
-  const registerMessageRef = (id: number) => (el: HTMLDivElement | null) => {
-    if (el) messageRefs.current.set(id, el)
-    else messageRefs.current.delete(id)
-  }
+  const {
+    isRecording,
+    audioBlob,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    clearRecording,
+  } = useAudioRecorder()
 
-  const scrollToMessage = (id?: number) => {
-    if (!id) return
-    const el = messageRefs.current.get(id)
-    if (!el) return
-    el.scrollIntoView({ behavior: "smooth", block: "center" })
-    setHighlightedId(id)
-    window.setTimeout(() => setHighlightedId(null), 1600)
-  }
+  const hasMedia = useCallback((message: MessageDto) => {
+    return (message.attachments?.length ?? 0) > 0
+  }, [])
+
+  const hasText = useCallback((message: MessageDto) => {
+    return (
+      typeof message.content === "string" &&
+      message.content.trim().length > 0
+    )
+  }, [])
+
+  const setSelectedOption = useCallback((option: string | null) => {
+    selectedOptionRef.current = option
+    _setSelectedOption(option)
+  }, [])
 
   useEffect(() => {
     setConversationId(Number(args.conversationId ?? 0))
@@ -80,99 +108,187 @@ export const useChatWindow = (args: UseChatWindowArgs = {},   validFrom?: Date |
   }, [args.conversationId, args.userId])
 
   useEffect(() => {
-    const onClickOutside = (e: MouseEvent) => {
+    setSearchTerm((args.highlightTerm ?? "").trim())
+  }, [args.highlightTerm])
+
+  useEffect(() => {
+    // Limpia estados propios al cambiar de conversación.
+    setText("")
+    setFile(null)
+    setReplyTo(null)
+    setSelectedOption(null)
+    setQuickMenuOpen(false)
+    setQuickMenuMsg(null)
+    setHighlightedId(null)
+    setMatchIndex(0)
+    setismaximize(false)
+    setPreviewImageUrl(null)
+    messageRefs.current.clear()
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [args.conversationId, setSelectedOption])
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
       if (!popoverRef.current) return
-      if (!popoverRef.current.contains(e.target as Node)) {
+
+      if (!popoverRef.current.contains(event.target as Node)) {
         setQuickMenuOpen(false)
         setQuickMenuMsg(null)
       }
     }
-    if (quickMenuOpen) document.addEventListener("mousedown", onClickOutside)
-    return () => document.removeEventListener("mousedown", onClickOutside)
+
+    if (quickMenuOpen) {
+      document.addEventListener("mousedown", onClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside)
+    }
   }, [quickMenuOpen])
 
   const quickOptions: string[] = useMemo(() => {
-    const p = args.selectedParam as any
-    if (Array.isArray(p)) return p.filter((v: any) => typeof v === "string")
-    if (typeof p === "string") {
+    const param = args.selectedParam as any
+
+    if (Array.isArray(param)) {
+      return param.filter((value: any) => typeof value === "string")
+    }
+
+    if (typeof param === "string") {
       try {
-        const parsed = JSON.parse(p)
-        if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === "string")
+        const parsed = JSON.parse(param)
+
+        if (Array.isArray(parsed)) {
+          return parsed.filter((value: any) => typeof value === "string")
+        }
       } catch {
-        return String(p)
+        return param
           .split("|")
-          .map((s) => s.trim())
+          .map((value) => value.trim())
           .filter(Boolean)
       }
     }
-    if (typeof p?.value === "string") {
+
+    if (typeof param?.value === "string") {
       try {
-        const parsed = JSON.parse(p.value)
-        if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === "string")
+        const parsed = JSON.parse(param.value)
+
+        if (Array.isArray(parsed)) {
+          return parsed.filter((value: any) => typeof value === "string")
+        }
       } catch {
-        return String(p.value)
+        return String(param.value)
           .split("|")
-          .map((s: string) => s.trim())
+          .map((value: string) => value.trim())
           .filter(Boolean)
       }
     }
-    if (Array.isArray(p?.value)) return p.value.filter((v: any) => typeof v === "string")
+
+    if (Array.isArray(param?.value)) {
+      return param.value.filter((value: any) => typeof value === "string")
+    }
+
     return []
   }, [args.selectedParam])
 
+  const visibleMessages = useMemo(() => {
+    return messages.filter(
+      (message) =>
+        hasMedia(message) ||
+        hasText(message) ||
+        message.messageType === "Interactive" ||
+        message.messageType === "Contact"
+    )
+  }, [messages, hasMedia, hasText])
 
-    const handleSendAudio = async () => {
-      if (!conversationId || sending || !audioBlob) return;
+  useEffect(() => {
+    const element = bottomRef.current
 
-      //Validar tamaño máximo permitido por Meta
-      if (audioBlob.size > 16 * 1024 * 1024) {
-        toast.error("El audio supera el tamaño máximo permitido (16 MB).");
-        return;
+    if (element?.isConnected) {
+      element.scrollIntoView({ block: "end" })
+    }
+  }, [conversationId, visibleMessages.length])
+
+  const registerMessageRef = useCallback(
+    (id: number) => (element: HTMLDivElement | null) => {
+      if (element) {
+        messageRefs.current.set(id, element)
+        return
       }
 
-      setSending(true);
-      try {
-        const fileName = `audio_${Date.now()}.mp3`;
-        const audioFile = new File([audioBlob], fileName, { type: "audio/mpeg" });
-
-        // 3er parámetro es string (caption/nota). Para audio va vacío.
-        await sendMedia(conversationId, audioFile, "");
-
-        clearRecording();
-      } catch (e) {
-        console.error(e);
-        toast.error("No se pudo enviar el audio.");
-      } finally {
-        setSending(false);
-      }
-    };
-
-  const visibleMessages = useMemo(
-    () => messages.filter((m) => hasMedia(m) || hasText(m) || 
-    m.messageType === "Interactive" || m.messageType === "Contact"),
-    [messages]
+      messageRefs.current.delete(id)
+    },
+    []
   )
 
-useEffect(() => {
-  const el = bottomRef.current;
-  if (el && el.isConnected) {
-    el.scrollIntoView({ block: "end" });
-  }
-}, [visibleMessages]);
+  const scrollToMessage = useCallback((id?: number) => {
+    if (!id) return
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const element = messageRefs.current.get(id)
+
+    if (!element) return
+
+    element.scrollIntoView({ behavior: "smooth", block: "center" })
+    setHighlightedId(id)
+
+    window.setTimeout(() => {
+      setHighlightedId(null)
+    }, 1600)
+  }, [])
+
+  const handleSendAudio = useCallback(async () => {
+    if (!conversationId || sending || !audioBlob) return
+
+    // Valida límite permitido por Meta.
+    if (audioBlob.size > 16 * 1024 * 1024) {
+      toast.error("El audio supera el tamaño máximo permitido (16 MB).")
+      return
+    }
+
+    setSending(true)
+
+    try {
+      const fileName = `audio_${Date.now()}.mp3`
+      const audioFile = new File([audioBlob], fileName, {
+        type: "audio/mpeg",
+      })
+
+      await sendMedia(conversationId, audioFile, "")
+      clearRecording()
+    } catch (error) {
+      console.error(error)
+      toast.error("No se pudo enviar el audio.")
+    } finally {
+      setSending(false)
+    }
+  }, [audioBlob, clearRecording, conversationId, sending])
+
+  const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0]
+
+    if (!selectedFile) return
+
     let maxSize = 16 * 1024 * 1024
     let errorMsg = "El archivo supera el límite permitido."
-    if (file.type.startsWith("application/")) {
+
+    if (selectedFile.type.startsWith("application/")) {
       maxSize = 100 * 1024 * 1024
       errorMsg = "Los documentos no pueden superar 100MB."
-    } else if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+    } else if (
+      selectedFile.type.startsWith("image/") ||
+      selectedFile.type.startsWith("video/")
+    ) {
       maxSize = 16 * 1024 * 1024
       errorMsg = "Las imágenes y videos no pueden superar 16MB."
-    } else if (file.type === "image/webp") {
-      if (file.size > 100 * 1024 && file.size <= 500 * 1024) {
+    } else if (selectedFile.type === "image/webp") {
+      if (selectedFile.size > 100 * 1024 && selectedFile.size <= 500 * 1024) {
         maxSize = 500 * 1024
         errorMsg = "Los stickers animados no pueden superar 500KB."
       } else {
@@ -180,425 +296,524 @@ useEffect(() => {
         errorMsg = "Los stickers estáticos no pueden superar 100KB."
       }
     }
-    if (file.size > maxSize) {
+
+    if (selectedFile.size > maxSize) {
       toast.warn(errorMsg)
-      e.target.value = ""
+      event.target.value = ""
       return
     }
-    setFile(file)
-  }
 
-  const setSelectedOption = (opt: string | null) => {
-    selectedOptionRef.current = opt
-    _setSelectedOption(opt)
-  }
+    setFile(selectedFile)
+  }, [])
 
-  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
+  const beginReply = useCallback((message: MessageDto) => {
+    const externalId = (message as any).externalId || null
 
-  const beginReply = (m: MessageDto) => {
-    const extId = (m as any).externalId || null
-    if (!extId) return
-    const author = m.senderContactName || m.senderUserName || "Mensaje"
+    if (!externalId) return
+
+    const author =
+      message.senderContactName || message.senderUserName || "Mensaje"
+
     const preview =
-      (typeof m.content === "string" && m.content.trim()) ||
-      m.attachments?.[0]?.fileName ||
-      (m.attachments?.[0]?.mimeType?.startsWith("image/") ? "[Imagen]" : m.attachments?.[0]?.mimeType?.startsWith("video/") ? "[Video]" : m.attachments?.[0]?.mimeType?.startsWith("audio/") ? "[Audio]" : m.messageType === "Document" ? "[Documento]" : "[Adjunto]")
-    setReplyTo({ messageId: m.messageId, externalId: extId, author, preview })
-  }
+      (typeof message.content === "string" && message.content.trim()) ||
+      message.attachments?.[0]?.fileName ||
+      (message.attachments?.[0]?.mimeType?.startsWith("image/")
+        ? "[Imagen]"
+        : message.attachments?.[0]?.mimeType?.startsWith("video/")
+          ? "[Video]"
+          : message.attachments?.[0]?.mimeType?.startsWith("audio/")
+            ? "[Audio]"
+            : message.messageType === "Document"
+              ? "[Documento]"
+              : "[Adjunto]")
 
-  const cancelReply = () => setReplyTo(null)
+    setReplyTo({
+      messageId: message.messageId,
+      externalId,
+      author,
+      preview,
+    })
+  }, [])
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    if (file) return
-    const clipboardItems = Array.from(e.clipboardData.items)
-    for (const item of clipboardItems) {
-      if (item.kind === "file") {
+  const cancelReply = useCallback(() => {
+    setReplyTo(null)
+  }, [])
+
+  const handlePaste = useCallback(
+    (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (file) return
+
+      const clipboardItems = Array.from(event.clipboardData.items)
+
+      for (const item of clipboardItems) {
+        if (item.kind !== "file") continue
+
         const pastedFile = item.getAsFile()
-        if (pastedFile) {
-          e.preventDefault()
-          setFile(pastedFile)
-          break
-        }
+
+        if (!pastedFile) continue
+
+        event.preventDefault()
+        setFile(pastedFile)
+        break
       }
-    }
-  }
+    },
+    [file]
+  )
 
-  
-    function renderMessageContent(content: string, searchTerm: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = content.split(urlRegex);
+  const highlightText = useCallback((value: string, term: string) => {
+    const cleanTerm = term.trim()
 
-  return parts.map((part, i) => {
-    // comprobamos con un regex SIN la flag "g" para este fragmento
-    const isUrl = /^https?:\/\/[^\s]+$/.test(part);
+    if (!cleanTerm) return value
 
-    if (isUrl) {
-      return (
-        <a
-          key={`url-${i}`}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#8595f0ff", textDecoration: "underline" }}
-        >
+    const regex = new RegExp(
+      `(${cleanTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "ig"
+    )
+
+    return value.split(regex).map((part, index) =>
+      index % 2 === 1 ? (
+        <mark key={index} className="chat-window__hl">
           {part}
-        </a>
-      );
-    }
+        </mark>
+      ) : (
+        <React.Fragment key={index}>{part}</React.Fragment>
+      )
+    )
+  }, [])
 
-    return (
-      <React.Fragment key={`txt-${i}`}>
-        {highlightText(part, searchTerm)}
-      </React.Fragment>
-    );
-  });
-}
+  const renderMessageContent = useCallback(
+    (content: string, term: string) => {
+      const urlRegex = /(https?:\/\/[^\s]+)/g
+      const parts = content.split(urlRegex)
 
+      return parts.map((part, index) => {
+        const isUrl = /^https?:\/\/[^\s]+$/.test(part)
 
+        if (isUrl) {
+          return (
+            <a
+              key={`url-${index}`}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#8595f0ff",
+                textDecoration: "underline",
+              }}
+            >
+              {part}
+            </a>
+          )
+        }
+
+        return (
+          <React.Fragment key={`txt-${index}`}>
+            {highlightText(part, term)}
+          </React.Fragment>
+        )
+      })
+    },
+    [highlightText]
+  )
 
   const handleSend = useCallback(
-  async (fileOverride?: File | null, textOverride?: string) => {
-    if (!conversationId || sending) return
+    async (fileOverride?: File | null, textOverride?: string) => {
+      if (!conversationId || sending) return
 
-    setSending(true)
-
-    try {
       const fileToSend = fileOverride ?? file
-      const msg = (textOverride ?? text).trim()
-      const quick = (selectedOptionRef.current ?? "").trim()
+      const messageText = (textOverride ?? text).trim()
+      const quickText = (selectedOptionRef.current ?? "").trim()
 
-      if (!fileToSend && !msg && !quick) return
+      if (!fileToSend && !messageText && !quickText) return
 
-      const replyExternalId = replyTo?.externalId || null
-      const repliedParentMessageId = replyTo?.messageId ?? null
+      setSending(true)
 
-      if (fileToSend) {
-        await sendMedia(
-          conversationId,
-          fileToSend,
-          msg || undefined,
-          replyExternalId,
-          repliedParentMessageId
-        )
+      try {
+        const replyExternalId = replyTo?.externalId || null
+        const repliedParentMessageId = replyTo?.messageId ?? null
 
-        setFile(null)
-        setText("")
+        if (fileToSend) {
+          await sendMedia(
+            conversationId,
+            fileToSend,
+            messageText || undefined,
+            replyExternalId,
+            repliedParentMessageId
+          )
 
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
+          setFile(null)
+          setText("")
+          setReplyTo(null)
+
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+          }
+
+          return
         }
 
-        setReplyTo(null)
-        return
-      }
+        if (quickText) {
+          await sendText({
+            conversationId,
+            senderId: userId,
+            content: quickText,
+            messageType: "Text",
+            externalId: replyExternalId,
+            repliedParentMessageId,
+          })
 
-      if (quick) {
+          setSelectedOption(null)
+          setReplyTo(null)
+          return
+        }
+
         await sendText({
           conversationId,
           senderId: userId,
-          content: quick,
+          content: messageText,
           messageType: "Text",
           externalId: replyExternalId,
-          repliedParentMessageId
-        })
-
-        setSelectedOption(null)
-        setReplyTo(null)
-        return
-      }
-
-      if (msg) {
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content: msg,
-          messageType: "Text",
-          externalId: replyExternalId,
-          repliedParentMessageId
+          repliedParentMessageId,
         })
 
         setText("")
         setReplyTo(null)
+      } finally {
+        setSending(false)
       }
-    } finally {
-      setSending(false)
-    }
-  },
-  [conversationId, file, sending, text, userId, replyTo]
-)
+    },
+    [
+      conversationId,
+      file,
+      replyTo,
+      sending,
+      setSelectedOption,
+      text,
+      userId,
+    ]
+  )
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
-  // const handleSend = useCallback(async () => {
-  //   if (!conversationId || sending) return
-  //   setSending(true)
-  //   try {
-  //     const msg = text.trim()
-  //     const quick = (selectedOptionRef.current ?? "").trim()
-  //     if (!file && !msg && !quick) return
-  //     const replyExternalId = replyTo?.externalId || null
-  //     const repliedParentMessageId = replyTo?.messageId ?? null
-  //     if (file) {
-  //       await sendMedia(conversationId, file, msg || undefined, replyExternalId, repliedParentMessageId)
-  //       setFile(null)
-  //       setText("")
-  //       if (fileInputRef.current) fileInputRef.current.value = ""
-  //       setReplyTo(null)
-  //       return
-  //     }
-  //     if (quick) {
-  //       await sendText({
-  //         conversationId,
-  //         senderId: userId,
-  //         content: quick,
-  //         messageType: "Text",
-  //         externalId: replyExternalId,
-  //         repliedParentMessageId
-  //       })
-  //       setSelectedOption(null)
-  //       setReplyTo(null)
-  //       return
-  //     }
-  //     if (msg) {
-  //       await sendText({
-  //         conversationId,
-  //         senderId: userId,
-  //         content: msg,
-  //         messageType: "Text",
-  //         externalId: replyExternalId,
-  //         repliedParentMessageId
-  //       })
-  //       setText("")
-  //       setReplyTo(null)
-  //     }
-  //   } finally {
-  //     setSending(false)
-  //   }
-  // }, [conversationId, file, sending, text, userId, replyTo])
+  const handleKeyPress = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key !== "Enter" || event.shiftKey) return
 
-  const handleDownload = async (fileName: string) => {
+      event.preventDefault()
+      void handleSend()
+    },
+    [handleSend]
+  )
+
+  const handleDownload = useCallback(async (fileName: string) => {
     try {
       const response = DownloadMedia(fileName)
       const blob = new Blob([(await response).data])
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
+
       link.href = url
       link.download = fileName || "archivo"
+
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+
       window.URL.revokeObjectURL(url)
-    // eslint-disable-next-line no-empty
-    } catch { }
-  }
+    } catch {
+      toast.error("No se pudo descargar el archivo.")
+    }
+  }, [])
 
-  const getStatusIcon = (m: MessageDto, isOut: boolean) => {
+  const getStatusIcon = useCallback((message: MessageDto, isOut: boolean) => {
     if (!isOut) return null
-    if (m.readAt) return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--read" />
-    if (m.deliveredAt) return <CheckCheck size={14} className="chat-window__message-status chat-window__message-status--delivered" />
-    if (m.status === "Sent") return <Check size={14} className="chat-window__message-status chat-window__message-status--sent" />
+
+    if (message.readAt) {
+      return (
+        <CheckCheck
+          size={14}
+          className="chat-window__message-status chat-window__message-status--read"
+        />
+      )
+    }
+
+    if (message.deliveredAt) {
+      return (
+        <CheckCheck
+          size={14}
+          className="chat-window__message-status chat-window__message-status--delivered"
+        />
+      )
+    }
+
+    if (message.status === "Sent") {
+      return (
+        <Check
+          size={14}
+          className="chat-window__message-status chat-window__message-status--sent"
+        />
+      )
+    }
+
     return null
-  }
+  }, [])
 
-  // 
-  const getMessageClassName = (m: MessageDto) => {
-    if (m.senderContactId) return "chat-window__message chat-window__message--incoming"
-    if (m.senderUserId && m.senderUserId !== userId && m.isAutoSend) return "chat-window__message chat-window__message--agent chat-window__message--autoSend"
-    return "chat-window__message chat-window__message--outgoing"
-    if (m.senderUserId && m.senderUserId !== userId) return "chat-window__message chat-window__message--agent"
-    return "chat-window__message chat-window__message--outgoing"
-  }
+  const getMessageClassName = useCallback(
+    (message: MessageDto) => {
+      if (message.senderContactId) {
+        return "chat-window__message chat-window__message--incoming"
+      }
 
-  const getMessagePosition = (m: MessageDto) => {
-    if (m.senderUserId === userId) return "chat-window__message-group chat-window__message-group--outgoing"
-    return "chat-window__message-group chat-window__message-group--incoming"
-  }
+      if (message.senderUserId && message.senderUserId !== userId) {
+        return message.isAutoSend
+          ? "chat-window__message chat-window__message--agent chat-window__message--autoSend"
+          : "chat-window__message chat-window__message--agent"
+      }
 
-  const getFileIcon = (mimeType: string) => {
+      return "chat-window__message chat-window__message--outgoing"
+    },
+    [userId]
+  )
+
+  const getMessagePosition = useCallback(
+    (message: MessageDto) => {
+      if (message.senderUserId === userId) {
+        return "chat-window__message-group chat-window__message-group--outgoing"
+      }
+
+      return "chat-window__message-group chat-window__message-group--incoming"
+    },
+    [userId]
+  )
+
+  const getFileIcon = useCallback((mimeType: string) => {
     if (mimeType.startsWith("image/")) return "🖼️"
     if (mimeType.startsWith("video/")) return "🎥"
     if (mimeType.startsWith("audio/")) return "🎵"
     if (mimeType.includes("pdf")) return "📄"
     if (mimeType.includes("word") || mimeType.includes("document")) return "📝"
     if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊"
-    if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "📽️"
-    return "📎"
-  }
 
-  const openImagePreview = (url: string) => {
+    if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) {
+      return "📽️"
+    }
+
+    return "📎"
+  }, [])
+
+  const openImagePreview = useCallback((url: string) => {
     setPreviewImageUrl(url)
     setismaximize(true)
-  }
+  }, [])
 
-  const closeImagePreview = () => {
+  const closeImagePreview = useCallback(() => {
     setPreviewImageUrl(null)
     setismaximize(false)
-  }
+  }, [])
 
-  const getCustomoMessageByAgent = async () => {
+  const getCustomoMessageByAgent = useCallback(async () => {
     toast.info("Cargando respuestas rápidas…")
-  }
+  }, [])
 
-  const sendQuickNow = async (msg: MessageDto, opt: string) => {
-    try {
-      await sendText({
-        conversationId: Number(conversationId),
-        senderId: Number(userId),
-        content: opt,
-        messageType: "Text",
-        externalId: (msg as any)?.externalId ?? null,
-        repliedParentMessageId: msg.messageId
-      })
-    } finally {
-      setSelectedOption(null)
-      cancelReply()
-      setQuickMenuOpen(false)
-    }
-  }
+  const sendQuickNow = useCallback(
+    async (message: MessageDto, option: string) => {
+      try {
+        await sendText({
+          conversationId: Number(conversationId),
+          senderId: Number(userId),
+          content: option,
+          messageType: "Text",
+          externalId: (message as any)?.externalId ?? null,
+          repliedParentMessageId: message.messageId,
+        })
+      } finally {
+        setSelectedOption(null)
+        cancelReply()
+        setQuickMenuOpen(false)
+      }
+    },
+    [cancelReply, conversationId, setSelectedOption, userId]
+  )
 
-  const sendQuick = (opt: string) => {
-    if (quickMenuMsg) void sendQuickNow(quickMenuMsg, opt)
-    else {
-      setSelectedOption(opt)
-      handleSend()
-    }
-  }
+  const sendQuick = useCallback(
+    (option: string) => {
+      if (quickMenuMsg) {
+        void sendQuickNow(quickMenuMsg, option)
+        return
+      }
 
-  const startLongPress = (e: React.PointerEvent, msg: MessageDto) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect()
-    const x = (e as any).clientX ?? rect.left + rect.width / 2
-    const y = (e as any).clientY ?? rect.top
-    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
-    longPressTimerRef.current = window.setTimeout(() => {
-      setQuickMenuPos({ x, y })
-      setQuickMenuMsg(msg)
-      setQuickMenuOpen(true)
-    }, LONG_PRESS_MS) as unknown as number
-  }
+      setSelectedOption(option)
+      void handleSend()
+    },
+    [handleSend, quickMenuMsg, sendQuickNow, setSelectedOption]
+  )
 
-  const cancelLongPress = () => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }
+  const startLongPress = useCallback(
+    (event: React.PointerEvent, message: MessageDto) => {
+      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      const x = (event as any).clientX ?? rect.left + rect.width / 2
+      const y = (event as any).clientY ?? rect.top
 
-  const focusTextarea = () => {
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current)
+      }
+
+      longPressTimerRef.current = window.setTimeout(() => {
+        setQuickMenuPos({ x, y })
+        setQuickMenuMsg(message)
+        setQuickMenuOpen(true)
+      }, LONG_PRESS_MS) as unknown as number
+    },
+    []
+  )
+
+  const cancelLongPress = useCallback(() => {
+    if (!longPressTimerRef.current) return
+
+    window.clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = null
+  }, [])
+
+  const focusTextarea = useCallback(() => {
     textAreaRef.current?.focus()
-  }
+  }, [])
 
   useEffect(() => {
-    const onGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (replyTo) {
-          e.preventDefault()
-          cancelReply()
-        } else if (file) {
-          e.preventDefault()
-          setFile(null)
-        }
-      }
-    }
-    window.addEventListener("keydown", onGlobalKeyDown)
-    return () => window.removeEventListener("keydown", onGlobalKeyDown)
-  }, [replyTo, file])
+    const onGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
 
-  const onComposerKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
-    if (e.key === "Escape") {
       if (replyTo) {
-        e.preventDefault()
+        event.preventDefault()
         cancelReply()
         return
       }
+
       if (file) {
-        e.preventDefault()
+        event.preventDefault()
         setFile(null)
-        return
       }
     }
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-      return
+
+    window.addEventListener("keydown", onGlobalKeyDown)
+
+    return () => {
+      window.removeEventListener("keydown", onGlobalKeyDown)
     }
-    handleKeyPress(e)
-  }
+  }, [cancelReply, file, replyTo])
+
+  const onComposerKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> =
+    useCallback(
+      (event) => {
+        if (event.key === "Escape") {
+          if (replyTo) {
+            event.preventDefault()
+            cancelReply()
+            return
+          }
+
+          if (file) {
+            event.preventDefault()
+            setFile(null)
+            return
+          }
+        }
+
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault()
+          void handleSend()
+        }
+      },
+      [cancelReply, file, handleSend, replyTo]
+    )
 
   useEffect(() => {
-    const onGlobalEnter = (e: KeyboardEvent) => {
-      const el = document.activeElement as HTMLElement | null
-      const isTyping = el?.tagName === "TEXTAREA" || el?.tagName === "INPUT" || el?.getAttribute("contenteditable") === "true"
-      if (e.key === "Enter" && !e.shiftKey && file && !sending && conversationId && args.conversationStatus !== "Closed") {
-        if (!isTyping) {
-          e.preventDefault()
-          handleSend()
-        }
+    const onGlobalEnter = (event: KeyboardEvent) => {
+      const activeElement = document.activeElement as HTMLElement | null
+      const isTyping =
+        activeElement?.tagName === "TEXTAREA" ||
+        activeElement?.tagName === "INPUT" ||
+        activeElement?.getAttribute("contenteditable") === "true"
+
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        file &&
+        !sending &&
+        conversationId &&
+        args.conversationStatus !== "Closed" &&
+        !isTyping
+      ) {
+        event.preventDefault()
+        void handleSend()
       }
     }
-    window.addEventListener("keydown", onGlobalEnter)
-    return () => window.removeEventListener("keydown", onGlobalEnter)
-  }, [file, sending, conversationId, args.conversationStatus, handleSend])
 
-  const visibleState = {
-    quickMenuOpen,
-    quickMenuPos,
-    quickMenuMsg
-  }
+    window.addEventListener("keydown", onGlobalEnter)
+
+    return () => {
+      window.removeEventListener("keydown", onGlobalEnter)
+    }
+  }, [args.conversationStatus, conversationId, file, handleSend, sending])
+
+  const visibleState = useMemo(
+    () => ({
+      quickMenuOpen,
+      quickMenuPos,
+      quickMenuMsg,
+    }),
+    [quickMenuMsg, quickMenuOpen, quickMenuPos]
+  )
 
   const matchIds = useMemo(() => {
-  const term = searchTerm.toLowerCase();
-  if (!term) return [];
+    const term = searchTerm.toLowerCase()
 
-  return visibleMessages
-    .filter(m => hasText(m) && (m.content ?? "").toLowerCase().includes(term))
-    .map(m => m.messageId);
+    if (!term) return []
 
-}, [visibleMessages, searchTerm]);
+    return visibleMessages
+      .filter(
+        (message) =>
+          hasText(message) &&
+          (message.content ?? "").toLowerCase().includes(term)
+      )
+      .map((message) => message.messageId)
+  }, [hasText, searchTerm, visibleMessages])
 
-const [matchIndex, setMatchIndex] = useState(0);
+  useEffect(() => {
+    if (!matchIds.length) {
+      setMatchIndex(0)
+      return
+    }
 
-useEffect(() => {
-  if (matchIds.length) {
-    setMatchIndex(0);
-    scrollToMessage(matchIds[0]);       // auto-scroll a la primera coincidencia
-  }
-}, [matchIds]);
+    setMatchIndex(0)
 
-const gotoMatch = (dir: 1 | -1) => {
-  if (!matchIds.length) return;
-  const next = (matchIndex + dir + matchIds.length) % matchIds.length;
-  setMatchIndex(next);
-  scrollToMessage(matchIds[next]);
-  setHighlightedId(matchIds[next]);
-};
+    requestAnimationFrame(() => {
+      scrollToMessage(matchIds[0])
+    })
+  }, [matchIds, scrollToMessage])
 
-  const highlightText = (text: string, term: string) => {
-  const t = term.trim()
-  if (!t) return text
-  const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig")
-    return text.split(re).map((part, i) =>
-      i % 2 === 1
-        ? <mark key={i} className="chat-window__hl">{part}</mark>
-        : <React.Fragment key={i}>{part}</React.Fragment>
-    )
-  }
+  const gotoMatch = useCallback(
+    (direction: 1 | -1) => {
+      if (!matchIds.length) return
 
-  function secondsToTime(totalSeconds: number) {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+      const nextIndex =
+        (matchIndex + direction + matchIds.length) % matchIds.length
 
-    const paddedHours = String(hours).padStart(2, '0');
-    const paddedMinutes = String(minutes).padStart(2, '0');
-    const paddedSeconds = String(seconds).padStart(2, '0');
+      setMatchIndex(nextIndex)
+      scrollToMessage(matchIds[nextIndex])
+      setHighlightedId(matchIds[nextIndex])
+    },
+    [matchIds, matchIndex, scrollToMessage]
+  )
 
-    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
-  }
+  const secondsToTime = useCallback((totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
 
+    const paddedHours = String(hours).padStart(2, "0")
+    const paddedMinutes = String(minutes).padStart(2, "0")
+    const paddedSeconds = String(seconds).padStart(2, "0")
+
+    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`
+  }, [])
 
   return {
     setConversationId,
@@ -627,7 +842,7 @@ const gotoMatch = (dir: 1 | -1) => {
     openImagePreview,
     closeImagePreview,
 
-    //audio
+    // Audio.
     isRecording,
     audioBlob,
     recordingTime,
@@ -636,7 +851,6 @@ const gotoMatch = (dir: 1 | -1) => {
     secondsToTime,
     clearRecording,
     handleSendAudio,
-
 
     visibleMessages,
     hasMedia,
@@ -660,13 +874,13 @@ const gotoMatch = (dir: 1 | -1) => {
     highlightedId,
     visibleState,
 
-    //Buscar texto
+    // Búsqueda.
     searchTerm,
     setSearchTerm,
     matchIds,
     matchIndex,
     gotoMatch,
     highlightText,
-    renderMessageContent
+    renderMessageContent,
   }
 }

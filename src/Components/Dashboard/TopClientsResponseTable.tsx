@@ -5,17 +5,12 @@ import DashboardTable, {
 } from "@/Components/Dashboard/DashboardTable";
 import type { DashboardAgentAverageResponseTopClientProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatNumber } from "@/Utils/ECommerce/formatters";
 
 interface TopClientsResponseTableProps {
   rows: DashboardAgentAverageResponseTopClientProj[];
   loading?: boolean;
 }
-
-const formatNumber = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
-};
 
 const formatResponseTime = (seconds?: number | null) => {
   const totalSeconds = Math.floor(seconds ?? 0);

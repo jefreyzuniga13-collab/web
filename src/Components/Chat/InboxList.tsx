@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { MessageSquareOff, MoreVertical } from "lucide-react"
 import "@/Styles/Chat/InboxList.css"
-import { format, isToday, isYesterday, parseISO, isValid } from "date-fns"
-import { es } from "date-fns/locale/es"
 import { toast } from "react-toastify"
 import { markConversationRead } from "@/Services/chat/ConversationService"
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces"
@@ -11,13 +9,10 @@ import CustomLoader from "@/Components/Common/CustomLoader"
 import { selectCartBadgeByContactId } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { useSelector } from "react-redux"
 import { FaCartFlatbedSuitcase } from "react-icons/fa6"
-import { ImWhatsapp } from "react-icons/im"
-import { RiMessengerLine } from "react-icons/ri"
-import { FaInstagram } from "react-icons/fa6"
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import { useContactBlock } from "@/Hooks/Wh/useContactBlock"
-import { CHANNEL, type ChannelType } from "@/Interfaces/Wh/MetaChannelId"
-import { contactService } from "@/Services/auth/ContactService"
+import { formatDuration, formatTimeNI, getChannel, getConversationDateValue, getConversationGroupKey, getConversationGroupLabel, getConversationIdentifier, getElapsedMsFromNI, parseConversationDate } from "@/Utils/ECommerce/formatters"
+import { getChannelIcon } from "@/Utils/Chat/Utils"
 
 interface Props {
   selectedId?: number
@@ -40,79 +35,6 @@ type ConversationGroup = {
   conversations: ConversationDto[]
 }
 
-const formatDuration = (ms: number): string => {
-  const totalMinutes = Math.floor(ms / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
-}
-
-const getChannelIcon = (channelId?: number | null) => {
-  if (channelId === CHANNEL.Whatsapp) {
-    return <ImWhatsapp size={16} className="whatsapp-icon" />
-  }
-
-  if (channelId === CHANNEL.Messenger) {
-    return <RiMessengerLine size={18} className="messenger-icon" />
-  }
-
-  return <FaInstagram size={16} className="instagram-icon" />
-}
-
-const getChannel = (channelId?: number | null): ChannelType | null => {
-  if (channelId === CHANNEL.Whatsapp) return CHANNEL.Whatsapp
-  if (channelId === CHANNEL.Messenger) return CHANNEL.Messenger
-  if (channelId === CHANNEL.Instagram) return CHANNEL.Instagram
-
-  return null
-}
-
-const getConversationIdentifier = async (
-  conversation: ConversationDto
-): Promise<string> => {
-  const res = await contactService.getById(conversation.clientContactId)
-
-  if (res.data.metaChannelId === CHANNEL.Whatsapp) return res.data.waId ?? ""
-  if (res.data.metaChannelId === CHANNEL.Messenger) return res.data.psid ?? ""
-  if (res.data.metaChannelId === CHANNEL.Instagram) return res.data.psid ?? ""
-
-  return ""
-}
-
-const getConversationDateValue = (conversation: ConversationDto): string => {
-  return (
-    conversation.lastActivity ||
-    conversation.clientLastMessageAt ||
-    conversation.updatedAt ||
-    conversation.createdAt ||
-    ""
-  )
-}
-
-const parseConversationDate = (value?: string | null): Date | null => {
-  if (!value) return null
-
-  const parsed = parseISO(value)
-
-  if (isValid(parsed)) return parsed
-
-  const fallback = new Date(value)
-
-  return isValid(fallback) ? fallback : null
-}
-
-const getConversationGroupLabel = (date: Date): string => {
-  if (isToday(date)) return "Hoy"
-  if (isYesterday(date)) return "Ayer"
-
-  return format(date, "EEEE d 'de' MMMM", { locale: es })
-}
-
-const getConversationGroupKey = (date: Date): string => {
-  return format(date, "yyyy-MM-dd")
-}
-
 export const InboxList: React.FC<Props> = ({
   selectedId,
   onSelect,
@@ -130,7 +52,6 @@ export const InboxList: React.FC<Props> = ({
   const { blockContact, unblockContact, isBlocking, isUnblocking } =
     useContactBlock()
 
-  const [now, setNow] = useState(Date.now())
   const [menuState, setMenuState] = useState<MenuState>(null)
 
   const userId = useSelector(selectUserId)
@@ -162,11 +83,11 @@ export const InboxList: React.FC<Props> = ({
     return Array.from(groups.values())
   }, [conversations])
 
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000)
+  // useEffect(() => {
+  //   const interval = setInterval(() => setNow(Date.now()), 1000)
 
-    return () => clearInterval(interval)
-  }, [])
+  //   return () => clearInterval(interval)
+  // }, [])
 
   useEffect(() => {
     const root = listRef.current
@@ -206,15 +127,15 @@ export const InboxList: React.FC<Props> = ({
     }
   }, [])
 
-  const formatTime = (iso?: string) => {
-    if (!iso) return ""
+  // const formatTime = (iso?: string) => {
+  //   if (!iso) return ""
 
-    try {
-      return format(new Date(iso), "HH:mm")
-    } catch {
-      return ""
-    }
-  }
+  //   try {
+  //     return format(new Date(iso), "HH:mm")
+  //   } catch {
+  //     return ""
+  //   }
+  // }
 
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
@@ -364,19 +285,18 @@ export const InboxList: React.FC<Props> = ({
 
             const hasUnread = unread > 0
 
-            let timeSinceRequest = ""
+            const clientLast = formatTimeNI(conversation.clientLastMessageAt)
+
+            let previewText = clientLast
+              ? `Cliente últ. msj: ${clientLast}`
+              : "Cliente últ. msj:"
 
             if (!conversation.assignedAt && conversation.requestedAgentAt) {
-              timeSinceRequest = formatDuration(
-                now - new Date(conversation.requestedAgentAt).getTime()
-              )
-            }
+              const elapsedMs = getElapsedMsFromNI(conversation.requestedAgentAt)
 
-            const clientLast = formatTime(conversation.clientLastMessageAt)
-            let previewText = `Cliente últ. msj: ${clientLast}`
-
-            if (!conversation.assignedAt && conversation.requestedAgentAt) {
-              previewText += ` · Desde solicitud: ${timeSinceRequest}`
+              if (elapsedMs > 0) {
+                previewText += ` · Desde solicitud: ${formatDuration(elapsedMs)}`
+              }
             }
 
             const contactId = conversation.clientContactId ?? 0

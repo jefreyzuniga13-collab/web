@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   // getConversation,
   closeConversation,
+  getConversation,
   SetHaltedConversation
 } from "@/Services/chat/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
@@ -97,9 +98,9 @@ export function useSupportPage() {
 
       setConversation(null)
 
-      // getConversation(convId)
-      //   .then(res => setConversation(res.data.data))
-      //   .catch(console.error)
+      getConversation(convId)
+        .then(res => setConversation(res.data.data))
+        .catch(console.error)
 
       fetchByName('OpcionesRapidas')
     }, [convId, fetchByName])
@@ -133,13 +134,15 @@ export function useSupportPage() {
 
     const handleAfterActionRefresh = useCallback(() => {
     if (!convId) return;
-    // getConversation(convId)
-    //   .then((res) => setConversation(res.data.data))
-    //   .catch(() => {});
+    getConversation(convId)
+      .then((res) => setConversation(res.data.data))
+      .catch(() => {});
   }, [convId]);
 
     const handleCloseClick = useCallback(() => {
+      
     if (!convId || !conversation) return;
+
     closeConversation(convId).then(handleAfterActionRefresh).catch(() => {});
   }, [convId, conversation, handleAfterActionRefresh]);
 

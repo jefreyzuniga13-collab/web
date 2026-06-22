@@ -21,10 +21,13 @@ import { selectCartLoading } from "@/Context/Slices/Ecommerce/cartSlice"
 import { KEY_SCROLL } from "@/Utils/ECommerce/keys"
 import { clampQty } from "@/Utils/ECommerce/formatters"
 import EmptyPlayer from "@/assets/lottie/Empty.json"
+import EmptyCartPlayer from '@/assets/lottie/Empty.json'
 
 import "@/Styles/Ecommerce/ProductTab.css"
 import "@/Styles/Ecommerce/ProductPCGList.css"
 import type { AddProductParams, SelectedModifierOption } from "@/Interfaces/Crm/CartPCGInterface"
+import { IoMdSend } from "react-icons/io"
+import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
 
 interface Props {
   conversationId: number
@@ -73,6 +76,9 @@ export const ProductTab = ({ conversationId }: Props) => {
     Record<string, SelectedBatchProduct>
   >({})
   const [addingSelected, setAddingSelected] = useState(false)
+  const { sending, sendProductMessage } = useProductMessageComposer()
+
+
   const { pickerProps, codPrecioActivo, addProducts } = useCartPCGFlowCtx()
   const cartLoading = useSelector((state: RootState) =>
     selectCartLoading(state)
@@ -177,6 +183,7 @@ export const ProductTab = ({ conversationId }: Props) => {
     [selectedProducts]
   )
 
+  
   const handleOpenDetail = useCallback(
     (prod: ProductoPCGInterface) => {
       sessionStorage.setItem(KEY_SCROLL, String(listRef.current?.scrollTop ?? 0))
@@ -384,6 +391,10 @@ export const ProductTab = ({ conversationId }: Props) => {
           onDoneUiReset: false,
         }))
       )
+
+        setSelectedProducts({})
+        setSimpleQuantity(1)
+
     } finally {
       setAddingSelected(false)
     }
@@ -450,6 +461,38 @@ export const ProductTab = ({ conversationId }: Props) => {
     return () => observerRef.current?.disconnect()
   }, [showProducts, hasMore, loadNextPage, loadingProductPcg])
 
+
+  const sendSelectedProducts = useCallback(async () => {
+  const items = Object.values(selectedProducts)
+
+  if (!items.length) {
+    toast.warning("Seleccione al menos un producto.")
+    return
+  }
+
+  const pending = items.find((item) => !item.configured)
+
+  if (pending) {
+    toast.warning(`Falta configurar: ${getProductName(pending.product)}`)
+    handleOpenDetail(pending.product)
+    return
+  }
+
+  for (const item of items) {
+    await sendProductMessage({
+      product: item.product,
+      conversationId,
+      observation: item.observacion,
+    })
+  }
+
+  toast.success(
+    `${items.length} producto${items.length === 1 ? "" : "s"} enviado${
+      items.length === 1 ? "" : "s"
+    }.`
+  )
+}, [selectedProducts, sendProductMessage, conversationId, handleOpenDetail])
+
   if (loading) {
     return (
       <div className="detailPanel-loaderContainer">
@@ -459,11 +502,17 @@ export const ProductTab = ({ conversationId }: Props) => {
   }
 
   if (error) {
-    return <div className="detailPanel-error">Error al cargar categorías</div>
+    return <div className="detailPanel-error">
+          <Lottie loop={false} autoplay animationData={EmptyCartPlayer} />
+          <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
+    </div>
   }
 
   if (errProducts && selectedCategory) {
-    return <div className="detailPanel-error">Error al cargar productos</div>
+    return <div className="detailPanel-error">
+      <Lottie loop={false} autoplay animationData={EmptyCartPlayer} />
+    <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
+    </div>
   }
 
   if (detailProduct) {
@@ -568,6 +617,23 @@ export const ProductTab = ({ conversationId }: Props) => {
                   </button>
                 </span>
               </Tooltip>
+
+              <Tooltip title="Enviar seleccionados">
+          <span>
+            <button
+              type="button"
+              className="productPCGList__iconBtn productPCGList__iconBtn--send"
+              onClick={sendSelectedProducts}
+              disabled={selectedCount === 0 || sending || addingSelected}
+            >
+              {sending ? (
+                <AiOutlineLoading3Quarters fontSize={20} />
+              ) : (
+                <IoMdSend fontSize={20} />
+              )}
+            </button>
+          </span>
+        </Tooltip>
 
               <Tooltip title="Agregar seleccionados">
                 <span>

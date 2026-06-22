@@ -3,6 +3,7 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import DashboardPanel from "@/Components/Dashboard/DashboardPanel";
 import type { DashboardIndicatorsByAgentProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatDecimal, formatNumber } from "@/Utils/ECommerce/formatters";
 
 interface AgentIndicatorsChartProps {
   data: DashboardIndicatorsByAgentProj[];
@@ -14,19 +15,6 @@ const CHART_COLORS = {
   proformas: "#4354f4",
   service: "#10b981",
   response: "#f59e0b",
-};
-
-const formatNumber = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
-};
-
-const formatDecimal = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value ?? 0);
 };
 
 const formatAgentName = (value?: string | null) => {

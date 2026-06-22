@@ -6,18 +6,13 @@ import type {
   DashboardRatingGlobalProj,
 } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatNumber } from "@/Utils/ECommerce/formatters";
 
 interface RatingSummaryProps {
   globalRating: DashboardRatingGlobalProj | null;
   byAgent: DashboardRatingByAgentProj[];
   loading?: boolean;
 }
-
-const formatNumber = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
-};
 
 const formatPercent = (value: number, total: number) => {
   if (!total) return "0.0%";

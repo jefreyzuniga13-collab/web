@@ -781,10 +781,11 @@
 .detailPanel-error {
   display: grid;
   place-items: center;
-  color: #991b1b;
-  background: #fde8e8;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  /* color: #991b1b; */
+  /* background: #fde8e8; */
+  /* border: 1px solid #fecaca; */
+  /* border-radius: 8px; */
+  border: none;
   padding: 10px;
   margin: 12px;
 }

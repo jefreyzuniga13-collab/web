@@ -11,6 +11,7 @@ import SuccessRequest from "@/Pages/ECommerce/SuccessRequest";
 import PaymentResultPage from "@/Pages/ECommerce/PaymentResultPage";
 import PaymentHostedPage from "@/Pages/ECommerce/PaymentHostedPage";
 import CustomLoader from "@/Components/Common/CustomLoader";
+import PerformanceDashboardPage from "@/Pages/Dashboard/PerformanceDashboardPage";
 const Register = lazy(() => import("@/Pages/Auth/RegisterAccountPage"));
 const Login = lazy(() => import("@/Pages/Auth/LoginPage"));
 const VerifyEmail = lazy(() => import("@/Pages/Auth/VerifyEmailPage"));
@@ -20,7 +21,7 @@ const Activation = lazy(() => import("@/Pages/Auth/ActivationAccountPage"));
 const Unauthorized = lazy(() => import("@/Components/Common/Unauthorized"));
 const SupportPage = lazy(() => import("@/Pages/Chat/SupportPage"));
 const UsersPage = lazy(() => import("@/Pages/Auth/UsersPage"));
-const DashboardPage = lazy(() => import("@/Pages/Dashboard/DashboardPage"));
+// const DashboardPage = lazy(() => import("@/Pages/Dashboard/DashboardPage"));
 const NotificationsPage = lazy(() => import("@/Pages/Crm/NotificationsPage"));
 const NotFound = lazy(() => import("@/Pages/Auth/NotFound"));
 const SystemParameterPage = lazy(() => import("@/Pages/Crm/SystemParameterPage"),);
@@ -39,7 +40,7 @@ const ClientManagementPanel = lazy(() => import("@/Pages/Crm/ClientManagementPan
 const LicensePage = lazy(() => import("@/Pages/Crm/LicensePage"),);
 const CompaniesLicensePage = lazy(() => import("@/Pages/Crm/CompaniesLicensePage"));
 const ContactKanbanPage = lazy(() => import("@/Pages/Auth/ContactKanbanPage"));
-const PerformanceDashboardPage = lazy(() => import("@/Pages/Dashboard/PerformanceDashboardPage"));
+// const PerformanceDashboardPage = lazy(() => import("@/Pages/Dashboard/PerformanceDashboardPage"));
 
 export function AppRouter() {
   return (
@@ -69,7 +70,7 @@ export function AppRouter() {
             }
           >
           <Route index element={<Navigate to="chat" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          {/* <Route path="dashboard" element={<DashboardPage />} /> */}
           <Route path="chat" element={<SupportPage />} />
           <Route path="UserSessions" element={<UserSessionPage />} />
           <Route path="contacts" element={<ContactPage />} />

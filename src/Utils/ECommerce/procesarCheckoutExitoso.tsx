@@ -87,7 +87,7 @@ export async function procesarCheckoutExitoso({
 
 
   if (existingLog?.id) {
-    await updatedStatus(existingLog.id, GENERAL_STATUS.Cancelada);
+    await updatedStatus(existingLog.id, GENERAL_STATUS.Finalizada);
   }
 
   await UserSessionService.revokeCartTempLink(orderId);

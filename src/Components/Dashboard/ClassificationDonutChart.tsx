@@ -3,6 +3,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import DashboardPanel from "./DashboardPanel";
 import type { DashboardIndicatorsProj } from "@/Interfaces/Dashboard/PerformanceDashboardInterfaces";
 import "@/Styles/Dashboard/PerformanceDashboard.css";
+import { formatNumber } from "@/Utils/ECommerce/formatters";
 
 interface ClassificationDonutChartProps {
   indicators: DashboardIndicatorsProj | null;
@@ -20,12 +21,6 @@ const COLORS = {
   potential: "#f59e0b",
   tracking: "#0070B4",
   sale: "#10b981",
-};
-
-const formatNumber = (value?: number | null) => {
-  return new Intl.NumberFormat("es-NI", {
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
 };
 
 const formatPercent = (value: number, total: number) => {

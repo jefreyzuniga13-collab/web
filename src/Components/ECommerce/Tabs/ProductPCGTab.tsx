@@ -193,7 +193,7 @@ export const ProductPCGTab = ({
                   : "product-row__batchStatus--pending"
               }`}
             >
-              {isConfigured ? "✓ Configurado" : "Pendiente"}
+              {isConfigured ? "✓ Listo" : "Pendiente"}
             </span>
           )}
         </div>

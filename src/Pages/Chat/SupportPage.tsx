@@ -334,14 +334,15 @@ const SupportPage: React.FC = () => {
         </header>
 
         <ChatWindow
-          conversationId={convId ?? undefined}
-          userId={userId}
-          conversationStatus={activeConversation?.status}
-          selectedParam={selectedParam}
-          highlightTerm={searchConversation}
-          validFrom={convHook.form.validFrom}
-          validTo={convHook.form.validTo}
-        />
+        key={convId ?? "empty-chat"}
+        conversationId={convId ?? undefined}
+        userId={userId}
+        conversationStatus={activeConversation?.status}
+        selectedParam={selectedParam}
+        highlightTerm={searchConversation}
+        validFrom={convHook.form.validFrom}
+        validTo={convHook.form.validTo}
+      />
       </main>
 
       <aside className="detail-aside">

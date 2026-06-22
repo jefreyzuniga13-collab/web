@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import * as turf from "@turf/turf";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux";
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder";
@@ -11,30 +10,11 @@ import { useIniciarPago } from "@/Hooks/Ecommerce/payment/useIniciarPago";
 import { usePayWithToken } from "@/Hooks/Ecommerce/payment/usePayWithToken";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
 import { normalizeNumber, round2, safeStr } from "@/Utils/ECommerce/formatters";
-import {
-  CHECKOUT_INVOICE_KEY,
-  CHECKOUT_PAYLOAD_KEY,
-  ECOMMERCEUSERID_KEY
-} from "@/Utils/ECommerce/keys";
-import type {
-  ClientLocationDto,
-  Coords,
-  LocationMode,
-  TotalesPantallaReqDTO
-} from "@/Interfaces/Ecommerce/ClientLocationInterface";
-import type {
-  Currencyto,
-  CheckoutStep,
-  PaymentMethod,
-  BillingFormState
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import {CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY, ECOMMERCEUSERID_KEY} from "@/Utils/ECommerce/keys";
+import type {ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO} from "@/Interfaces/Ecommerce/ClientLocationInterface";
+import type {Currencyto, CheckoutStep, PaymentMethod, BillingFormState} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import type { NearestBranchRequestDto } from "@/Interfaces/Ecommerce/BranchInterfaces";
-import type {
-  FacturaTempo,
-  PagoGenerico,
-  ObtenerDivisaPagosTipoReq,
-  ObtenerDivisaPagosTipoRes
-} from "@/Interfaces/Ecommerce/FacturaTempo";
+import type {FacturaTempo, PagoGenerico, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes} from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface";
 import { selectCarPCG, getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
 import type { AppDispatch, RootState } from "@/Context";
@@ -45,14 +25,12 @@ import { PaymentMethodComponent } from "@/Components/ECommerce/Payment/PaymentMe
 import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection";
 import { LocationSection } from "@/Components/ECommerce/Payment/LocationSection";
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface";
-import type {
-  PowertranzBrowserInfoDto,
-  PowertranzPayWithTokenRequestDto
-} from "@/Interfaces/Ecommerce/powertranzInterface";
+import type {PowertranzPayWithTokenRequestDto} from "@/Interfaces/Ecommerce/powertranzInterface";
 import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
-import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi";
 import { FechaManagua } from "@/Utils/FechaManagua";
+import { calculateDistance, obtenerBrowserInfo } from "@/Utils/ECommerce/utils";
+import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -75,33 +53,6 @@ type BranchLike = {
   latitud: number | string;
   longitud: number | string;
 };
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const from = turf.point([lon1, lat1]);
-  const to = turf.point([lon2, lat2]);
-  return turf.distance(from, to, { units: "kilometers" });
-}
-
-function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
-  return {
-    Language: window?.navigator?.language ?? "es-NI",
-    ScreenHeight: window?.screen?.height?.toString() ?? "",
-    ScreenWidth: window?.screen?.width?.toString() ?? "",
-    TimeZone: String(new Date().getTimezoneOffset() * -1),
-    UserAgent: window?.navigator?.userAgent ?? "",
-    Ip: null,
-    JavaEnabled:
-      typeof window !== "undefined" && typeof window.navigator?.javaEnabled === "function"
-        ? window.navigator.javaEnabled()
-        : false,
-    JavascriptEnabled: true,
-    ColorDepth: window?.screen?.colorDepth?.toString() ?? "",
-    ChallengeWindowSize: 5,
-    ChallengeIndicator: "01",
-    AcceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-  };
-}
-
 
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -173,7 +124,7 @@ const CheckoutPage: React.FC = () => {
 
   const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
 
-    const getTransporteFactura = () => {
+  const getTransporteFactura = () => {
   const stateTransp = Number(transpCost ?? 0);
   const logTransp = Number(existingLog?.transCost ?? 0);
 
@@ -183,10 +134,10 @@ const CheckoutPage: React.FC = () => {
   return 0;
 };
 
-  const totalPagar = useMemo(
-    () => round2(cartTotal + getTransporteFactura() + normalizeNumber(tip)),
-    [cartTotal, transpCost, existingLog?.transCost, tip]
-  );
+  const totalPagar = useMemo(() => {
+  const totalBase = Number(existingLog?.totalEnPantalla ?? cartTotal ?? 0);
+  return round2(totalBase + normalizeNumber(tip));
+}, [existingLog?.totalEnPantalla, cartTotal, tip]);
 
   const { mutateAsync: completeFpiAsync } = useCompleteFpi();
 
@@ -217,6 +168,15 @@ const CheckoutPage: React.FC = () => {
     }
   });
 
+
+  const goToStep = (nextStep: CheckoutStep | string) => {
+  if (locationLockedByLog && nextStep === "location") {
+    setStep("currency");
+    return;
+  }
+
+  setStep(nextStep);
+};
 
   const payWithTokenMutation = usePayWithToken({
     onSuccess: async (response) => {
@@ -398,6 +358,14 @@ const CheckoutPage: React.FC = () => {
     GetCurrencyAsync,
     GetAsync
   ]);
+
+  useEffect(() => {
+  if (!locationLockedByLog) return;
+
+  if (step === "location" || !step) {
+    setStep("currency");
+  }
+}, [locationLockedByLog, step]);
 
   useEffect(() => {
     if (!userFullName) return;
@@ -716,7 +684,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleGoToCurrency = async () => {
     if (locationLockedByLog) {
-      setStep("currency");
+      goToStep("currency");
       return;
     }
 
@@ -740,7 +708,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleGoToPayment = () => {
     if (locationLockedByLog) {
-      setStep("paymentMethod");
+      goToStep("paymentMethod");
       return;
     }
 
@@ -755,23 +723,12 @@ const CheckoutPage: React.FC = () => {
 
     return round2(totalBase + Number(tip ?? 0));
   };
+
   const validateManualCard = () => {
 
     if (!safeStr(manualCardData.tarjetahabiente)) {
       return toastError("El tarjetahabiente es requerido.");
     }
-
-    // if (!safeStr(manualCardData.tarjeta)) {
-    //   return toastError("La tarjeta es requerida.");
-    // }
-
-    // if (!safeStr(manualCardData.ultDigito)) {
-    //   return toastError("Los últimos dígitos son requeridos.");
-    // }
-
-    // if (!safeStr(manualCardData.autorizacion)) {
-    //   return toastError("La autorización es requerida.");
-    // }
 
     if (!safeStr(manualCardData.fechaVence)) {
       return toastError("La fecha de vencimiento es requerida.");
@@ -780,101 +737,95 @@ const CheckoutPage: React.FC = () => {
     return true;
   };
 
+
+  //Detalle de pago
   const buildPagoGenerico = (
-    invoiceReq: FacturaTempo,
-    codSucursalFactura: string
-  ): PagoGenerico => {
-    const moneda = safeStr(invoiceReq.moneda) || "1";
-    const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
+  invoiceReq: FacturaTempo,
+  codSucursalFactura: string
+) => {
+  const moneda = safeStr(invoiceReq.moneda);
+  const tasaCambio = Number(invoiceReq.tasaCambio);
 
-    const isCash = method === "cash";
-    const isTransfer = method === "transfer";
-    const isGateway = method === "card";
-    const isManual = method === "manualCard";
+  const isCash = method === "cash";
+  const isTransfer = method === "transfer";
+  // const isGateway = method === "card";
+  const isManual = method === "manualCard";
 
-    const selected = divisaSelected;
-    const total = getTotalFactura();
+  const selected = divisaSelected;
+  const total = getTotalFactura();
 
-    const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
-    const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
-    const tipo = isCash ? "" : safeStr(selected?.tipo);
-    const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
-    const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
+  const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
+  const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
+  const tipo = isCash ? "" : safeStr(selected?.tipo);
+  const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
+  const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
 
-    let monto = total;
-    let referencia = "";
-    let numeroTransaccion = "";
-    let fechaOVence = "";
+  const monto = total;
+  let referencia = "";
+  let numeroTransaccion = "";
+  let fechaOVence = "";
 
-    if (isCash) {
-      monto = total;
-    }
+  if (isTransfer) {
+    referencia = safeStr(transferRef);
+    numeroTransaccion = safeStr(transferRef);
+    fechaOVence = new Date().toISOString().slice(0, 10);
+  }
 
-    if (isTransfer) {
-      monto = total;
-      referencia = safeStr(transferRef);
-      numeroTransaccion = safeStr(transferRef);
-      fechaOVence = new Date().toISOString().slice(0, 10);
-    }
+  if (isManual) {
+    referencia = safeStr(manualCardData.autorizacion);
+    numeroTransaccion = safeStr(manualCardData.autorizacion);
+    fechaOVence = safeStr(manualCardData.fechaVence);
+  }
 
-    if (isGateway) {
-      monto = total;
-    }
+  const concepto = isCash
+    ? "Efectivo"
+    : isTransfer
+      ? descripcionPago || "Transferencia"
+      : isManual
+        ? descripcionPago || "Tarjeta manual"
+        : descripcionPago || "Tarjeta";
 
-    if (isManual) {
-      monto = total;
-      referencia = safeStr(manualCardData.autorizacion);
-      numeroTransaccion = safeStr(manualCardData.autorizacion);
-      fechaOVence = safeStr(manualCardData.fechaVence);
-    }
+  const cleanCashAmount = Number(cashAmount || 0);
 
-    const concepto = isCash
-      ? "Efectivo"
-      : isTransfer
-        ? descripcionPago || "Transferencia"
-        : isManual
-          ? descripcionPago || "Tarjeta manual"
-          : descripcionPago || "Tarjeta";
-
-    return {
-      numPago: "1",
-      concepto,
-      codPago,
-      tipoPago: isCash ? "" : tipo,
-      aplicaCambio: "True",
-      codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
-      banco: banco || (isCash ? "00" : ""),
-      monto: isCash ? Number(cashAmount) : monto,
-      moneda,
-      montoA: isCash ? Number(cashAmount) : monto,
-      cambio: isCash ? Number(cashAmount - monto) : 0,
-      tasaCambio: Number(tasaCambio),
-      Fecha_o_Vence: fechaOVence,
-      Dll: "",
-      Numero: "",
-      referencia,
-      numeroTransaccion,
-      cuentaContable: "",
-      ultDigito: isManual ? safeStr(manualCardData.ultDigito) : "",
-      tarjeta: isManual ? safeStr(manualCardData.tarjeta) : "",
-      tarjetahabiente: isManual ? safeStr(manualCardData.tarjetahabiente) : "",
-      autorizacion: isManual ? safeStr(manualCardData.autorizacion) : "",
-      termId: isManual ? safeStr(manualCardData.termId) : "",
-      afiliado: isManual ? safeStr(manualCardData.afiliado) : "",
-      CodStrCadsaccion: "",
-      Codtransaccion: "",
-      CuentaHabiente: "",
-      montoP: round2(total),
-      montoS: round2(total / 36.6243),
-      indice: "0",
-      codClienteCrd: "00000",
-      facturaPinpad: "",
-      codEmpresa: safeStr(invoiceReq.codEmpresa),
-      codSucursal: codSucursalFactura,
-      montoFirma: "0",
-      sobrante: "0"
-    };
+  return {
+    numPago: "1",
+    concepto,
+    codPago: codPago || "",
+    tipoPago: isCash ? safeStr(selectedCurrency?.codPago) : tipo,
+    codPagoExterno: codPagoExterno || "",
+    banco: banco || "",
+    aplicaCambio: "True",
+    monto: isCash ? cleanCashAmount : monto,
+    moneda,
+    montoA: isCash ? cleanCashAmount : monto,
+    cambio: isCash ? Number(cleanCashAmount - monto) : 0,
+    tasaCambio: Number(tasaCambio),
+    Fecha_o_Vence: fechaOVence,
+    Dll: "",
+    Numero: "",
+    referencia,
+    numeroTransaccion,
+    cuentaContable: "",
+    ultDigito: isManual ? safeStr(manualCardData.ultDigito) : "",
+    tarjeta: isManual ? safeStr(manualCardData.tarjeta) : "",
+    tarjetahabiente: isManual ? safeStr(manualCardData.tarjetahabiente) : "",
+    autorizacion: isManual ? safeStr(manualCardData.autorizacion) : "",
+    termId: isManual ? safeStr(manualCardData.termId) : "",
+    afiliado: isManual ? safeStr(manualCardData.afiliado) : "",
+    CodStrCadsaccion: "",
+    Codtransaccion: "",
+    CuentaHabiente: "",
+    montoP: round2(total),
+    montoS: round2(total / 36.6243),
+    indice: "0",
+    codClienteCrd: "00000",
+    facturaPinpad: "",
+    codEmpresa: safeStr(invoiceReq.codEmpresa),
+    codSucursal: codSucursalFactura,
+    montoFirma: "0",
+    sobrante: "0"
   };
+};
 
   const handlePayNow = async () => {
     const isProcessingPayment = iniciarPagoMutation.isPending || payWithTokenMutation.isPending;
@@ -1187,7 +1138,7 @@ const CheckoutPage: React.FC = () => {
                 selectedCurrency={selectedCurrency}
                 handleSelectCurrency={handleSelectCurrency}
                 invoiceLoading={invoiceLoading}
-                setStep={setStep}
+                setStep={goToStep}
                 handleGoToPayment={handleGoToPayment}
               />
             )}
@@ -1198,7 +1149,7 @@ const CheckoutPage: React.FC = () => {
               ) : (
                 <PaymentMethodComponent
                   step={step as CheckoutStep}
-                  setStep={setStep}
+                  setStep={goToStep}
                   method={method}
                   distanceKm={distanceKm}
                   transpCost={transpCost}

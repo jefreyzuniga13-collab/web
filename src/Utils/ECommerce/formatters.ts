@@ -1,4 +1,4 @@
-import { format, differenceInCalendarDays } from 'date-fns';
+import { format, differenceInCalendarDays, isValid, isToday, isYesterday } from 'date-fns';
 import { format as formatz, toZonedTime } from "date-fns-tz";
 
 export function round2(n: number): number {
@@ -98,6 +98,10 @@ export const formatoNicaragua = (fecha: Date) => {
 
 import type { PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { parseISO } from "date-fns";
+import { CHANNEL, type ChannelType } from '@/Interfaces/Wh/MetaChannelId';
+import type { ConversationDto } from '@/Interfaces/Chat/ChatInterfaces';
+import { contactService } from '@/Services/auth/ContactService';
+import { es } from 'date-fns/locale/es';
 
 export const formatTimeNI = (iso?: string) => {
   if (!iso) return "";
@@ -275,3 +279,127 @@ export const formatMinutes = (value?: number | null) => {
     maximumFractionDigits: 1,
   }).format(value ?? 0)} min`;
 };
+
+export const formatDecimal = (value?: number | null) => {
+  return new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value ?? 0);
+};
+
+
+// CHAT
+const MANAGUA_OFFSET = "-06:00"
+
+const hasTimezoneInfo = (value: string) => {
+  return /([zZ]|[+-]\d{2}:?\d{2})$/.test(value)
+}
+
+export const parseApiDateNI = (value?: string | Date | null): Date | null => {
+  if (!value) return null
+
+  if (value instanceof Date) {
+    return value
+  }
+
+  const raw = String(value).trim()
+
+  if (!raw) return null
+
+  // Si la API ya manda Z o -06:00, se respeta.
+  if (hasTimezoneInfo(raw)) {
+    const date = new Date(raw)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+
+  // Si viene sin zona, se asume hora local de Nicaragua.
+  const normalized = raw.includes("T")
+    ? `${raw}${MANAGUA_OFFSET}`
+    : `${raw}T00:00:00${MANAGUA_OFFSET}`
+
+  const date = new Date(normalized)
+
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+
+export const getElapsedMsFromNI = (value?: string | Date | null): number => {
+  const date = parseApiDateNI(value)
+
+  if (!date) return 0
+
+  const diff = Date.now() - date.getTime()
+
+  return diff > 0 ? diff : 0
+}
+
+export const formatTime = (iso?: string) => {
+  if (!iso) return "";
+  const match = iso.match(/T(\d{2}:\d{2})/);
+  return match ? match[1] : "";
+};
+
+
+
+export const formatDuration = (ms: number): string => {
+  const totalMinutes = Math.floor(ms / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+}
+
+
+
+export const getChannel = (channelId?: number | null): ChannelType | null => {
+  if (channelId === CHANNEL.Whatsapp) return CHANNEL.Whatsapp
+  if (channelId === CHANNEL.Messenger) return CHANNEL.Messenger
+  if (channelId === CHANNEL.Instagram) return CHANNEL.Instagram
+
+  return null
+}
+
+export const getConversationIdentifier = async (
+  conversation: ConversationDto
+): Promise<string> => {
+  const res = await contactService.getById(conversation.clientContactId)
+
+  if (res.data.metaChannelId === CHANNEL.Whatsapp) return res.data.waId ?? ""
+  if (res.data.metaChannelId === CHANNEL.Messenger) return res.data.psid ?? ""
+  if (res.data.metaChannelId === CHANNEL.Instagram) return res.data.psid ?? ""
+
+  return ""
+}
+
+export const getConversationDateValue = (conversation: ConversationDto): string => {
+  return (
+    conversation.lastActivity ||
+    conversation.clientLastMessageAt ||
+    conversation.updatedAt ||
+    conversation.createdAt ||
+    ""
+  )
+}
+
+export const parseConversationDate = (value?: string | null): Date | null => {
+  if (!value) return null
+
+  const parsed = parseISO(value)
+
+  if (isValid(parsed)) return parsed
+
+  const fallback = new Date(value)
+
+  return isValid(fallback) ? fallback : null
+}
+
+export const getConversationGroupLabel = (date: Date): string => {
+  if (isToday(date)) return "Hoy"
+  if (isYesterday(date)) return "Ayer"
+
+  return format(date, "EEEE d 'de' MMMM", { locale: es })
+}
+
+export const getConversationGroupKey = (date: Date): string => {
+  return format(date, "yyyy-MM-dd")
+}
