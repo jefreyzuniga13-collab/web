@@ -1,9 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  MdFilterListAlt,
-  MdOutlineRefresh,
-  MdPersonSearch,
-} from "react-icons/md";
+import {MdFilterListAlt, MdOutlineRefresh, MdPersonSearch} from "react-icons/md";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import usePerformanceDashboard from "@/Hooks/Dashboard/usePerformanceDashboard";
 import MetricCardsGrid from "@/Components/Dashboard/MetricCardsGrid";
@@ -117,6 +113,7 @@ const PerformanceDashboardPage: React.FC = () => {
 
     setRecentPage(1);
   };
+
   const handleAgentChange = (value: string) => {
     const agentId = Number(value);
 
@@ -192,21 +189,19 @@ const PerformanceDashboardPage: React.FC = () => {
       </header>
 
       <section className="performance-dashboard__filters">
-
         <div className="performance-filter">
           <label>
             <FaRegCalendarAlt />
             Desde
           </label>
 
-              {/* Click en el icono del calendario no funcoona */}
           <input
             type="date"
             value={formatDateInput(filters.from)}
             onChange={(event) => handleDateChange("from", event.target.value)}
           />
         </div>
-              {/* Click en el icono del calendario no funcoona */}
+
         <div className="performance-filter">
           <label>
             <FaRegCalendarAlt />

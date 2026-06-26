@@ -86,7 +86,8 @@ function validarRespuestaComplete(
 export const powertranzService = {
   async iniciarPago(payload: InitPaymentRequest) {
     try {
-      const res = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", payload,
+      const res = await apiPCG.post<ApiResponse<InitResponse>>("/powertranz/init", 
+        payload,
         {
           params:{
             codReferencia: '01'
@@ -133,7 +134,7 @@ export const powertranzService = {
       const res = await apiPCG.post<ApiResponse<PowertranzProcessPaymentResultDto>>(
         "/powertranz/fpi/complete",
         payload,
-        {
+         {
           params:{
             codReferencia: '01'
           }

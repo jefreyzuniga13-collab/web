@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Search, ChevronDown, ChevronUp, X, Loader2, Download } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, X, Loader2 } from "lucide-react";
 import { ConversationService } from "@/Services/chat/ConversationService";
 import useContact from "@/Hooks/Auth/useContact";
 import bg from "@/assets/img/backgroundchat.png";
 import "@/Styles/Chat/ConversationHistoryModal.css";
-import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
-import { es } from "date-fns/locale/es";
 import CustomLoader from '@/Components/Common/CustomLoader'
+import { formatTime } from "@/Utils/ECommerce/formatters";
+import { dateLabel, renderAttachments } from "@/Utils/Chat/Utils";
 
 interface ConversationHistoryModalProps {
   isOpen: boolean;
@@ -17,93 +17,6 @@ interface ConversationHistoryModalProps {
   conversationStart: string | null;
   initialContactId?: number | null;
 }
-
-const formatTime = (iso?: string) => {
-  if (!iso) return "";
-  const match = iso.match(/T(\d{2}:\d{2})/);
-  return match ? match[1] : "";
-};
-
-const isImage = (mt?: string | null) => !!mt && (mt.startsWith("image/") || mt === "image/webp");
-const isVideo = (mt?: string | null) => !!mt && mt.startsWith("video/");
-const isAudio = (mt?: string | null) => !!mt && mt.startsWith("audio/");
-
-const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-
-const dateLabel = (iso: string) => {
-  const d = parseISO(iso);
-  if (isToday(d)) return "Hoy";
-  if (isYesterday(d)) return "Ayer";
-  const diff = differenceInCalendarDays(new Date(), d);
-  if (diff >= 2 && diff < 7) return cap(format(d, "EEEE", { locale: es }));
-  return format(d, "d 'de' MMMM 'de' yyyy", { locale: es });
-};
-
-const renderAttachments = (message: any) => {
-  const a = message?.attachments?.[0];
-  if (!a) return null;
-
-  const href = a.mediaUrl as string;
-  const name = (a.fileName as string) || "archivo";
-
-  if (isImage(a.mimeType)) {
-    return (
-      <div className="chm-attachment chm-attachment--image">
-        <a href={href} target="_blank" rel="noopener noreferrer" className="chm-image-link">
-          <img src={href} alt={name} className="chm-image" loading="lazy" />
-        </a>
-        <div className="chm-attachment-meta">
-          <a href={href} download={name} className="chm-download">
-            <Download size={14} />
-            <span>{name}</span>
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  if (isVideo(a.mimeType)) {
-    return (
-      <div className="chm-attachment chm-attachment--video">
-        <video controls className="chm-video" src={href} />
-        <div className="chm-attachment-meta">
-          <a href={href} download={name} className="chm-download">
-            <Download size={14} />
-            <span>{name}</span>
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAudio(a.mimeType)) {
-    return (
-      <div className="chm-attachment chm-attachment--audio">
-        <audio controls className="chm-audio" src={href} />
-        <div className="chm-attachment-meta">
-          <a href={href} download={name} className="chm-download">
-            <Download size={14} />
-            <span>{name}</span>
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="chm-attachment chm-attachment--doc">
-      <a href={href} target="_blank" rel="noopener noreferrer" className="chm-doc-link">
-        <span className="chm-doc-name">{name}</span>
-      </a>
-      <div className="chm-attachment-meta">
-        <a href={href} download={name} className="chm-download">
-          <Download size={14} />
-          <span>Descargar</span>
-        </a>
-      </div>
-    </div>
-  );
-};
 
 const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
   isOpen,

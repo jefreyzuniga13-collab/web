@@ -252,7 +252,6 @@ const SupportPage: React.FC = () => {
             <IoMdHourglass fontSize={12} className="main-license__icon" />
 
             <span className="main-license__text">
-              {/* {getLicenseMessage(licenseExpireAt)} */}
               {licenseWarningMessage}
             </span>
           </div>
@@ -334,15 +333,15 @@ const SupportPage: React.FC = () => {
         </header>
 
         <ChatWindow
-        key={convId ?? "empty-chat"}
-        conversationId={convId ?? undefined}
-        userId={userId}
-        conversationStatus={activeConversation?.status}
-        selectedParam={selectedParam}
-        highlightTerm={searchConversation}
-        validFrom={convHook.form.validFrom}
-        validTo={convHook.form.validTo}
-      />
+          key={convId ?? "empty-chat"}
+          conversationId={convId ?? undefined}
+          userId={userId}
+          conversationStatus={activeConversation?.status}
+          selectedParam={selectedParam}
+          highlightTerm={searchConversation}
+          validFrom={convHook.form.validFrom}
+          validTo={convHook.form.validTo}
+        />
       </main>
 
       <aside className="detail-aside">
@@ -400,6 +399,7 @@ const SupportPage: React.FC = () => {
             saveOrder(newOrder);
             setOrderModalVisible(false);
           }}
+         
           onClose={() => setOrderModalVisible(false)}
           form={convHook.form}
           handleDate={convHook.handleDate}

@@ -83,12 +83,6 @@ export const InboxList: React.FC<Props> = ({
     return Array.from(groups.values())
   }, [conversations])
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => setNow(Date.now()), 1000)
-
-  //   return () => clearInterval(interval)
-  // }, [])
-
   useEffect(() => {
     const root = listRef.current
     const loader = loaderRef.current
@@ -126,16 +120,6 @@ export const InboxList: React.FC<Props> = ({
       window.removeEventListener("scroll", closeMenu, true)
     }
   }, [])
-
-  // const formatTime = (iso?: string) => {
-  //   if (!iso) return ""
-
-  //   try {
-  //     return format(new Date(iso), "HH:mm")
-  //   } catch {
-  //     return ""
-  //   }
-  // }
 
   const clearPressTimer = () => {
     if (pressTimerRef.current) {

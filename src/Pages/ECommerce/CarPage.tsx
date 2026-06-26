@@ -211,7 +211,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                       </td>
 
                       <td className="cart-table__cell cart-table__cell--price">
-                        {/* {formatMoney(product.precioV)} */}
                         {product.precioV > 0 ? " C$ " + formatearDecimales(product.precioV) : ""}
                       </td>
 
@@ -250,7 +249,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--price cart-table__cell--option">
-                          {/* {formatMoney(option.precioV)} */}
+  
                           {option.precioV > 0 ? " C$ " + formatearDecimales(option.precioV) : "Incluido"}
                         </td>
 
@@ -273,6 +272,11 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
             </table>
           </section>
 
+
+
+          {/* LLega a mostrar el 0.00, todo cuando no deberia por eso se estaba revisando el logcart
+          desde el carpcgtab
+          */}
           <aside className="cart-page__totals" aria-label="Total carrito">
             <h2 className="cart-totals__title">Total Carrito</h2>
 

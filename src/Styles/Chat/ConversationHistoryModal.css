@@ -16,10 +16,12 @@
   box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
-  width: 100%;
+  max-height: 100vh;
+  width: 100vw;
   overflow: hidden;
   animation: chmSlideIn var(--transition-normal) var(--transition-ease);
+  min-width: 90vw;
+  min-height: 90vh;
 }
 
 .chm-lg { max-width: 90rem; }
@@ -37,7 +39,7 @@
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--text-default);
+  color: var(--color-primary);
 }
 
 .chm-close {
@@ -80,6 +82,8 @@
   font-weight: var(--font-weight-semibold);
   color: var(--text-default);
   border-bottom: 0.1rem solid var(--border-default);
+  font-size: var(--font-size-lg);
+  text-align: left;
 }
 
 .chm-contacts-list {
@@ -88,6 +92,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  max-height: 500px;
 }
 
 .chm-contact-item {
@@ -120,14 +125,14 @@
 
 .chm-contact-name {
   color: var(--text-default);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   line-height: 1.2;
 }
 
 .chm-contact-meta {
   color: var(--text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   margin-top: 0.15rem;
 }
 
@@ -178,7 +183,7 @@
   padding: var(--space-sm) var(--space-sm) var(--space-sm) 2.5rem;
   border: 0.1rem solid var(--border-default);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   background-color: var(--input-bg);
   color: var(--text-default);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -197,7 +202,7 @@
 }
 
 .chm-search-count {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text-muted);
 }
 
@@ -235,7 +240,7 @@
   padding: var(--space-sm) var(--space-sm);
   border: 0.1rem solid var(--border-default);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   background-color: var(--input-bg);
   color: var(--text-default);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -311,7 +316,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--text-muted);
 }
@@ -319,12 +324,12 @@
 .chm-meta { display: flex; flex-direction: column; gap: 0.125rem; }
 
 .chm-sender {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--text-default);
 }
 
-.chm-time { font-size: var(--font-size-xs); color: var(--text-muted); }
+.chm-time { font-size: var(--font-size-sm); color: var(--text-muted); }
 
 .chm-item-body {
   grid-column: 2 / span 1;
@@ -348,7 +353,7 @@
 }
 
 .chm-text {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -358,7 +363,7 @@
 .chm-text--muted {
   color: var(--text-muted);
   font-style: italic;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .chm-attachments {
@@ -387,7 +392,7 @@
   display: inline-flex;
   gap: 0.4rem;
   align-items: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-primary);
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
@@ -415,7 +420,7 @@
   color: var(--text-default);
 }
 .chm-doc-name {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -427,7 +432,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .chm-contacts-loading,
@@ -435,13 +440,13 @@
 .chm-contacts-empty {
   padding: var(--space-md) var(--space-lg);
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .chm-end {
   text-align: center;
   color: var(--text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   padding: var(--space-sm) 0;
 }
 
@@ -461,7 +466,7 @@
   margin-bottom: var(--space-sm);
 }
 .chat-window__date-text {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-sm);
   background: var(--bg-tertiary);
@@ -526,12 +531,12 @@
 
 @media (max-width: 30rem) {
   .chm-header { padding: var(--space-sm); }
-  .chm-title { font-size: var(--font-size-base); }
-  .chm-input { font-size: var(--font-size-xs); }
+  .chm-title { font-size: var(--font-size-lg); }
+  .chm-input { font-size: var(--font-size-sm); }
   .chm-messages { padding: var(--space-sm); }
   .chm-box { grid-template-columns: 36px 1fr; width: 100%; }
   .chm-avatar { width: 2.4rem; height: 2.4rem; font-size: 1.1rem; }
-  .chm-text { font-size: var(--font-size-xs); }
+  .chm-text { font-size: var(--font-size-sm); }
   .chm-icon-btn { width: 2.8rem; height: 2.8rem; }
 }
 

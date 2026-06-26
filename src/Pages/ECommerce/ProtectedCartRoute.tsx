@@ -21,6 +21,7 @@ const ProtectedCartRoute = () => {
       }
 
       try {
+        //EL SERVICIO SOLO SE LLAMA DESDE AQUI NODESDE  OTRA PARTE
         const { data } = await CartService.resolveToken(token)
 
         const resolvedPayload = data;

@@ -1,3 +1,5 @@
+import type { CarDto, InvoiceTotalsDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+
 export interface LogCartResponseDto {
   id: number
   orderId: number
@@ -92,35 +94,6 @@ export interface LogCartFormValues {
    codPrecio: string
 }
 
-
-// Actualizar
-// export interface LogCartUpdateRequestDto {
-//   orderId: number
-//   contactId: number
-//   userId: number
-//   conversationId: number
-//   statusId: number
-//   branch?: string | null
-//   branchName?: string | null
-//   serie?: string;
-//   addressId?: number | null
-//   transCost?: number | null
-//   wherehouse?: string | null
-//   wherehouseCode?: string | null
-//   totalEnPantalla?: number | null
-//   descuentoPantalla?: number | null
-//   ivaPantalla?: number | null
-//   exonerado?: string | null
-//   propina?: number | null
-//   subTotal?: number | null
-//   observacion?: string | null
-//   retiraSucursal?: "S" | "N" | null
-//   destinationBranchCode?: string
-//   destinationWherehouseCode?: string
-// }
-
-
-
 export type LogCartUpdateRequestDto = {
   orderId: number
   contactId: number
@@ -156,3 +129,34 @@ export type Payload = {
   contactId: number;
   userId: number;
 };
+
+
+
+// CartPCGPANEL:
+export type DraftState = {
+  addDescription: string
+  retiraSucursal: "S" | "N"
+  transCost: number
+  selectedAddressId: number | null
+  observation: string
+}
+
+export type CartDetailView = {
+  cart: CarDto
+  detail: ListDetalleCarrito
+}
+
+export type AddressPayload = {
+  addressId: number | null
+  retiraSucursal: "S" | "N"
+  transCost: number
+}
+
+export type BuildLogUpdateParams = {
+  log: LogCartResponseDto
+  contactId: number
+  conversationId: number
+  addressPayload: AddressPayload
+  totals?: InvoiceTotalsDto | null
+  observation: string
+}

@@ -160,7 +160,7 @@ const CheckoutPage: React.FC = () => {
           payment: {
             redirectData: response.data.redirectData,
             spiToken: response.data.spiToken,
-            orderId: response.data.orderId,
+            orderId: "CRM" + response.data.orderId,
             mode: "hosted"
           }
         }
@@ -197,7 +197,7 @@ const CheckoutPage: React.FC = () => {
             payment: {
               redirectData,
               spiToken: data.spiToken,
-              orderId: data.orderIdentifier,
+              orderId:  "CRM" + data.orderIdentifier,
               mode: "token-3ds"
             }
           }
@@ -208,7 +208,7 @@ const CheckoutPage: React.FC = () => {
       if (threeDsCompleted) {
         const completeRes = await completeFpiAsync({
           spiToken: data.spiToken ?? "",
-          orderId: data.orderIdentifier ?? ""
+          orderId:  "CRM" + data.orderIdentifier
         });
 
         const payment = completeRes.data.payment;
@@ -739,93 +739,101 @@ const CheckoutPage: React.FC = () => {
 
 
   //Detalle de pago
-  const buildPagoGenerico = (
-  invoiceReq: FacturaTempo,
-  codSucursalFactura: string
-) => {
-  const moneda = safeStr(invoiceReq.moneda);
-  const tasaCambio = Number(invoiceReq.tasaCambio);
+ const buildPagoGenerico = (
+    invoiceReq: FacturaTempo,
+    codSucursalFactura: string
+  ): PagoGenerico => {
+    const moneda = safeStr(invoiceReq.moneda) || "1";
+    const tasaCambio = Number(invoiceReq.tasaCambio ?? 1);
 
-  const isCash = method === "cash";
-  const isTransfer = method === "transfer";
-  // const isGateway = method === "card";
-  const isManual = method === "manualCard";
+    const isCash = method === "cash";
+    const isTransfer = method === "transfer";
+    const isGateway = method === "card";
+    const isManual = method === "manualCard";
 
-  const selected = divisaSelected;
-  const total = getTotalFactura();
+    const selected = divisaSelected;
+    const total = getTotalFactura();
 
-  const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
-  const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
-  const tipo = isCash ? "" : safeStr(selected?.tipo);
-  const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
-  const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
+    const codPago = isCash ? safeStr(selectedCurrency?.codPago) : safeStr(selected?.codigo);
+    const descripcionPago = isCash ? safeStr(selectedCurrency?.descripcion_Pago) : safeStr(selected?.nombre);
+    const tipo = isCash ? "" : safeStr(selected?.tipo);
+    const banco = isCash ? safeStr(selectedCurrency?.codigo_Banco) : safeStr(selected?.banco);
+    const codPagoExterno = isCash ? safeStr(selectedCurrency?.codExterno) : safeStr(selected?.codigoExterno);
 
-  const monto = total;
-  let referencia = "";
-  let numeroTransaccion = "";
-  let fechaOVence = "";
+    let monto = total;
+    let referencia = "";
+    let numeroTransaccion = "";
+    let fechaOVence = "";
 
-  if (isTransfer) {
-    referencia = safeStr(transferRef);
-    numeroTransaccion = safeStr(transferRef);
-    fechaOVence = new Date().toISOString().slice(0, 10);
-  }
+    if (isCash) {
+      monto = total;
+    }
 
-  if (isManual) {
-    referencia = safeStr(manualCardData.autorizacion);
-    numeroTransaccion = safeStr(manualCardData.autorizacion);
-    fechaOVence = safeStr(manualCardData.fechaVence);
-  }
+    if (isTransfer) {
+      monto = total;
+      referencia = safeStr(transferRef);
+      numeroTransaccion = safeStr(transferRef);
+      fechaOVence = new Date().toISOString().slice(0, 10);
+    }
 
-  const concepto = isCash
-    ? "Efectivo"
-    : isTransfer
-      ? descripcionPago || "Transferencia"
-      : isManual
-        ? descripcionPago || "Tarjeta manual"
-        : descripcionPago || "Tarjeta";
+    if (isGateway) {
+      monto = total;
+    }
 
-  const cleanCashAmount = Number(cashAmount || 0);
+    if (isManual) {
+      monto = total;
+      referencia = safeStr(manualCardData.autorizacion);
+      numeroTransaccion = safeStr(manualCardData.autorizacion);
+      fechaOVence = safeStr(manualCardData.fechaVence);
+    }
 
-  return {
-    numPago: "1",
-    concepto,
-    codPago: codPago || "",
-    tipoPago: isCash ? safeStr(selectedCurrency?.codPago) : tipo,
-    codPagoExterno: codPagoExterno || "",
-    banco: banco || "",
-    aplicaCambio: "True",
-    monto: isCash ? cleanCashAmount : monto,
-    moneda,
-    montoA: isCash ? cleanCashAmount : monto,
-    cambio: isCash ? Number(cleanCashAmount - monto) : 0,
-    tasaCambio: Number(tasaCambio),
-    Fecha_o_Vence: fechaOVence,
-    Dll: "",
-    Numero: "",
-    referencia,
-    numeroTransaccion,
-    cuentaContable: "",
-    ultDigito: isManual ? safeStr(manualCardData.ultDigito) : "",
-    tarjeta: isManual ? safeStr(manualCardData.tarjeta) : "",
-    tarjetahabiente: isManual ? safeStr(manualCardData.tarjetahabiente) : "",
-    autorizacion: isManual ? safeStr(manualCardData.autorizacion) : "",
-    termId: isManual ? safeStr(manualCardData.termId) : "",
-    afiliado: isManual ? safeStr(manualCardData.afiliado) : "",
-    CodStrCadsaccion: "",
-    Codtransaccion: "",
-    CuentaHabiente: "",
-    montoP: round2(total),
-    montoS: round2(total / 36.6243),
-    indice: "0",
-    codClienteCrd: "00000",
-    facturaPinpad: "",
-    codEmpresa: safeStr(invoiceReq.codEmpresa),
-    codSucursal: codSucursalFactura,
-    montoFirma: "0",
-    sobrante: "0"
+    const concepto = isCash
+      ? "Efectivo"
+      : isTransfer
+        ? descripcionPago || "Transferencia"
+        : isManual
+          ? descripcionPago || "Tarjeta manual"
+          : descripcionPago || "Tarjeta";
+
+    return {
+      numPago: "1",
+      concepto,
+      codPago,
+      tipoPago: isCash ? "" : tipo,
+      aplicaCambio: "True",
+      codPagoExterno: codPagoExterno || (isCash ? "1" : ""),
+      banco: banco || (isCash ? "00" : ""),
+      monto: isCash ? Number(cashAmount) : monto,
+      moneda,
+      montoA: isCash ? Number(cashAmount) : monto,
+      cambio: isCash ? Number(cashAmount - monto) : 0,
+      tasaCambio: Number(tasaCambio),
+      Fecha_o_Vence: fechaOVence,
+      Dll: "",
+      Numero: "",
+      referencia,
+      numeroTransaccion,
+      cuentaContable: "",
+      ultDigito: isManual ? safeStr(manualCardData.ultDigito) : "",
+      tarjeta: isManual ? safeStr(manualCardData.tarjeta) : "",
+      tarjetahabiente: isManual ? safeStr(manualCardData.tarjetahabiente) : "",
+      autorizacion: isManual ? safeStr(manualCardData.autorizacion) : "",
+      termId: isManual ? safeStr(manualCardData.termId) : "",
+      afiliado: isManual ? safeStr(manualCardData.afiliado) : "",
+      CodStrCadsaccion: "",
+      Codtransaccion: "",
+      CuentaHabiente: "",
+      montoP: round2(total),
+      montoS: round2(total / 36.6243),
+      indice: "0",
+      codClienteCrd: "00000",
+      facturaPinpad: "",
+      codEmpresa: safeStr(invoiceReq.codEmpresa),
+      codSucursal: codSucursalFactura,
+      montoFirma: "0",
+      sobrante: "0"
+    };
   };
-};
 
   const handlePayNow = async () => {
     const isProcessingPayment = iniciarPagoMutation.isPending || payWithTokenMutation.isPending;

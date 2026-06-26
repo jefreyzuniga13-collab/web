@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  // getConversation,
-  closeConversation,
-  getConversation,
-  SetHaltedConversation
-} from "@/Services/chat/ConversationService";
+import {closeConversation, getConversation, SetHaltedConversation} from "@/Services/chat/ConversationService";
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
 import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
@@ -95,7 +90,6 @@ export function useSupportPage() {
       setConversation(null)
       return
     }
-
       setConversation(null)
 
       getConversation(convId)

@@ -387,6 +387,7 @@ async getRatingConversation(
 }
 
   async getConversationsByRole(
+    agentId: number,
     from?: Date,
     to?: Date,
     searchConversation?: string,
@@ -397,6 +398,7 @@ async getRatingConversation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const params: Record<string, any> = { pageNumber: page, pageSize };
     if (from) params.from = from.toISOString();
+    if (agentId) params.from = agentId;
     if (to) params.to = to.toISOString();
     if (searchConversation != '') params.searchConversation = searchConversation;
     if (state && state !== 'all') params.state = toPascal(state);

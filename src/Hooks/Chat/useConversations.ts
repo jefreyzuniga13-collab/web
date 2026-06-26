@@ -23,6 +23,7 @@ export type Filter =
 export interface FormInterface {
   validFrom: Date | null
   validTo: Date | null
+  agentId: number
 }
 
 export interface UseConversationsResult {
@@ -47,8 +48,8 @@ const initialRange = (): FormInterface => {
   const t = localStorage.getItem("convTo")
 
   return f && t
-    ? { validFrom: new Date(f), validTo: new Date(t) }
-    : { validFrom: null, validTo: null }
+    ? { validFrom: new Date(f), validTo: new Date(t), agentId:0 }
+    : { validFrom: null, validTo: null, agentId:0 }
 }
 
 const safeTime = (value?: string | null): number => {
@@ -389,6 +390,7 @@ export function useConversations(
     setAppliedRange({
       validFrom: form.validFrom ? new Date(form.validFrom) : null,
       validTo: form.validTo ? new Date(form.validTo) : null,
+      agentId: form.agentId
     })
 
     setConversations([])
@@ -396,8 +398,8 @@ export function useConversations(
   }, [form])
 
   const clearFilter = useCallback(() => {
-    setForm({ validFrom: null, validTo: null })
-    setAppliedRange({ validFrom: null, validTo: null })
+    setForm({ validFrom: null, validTo: null, agentId:0 })
+    setAppliedRange({ validFrom: null, validTo: null, agentId: 0 })
     setConversations([])
     setPage(1)
   }, [])
@@ -416,6 +418,7 @@ export function useConversations(
     setError(undefined)
 
     ConversationService.getConversationsByRole(
+      appliedRange.agentId,
       appliedRange.validFrom ?? undefined,
       appliedRange.validTo ?? undefined,
       searchConversation,
@@ -471,16 +474,7 @@ export function useConversations(
     return () => {
       cancelled = true
     }
-  }, [
-    appliedRange.validFrom,
-    appliedRange.validTo,
-    dedupeByClientKeepNewest,
-    filter,
-    normalizeConversation,
-    page,
-    pageSize,
-    searchConversation,
-  ])
+  }, [appliedRange.agentId, appliedRange.validFrom, appliedRange.validTo, dedupeByClientKeepNewest, filter, normalizeConversation, page, pageSize, searchConversation])
 
   useEffect(() => {
     if (isAdmin) onConversationCreated(handleNewConvo)
