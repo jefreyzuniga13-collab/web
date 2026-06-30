@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import { AxiosHeaders } from "axios";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 import { store } from "@/Context";
 
 const getStorageValue = (key: string): string => {
@@ -88,22 +88,22 @@ export function setupEmpresaInterceptor(instance: AxiosInstance) {
   });
 }
 
-export function setupNetworkInterceptor(instance: AxiosInstance) {
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      const code = error?.code ?? "";
-      const hasResponse = !!error?.response;
-      const isTimeout = code === "ECONNABORTED";
-      const isNetwork = !hasResponse && !isTimeout;
+// export function setupNetworkInterceptor(instance: AxiosInstance) {
+//   instance.interceptors.response.use(
+//     (response) => response,
+//     (error) => {
+//       const code = error?.code ?? "";
+//       const hasResponse = !!error?.response;
+//       const isTimeout = code === "ECONNABORTED";
+//       const isNetwork = !hasResponse && !isTimeout;
 
-      if (isTimeout) {
-        toast.error("La operación tardó demasiado. Intenta de nuevo.");
-      } else if (isNetwork) {
-        toast.error("No se pudo conectar al servidor. Verifica tu conexión.");
-      }
+//       // if (isTimeout) {
+//       //   toast.error("La operación tardó demasiado. Intenta de nuevo.");
+//       // } else if (isNetwork) {
+//       //   toast.error("No se pudo conectar al servidor. Verifica tu conexión.");
+//       // }
 
-      return Promise.reject(error);
-    }
-  );
-}
+//       return Promise.reject(error);
+//     }
+//   );
+// }

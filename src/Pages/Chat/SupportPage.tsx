@@ -9,7 +9,7 @@ import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter";
 import Input from "@/Components/Common/Input";
 import DetailPanel from "@/Components/Chat/DetailPanel";
 import { Sticker } from "lucide-react";
-import { useConversations } from "@/Hooks/Chat/useConversations"; 
+import { useConversations, type Filter } from "@/Hooks/Chat/useConversations";
 import TicketModal from "@/Components/Crm/TicketModal";
 import useContact from "@/Hooks/Auth/useContact";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
@@ -22,9 +22,9 @@ import { MdContacts } from "react-icons/md";
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
-import { useCompanySystemParamValue } from '@/Hooks/Crm/useCompanySystemParamValue'
-import {LICENSE_WARNING_MESSAGE_PARAM_ID} from '@/Constants/systemParams'
-import {selectCompanySistema} from "@/Context/Slices/Auth/authSlice"
+import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamValue";
+import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams";
+import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice";
 import { isValidSaleCompany } from "@/Utils/isValidSaleCompany";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
@@ -32,11 +32,15 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [ticketOpen, setTicketOpen] = useState(false);
-  
+
   const dispatch = useAppDispatch();
+
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth
   );
+
+  const companySistema = useSelector(selectCompanySistema);
+
   const { fetchById, selectedData: contact } = useContact();
   const { fetchByContactId } = useLogCart();
 
@@ -65,17 +69,16 @@ const SupportPage: React.FC = () => {
     canAssign,
     showCompanyModal,
     setShowCompanyModal,
+    agentOptions,
+    loadingAgents,
   } = useSupportPage();
 
-  const {
-  value: licenseWarningMessageParam
-} = useCompanySystemParamValue(
-  LICENSE_WARNING_MESSAGE_PARAM_ID,
-  showLicenseWarning
-)
-  const companySistema = useSelector(selectCompanySistema)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const convHook = useConversations(filter as any, searchConversation);
+  const { value: licenseWarningMessageParam } = useCompanySystemParamValue(
+    LICENSE_WARNING_MESSAGE_PARAM_ID,
+    showLicenseWarning
+  );
+
+  const convHook = useConversations(filter as Filter, searchConversation);
 
   const activeConversation = useMemo(() => {
     if (!convId) return null;
@@ -90,6 +93,10 @@ const SupportPage: React.FC = () => {
   const isClosed =
     activeConversation?.status === "Closed" ||
     activeConversation?.status === "Incomplete";
+
+  const licenseWarningMessage = useMemo(() => {
+    return getLicenseMessage(licenseExpireAt, licenseWarningMessageParam);
+  }, [licenseExpireAt, licenseWarningMessageParam]);
 
   useEffect(() => {
     if (!activeConversation?.clientContactId) return;
@@ -107,30 +114,30 @@ const SupportPage: React.FC = () => {
     }
   }, [convId, convHook.conversations, convHook.loading, setConvId]);
 
-  useEffect(() => {
-    const handleEscapePress = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+useEffect(() => {
+  const handleEscapePress = (event: KeyboardEvent) => {
+    if (event.key !== "Escape") return;
 
-      setContactDetailToggle(false);
-      setTicketOpen(false);
-      setDetailToggle(false);
+    setContactDetailToggle(false);
+    setTicketOpen(false);
+    setDetailToggle(false);
+
+    if (convId) {
       setConvId(null);
-      setSearchConversation("");
-      convHook.clearFilter();
-    };
+    }
+  };
 
-    window.addEventListener("keydown", handleEscapePress);
+  window.addEventListener("keydown", handleEscapePress);
 
-    return () => {
-      window.removeEventListener("keydown", handleEscapePress);
-    };
-  }, [
-    convHook,
-    setContactDetailToggle,
-    setConvId,
-    setDetailToggle,
-  ]);
-
+  return () => {
+    window.removeEventListener("keydown", handleEscapePress);
+  };
+}, [
+  convId,
+  setContactDetailToggle,
+  setConvId,
+  setDetailToggle,
+]);
   useEffect(() => {
     if (!convId && isValidSaleCompany(companySistema)) {
       void dispatch(
@@ -188,11 +195,7 @@ const SupportPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [convId, contact?.id, dispatch, fetchByContactId]);
-
-  const licenseWarningMessage = useMemo(() => {
-  return getLicenseMessage(licenseExpireAt, licenseWarningMessageParam)
-}, [licenseExpireAt, licenseWarningMessageParam])
+  }, [convId, contact?.id, dispatch, fetchByContactId, companySistema]);
 
   return (
     <div className={`support-layout ${detailToggle && convId ? "details-open" : ""}`}>
@@ -216,7 +219,7 @@ const SupportPage: React.FC = () => {
               <button
                 className="sort-button"
                 onClick={() => setOrderModalVisible(true)}
-                title="Ordenar filtros"
+                title="Filtrar conversaciones"
                 type="button"
               >
                 <FaFilter className="sort-button-icon" />
@@ -225,25 +228,31 @@ const SupportPage: React.FC = () => {
           </div>
 
           <div className="inbox-title-container__filter">
-            <Input
+           <Input
               className="inbox-title-container__filter__input"
               value={searchConversation}
               onChange={(e) => setSearchConversation(e.target.value)}
-              placeholder="Filtrar Conversaciones"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }
+              }}
+              placeholder="Filtrar conversaciones"
             />
           </div>
         </div>
 
-        <InboxList
-          selectedId={convId ?? 0}
-          onSelect={setConvId}
-          conversations={convHook.conversations}
-          loading={convHook.loading}
-          error={convHook.error}
-          page={convHook.page}
-          pagination={convHook.pagination}
-          onPageChange={convHook.onPageChange}
-        />
+      <InboxList
+        selectedId={convId ?? 0}
+        onSelect={setConvId}
+        conversations={convHook.conversations}
+        loading={convHook.loading}
+        error={convHook.error ?? undefined}
+        page={convHook.page}
+        pagination={convHook.pagination}
+        onPageChange={convHook.onPageChange}
+      />
       </aside>
 
       <main className="main-content">
@@ -259,7 +268,7 @@ const SupportPage: React.FC = () => {
 
         <header className="main-header">
           <h2 className="main-title">
-            {convId != null && activeConversation?.systemDefinedCompanyName != null ? (
+            {convId !== null && activeConversation?.systemDefinedCompanyName != null ? (
               <span
                 style={{ marginLeft: "5px", marginRight: "5px" }}
                 className="main_header-text"
@@ -271,7 +280,7 @@ const SupportPage: React.FC = () => {
               ""
             )}
 
-            {convId != null && activeConversation?.clientContactName != null ? (
+            {convId !== null && activeConversation?.clientContactName != null ? (
               <span
                 style={{ marginLeft: "5px", marginRight: "5px" }}
                 className="main_header-text"
@@ -283,7 +292,7 @@ const SupportPage: React.FC = () => {
               ""
             )}
 
-            {convId != null && activeConversation?.contactNumber != null ? (
+            {convId !== null && activeConversation?.contactNumber != null ? (
               <span
                 style={{ marginLeft: "5px", marginRight: "5px" }}
                 className="main_header-text"
@@ -339,17 +348,17 @@ const SupportPage: React.FC = () => {
           conversationStatus={activeConversation?.status}
           selectedParam={selectedParam}
           highlightTerm={searchConversation}
-          validFrom={convHook.form.validFrom}
-          validTo={convHook.form.validTo}
+          validFrom={convHook.appliedRange.validFrom}
+          validTo={convHook.appliedRange.validTo}
         />
       </main>
 
       <aside className="detail-aside">
-        {detailToggle && convId && isValidSaleCompany(companySistema) &&(
+        {detailToggle && convId && isValidSaleCompany(companySistema) && (
           <DetailPanel
             contactId={activeConversation?.clientContactId}
             selectedParam={selectedParam}
-            conversationId={convId ?? 0}
+            conversationId={convId}
             metaChannel={
               activeConversation?.metaChannelId === CHANNEL.Whatsapp
                 ? "WhatsApp"
@@ -399,15 +408,17 @@ const SupportPage: React.FC = () => {
             saveOrder(newOrder);
             setOrderModalVisible(false);
           }}
-         
           onClose={() => setOrderModalVisible(false)}
           form={convHook.form}
           handleDate={convHook.handleDate}
+          handleAgentChange={convHook.handleAgentChange}
           applyDateFilter={convHook.applyDateFilter}
           clearFilter={convHook.clearFilter}
           handleOptionChange={handleOptionChange}
           sortedOptions={sortedOptions}
           filter={filter}
+          agentOptions={agentOptions}
+          loadingAgents={loadingAgents}
         />
       )}
 

@@ -9,8 +9,9 @@ import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSectio
 import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection";
 import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection";
 import { safeStr } from "@/Utils/ECommerce/formatters";
-import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 import { formatearDecimales } from "@/Utils/calcularIVA";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 
 export type CheckoutPaymentMethod = PaymentMethod | "manualCard";
 
@@ -273,6 +274,13 @@ export const PaymentMethodComponent = ({
             />
           )}
 
+
+          {/* Multipago
+          
+            - Opcion de seleccionar mas de 1 forma de pago, actualmente solo esta para fija, transferencia, efectivo o tarjetas...
+
+          */}
+
           <div className="checkout-actionBtn">
             <button
               type="button"
@@ -288,7 +296,7 @@ export const PaymentMethodComponent = ({
               onClick={handlePayNow}
               disabled={!canPay}
             >
-              {payNowDisabled ? "Procesando..." : "Pagar ahora"}
+              {payNowDisabled ? <AiOutlineLoading3Quarters /> : "Pagar ahora"}
             </button>
           </div>
         </div>

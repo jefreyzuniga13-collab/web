@@ -43,7 +43,9 @@ export const LocationSection = ({
   return (
     <div className="checkout-section checkout-section__location">
       <div className="checkout-location__container">
-        <h2 className="checkout-section__title">Selecciona la ubicación y tus datos</h2>
+        <h2 className="checkout-section__title">
+          Marca tu ubicación en el mapa o selecciona una guardada
+        </h2>
 
         {isPickup && (
               <div className="checkout-pickup-info">
@@ -129,14 +131,6 @@ export const LocationSection = ({
           </div>
         ) : null}
 
-        {locationMode === "existing" && selectedAddress ? (
-          <div className="checkout-current-location">
-            <p>
-              <strong>Dirección seleccionada:</strong>
-            </p>
-            <p>{selectedAddress.descripcion}</p>
-          </div>
-        ) : null}
 
         {/* Lista de direcciones dispponible, para ahorra al usuario el que tenga que slecccionar */}
         {locationMode === "new" && !isPickup ? (

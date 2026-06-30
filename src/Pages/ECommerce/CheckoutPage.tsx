@@ -1115,7 +1115,9 @@ const CheckoutPage: React.FC = () => {
   return (
     <section className="checkout-page">
       <div className="checkout-shell">
-        <h1 className="checkout-page__title">Checkout</h1>
+        <div className="checkout-page__title">
+          <h1 className="checkout-page__title__value">Checkout</h1>
+        </div>
 
         <div className="checkout-main">
           <div className="checkout-left">

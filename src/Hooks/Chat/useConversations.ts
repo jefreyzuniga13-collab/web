@@ -20,6 +20,8 @@ export type Filter =
   | "incomplete"
   | "paused"
 
+export type DateField = "validFrom" | "validTo"
+
 export interface FormInterface {
   validFrom: Date | null
   validTo: Date | null
@@ -29,9 +31,11 @@ export interface FormInterface {
 export interface UseConversationsResult {
   conversations: ConversationDto[]
   loading: boolean
-  error?: string
+  error: string | null
   form: FormInterface
-  handleDate: (field: keyof FormInterface, d: Date | null) => void
+  appliedRange: FormInterface
+  handleDate: (field: DateField, date: Date | null) => void
+  handleAgentChange: (agentId: number) => void
   applyDateFilter: () => void
   clearFilter: () => void
   page: number
@@ -42,17 +46,52 @@ export interface UseConversationsResult {
 }
 
 const DEFAULT_PAGE_SIZE = 10
+const STORAGE_FROM = "convFrom"
+const STORAGE_TO = "convTo"
+const STORAGE_AGENT = "convAgentId"
 
-const initialRange = (): FormInterface => {
-  const f = localStorage.getItem("convFrom")
-  const t = localStorage.getItem("convTo")
+const readStoredDate = (key: string): Date | null => {
+  const value = localStorage.getItem(key)
 
-  return f && t
-    ? { validFrom: new Date(f), validTo: new Date(t), agentId:0 }
-    : { validFrom: null, validTo: null, agentId:0 }
+  if (!value) return null
+
+  const date = new Date(value)
+
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
-const safeTime = (value?: string | null): number => {
+const readStoredAgentId = (): number => {
+  const value = Number(localStorage.getItem(STORAGE_AGENT) ?? 0)
+
+  return Number.isFinite(value) ? value : 0
+}
+
+const initialRange = (): FormInterface => {
+  return {
+    validFrom: readStoredDate(STORAGE_FROM),
+    validTo: readStoredDate(STORAGE_TO),
+    agentId: readStoredAgentId(),
+  }
+}
+
+const saveRange = (range: FormInterface) => {
+  // Persiste filtros aplicados.
+  if (range.validFrom) {
+    localStorage.setItem(STORAGE_FROM, range.validFrom.toISOString())
+  } else {
+    localStorage.removeItem(STORAGE_FROM)
+  }
+
+  if (range.validTo) {
+    localStorage.setItem(STORAGE_TO, range.validTo.toISOString())
+  } else {
+    localStorage.removeItem(STORAGE_TO)
+  }
+
+  localStorage.setItem(STORAGE_AGENT, String(range.agentId))
+}
+
+const safeTime = (value: string | null): number => {
   if (!value) return 0
 
   const ts = new Date(value).getTime()
@@ -60,8 +99,8 @@ const safeTime = (value?: string | null): number => {
   return Number.isNaN(ts) ? 0 : ts
 }
 
-const toApiState = (filter: Filter) => {
-  return filter === "all" ? undefined : filter
+const toApiState = (filter: Filter): string => {
+  return filter === "all" ? "" : filter
 }
 
 const getFilterStatus = (filter: Filter): ConversationDto["status"] | null => {
@@ -96,9 +135,10 @@ export function useConversations(
   const [appliedRange, setAppliedRange] = useState<FormInterface>(initialRange())
   const [conversations, setConversations] = useState<ConversationDto[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages: 0,
@@ -119,11 +159,11 @@ export function useConversations(
 
   const activityTs = useCallback((conversation: ConversationDto) => {
     return Math.max(
-      safeTime(conversation.lastActivity),
-      safeTime(conversation.updatedAt),
-      safeTime(conversation.clientLastMessageAt),
-      safeTime(conversation.agentLastMessageAt),
-      safeTime(conversation.createdAt)
+      safeTime(conversation.lastActivity ?? null),
+      safeTime(conversation.updatedAt ?? null),
+      safeTime(conversation.clientLastMessageAt ?? null),
+      safeTime(conversation.agentLastMessageAt ?? null),
+      safeTime(conversation.createdAt ?? null)
     )
   }, [])
 
@@ -183,23 +223,20 @@ export function useConversations(
   )
 
   const mergeConversation = useCallback(
-    (
-      current: ConversationDto | undefined,
-      updated: ConversationDto
-    ): ConversationDto => {
+    (current: ConversationDto | null, updated: ConversationDto): ConversationDto => {
       // Conserva datos previos cuando SignalR envía payload parcial.
       const merged = {
         ...current,
         ...updated,
 
         assignedAgentId:
-          updated.assignedAgentId ?? current?.assignedAgentId ?? undefined,
+          updated.assignedAgentId ?? current?.assignedAgentId ?? 0,
 
         assignedByUserId:
-          updated.assignedByUserId ?? current?.assignedByUserId ?? undefined,
+          updated.assignedByUserId ?? current?.assignedByUserId ?? 0,
 
         clientContactId:
-          updated.clientContactId ?? current?.clientContactId ?? undefined,
+          updated.clientContactId ?? current?.clientContactId ?? 0,
 
         lastActivity:
           updated.lastActivity ??
@@ -222,10 +259,7 @@ export function useConversations(
           current?.contactClassificationBgColor,
 
         unreadCount: updated.unreadCount ?? current?.unreadCount ?? 0,
-
-        unreadForAgent:
-          updated.unreadForAgent ?? current?.unreadForAgent ?? 0,
-
+        unreadForAgent: updated.unreadForAgent ?? current?.unreadForAgent ?? 0,
         unreadForAssigner:
           updated.unreadForAssigner ?? current?.unreadForAssigner ?? 0,
       } as ConversationDto
@@ -245,7 +279,7 @@ export function useConversations(
 
           return normalizeConversation({
             ...conversation,
-            status: "Human" as ConversationDto["status"],
+            status: "Human",
             lastActivity:
               conversation.lastActivity ??
               conversation.updatedAt ??
@@ -265,10 +299,11 @@ export function useConversations(
       const normalizedUpdated = normalizeConversation(updated)
 
       setConversations((prev) => {
-        const current = prev.find(
-          (conversation) =>
-            conversation.conversationId === normalizedUpdated.conversationId
-        )
+        const current =
+          prev.find(
+            (conversation) =>
+              conversation.conversationId === normalizedUpdated.conversationId
+          ) ?? null
 
         const mergedConversation = mergeConversation(current, normalizedUpdated)
 
@@ -276,8 +311,7 @@ export function useConversations(
 
         const base = prev.filter(
           (conversation) =>
-            conversation.conversationId !==
-              mergedConversation.conversationId &&
+            conversation.conversationId !== mergedConversation.conversationId &&
             conversation.clientContactId !== mergedConversation.clientContactId
         )
 
@@ -302,7 +336,8 @@ export function useConversations(
 
       setConversations((prev) => {
         const exists = prev.some(
-          (conversation) => conversation.conversationId === message.conversationId
+          (conversation) =>
+            conversation.conversationId === message.conversationId
         )
 
         if (!exists) return prev
@@ -345,7 +380,7 @@ export function useConversations(
             unreadCount: (conversation.unreadCount ?? 0) + 1,
             unreadForAgent,
             unreadForAssigner,
-          } as ConversationDto)
+          })
         })
 
         return dedupeByClientKeepNewest(updated)
@@ -374,53 +409,64 @@ export function useConversations(
     [dedupeByClientKeepNewest, matchesFilter, normalizeConversation]
   )
 
-  const handleDate = useCallback(
-    (field: keyof FormInterface, date: Date | null) => {
-      setForm((current) => ({
-        ...current,
-        [field]: date,
-      }))
-    },
-    []
-  )
+  const handleDate = useCallback((field: DateField, date: Date | null) => {
+    setForm((current) => ({
+      ...current,
+      [field]: date,
+    }))
+  }, [])
+
+  const handleAgentChange = useCallback((agentId: number) => {
+    setForm((current) => ({
+      ...current,
+      agentId,
+    }))
+  }, [])
 
   const applyDateFilter = useCallback(() => {
-    if (!form.validFrom && !form.validTo) return
-
-    setAppliedRange({
+    const nextRange: FormInterface = {
       validFrom: form.validFrom ? new Date(form.validFrom) : null,
       validTo: form.validTo ? new Date(form.validTo) : null,
-      agentId: form.agentId
-    })
+      agentId: form.agentId,
+    }
 
+    saveRange(nextRange)
+
+    setAppliedRange(nextRange)
     setConversations([])
     setPage(1)
   }, [form])
 
   const clearFilter = useCallback(() => {
-    setForm({ validFrom: null, validTo: null, agentId:0 })
-    setAppliedRange({ validFrom: null, validTo: null, agentId: 0 })
+    const cleanRange: FormInterface = {
+      validFrom: null,
+      validTo: null,
+      agentId: 0,
+    }
+
+    saveRange(cleanRange)
+
+    setForm(cleanRange)
+    setAppliedRange(cleanRange)
     setConversations([])
     setPage(1)
   }, [])
 
-  useEffect(() => {
-    // Reinicia la lista cuando cambia el filtro base.
-    setConversations([])
-    setPage(1)
-  }, [filter, searchConversation])
+useEffect(() => {
+  setPage(1)
+}, [filter, searchConversation])
 
   useEffect(() => {
     const requestId = ++requestIdRef.current
     let cancelled = false
 
     setLoading(true)
-    setError(undefined)
+    setError(null)
 
     ConversationService.getConversationsByRole(
       appliedRange.agentId,
-      appliedRange.validFrom ?? undefined,
-      appliedRange.validTo ?? undefined,
+      appliedRange.validFrom,
+      appliedRange.validTo,
       searchConversation,
       page,
       pageSize,
@@ -455,15 +501,10 @@ export function useConversations(
           void joinConversation(conversation.conversationId)
         })
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         if (cancelled || requestId !== requestIdRef.current) return
 
-        const message =
-          err instanceof Error
-            ? err.message
-            : "No se pudieron cargar las conversaciones."
-
-        setError(message)
+        setError(err.message || "No se pudieron cargar las conversaciones.")
       })
       .finally(() => {
         if (cancelled || requestId !== requestIdRef.current) return
@@ -474,7 +515,17 @@ export function useConversations(
     return () => {
       cancelled = true
     }
-  }, [appliedRange.agentId, appliedRange.validFrom, appliedRange.validTo, dedupeByClientKeepNewest, filter, normalizeConversation, page, pageSize, searchConversation])
+  }, [
+    appliedRange.agentId,
+    appliedRange.validFrom,
+    appliedRange.validTo,
+    dedupeByClientKeepNewest,
+    filter,
+    normalizeConversation,
+    page,
+    pageSize,
+    searchConversation,
+  ])
 
   useEffect(() => {
     if (isAdmin) onConversationCreated(handleNewConvo)
@@ -525,7 +576,9 @@ export function useConversations(
     loading,
     error,
     form,
+    appliedRange,
     handleDate,
+    handleAgentChange,
     applyDateFilter,
     clearFilter,
     page,

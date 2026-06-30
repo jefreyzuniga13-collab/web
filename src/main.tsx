@@ -10,14 +10,16 @@ import { queryClient } from "@/Utils/Https/reactQuery";
 import api, { apiPCG } from "@/Utils/ApiConfig"
 import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor"
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor"
-import { setupEmpresaInterceptor, setupNetworkInterceptor } from "@/Interceptors/setupInterceptors"
+import { setupEmpresaInterceptor, 
+  // setupNetworkInterceptor 
+} from "@/Interceptors/setupInterceptors"
 import { PersistGate } from 'redux-persist/integration/react'
 
 setupRequestInterceptor(api)
 setupResponseInterceptor(api)      // refresh solo api CRM
-setupNetworkInterceptor(api)
+// setupNetworkInterceptor(api)
 setupEmpresaInterceptor(apiPCG);
-setupNetworkInterceptor(apiPCG)    // timeout/network para api PCG también
+// setupNetworkInterceptor(apiPCG)    // timeout/network para api PCG también
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

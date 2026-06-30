@@ -1,22 +1,30 @@
 import Button from "@/Components/Common/Button";
+import CustomAutocomplete from "@/Components/Common/CustomAutocomplete";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
-import type { Dayjs } from "dayjs";
 import { IoClose } from "react-icons/io5";
 import "@/Styles/Chat/FilterOrderModal.css";
 
 interface FormInterface {
   validFrom: Date | null;
   validTo: Date | null;
+  agentId: number;
 }
 
-type HandleDate = (field: keyof FormInterface, d: Date | null) => void;
+type DateField = "validFrom" | "validTo";
+
+type HandleDate = (field: DateField, date: Date | null) => void;
 
 type FilterOption = {
   label: string;
   value: string;
   content: string;
+};
+
+type AutocompleteOption = {
+  label: string;
+  value: string;
 };
 
 interface FilterOrderModalProps {
@@ -27,39 +35,56 @@ interface FilterOrderModalProps {
 
   form: FormInterface;
   handleDate: HandleDate;
+  handleAgentChange: (agentId: number) => void;
+
   applyDateFilter: () => void;
   clearFilter: () => void;
   sortedOptions: FilterOption[];
   handleOptionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   filter: string;
+
+  agentOptions: AutocompleteOption[];
+  loadingAgents: boolean;
 }
 
-const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
-  if (!value) return null;
-  return value instanceof Date ? value : (value as Dayjs).toDate();
+const ALL_AGENTS_OPTION: AutocompleteOption = {
+  label: "Todos los agentes",
+  value: "0",
 };
 
 const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
   onClose,
   form,
   handleDate,
+  handleAgentChange,
   applyDateFilter,
   clearFilter,
   sortedOptions,
   handleOptionChange,
   filter,
+  agentOptions,
+  loadingAgents,
 }) => {
+  const optionsWithAllAgents = [ALL_AGENTS_OPTION, ...agentOptions];
+
+  const selectedAgent =
+    optionsWithAllAgents.find(
+      (option) => Number(option.value) === Number(form.agentId)
+    ) ?? ALL_AGENTS_OPTION;
+
   const handleSave = () => {
-    if (form.validTo != null && form.validFrom == null) {
+    // Evita rango incompleto.
+    if (form.validTo !== null && form.validFrom === null) {
       toast.warn(
         "Para seleccionar una fecha final, seleccione una fecha de inicio."
       );
       return;
     }
 
+    // Evita rango inválido.
     if (
-      form.validFrom != null &&
-      form.validTo != null &&
+      form.validFrom !== null &&
+      form.validTo !== null &&
       form.validFrom > form.validTo
     ) {
       toast.warn("La fecha inicial no puede ser mayor que la fecha final.");
@@ -91,7 +116,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         <div className="filter-modal__header">
           <h3 className="filter-modal__title">Filtrar conversaciones</h3>
           <p className="filter-modal__subtitle">
-            Filtros aplicados a la app
+            Filtros aplicados a las conversaciones
           </p>
         </div>
 
@@ -127,21 +152,37 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         </section>
 
         <section className="filter-modal__section">
+          <span className="filter-modal__label">Filtrar por agente</span>
+
+          <CustomAutocomplete
+            placeholder={
+              loadingAgents
+                ? "Cargando agentes..."
+                : optionsWithAllAgents.length > 1
+                  ? "Seleccione agente"
+                  : "No hay agentes disponibles"
+            }
+            options={optionsWithAllAgents}
+            value={selectedAgent}
+            onChange={(agent) => {
+              handleAgentChange(agent ? Number(agent.value) : 0);
+            }}
+            disabled={loadingAgents}
+            loading={loadingAgents}
+          />
+        </section>
+
+        <section className="filter-modal__section">
           <span className="filter-modal__label">Rango de fechas</span>
 
-          <div className="filter-modal__dates">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="filter-modal__dates">
               <DatePicker
                 label="Desde"
                 value={form.validFrom}
-                onChange={(d) =>
-                  handleDate(
-                    "validFrom",
-                    pickerValueToDate(d as Date | Dayjs | null)
-                  )
-                }
+                onChange={(date) => handleDate("validFrom", date)}
                 format="dd/MM/yyyy"
-                maxDate={form.validTo ?? undefined}
+                {...(form.validTo !== null ? { maxDate: form.validTo } : {})}
                 slotProps={{
                   textField: {
                     className: "filter-modal__date-field",
@@ -150,20 +191,15 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
                   },
                 }}
               />
-            </LocalizationProvider>
 
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Hasta"
                 value={form.validTo}
-                onChange={(d) =>
-                  handleDate(
-                    "validTo",
-                    pickerValueToDate(d as Date | Dayjs | null)
-                  )
-                }
+                onChange={(date) => handleDate("validTo", date)}
                 format="dd/MM/yyyy"
-                minDate={form.validFrom ?? undefined}
+                {...(form.validFrom !== null
+                  ? { minDate: form.validFrom }
+                  : {})}
                 slotProps={{
                   textField: {
                     className: "filter-modal__date-field",
@@ -172,8 +208,8 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
                   },
                 }}
               />
-            </LocalizationProvider>
-          </div>
+            </div>
+          </LocalizationProvider>
         </section>
 
         <div className="filter-modal__actions">

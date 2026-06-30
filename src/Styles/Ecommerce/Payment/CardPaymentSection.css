@@ -1,12 +1,12 @@
 .checkout-section--card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   width: 100%;
-  /* margin-top: 2rem; */
   height: auto;
   max-height: 300px;
+  gap: 12px;
   overflow: auto;
+  margin-bottom: 12px;
 }
 
 .checkout-card-form {
@@ -149,8 +149,7 @@
 
 @media (min-width: 768px) {
   .checkout-section--card {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) minmax(280px, 360px);
+    flex-direction: column;
     gap: 16px;
     align-items: start;
   }

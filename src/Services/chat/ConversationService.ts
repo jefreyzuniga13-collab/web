@@ -15,6 +15,7 @@ import {format} from 'date-fns'
 
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
 
+
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/Conversations/${id}`);
 }
@@ -324,28 +325,6 @@ class ConversationServ {
     return data.data;
   }
 
-  async getConversationByDate(
-    from: Date,
-    to: Date,
-    page: number,
-    pageSize: number
-  ): Promise<PagedResponse<ConversationDto>> {
-
-
-    const { data } = await api.post<ApiResponse<PagedResponse<ConversationDto>>>(
-      "/Conversations/getConversationByDate",
-      {
-        params: {
-          from: from.toISOString(),
-          to: to.toISOString(),
-          PageNumber: page,
-          PageSize: pageSize
-        }
-      }
-    );
-    return data.data;
-  }
-
 async getRatingConversation(
   page: number,
   pageSize: number,
@@ -386,28 +365,44 @@ async getRatingConversation(
   return data.data;
 }
 
-  async getConversationsByRole(
-    agentId: number,
-    from?: Date,
-    to?: Date,
-    searchConversation?: string,
-    page: number = 1,
-    pageSize: number = 10,
-    state?: string
-  ): Promise<PagedResponse<ConversationDto>> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const params: Record<string, any> = { pageNumber: page, pageSize };
-    if (from) params.from = from.toISOString();
-    if (agentId) params.from = agentId;
-    if (to) params.to = to.toISOString();
-    if (searchConversation != '') params.searchConversation = searchConversation;
-    if (state && state !== 'all') params.state = toPascal(state);
+async getConversationsByRole(
+  agentId: number,
+  from: Date | null,
+  to: Date | null,
+  searchConversation: string,
+  page: number = 1,
+  pageSize: number = 10,
+  state: string = ""
+): Promise<PagedResponse<ConversationDto>> {
+  const params: Record<string, string | number> = {
+    pageNumber: page,
+    pageSize,
+    agentId: agentId > 0 ? agentId : 0,
+  };
 
-    const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-      "/Conversations/getByRole", { params }
-    );
-    return data.data;
+  if (from !== null) {
+    params.from = from.toISOString();
   }
+
+  if (to !== null) {
+    params.to = to.toISOString();
+  }
+
+  if (searchConversation.trim() !== "") {
+    params.searchConversation = searchConversation.trim();
+  }
+
+  if (state.trim() !== "" && state !== "all") {
+    params.state = toPascal(state);
+  }
+
+  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
+    "/Conversations/getByRole",
+    { params }
+  );
+
+  return data.data;
+}
 
   async getConversationsByContact(
     from?: Date,

@@ -971,7 +971,7 @@ const DetailPCGProduct = ({
               className="productTab-simpleAddBar__btn simpleAddBar-secondary"
               onClick={handleSaveBatchConfig}
               disabled={actionsDisabled}
-              title="Guardar configuración"
+              title="Marcas como listo"
             >
               {actionsDisabled ? (
                 <AiOutlineLoading3Quarters fontSize={20} />

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   useCallback,
   useEffect,
@@ -28,27 +27,125 @@ type ReplyTarget = {
 type UseChatWindowArgs = {
   conversationId?: number
   userId?: number
+  agentId?: number
   conversationStatus?: string | null
   selectedParam?: unknown
   highlightTerm?: string
 }
 
+type QuickParamObject = {
+  value?: unknown
+}
+
+type MessageWithExternal = MessageDto & {
+  externalId?: string | null
+}
+
+const LONG_PRESS_MS = 400
+const AUDIO_MAX_SIZE = 16 * 1024 * 1024
+
+const isObject = (value: unknown): value is QuickParamObject => {
+  return typeof value === "object" && value !== null
+}
+
+const parseQuickOptions = (param: unknown): string[] => {
+  if (Array.isArray(param)) {
+    return param.filter((value): value is string => typeof value === "string")
+  }
+
+  if (typeof param === "string") {
+    try {
+      const parsed: unknown = JSON.parse(param)
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (value): value is string => typeof value === "string"
+        )
+      }
+    } catch {
+      return param
+        .split("|")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    }
+  }
+
+  if (!isObject(param)) return []
+
+  const value = param.value
+
+  if (typeof value === "string") {
+    try {
+      const parsed: unknown = JSON.parse(value)
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === "string"
+        )
+      }
+    } catch {
+      return value
+        .split("|")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string")
+  }
+
+  return []
+}
+
+const getExternalId = (message: MessageDto): string | null => {
+  return (message as MessageWithExternal).externalId ?? null
+}
+
+const getMessagePreview = (message: MessageDto): string => {
+  const content = message.content?.trim()
+
+  if (content) return content
+
+  const attachment = message.attachments?.[0]
+
+  if (attachment?.fileName) return attachment.fileName
+
+  if (attachment?.mimeType?.startsWith("image/")) return "[Imagen]"
+  if (attachment?.mimeType?.startsWith("video/")) return "[Video]"
+  if (attachment?.mimeType?.startsWith("audio/")) return "[Audio]"
+
+  if (message.messageType === "Document") return "[Documento]"
+
+  return "[Adjunto]"
+}
+
 export const useChatWindow = (
   args: UseChatWindowArgs = {},
-  validFrom?: Date | null,
-  validTo?: Date | null
+  validFrom: Date | null = null,
+  validTo: Date | null = null
 ) => {
-  const LONG_PRESS_MS = 400
-
   const [conversationId, setConversationId] = useState<number>(
     Number(args.conversationId ?? 0)
   )
-  const [userId, setUserId] = useState<number>(Number(args.userId ?? 0))
 
-  const messages = useMessages(validFrom, validTo, conversationId)
+  const [userId, setUserId] = useState<number>(Number(args.userId ?? 0))
+  const agentId = Number(args.agentId ?? 0)
+
+  const {
+    messages,
+    loading: loadingMessages,
+    error: messagesError,
+    fetchOlderMessages,
+    hasMoreMessages,
+    isFetchingOlderMessages,
+  } = useMessages(validFrom, validTo, agentId, conversationId)
 
   const [text, setText] = useState("")
-  const [selectedOptionState, _setSelectedOption] = useState<string | null>(null)
+  const [selectedOptionState, setSelectedOptionState] = useState<string | null>(
+    null
+  )
+
   const selectedOptionRef = useRef<string | null>(null)
 
   const [file, setFile] = useState<File | null>(null)
@@ -91,15 +188,12 @@ export const useChatWindow = (
   }, [])
 
   const hasText = useCallback((message: MessageDto) => {
-    return (
-      typeof message.content === "string" &&
-      message.content.trim().length > 0
-    )
+    return typeof message.content === "string" && message.content.trim() !== ""
   }, [])
 
   const setSelectedOption = useCallback((option: string | null) => {
     selectedOptionRef.current = option
-    _setSelectedOption(option)
+    setSelectedOptionState(option)
   }, [])
 
   useEffect(() => {
@@ -112,7 +206,7 @@ export const useChatWindow = (
   }, [args.highlightTerm])
 
   useEffect(() => {
-    // Limpia estados propios al cambiar de conversación.
+    // Limpia estados al cambiar de conversación.
     setText("")
     setFile(null)
     setReplyTo(null)
@@ -129,7 +223,7 @@ export const useChatWindow = (
       fileInputRef.current.value = ""
     }
 
-    if (longPressTimerRef.current) {
+    if (longPressTimerRef.current !== null) {
       window.clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
@@ -154,48 +248,8 @@ export const useChatWindow = (
     }
   }, [quickMenuOpen])
 
-  const quickOptions: string[] = useMemo(() => {
-    const param = args.selectedParam as any
-
-    if (Array.isArray(param)) {
-      return param.filter((value: any) => typeof value === "string")
-    }
-
-    if (typeof param === "string") {
-      try {
-        const parsed = JSON.parse(param)
-
-        if (Array.isArray(parsed)) {
-          return parsed.filter((value: any) => typeof value === "string")
-        }
-      } catch {
-        return param
-          .split("|")
-          .map((value) => value.trim())
-          .filter(Boolean)
-      }
-    }
-
-    if (typeof param?.value === "string") {
-      try {
-        const parsed = JSON.parse(param.value)
-
-        if (Array.isArray(parsed)) {
-          return parsed.filter((value: any) => typeof value === "string")
-        }
-      } catch {
-        return String(param.value)
-          .split("|")
-          .map((value: string) => value.trim())
-          .filter(Boolean)
-      }
-    }
-
-    if (Array.isArray(param?.value)) {
-      return param.value.filter((value: any) => typeof value === "string")
-    }
-
-    return []
+  const quickOptions = useMemo(() => {
+    return parseQuickOptions(args.selectedParam)
   }, [args.selectedParam])
 
   const visibleMessages = useMemo(() => {
@@ -211,10 +265,10 @@ export const useChatWindow = (
   useEffect(() => {
     const element = bottomRef.current
 
-    if (element?.isConnected) {
+    if (element?.isConnected && !isFetchingOlderMessages) {
       element.scrollIntoView({ block: "end" })
     }
-  }, [conversationId, visibleMessages.length])
+  }, [conversationId, visibleMessages.length, isFetchingOlderMessages])
 
   const registerMessageRef = useCallback(
     (id: number) => (element: HTMLDivElement | null) => {
@@ -247,7 +301,7 @@ export const useChatWindow = (
     if (!conversationId || sending || !audioBlob) return
 
     // Valida límite permitido por Meta.
-    if (audioBlob.size > 16 * 1024 * 1024) {
+    if (audioBlob.size > AUDIO_MAX_SIZE) {
       toast.error("El audio supera el tamaño máximo permitido (16 MB).")
       return
     }
@@ -307,31 +361,18 @@ export const useChatWindow = (
   }, [])
 
   const beginReply = useCallback((message: MessageDto) => {
-    const externalId = (message as any).externalId || null
+    const externalId = getExternalId(message)
 
     if (!externalId) return
 
     const author =
       message.senderContactName || message.senderUserName || "Mensaje"
 
-    const preview =
-      (typeof message.content === "string" && message.content.trim()) ||
-      message.attachments?.[0]?.fileName ||
-      (message.attachments?.[0]?.mimeType?.startsWith("image/")
-        ? "[Imagen]"
-        : message.attachments?.[0]?.mimeType?.startsWith("video/")
-          ? "[Video]"
-          : message.attachments?.[0]?.mimeType?.startsWith("audio/")
-            ? "[Audio]"
-            : message.messageType === "Document"
-              ? "[Documento]"
-              : "[Adjunto]")
-
     setReplyTo({
       messageId: message.messageId,
       externalId,
       author,
-      preview,
+      preview: getMessagePreview(message),
     })
   }, [])
 
@@ -429,14 +470,14 @@ export const useChatWindow = (
       setSending(true)
 
       try {
-        const replyExternalId = replyTo?.externalId || null
+        const replyExternalId = replyTo?.externalId ?? null
         const repliedParentMessageId = replyTo?.messageId ?? null
 
         if (fileToSend) {
           await sendMedia(
             conversationId,
             fileToSend,
-            messageText || undefined,
+            messageText || "",
             replyExternalId,
             repliedParentMessageId
           )
@@ -505,8 +546,8 @@ export const useChatWindow = (
 
   const handleDownload = useCallback(async (fileName: string) => {
     try {
-      const response = DownloadMedia(fileName)
-      const blob = new Blob([(await response).data])
+      const response = await DownloadMedia(fileName)
+      const blob = new Blob([response.data])
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
 
@@ -617,11 +658,11 @@ export const useChatWindow = (
     async (message: MessageDto, option: string) => {
       try {
         await sendText({
-          conversationId: Number(conversationId),
-          senderId: Number(userId),
+          conversationId,
+          senderId: userId,
           content: option,
           messageType: "Text",
-          externalId: (message as any)?.externalId ?? null,
+          externalId: getExternalId(message),
           repliedParentMessageId: message.messageId,
         })
       } finally {
@@ -648,11 +689,11 @@ export const useChatWindow = (
 
   const startLongPress = useCallback(
     (event: React.PointerEvent, message: MessageDto) => {
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
-      const x = (event as any).clientX ?? rect.left + rect.width / 2
-      const y = (event as any).clientY ?? rect.top
+      const rect = event.currentTarget.getBoundingClientRect()
+      const x = event.clientX || rect.left + rect.width / 2
+      const y = event.clientY || rect.top
 
-      if (longPressTimerRef.current) {
+      if (longPressTimerRef.current !== null) {
         window.clearTimeout(longPressTimerRef.current)
       }
 
@@ -660,13 +701,13 @@ export const useChatWindow = (
         setQuickMenuPos({ x, y })
         setQuickMenuMsg(message)
         setQuickMenuOpen(true)
-      }, LONG_PRESS_MS) as unknown as number
+      }, LONG_PRESS_MS)
     },
     []
   )
 
   const cancelLongPress = useCallback(() => {
-    if (!longPressTimerRef.current) return
+    if (longPressTimerRef.current === null) return
 
     window.clearTimeout(longPressTimerRef.current)
     longPressTimerRef.current = null
@@ -727,6 +768,7 @@ export const useChatWindow = (
   useEffect(() => {
     const onGlobalEnter = (event: KeyboardEvent) => {
       const activeElement = document.activeElement as HTMLElement | null
+
       const isTyping =
         activeElement?.tagName === "TEXTAREA" ||
         activeElement?.tagName === "INPUT" ||
@@ -819,6 +861,12 @@ export const useChatWindow = (
     setConversationId,
     setUserId,
     messages,
+    loadingMessages,
+    messagesError,
+    fetchOlderMessages,
+    hasMoreMessages,
+    isFetchingOlderMessages,
+
     text,
     setText,
     file,

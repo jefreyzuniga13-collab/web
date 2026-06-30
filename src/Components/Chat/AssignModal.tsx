@@ -22,7 +22,7 @@ export const AssignModal: React.FC = () => {
         <header className="assign-modal__header">
           <div className="assign-modal__header-content">
             <h2 className="assign-modal__title">
-              Asignar agente a{' '}
+                {conversation?.assignedAgentId ? "Reasignar " : "Asignar agente "}
               <span className="assign-modal__client-name">
                 {conversation.clientContactName ?? `#${conversation.conversationId}`}
               </span>
