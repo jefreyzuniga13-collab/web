@@ -2,7 +2,7 @@ import { useDetailPanel } from "@/Hooks/Chat/useDetailPanel";
 import DetailPanelHeaderTabs from "@/Components/Chat/DetailPanel/DetailPanelHeaderTabs";
 import DetailPanelCurrentConversationTab from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
 import DetailPanelOptionsContact from "@/Components/Chat/DetailPanelOptionsContact";
-import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
+// import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
 import {ProductTab} from '@/Components/ECommerce/Tabs/ProductTab'
 import CarPCPanelTab from "@/Components/ECommerce/Tabs/CarPCPanelTab";
 import "@/Styles/Chat/DetailPanel.css";
@@ -28,17 +28,17 @@ const DetailPanel: React.FC<Props> = ({
   conversationId,
   metaChannel,
   selectedParam,
-  onSendNow,
+  // onSendNow,
   isAdmin
 }) => {
   const {
     optionMenu,
     setOptionMenu,
     selectedData,
-    qQuick,
-    setQQuick,
-    filteredQuick,
-    handleSendQuick,
+    // qQuick,
+    // setQQuick,
+    // filteredQuick,
+    // handleSendQuick,
     formatNiPhone,
     displayOrDash,
     formatDate,
@@ -141,7 +141,7 @@ const DetailPanel: React.FC<Props> = ({
           />
         )}
 
-        {optionMenu === 5 && (
+        {/* {optionMenu === 5 && (
           <DetailPanelMensajesRapidos
             filteredQuick={filteredQuick}
             handleSendQuick={txt => handleSendQuick(txt, onSendNow)}
@@ -149,7 +149,7 @@ const DetailPanel: React.FC<Props> = ({
             setQQuick={setQQuick}
             onSendNow={onSendNow}
           />
-        )}
+        )} */}
         
       </section>
     </div>

@@ -11,7 +11,17 @@ import { useSelector } from "react-redux"
 import { FaCartFlatbedSuitcase } from "react-icons/fa6"
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import { useContactBlock } from "@/Hooks/Wh/useContactBlock"
-import { formatDuration, formatTimeNI, getChannel, getConversationDateValue, getConversationGroupKey, getConversationGroupLabel, getConversationIdentifier, getElapsedMsFromNI, parseConversationDate } from "@/Utils/ECommerce/formatters"
+import {
+  formatDuration,
+  formatTimeNI,
+  getChannel,
+  getConversationDateValue,
+  getConversationGroupKey,
+  getConversationGroupLabel,
+  getConversationIdentifier,
+  getElapsedMsFromNI,
+  parseConversationDate,
+} from "@/Utils/ECommerce/formatters"
 import { getChannelIcon } from "@/Utils/Chat/Utils"
 
 interface Props {
@@ -62,7 +72,7 @@ export const InboxList: React.FC<Props> = ({
   const groupedConversations = useMemo<ConversationGroup[]>(() => {
     const groups = new Map<string, ConversationGroup>()
 
-    conversations.forEach(conversation => {
+    conversations.forEach((conversation) => {
       const rawDate = getConversationDateValue(conversation)
       const date = parseConversationDate(rawDate)
 
@@ -90,7 +100,7 @@ export const InboxList: React.FC<Props> = ({
     if (!root || !loader) return
 
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         const entry = entries[0]
 
         if (entry.isIntersecting && page < pagination.totalPages && !loading) {
@@ -121,6 +131,15 @@ export const InboxList: React.FC<Props> = ({
     }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current)
+        pressTimerRef.current = null
+      }
+    }
+  }, [])
+
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
       window.clearTimeout(pressTimerRef.current)
@@ -129,7 +148,7 @@ export const InboxList: React.FC<Props> = ({
   }
 
   const openMenu = (conversationId: number) => {
-    setMenuState(prev =>
+    setMenuState((prev) =>
       prev?.conversationId === conversationId ? null : { conversationId }
     )
   }
@@ -229,7 +248,7 @@ export const InboxList: React.FC<Props> = ({
 
   return (
     <ul ref={listRef} className="inbox-list">
-      {groupedConversations.map(group => (
+      {groupedConversations.map((group) => (
         <React.Fragment key={group.key}>
           {group.label !== "Hoy" && (
             <li className="inbox-list__date-group">
@@ -237,7 +256,7 @@ export const InboxList: React.FC<Props> = ({
             </li>
           )}
 
-          {group.conversations.map(conversation => {
+          {group.conversations.map((conversation) => {
             const isSelected = conversation.conversationId === selectedId
             const isMenuOpen =
               menuState?.conversationId === conversation.conversationId
@@ -276,10 +295,14 @@ export const InboxList: React.FC<Props> = ({
               : "Cliente últ. msj:"
 
             if (!conversation.assignedAt && conversation.requestedAgentAt) {
-              const elapsedMs = getElapsedMsFromNI(conversation.requestedAgentAt)
+              const elapsedMs = getElapsedMsFromNI(
+                conversation.requestedAgentAt
+              )
 
               if (elapsedMs > 0) {
-                previewText += ` · Desde solicitud: ${formatDuration(elapsedMs)}`
+                previewText += ` · Desde solicitud: ${formatDuration(
+                  elapsedMs
+                )}`
               }
             }
 
@@ -298,11 +321,12 @@ export const InboxList: React.FC<Props> = ({
                 tabIndex={0}
                 aria-pressed={isSelected}
                 onClick={() => handleSelect(conversation.conversationId)}
-                onKeyDown={event =>
-                  event.key === "Enter" &&
-                  handleSelect(conversation.conversationId)
-                }
-                onContextMenu={event =>
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleSelect(conversation.conversationId)
+                  }
+                }}
+                onContextMenu={(event) =>
                   handleContextMenu(event, conversation.conversationId)
                 }
                 onPointerDown={() =>
@@ -325,17 +349,19 @@ export const InboxList: React.FC<Props> = ({
                           {getChannelIcon(conversation.metaChannelId)}
                         </span>
 
-                        <div className="inbox-list__namecontactClassification">
+                        <span className="inbox-list__namecontactClassification">
                           <span>
-                          {conversation.clientContactId != null
-                            ? ` (${conversation.clientContactName})`
-                            : ""}
-                        </span>
+                            {conversation.clientContactId != null
+                              ? ` (${conversation.clientContactName})`
+                              : ""}
+                          </span>
 
-                         <span className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}>
-                         {conversation.contactClassificationName}
-                       </span>
-                        </div>
+                          <span
+                            className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}
+                          >
+                            {conversation.contactClassificationName}
+                          </span>
+                        </span>
 
                         {hasCart && (
                           <span className="inbox-list__isItemsInCart">
@@ -347,7 +373,7 @@ export const InboxList: React.FC<Props> = ({
                       <button
                         type="button"
                         className="inbox-list__menu-button"
-                        onClick={event => {
+                        onClick={(event) => {
                           event.preventDefault()
                           event.stopPropagation()
                           openMenu(conversation.conversationId)
@@ -360,12 +386,14 @@ export const InboxList: React.FC<Props> = ({
                       </button>
                     </div>
 
-                  
-                      <div className="inbox-list__names">
+                    <div className="inbox-list__names">
                       {conversation.assignedAgentName && (
-                        <span> Agente: <strong>{conversation.assignedAgentName}</strong></span>
+                        <span>
+                          Agente:{" "}
+                          <strong>{conversation.assignedAgentName}</strong>
+                        </span>
                       )}
-                      </div>
+                    </div>
 
                     <span className="inbox-list__preview">{previewText}</span>
                   </div>
@@ -386,13 +414,13 @@ export const InboxList: React.FC<Props> = ({
                     {isMenuOpen && (
                       <div
                         className="inbox-list__menu"
-                        onClick={event => event.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
                       >
                         <button
                           type="button"
                           className="inbox-list__menu-item"
                           disabled={actionLoading}
-                          onClick={event =>
+                          onClick={(event) =>
                             executeBlockAction(event, conversation, "block")
                           }
                         >
@@ -403,7 +431,7 @@ export const InboxList: React.FC<Props> = ({
                           type="button"
                           className="inbox-list__menu-item"
                           disabled={actionLoading}
-                          onClick={event =>
+                          onClick={(event) =>
                             executeBlockAction(event, conversation, "unblock")
                           }
                         >
@@ -419,9 +447,15 @@ export const InboxList: React.FC<Props> = ({
         </React.Fragment>
       ))}
 
-      {loading && <CustomLoader />}
+      {loading && (
+        <li className="inbox-list__loader-item">
+          <CustomLoader />
+        </li>
+      )}
 
       <li ref={loaderRef} className="inbox-list__loader-anchor" />
     </ul>
   )
 }
+
+export default InboxList

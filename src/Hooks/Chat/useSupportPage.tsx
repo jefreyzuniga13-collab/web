@@ -152,20 +152,37 @@ export function useSupportPage() {
     setFilter(selectedFilter);
   }, [selectedFilter]);
 
+  // useEffect(() => {
+  //   if (!convId) {
+  //     setConversation(null);
+  //     return;
+  //   }
+
+  //   setConversation(null);
+
+  //   getConversation(convId)
+  //     .then((res) => setConversation(res.data.data))
+  //     .catch(console.error);
+
+  //   fetchByName("OpcionesRapidas");
+  // }, [convId, fetchByName]);
+
   useEffect(() => {
-    if (!convId) {
-      setConversation(null);
-      return;
-    }
+  fetchByName("OpcionesRapidas");
+}, [fetchByName]);
 
+useEffect(() => {
+  if (!convId) {
     setConversation(null);
+    return;
+  }
 
-    getConversation(convId)
-      .then((res) => setConversation(res.data.data))
-      .catch(console.error);
+  setConversation(null);
 
-    fetchByName("OpcionesRapidas");
-  }, [convId, fetchByName]);
+  getConversation(convId)
+    .then((res) => setConversation(res.data.data))
+    .catch(console.error);
+}, [convId]);
 
   useEffect(() => {
     const fetchPolicy = async () => {

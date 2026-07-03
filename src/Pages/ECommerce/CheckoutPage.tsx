@@ -124,20 +124,26 @@ const CheckoutPage: React.FC = () => {
 
   const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
 
-  const getTransporteFactura = () => {
-  const stateTransp = Number(transpCost ?? 0);
-  const logTransp = Number(existingLog?.transCost ?? 0);
+const getTransporteFactura = () => {
+  const stateTransp = normalizeNumber(transpCost);
+  const logTransp = normalizeNumber(existingLog?.transCost);
 
+  // Si el cliente seleccionó en mapa, este es el correcto.
   if (stateTransp > 0) return stateTransp;
+
+  // Solo usar el del log si ya venía guardado.
   if (logTransp > 0) return logTransp;
 
   return 0;
 };
 
-  const totalPagar = useMemo(() => {
-  const totalBase = Number(existingLog?.totalEnPantalla ?? cartTotal ?? 0);
-  return round2(totalBase + normalizeNumber(tip));
-}, [existingLog?.totalEnPantalla, cartTotal, tip]);
+const totalPagar = useMemo(() => {
+  const totalBase = normalizeNumber(cartTotal ?? 0);
+  const transporte = getTransporteFactura();
+  const propina = normalizeNumber(tip);
+
+  return round2(totalBase + transporte + propina);
+}, [cartTotal, transpCost, existingLog?.transCost, tip]);
 
   const { mutateAsync: completeFpiAsync } = useCompleteFpi();
 
@@ -718,11 +724,13 @@ const CheckoutPage: React.FC = () => {
     setStep("paymentMethod");
   };
 
-  const getTotalFactura = () => {
-    const totalBase = Number(existingLog?.totalEnPantalla ?? carPCG?.[0]?.total ?? 0);
+const getTotalFactura = () => {
+  const totalBase = normalizeNumber(carPCG?.[0]?.total ?? 0);
+  const transporte = getTransporteFactura();
+  const propina = normalizeNumber(tip);
 
-    return round2(totalBase + Number(tip ?? 0));
-  };
+  return round2(totalBase + transporte + propina);
+};
 
   const validateManualCard = () => {
 

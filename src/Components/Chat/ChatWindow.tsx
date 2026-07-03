@@ -1,211 +1,166 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import {
-  Send,
-  Paperclip,
+  ArrowLeft,
+  Check,
+  ChevronDown,
   Download,
   MessageSquareMore,
   Mic,
+  Paperclip,
+  Send,
+  Smile,
   Square,
   Trash2,
-  Check,
+  UserCheck,
+  XCircle,
 } from "lucide-react"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
+import { TbShoppingCartX } from "react-icons/tb"
+import { AiOutlineShoppingCart } from "react-icons/ai"
+
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
-import type { SystemParamResponseDto } from "@/Interfaces/Auth/AuthInterface"
-import {
-  format,
-  isToday,
-  isYesterday,
-  parseISO,
-  differenceInCalendarDays,
-} from "date-fns"
-import { es } from "date-fns/locale/es"
-import SmsIcon from "@mui/icons-material/Sms"
-import { useCustomMessage } from "@/Hooks/Chat/useCustomMesssage"
+import useCustomMessage from "@/Hooks/Chat/useCustomMesssage"
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout"
-import { FaArrowDown } from "react-icons/fa"
-import "@/styles/Chat/ChatWindow.css"
+
+import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
+
+import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
-import { BsEmojiLaughing } from "react-icons/bs"
-import { IoCloseSharp } from "react-icons/io5"
-import { formatTime } from "@/Utils/ECommerce/formatters"
-import type {
-  AttachmentDto,
-  MessageDto,
-} from "@/Interfaces/Chat/ChatInterfaces"
 
-declare global {
-  interface Window {
-    __CHAT_SEND_QUICK__?: (text: string) => Promise<void>
-  }
-}
-
-interface Props {
+type ChatWindowProps = {
   conversationId?: number
-  conversationStatus?: string | null
-  userId: number
+  userId?: number
   agentId?: number
-  selectedParam: SystemParamResponseDto | null
+  conversationStatus?: string | null
+  selectedParam?: unknown
   highlightTerm?: string
-  validFrom: Date | null
-  validTo: Date | null
+  validFrom?: Date | null
+  validTo?: Date | null
+
+  showMobileBackButton?: boolean
+  onMobileBack?: () => void
+
+  showMobileActions?: boolean
+  mobileAssignLabel?: string
+  mobileCanAssign?: boolean
+  mobileIsClosed?: boolean
+  onMobileClose?: () => void
+  onMobileAssign?: () => void
+
+  showMobileDetailButton?: boolean
+  mobileDetailOpen?: boolean
+  onMobileToggleDetail?: () => void
 }
 
-type ContactPhone = {
-  wa_id?: string | null
-  phone?: string | null
-  type?: string | null
+const formatTime = (value?: string | null) => {
+  if (!value) return ""
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ""
+
+  return date.toLocaleTimeString("es-NI", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
-type ContactPayload = {
-  name?: {
-    formatted_name?: string | null
-  } | null
-  phones?: ContactPhone[] | null
+const formatDate = (value?: string | null) => {
+  if (!value) return ""
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ""
+
+  const today = new Date()
+  const yesterday = new Date()
+
+  yesterday.setDate(today.getDate() - 1)
+
+  const sameDay =
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+
+  const sameYesterday =
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate()
+
+  if (sameDay) return "Hoy"
+  if (sameYesterday) return "Ayer"
+
+  return date.toLocaleDateString("es-NI", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
 }
 
-type RepliedMessage = {
-  messageId?: number | null
-  senderContactId?: number | null
-  senderContactName?: string | null
-  senderUserName?: string | null
-  incognitoMode?: boolean | null
-  content?: string | null
-  attachments?: AttachmentDto[] | null
+const getDateKey = (value?: string | null) => {
+  if (!value) return ""
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ""
+
+  return date.toISOString().slice(0, 10)
 }
 
-type ChatMessageView = MessageDto & {
-  contact?: ContactPayload[] | null
-  repliedMessage?: RepliedMessage | null
-  repliedMessageId?: number | null
+const getAttachmentUrl = (attachment: AttachmentDto) => {
+  return attachment.mediaUrl || ""
 }
 
-const SCROLL_TOP_THRESHOLD = 80
-
-const cap = (value: string) => {
-  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value
+const isImage = (mimeType?: string | null) => {
+  return String(mimeType ?? "").startsWith("image/")
 }
 
-const getConversationStringDate = (sentAt: string) => {
-  const fecha = parseISO(sentAt)
-
-  if (isToday(fecha)) return "Hoy"
-  if (isYesterday(fecha)) return "Ayer"
-
-  const diff = differenceInCalendarDays(new Date(), fecha)
-
-  if (diff >= 2 && diff < 7) {
-    return cap(format(fecha, "EEEE", { locale: es }))
-  }
-
-  return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es })
+const isVideo = (mimeType?: string | null) => {
+  return String(mimeType ?? "").startsWith("video/")
 }
 
-const isAtBottom = (element: HTMLElement) => {
-  return element.scrollTop >= element.scrollHeight - element.clientHeight - 12
+const isAudio = (mimeType?: string | null) => {
+  return String(mimeType ?? "").startsWith("audio/")
 }
 
-const getReplyAuthor = (message: RepliedMessage | null) => {
-  if (!message) return "Mensaje"
-
-  if (message.senderContactId) {
-    return message.senderContactName || "Cliente"
-  }
-
-  return !message.incognitoMode ? message.senderUserName || "" : ""
-}
-
-const getReplyPreview = (message: RepliedMessage | null) => {
-  if (!message) return ""
-
-  const attachment = message.attachments?.[0]
-  const text = String(message.content ?? "").trim()
-
-  if (attachment) {
-    const mime = String(attachment.mimeType ?? "")
-
-    if (mime.startsWith("image/") || mime === "image/webp") {
-      return attachment.fileName || "Imagen"
-    }
-
-    if (mime.startsWith("video/")) return attachment.fileName || "Video"
-    if (mime.startsWith("audio/")) return attachment.fileName || "Audio"
-
-    return attachment.fileName || attachment.mimeType || "Adjunto"
-  }
-
-  if (!text) return ""
-
-  return text.length > 90 ? `${text.slice(0, 90)}…` : text
-}
-
-const getReplyIcon = (message: RepliedMessage | null) => {
-  const attachment = message?.attachments?.[0]
-
-  if (!attachment) return null
-
-  const mime = String(attachment.mimeType ?? "")
-
-  if (mime.startsWith("image/") || mime === "image/webp") return "📷"
-  if (mime.startsWith("video/")) return "🎬"
-  if (mime.startsWith("audio/")) return "🎵"
-
-  return "📎"
-}
-
-const getReplyThumb = (message: RepliedMessage | null) => {
-  const attachment = message?.attachments?.[0]
-
-  if (!attachment) return null
-
-  const mime = String(attachment.mimeType ?? "")
-
-  if (mime.startsWith("image/") || mime === "image/webp") {
-    return attachment.mediaUrl ?? null
-  }
-
-  return null
-}
-
-export const ChatWindow: React.FC<Props> = ({
+export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationId,
   userId,
-  agentId = 0,
+  agentId,
   conversationStatus,
   selectedParam,
   highlightTerm,
-  validFrom,
-  validTo,
+  validFrom = null,
+  validTo = null,
+
+  showMobileBackButton = false,
+  onMobileBack,
+
+  showMobileActions = false,
+  mobileAssignLabel = "Asignar",
+  mobileCanAssign = true,
+  mobileIsClosed = false,
+  onMobileClose,
+  onMobileAssign,
+
+  showMobileDetailButton = false,
+  mobileDetailOpen = false,
+  onMobileToggleDetail,
 }) => {
-  const smsBtnRef = useRef<HTMLDivElement | null>(null)
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
-  const composerRef = useRef<HTMLDivElement | null>(null)
-  const dateRefs = useRef<Record<string, HTMLDivElement | null>>({})
-  const loadingOlderRef = useRef(false)
-  const lastConversationIdRef = useRef<number | undefined>(conversationId)
-  const shouldAutoScrollRef = useRef(true)
-
-  const [flyoutOpen, setFlyoutOpen] = useState(false)
-  const [emojiOpen, setEmojiOpen] = useState(false)
-  const [showScrollButton, setShowScrollButton] = useState(false)
-  const [stickyDate, setStickyDate] = useState<string | null>(null)
-
   const {
-    customMessages,
-    create,
-    update,
-    toggleSystemParam,
-    loading,
-    error,
-    load,
-    loaded,
-  } = useCustomMessage(false)
-
-  const {
-    setConversationId,
-    setUserId,
     visibleMessages,
-    hasText,
+    loadingMessages,
+    messagesError,
+    fetchOlderMessages,
+    hasMoreMessages,
+    isFetchingOlderMessages,
+
     text,
     setText,
     file,
@@ -216,6 +171,7 @@ export const ChatWindow: React.FC<Props> = ({
     fileInputRef,
     handleFileChange,
     handlePaste,
+    handleDownload,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
@@ -224,37 +180,39 @@ export const ChatWindow: React.FC<Props> = ({
     previewImageUrl,
     openImagePreview,
     closeImagePreview,
-    setSelectedOption,
-    beginReply,
-    cancelReply,
+
+    isRecording,
+    audioBlob,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    secondsToTime,
+    clearRecording,
+    handleSendAudio,
+
+    hasMedia,
+    hasText,
     replyTo,
+    cancelReply,
+    beginReply,
+    // quickOptions,
+    // sendQuick,
     startLongPress,
     cancelLongPress,
-    focusTextarea,
-    onComposerKeyDown,
-    textAreaRef,
+    // popoverRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
+    // visibleState,
+
     searchTerm,
     setSearchTerm,
     matchIds,
     matchIndex,
     gotoMatch,
     renderMessageContent,
-
-    isRecording,
-    clearRecording,
-    handleSendAudio,
-    recordingTime,
-    startRecording,
-    stopRecording,
-    secondsToTime,
-
-    loadingMessages,
-    fetchOlderMessages,
-    hasMoreMessages,
-    isFetchingOlderMessages,
+    onComposerKeyDown,
+    textAreaRef,
   } = useChatWindow(
     {
       conversationId,
@@ -268,721 +226,869 @@ export const ChatWindow: React.FC<Props> = ({
     validTo
   )
 
-  const computeStickyDate = React.useCallback(() => {
-    const root = messagesContainerRef.current
+  const {
+    activeCustomMessages,
+    loading: loadingCustomMessages,
+    error: customMessagesError,
+    create,
+    update,
+    toggleStatus,
+  } = useCustomMessage(true)
 
-    if (!root) return
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null)
+  const customMessagesButtonRef = useRef<HTMLButtonElement | null>(null)
 
-    const y = root.scrollTop + 8
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [customMessagesOpen, setCustomMessagesOpen] = useState(false)
+  const [customMessagesAnchor, setCustomMessagesAnchor] =
+    useState<DOMRect | null>(null)
 
-    const entries = Object.entries(dateRefs.current)
-      .filter(([, element]) => element !== null)
-      .sort((a, b) => {
-        const first = a[1]?.offsetTop ?? 0
-        const second = b[1]?.offsetTop ?? 0
+  const loadingOlderRef = useRef(false)
+  const shouldStickToBottomRef = useRef(true)
+  const previousConversationIdRef = useRef<number | undefined>(conversationId)
+  const previousMessagesLengthRef = useRef(visibleMessages.length)
 
-        return first - second
-      })
+  const pendingOlderScrollRef = useRef<{
+    scrollHeight: number
+    scrollTop: number
+  } | null>(null)
 
-    let current: string | null = null
+  const isClosed =
+    conversationStatus === "Closed" || conversationStatus === "Incomplete"
 
-    for (const [label, element] of entries) {
-      if (element && element.offsetTop <= y) {
-        current = label
-        continue
+  const canType = Boolean(conversationId) && !isClosed
+
+  const showSearchBar = Boolean(searchTerm || matchIds.length)
+
+  const groupedMessages = useMemo(() => {
+    let lastDateKey = ""
+
+    return visibleMessages.map((message) => {
+      const currentDateKey = getDateKey(message.sentAt)
+      const showDate = currentDateKey !== lastDateKey
+
+      if (currentDateKey) {
+        lastDateKey = currentDateKey
       }
 
-      break
-    }
+      return {
+        message,
+        showDate,
+      }
+    })
+  }, [visibleMessages])
 
-    if (!current && entries.length) {
-      current = entries[0][0]
-    }
+  const scrollToBottom = useCallback(
+    (behavior: ScrollBehavior = "auto") => {
+      bottomRef.current?.scrollIntoView({
+        behavior,
+        block: "end",
+      })
+    },
+    [bottomRef]
+  )
 
-    setStickyDate(current)
+  const updateScrollButtonState = useCallback(() => {
+    const container = messagesContainerRef.current
+
+    if (!container) return
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight
+
+    const isNearBottom = distanceFromBottom <= 90
+
+    shouldStickToBottomRef.current = isNearBottom
+    setShowScrollButton(distanceFromBottom > 140)
   }, [])
 
-  const autoResizeTextarea = React.useCallback(() => {
-    const textarea = textAreaRef.current
-
-    if (!textarea) return
-
-    textarea.style.height = "auto"
-
-    const maxHeight = 120
-    const nextHeight = Math.min(textarea.scrollHeight, maxHeight)
-
-    textarea.style.height = `${nextHeight}px`
-    textarea.style.overflowY =
-      textarea.scrollHeight > maxHeight ? "auto" : "hidden"
+  const focusComposer = useCallback(() => {
+    requestAnimationFrame(() => {
+      textAreaRef.current?.focus()
+    })
   }, [textAreaRef])
 
-  const loadOlderMessages = React.useCallback(async () => {
-    const root = messagesContainerRef.current
+  const toggleCustomMessages = useCallback(() => {
+    if (!canType) return
 
-    if (!root) return
-    if (!hasMoreMessages) return
-    if (isFetchingOlderMessages) return
-    if (loadingOlderRef.current) return
+    setShowEmojiPicker(false)
 
-    loadingOlderRef.current = true
+    const rect =
+      customMessagesButtonRef.current?.getBoundingClientRect() ?? null
 
-    const previousScrollHeight = root.scrollHeight
-    const previousScrollTop = root.scrollTop
+    setCustomMessagesAnchor(rect)
+    setCustomMessagesOpen((current) => !current)
+  }, [canType])
 
-    await fetchOlderMessages()
+  const closeCustomMessages = useCallback(() => {
+    setCustomMessagesOpen(false)
+  }, [])
 
-    requestAnimationFrame(() => {
-      const nextScrollHeight = root.scrollHeight
-      const heightDifference = nextScrollHeight - previousScrollHeight
+  const insertEmoji = useCallback(
+    (emojiData: EmojiClickData) => {
+      const emoji = emojiData.emoji
+      const textarea = textAreaRef.current
 
-      root.scrollTop = previousScrollTop + heightDifference
-      loadingOlderRef.current = false
-    })
-  }, [fetchOlderMessages, hasMoreMessages, isFetchingOlderMessages])
-
-  useEffect(() => {
-    if (flyoutOpen && !loaded) void load()
-  }, [flyoutOpen, loaded, load])
-
-  useEffect(() => {
-    setConversationId(Number(conversationId ?? 0))
-    setUserId(Number(userId))
-
-    return () => {
-      setConversationId(0)
-      setUserId(0)
-    }
-  }, [conversationId, setConversationId, setUserId, userId])
-
-  useEffect(() => {
-    const root = messagesContainerRef.current
-
-    if (!root) return
-
-    const onScroll = () => {
-      computeStickyDate()
-
-      const atBottom = isAtBottom(root)
-
-      shouldAutoScrollRef.current = atBottom
-      setShowScrollButton(!atBottom)
-
-      if (root.scrollTop <= SCROLL_TOP_THRESHOLD) {
-        void loadOlderMessages()
+      if (!textarea) {
+        setText(`${text}${emoji}`)
+        focusComposer()
+        return
       }
-    }
 
-    root.addEventListener("scroll", onScroll, { passive: true })
-    requestAnimationFrame(onScroll)
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const nextText = `${text.slice(0, start)}${emoji}${text.slice(end)}`
 
-    return () => root.removeEventListener("scroll", onScroll)
-  }, [computeStickyDate, loadOlderMessages])
+      setText(nextText)
 
-  useEffect(() => {
-    dateRefs.current = {}
-    requestAnimationFrame(computeStickyDate)
-  }, [visibleMessages.length, computeStickyDate])
-
-  useEffect(() => {
-    autoResizeTextarea()
-  }, [text, autoResizeTextarea])
-
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    const emoji = emojiData.emoji
-    const textarea = textAreaRef.current
-
-    if (!textarea) {
-      setText(text + emoji)
-      return
-    }
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const nextText = text.slice(0, start) + emoji + text.slice(end)
-
-    setSelectedOption(null)
-    setText(nextText)
-
-    requestAnimationFrame(() => {
-      textarea.focus()
-      textarea.selectionStart = start + emoji.length
-      textarea.selectionEnd = start + emoji.length
-      autoResizeTextarea()
-    })
-  }
-
-  const handleSendNow = React.useCallback(
-    async (txt: string) => {
-      setSelectedOption(txt)
-      setEmojiOpen(false)
-      await handleSend()
+      requestAnimationFrame(() => {
+        textarea.focus()
+        const nextCursorPosition = start + emoji.length
+        textarea.setSelectionRange(nextCursorPosition, nextCursorPosition)
+      })
     },
-    [setSelectedOption, handleSend]
+    [focusComposer, setText, text, textAreaRef]
+  )
+
+  const handleMessagesScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const container = event.currentTarget
+
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight
+
+      const isNearBottom = distanceFromBottom <= 90
+
+      shouldStickToBottomRef.current = isNearBottom
+      setShowScrollButton(distanceFromBottom > 140)
+
+      const isNearTop = container.scrollTop <= 80
+
+      if (
+        isNearTop &&
+        hasMoreMessages &&
+        !isFetchingOlderMessages &&
+        !loadingOlderRef.current
+      ) {
+        loadingOlderRef.current = true
+
+        pendingOlderScrollRef.current = {
+          scrollHeight: container.scrollHeight,
+          scrollTop: container.scrollTop,
+        }
+
+        void fetchOlderMessages()
+      }
+    },
+    [fetchOlderMessages, hasMoreMessages, isFetchingOlderMessages]
   )
 
   useEffect(() => {
-    const sendQuick = async (txt: string) => {
-      if (txt.trim()) {
-        await handleSendNow(txt)
-      }
-    }
+    const container = messagesContainerRef.current
 
-    window.__CHAT_SEND_QUICK__ = sendQuick
+    if (!container) return
 
-    const onEvt = (event: Event) => {
-      const customEvent = event as CustomEvent<{ text?: string }>
-      const txt = customEvent.detail?.text
+    const cssVar = `${container.clientHeight}px`
 
-      if (typeof txt === "string") {
-        void sendQuick(txt)
-      }
-    }
+    document.documentElement.style.setProperty("--chat-visible-h", cssVar)
 
-    window.addEventListener("chat:sendQuick", onEvt as EventListener)
-
-    return () => {
-      delete window.__CHAT_SEND_QUICK__
-      window.removeEventListener("chat:sendQuick", onEvt as EventListener)
-    }
-  }, [handleSendNow])
-
-  useEffect(() => {
-    const root = messagesContainerRef.current
-    const composer = composerRef.current
-
-    if (!root || !composer) return
-
-    const setVar = () => {
-      root.style.setProperty("--composer-h", `${composer.offsetHeight}px`)
-    }
-
-    setVar()
-
-    const resizeObserver = new ResizeObserver(setVar)
-
-    resizeObserver.observe(composer)
-    window.addEventListener("resize", setVar)
-
-    return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener("resize", setVar)
-    }
-  }, [])
-
-  useEffect(() => {
-    const root = messagesContainerRef.current
-
-    if (!root) return
-
-    const conversationChanged = lastConversationIdRef.current !== conversationId
+    const conversationChanged =
+      previousConversationIdRef.current !== conversationId
 
     if (conversationChanged) {
-      lastConversationIdRef.current = conversationId
+      previousConversationIdRef.current = conversationId
+      previousMessagesLengthRef.current = visibleMessages.length
+      shouldStickToBottomRef.current = true
+      pendingOlderScrollRef.current = null
+      loadingOlderRef.current = false
+
+      setShowScrollButton(false)
+      setShowEmojiPicker(false)
+      setCustomMessagesOpen(false)
+      setCustomMessagesAnchor(null)
 
       requestAnimationFrame(() => {
-        root.scrollTop = root.scrollHeight
-        setShowScrollButton(false)
-        shouldAutoScrollRef.current = true
+        scrollToBottom("auto")
+        updateScrollButtonState()
+        focusComposer()
       })
 
       return
     }
 
-    if (loadingOlderRef.current || isFetchingOlderMessages) return
+    const pendingOlderScroll = pendingOlderScrollRef.current
 
-    if (shouldAutoScrollRef.current) {
+    if (pendingOlderScroll && !isFetchingOlderMessages) {
       requestAnimationFrame(() => {
-        root.scrollTop = root.scrollHeight
-        setShowScrollButton(false)
+        const nextScrollHeight = container.scrollHeight
+        const diff = nextScrollHeight - pendingOlderScroll.scrollHeight
+
+        container.scrollTop = pendingOlderScroll.scrollTop + diff
+
+        pendingOlderScrollRef.current = null
+        loadingOlderRef.current = false
+        previousMessagesLengthRef.current = visibleMessages.length
+
+        updateScrollButtonState()
       })
+
+      return
     }
-  }, [conversationId, visibleMessages.length, isFetchingOlderMessages])
 
-  useEffect(() => {
-    if (isRecording) {
-      setEmojiOpen(false)
+    const messagesCountChanged =
+      previousMessagesLengthRef.current !== visibleMessages.length
+
+    previousMessagesLengthRef.current = visibleMessages.length
+
+    if (
+      messagesCountChanged &&
+      shouldStickToBottomRef.current &&
+      !isFetchingOlderMessages
+    ) {
+      requestAnimationFrame(() => {
+        scrollToBottom("auto")
+        updateScrollButtonState()
+      })
+
+      return
     }
-  }, [isRecording])
-
-  const scrollToBottom = () => {
-    const root = messagesContainerRef.current
-
-    if (!root) return
-
-    root.scrollTo({ top: root.scrollHeight, behavior: "auto" })
-    setShowScrollButton(false)
-    shouldAutoScrollRef.current = true
-  }
-
-  const handleInsertToComposer = (txt: string) => {
-    const glue = text.trim().length ? (text.endsWith(" ") ? "" : " ") : ""
-
-    setSelectedOption(null)
-    setText(text + glue + txt)
 
     requestAnimationFrame(() => {
-      textAreaRef.current?.focus()
-      autoResizeTextarea()
+      updateScrollButtonState()
+    })
+  }, [
+    conversationId,
+    visibleMessages.length,
+    isFetchingOlderMessages,
+    scrollToBottom,
+    updateScrollButtonState,
+    focusComposer,
+  ])
+
+  useEffect(() => {
+    if (!showEmojiPicker) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node
+
+      if (emojiPickerRef.current?.contains(target)) return
+
+      setShowEmojiPicker(false)
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showEmojiPicker])
+
+  useEffect(() => {
+    if (!customMessagesOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+
+      if (!target) return
+
+      const clickedFlyout = Boolean(target.closest(".cmf-flyout"))
+      const clickedButton = customMessagesButtonRef.current?.contains(target)
+
+      if (clickedFlyout || clickedButton) return
+
+      setCustomMessagesOpen(false)
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+
+      setCustomMessagesOpen(false)
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [customMessagesOpen])
+
+  const handleSendNow = async () => {
+    if (!canType || sending || (!text.trim() && !file)) return
+
+    shouldStickToBottomRef.current = true
+    setShowEmojiPicker(false)
+    setCustomMessagesOpen(false)
+
+    await handleSend()
+
+    requestAnimationFrame(() => {
+      scrollToBottom("smooth")
+      updateScrollButtonState()
+      focusComposer()
     })
   }
 
-  const onJumpToReplied = (message: ChatMessageView) => {
-    const id = message.repliedMessageId ?? message.repliedMessage?.messageId
+  const handleSendCustomMessageNow = useCallback(
+    async (messageText: string) => {
+      const cleanText = messageText.trim()
 
-    if (!id) return
+      if (!cleanText || !canType || sending) return
 
-    scrollToMessage(Number(id))
+      shouldStickToBottomRef.current = true
+      setCustomMessagesOpen(false)
+      setShowEmojiPicker(false)
+
+      await handleSend(null, cleanText)
+
+      requestAnimationFrame(() => {
+        scrollToBottom("smooth")
+        updateScrollButtonState()
+        focusComposer()
+      })
+    },
+    [
+      canType,
+      sending,
+      handleSend,
+      scrollToBottom,
+      updateScrollButtonState,
+      focusComposer,
+    ]
+  )
+
+  const handleInsertCustomMessage = useCallback(
+    (messageText: string) => {
+      setCustomMessagesOpen(false)
+      setShowEmojiPicker(false)
+      setText(messageText)
+
+      requestAnimationFrame(() => {
+        textAreaRef.current?.focus()
+        const length = messageText.length
+        textAreaRef.current?.setSelectionRange(length, length)
+      })
+    },
+    [setText, textAreaRef]
+  )
+
+  const handleTextareaChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setText(event.target.value)
+
+    const textarea = event.target
+
+    textarea.style.height = "auto"
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
   }
 
-  const showEmpty = !conversationId
+  const removeSelectedFile = () => {
+    setFile(null)
 
-  if (showEmpty) {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+
+    focusComposer()
+  }
+
+  const renderReplyPreview = (message: MessageDto) => {
+    const replied = message.repliedMessage
+
+    if (!replied) return null
+
     return (
-      <div className="chat-window__empty">
-        <div className="chat-window__empty-icon">
-          <MessageSquareMore size={64} />
+      <button
+        type="button"
+        className="chat-window__reply-preview"
+        onClick={() =>
+          scrollToMessage(message.repliedMessageId ?? replied.messageId)
+        }
+      >
+        <div className="chat-window__reply-author">
+          {replied.senderContactName || replied.senderUserName || "Mensaje"}
         </div>
 
-        <h3 className="chat-window__empty-title">
-          Ninguna conversación seleccionada
-        </h3>
+        <div className="chat-window__reply-row">
+          {replied.attachments?.[0]?.mediaUrl &&
+            isImage(replied.attachments[0].mimeType) && (
+              <img
+                src={replied.attachments[0].mediaUrl}
+                alt="Respuesta"
+                className="chat-window__reply-thumb-img"
+              />
+            )}
 
-        <p className="chat-window__empty-text">
-          Selecciona una conversación para chatear.
-        </p>
+          <span className="chat-window__reply-content">
+            {replied.content || replied.attachments?.[0]?.fileName || "Adjunto"}
+          </span>
+        </div>
+      </button>
+    )
+  }
+
+  const renderAttachment = (attachment: AttachmentDto) => {
+    const url = getAttachmentUrl(attachment)
+    const mimeType = attachment.mimeType ?? ""
+    const fileName = attachment.fileName || "archivo"
+
+    if (isImage(mimeType)) {
+      return (
+        <div className="chat-window__media-image">
+          <button
+            type="button"
+            className="chat-window__image-container"
+            onClick={() => openImagePreview(url)}
+          >
+            <img src={url} alt={fileName} className="chat-window__image" />
+          </button>
+        </div>
+      )
+    }
+
+    if (isVideo(mimeType)) {
+      return (
+        <div className="chat-window__media-video">
+          <video controls className="chat-window__video">
+            <source src={url} type={mimeType} />
+          </video>
+        </div>
+      )
+    }
+
+    if (isAudio(mimeType)) {
+      return (
+        <div className="chat-window__media-audio">
+          <div className="chat-window__audio-container">
+            <div className="chat-window__audio-icon">
+              {getFileIcon(mimeType)}
+            </div>
+
+            <div className="chat-window__audio-info">
+              <div className="chat-window__audio-name">{fileName}</div>
+
+              <audio controls className="chat-window__audio-player">
+                <source src={url} type={mimeType} />
+              </audio>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="chat-window__media-document">
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="chat-window__document-link"
+        >
+          <div className="chat-window__document-icon">
+            {getFileIcon(mimeType)}
+          </div>
+
+          <div className="chat-window__document-info">
+            <div className="chat-window__document-name">{fileName}</div>
+            <div className="chat-window__document-size">
+              {mimeType || "Documento"}
+            </div>
+          </div>
+
+          <Download
+            className="chat-window__document-download"
+            onClick={(event) => {
+              event.preventDefault()
+              void handleDownload(fileName)
+            }}
+          />
+        </a>
       </div>
     )
   }
 
-  const canType = !!conversationId && !sending && conversationStatus !== "Closed"
-  const hasAudioToSend = Number(recordingTime ?? 0) > 0
+  const renderContactMessage = (message: MessageDto) => {
+    if (!message.contact?.length) return null
 
-  const onStartRecord = async () => {
-    if (!canType) return
+    return (
+      <div className="chat-window__contact-list">
+        {message.contact.map((contact, index) => (
+          <div
+            key={`${contact.phones ?? index}`}
+            className="chat-window__contact-card"
+          >
+            <div className="chat-window__contact-icon">👤</div>
 
-    setEmojiOpen(false)
-    await startRecording()
+            <div className="chat-window__contact-info">
+              <p className="chat-window__contact-name">
+                {contact.name?.formatted_name ||
+                  contact.name?.first_name ||
+                  "Contacto"}
+              </p>
+
+              {contact.phones?.map((phone, phoneIndex) => (
+                <p
+                  key={`${phone.phone ?? phone.wa_id ?? phoneIndex}`}
+                  className="chat-window__contact-phone"
+                >
+                  {phone.phone || phone.wa_id}
+
+                  {phone.type && (
+                    <span className="chat-window__contact-type">
+                      {phone.type}
+                    </span>
+                  )}
+                </p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
-  const onStopRecord = async () => {
-    if (!canType) return
+  const renderMessage = (message: MessageDto) => {
+    const isOut =
+      !message.senderContactId &&
+      !message.isIncoming &&
+      (!message.senderUserId || message.senderUserId === userId)
 
-    await stopRecording()
+    return (
+      <div
+        ref={registerMessageRef(message.messageId)}
+        className={`${getMessagePosition(message)} ${
+          highlightedId === message.messageId
+            ? "chat-window__message--highlighted"
+            : ""
+        }`}
+        onPointerDown={(event) => startLongPress(event, message)}
+        onPointerUp={cancelLongPress}
+        onPointerLeave={cancelLongPress}
+        onPointerCancel={cancelLongPress}
+      >
+        {!isOut && (
+          <span className="chat-window__message-sender">
+            {message.senderContactName ||
+              message.senderUserName ||
+              message.senderClientName ||
+              "Cliente"}
+          </span>
+        )}
+
+        <div
+          className={getMessageClassName(message)}
+          title={message.localError ?? ""}
+          onDoubleClick={() => beginReply(message)}
+        >
+          {renderReplyPreview(message)}
+
+          <div className="chat-window__message-content">
+            {hasMedia(message) && (
+              <div className="chat-window__media">
+                {message.attachments?.map((attachment) => (
+                  <React.Fragment key={attachment.attachmentId}>
+                    {renderAttachment(attachment)}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+
+            {message.messageType === "Contact" && renderContactMessage(message)}
+
+            {hasText(message) && (
+              <p className="chat-window__message-text">
+                {renderMessageContent(message.content ?? "", searchTerm)}
+              </p>
+            )}
+          </div>
+
+          <div className="chat-window__message-info">
+            <span className="chat-window__message-time">
+              {formatTime(message.sentAt)}
+            </span>
+
+            {getStatusIcon(message, isOut)}
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const onClearRecord = () => {
-    clearRecording()
-    focusTextarea()
-  }
-
-  const onSendRecord = async () => {
-    if (!canType || !hasAudioToSend) return
-
-    setEmojiOpen(false)
-    await handleSendAudio()
-    focusTextarea()
-  }
-
-  const onSendTextOrFile = async () => {
-    setEmojiOpen(false)
-    await handleSend()
-
-    requestAnimationFrame(() => {
-      autoResizeTextarea()
-    })
+  if (!conversationId) {
+    return (
+      <section className="chat-window">
+        <div className="chat-window__empty">
+          <MessageSquareMore className="chat-window__empty-icon" />
+          <h3 className="chat-window__empty-title">
+            Seleccioná una conversación
+          </h3>
+          <p className="chat-window__empty-text">
+            Elegí un chat de la lista para comenzar a responder.
+          </p>
+        </div>
+      </section>
+    )
   }
 
   return (
-    <div className="chat-window">
-      {searchTerm && (
+    <section className="chat-window">
+      {showMobileBackButton && (
+        <div className="chat-window__mobile-topbar">
+          <button
+            type="button"
+            className="chat-window__mobile-back"
+            onClick={onMobileBack}
+            aria-label="Regresar"
+            title="Regresar"
+          >
+            <ArrowLeft size={18} />
+          </button>
+
+          <span className="chat-window__mobile-title">Chat</span>
+
+          <div className="chat-window__mobile-actions">
+            {showMobileDetailButton && (
+              <button
+                type="button"
+                className={`chat-window__mobile-action ${
+                  mobileDetailOpen ? "is-active" : ""
+                }`}
+                onClick={onMobileToggleDetail}
+                title={mobileDetailOpen ? "Ocultar detalle" : "Mostrar detalle"}
+                aria-label={
+                  mobileDetailOpen ? "Ocultar detalle" : "Mostrar detalle"
+                }
+              >
+                {!mobileDetailOpen ? (
+                  <>
+                    <AiOutlineShoppingCart size={18} />
+                    <span>Abrir Ventas</span>
+                  </>
+                ) : (
+                  <>
+                    <TbShoppingCartX size={18} />
+                    <span>Cerrar Panel</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {showMobileActions && !mobileDetailOpen && (
+              <>
+                <button
+                  type="button"
+                  className="chat-window__mobile-action chat-window__mobile-action--close"
+                  onClick={onMobileClose}
+                  disabled={mobileIsClosed}
+                  title="Cerrar"
+                >
+                  <XCircle size={15} />
+                  <span>Cerrar</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="chat-window__mobile-action chat-window__mobile-action--assign"
+                  onClick={onMobileAssign}
+                  disabled={mobileIsClosed || !mobileCanAssign}
+                  title={mobileAssignLabel}
+                >
+                  <UserCheck size={15} />
+                  <span>{mobileAssignLabel}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showSearchBar && (
         <div className="chat-window__searchbar">
           <input
             className="chat-window__searchbar-input"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar en la conversación…"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar en el chat"
           />
 
           <div className="chat-window__searchbar-meta">
             <span>
-              {matchIds.length ? `${matchIndex + 1}/${matchIds.length}` : "0/0"}
+              {matchIds.length ? matchIndex + 1 : 0}/{matchIds.length}
             </span>
 
-            <button onClick={() => gotoMatch(-1)} disabled={!matchIds.length}>
-              ◀
+            <button
+              type="button"
+              onClick={() => gotoMatch(-1)}
+              disabled={!matchIds.length}
+            >
+              ↑
             </button>
 
-            <button onClick={() => gotoMatch(1)} disabled={!matchIds.length}>
-              ▶
+            <button
+              type="button"
+              onClick={() => gotoMatch(1)}
+              disabled={!matchIds.length}
+            >
+              ↓
             </button>
-
-            <button onClick={() => setSearchTerm("")}>✕</button>
           </div>
         </div>
       )}
 
       <div
-        className="chat-window__messages"
-        onDoubleClick={focusTextarea}
         ref={messagesContainerRef}
+        className="chat-window__messages"
+        onScroll={handleMessagesScroll}
       >
-        {isFetchingOlderMessages && (
+        {hasMoreMessages && (
           <div className="chat-window__loading-older">
-            Cargando mensajes anteriores...
+            {isFetchingOlderMessages
+              ? "Cargando mensajes..."
+              : "Deslizá hacia arriba"}
           </div>
         )}
 
-        {!hasMoreMessages && visibleMessages.length > 0 && (
-          <div className="chat-window__loading-older">
-            No hay más mensajes anteriores
-          </div>
-        )}
-
-        {loadingMessages && visibleMessages.length === 0 && (
+        {loadingMessages && !visibleMessages.length && (
           <div className="chat-window__loading-older">Cargando mensajes...</div>
         )}
 
-        {stickyDate && (
-          <div className="chat-window__sticky-date">
-            <span className="chat-window__date-text chat-window__date-text--dark">
-              {stickyDate}
-            </span>
+        {messagesError && (
+          <div className="chat-window__loading-older">
+            No se pudieron cargar los mensajes.
           </div>
         )}
 
-        {visibleMessages.map((message, index) => {
-          const viewMessage = message as ChatMessageView
-          const sentAt = formatTime(message.sentAt)
-          const isCurrentUser = message.senderUserId === userId
-          const previousMessage = index > 0 ? visibleMessages[index - 1] : null
-          const showSender =
-            !previousMessage ||
-            previousMessage.senderUserId !== message.senderUserId
-
-          const label = getConversationStringDate(message.sentAt)
-          const previousLabel = previousMessage
-            ? getConversationStringDate(previousMessage.sentAt)
-            : null
-
-          const showDivider = !previousMessage || label !== previousLabel
-          const isIncomingFromContact = !isCurrentUser
-
-          const contacts = viewMessage.contact ?? []
-          const isContactMessage =
-            message.messageType === "Contact" || contacts.length > 0
-
-          const repliedMessage = viewMessage.repliedMessage ?? null
-          const replyThumb = getReplyThumb(repliedMessage)
-
-          return (
-            <React.Fragment key={message.messageId}>
-              {showDivider && (
-                <div
-                  className="chat-window__date-divider"
-                  ref={(element) => {
-                    if (element) {
-                      dateRefs.current[label] = element
-                    }
-                  }}
-                >
-                  <span className="chat-window__date-text chat-window__date-text--dark">
-                    {label}
-                  </span>
-                </div>
-              )}
-
-              <div
-                className="chat-window_message-group_container"
-                onDoubleClick={() => {
-                  beginReply(message)
-                  focusTextarea()
-                }}
-              >
-                <div
-                  ref={registerMessageRef(message.messageId)}
-                  className={
-                    highlightedId === message.messageId
-                      ? `${getMessagePosition(message)} chat-window__message--highlighted`
-                      : getMessagePosition(message)
-                  }
-                >
-                  {showSender && !isCurrentUser && (
-                    <div className="chat-window__message-sender">
-                      {message.senderContactId
-                        ? message.senderContactName || "Cliente"
-                        : !message.incognitoMode
-                          ? message.senderUserName || ""
-                          : ""}
-                    </div>
-                  )}
-
-                  <div
-                    className={getMessageClassName(message)}
-                    {...(isIncomingFromContact
-                      ? {
-                          onPointerDown: (event: React.PointerEvent) =>
-                            startLongPress(event, message),
-                          onPointerUp: cancelLongPress,
-                          onPointerLeave: cancelLongPress,
-                          onPointerCancel: cancelLongPress,
-                        }
-                      : { onDoubleClick: focusTextarea })}
-                    style={
-                      message.messageSourceId === 1
-                        ? {
-                            backgroundColor:
-                              message.messageSourceColor ?? "#fff",
-                            color: "#fff",
-                          }
-                        : {}
-                    }
-                  >
-                    <div className="chat-window__message-content">
-                      {repliedMessage && (
-                        <button
-                          type="button"
-                          className="chat-window__reply-preview"
-                          onClick={() => onJumpToReplied(viewMessage)}
-                          title="Ir al mensaje citado"
-                        >
-                          <div className="chat-window__reply-author">
-                            {getReplyAuthor(repliedMessage)}
-                          </div>
-
-                          <div className="chat-window__reply-row">
-                            {replyThumb ? (
-                              <img
-                                src={replyThumb}
-                                alt="thumb"
-                                className="chat-window__reply-thumb-img"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <span className="chat-window__reply-ico">
-                                {getReplyIcon(repliedMessage) ?? ""}
-                              </span>
-                            )}
-
-                            <span className="chat-window__reply-text">
-                              {getReplyPreview(repliedMessage)}
-                            </span>
-                          </div>
-                        </button>
-                      )}
-
-                      {isContactMessage && (
-                        <div className="chat-window__contact-list">
-                          {contacts.map((contact, contactIndex) => {
-                            const phone = contact.phones?.[0] ?? null
-
-                            const key =
-                              phone?.phone ||
-                              contact.name?.formatted_name ||
-                              `${message.messageId}-${contactIndex}`
-
-                            return (
-                              <div
-                                key={key}
-                                className="chat-window__media chat-window__contact-card"
-                              >
-                                <div className="chat-window__contact-icon">
-                                  👤
-                                </div>
-
-                                <div className="chat-window__contact-info">
-                                  <p className="chat-window__contact-name">
-                                    {contact.name?.formatted_name || "Contacto"}
-                                  </p>
-
-                                  {phone?.phone && (
-                                    <p className="chat-window__contact-phone">
-                                      {phone.phone}
-
-                                      {phone.type ? (
-                                        <span className="chat-window__contact-type">
-                                          {" "}
-                                          ({phone.type})
-                                        </span>
-                                      ) : null}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-
-                      {!isContactMessage && message.attachments?.length ? (
-                        <div className="chat-window__media">
-                          {(message.attachments[0].mimeType?.startsWith(
-                            "image/"
-                          ) ||
-                            message.attachments[0].mimeType ===
-                              "image/webp") && (
-                            <div className="chat-window__media-image">
-                              <div className="chat-window__image-container">
-                                <img
-                                  src={message.attachments[0].mediaUrl}
-                                  alt={
-                                    message.attachments[0].fileName || "Imagen"
-                                  }
-                                  className="chat-window__image"
-                                  loading="lazy"
-                                  decoding="async"
-                                  draggable={false}
-                                  onClick={() => {
-                                    const mediaUrl =
-                                      message.attachments?.[0]?.mediaUrl
-
-                                    if (mediaUrl) {
-                                      openImagePreview(mediaUrl)
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {message.attachments[0].mimeType?.startsWith(
-                            "video/"
-                          ) && (
-                            <div className="chat-window__media-video">
-                              <video
-                                controls
-                                className="chat-window__video"
-                                src={message.attachments[0].mediaUrl}
-                              >
-                                Tu navegador no soporta el elemento video.
-                              </video>
-                            </div>
-                          )}
-
-                          {message.attachments[0].mimeType?.startsWith(
-                            "audio/"
-                          ) && (
-                            <div className="chat-window__media-audio">
-                              <div className="chat-window__audio-container">
-                                <div className="chat-window__audio-icon">🎵</div>
-
-                                <div className="chat-window__audio-info">
-                                  <div className="chat-window__audio-name">
-                                    {message.attachments[0].fileName || "Audio"}
-                                  </div>
-
-                                  <audio
-                                    controls
-                                    className="chat-window__audio-player"
-                                    src={message.attachments[0].mediaUrl}
-                                  >
-                                    Tu navegador no soporta el elemento audio.
-                                  </audio>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {message.messageType === "Document" && (
-                            <div className="chat-window__media-document">
-                              <a
-                                href={message.attachments[0].mediaUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="chat-window__document-link"
-                              >
-                                <div className="chat-window__document-icon">
-                                  {getFileIcon(
-                                    message.attachments[0].mimeType || ""
-                                  )}
-                                </div>
-
-                                <div className="chat-window__document-info">
-                                  <div className="chat-window__document-name">
-                                    {message.attachments[0].fileName ||
-                                      "Documento"}
-                                  </div>
-
-                                  <div className="chat-window__document-size">
-                                    {message.attachments[0].mimeType ||
-                                      "Archivo"}
-                                  </div>
-                                </div>
-
-                                <div className="chat-window__document-download">
-                                  <Download size={16} />
-                                </div>
-                              </a>
-                            </div>
-                          )}
-
-                          {hasText(message) && (
-                            <div className="chat-window__message-caption">
-                              {renderMessageContent(
-                                String(message.content ?? ""),
-                                searchTerm
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        hasText(message) && (
-                          <div className="chat-window__message-text">
-                            {renderMessageContent(
-                              String(message.content ?? ""),
-                              searchTerm
-                            )}
-                          </div>
-                        )
-                      )}
-                    </div>
-
-                    <div className="chat-window__message-info">
-                      <span className="chat-window__message-time">{sentAt}</span>
-
-                      {getStatusIcon(message, isCurrentUser)}
-                    </div>
-                  </div>
-                </div>
+        {groupedMessages.map(({ message, showDate }) => (
+          <React.Fragment key={message.clientTempId ?? message.messageId}>
+            {showDate && (
+              <div className="chat-window__date-divider">
+                <span className="chat-window__date-text">
+                  {formatDate(message.sentAt)}
+                </span>
               </div>
-            </React.Fragment>
-          )
-        })}
+            )}
 
-        <div ref={bottomRef} className="butttonRef" style={{ height: 1 }} />
+            <div className="chat-window_message-group_container">
+              {renderMessage(message)}
+            </div>
+          </React.Fragment>
+        ))}
+
+        <div ref={bottomRef} />
 
         {showScrollButton && (
           <button
+            type="button"
             className="chat-window__scroll-button"
-            onClick={scrollToBottom}
-            title="Bajar al último mensaje"
+            onClick={() => {
+              shouldStickToBottomRef.current = true
+              scrollToBottom("smooth")
+              setShowScrollButton(false)
+            }}
+            title="Ir al final"
           >
-            <FaArrowDown className="chat-window__scroll-buttonIcon" />
+            <ChevronDown className="chat-window__scroll-buttonIcon" />
           </button>
         )}
       </div>
 
-      <div className="chat-window__composer" ref={composerRef}>
-        <label
-          htmlFor="file-upload"
-          className="chat-window__composer-attachment"
-          aria-label="Adjuntar archivo"
+      {replyTo && (
+        <div className="chat-window__reply-pill">
+          <div>
+            <div className="chat-window__reply-pill-text">
+              Respondiendo a {replyTo.author}
+            </div>
+
+            <button
+              type="button"
+              className="chat-window__reply-pill-jump"
+              onClick={() => scrollToMessage(replyTo.messageId)}
+            >
+              {replyTo.preview}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="chat-window__reply-pill-close"
+            onClick={() => {
+              cancelReply()
+              focusComposer()
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
+        <div
+          ref={popoverRef}
+          className="chat-window__quick-popover"
+          style={{
+            left: visibleState.quickMenuPos.x,
+            top: visibleState.quickMenuPos.y,
+          }}
         >
-          <Paperclip size={20} />
-        </label>
+          <div className="chat-window__quick-popover-title">
+            Opciones del mensaje
+          </div>
+
+          <button
+            type="button"
+            className="chat-window__quick-popover-btn"
+            onClick={() => beginReply(visibleState.quickMenuMsg as MessageDto)}
+          >
+            Responder
+          </button>
+
+          {quickOptions.length > 0 && (
+            <>
+              <div className="chat-window__quick-popover-divider" />
+
+              <div className="chat-window__quick-popover-list">
+                {quickOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className="chat-window__quick-popover-btn"
+                    onClick={() => {
+                      sendQuick(option)
+                      focusComposer()
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )} */}
+
+      <footer className="chat-window__composer">
+        <button
+          type="button"
+          className="chat-window__composer-attachment"
+          onClick={() => {
+            fileInputRef.current?.click()
+            focusComposer()
+          }}
+          disabled={!canType}
+          title="Adjuntar"
+        >
+          <Paperclip size={18} />
+        </button>
 
         <input
-          id="file-upload"
           ref={fileInputRef}
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
-          disabled={
-            !conversationId ||
-            sending ||
-            conversationStatus === "Closed" ||
-            isRecording
-          }
         />
 
         {file && (
@@ -990,198 +1096,163 @@ export const ChatWindow: React.FC<Props> = ({
             <span className="chat-window__composer-file-name">{file.name}</span>
 
             <button
-              className="chat-window__composer-file-remove"
-              onClick={() => setFile(null)}
-              aria-label="Eliminar archivo"
               type="button"
+              className="chat-window__composer-file-remove"
+              onClick={removeSelectedFile}
             >
-              ×
+              ✕
             </button>
           </div>
         )}
 
+        <div className="chat-window__quick">
+          <button
+            ref={customMessagesButtonRef}
+            type="button"
+            className="chat-window__quick-toggle"
+            disabled={!canType}
+            title="Mensajes personalizados"
+            onClick={toggleCustomMessages}
+          >
+            <MessageSquareMore size={18} />
+          </button>
+        </div>
+
         <div className="chat-window__composer-input-container">
-          {replyTo && (
-            <div className="chat-window__reply-pill">
-              <div className="chat-window__reply-pill-text">
-                Respondiendo a {replyTo.author}
-              </div>
+          <textarea
+            ref={textAreaRef}
+            className="chat-window__composer-input"
+            value={text}
+            onChange={handleTextareaChange}
+            onPaste={handlePaste}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                shouldStickToBottomRef.current = true
+              }
 
-              <button
-                type="button"
-                onClick={() => scrollToMessage(replyTo.messageId)}
-                className="chat-window__reply-pill-jump"
-                title="Ir al mensaje citado"
-              >
-                {replyTo.preview}
-              </button>
+              onComposerKeyDown(event)
+            }}
+            placeholder={
+              isClosed ? "Conversación cerrada" : "Escribí un mensaje..."
+            }
+            disabled={!canType}
+          />
+        </div>
 
-              <button
-                onClick={cancelReply}
-                className="chat-window__reply-pill-close"
-                type="button"
-              >
-                ✕
-              </button>
-            </div>
-          )}
+        <div className="chat-window__emoji-container" ref={emojiPickerRef}>
+          <button
+            type="button"
+            className="chat-window__emoji-btn"
+            disabled={!canType}
+            title="Agregar emoji"
+            onClick={() => {
+              setCustomMessagesOpen(false)
+              setShowEmojiPicker((current) => !current)
+              focusComposer()
+            }}
+          >
+            <Smile size={20} />
+          </button>
 
-          <div className="chat-window__composer-input-container__divisor">
-            <div
-              className="custom_messages__container"
-              ref={smsBtnRef}
-              onClick={() => setFlyoutOpen(true)}
-              title="Mensajes personalizados"
-            >
-              <SmsIcon className="custom_messages__icon" />
-            </div>
-
-            <textarea
-              ref={textAreaRef}
-              className="chat-window__composer-input"
-              placeholder={isRecording ? "Grabando..." : "Escribe un mensaje…"}
-              value={text}
-              autoCapitalize="sentences"
-              lang="es"
-              spellCheck={true}
-              autoFocus
-              disabled={isRecording}
-              onChange={(e) => {
-                setSelectedOption(null)
-                setText(e.target.value)
-              }}
-              onKeyDown={onComposerKeyDown}
-              onPaste={handlePaste}
-              rows={1}
-            />
-          </div>
-
-          {flyoutOpen && (
-            <div className="cmf-layer">
-              <div
-                className="cmf-backdrop"
-                onClick={() => setFlyoutOpen(false)}
-              />
-
-              <CustomMessagesFlyout
-                anchorRect={null}
-                open={flyoutOpen}
-                onClose={() => setFlyoutOpen(false)}
-                items={customMessages}
-                loading={loading}
-                error={error}
-                onCreate={create}
-                onUpdate={update}
-                onToggle={toggleSystemParam}
-                onInsertToComposer={handleInsertToComposer}
-                onSendNow={handleSendNow}
+          {showEmojiPicker && (
+            <div className="chat-window__emoji-picker">
+              <EmojiPicker
+                onEmojiClick={insertEmoji}
+                width="100%"
+                height={300}
+                searchPlaceHolder="Buscar emoji"
+                previewConfig={{
+                  showPreview: false,
+                }}
+                skinTonesDisabled
+                lazyLoadEmojis
               />
             </div>
           )}
         </div>
 
         <div className="chat-window__composer-audio">
-          <div className="chat-window__emoji-container">
-            <button
-              type="button"
-              className="chat-window__emoji-btn"
-              onClick={() => setEmojiOpen((prev) => !prev)}
-              disabled={!canType || isRecording}
-              title="Agregar emoji"
-            >
-              {!emojiOpen ? (
-                <BsEmojiLaughing fontSize={18} />
-              ) : (
-                <IoCloseSharp fontSize={18} />
-              )}
-            </button>
-
-            {emojiOpen && (
-              <div className="chat-window__emoji-picker">
-                <EmojiPicker
-                  onEmojiClick={handleEmojiClick}
-                  searchDisabled={false}
-                  skinTonesDisabled={false}
-                  previewConfig={{ showPreview: false }}
-                  height={360}
-                  width={320}
-                />
-              </div>
-            )}
-          </div>
-
-          <div
-            className={`chat-window__audio-timer ${
-              isRecording ? "audio-timer__recording" : ""
-            }`}
-          >
-            {hasAudioToSend ? secondsToTime(recordingTime) : ""}
-          </div>
-
-          {!isRecording && !hasAudioToSend && (
+          {!isRecording && !audioBlob && (
             <button
               type="button"
               className="chat-window__audio-btn"
-              onClick={onStartRecord}
+              onClick={startRecording}
               disabled={!canType}
               title="Grabar audio"
             >
-              <Mic size={24} className="chat-window__audio-icons" />
+              <Mic className="chat-window__audio-icons" size={18} />
             </button>
           )}
 
           {isRecording && (
-            <button
-              type="button"
-              className="chat-window__audio-btn chat-window__audio-btn--stop"
-              onClick={onStopRecord}
-              disabled={!canType}
-              title="Detener"
-            >
-              <Square size={18} />
-            </button>
+            <>
+              <span className="chat-window__audio-timer audio-timer__recording">
+                {secondsToTime(recordingTime)}
+              </span>
+
+              <button
+                type="button"
+                className="chat-window__audio-btn chat-window__audio-btn--stop"
+                onClick={stopRecording}
+                title="Detener"
+              >
+                <Square size={16} />
+              </button>
+            </>
           )}
 
-          {!isRecording && hasAudioToSend && (
+          {audioBlob && !isRecording && (
             <>
               <button
                 type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--send"
-                onClick={onSendRecord}
-                disabled={!canType}
-                title="Enviar audio"
+                className="chat-window__audio-btn chat-window__audio-btn--trash"
+                onClick={clearRecording}
+                title="Eliminar audio"
               >
-                <Check size={18} />
+                <Trash2 size={16} />
               </button>
 
               <button
                 type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--trash"
-                onClick={onClearRecord}
-                title="Eliminar audio"
+                className="chat-window__audio-btn chat-window__audio-btn--send"
+                onClick={() => {
+                  shouldStickToBottomRef.current = true
+                  void handleSendAudio()
+                  focusComposer()
+                }}
+                disabled={sending}
+                title="Enviar audio"
               >
-                <Trash2 size={18} />
+                <Check size={16} />
               </button>
             </>
           )}
         </div>
 
         <button
-          className="chat-window__composer-send"
-          onClick={onSendTextOrFile}
-          disabled={
-            !conversationId ||
-            sending ||
-            (!text.trim() && !file) ||
-            conversationStatus === "Closed" ||
-            isRecording
-          }
-          aria-label="Enviar mensaje"
           type="button"
+          className="chat-window__composer-send"
+          onClick={handleSendNow}
+          disabled={!canType || sending || (!text.trim() && !file)}
+          title="Enviar"
         >
           <Send size={18} />
         </button>
-      </div>
+      </footer>
+
+      <CustomMessagesFlyout
+        anchorRect={customMessagesAnchor}
+        open={customMessagesOpen}
+        onClose={closeCustomMessages}
+        items={activeCustomMessages}
+        loading={loadingCustomMessages}
+        error={customMessagesError}
+        onCreate={create}
+        onUpdate={update}
+        onToggle={toggleStatus}
+        onInsertToComposer={handleInsertCustomMessage}
+        onSendNow={handleSendCustomMessageNow}
+      />
 
       {ismaximize && previewImageUrl && (
         <div
@@ -1195,6 +1266,8 @@ export const ChatWindow: React.FC<Props> = ({
           />
         </div>
       )}
-    </div>
+    </section>
   )
 }
+
+export default ChatWindow

@@ -1,119 +1,131 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSystemParams } from '@/Hooks/Crm/useSystemParams'
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// import { useCallback, useMemo, useState } from "react"
 
-const parseQuickOptions = (selectedParam: unknown): string[] => {
-  const p: any = selectedParam
+// const parseQuickOptions = (selectedParam: unknown): string[] => {
+//   const p: any = selectedParam
 
-  const split = (s: string) =>
-    String(s)
-      .split('|')
-      .map(x => x.trim())
-      .filter(Boolean)
+//   const split = (s: string) =>
+//     String(s)
+//       .split("|")
+//       .map((x) => x.trim())
+//       .filter(Boolean)
 
-  if (Array.isArray(p)) {
-    return p.filter((v: any) => typeof v === 'string').map((v: any) => v.trim())
-  }
+//   if (Array.isArray(p)) {
+//     return p
+//       .filter((v: any) => typeof v === "string")
+//       .map((v: any) => v.trim())
+//       .filter(Boolean)
+//   }
 
-  if (typeof p === 'string') {
-    const raw = p.trim()
+//   if (typeof p === "string") {
+//     const raw = p.trim()
 
-    // Intentar JSON primero
-    if (raw.startsWith('[') && raw.endsWith(']')) {
-      try {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) {
-          return parsed
-            .filter((v: any) => typeof v === 'string')
-            .map((v: any) => v.trim())
-        }
-      } catch {
-        // si falla, seguimos abajo
-      }
-    }
+//     if (raw.startsWith("[") && raw.endsWith("]")) {
+//       try {
+//         const parsed = JSON.parse(raw)
 
-    // Formato "texto1|texto2|texto3"
-    return split(raw)
-  }
+//         if (Array.isArray(parsed)) {
+//           return parsed
+//             .filter((v: any) => typeof v === "string")
+//             .map((v: any) => v.trim())
+//             .filter(Boolean)
+//         }
+//       } catch {
+//         return split(raw)
+//       }
+//     }
 
-  if (typeof p?.value === 'string') {
-    const raw = p.value.trim()
+//     return split(raw)
+//   }
 
-    if (raw.startsWith('[') && raw.endsWith(']')) {
-      try {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) {
-          return parsed
-            .filter((v: any) => typeof v === 'string')
-            .map((v: any) => v.trim())
-        }
-      } catch {
-        // ignorar, seguimos
-      }
-    }
+//   if (typeof p?.value === "string") {
+//     const raw = p.value.trim()
 
-    return split(raw)
-  }
+//     if (raw.startsWith("[") && raw.endsWith("]")) {
+//       try {
+//         const parsed = JSON.parse(raw)
 
-  if (Array.isArray(p?.value)) {
-    return p.value
-      .filter((v: any) => typeof v === 'string')
-      .map((v: any) => v.trim())
-  }
+//         if (Array.isArray(parsed)) {
+//           return parsed
+//             .filter((v: any) => typeof v === "string")
+//             .map((v: any) => v.trim())
+//             .filter(Boolean)
+//         }
+//       } catch {
+//         return split(raw)
+//       }
+//     }
 
-  return []
-}
+//     return split(raw)
+//   }
 
-export const useQuickTab = (onSendNow?: (txt: string) => void | Promise<void>) => {
-  const { selectedParam, fetchByName } = useSystemParams()
+//   if (Array.isArray(p?.value)) {
+//     return p.value
+//       .filter((v: any) => typeof v === "string")
+//       .map((v: any) => v.trim())
+//       .filter(Boolean)
+//   }
 
-  useEffect(() => {
-    fetchByName('OpcionesRapidas')
-  }, [fetchByName])
+//   return []
+// }
 
-  const quickOptions = useMemo(() => {
-    const raw = parseQuickOptions(selectedParam)
-    const uniq = Array.from(new Set(raw.map(s => s.trim()))).filter(Boolean)
-    return uniq
-  }, [selectedParam])
+// export const useQuickTab = (
+//   selectedParam: unknown,
+//   onSendNow?: (txt: string) => void | Promise<void>
+// ) => {
+//   const quickOptions = useMemo(() => {
+//     const raw = parseQuickOptions(selectedParam)
+//     return Array.from(new Set(raw.map((s) => s.trim()))).filter(Boolean)
+//   }, [selectedParam])
 
-  const [qQuick, setQQuick] = useState('')
+//   const [qQuick, setQQuick] = useState("")
 
-  const filteredQuick = useMemo(() => {
-    const n = qQuick.trim().toLowerCase()
-    if (!n) return quickOptions
-    return quickOptions.filter(s => s.toLowerCase().includes(n))
-  }, [quickOptions, qQuick])
+//   const filteredQuick = useMemo(() => {
+//     const search = qQuick.trim().toLowerCase()
 
-  const handleSendQuick = useCallback(
-    async (txt: string) => {
-      if (!txt) return
+//     if (!search) return quickOptions
 
-      // Si viene función externa (como en SupportPage), úsala
-      if (onSendNow) {
-        await onSendNow(txt)
-        return
-      }
+//     return quickOptions.filter((option) =>
+//       option.toLowerCase().includes(search)
+//     )
+//   }, [quickOptions, qQuick])
 
-      // Fallback al "canal global" existente
-      const w = window as any
-      if (typeof w.__CHAT_SEND_QUICK__ === 'function') {
-        w.__CHAT_SEND_QUICK__(txt)
-        return
-      }
+//   const handleSendQuick = useCallback(
+//     async (txt: string) => {
+//       const cleanText = txt.trim()
 
-      window.dispatchEvent(new CustomEvent('chat:sendQuick', { detail: { text: txt } }))
-    },
-    [onSendNow]
-  )
+//       if (!cleanText) return
 
-  return {
-    quickOptions,
-    qQuick,
-    setQQuick,
-    filteredQuick,
-    handleSendQuick,
-  }
-}
+//       if (onSendNow) {
+//         await onSendNow(cleanText)
+//         return
+//       }
 
-export default useQuickTab
+//       const w = window as any
+
+//       if (typeof w.__CHAT_SEND_QUICK__ === "function") {
+//         w.__CHAT_SEND_QUICK__(cleanText)
+//         return
+//       }
+
+//       window.dispatchEvent(
+//         new CustomEvent("chat:sendQuick", {
+//           detail: {
+//             text: cleanText,
+//           },
+//         })
+//       )
+//     },
+//     [onSendNow]
+//   )
+
+//   return {
+//     quickOptions,
+//     qQuick,
+//     setQQuick,
+//     filteredQuick,
+//     handleSendQuick,
+//   }
+// }
+
+// export default useQuickTab

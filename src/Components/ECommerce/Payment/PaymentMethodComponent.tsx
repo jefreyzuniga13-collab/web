@@ -144,10 +144,8 @@ export const PaymentMethodComponent = ({
   };
 
   const totalResumen = useMemo(() => {
-    const totalBase = Number(existingLog?.totalEnPantalla ?? 0);
-    const transporte = Number(transpCost > 0 ? transpCost : 0);
-    return totalBase + transporte;
-  }, [existingLog?.totalEnPantalla, existingLog?.transCost, transpCost]);
+  return Number(totalPagar ?? 0);
+}, [totalPagar]);
 
   return (
     <>

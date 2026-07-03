@@ -52,33 +52,63 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
    *  - anclamos en el borde izquierdo del botón
    *  - lo desplazamos todo el ancho (-100%) más un GAP, y centramos verticalmente (-50%)
    */
+
   const flyoutStyle = useMemo<React.CSSProperties>(() => {
-    if (!anchorRect) {
-      // Fallback: esquina inferior derecha (por si no hay anchorRect)
-      return { right: 16, bottom: 84, transform: "none" };
-    }
-
-    const GAP = 10; // separación entre el flyout y el botón
-    const ESTIMATED_WIDTH = 360; // aprox. coincide con clamp de CSS
-    const MARGIN = 12;
-
-    // centro vertical del botón (para alinear verticalmente)
-    const top = anchorRect.top + anchorRect.height / 2;
-
-    // borde izquierdo del botón (punto de anclaje)
-    let left = anchorRect.left;
-
-    // si el botón está muy pegado al borde izquierdo, evitamos que el flyout se salga
-    // requerimos al menos el ancho estimado + margen
-    const minLeft = MARGIN + ESTIMATED_WIDTH;
-    if (left < minLeft) left = minLeft;
-
+  if (!anchorRect) {
     return {
-      top,
-      left,
-      transform: `translate(calc(-100% - ${GAP}px), -50%)`,
+      left: 16,
+      bottom: 90,
+      transform: "none",
     };
-  }, [anchorRect]);
+  }
+
+  const GAP = 10;
+  const MARGIN = 12;
+  const ESTIMATED_WIDTH = 380;
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  const isMobile = viewportWidth <= 768;
+
+  if (isMobile) {
+    return {
+      left: 0,
+      right: 0,
+      bottom: 0,
+      transform: "none",
+    };
+  }
+
+  let left = anchorRect.right + GAP;
+  let top = anchorRect.top - 260;
+
+  const maxLeft = viewportWidth - ESTIMATED_WIDTH - MARGIN;
+
+  if (left > maxLeft) {
+    left = maxLeft;
+  }
+
+  if (left < MARGIN) {
+    left = MARGIN;
+  }
+
+  if (top < MARGIN) {
+    top = MARGIN;
+  }
+
+  const maxTop = viewportHeight - 440 - MARGIN;
+
+  if (top > maxTop) {
+    top = maxTop;
+  }
+
+  return {
+    top,
+    left,
+    transform: "none",
+  };
+}, [anchorRect]);
 
   if (!open) return null;
 
@@ -115,7 +145,7 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
   return (
     <>
 
-      {/* <div className="cmf-backdrop" onClick={onClose} /> */}
+      <div className="cmf-backdrop" onClick={onClose} />
 
       <div
         className="cmf-flyout"

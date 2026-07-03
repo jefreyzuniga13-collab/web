@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "@mui/material/styles";
+
 import { AppRouter } from "@/Routers/AppRouter";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
@@ -16,11 +17,37 @@ import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
 import type { RootState } from "@/Context";
 import { theme } from "@/Utils/materialTheme";
 import { LicenseExpiredModalWatcher } from "@/Components/Auth/LicenseExpiredModalWatcher";
+
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
 
+const BASE_URL = import.meta.env.BASE_URL || "/";
+
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
+}
+
+function normalizeInternalUrl(url?: string | null): string {
+  const rawUrl = String(url ?? "").trim();
+
+  if (!rawUrl) {
+    return "/chat";
+  }
+
+  if (isExternalUrl(rawUrl)) {
+    return rawUrl;
+  }
+
+  if (rawUrl.startsWith(BASE_URL)) {
+    const withoutBase = rawUrl.slice(BASE_URL.length - 1);
+    return withoutBase.startsWith("/") ? withoutBase : `/${withoutBase}`;
+  }
+
+  if (rawUrl.startsWith("/")) {
+    return rawUrl;
+  }
+
+  return `/${rawUrl}`;
 }
 
 function sanitizeExternalUrl(url?: string | null): string {
@@ -41,6 +68,10 @@ function sanitizeExternalUrl(url?: string | null): string {
   return `https://${rawUrl.replace(/^\/+/, "")}`;
 }
 
+function getPublicAssetUrl(fileName: string): string {
+  return `${BASE_URL}${fileName}`.replace(/\/{2,}/g, "/");
+}
+
 function shouldShowDesktopNotification() {
   return document.visibilityState === "hidden" || !document.hasFocus();
 }
@@ -58,7 +89,7 @@ function AppRealtimeEffects() {
       (evt?.content && String(evt.content).trim()) ??
       "Tienes una nueva notificación";
 
-    const url = sanitizeExternalUrl(evt?.url ?? "/chat");
+    const url = normalizeInternalUrl(evt?.url ?? "/chat");
 
     return { title, body, url };
   }, []);
@@ -66,15 +97,17 @@ function AppRealtimeEffects() {
   const showDesktopNotification = useCallback(
     async (evt: any) => {
       if (!("Notification" in window)) return;
+      if (!("serviceWorker" in navigator)) return;
       if (Notification.permission !== "granted") return;
 
       const { title, body, url } = mapNotificationPayload(evt);
-      const reg = await navigator.serviceWorker.getRegistration();
 
-      await reg?.showNotification(title, {
+      const reg = await navigator.serviceWorker.ready;
+
+      await reg.showNotification(title, {
         body,
-        icon: "/logopcg.png",
-        badge: "/logopcg.png",
+        icon: getPublicAssetUrl("icono.jpeg"),
+        badge: getPublicAssetUrl("icono.jpeg"),
         requireInteraction: true,
         tag: "latest-message",
         renotify: true,
@@ -115,7 +148,7 @@ function AppRealtimeEffects() {
         return;
       }
 
-      navigate(url);
+      navigate(normalizeInternalUrl(url));
     };
 
     navigator.serviceWorker.addEventListener("message", handler);
@@ -139,7 +172,7 @@ function AppRealtimeEffects() {
     if (!lastEvent) return;
 
     try {
-      const audio = new Audio(`${import.meta.env.BASE_URL}notification.mp3`);
+      const audio = new Audio(getPublicAssetUrl("notification.mp3"));
       audio.play().catch(() => {});
     } catch {}
   }, [lastEvent]);
@@ -167,14 +200,6 @@ export default function App() {
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-
-    navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`)
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!("Notification" in window)) return;

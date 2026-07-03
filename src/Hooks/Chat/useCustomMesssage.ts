@@ -1,122 +1,221 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useMemo, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type {
   CustomMessageRequestDto,
   CustomMessageResponseDto,
-} from '@/Interfaces/Crm/CustomMessageInterface'
-import { CustomMessageServices } from '@/Services/chat/CustomMessageServices'
+} from "@/Interfaces/Crm/CustomMessageInterface"
+import { CustomMessageServices } from "@/Services/chat/CustomMessageServices"
 
-export function useCustomMessage(autoLoad = true) {
-  const [customMessages, setCustomMessages] = useState<CustomMessageResponseDto[]>([])
-  const [selectedCustomMessage, setSelectedCustomMessage] = useState<CustomMessageResponseDto | null>(null)
-  const [loadingList, setLoadingList] = useState(false)
-  const [loadingItem, setLoadingItem] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
+type ModalMode = "create" | "edit" | "view"
+
+type UseCustomMessageOptions = {
+  autoLoad?: boolean
+}
+
+export const CUSTOM_MESSAGES_QUERY_KEY = ["customMessages"] as const
+
+const normalizeError = (error: any): Error => {
+  if (error instanceof Error) return error
+
+  const message =
+    error?.response?.data?.message ||
+    error?.message ||
+    "Ocurrió un error al procesar los mensajes personalizados."
+
+  return new Error(message)
+}
+
+export function useCustomMessage(options: UseCustomMessageOptions | boolean = true) {
+  const normalizedOptions = useMemo<UseCustomMessageOptions>(() => {
+    if (typeof options === "boolean") {
+      return {
+        autoLoad: options,
+      }
+    }
+
+    return {
+      autoLoad: options.autoLoad ?? true,
+    }
+  }, [options])
+
+  const { autoLoad = true } = normalizedOptions
+
+  const queryClient = useQueryClient()
+
+  const [selectedCustomMessage, setSelectedCustomMessage] =
+    useState<CustomMessageResponseDto | null>(null)
+
+  const [modalMode, setModalMode] = useState<ModalMode>("create")
   const [isModalOpen, setModalOpen] = useState(false)
-  const [loaded, setLoaded] = useState(false)
 
-  const fetchPage = useCallback(async () => {
-    setLoadingList(true)
-    setError(null)
-    try {
-      const resp = await CustomMessageServices.getAllAsync()
-      setCustomMessages(resp)
-      setLoaded(true)
-    } catch (err: any) {
-      setError(err)
-    } finally {
-      setLoadingList(false)
-    }
-  }, [])
+  const customMessagesQuery = useQuery<CustomMessageResponseDto[], Error>({
+    queryKey: CUSTOM_MESSAGES_QUERY_KEY,
+    queryFn: async () => {
+      try {
+        return await CustomMessageServices.getAllAsync()
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    enabled: autoLoad,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+  })
 
-  const fetchById = useCallback(async (id: number) => {
-    setLoadingItem(true)
-    setError(null)
-    try {
-      const item = await CustomMessageServices.getByIdAsync(id)
+  const customMessages = customMessagesQuery.data ?? []
+
+  const activeCustomMessages = useMemo(() => {
+    return customMessages.filter((item) => item.isActive)
+  }, [customMessages])
+
+  const invalidateCustomMessages = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: CUSTOM_MESSAGES_QUERY_KEY,
+    })
+  }, [queryClient])
+
+  const fetchByIdMutation = useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        return await CustomMessageServices.getByIdAsync(id)
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    onSuccess: (item) => {
       setSelectedCustomMessage(item)
-    } catch (err: any) {
-      setError(err)
-    } finally {
-      setLoadingItem(false)
-    }
-  }, [])
+
+      queryClient.setQueryData<CustomMessageResponseDto[]>(
+        CUSTOM_MESSAGES_QUERY_KEY,
+        (current = []) => {
+          const exists = current.some((message) => message.id === item.id)
+
+          if (exists) {
+            return current.map((message) =>
+              message.id === item.id ? item : message
+            )
+          }
+
+          return [item, ...current]
+        }
+      )
+    },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: async (values: CustomMessageRequestDto) => {
+      try {
+        return await CustomMessageServices.createAsync(values)
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    onSuccess: async () => {
+      await invalidateCustomMessages()
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: async (params: {
+      id: number
+      values: CustomMessageRequestDto
+    }) => {
+      try {
+        return await CustomMessageServices.updateAsync(params.id, params.values)
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    onSuccess: async () => {
+      await invalidateCustomMessages()
+    },
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        return await CustomMessageServices.toggleStatusAsync(id)
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    onSuccess: (toggled) => {
+      queryClient.setQueryData<CustomMessageResponseDto[]>(
+        CUSTOM_MESSAGES_QUERY_KEY,
+        (current = []) =>
+          current.map((item) => (item.id === toggled.id ? toggled : item))
+      )
+
+      setSelectedCustomMessage((current) => {
+        if (!current) return current
+        return current.id === toggled.id ? toggled : current
+      })
+    },
+  })
+
+  const fetchById = useCallback(
+    async (id: number) => {
+      return await fetchByIdMutation.mutateAsync(id)
+    },
+    [fetchByIdMutation]
+  )
 
   const create = useCallback(
     async (values: CustomMessageRequestDto) => {
-      setLoadingItem(true)
-      setError(null)
-      try {
-        await CustomMessageServices.createAsync(values)
-        await fetchPage()
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
-      }
+      await createMutation.mutateAsync(values)
     },
-    [fetchPage]
+    [createMutation]
   )
 
   const update = useCallback(
     async (id: number, values: CustomMessageRequestDto) => {
-      setLoadingItem(true)
-      setError(null)
-      try {
-        await CustomMessageServices.updateAsync(id, values)
-        await fetchPage()
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
-      }
+      await updateMutation.mutateAsync({
+        id,
+        values,
+      })
     },
-    [fetchPage]
+    [updateMutation]
   )
 
   const toggleStatus = useCallback(
     async (id: number) => {
-      setLoadingItem(true)
-      setError(null)
-      try {
-        const toggled = await CustomMessageServices.toggleStatusAsync(id)
-        setCustomMessages(prev =>
-          prev.map(item => (item.id === toggled.id ? toggled : item))
-        )
-      } catch (err: any) {
-        setError(err)
-      } finally {
-        setLoadingItem(false)
-      }
+      await toggleMutation.mutateAsync(id)
     },
-    []
+    [toggleMutation]
   )
 
   const openCreate = useCallback(() => {
     setSelectedCustomMessage(null)
-    setModalMode('create')
+    setModalMode("create")
     setModalOpen(true)
   }, [])
 
   const openEdit = useCallback(
     (id: number) => {
-      const cache = customMessages.find(x => x.id === id) || null
+      const cache = customMessages.find((item) => item.id === id) || null
+
       setSelectedCustomMessage(cache)
-      setModalMode('edit')
+      setModalMode("edit")
       setModalOpen(true)
-      fetchById(id)
+
+      void fetchById(id)
     },
     [customMessages, fetchById]
   )
 
   const openView = useCallback(
     (id: number) => {
-      const cache = customMessages.find(x => x.id === id) || null
+      const cache = customMessages.find((item) => item.id === id) || null
+
       setSelectedCustomMessage(cache)
-      setModalMode('view')
+      setModalMode("view")
       setModalOpen(true)
-      fetchById(id)
+
+      void fetchById(id)
     },
     [customMessages, fetchById]
   )
@@ -127,36 +226,108 @@ export function useCustomMessage(autoLoad = true) {
   }, [])
 
   const handleSubmit = useCallback(
-    (values: CustomMessageRequestDto) => {
-      if (modalMode === 'create') create(values)
-      else if (modalMode === 'edit' && selectedCustomMessage) update(selectedCustomMessage.id, values)
-      closeModal()
+    async (values: CustomMessageRequestDto) => {
+      if (modalMode === "create") {
+        await create(values)
+        closeModal()
+        return
+      }
+
+      if (modalMode === "edit" && selectedCustomMessage) {
+        await update(selectedCustomMessage.id, values)
+        closeModal()
+      }
     },
     [modalMode, selectedCustomMessage, create, update, closeModal]
   )
 
-  useEffect(() => {
-    if (autoLoad) {
-      fetchPage()
-    }
-  }, [autoLoad, fetchPage])
+  const load = useCallback(async () => {
+    const result = await customMessagesQuery.refetch()
+    return result.data ?? []
+  }, [customMessagesQuery])
+
+  const refresh = useCallback(async () => {
+    await invalidateCustomMessages()
+  }, [invalidateCustomMessages])
+
+  const insertLocal = useCallback(
+    (item: CustomMessageResponseDto) => {
+      queryClient.setQueryData<CustomMessageResponseDto[]>(
+        CUSTOM_MESSAGES_QUERY_KEY,
+        (current = []) => {
+          const exists = current.some((message) => message.id === item.id)
+
+          if (exists) {
+            return current.map((message) =>
+              message.id === item.id ? item : message
+            )
+          }
+
+          return [item, ...current]
+        }
+      )
+    },
+    [queryClient]
+  )
+
+  const removeLocal = useCallback(
+    (id: number) => {
+      queryClient.setQueryData<CustomMessageResponseDto[]>(
+        CUSTOM_MESSAGES_QUERY_KEY,
+        (current = []) => current.filter((message) => message.id !== id)
+      )
+    },
+    [queryClient]
+  )
+
+  const error =
+    customMessagesQuery.error ||
+    fetchByIdMutation.error ||
+    createMutation.error ||
+    updateMutation.error ||
+    toggleMutation.error ||
+    null
+
+  const loadingList = customMessagesQuery.isLoading
+  const loadingItem =
+    fetchByIdMutation.isPending ||
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    toggleMutation.isPending
 
   return {
     customMessages,
+    activeCustomMessages,
     selectedCustomMessage,
+
     loading: loadingList || loadingItem,
+    loadingList,
+    loadingItem,
     error,
+
     modalMode,
     isModalOpen,
+
+    loaded: customMessagesQuery.isSuccess,
+
     openCreate,
     openEdit,
     openView,
     closeModal,
     handleSubmit,
-    toggleSystemParam: toggleStatus,
+
     create,
     update,
-    load: fetchPage,
-    loaded,
+
+    toggleSystemParam: toggleStatus,
+    toggleStatus,
+
+    load,
+    refresh,
+
+    insertLocal,
+    removeLocal,
   }
 }
+
+export default useCustomMessage

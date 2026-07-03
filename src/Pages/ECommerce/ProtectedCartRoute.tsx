@@ -1,69 +1,183 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import NotFound from "@/Pages/Auth/NotFound";
-import CarPage from "@/Pages/ECommerce/CarPage";
-import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface";
-import { CartService } from "@/Services/Ecommerce/CartService";
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
+import NotFound from "@/Pages/Auth/NotFound"
+import CarPage from "@/Pages/ECommerce/CarPage"
+import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
+import { CartService } from "@/Services/Ecommerce/CartService"
 
-type Status = "loading" | "ok" | "unauthorized";
+type Status = "loading" | "ok" | "unauthorized"
+
+const resolveMemoryCache = new Map<string, TempLinkResolveResponseDto>()
+const resolveInFlight = new Map<
+  string,
+  Promise<TempLinkResolveResponseDto>
+>()
+
+const getCacheKey = (token: string) => {
+  return `paynow:resolved:${token}`
+}
+
+const readPayloadFromSession = (
+  token: string
+): TempLinkResolveResponseDto | null => {
+  try {
+    const raw = sessionStorage.getItem(getCacheKey(token))
+
+    if (!raw) return null
+
+    return JSON.parse(raw) as TempLinkResolveResponseDto
+  } catch {
+    sessionStorage.removeItem(getCacheKey(token))
+    return null
+  }
+}
+
+const savePayloadToSession = (
+  token: string,
+  payload: TempLinkResolveResponseDto
+) => {
+  try {
+    sessionStorage.setItem(getCacheKey(token), JSON.stringify(payload))
+  } catch {
+    // Ignorar si el navegador bloquea storage.
+  }
+}
+
+const applyEmpresaId = (payload: TempLinkResolveResponseDto) => {
+  const empresaId = payload?.empresaId?.trim() ?? ""
+
+  if (empresaId) {
+    sessionStorage.setItem("EmpresaId", empresaId)
+    return
+  }
+
+  sessionStorage.removeItem("EmpresaId")
+  localStorage.removeItem("EmpresaId")
+  console.warn("empresaId no vino en el payload")
+}
+
+const resolvePaynowTokenOnce = async (
+  token: string
+): Promise<TempLinkResolveResponseDto> => {
+  const cleanToken = token.trim()
+
+  const memoryPayload = resolveMemoryCache.get(cleanToken)
+
+  if (memoryPayload) {
+    return memoryPayload
+  }
+
+  const sessionPayload = readPayloadFromSession(cleanToken)
+
+  if (sessionPayload) {
+    resolveMemoryCache.set(cleanToken, sessionPayload)
+    return sessionPayload
+  }
+
+  const currentRequest = resolveInFlight.get(cleanToken)
+
+  if (currentRequest) {
+    return currentRequest
+  }
+
+  const request = CartService.resolveToken(cleanToken)
+    .then((response) => {
+      const payload = response.data
+
+      if (!payload) {
+        throw new Error("El enlace no devolvió información válida.")
+      }
+
+      resolveMemoryCache.set(cleanToken, payload)
+      savePayloadToSession(cleanToken, payload)
+
+      return payload
+    })
+    .finally(() => {
+      resolveInFlight.delete(cleanToken)
+    })
+
+  resolveInFlight.set(cleanToken, request)
+
+  return request
+}
 
 const ProtectedCartRoute = () => {
-  const [status, setStatus] = useState<Status>("loading");
-  const [payload, setPayload] = useState<TempLinkResolveResponseDto | null>(null);
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("paynow");
+  const [status, setStatus] = useState<Status>("loading")
+  const [payload, setPayload] =
+    useState<TempLinkResolveResponseDto | null>(null)
+
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get("paynow")
+
+  const cleanToken = useMemo(() => {
+    return String(token ?? "").trim()
+  }, [token])
+
+  const lastResolvedTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     const validate = async () => {
-      if (!token) {
-        setStatus("unauthorized");
-        return;
+      if (!cleanToken) {
+        sessionStorage.removeItem("EmpresaId")
+        localStorage.removeItem("EmpresaId")
+        setPayload(null)
+        setStatus("unauthorized")
+        return
       }
+
+      if (lastResolvedTokenRef.current === cleanToken && payload) {
+        setStatus("ok")
+        return
+      }
+
+      setStatus("loading")
 
       try {
-        //EL SERVICIO SOLO SE LLAMA DESDE AQUI NODESDE  OTRA PARTE
-        const { data } = await CartService.resolveToken(token)
+        const resolvedPayload = await resolvePaynowTokenOnce(cleanToken)
 
-        const resolvedPayload = data;
+        if (cancelled) return
 
-        setPayload(resolvedPayload);
+        lastResolvedTokenRef.current = cleanToken
 
-        const empresaId = resolvedPayload?.empresaId?.trim() ?? "";
-
-        if (empresaId) {
-          sessionStorage.setItem("EmpresaId", empresaId);
-        } else {
-          sessionStorage.removeItem("EmpresaId");
-          localStorage.removeItem("EmpresaId");
-          console.warn("empresaId no vino en el payload");
-        }
-
-
-        setStatus("ok");
+        applyEmpresaId(resolvedPayload)
+        setPayload(resolvedPayload)
+        setStatus("ok")
       } catch (error) {
-        console.error("Error resolviendo token temporal:", error);
-        sessionStorage.removeItem("EmpresaId");
-        localStorage.removeItem("EmpresaId");
-        setStatus("unauthorized");
-      }
-    };
+        if (cancelled) return
 
-    validate();
-  }, [token]);
+        console.error("Error resolviendo token temporal:", error)
+
+        sessionStorage.removeItem("EmpresaId")
+        localStorage.removeItem("EmpresaId")
+
+        setPayload(null)
+        setStatus("unauthorized")
+      }
+    }
+
+    void validate()
+
+    return () => {
+      cancelled = true
+    }
+  }, [cleanToken, payload])
 
   if (status === "loading") {
     return (
       <main className="cart-page cart-page--centered">
         <p>Validando enlace...</p>
       </main>
-    );
+    )
   }
 
   if (status === "unauthorized" || !payload) {
-    return <NotFound />;
+    return <NotFound />
   }
 
-  return <CarPage payload={payload} />;
-};
+  return <CarPage payload={payload} />
+}
 
-export default ProtectedCartRoute;
+export default ProtectedCartRoute
