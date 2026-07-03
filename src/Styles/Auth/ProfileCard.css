@@ -315,6 +315,7 @@
   padding: var(--space-lg);
   overflow-y: auto;
   height: 100%;
+  text-align: left;
 }
 
 .profile-card__sidebar {
@@ -362,12 +363,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
   gap: var(--space-lg);
+  text-align: left;
 }
 
 .profile-card__field {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  text-align: left;
 }
 
 .profile-card__field .label {
@@ -392,6 +395,7 @@
   align-items: center;
   justify-content: center;
   word-break: break-word;
+  align-self: flex-start;
 }
 
 .profile-card__field--full-width {
@@ -408,6 +412,7 @@
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   padding: var(--space-sm) 0;
+  align-self: flex-start;
 }
 
 .profile-card__account-indicator {
@@ -490,7 +495,6 @@
     text-align: center;
     gap: var(--space-md);
     min-height: 12rem;
-    max-height: 14rem;
     padding: var(--space-md);
   }
   

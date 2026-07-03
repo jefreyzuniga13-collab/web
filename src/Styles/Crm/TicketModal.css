@@ -132,7 +132,7 @@ font-weight: bold;
   gap:var(--space-sm)
 }
 .tm-file-input{
-  display:none
+  display:none;
 }
 .tm-files{
   margin:var(--space-sm) 0 0;

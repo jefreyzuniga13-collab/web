@@ -1,30 +1,28 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 
 html {
-  font-size: 62.5%; /* 10px base */
+  font-size: 62.5%;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
+  width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
   margin: 0;
   padding: 0;
-  font-family: 'Roboto', sans-serif !important;
-  box-sizing: border-box;
+  font-family: "Roboto", sans-serif !important;
   background-color: var(--bg-primary);
-  font-size: 55%;
   position: relative;
-}
-
-#root {
-  display: flex;
-  min-width: 100vw;
-  min-height: 100vh;
-  padding: 0;
+  overflow: hidden;
 }
 
 body {
@@ -34,37 +32,37 @@ body {
   font-size: 1.6rem;
 }
 
-.detailPanelHistoryTab_rating{
-  color: rgb(192, 192, 34);
+#root {
+  display: block;
 }
 
 :root {
   --color-primary: #2577e1;
-  --color-secondary: #F99D1C;
+  --color-secondary: #f99d1c;
   --color-secondary-light: #f6aa28;
-  --color-primary-dark: #0070B4;
+  --color-primary-dark: #0070b4;
   --color-primary-light: #4f7bd1;
   --color-primary-hover-opacity: 0.9;
-  
+
   --bg-primary: #ffffff;
   --bg-secondary: #f3f4f6;
   --bg-tertiary: #f9fafb;
   --bg-secondary-hover: #e5e7eb;
   --bg-tertiary-hover: #f9fafb;
   --bg-warning: #e14747;
-  
+
   --text-primary: #131418;
   --text-secondary: #374151;
   --text-muted: #020408;
   --text-light: #9ca3af;
   --text-white: #ffffff;
   --text-default: #131418;
-  
+
   --border-primary: #d1d5db;
   --border-secondary: #e5e7eb;
   --border-tertiary: #d1d5db;
   --border-default: #d1d5db;
-  
+
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #dc2626;
@@ -72,15 +70,15 @@ body {
   --color-destructive: #dc2626;
   --bg-destructive-hover: rgba(220, 38, 38, 0.1);
   --error: #dc2626;
-  
+
   --input-bg: #ffffff;
   --input-focus-border: #015d96;
   --grayColor: #374151;
-  
+
   --greenColor: #37c255;
   --purpleColor: #9044e7;
   --blueColor: #4675d1;
-  
+
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
   --color-gray-200: #e5e7eb;
@@ -91,18 +89,21 @@ body {
   --color-gray-700: #374151;
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
-  
+
   --color-blue-primary: #356ace;
   --color-blue-light: #e0e7ff;
   --color-green-primary: #10b981;
-    --color-green-light: #b4ffd8;
-  
+  --color-green-light: #b4ffd8;
+
   --shadow-xs: 0 0.1rem 0.2rem 0 rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 0.1rem 0.2rem 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 0.4rem 0.6rem -0.1rem rgba(0, 0, 0, 0.1), 0 0.2rem 0.4rem -0.1rem rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 1rem 1.5rem -0.3rem rgba(0, 0, 0, 0.1), 0 0.4rem 0.6rem -0.2rem rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 2rem 2.5rem -0.5rem rgba(0, 0, 0, 0.1), 0 0.8rem 1rem -0.4rem rgba(0, 0, 0, 0.06);
-  
+  --shadow-md: 0 0.4rem 0.6rem -0.1rem rgba(0, 0, 0, 0.1),
+    0 0.2rem 0.4rem -0.1rem rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 1rem 1.5rem -0.3rem rgba(0, 0, 0, 0.1),
+    0 0.4rem 0.6rem -0.2rem rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 2rem 2.5rem -0.5rem rgba(0, 0, 0, 0.1),
+    0 0.8rem 1rem -0.4rem rgba(0, 0, 0, 0.06);
+
   --radius-xs: 0.2rem;
   --radius-sm: 0.4rem;
   --radius-md: 0.6rem;
@@ -110,12 +111,13 @@ body {
   --radius-xl: 1.2rem;
   --radius-2xl: 1.6rem;
   --radius-full: 999.9rem;
+
   --border-radius-sm: 0.125rem;
   --border-radius-md: 0.375rem;
   --border-radius-lg: 0.5rem;
   --border-radius-xl: 1rem;
   --border-radius-full: 9999px;
-  
+
   --space-xs: 0.4rem;
   --space-sm: 0.8rem;
   --space-md: 1.2rem;
@@ -124,7 +126,7 @@ body {
   --space-2xl: 3.2rem;
   --space-3xl: 4.8rem;
   --space-4xl: 6.4rem;
-  
+
   --font-size-1xs: 0.9rem;
   --font-size-xs: 1.2rem;
   --font-size-sm: 1.4rem;
@@ -135,27 +137,26 @@ body {
   --font-size-3xl: 3rem;
   --font-size-4xl: 3.6rem;
   --font-size-5xl: 4.8rem;
-  
+
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 450;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
-  
+
   --transition-fast: 150ms;
   --transition-normal: 250ms;
   --transition-slow: 350ms;
   --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  
-  /* === BREAKPOINTS === */
-  --breakpoint-mobile: 48rem; /* 768px */
-  --breakpoint-tablet: 76.8rem; /* 1024px */
-  --breakpoint-laptop: 120rem; /* 1200px */
-  --breakpoint-desktop: 144rem; /* 1440px */
+
+  --breakpoint-mobile: 48rem;
+  --breakpoint-tablet: 76.8rem;
+  --breakpoint-laptop: 120rem;
+  --breakpoint-desktop: 144rem;
 
   --bp-xs: 36rem;
   --bp-sm: 48rem;
@@ -165,117 +166,135 @@ body {
   --bp-2xl: 120rem;
 }
 
+
+.general-container {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.general-container__content {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ============================= */
+/* Layout móvil */
+/* ============================= */
+
+.general-container--mobile {
+  display: block;
+  width: 100vw;
+  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.general-container--mobile .general-container__content {
+  width: 100vw;
+  height: calc(100dvh - 54px);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+/* ============================= */
+/* Loader */
+/* ============================= */
+
 .loader-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 100vw;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
 }
 
-.general-container {
-  display: grid;
-  grid-template-columns: auto 2fr;
-  min-width: 100vw;
+/* ============================= */
+/* Utilidades */
+/* ============================= */
+
+.detailPanelHistoryTab_rating {
+  color: rgb(192, 192, 34);
 }
 
-@media (min-width: 10.8rem) {
-  .navbar-container {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 0.1rem solid var(--border-secondary);
-  }
-  .general-container {
-    display: grid;
-    grid-template-columns: auto 2fr;
-    min-width: 100vw;
-  }
-}
-  
-@media (max-width: 1000px) {
-
-}
-.u-text-center { text-align: center; }
-.u-text-left { text-align: left; }
-.u-text-right { text-align: right; }
-
-.u-font-light { font-weight: var(--font-weight-light); }
-.u-font-normal { font-weight: var(--font-weight-normal); }
-.u-font-medium { font-weight: var(--font-weight-medium); }
-.u-font-semibold { font-weight: var(--font-weight-semibold); }
-.u-font-bold { font-weight: var(--font-weight-bold); }
-
-.u-hidden { display: none; }
-.u-block { display: block; }
-.u-flex { display: flex; }
-.u-grid { display: grid; }
-/* 
-.MuiAutocomplete-listbox .MuiAutocomplete-option {
-  font-size: var(--font-size-lg);
-  line-height: 1.4;  
-} */
-
-.cm-modal__container .MuiAutocomplete-listbox .MuiAutocomplete-option {
-   font-size: var(--font-size-lg);
-}
-
-.date-picker-field .MuiInputBase-input {
-  font-size: var(--font-size-lg);
-}
-
-
-.MuiPickersSectionList-root 
-.MuiPickersInputBase-sectionsContainer{
-  padding: 0 !important;
-  margin: 0 !important;
-  font-size: 12px;
-}
-.MuiCalendarPicker-root,
-.MuiCalendarPicker-root .MuiTypography-root,
-.MuiCalendarPicker-root .MuiDayCalendar-day,
-.MuiCalendarPicker-root .MuiDayCalendar-weekDayLabel,
-.MuiCalendarPicker-root .MuiCalendarHeader-root,
-.MuiCalendarPicker-root .MuiCalendarHeader-label,
-.MuiCalendarPicker-root .MuiCalendarHeader-switchHeader {
-  font-size: var(--font-size-lg) !important;
-}
-
-.time-picker-field .MuiInputBase-input {
-  font-size: var(--font-size-lg);
-}
-.MuiClockNumber-clockNumber {
-  font-size: var(--font-size-3xl) !important;
-}
-.MuiPickersMeridiemSwitch-root .MuiButton-root {
-  font-size: var(--font-size-lg) !important;
-}
-.MuiPickerTimeListItem-root .MuiTypography-root {
-  font-size: var(--font-size-3xl) !important;
-}
-.MuiPickersActionBar-root .MuiButton-root {
-  font-size: var(--font-size-lg) !important;
-}
-
-.MuiTableCell-root
-.MuiTableCell-body{
-    font-family: 'Roboto', sans-serif !important;
-}
-
-.whatsapp-icon{
+.whatsapp-icon {
   color: var(--greenColor);
   font-size: var(--font-size-lg);
 }
-.instagram-icon{
+
+.instagram-icon {
   color: var(--purpleColor);
   font-size: var(--font-size-lg);
 }
-.messenger-icon{
+
+.messenger-icon {
   color: var(--blueColor);
   font-size: var(--font-size-lg);
 }
 
+.u-text-center {
+  text-align: center;
+}
+
+.u-text-left {
+  text-align: left;
+}
+
+.u-text-right {
+  text-align: right;
+}
+
+.u-font-light {
+  font-weight: var(--font-weight-light);
+}
+
+.u-font-normal {
+  font-weight: var(--font-weight-normal);
+}
+
+.u-font-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.u-font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.u-font-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.u-hidden {
+  display: none;
+}
+
+.u-block {
+  display: block;
+}
+
+.u-flex {
+  display: flex;
+}
+
+.u-grid {
+  display: grid;
+}
+
+/* ============================= */
+/* Toast */
+/* ============================= */
 
 .custom-toast {
   font-size: var(--font-size-lg);
@@ -286,7 +305,6 @@ body {
 .custom-toast-body {
   font-size: var(--font-size-lg);
   font-weight: 500;
-
 }
 
 .custom-toast .Toastify__toast-icon {
@@ -300,14 +318,104 @@ body {
   opacity: 0.9;
 }
 
+/* ============================= */
+/* Material UI */
+/* ============================= */
+
+.cm-modal__container .MuiAutocomplete-listbox .MuiAutocomplete-option {
+  font-size: var(--font-size-lg);
+}
+
+.date-picker-field .MuiInputBase-input {
+  font-size: var(--font-size-lg);
+}
+
+.time-picker-field .MuiInputBase-input {
+  font-size: var(--font-size-lg);
+}
+
+.MuiPickersSectionList-root .MuiPickersInputBase-sectionsContainer {
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 12px;
+}
+
+.MuiCalendarPicker-root,
+.MuiCalendarPicker-root .MuiTypography-root,
+.MuiCalendarPicker-root .MuiDayCalendar-day,
+.MuiCalendarPicker-root .MuiDayCalendar-weekDayLabel,
+.MuiCalendarPicker-root .MuiCalendarHeader-root,
+.MuiCalendarPicker-root .MuiCalendarHeader-label,
+.MuiCalendarPicker-root .MuiCalendarHeader-switchHeader {
+  font-size: var(--font-size-lg) !important;
+}
+
+.MuiClockNumber-clockNumber {
+  font-size: var(--font-size-3xl) !important;
+}
+
+.MuiPickersMeridiemSwitch-root .MuiButton-root {
+  font-size: var(--font-size-lg) !important;
+}
+
+.MuiPickerTimeListItem-root .MuiTypography-root {
+  font-size: var(--font-size-3xl) !important;
+}
+
+.MuiPickersActionBar-root .MuiButton-root {
+  font-size: var(--font-size-lg) !important;
+}
+
+.MuiTableCell-root,
+.MuiTableCell-body {
+  font-family: "Roboto", sans-serif !important;
+}
+
+/* ============================= */
+/* Animaciones */
+/* ============================= */
+
 @keyframes latido {
   0% {
-    transform: scale(1); 
+    transform: scale(1);
   }
+
   50% {
     transform: scale(1.15);
   }
+
   100% {
     transform: scale(1);
+  }
+}
+
+/* ============================= */
+/* Mobile fixes */
+/* ============================= */
+
+@media (max-width: 700px) {
+  html,
+  body,
+  #root {
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body {
+    font-size: 1.4rem;
+  }
+
+  .general-container--mobile {
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .general-container--mobile .general-container__content {
+    width: 100vw;
+    height: calc(100dvh - 54px);
+    overflow: hidden;
+    padding-bottom: 0;
   }
 }

@@ -6,6 +6,7 @@
   font-family: inherit;
   overflow-y: auto;
   padding-top: 5rem;
+  overflow-y: scroll;
 }
 
 .performance-dashboard__header {
@@ -185,6 +186,7 @@ box-shadow: rgba(0, 0, 0, 0.18) 0px 2px 4px;
   grid-template-columns: repeat(4, minmax(13rem, 1fr));
   gap: var(--space-md);
   margin-bottom: var(--space-lg);
+  overflow-y: scroll;
 }
 
 .metric-card {
@@ -1204,6 +1206,8 @@ box-shadow: rgba(0, 0, 0, 0.18) 0px 2px 4px;
 @media (max-width: 760px) {
   .performance-dashboard {
     padding: var(--space-md);
+    max-height: 100%;
+    overflow-y: auto;
   }
 
   .performance-dashboard__header {
