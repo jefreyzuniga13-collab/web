@@ -1,6 +1,5 @@
 import type { AxiosInstance } from "axios";
 import { AxiosHeaders } from "axios";
-// import { toast } from "react-toastify";
 import { store } from "@/Context";
 
 const getStorageValue = (key: string): string => {

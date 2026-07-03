@@ -1,14 +1,14 @@
 import React from "react"
 import * as Icons from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { useMenus } from "@/Hooks/Auth/useMenus"
 import { useAuth } from "@/Hooks/Auth/useAuth"
 import { presenceConnection } from "@/Services/signalr"
 import { markOffline } from "@/Hooks/Auth/useUserPresence"
 import { logoutThunk } from "@/Context/Slices/Auth/authThunks"
 import type { AppDispatch } from "@/Context"
-import type { AuthData } from "@/Interfaces/Auth/AuthInterface"
+import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import "@/Styles/Auth/MobileNavbar.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -60,8 +60,7 @@ const MobileNavbar: React.FC = () => {
   const dispatch = useAppDispatch()
   const { logout: logoutAuth } = useAuth()
 
-  const authRaw = localStorage.getItem("auth") || "{}"
-  const { userId } = JSON.parse(authRaw) as AuthData
+  const userId = useSelector(selectUserId)
 
   const selectedUrl = normalizePath(location.pathname)
 

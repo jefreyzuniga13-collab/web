@@ -33,7 +33,7 @@ const OpeningHourPage = lazy(() => import("@/Pages/Crm/OpeningHourPage"));
 const WorkShiftPage = lazy(() => import("@/Pages/Crm/WorkShiftPage"));
 const ContactPage = lazy(() => import("@/Pages/Auth/ContactPage"));
 const ConversationsPage = lazy(() => import("@/Pages/Chat/ConversationsPage"));
-const TemplateCategoryPage = lazy(() => import("@/Pages/Chat/TemplateCategoryPage"),);
+const TemplateCategoryPage = lazy(() => import("@/Pages/Wa/TemplateCategoryPage"),);
 const ProductCatalogPage = lazy(() => import("@/Pages/Wa/ProductCatalogPage"));
 const DynamicParamPage = lazy(() => import("@/Pages/Crm/DynamicParamPage"));
 const ClientManagementPanel = lazy(() => import("@/Pages/Crm/ClientManagementPanel"),);

@@ -3,7 +3,7 @@ import {useClasicClient} from '@/Hooks/Crm/useClasicClient'
 import type { Column } from "@/Interfaces/Common/CustomTable"
 import CustomTable from "@/Components/Common/CustomTable"
 import IconButton from "@mui/material/IconButton"
-import { EditIcon } from "lucide-react"
+import { MdOutlineEdit } from "react-icons/md";
 import "@/Styles/Crm/OpeningHourPage.css"
 import "@/Styles/Crm/WorkShiftPage.css"
 import '@/Styles/Crm/SystemParamsPage.css'
@@ -104,7 +104,7 @@ export default function ClientPage() {
             () => 
               navigate(`/clientManagementPanel/${row.clientId}`)
             }>
-            <EditIcon size={16} />
+            <MdOutlineEdit size={16} />
           </IconButton>
         </>
       ),

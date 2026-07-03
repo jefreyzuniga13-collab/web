@@ -8,7 +8,7 @@ import FilterOrderModal from "@/Components/Chat/FilterOrderModal"
 import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter"
 import Input from "@/Components/Common/Input"
 import DetailPanel from "@/Components/Chat/DetailPanel"
-import { Sticker } from "lucide-react"
+import { PiSticker } from "react-icons/pi";
 import { useConversations, type Filter } from "@/Hooks/Chat/useConversations"
 import TicketModal from "@/Components/Crm/TicketModal"
 import useContact from "@/Hooks/Auth/useContact"
@@ -16,7 +16,6 @@ import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "@/Context"
-import "@/Styles/Chat/SupportPage.css"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { MdContacts } from "react-icons/md"
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io"
@@ -26,6 +25,7 @@ import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamVal
 import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams"
 import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
 import { isValidSaleCompany } from "@/Utils/isValidSaleCompany"
+import "@/Styles/Chat/SupportPage.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 
@@ -378,7 +378,7 @@ const handleMobileBack = () => {
                 onClick={() => setTicketOpen(true)}
                 type="button"
               >
-                <Sticker size={16} /> Crear Ticket
+                <PiSticker size={16} /> Crear Ticket
               </button>
             )}
 

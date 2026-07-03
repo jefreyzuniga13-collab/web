@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  Edit,
-  // Lock 
-} from "lucide-react";
+import { MdOutlineEdit } from "react-icons/md";
 import { Label } from "@/Components/Common/Label";
 import Input from "@/Components/Common/Input";
 import FileInput from "@/Components/Common/FileInput";
@@ -86,7 +83,7 @@ const ProfileCard: React.FC = () => {
 
             {!isEditing ? (
               <button className="profile-card__edit-btn" onClick={handleEdit}>
-                <Edit size={16} />
+                <MdOutlineEdit  size={16} />
                 Editar perfil
               </button>
             ) : (

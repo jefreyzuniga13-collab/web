@@ -5,7 +5,7 @@ import { FaInstagram } from "react-icons/fa6"
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId"
 import { format, isToday, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale/es";
-import { Download } from "lucide-react";
+import { FaDownload } from "react-icons/fa6";
 
 // CHAT
 export const getChannelIcon = (channelId?: number | null) => {
@@ -50,7 +50,7 @@ export const getChannelIcon = (channelId?: number | null) => {
         </a>
         <div className="chm-attachment-meta">
           <a href={href} download={name} className="chm-download">
-            <Download size={14} />
+            <FaDownload size={14} />
             <span>{name}</span>
           </a>
         </div>
@@ -64,7 +64,7 @@ export const getChannelIcon = (channelId?: number | null) => {
         <video controls className="chm-video" src={href} />
         <div className="chm-attachment-meta">
           <a href={href} download={name} className="chm-download">
-            <Download size={14} />
+            <FaDownload size={14} />
             <span>{name}</span>
           </a>
         </div>
@@ -78,7 +78,7 @@ export const getChannelIcon = (channelId?: number | null) => {
         <audio controls className="chm-audio" src={href} />
         <div className="chm-attachment-meta">
           <a href={href} download={name} className="chm-download">
-            <Download size={14} />
+            <FaDownload size={14} />
             <span>{name}</span>
           </a>
         </div>
@@ -93,7 +93,7 @@ export const getChannelIcon = (channelId?: number | null) => {
       </a>
       <div className="chm-attachment-meta">
         <a href={href} download={name} className="chm-download">
-          <Download size={14} />
+          <FaDownload size={14} />
           <span>Descargar</span>
         </a>
       </div>

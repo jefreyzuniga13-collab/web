@@ -5,7 +5,8 @@ import {
   newConversationSound,
   closeConversationSound,
 } from "@/Utils/sound";
-import type { AuthData } from "@/Interfaces/Auth/AuthInterface";
+import { selectUserId } from "@/Context/Slices/Auth/authSlice"
+import { useSelector } from "react-redux";
 
 type SoundDto = {
   conversationId: number;
@@ -17,10 +18,7 @@ type SoundDto = {
 };
 
 export function GlobalSoundNotifier() {
-  const authRaw = localStorage.getItem("auth") || "{}";
-  const auth = JSON.parse(authRaw) as AuthData;
-
-  const myUserId = Number(auth?.userId ?? 0);
+  const myUserId = useSelector(selectUserId)
   // const soundEnabled = Boolean(auth?.soundNotifications ?? true);
 
   const playIfAllowed = useCallback(
@@ -38,7 +36,8 @@ export function GlobalSoundNotifier() {
 
       notificationSound.play();
     },
-    [myUserId
+    [
+      myUserId
     ]
   );
 

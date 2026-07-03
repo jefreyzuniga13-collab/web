@@ -14,7 +14,8 @@ import '@/Styles/Crm/SystemParamsPage.css'
 import { TextField } from '@mui/material'
 import {templateCategoryTranslations} from '@/Utils/Translation/categoryTemplateTranslation'
 import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
-export default function SystemParamsPage() {
+
+export default function TemplateCategoryPage() {
   const {
     templateCategories,
     selectedTemplateCategory,

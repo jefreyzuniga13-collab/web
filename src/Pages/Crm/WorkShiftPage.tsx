@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import ToggleOffIcon from "@mui/icons-material/ToggleOff"
 import ToggleOnIcon from "@mui/icons-material/ToggleOn"
-import { EditIcon } from "lucide-react"
+import { MdOutlineEdit } from "react-icons/md";
 import "@/Styles/Crm/OpeningHourPage.css"
 import "@/Styles/Crm/WorkShiftPage.css"
 import WorkShiftModal from "@/Components/Crm/WorkShiftModal"
@@ -93,7 +93,7 @@ export default function WorkShiftPage() {
             <VisibilityIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" onClick={() => openEdit(row.id)}>
-            <EditIcon size={16} />
+            <MdOutlineEdit size={16} />
           </IconButton>
           <IconButton size="small" onClick={() => toggleStatus(row.id)}>
             {row.isActive ? (

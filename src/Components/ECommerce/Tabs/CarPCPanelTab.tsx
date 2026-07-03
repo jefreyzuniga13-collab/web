@@ -59,12 +59,10 @@ import {
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import vacio from "@/assets/vacio.png"
-import { MdDelete } from "react-icons/md"
+import { MdDelete, MdOutlinePayment } from "react-icons/md"
 import { FaFilePdf, FaMapMarkerAlt } from "react-icons/fa"
 import {
-  IoIosChatboxes,
-  IoMdArrowRoundBack,
-  IoMdArrowRoundForward
+  IoIosChatboxes
 } from "react-icons/io"
 import { MdOutlineCancelScheduleSend } from "react-icons/md"
 import { IoSend } from "react-icons/io5"
@@ -73,6 +71,7 @@ import "@/Styles/Ecommerce/cardPCGTab.css"
 import { buildCalculationRequest, buildLogUpdateRequest, countMainProducts, normalizeDraft, safeNumber, safePositiveNumber, toLogCartFormValues, tooltipSlotProps } from "@/Utils/ECommerce/utils"
 import { STEP_STATUS } from "@/Constants/step"
 import { GENERAL_STATUS } from "@/Constants/status"
+import { LuMapPin, LuShoppingCart } from "react-icons/lu"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -179,9 +178,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const detailsCount = cart?.listDetalle?.length ?? 0
   const showEmpty = !contactHasCart.hasCart || detailsCount === 0
 
-  // ======================================================
-  // Draft local
-  // ======================================================
 
   const readDraft = useCallback((): DraftState | null => {
     try {
@@ -1453,6 +1449,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           </div>
         )}
 
+
+          {activeStep === STEP_STATUS.tres && (
+            <div className="carPCPanel-stepContent">
+                Formas de pago
+            </div>
+          )}
+
+
         <div className="carPCPanel-bottom">
           <div className="carPCPanel-steps">
             <button
@@ -1462,11 +1466,20 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
               }`}
               onClick={() => setActiveStep(STEP_STATUS.uno)}
             >
-              <IoMdArrowRoundBack fontSize={12} />
+              <LuShoppingCart  fontSize={16} />
             </button>
 
             <div className="carPCPanel-stepLine" />
 
+
+              {/* Paso nuevo 3
+              seleccionar la forma de pago, integrado con multipago
+              en base a la parametrizacion del cliente propiedad, Multipago,
+              igual al checkout page. txs de hecho la logica se deveria de reutilizar
+              por eso hay que obserbar el checkoutpage su logica para poder reutilizar y lo que cambiaria es la ui
+              ademas de aplicar solid etc, el tercer paso agregar esa marte, nada de mapa, ni similar
+              soo selecciona la divisa, el tipo de dibisa, y le puede dar pagar.
+              */}
             <button
               type="button"
               className={`carPCPanel-step ${
@@ -1476,7 +1489,22 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
               }`}
               onClick={() => setActiveStep(STEP_STATUS.dos)}
             >
-              <IoMdArrowRoundForward fontSize={12} />
+              <LuMapPin fontSize={16} />
+            </button>
+
+
+            <div className="carPCPanel-stepLine" />
+
+             <button
+              type="button"
+              className={`carPCPanel-step ${
+                activeStep === STEP_STATUS.tres
+                  ? "carPCPanel-step--active"
+                  : "carPCPanel-step--inactive"
+              }`}
+              onClick={() => setActiveStep(STEP_STATUS.tres)}
+            >
+              <MdOutlinePayment  fontSize={16} />
             </button>
           </div>
 

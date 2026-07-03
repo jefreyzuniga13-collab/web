@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { IoCloseSharp } from "react-icons/io5";
 import '@/Styles/Auth/Modal.css'
 
 
@@ -52,7 +52,7 @@ const Modal: React.FC<ModalProps> = ({
             onClick={onClose}
             type="button"
           >
-            <X size={20} />
+            <IoCloseSharp size={20} />
           </button>
         </div>
         

@@ -9,7 +9,7 @@ import { Textarea } from "@/Components/Common/Textarea";
 import Select from "@/Components/Common/Select";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { EditIcon } from "lucide-react";
+import { MdOutlineEdit } from "react-icons/md";
 import CustomTable from "@/Components/Common/CustomTable";
 import type { Column } from "@/Interfaces/Common/CustomTable";
 import { useCatCredential } from "@/Hooks/Crm/useCatCredential";
@@ -442,7 +442,7 @@ export default function ClientAdminPanel() {
           <VisibilityIcon fontSize="small" />
         </IconButton>
         <IconButton size="small" onClick={() => openCredEdit(r)} aria-label="Editar">
-          <EditIcon size={16} />
+          <MdOutlineEdit size={16} />
         </IconButton>
       </>
     ) },
@@ -461,7 +461,7 @@ export default function ClientAdminPanel() {
           <VisibilityIcon fontSize="small" />
         </IconButton>
         <IconButton size="small" onClick={() => openEqEditRow(r)}>
-          <EditIcon size={16} />
+          <MdOutlineEdit size={16} />
         </IconButton>
       </>
     ) },
@@ -478,7 +478,7 @@ export default function ClientAdminPanel() {
           <VisibilityIcon fontSize="small" />
         </IconButton>
         <IconButton size="small" onClick={() => openSysEditRow(r)}>
-          <EditIcon size={16} />
+          <MdOutlineEdit size={16} />
         </IconButton>
       </>
     ) },
