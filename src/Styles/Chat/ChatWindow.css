@@ -1965,19 +1965,23 @@
 @media (max-width: 420px) {
   .chat-window__composer {
     min-height: 44px;
-    padding: 4px 7px;
+    /* padding: 4px 7px; */
+    /* padding-top: 4px; */
+    padding: 0;
     padding-bottom: calc(4px + env(safe-area-inset-bottom));
-    gap: 3px;
+    gap: 1px;
   }
 
   .chat-window__composer-input-container {
-    min-height: 32px;
+    min-height: 30px;
+    max-height: 35px;
+    margin-top: 12px;
     border-radius: 16px;
   }
 
   .chat-window__composer-input {
     padding: 5px 9px;
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     line-height: 17px;
   }
 
@@ -1986,10 +1990,11 @@
   .chat-window__emoji-btn,
   .chat-window__audio-btn,
   .chat-window__composer-send {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    max-width: 28px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    max-width: 24px;
+    
   }
 
   .chat-window__composer-attachment svg,
@@ -1997,8 +2002,8 @@
   .chat-window__emoji-btn svg,
   .chat-window__audio-btn svg,
   .chat-window__composer-send svg {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
   }
 
   .chat-window__messages, 

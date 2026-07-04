@@ -151,15 +151,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     replyTo,
     cancelReply,
     beginReply,
-    quickOptions,
-    sendQuick,
+    // quickOptions,
+    // sendQuick,
     startLongPress,
     cancelLongPress,
-    popoverRef,
+    // popoverRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
-    visibleState,
+    // visibleState,
 
     searchTerm,
     setSearchTerm,
@@ -981,7 +981,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       )}
 
-      {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
+      {/* {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
         <div
           ref={popoverRef}
           className="chat-window__quick-popover"
@@ -1024,7 +1024,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </>
           )}
         </div>
-      )}
+      )} */}
 
       <footer className="chat-window__composer">
         <button
