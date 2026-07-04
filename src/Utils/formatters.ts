@@ -93,3 +93,36 @@ export const formatDate = (
     minute: "2-digit",
   }).format(d);
 };
+
+
+export const formatearHoraNicaragua = (isoString: string, hour12: boolean = true): string => {
+
+  const coincidencia = isoString.match(/T(\d{2}):(\d{2}):(\d{2})/);
+  
+  if (!coincidencia) {
+    throw new Error("El formato de fecha no contiene una hora válida (HH:MM:SS)");
+  }
+
+  // Desestructuramos el resultado del regex
+  const [, horaStr, minutos, segundos] = coincidencia;
+  let hora = parseInt(horaStr, 10);
+
+  if (hour12) {
+    const ampm = hora >= 12 ? 'p. m.' : 'a. m.';
+    hora = hora % 12;
+    hora = hora ? hora : 12;
+    return `${hora}:${minutos}:${segundos} ${ampm}`;
+  }
+
+  return `${horaStr}:${minutos}:${segundos}`;
+};
+
+
+// Para onbtener la horqa nicaragua
+export const getNicaraguaIsoDate = () => {
+  const now = new Date()
+  const offsetMs = 6 * 60 * 60 * 1000
+  const nicaraguaDate = new Date(now.getTime() - offsetMs)
+
+  return nicaraguaDate.toISOString().replace("Z", "")
+}

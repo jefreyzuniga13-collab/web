@@ -174,7 +174,6 @@
   max-height: 22rem;
   color: var(--color-gray-800);
   background: var(--bg-primary);
-  font-family: inherit;
 }
 
 .cmf-textarea:focus {

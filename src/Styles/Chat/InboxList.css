@@ -145,8 +145,8 @@
 }
 
 .inbox-list__namecontactClassification > span:first-child {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--font-size-base);
+  /* font-weight: 700; */
   color: var(--color-gray-800);
   white-space: nowrap;
   overflow: hidden;
@@ -154,7 +154,7 @@
 }
 
 .inbox-list__contactClassification {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   white-space: nowrap;
   color: var(--color-gray-500);

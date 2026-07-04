@@ -712,7 +712,6 @@
   max-height: 96px;
   overflow-y: auto;
   line-height: 20px;
-  font-family: inherit;
 }
 
 .chat-window__composer-input::placeholder {
@@ -892,7 +891,6 @@
   width: 100% !important;
   border: none !important;
   box-shadow: none !important;
-  font-family: inherit !important;
 }
 .chat-window__reply-pill {
   display: flex;

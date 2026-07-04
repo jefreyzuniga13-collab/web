@@ -32,6 +32,7 @@ import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces
 
 import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
+import { formatearHoraNicaragua } from "@/Utils/formatters"
 
 type ChatWindowProps = {
   conversationId?: number
@@ -56,51 +57,6 @@ type ChatWindowProps = {
   showMobileDetailButton?: boolean
   mobileDetailOpen?: boolean
   onMobileToggleDetail?: () => void
-}
-
-const formatTime = (value?: string | null) => {
-  if (!value) return ""
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) return ""
-
-  return date.toLocaleTimeString("es-NI", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-const formatDate = (value?: string | null) => {
-  if (!value) return ""
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) return ""
-
-  const today = new Date()
-  const yesterday = new Date()
-
-  yesterday.setDate(today.getDate() - 1)
-
-  const sameDay =
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-
-  const sameYesterday =
-    date.getFullYear() === yesterday.getFullYear() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getDate() === yesterday.getDate()
-
-  if (sameDay) return "Hoy"
-  if (sameYesterday) return "Ayer"
-
-  return date.toLocaleDateString("es-NI", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
 }
 
 const getDateKey = (value?: string | null) => {
@@ -195,15 +151,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     replyTo,
     cancelReply,
     beginReply,
-    // quickOptions,
-    // sendQuick,
+    quickOptions,
+    sendQuick,
     startLongPress,
     cancelLongPress,
-    // popoverRef,
+    popoverRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
-    // visibleState,
+    visibleState,
 
     searchTerm,
     setSearchTerm,
@@ -808,7 +764,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
           <div className="chat-window__message-info">
             <span className="chat-window__message-time">
-              {formatTime(message.sentAt)}
+              {formatearHoraNicaragua(message.sentAt)}
             </span>
 
             {getStatusIcon(message, isOut)}
@@ -967,7 +923,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             {showDate && (
               <div className="chat-window__date-divider">
                 <span className="chat-window__date-text">
-                  {formatDate(message.sentAt)}
+                  {formatearHoraNicaragua(message.sentAt)}
                 </span>
               </div>
             )}
@@ -1025,7 +981,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       )}
 
-      {/* {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
+      {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
         <div
           ref={popoverRef}
           className="chat-window__quick-popover"
@@ -1068,7 +1024,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </>
           )}
         </div>
-      )} */}
+      )}
 
       <footer className="chat-window__composer">
         <button

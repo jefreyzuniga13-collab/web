@@ -25,6 +25,7 @@
 
 .navbar__header {
   display: flex;
+  flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
@@ -34,10 +35,14 @@
   min-height: 6rem;
   flex: 0 0 auto;
   overflow: hidden;
+  gap: var(--space-md);
+  padding-top:1.5rem;
+
 }
 
 .navbar__header-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-sm);
   min-width: 0;
@@ -103,7 +108,11 @@
   margin: 0;
   width: 100%;
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
   min-height: 0;
+  padding-top: 4em;
   overflow-y: auto;
   overflow-x: hidden;
 }

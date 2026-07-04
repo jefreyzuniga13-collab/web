@@ -3,7 +3,6 @@
   min-height: 100vh;
   padding: var(--space-lg) var(--space-xl);
   color: var(--text-primary);
-  font-family: inherit;
   overflow-y: auto;
   padding-top: 5rem;
   overflow-y: scroll;
@@ -1404,17 +1403,14 @@ box-shadow: rgba(0, 0, 0, 0.18) 0px 2px 4px;
 /* Mejor lectura para etiquetas de gráficos */
 .dashboard-chart-panel .MuiChartsAxis-tickLabel {
   fill: var(--text-secondary) !important;
-  font-family: inherit !important;
 }
 
 .dashboard-chart-panel .MuiChartsAxis-label {
   fill: var(--text-secondary) !important;
-  font-family: inherit !important;
 }
 
 .dashboard-chart-panel .MuiChartsLegend-root {
   color: var(--text-secondary);
-  font-family: inherit;
 }
 
 /* Ajuste para grids con gráficos */

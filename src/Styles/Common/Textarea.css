@@ -12,7 +12,6 @@
   color: var(--color-text-primary);
   transition: all var(--transition-fast);
   resize: vertical;
-  font-family: inherit;
 }
 
 .textarea::placeholder {

@@ -181,7 +181,6 @@ background:
   background: var(--input-bg);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
-  font-family: "Roboto", sans-serif;
   outline: none;
   transition: 0.25s ease;
 }
@@ -237,7 +236,6 @@ background:
   color: var(--text-white);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
-  font-family: "Roboto", sans-serif;
   cursor: pointer;
   box-shadow: 0 1rem 2.4rem rgba(10, 100, 218, 0.28);
   transition: 0.25s ease;

@@ -20,6 +20,7 @@ import {
 } from "@/Services/chat/MessageService"
 import useMessages from "@/Hooks/Chat/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder"
+import { getNicaraguaIsoDate } from "@/Utils/formatters"
 
 type ReplyTarget = {
   messageId: number
@@ -441,7 +442,7 @@ export const useChatWindow = (
     }): MessageDto => {
       const clientTempId = getLocalTempId()
       const tempMessageId = -Date.now()
-      const now = new Date().toISOString()
+      const now = getNicaraguaIsoDate()
 
       let mediaUrl = ""
       let attachments: AttachmentDto[] = []
