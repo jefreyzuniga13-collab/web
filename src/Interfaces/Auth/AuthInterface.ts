@@ -13,6 +13,8 @@ export interface AuthData {
   empresaId: string
   companyImageUrl?: string;
   companySistema: string
+  permiteMultiPago: boolean;
+  permitePasarela: boolean;
   codReferenciaPCG?: string
   isRoot:boolean
   isAdmin: boolean
@@ -113,6 +115,8 @@ export interface AuthMe {
   empresaId: string;
   companyImageUrl?: string;
   companySistema: string;
+  permiteMultiPago: boolean;
+  permitePasarela: boolean;
   codReferenciaPCG?: string
   isRoot: boolean
   isAdmin: boolean

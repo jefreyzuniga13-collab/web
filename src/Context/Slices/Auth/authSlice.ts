@@ -10,10 +10,21 @@ interface AuthState {
   checkingSession: boolean;
   isRoot: boolean;
   isAdmin: boolean;
+  // Valor encriptado de empresa PCG
   empresaId: string;
   companyImageUrl: string;
+
+  // Vertical restaurante o PCG
   companySistema: string;
+
+  // Permite mas de 1 metodo de pago para el mismo pedido
+  permiteMultiPago: boolean;
+
+  // Cliente permite pasarela de pago
+  permitePasarela: boolean;
   codReferenciaPCG: string;
+
+  // Licencias de la empresa
   licenseExpireAt: string;
   showLicenseWarning: boolean;
   showLicenseModalOnLogin: boolean;
@@ -29,6 +40,8 @@ const initialState: AuthState = {
   empresaId: "",
   companyImageUrl: "",
   companySistema: "",
+  permiteMultiPago: false,
+  permitePasarela: false,
   codReferenciaPCG: "",
   licenseExpireAt: "",
   showLicenseWarning: false,
@@ -75,6 +88,8 @@ const limpiarSesion = (state: AuthState) => {
   state.empresaId = "";
   state.companyImageUrl = "";
   state.companySistema = "";
+  state.permiteMultiPago= false;
+  state.permitePasarela= false;
   state.codReferenciaPCG = "";
   state.licenseExpireAt = "";
   state.showLicenseWarning = false;
@@ -87,6 +102,8 @@ const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.empresaId = String(payload.empresaId ?? "");
   state.companyImageUrl = payload.companyImageUrl ?? "";
   state.companySistema = payload.companySistema ?? "";
+  state.permiteMultiPago = payload.permiteMultiPago ?? false;
+  state.permitePasarela = payload.permitePasarela ?? false;
   state.codReferenciaPCG = payload.codReferenciaPCG ?? "";
   state.isRoot = Boolean(payload.isRoot);
   state.isAdmin = Boolean(payload.isAdmin);
@@ -184,6 +201,13 @@ export const selectCompanyImageUrl = (state: RootState) =>
 
 export const selectCompanySistema = (state: RootState) =>
   state.auth.companySistema;
+
+// Si es true, la empresa del usuario en sesión puede aplicar el pago unico, y el multipago, caso contrario solo pago unico
+export const selectPermiteMultipago = (state: RootState) =>
+  state.auth.permiteMultiPago;
+
+export const selectPermitePasarela = (state: RootState) =>
+  state.auth.permitePasarela;
 
 export const selectCodReferenciaPCG = (state: RootState) =>
   state.auth.codReferenciaPCG;
