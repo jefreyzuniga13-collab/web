@@ -115,6 +115,12 @@
   padding:10rem;
 }
 
+
+.cartPanel-paymentHint{
+  color: var(--color-secondary);
+  font-weight: 800;
+  font-size: var(--font-size-sm);
+}
 .carPCPanel-products {
   margin-top: var(--space-sm);
 }

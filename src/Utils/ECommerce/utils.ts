@@ -1,22 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-//POWERTRANZ
+import { PCG_SERVICES } from "@/Constants/pcgservices"
+import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface"
+import type {
+  BuildLogUpdateParams,
+  DraftState,
+  LogCartFormValues,
+  LogCartResponseDto,
+  LogCartUpdateRequestDto
+} from "@/Interfaces/Crm/LogCartInterface"
+import type { CalculationReqDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type { PowertranzBrowserInfoDto } from "@/Interfaces/Ecommerce/powertranzInterface"
+import * as turf from "@turf/turf"
 
-import { PCG_SERVICES } from "@/Constants/pcgservices";
-import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
-import type { BuildLogUpdateParams, DraftState, LogCartFormValues, LogCartResponseDto, LogCartUpdateRequestDto } from "@/Interfaces/Crm/LogCartInterface";
-import type { CalculationReqDto } from "@/Interfaces/Ecommerce/ClientLocationInterface";
-import type { PowertranzBrowserInfoDto } from "@/Interfaces/Ecommerce/powertranzInterface";
-import * as turf from "@turf/turf";
+/**
+ * Calcula la distancia entre dos coordenadas en kilómetros.
+ *
+ * Se usa para estimar distancia entre ubicación del cliente,
+ * sucursal o punto de entrega.
+ */
+export function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const from = turf.point([lon1, lat1])
+  const to = turf.point([lon2, lat2])
 
-export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const from = turf.point([lon1, lat1]);
-  const to = turf.point([lon2, lat2]);
-  return turf.distance(from, to, { units: "kilometers" });
+  return turf.distance(from, to, { units: "kilometers" })
 }
 
-
-// Metodo brindado por PW
+/**
+ * Obtiene información del navegador requerida por PowerTranz.
+ *
+ * Esta información es usada principalmente en flujos 3DS,
+ * fingerprint y challenge.
+ */
 export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   return {
     Language: window?.navigator?.language ?? "es-NI",
@@ -26,29 +46,49 @@ export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
     UserAgent: window?.navigator?.userAgent ?? "",
     Ip: null,
     JavaEnabled:
-      typeof window !== "undefined" && typeof window.navigator?.javaEnabled === "function"
+      typeof window !== "undefined" &&
+      typeof window.navigator?.javaEnabled === "function"
         ? window.navigator.javaEnabled()
         : false,
     JavascriptEnabled: true,
     ColorDepth: window?.screen?.colorDepth?.toString() ?? "",
     ChallengeWindowSize: 5,
     ChallengeIndicator: "01",
-    AcceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-  };
+    AcceptHeader:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+  }
 }
 
-
-//Validar valores numericos
+/**
+ * Convierte un valor a número de forma segura.
+ *
+ * Si el valor no es numérico o no es finito,
+ * retorna el fallback indicado.
+ */
 export const safeNumber = (value: unknown, fallback = 0): number => {
   const n = Number(value)
+
   return Number.isFinite(n) ? n : fallback
 }
 
+/**
+ * Convierte un valor a número positivo.
+ *
+ * Si el valor es negativo, inválido o cero,
+ * retorna 0.
+ */
 export const safePositiveNumber = (value: unknown): number => {
   const n = safeNumber(value, 0)
+
   return n > 0 ? n : 0
 }
 
+/**
+ * Obtiene un valor de LogCart buscando entre varios posibles nombres de propiedad.
+ *
+ * Es útil porque algunos objetos pueden venir con nombres en camelCase
+ * y otros con PascalCase dependiendo del backend o del mapper.
+ */
 export const getLogValue = <T,>(
   log: LogCartResponseDto,
   keys: string[],
@@ -67,7 +107,13 @@ export const getLogValue = <T,>(
   return fallback
 }
 
-// Segunda tab, de ubicación. Datos a persistir y recupera al volver a acceder
+/**
+ * Normaliza el borrador local del carrito.
+ *
+ * Este draft se usa para recuperar datos del paso de entrega:
+ * dirección manual, retiro en sucursal, transporte,
+ * dirección seleccionada y observación.
+ */
 export const normalizeDraft = (raw: string | null): DraftState | null => {
   if (!raw) return null
 
@@ -90,8 +136,12 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
   }
 }
 
-
-// Conocer la cantidad de productos en el carrito PCG
+/**
+ * Cuenta únicamente los productos principales del carrito.
+ *
+ * Los componentes tipo "O" normalmente representan opciones,
+ * modificadores o adicionales, por eso no se cuentan como producto principal.
+ */
 export const countMainProducts = (cartList: CarDto[]): number => {
   return (
     cartList[0]?.listDetalle?.reduce((sum, detail) => {
@@ -104,7 +154,12 @@ export const countMainProducts = (cartList: CarDto[]): number => {
   )
 }
 
-
+/**
+ * Construye el request para recalcular totales del carrito.
+ *
+ * Este cálculo toma en cuenta transporte, impuestos,
+ * descuentos y demás reglas manejadas por PCG.
+ */
 export const buildCalculationRequest = (
   contactId: number,
   shippingCost: number
@@ -123,6 +178,9 @@ export const buildCalculationRequest = (
   }
 }
 
+/**
+ * Configuración visual reutilizable para tooltips.
+ */
 export const tooltipSlotProps = {
   tooltip: {
     sx: {
@@ -132,8 +190,13 @@ export const tooltipSlotProps = {
   }
 }
 
-
-// Mapper de la entidad del carrito LogCart
+/**
+ * Construye el request de actualización de LogCart.
+ *
+ * Este mapper centraliza la persistencia de:
+ * sucursal, bodega, dirección, transporte, totales,
+ * observación y datos relacionados al carrito.
+ */
 export const buildLogUpdateRequest = ({
   log,
   contactId,
@@ -206,10 +269,18 @@ export const buildLogUpdateRequest = ({
       ["destinationWherehouseCode", "DestinationWherehouseCode"],
       null
     ),
+
     serie: log.serie
   } as LogCartUpdateRequestDto
 }
 
+/**
+ * Convierte el request de actualización a valores completos de formulario.
+ *
+ * Algunos endpoints de actualización necesitan conservar datos existentes
+ * como id, companyId o codPrecio. Por eso se mezclan datos nuevos con datos
+ * ya existentes del LogCart.
+ */
 export const toLogCartFormValues = (
   req: LogCartUpdateRequestDto,
   log: LogCartResponseDto
@@ -218,7 +289,12 @@ export const toLogCartFormValues = (
     ...req,
 
     id: getLogValue<number>(log, ["id", "Id"], 0),
-    companyId: getLogValue<number | null>(log, ["companyId", "CompanyId"], null),
+
+    companyId: getLogValue<number | null>(
+      log,
+      ["companyId", "CompanyId"],
+      null
+    ),
 
     codPrecio: getLogValue<string | null>(
       log,

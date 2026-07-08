@@ -150,7 +150,6 @@ const useLogCart = (
         invalidateList: enabledList,
       })
 
-      toast.success(response.message)
     },
     onError: (err) => {
       toast.error(err.message)
@@ -178,7 +177,6 @@ const useLogCart = (
         invalidateList: enabledList,
       })
 
-      toast.success(response.message)
     },
     onError: (err) => {
       toast.error(err.message)

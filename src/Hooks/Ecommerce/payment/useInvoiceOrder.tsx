@@ -1,15 +1,22 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "react-toastify"
+
 import type {
   Currencyto,
   InvoiceOrderInterface,
   InvoiceOrderRequestDto,
-  PrintOrdenFactInterfaceRaw,
-} from '@/Interfaces/Ecommerce/InvoiceOrderInterface'
-import { InvoiceOrderService } from '@/Services/Ecommerce/InvoiceOrderService'
-import { toast } from 'react-toastify'
-import type { FacturaTempo } from '@/Interfaces/Ecommerce/FacturaTempo'
-import type { NearestBranchRequestDto, NearestBranchResponseDto } from '@/Interfaces/Ecommerce/BranchInterfaces'
+  PrintOrdenFactInterfaceRaw
+} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+
+import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo"
+
+import type {
+  NearestBranchRequestDto,
+  NearestBranchResponseDto
+} from "@/Interfaces/Ecommerce/BranchInterfaces"
+
+import { InvoiceOrderService } from "@/Services/Ecommerce/InvoiceOrderService"
 
 interface ApiResponse<T> {
   success: boolean
@@ -18,80 +25,139 @@ interface ApiResponse<T> {
 }
 
 const invoiceOrderKeys = {
-  all: ['invoice-order'] as const,
-  latest: (id: number) => [...invoiceOrderKeys.all, 'latest', id] as const,
+  all: ["invoice-order"] as const,
+
+  latest: (id: number) =>
+    [...invoiceOrderKeys.all, "latest", id] as const,
+
   nearestBranch: (req: NearestBranchRequestDto) =>
-    [...invoiceOrderKeys.all, 'nearest-branch', JSON.stringify(req)] as const,
-  transportationCost: (req: number) =>
-    [...invoiceOrderKeys.all, 'transportation-cost', req] as const,
-  currency: () => [...invoiceOrderKeys.all, 'currency'] as const,
-  printDetFac: (req: string) => [...invoiceOrderKeys.all, 'print-det-fac', req] as const,
+    [...invoiceOrderKeys.all, "nearest-branch", JSON.stringify(req)] as const,
+
+  transportationCost: (distanceKm: number) =>
+    [...invoiceOrderKeys.all, "transportation-cost", distanceKm] as const,
+
+  currency: () =>
+    [...invoiceOrderKeys.all, "currency"] as const,
+
+  printDetFac: (
+    codSucursal: string,
+    fecha: string,
+    consecutivo: number,
+    tipoServicio: number
+  ) =>
+    [
+      ...invoiceOrderKeys.all,
+      "print-det-fac",
+      codSucursal,
+      fecha,
+      consecutivo,
+      tipoServicio
+    ] as const
+}
+
+type PrintDetFacParams = {
+  codSucursal: string
+  fecha: string
+  consecutivo: number
+  tipoServicio: number
 }
 
 const useInvoiceOrder = () => {
   const queryClient = useQueryClient()
 
-  const [invoiceOrders, setInvoiceOrders] = useState<InvoiceOrderRequestDto | null>(null)
-  const [invoiceOrder, setInvoiceOrder] = useState<InvoiceOrderInterface | null>(null)
-  const [nearestBranch, setNearestBranch] = useState<NearestBranchResponseDto | null>(null)
-  const [transportationCost, setTransportationCost] = useState<number>(0)
-  const [printOrdenFac, setPrintOrdenFac] = useState<PrintOrdenFactInterfaceRaw | null>(null)
+  const [invoiceOrders, setInvoiceOrders] =
+    useState<InvoiceOrderRequestDto | null>(null)
 
+  const [invoiceOrder, setInvoiceOrder] =
+    useState<InvoiceOrderInterface | null>(null)
+
+  const [nearestBranch, setNearestBranch] =
+    useState<NearestBranchResponseDto | null>(null)
+
+  const [transportationCost, setTransportationCost] = useState<number>(0)
+
+  const [printOrdenFac, setPrintOrdenFac] =
+    useState<PrintOrdenFactInterfaceRaw | null>(null)
+
+  /**
+   * Carga las formas de pago disponibles.
+   */
   const {
     data: currency = [],
     isLoading: loadingCurrency,
     isFetching: fetchingCurrency,
-    error: currencyError,
+    error: currencyError
   } = useQuery<Currencyto[], Error>({
     queryKey: invoiceOrderKeys.currency(),
     queryFn: async () => {
-      const res: ApiResponse<Currencyto[]> = await InvoiceOrderService.GetCurrency()
+      const res: ApiResponse<Currencyto[]> =
+        await InvoiceOrderService.GetCurrency()
+
       if (!res.success) {
         toast.error(res.message)
         return []
       }
+
       return res.data ?? []
     },
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 30
   })
 
+  /**
+   * Crea una orden de factura.
+   */
   const createMutation = useMutation<
     ApiResponse<unknown>,
     Error,
     InvoiceOrderRequestDto
   >({
-    mutationFn: req => InvoiceOrderService.Create(req),
+    mutationFn: (req) => InvoiceOrderService.Create(req),
+   retry: 0,
     onSuccess: async (res, req) => {
       if (!res.success) {
         toast.error(res.message)
         return
       }
+
       setInvoiceOrders(req)
-      await queryClient.invalidateQueries({ queryKey: invoiceOrderKeys.all })
-    },
+
+      await queryClient.invalidateQueries({
+        queryKey: invoiceOrderKeys.all
+      })
+    }
   })
 
+  /**
+   * Inserta la factura PCG final.
+   */
   const insertaFacturaMutation = useMutation<
     ApiResponse<unknown>,
     Error,
     FacturaTempo
   >({
-    mutationFn: req => InvoiceOrderService.CreatePCG(req),
-    onSuccess: async res => {
+    mutationFn: (req) => InvoiceOrderService.CreatePCG(req),
+    retry: 0,
+    onSuccess: async (res) => {
       if (!res.success) {
         toast.error(res.message)
         return
       }
-      await queryClient.invalidateQueries({ queryKey: invoiceOrderKeys.all })
-    },
+
+      await queryClient.invalidateQueries({
+        queryKey: invoiceOrderKeys.all
+      })
+    }
   })
 
+  /**
+   * Obtiene la última orden por id de usuario o referencia.
+   */
   const latestMutation = useMutation<
     InvoiceOrderInterface | null,
     Error,
     number
   >({
-    mutationFn: async req => {
+    mutationFn: async (req) => {
       const res: ApiResponse<InvoiceOrderInterface> =
         await InvoiceOrderService.GetLastest(req)
 
@@ -104,16 +170,23 @@ const useInvoiceOrder = () => {
     },
     onSuccess: (data, req) => {
       setInvoiceOrder(data)
-      queryClient.setQueryData(invoiceOrderKeys.latest(req), data)
-    },
+
+      queryClient.setQueryData(
+        invoiceOrderKeys.latest(req),
+        data
+      )
+    }
   })
 
+  /**
+   * Obtiene la sucursal más cercana a una ubicación.
+   */
   const nearestBranchMutation = useMutation<
     NearestBranchResponseDto | null,
     Error,
     NearestBranchRequestDto
   >({
-    mutationFn: async req => {
+    mutationFn: async (req) => {
       const res: ApiResponse<NearestBranchResponseDto> =
         await InvoiceOrderService.GetNearestBranch(req)
 
@@ -126,14 +199,25 @@ const useInvoiceOrder = () => {
     },
     onSuccess: (data, req) => {
       setNearestBranch(data)
-      queryClient.setQueryData(invoiceOrderKeys.nearestBranch(req), data)
-    },
+
+      queryClient.setQueryData(
+        invoiceOrderKeys.nearestBranch(req),
+        data
+      )
+    }
   })
 
-  const transportationCostMutation = useMutation<number | null, Error, number>({
-    mutationFn: async req => {
+  /**
+   * Obtiene costo de transporte según distancia.
+   */
+  const transportationCostMutation = useMutation<
+    number | null,
+    Error,
+    number
+  >({
+    mutationFn: async (distanceKm) => {
       const res: ApiResponse<number> =
-        await InvoiceOrderService.GetTransportationCost(req)
+        await InvoiceOrderService.GetTransportationCost(distanceKm)
 
       if (!res.success) {
         toast.error(res.message)
@@ -142,33 +226,54 @@ const useInvoiceOrder = () => {
 
       return res.data ?? 0
     },
-    onSuccess: (data, req) => {
+    onSuccess: (data, distanceKm) => {
       const cost = data ?? 0
+
       setTransportationCost(cost)
-      queryClient.setQueryData(invoiceOrderKeys.transportationCost(req), cost)
-    },
+
+      queryClient.setQueryData(
+        invoiceOrderKeys.transportationCost(distanceKm),
+        cost
+      )
+    }
   })
 
+  /**
+   * Imprime u obtiene el detalle de factura para generar PDF.
+   */
   const printDetFacMutation = useMutation<
     PrintOrdenFactInterfaceRaw | null,
     Error,
-    string
+    PrintDetFacParams
   >({
-    // mutationFn: async req => {
-    //   const res: ApiResponse<PrintOrdenFactInterfaceRaw> =
-    //     await InvoiceOrderService.PrintDetFac(req)
+    mutationFn: async (req) => {
+      const res = await InvoiceOrderService.PrintDetFac(
+        req.codSucursal,
+        req.fecha,
+        req.consecutivo,
+        req.tipoServicio
+      )
 
-    //   if (!res.success) {
-    //     toast.error(res.message)
-    //     return null
-    //   }
+      if (!res?.success) {
+        toast.error(res?.message ?? "No se pudo obtener el detalle de factura")
+        return null
+      }
 
-    //   return res.data ?? null
-    // },
-    // onSuccess: (data, req) => {
-    //   setPrintOrdenFac(data)
-    //   queryClient.setQueryData(invoiceOrderKeys.printDetFac(req), data)
-    // },
+      return res.data ?? null
+    },
+    onSuccess: (data, req) => {
+      setPrintOrdenFac(data)
+
+      queryClient.setQueryData(
+        invoiceOrderKeys.printDetFac(
+          req.codSucursal,
+          req.fecha,
+          req.consecutivo,
+          req.tipoServicio
+        ),
+        data
+      )
+    }
   })
 
   const CreateAsync = useCallback(
@@ -193,7 +298,8 @@ const useInvoiceOrder = () => {
   )
 
   const GetTransportationCostAsync = useCallback(
-    (req: number) => transportationCostMutation.mutateAsync(req),
+    (distanceKm: number) =>
+      transportationCostMutation.mutateAsync(distanceKm),
     [transportationCostMutation]
   )
 
@@ -211,16 +317,19 @@ const useInvoiceOrder = () => {
 
         return res.data ?? []
       },
+      staleTime: 1000 * 60 * 30
     })
   }, [queryClient])
 
   const PrintDetFacAsync = useCallback(
-    (req: string) => printDetFacMutation.mutateAsync(req),
+    (req: PrintDetFacParams) =>
+      printDetFacMutation.mutateAsync(req),
     [printDetFacMutation]
   )
 
   const loadingInvoice =
-    createMutation.isPending || insertaFacturaMutation.isPending
+    createMutation.isPending ||
+    insertaFacturaMutation.isPending
 
   const loading =
     loadingCurrency ||
@@ -247,28 +356,33 @@ const useInvoiceOrder = () => {
       latestMutation.error,
       nearestBranchMutation.error,
       transportationCostMutation.error,
-      printDetFacMutation.error,
+      printDetFacMutation.error
     ]
   )
 
   return {
     invoiceOrders,
     invoiceOrder,
+
     nearestBranch,
     transportationCost,
+
     currency,
+    printOrdenFac,
+
     loading,
+    loadingInvoice,
     error,
+
     CreateAsync,
+    InsertaFacturaAsync,
     GetLastestAsync,
     GetNearestBranchAsync,
     GetTransportationCostAsync,
     GetCurrencyAsync,
     PrintDetFacAsync,
-    printOrdenFac,
-    setPrintOrdenFac,
-    loadingInvoice,
-    InsertaFacturaAsync,
+
+    setPrintOrdenFac
   }
 }
 

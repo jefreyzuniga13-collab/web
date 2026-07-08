@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-empty */
-import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react"
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
-import { Tooltip } from "@mui/material"
-import Input from "@/Components/Common/Input"
-import Button from "@/Components/Common/Button"
+
 import type { RootState, AppDispatch } from "@/Context"
+
 import {
   selectCarPCG,
   selectCartError,
@@ -17,63 +16,97 @@ import {
   updateCarAsync,
   setActiveContactId
 } from "@/Context/Slices/Ecommerce/cartSlice"
+
 import {
   selectCartBadgeByContactId,
   setContactCartBadge
 } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
+
 import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
+
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useContact from "@/Hooks/Auth/useContact"
 import { useUserEcommerce } from "@/Hooks/Ecommerce/tabs/useUserEcommerce"
 import useLogCart from "@/Hooks/Crm/useLogCard"
+import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
+import { useAgentCartPayment } from "@/Hooks/Ecommerce/tabs/useAgentCartPayment"
+
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
+
+import CartPanelProductStep from "@/Components/ECommerce/Tabs/CartPanelProductStep"
+import CartPanelDeliveryStep from "@/Components/ECommerce/Tabs/CartPanelDeliveryStep"
+import CartPanelPaymentStep from "@/Components/ECommerce/Tabs/CartPanelPaymentStep"
+import CartPanelStepNavigation from "@/Components/ECommerce/Tabs/CartPanelStepNavigation"
+import CartPanelTotals from "@/Components/ECommerce/Tabs/CartPanelTotals"
+import CartPanelActions from "@/Components/ECommerce/Tabs/CartPanelActions"
+
 import type {
   CarDto,
   InvoiceTotalsDto
 } from "@/Interfaces/Crm/CartPCGInterface"
-import type { UserEcommerceDto } from "@/Interfaces/Ecommerce/UserEcommerceInterface"
-import type { SendLinkRequestDto } from "@/Interfaces/Ecommerce/SendLinkInterface"
-import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
-import type {
-  ClientLocationDto
-} from "@/Interfaces/Ecommerce/ClientLocationInterface"
+
 import type {
   AddressPayload,
   CartDetailView,
   DraftState,
   LogCartResponseDto
 } from "@/Interfaces/Crm/LogCartInterface"
-import type { SendInteractiveMessajeRequestDto } from "@/Interfaces/Chat/ChatInterfaces"
+
+import type {
+  ContactLogInterface
+} from "@/Interfaces/Auth/ContactInterface"
+
+import type {
+  ClientLocationDto
+} from "@/Interfaces/Ecommerce/ClientLocationInterface"
+
+import type {
+  UserEcommerceDto
+} from "@/Interfaces/Ecommerce/UserEcommerceInterface"
+
+import type {
+  SendLinkRequestDto
+} from "@/Interfaces/Ecommerce/SendLinkInterface"
+
+import type {
+  SendInteractiveMessajeRequestDto
+} from "@/Interfaces/Chat/ChatInterfaces"
+
+import {
+  CART_AGENT_STEP,
+  type CartAgentStep
+} from "@/Interfaces/Ecommerce/CartAgentCheckoutInterface"
+
 import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import { UserSessionService } from "@/Services/auth/UserSessionService"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
+
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
+
 import {
   generateRandomString,
   formatCurrencyNIO
 } from "@/Utils/ECommerce/formatters"
-import { formatearDecimales } from "@/Utils/calcularIVA"
-import EmptyCartPlayer from "@/assets/lottie/Empty.json"
-import vacio from "@/assets/vacio.png"
-import { MdDelete, MdOutlinePayment } from "react-icons/md"
-import { FaFilePdf, FaMapMarkerAlt } from "react-icons/fa"
+
 import {
-  IoIosChatboxes
-} from "react-icons/io"
-import { MdOutlineCancelScheduleSend } from "react-icons/md"
-import { IoSend } from "react-icons/io5"
-import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import "@/Styles/Ecommerce/cardPCGTab.css"
-import { buildCalculationRequest, buildLogUpdateRequest, countMainProducts, normalizeDraft, 
-  safeNumber, safePositiveNumber, toLogCartFormValues, tooltipSlotProps } from "@/Utils/ECommerce/utils"
-import { STEP_STATUS } from "@/Constants/step"
+  buildCalculationRequest,
+  buildLogUpdateRequest,
+  countMainProducts,
+  normalizeDraft,
+  safeNumber,
+  safePositiveNumber,
+  toLogCartFormValues
+} from "@/Utils/ECommerce/utils"
+
+import { formatearDecimales } from "@/Utils/calcularIVA"
 import { GENERAL_STATUS } from "@/Constants/status"
-import { LuMapPin, LuShoppingCart } from "react-icons/lu"
-import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo"
-import type { CheckoutStep } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+
+import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import Lottie from "lottie-react"
+
+import "@/Styles/Ecommerce/cardPCGTab.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -84,44 +117,8 @@ interface Props {
 }
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
-  const [search, setSearch] = useState("")
-  const [orderId, setOrderId] = useState<number | null>(null)
-  const [cancelLoading, setCancelLoading] = useState(false)
-  const [sendChatLoading, setSendChatLoading] = useState(false)
-  const [activeStep, setActiveStep] = useState(1)
-
-  const [addDescription, setAddDescription] = useState("")
-  const [retiraSucursal, setRetiraSucursal] = useState<"S" | "N">("N")
-  const [transCost, setTransCost] = useState(0)
-
-  const [invoiceTotalsDto, setInvoiceTotalsDto] =
-    useState<InvoiceTotalsDto | null>(null)
-  const [totalsLoading, setTotalsLoading] = useState(false)
-
-  const [showAddressModal, setShowAddressModal] = useState(false)
-  const [addresses, setAddresses] = useState<ClientLocationDto[]>([])
-  const [addressLoading, setAddressLoading] = useState(false)
-  const [observation, setObservation] = useState("")
-
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
-    null
-  )
-  const [addressSearch, setAddressSearch] = useState("")
-  const [currentLog, setCurrentLog] = useState<LogCartResponseDto | null>(null)
-  const [debouncedTransCost, setDebouncedTransCost] = useState(0)
-
-  const totalsReqRef = useRef(0)
-  const reqRef = useRef(0)
-  const hydratedRef = useRef(false)
-  const skipPersistOnceRef = useRef(false)
-  const cartClearedRef = useRef(false)
-
-  const ensureEcommerceRef = useRef<Promise<{
-    ecommerceUserId: number
-    contact: ContactLogInterface | null
-  }> | null>(null)
-
   const dispatch = useAppDispatch()
+
   const carPCG = useAppSelector(selectCarPCG)
   const loading = useAppSelector(selectCartLoading)
   const error = useAppSelector(selectCartError)
@@ -133,6 +130,54 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     count: 0
   }
 
+  const [search, setSearch] = useState("")
+  const [orderId, setOrderId] = useState<number | null>(null)
+  const [cancelLoading, setCancelLoading] = useState(false)
+  const [sendChatLoading, setSendChatLoading] = useState(false)
+
+  const [activeStep, setActiveStep] = useState<CartAgentStep>(
+    CART_AGENT_STEP.carrito
+  )
+
+  const [addDescription, setAddDescription] = useState("")
+  const [retiraSucursal, setRetiraSucursal] = useState<"S" | "N">("N")
+  const [transCost, setTransCost] = useState(0)
+  const [debouncedTransCost, setDebouncedTransCost] = useState(0)
+
+  const [invoiceTotalsDto, setInvoiceTotalsDto] =
+    useState<InvoiceTotalsDto | null>(null)
+
+  const [totalsLoading, setTotalsLoading] = useState(false)
+
+  const [showAddressModal, setShowAddressModal] = useState(false)
+  const [addresses, setAddresses] = useState<ClientLocationDto[]>([])
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [addressSearch, setAddressSearch] = useState("")
+
+  const [selectedAddressId, setSelectedAddressId] =
+    useState<number | null>(null)
+
+  const [observation, setObservation] = useState("")
+  const [currentLog, setCurrentLog] =
+    useState<LogCartResponseDto | null>(null)
+
+  const totalsReqRef = useRef(0)
+  const reqRef = useRef(0)
+  const hydratedRef = useRef(false)
+  const skipPersistOnceRef = useRef(false)
+  const cartClearedRef = useRef(false)
+
+  /**
+   * Permite limpiar también el estado de pago aunque el reset principal
+   * se declare antes de crear el hook de pago.
+   */
+  const paymentResetRef = useRef<(() => void) | null>(null)
+
+  const ensureEcommerceRef = useRef<Promise<{
+    ecommerceUserId: number
+    contact: ContactLogInterface | null
+  }> | null>(null)
+
   const { setLocked } = useCartPCGFlowCtx()
 
   const {
@@ -142,11 +187,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     loading: loadingCart
   } = useCart()
 
-  const { UpdatedStatus, fetchByContactId, update: updatedLogCart } =
-    useLogCart()
+  const {
+    UpdatedStatus,
+    fetchByContactId,
+    update: updatedLogCart
+  } = useLogCart()
 
   const { UpdateEcommerceUserAsync, getById } = useContact()
   const { createAsync } = useUserEcommerce()
+
+  const { InsertaFacturaAsync } = useInvoiceOrder()
 
   const { setFile, setText, handleSend, sending } = useChatWindow({
     conversationId
@@ -157,11 +207,25 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     [conversationId, contactId]
   )
 
+  const cart = carPCG?.[0]
+  const detailsCount = cart?.listDetalle?.length ?? 0
+
+  const hasItems = useMemo(
+    () => carPCG != null && carPCG.length > 0,
+    [carPCG]
+  )
+
+  const showEmpty = !contactHasCart.hasCart || detailsCount === 0
+
   const isPickup = retiraSucursal === "S"
   const hasSelectedAddress = selectedAddressId != null
   const hasManualAddress = addDescription.trim().length > 0
   const hasDeliveryAddress = hasSelectedAddress || hasManualAddress
 
+  /**
+   * En el panel del agente no hay mapa.
+   * El transporte se toma únicamente del paso 2.
+   */
   const effectiveShipping =
     !isPickup && hasDeliveryAddress ? safePositiveNumber(transCost) : 0
 
@@ -170,15 +234,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const pickupDisabled = hasSelectedAddress || hasManualAddress
   const showAddressButton = !isPickup && !hasManualAddress
 
-  const hasItems = useMemo(
-    () => carPCG != null && carPCG.length > 0,
-    [carPCG]
-  )
-
-  const cart = carPCG?.[0]
-  const detailsCount = cart?.listDetalle?.length ?? 0
-  const showEmpty = !contactHasCart.hasCart || detailsCount === 0
-
+  const totalPagarAgente = useMemo(() => {
+    return safePositiveNumber(invoiceTotalsDto?.total ?? 0)
+  }, [invoiceTotalsDto?.total])
 
   const readDraft = useCallback((): DraftState | null => {
     try {
@@ -204,10 +262,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } catch {}
   }, [draftKey])
 
-  // ======================================================
-  // Reset UI
-  // ======================================================
-
+  /**
+   * Limpia el panel completo cuando se cancela, se vacía o se procesa venta.
+   */
   const resetCartPanelUi = useCallback(() => {
     cartClearedRef.current = true
 
@@ -215,7 +272,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setOrderId(null)
     setCancelLoading(false)
     setSendChatLoading(false)
-    setActiveStep(STEP_STATUS.uno)
+    setActiveStep(CART_AGENT_STEP.carrito)
 
     setAddDescription("")
     setRetiraSucursal("N")
@@ -228,24 +285,23 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setShowAddressModal(false)
     setAddresses([])
     setAddressLoading(false)
-    setObservation("")
+    setAddressSearch("")
 
     setSelectedAddressId(null)
-    setAddressSearch("")
+    setObservation("")
     setCurrentLog(null)
+
+    paymentResetRef.current?.()
 
     setLocked(null)
     removeDraft()
   }, [removeDraft, setLocked])
 
-  // ======================================================
-  // Totales
-  // ======================================================
-
   const getShippingForTotals = useCallback(
     (opts?: { cost?: number; pickup?: boolean }) => {
       const pickup = opts?.pickup ?? retiraSucursal === "S"
       const cost = safePositiveNumber(opts?.cost ?? transCost)
+
       const allowShipping =
         !pickup &&
         (selectedAddressId != null || addDescription.trim().length > 0)
@@ -255,6 +311,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     [addDescription, retiraSucursal, selectedAddressId, transCost]
   )
 
+  /**
+   * Calcula totales del carrito usando el transporte del paso 2.
+   */
   const calcTotals = useCallback(
     async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
       if (!contactId) return null
@@ -298,11 +357,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     return totals
   }, [calcTotals])
 
-  // ======================================================
-  // Usuario ecommerce
-  // ======================================================
-
-  const ensureEcommerceUser = async (): Promise<{
+  /**
+   * Obtiene o crea el usuario ecommerce relacionado al contacto.
+   */
+  const ensureEcommerceUser = useCallback(async (): Promise<{
     ecommerceUserId: number
     contact: ContactLogInterface | null
   }> => {
@@ -377,12 +435,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } finally {
       ensureEcommerceRef.current = null
     }
-  }
+  }, [
+    UpdateEcommerceUserAsync,
+    contactId,
+    createAsync,
+    getById
+  ])
 
-  // ======================================================
-  // Dirección y LogCart
-  // ======================================================
-
+  /**
+   * Construye la dirección que debe persistirse en LogCart.
+   */
   const getAddressPayload = useCallback(
     async (ecommerceUserId: number): Promise<AddressPayload> => {
       if (retiraSucursal === "S") {
@@ -428,6 +490,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     [addDescription, effectiveShipping, retiraSucursal, selectedAddressId]
   )
 
+  /**
+   * Persiste dirección, transporte, observación y totales frescos en LogCart.
+   */
   const persistLogWithTotals = useCallback(
     async (
       log: LogCartResponseDto,
@@ -476,6 +541,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     ]
   )
 
+  /**
+   * Persiste solo la dirección cuando el agente selecciona una guardada.
+   */
   const persistLogAddressOnly = useCallback(
     async (log: LogCartResponseDto, nextAddressId: number | null) => {
       if (!log?.id) return
@@ -486,7 +554,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         transCost: safePositiveNumber(transCost)
       }
 
-      // No se mandan totales nuevos aquí para no sobrescribir con 0.
       const req = buildLogUpdateRequest({
         log,
         contactId,
@@ -508,6 +575,52 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     },
     [contactId, conversationId, observation, transCost, updatedLogCart]
   )
+
+  const agentPayment = useAgentCartPayment({
+    contactId,
+    conversationId,
+    orderId,
+    totalPagar: totalPagarAgente,
+    effectiveShipping,
+    retiraSucursal,
+    addDescription,
+    observation,
+    selectedAddressId,
+    addresses,
+    currentLog,
+    ensureEcommerceUser,
+    fetchByContactId,
+    UpdatedStatus,
+    InsertaFacturaAsync,
+    persistLogWithTotals,
+    getFreshInvoiceTotals,
+    resetCartPanelUi,
+    dispatch
+  })
+
+  paymentResetRef.current = agentPayment.payment.resetPayment
+
+  const {
+    payment,
+    divisaOpts,
+    divisaLoading,
+    payLoading,
+    handleAgentPayNow
+  } = agentPayment
+
+  const {
+    method,
+    setMethod,
+    divisaSelected,
+    setDivisaSelected,
+    cashAmount,
+    setCashAmount,
+    transfer,
+    setTransfer,
+    manualCardData,
+    setManualCardData,
+    canPay
+  } = payment
 
   const loadAddresses = async () => {
     try {
@@ -545,15 +658,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       await persistLogAddressOnly(log, nextId)
 
-      toast.success(nextId ? "Dirección seleccionada" : "Dirección deseleccionada")
+      toast.success(
+        nextId ? "Dirección seleccionada" : "Dirección deseleccionada"
+      )
     } catch {
       toast.error("No se pudo actualizar la dirección")
     }
   }
-
-  // ======================================================
-  // Carrito
-  // ======================================================
 
   const refreshCartBadge = useCallback(
     async (noPedido: number) => {
@@ -566,17 +677,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       const arr = Array.isArray(updated) ? updated : []
       const count = countMainProducts(arr)
-      const hasCart = count > 0
 
       dispatch(
         setContactCartBadge({
           contactId,
-          hasCart,
+          hasCart: count > 0,
           count
         })
       )
 
-      return { hasCart, count }
+      return { hasCart: count > 0, count }
     },
     [contactId, dispatch]
   )
@@ -593,6 +703,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       setOrderId(null)
       setInvoiceTotalsDto(null)
       setLocked(null)
+
+      paymentResetRef.current?.()
 
       try {
         if (noPedido > 0) {
@@ -687,8 +799,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     return result
   }, [carPCG, hasItems, search])
 
-
-
   const buildCartChatMessage = (
     currentCart: CarDto,
     totals: InvoiceTotalsDto,
@@ -715,7 +825,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       const qty = safeNumber(detail.cantidad, 0)
       const description = String(detail.descripcion ?? "").trim()
       const note = String(detail.observaciones ?? "").trim()
-
       const title = [description, note].filter(Boolean).join(" - ")
 
       if (!title) return
@@ -771,11 +880,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         (address) => Number(address.idDireccion) === Number(selectedAddressId)
       )
 
-      const addrName = String(selected?.nombre ?? "").trim()
-      const addrDesc = String(selected?.descripcion ?? "").trim()
-      const addrRef = String(selected?.referencia ?? "").trim()
-
-      const addressText = [addrName, addrDesc, addrRef]
+      const addressText = [
+        String(selected?.nombre ?? "").trim(),
+        String(selected?.descripcion ?? "").trim(),
+        String(selected?.referencia ?? "").trim()
+      ]
         .filter(Boolean)
         .join(" | ")
 
@@ -874,7 +983,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         return
       }
 
-      // Se guardan totales frescos antes de enviar.
       const totals = await getFreshInvoiceTotals()
       await persistLogWithTotals(existingLog, ecommerceUserId, totals)
 
@@ -1186,7 +1294,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     sending ||
     sendChatLoading ||
     cancelLoading ||
-    totalsLoading
+    totalsLoading ||
+    payLoading
 
   if (loadingCart || loading) {
     return (
@@ -1213,7 +1322,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
         <div className="carPCPanel-emptyContainer">
           <Lottie loop={false} autoplay animationData={EmptyCartPlayer} />
-          <p className="cardPanel--emptyText">No hay productos en el carrito.</p>
+
+          <p className="cardPanel--emptyText">
+            No hay productos en el carrito.
+          </p>
         </div>
       </div>
     )
@@ -1229,425 +1341,98 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       </header>
 
       <section className="carPCPanel-content">
-        {activeStep === STEP_STATUS.uno && (
-          <div className="carPCPanel-stepContent">
-            <Input
-              id="searchProduct"
-              name="searchProduct"
-              value={search}
-              placeholder="Buscar categoría o producto"
-              onChange={(event) => setSearch(event.target.value)}
-            />
-
-            <div className="carPCPanel-products">
-              {filteredDetails.map(({ detail }, index) => {
-                if (detail.tipoComponente === "P") {
-                  return (
-                    <div key={index} className="carPCPanel-content__list">
-                      <div className="carPCPanel-content__list-imgContainer">
-                        <img
-                          src={detail.imagen ?? vacio}
-                          aria-label="product image"
-                          className="carPCPanel-content__list-image"
-                        />
-
-                        <p className="carPCPanel-content__list-flootingQuantity">
-                          {detail.cantidad}
-                        </p>
-                      </div>
-
-                      <div className="carPCPanel-content__list-info">
-                        <p className="carPCPanel-content__list-text">
-                          {detail.descripcion}
-                        </p>
-
-                        <p className="carPCPanel-content__list-price">
-                          {safeNumber(detail.precioV, 0) > 0
-                            ? ` C$ ${formatearDecimales(detail.precioV)}`
-                            : ""}
-                        </p>
-                      </div>
-
-                      <MdDelete
-                        fontSize={24}
-                        onClick={() =>
-                          handleRemoveItem(
-                            cart?.idUsuario ?? 0,
-                            detail.noPedido,
-                            String(companySistema) === "P"
-                              ? detail.codProducto
-                              : "",
-                            detail.unico!
-                          )
-                        }
-                        className="carPCPanel-content__removeIcon"
-                      />
-                    </div>
-                  )
-                }
-
-                if (detail.tipoComponente === "O") {
-                  return (
-                    <div
-                      key={index}
-                      className="carPCPanel-content__list__opcion"
-                    >
-                      <div className="carPCPanel-content__list-info-opcion">
-                        <p className="carPCPanel-content__list-opcion">
-                          {detail.descripcion}
-                        </p>
-
-                        <p className="carPCPanel-content__list-price">
-                          {safeNumber(detail.precioV, 0) > 0
-                            ? `C$ ${formatearDecimales(detail.precioV)}`
-                            : ""}
-                        </p>
-                      </div>
-
-                      <div className="carPCPanel-content__list-imgContainer">
-                        <p className="carPCPanel-content__list-flootingQuantity-opcion">
-                          {detail.cantidad}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                }
-
-                return null
-              })}
-            </div>
-          </div>
+        {activeStep === CART_AGENT_STEP.carrito && (
+          <CartPanelProductStep
+            search={search}
+            setSearch={setSearch}
+            filteredDetails={filteredDetails}
+            companySistema={companySistema}
+            handleRemoveItem={handleRemoveItem}
+            cartUserId={cart?.idUsuario ?? 0}
+          />
         )}
 
-        {activeStep === STEP_STATUS.dos && (
-          <div className="carPCPanel-stepContent">
-            <div className="productTab-content-footer">
-              <div className="productTab-content__inputContaner">
-                <div className="productTab-content__inputs">
-                  <textarea
-                    rows={5}
-                    name="observation"
-                    id="observation"
-                    className="productTab-content__input"
-                    placeholder="Observación"
-                    value={observation}
-                    onChange={(event) => setObservation(event.target.value)}
-                  />
-
-                  <textarea
-                    rows={5}
-                    name="descripcion"
-                    id="descripcion"
-                    className="productTab-content__input"
-                    placeholder="Dirección"
-                    value={addDescription}
-                    disabled={addressInputsDisabled}
-                    onChange={(event) => {
-                      if (addressInputsDisabled) return
-                      setAddDescription(event.target.value)
-                    }}
-                  />
-
-                  <div className="transportationCost__input">
-                    <input
-                      type="number"
-                      min={0}
-                      name="shipment"
-                      id="shipment"
-                      placeholder="C$ transporte"
-                      value={transCost}
-                      disabled={transportDisabled}
-                      onChange={(event) => {
-                        if (transportDisabled) return
-
-                        setTransCost(
-                          event.target.value === ""
-                            ? 0
-                            : safePositiveNumber(event.target.value)
-                        )
-                      }}
-                      className="productTab-content__input transportationCost"
-                    />
-                  </div>
-
-                  <div className="transportationCost__checkbox">
-                    <input
-                      type="checkbox"
-                      id="retiraSucursal"
-                      checked={retiraSucursal === "S"}
-                      disabled={pickupDisabled}
-                      onChange={(event) =>
-                        setRetiraSucursal(event.target.checked ? "S" : "N")
-                      }
-                    />
-
-                    <label htmlFor="retiraSucursal">Retira en sucursal</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {showAddressModal && (
-              <div className="addressMenu">
-                <div className="addressMenu__header">
-                  <strong>Direcciones</strong>
-
-                  <button
-                    type="button"
-                    className="addressMenu-close"
-                    onClick={() => setShowAddressModal(false)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-
-                <div className="addressMenu__content">
-                  <input
-                    type="text"
-                    className="addressMenu-search"
-                    placeholder="Buscar dirección..."
-                    value={addressSearch}
-                    onChange={(event) => setAddressSearch(event.target.value)}
-                  />
-
-                  {addressLoading && <p>Cargando direcciones...</p>}
-
-                  {!addressLoading && filteredAddresses.length === 0 && (
-                    <p>
-                      {addresses.length === 0
-                        ? "No hay direcciones registradas"
-                        : "No hay resultados"}
-                    </p>
-                  )}
-
-                  {!addressLoading &&
-                    filteredAddresses.map((address) => (
-                      <div
-                        key={address.idDireccion}
-                        className={`addressMenu-item ${
-                          selectedAddressId === address.idDireccion
-                            ? "addressMenu-item--active"
-                            : ""
-                        }`}
-                        onClick={async () => {
-                          if (retiraSucursal === "S") return
-
-                          await applySelectedAddressToLog(
-                            Number(address.idDireccion)
-                          )
-
-                          setShowAddressModal(false)
-                        }}
-                      >
-                        <strong>{address.nombre}</strong>
-                        <p>{address.descripcion}</p>
-                        <small>{address.referencia}</small>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {activeStep === CART_AGENT_STEP.entrega && (
+          <CartPanelDeliveryStep
+            observation={observation}
+            setObservation={setObservation}
+            addDescription={addDescription}
+            setAddDescription={setAddDescription}
+            transCost={transCost}
+            setTransCost={setTransCost}
+            retiraSucursal={retiraSucursal}
+            setRetiraSucursal={setRetiraSucursal}
+            addressInputsDisabled={addressInputsDisabled}
+            transportDisabled={transportDisabled}
+            pickupDisabled={pickupDisabled}
+            showAddressModal={showAddressModal}
+            setShowAddressModal={setShowAddressModal}
+            filteredAddresses={filteredAddresses}
+            addressLoading={addressLoading}
+            addressesLength={addresses.length}
+            addressSearch={addressSearch}
+            setAddressSearch={setAddressSearch}
+            selectedAddressId={selectedAddressId}
+            applySelectedAddressToLog={applySelectedAddressToLog}
+          />
         )}
 
-
-        {/* # Componente y logica de formar de pago y finalizar preventas desde la perspectiva del agente*/}
-          {/* {activeStep === STEP_STATUS.tres && (
-            <div className="carPCPanel-stepContent">
-                <div className="carPCPanel-stepContent__animation">
-                <PaymentMethodComponent/>
-                </div>
-            </div>
-          )} */}
-
+        {activeStep === CART_AGENT_STEP.pago && (
+          <CartPanelPaymentStep
+            method={method}
+            setMethod={setMethod}
+            divisaOpts={divisaOpts}
+            divisaSelected={divisaSelected}
+            setDivisaSelected={setDivisaSelected}
+            divisaLoading={divisaLoading}
+            cashAmount={cashAmount}
+            setCashAmount={setCashAmount}
+            transfer={transfer}
+            setTransfer={setTransfer}
+            manualCardData={manualCardData}
+            setManualCardData={setManualCardData}
+            totalPagar={totalPagarAgente}
+            transpCost={effectiveShipping}
+            invoiceTotalsDto={invoiceTotalsDto}
+            carPCG={carPCG}
+            currentLog={currentLog}
+            payLoading={payLoading}
+            actionsDisabled={actionsDisabled}
+            canPay={canPay}
+            onBack={() => setActiveStep(CART_AGENT_STEP.entrega)}
+            handlePayNow={handleAgentPayNow}
+          />
+        )}
 
         <div className="carPCPanel-bottom">
-          <div className="carPCPanel-steps">
-            <button
-              type="button"
-              className={`carPCPanel-step ${
-                activeStep === STEP_STATUS.uno ? "carPCPanel-step--active" : "carPCPanel-step--inactive"
-              }`}
-              onClick={() => setActiveStep(STEP_STATUS.uno)}
-            >
-              <LuShoppingCart  fontSize={16} />
-            </button>
+          <CartPanelStepNavigation
+            activeStep={activeStep}
+            setActiveStep={setActiveStep}
+          />
 
-            <div className="carPCPanel-stepLine" />
+          <CartPanelTotals
+            invoiceTotalsDto={invoiceTotalsDto}
+            effectiveShipping={effectiveShipping}
+            retiraSucursal={retiraSucursal}
+            selectedAddressId={selectedAddressId}
+            addDescription={addDescription}
+          />
 
-
-              {/* Paso nuevo 3
-              seleccionar la forma de pago, integrado con multipago
-              en base a la parametrizacion del cliente propiedad, Multipago,
-              igual al checkout page. txs de hecho la logica se deveria de reutilizar
-              por eso hay que obserbar el checkoutpage su logica para poder reutilizar y lo que cambiaria es la ui
-              ademas de aplicar solid etc, el tercer paso agregar esa marte, nada de mapa, ni similar
-              soo selecciona la divisa, el tipo de dibisa, y le puede dar pagar.
-              */}
-
-            <button
-              type="button"
-              className={`carPCPanel-step ${
-                activeStep === STEP_STATUS.dos
-                  ? "carPCPanel-step--active"
-                  : "carPCPanel-step--inactive"
-              }`}
-              onClick={() => setActiveStep(STEP_STATUS.dos)}
-            >
-              <LuMapPin fontSize={16} />
-            </button>
-
-
-            <div className="carPCPanel-stepLine" />
-
-             {/* <button
-              type="button"
-              className={`carPCPanel-step ${
-                activeStep === STEP_STATUS.tres
-                  ? "carPCPanel-step--active"
-                  : "carPCPanel-step--inactive"
-              }`}
-              onClick={() => setActiveStep(STEP_STATUS.tres)}
-            >
-              <MdOutlinePayment  fontSize={16} />
-            </button> */}
-          </div>
-
-          <div className="productTab-content-footer carPCPanel-totals">
-            {invoiceTotalsDto?.subTotal != null &&
-              invoiceTotalsDto.subTotal > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">Subtotal:</p>
-
-                  <span className="productTab-content-footer__value">
-                    C$ {formatearDecimales(invoiceTotalsDto.subTotal)}
-                  </span>
-                </div>
-              )}
-
-            {invoiceTotalsDto?.descuento != null &&
-              invoiceTotalsDto.descuento > 0 && (
-                <div className="productTab-content__container">
-                  <p className="productTab-content-footer__title">Descuento:</p>
-
-                  <span className="productTab-content-footer__value">
-                    C$ {formatearDecimales(invoiceTotalsDto.descuento)}
-                  </span>
-                </div>
-              )}
-
-            {invoiceTotalsDto?.iva != null && invoiceTotalsDto.iva > 0 && (
-              <div className="productTab-content__container">
-                <p className="productTab-content-footer__title">IVA:</p>
-
-                <span className="productTab-content-footer__value">
-                  C$ {formatearDecimales(invoiceTotalsDto.iva)}
-                </span>
-              </div>
-            )}
-
-            {effectiveShipping > 0 && (
-              <div className="productTab-content__container">
-                <p className="productTab-content-footer__title">Transporte:</p>
-
-                <span className="productTab-content-footer__value">
-                  C$ {formatearDecimales(effectiveShipping)}
-                </span>
-              </div>
-            )}
-
-            {invoiceTotalsDto?.total != null && invoiceTotalsDto.total > 0 && (
-              <div className="productTab-content__container">
-                <p className="productTab-content-footer__title">
-                  {`Total${
-                    retiraSucursal === "N" &&
-                    selectedAddressId == null &&
-                    addDescription.trim().length === 0
-                      ? " Más envío"
-                      : ""
-                  }:`}
-                </p>
-
-                <span className="productTab-content-footer__totalValue">
-                  C$ {formatearDecimales(invoiceTotalsDto.total)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="productTab-footer__payment">
-            {showAddressButton && (
-              <Tooltip title="Listar direcciones" slotProps={tooltipSlotProps}>
-                <Button
-                  className="carPanel-btn"
-                  disabled={actionsDisabled}
-                  onClick={async () => {
-                    await loadAddresses()
-                    setShowAddressModal(true)
-                    setActiveStep(2)
-                  }}
-                >
-                  <FaMapMarkerAlt size={12} />
-                </Button>
-              </Tooltip>
-            )}
-
-            <Tooltip title="Enviar PDF" slotProps={tooltipSlotProps}>
-              <Button
-                className="carPanel-btn"
-                disabled={actionsDisabled}
-                onClick={handleSendCartPdf}
-              >
-                {sending || sendChatLoading ? (
-                  <AiOutlineLoading3Quarters fontSize={18} />
-                ) : (
-                  <FaFilePdf fontSize={18} />
-                )}
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="Confirmar carrito" slotProps={tooltipSlotProps}>
-              <Button
-                className="carPanel-btn"
-                disabled={actionsDisabled}
-                onClick={handleSendCartChat}
-              >
-                {sendChatLoading ? (
-                  <AiOutlineLoading3Quarters fontSize={18} />
-                ) : (
-                  <IoIosChatboxes fontSize={18} />
-                )}
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="Cancelar links" slotProps={tooltipSlotProps}>
-              <Button
-                className="cancelPanel-btn"
-                disabled={actionsDisabled}
-                onClick={Cancel}
-              >
-                {cancelLoading ? (
-                  <AiOutlineLoading3Quarters fontSize={18} />
-                ) : (
-                  <MdOutlineCancelScheduleSend fontSize={18} />
-                )}
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="Enviar link" slotProps={tooltipSlotProps}>
-              <Button
-                className="payment-btn"
-                disabled={actionsDisabled}
-                onClick={async () => await handleSendLink(false)}
-              >
-                {sendChatLoading ? (
-                  <AiOutlineLoading3Quarters fontSize={18} />
-                ) : (
-                  <IoSend fontSize={16} />
-                )}
-              </Button>
-            </Tooltip>
-          </div>
+          <CartPanelActions
+            activeStep={activeStep}
+            setActiveStep={setActiveStep}
+            showAddressButton={showAddressButton}
+            actionsDisabled={actionsDisabled}
+            sending={sending}
+            sendChatLoading={sendChatLoading}
+            cancelLoading={cancelLoading}
+            loadAddresses={loadAddresses}
+            setShowAddressModal={setShowAddressModal}
+            handleSendCartPdf={handleSendCartPdf}
+            handleSendCartChat={handleSendCartChat}
+            Cancel={Cancel}
+            handleSendLink={handleSendLink}
+          />
         </div>
       </section>
     </div>

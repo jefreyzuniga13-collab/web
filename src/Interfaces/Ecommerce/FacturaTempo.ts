@@ -71,7 +71,7 @@ export interface PagoGenerico {
   banco: string;           
 
   monto: number;
-  moneda: string;
+  moneda?: string;
   montoA: number;
   cambio: number;
   tasaCambio: number;
@@ -94,7 +94,7 @@ export interface PagoGenerico {
   montoS: number;
 
   indice: string;
-  codClienteCrd: string;     
+  codClienteCrd?: string;     
   facturaPinpad: string;
   codEmpresa: string;      
   codSucursal: string;
@@ -205,9 +205,3 @@ export interface ObtenerDivisaPagosTipoRes{
   banco: string
   aCambio: string;
 }
-
-
-//pago sucursal
-// export interface PrintFact{
-
-// }

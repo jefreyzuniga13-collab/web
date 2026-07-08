@@ -1,53 +1,74 @@
-import "@/Styles/Ecommerce/Payment/ManualCardPaymentSection.css";
-
-export type ManualCardFormState = {
-  tarjeta: string;
-  ultDigito: string;
-  tarjetahabiente: string;
-  autorizacion: string;
-  termId: string;
-  afiliado: string;
-  fechaVence: string;
-};
+import type { ManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import "@/Styles/Ecommerce/Payment/ManualCardPaymentSection.css"
 
 interface Props {
-  value: ManualCardFormState;
-  onChange: React.Dispatch<React.SetStateAction<ManualCardFormState>>;
+  /**
+   * Estado actual del formulario de tarjeta manual.
+   * Este estado viene desde el componente padre o desde un hook reutilizable.
+   */
+  value: ManualCardFormState
+
+  /**
+   * Actualiza el estado del formulario de tarjeta manual.
+   * Se usa Dispatch para permitir actualizar por campo sin perder el resto del objeto.
+   */
+  onChange: React.Dispatch<React.SetStateAction<ManualCardFormState>>
+
+  /**
+   * Permite bloquear el formulario mientras se procesa el pago
+   * o mientras se cargan datos relacionados.
+   */
+  disabled?: boolean
 }
 
 export default function ManualCardPaymentSection({
   value,
   onChange,
+  disabled = false
 }: Props) {
+  /**
+   * Actualiza un campo específico del formulario.
+   * Mantiene los demás valores existentes.
+   */
   const updateField = (field: keyof ManualCardFormState, nextValue: string) => {
+    if (disabled) return
+
     onChange((prev) => ({
       ...prev,
-      [field]: nextValue,
-    }));
-  };
+      [field]: nextValue
+    }))
+  }
 
+  /**
+   * Limpia cualquier carácter que no sea número.
+   * Se usa para campos como últimos 4 dígitos y fecha de vencimiento.
+   */
   const handleDigitsOnly = (
     field: keyof ManualCardFormState,
     nextValue: string,
     maxLength?: number
   ) => {
-    const limpio = nextValue.replace(/\D/g, "");
-    updateField(field, maxLength ? limpio.slice(0, maxLength) : limpio);
-  };
+    const limpio = nextValue.replace(/\D/g, "")
+    updateField(field, maxLength ? limpio.slice(0, maxLength) : limpio)
+  }
 
+  /**
+   * Valida la fecha de vencimiento en formato MMYY.
+   * Solo permite meses entre 01 y 12.
+   */
   const handleFechaVence = (nextValue: string) => {
-    const limpio = nextValue.replace(/\D/g, "").slice(0, 4);
+    const limpio = nextValue.replace(/\D/g, "").slice(0, 4)
 
     if (limpio.length >= 2) {
-      const mes = Number(limpio.slice(0, 2));
+      const mes = Number(limpio.slice(0, 2))
 
       if (mes < 1 || mes > 12) {
-        return;
+        return
       }
     }
 
-    updateField("fechaVence", limpio);
-  };
+    updateField("fechaVence", limpio)
+  }
 
   return (
     <div className="checkout-manual-card">
@@ -61,7 +82,10 @@ export default function ManualCardPaymentSection({
           type="text"
           className="checkout-input"
           value={value.tarjetahabiente}
-          onChange={(e) => updateField("tarjetahabiente", e.target.value)}
+          disabled={disabled}
+          onChange={(event) =>
+            updateField("tarjetahabiente", event.target.value)
+          }
           placeholder="Nombre del titular"
           autoComplete="off"
         />
@@ -77,7 +101,8 @@ export default function ManualCardPaymentSection({
           type="text"
           className="checkout-input"
           value={value.tarjeta}
-          onChange={(e) => updateField("tarjeta", e.target.value)}
+          disabled={disabled}
+          onChange={(event) => updateField("tarjeta", event.target.value)}
           placeholder="Ej. VISA, Mastercard, BAC, Lafise"
           autoComplete="off"
         />
@@ -94,7 +119,10 @@ export default function ManualCardPaymentSection({
           inputMode="numeric"
           className="checkout-input"
           value={value.ultDigito}
-          onChange={(e) => handleDigitsOnly("ultDigito", e.target.value, 4)}
+          disabled={disabled}
+          onChange={(event) =>
+            handleDigitsOnly("ultDigito", event.target.value, 4)
+          }
           placeholder="Ej. 1234"
           autoComplete="off"
           maxLength={4}
@@ -112,12 +140,13 @@ export default function ManualCardPaymentSection({
           inputMode="numeric"
           className="checkout-input"
           value={value.fechaVence}
-          onChange={(e) => handleFechaVence(e.target.value)}
+          disabled={disabled}
+          onChange={(event) => handleFechaVence(event.target.value)}
           placeholder="MMYY"
           autoComplete="off"
           maxLength={4}
         />
       </div>
     </div>
-  );
+  )
 }

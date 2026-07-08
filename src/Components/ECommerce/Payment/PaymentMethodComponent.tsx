@@ -1,78 +1,223 @@
-import React, { useEffect, useMemo, useState } from "react";
-import type { CheckoutStep, PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
-import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
-import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface";
-import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
-import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
-import CashPaymentSection from "@/Components/ECommerce/Payment/CashPaymentSection";
-import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSection";
-import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection";
-import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection";
-import { safeStr } from "@/Utils/ECommerce/formatters";
-import { formatearDecimales } from "@/Utils/calcularIVA";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
+import { useMemo } from "react"
+import { AiOutlineLoading3Quarters } from "react-icons/ai"
 
-export type CheckoutPaymentMethod = PaymentMethod | "manualCard";
+import PaymentMethodSelector from "@/Components/ECommerce/Payment/PaymentMethodSelector"
+import PaymentCurrencySelect from "@/Components/ECommerce/Payment/PaymentCurrencySelect"
+import PaymentFormRenderer from "@/Components/ECommerce/Payment/PaymentFormRenderer"
 
-export type ManualCardFormState = {
-  tarjeta: string;
-  ultDigito: string;
-  tarjetahabiente: string;
-  autorizacion: string;
-  termId: string;
-  afiliado: string;
-  fechaVence: string;
-};
+import type {
+  CheckoutStep
+} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 
-export interface Props {
-  step: CheckoutStep;
-  setStep: (step: CheckoutStep | string) => void;
-  method: CheckoutPaymentMethod;
-  transpCost: number;
-  distanceKm: number;
-  tip: number;
-  setTip: (tip: number) => void;
-  cashAmount: number;
-  setCashAmount: (cashAmount: number) => void;
-  transferAmount: number;
-  setTransferAmount: (transferAmount: number) => void;
-  transfer: string;
-  setTransfer: (transfer: string) => void;
-  payNowDisabled: boolean;
-  payNowLock: boolean;
-  handlePayNow: () => void;
-  divisaLoading: boolean;
-  divisaOpts: ObtenerDivisaPagosTipoRes[];
-  divisaSelected: ObtenerDivisaPagosTipoRes | null;
-  setDivisaSelected: (v: ObtenerDivisaPagosTipoRes | null) => void;
-  carPCG?: CarDto[];
-  totalPagar: number;
-  existingLog: LogCartResponseDto | null;
-  ecommerceUserId: number;
-  onSelectCard?: (card: TarjetaModelInterface | null) => void;
-  manualCardData: ManualCardFormState;
-  setManualCardData: React.Dispatch<React.SetStateAction<ManualCardFormState>>;
-  isGatewayCard?: boolean;
-  isManualCard?: boolean;
-  isAnyCard?: boolean;
+import type {
+  ObtenerDivisaPagosTipoRes
+} from "@/Interfaces/Ecommerce/FacturaTempo"
+
+import type {
+  CarDto,
+  InvoiceTotalsDto
+} from "@/Interfaces/Crm/CartPCGInterface"
+
+import type {
+  LogCartResponseDto
+} from "@/Interfaces/Crm/LogCartInterface"
+
+import type {
+  TarjetaModelInterface
+} from "@/Interfaces/Ecommerce/TarjetaInterface"
+
+import type {
+  CheckoutPaymentMethod,
+  ManualCardFormState
+} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+
+import { safeStr } from "@/Utils/ECommerce/formatters"
+import { safeNumber } from "@/Utils/ECommerce/utils"
+import { formatearDecimales } from "@/Utils/calcularIVA"
+
+import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css"
+
+interface Props {
+  /**
+   * Paso actual del checkout.
+   * El componente solo renderiza cuando el paso es paymentMethod.
+   */
+  step: CheckoutStep
+
+  /**
+   * Regresa o cambia de paso.
+   */
+  setStep: (step: CheckoutStep | string) => void
+
+  /**
+   * Método de pago seleccionado.
+   */
+  method: CheckoutPaymentMethod | null
+
+  /**
+   * Actualiza el método de pago seleccionado.
+   */
+  setMethod: (method: CheckoutPaymentMethod | null) => void
+
+  /**
+   * Métodos permitidos para el flujo actual.
+   *
+   * Agente:
+   * cash, transfer, manualCard.
+   *
+   * Cliente:
+   * cash, transfer, manualCard, gatewayCard.
+   */
+  allowedMethods: CheckoutPaymentMethod[]
+
+  /**
+   * Costo de transporte final.
+   */
+  transpCost: number
+
+  /**
+   * Distancia en kilómetros, si aplica.
+   */
+  distanceKm?: number
+
+  /**
+   * Propina, si aplica.
+   */
+  tip?: number
+
+  /**
+   * Actualiza propina, si aplica.
+   */
+  setTip?: (tip: number) => void
+
+  /**
+   * Monto recibido en efectivo.
+   */
+  cashAmount: number
+
+  /**
+   * Actualiza monto recibido en efectivo.
+   */
+  setCashAmount: (cashAmount: number) => void
+
+  /**
+   * Referencia de transferencia.
+   */
+  transfer: string
+
+  /**
+   * Actualiza referencia de transferencia.
+   */
+  setTransfer: (transfer: string) => void
+
+  /**
+   * Bloquea el botón de procesar pago.
+   *
+   * Importante:
+   * Esto NO debe bloquear el selector de método, porque si se usa
+   * !canPay aquí, nunca se podría seleccionar el primer método.
+   */
+  payNowDisabled: boolean
+
+  /**
+   * Bloqueo por proceso de pago en curso.
+   */
+  payNowLock: boolean
+
+  /**
+   * Acción final de pago.
+   */
+  handlePayNow: () => void | Promise<void>
+
+  /**
+   * Indica si se cargan bancos/tipos de pago.
+   */
+  divisaLoading: boolean
+
+  /**
+   * Opciones de banco/tipo de pago.
+   */
+  divisaOpts: ObtenerDivisaPagosTipoRes[]
+
+  /**
+   * Banco/tipo de pago seleccionado.
+   */
+  divisaSelected: ObtenerDivisaPagosTipoRes | null
+
+  /**
+   * Actualiza banco/tipo de pago.
+   */
+  setDivisaSelected: (value: ObtenerDivisaPagosTipoRes | null) => void
+
+  /**
+   * Carrito actual.
+   */
+  carPCG?: CarDto[]
+
+  /**
+   * Total final a pagar.
+   */
+  totalPagar: number
+
+  /**
+   * LogCart actual.
+   */
+  existingLog: LogCartResponseDto | null
+
+  /**
+   * Totales frescos calculados por PCG.
+   *
+   * Se usa para evitar mostrar subtotal/IVA en 0 cuando el LogCart
+   * todavía no se ha actualizado.
+   */
+  invoiceTotalsDto?: InvoiceTotalsDto | null
+
+  /**
+   * Id de usuario ecommerce.
+   */
+  ecommerceUserId?: number
+
+  /**
+   * Selección de tarjeta guardada.
+   * Solo aplica para gatewayCard.
+   */
+  onSelectCard?: (card: TarjetaModelInterface | null) => void
+
+  /**
+   * Datos de tarjeta manual.
+   */
+  manualCardData: ManualCardFormState
+
+  /**
+   * Actualiza datos de tarjeta manual.
+   */
+  setManualCardData: React.Dispatch<React.SetStateAction<ManualCardFormState>>
+
+  /**
+   * Paso al que se regresa.
+   */
+  backStep?: CheckoutStep | string
+
+  /**
+   * Texto del botón final.
+   */
+  payButtonText?: string
+
+  /**
+   * Indica si se muestra el selector de métodos.
+   */
+  showMethodSelector?: boolean
 }
 
-function methodLabel(m: CheckoutPaymentMethod): string {
-  if (m === "cash") return "Efectivo";
-  if (m === "transfer") return "Transferencia";
-  if (m === "manualCard") return "Tarjeta manual";
-  return "Tarjeta débito / crédito";
-}
-
-export const PaymentMethodComponent = ({
+export default function PaymentMethodComponent({
   step,
   setStep,
   method,
+  setMethod,
+  allowedMethods,
   transpCost,
   cashAmount,
   setCashAmount,
-  setTransferAmount,
   transfer,
   setTransfer,
   payNowDisabled,
@@ -85,220 +230,258 @@ export const PaymentMethodComponent = ({
   carPCG,
   totalPagar,
   existingLog,
-  ecommerceUserId,
+  invoiceTotalsDto = null,
+  ecommerceUserId = 0,
   onSelectCard,
   manualCardData,
   setManualCardData,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isGatewayCard,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isManualCard,
-}: Props) => {
-  const [selectedSavedCard, setSelectedSavedCard] = useState<TarjetaModelInterface | null>(null);
+  backStep = "currency",
+  payButtonText = "Pagar ahora",
+  showMethodSelector = true
+}: Props) {
+  /**
+   * Estos métodos necesitan seleccionar banco, tarjeta o tipo de pago.
+   * Efectivo no lo requiere.
+   */
+  const showDivisaSelect =
+    method === "transfer" ||
+    method === "manualCard" ||
+    method === "gatewayCard"
 
-  const showDivisaSelect = method === "card" || method === "manualCard" || method === "transfer";
-
-  useEffect(() => {
-    if (method === "transfer") {
-      setTransferAmount(totalPagar);
-    }
-  }, [method, totalPagar, setTransferAmount]);
-
-  useEffect(() => {
-    if (method !== "card") {
-      setSelectedSavedCard(null);
-      onSelectCard?.(null);
-    }
-  }, [method, onSelectCard]);
-
+  /**
+   * Valida referencia de transferencia.
+   */
   const transferRefOk = useMemo(() => {
-    if (method !== "transfer") return true;
+    if (method !== "transfer") return true
 
-    const ref = safeStr(transfer);
+    const ref = safeStr(transfer)
 
-    if (!ref) return false;
+    if (!ref) return false
 
-    return /^[A-Za-z0-9-]{4,40}$/.test(ref);
-  }, [method, transfer]);
+    return /^[A-Za-z0-9-]{4,40}$/.test(ref)
+  }, [method, transfer])
 
+  /**
+   * Valida datos mínimos de tarjeta manual.
+   */
   const manualCardOk = useMemo(() => {
-    if (method !== "manualCard") return true;
+    if (method !== "manualCard") return true
 
     return (
       !!safeStr(manualCardData.tarjetahabiente) &&
       !!safeStr(manualCardData.tarjeta) &&
-      !!safeStr(manualCardData.ultDigito) &&
+      safeStr(manualCardData.ultDigito).length === 4 &&
       !!safeStr(manualCardData.fechaVence)
-    );
-  }, [method, manualCardData]);
+    )
+  }, [method, manualCardData])
 
-  const canPay =
+  /**
+   * Valida efectivo.
+   *
+   * En el flujo del agente y cliente, efectivo debe cubrir el total.
+   */
+  const cashOk = useMemo(() => {
+    if (method !== "cash") return true
+
+    return safeNumber(cashAmount, 0) >= safeNumber(totalPagar, 0)
+  }, [method, cashAmount, totalPagar])
+
+  /**
+   * Habilita únicamente el botón final.
+   *
+   * No se usa para bloquear el selector, porque al inicio method es null
+   * y bloquearía la selección de pago.
+   */
+  const canPressPay =
+    !!method &&
     !payNowDisabled &&
     !payNowLock &&
     (showDivisaSelect ? !!divisaSelected : true) &&
     (method === "transfer" ? transferRefOk : true) &&
-    (method === "manualCard" ? manualCardOk : true);
-  const handleSelectCard = (card: TarjetaModelInterface | null) => {
-    setSelectedSavedCard(card);
-    onSelectCard?.(card);
-  };
+    (method === "manualCard" ? manualCardOk : true) &&
+    (method === "cash" ? cashOk : true)
 
   const totalResumen = useMemo(() => {
-  return Number(totalPagar ?? 0);
-}, [totalPagar]);
+    return safeNumber(totalPagar, 0)
+  }, [totalPagar])
+
+  /**
+   * Se toman primero los totales frescos.
+   * Si no vienen, se usa existingLog como respaldo.
+   */
+  const resumen = useMemo(() => {
+    return {
+      subTotal: safeNumber(
+        invoiceTotalsDto?.subTotal ?? existingLog?.subTotal ?? 0,
+        0
+      ),
+      descuento: safeNumber(
+        invoiceTotalsDto?.descuento ?? existingLog?.DescuentoPantalla ?? 0,
+        0
+      ),
+      iva: safeNumber(
+        invoiceTotalsDto?.iva ?? existingLog?.ivaPantalla ?? 0,
+        0
+      ),
+      transporte: safeNumber(
+        transpCost || existingLog?.transCost || 0,
+        0
+      ),
+      total: totalResumen
+    }
+  }, [
+    invoiceTotalsDto,
+    existingLog,
+    transpCost,
+    totalResumen
+  ])
+
+  const divisaLabel = useMemo(() => {
+    if (method === "transfer") return "Tipo de transferencia / banco *"
+    if (method === "manualCard") return "Tipo de tarjeta / banco manual *"
+    if (method === "gatewayCard") return "Tipo de tarjeta / banco *"
+
+    return "Tipo de pago / banco *"
+  }, [method])
+
+  if (step !== "paymentMethod") {
+    return null
+  }
 
   return (
-    <>
-      {step === "paymentMethod" && (
-        <div className="checkout-section">
-          <h2 className="checkout-section__title">
-            {`Método de pago ${methodLabel(method)}`}
-          </h2>
+    <div className="checkout-section">
+      <h2 className="checkout-section__title">
+        Pago y confirmar venta
+      </h2>
 
-          {showDivisaSelect && (
-            <div className="checkout-field checkout-field--full">
-              <label className="checkout-label" htmlFor="payType">
-                {method === "transfer"
-                  ? "Tipo de transferencia / banco *"
-                  : method === "manualCard"
-                    ? "Tipo de tarjeta / banco manual *"
-                    : "Tipo de tarjeta / banco *"}
-              </label>
+      {showMethodSelector && (
+        <PaymentMethodSelector
+          value={method}
+          methods={allowedMethods}
+          onChange={(nextMethod) => {
+            /**
+             * Al cambiar método se limpia la divisa seleccionada.
+             * El hook padre se encarga de volver a cargar las opciones.
+             */
+            setMethod(nextMethod)
+            setDivisaSelected(null)
+          }}
+          disabled={payNowLock}
+        />
+      )}
 
-              <select
-                id="payType"
-                className="checkout-input"
-                value={safeStr(divisaSelected?.codigo)}
-                onChange={(e) => {
-                  const code = safeStr(e.target.value);
-                  const found =
-                    divisaOpts.find((x) => safeStr(x.codigo) === code) ?? null;
-                  setDivisaSelected(found);
-                }}
-                disabled={divisaLoading}
-              >
-                <option value="">
-                  {divisaLoading ? "Cargando..." : "Seleccionar"}
-                </option>
+      {!method && (
+        <p className="checkout-payment-hint">
+          Selecciona una forma de pago para continuar.
+        </p>
+      )}
 
-                {divisaOpts.map((x) => (
-                  <option key={`${x.codigo}-${x.codigoExterno}`} value={x.codigo}>
-                    {x.nombre}
-                  </option>
-                ))}
-              </select>
+      {method && showDivisaSelect && (
+        <PaymentCurrencySelect
+          divisaOpts={divisaOpts}
+          divisaSelected={divisaSelected}
+          setDivisaSelected={setDivisaSelected}
+          divisaLoading={divisaLoading}
+          label={divisaLabel}
+          disabled={payNowLock}
+        />
+      )}
+
+      {carPCG && carPCG.length > 0 && (
+        <aside className="checkout-summary">
+          <p className="checkout-summary__title">Resumen</p>
+
+          {resumen.subTotal > 0 && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Subtotal:</p>
+              <strong className="checkout-summary__strong">
+                C$ {formatearDecimales(resumen.subTotal)}
+              </strong>
             </div>
           )}
 
-          {carPCG && carPCG.length > 0 && (
-            <aside className="checkout-summary">
-              <p className="checkout-summary__title">Resumen</p>
-
-              <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Subtotal:</p>
-                <strong className="checkout-summary__strong">
-                  {formatearDecimales(existingLog?.subTotal ?? 0)}
-                </strong>
-              </div>
-
-              <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">IVA:</p>
-                <strong className="checkout-summary__strong">
-                  {formatearDecimales(existingLog?.ivaPantalla ?? 0)}
-                </strong>
-              </div>
-
-              <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Transporte:</p>
-                <strong className="checkout-summary__strong">
-                  {formatearDecimales(transpCost || existingLog?.transCost || 0)}
-                </strong>
-              </div>
-
-              <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Total:</p>
-                <strong className="checkout-summary__strong">
-                  C$ {formatearDecimales(totalResumen)}
-                </strong>
-              </div>
-
-              {method === "card" && selectedSavedCard && (
-                <div className="checkout-summary__subtitle">
-                  <p className="checkout-summary__p">Tarjeta guardada:</p>
-                  <strong className="checkout-summary__strong">
-                    **** {safeStr(selectedSavedCard.ultimos4)}
-                  </strong>
-                </div>
-              )}
-
-              {method === "manualCard" && safeStr(manualCardData.ultDigito) && (
-                <div className="checkout-summary__subtitle">
-                  <p className="checkout-summary__p">Tarjeta manual:</p>
-                  <strong className="checkout-summary__strong">
-                    **** {safeStr(manualCardData.ultDigito)}
-                  </strong>
-                </div>
-              )}
-            </aside>
+          {resumen.descuento > 0 && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Descuento:</p>
+              <strong className="checkout-summary__strong">
+                C$ {formatearDecimales(resumen.descuento)}
+              </strong>
+            </div>
           )}
 
-          {method === "cash" && (
-            <CashPaymentSection
-              cashAmount={cashAmount}
-              setCashAmount={setCashAmount}
-            />
+          {resumen.iva > 0 && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">IVA:</p>
+              <strong className="checkout-summary__strong">
+                C$ {formatearDecimales(resumen.iva)}
+              </strong>
+            </div>
           )}
 
-          {method === "card" && (
-            <CardPaymentSection
-              ecommerceUserId={ecommerceUserId}
-              onSelectCard={handleSelectCard}
-            />
+          {resumen.transporte > 0 && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Transporte:</p>
+              <strong className="checkout-summary__strong">
+                C$ {formatearDecimales(resumen.transporte)}
+              </strong>
+            </div>
           )}
 
-          {method === "manualCard" && (
-            <ManualCardPaymentSection
-              value={manualCardData}
-              onChange={setManualCardData}
-            />
-          )}
-
-          {method === "transfer" && (
-            <TransferPaymentSection
-              totalPagar={totalPagar}
-              transfer={transfer}
-              setTransfer={setTransfer}
-              transferRefOk={transferRefOk}
-            />
-          )}
-
-
-          {/* Multipago
-          
-            - Opcion de seleccionar mas de 1 forma de pago, actualmente solo esta para fija, transferencia, efectivo o tarjetas...
-
-          */}
-
-          <div className="checkout-actionBtn">
-            <button
-              type="button"
-              className="checkout-paybtn__back"
-              onClick={() => setStep("currency")}
-            >
-              Regresar
-            </button>
-
-            <button
-              type="button"
-              className="checkout-paybtn"
-              onClick={handlePayNow}
-              disabled={!canPay}
-            >
-              {payNowDisabled ? <AiOutlineLoading3Quarters /> : "Pagar ahora"}
-            </button>
+          <div className="checkout-summary__subtitle">
+            <p className="checkout-summary__p">Total:</p>
+            <strong className="checkout-summary__strong">
+              C$ {formatearDecimales(resumen.total)}
+            </strong>
           </div>
-        </div>
+
+          {method === "manualCard" && safeStr(manualCardData.ultDigito) && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Tarjeta manual:</p>
+              <strong className="checkout-summary__strong">
+                **** {safeStr(manualCardData.ultDigito)}
+              </strong>
+            </div>
+          )}
+        </aside>
       )}
-    </>
-  );
-};
+
+      <PaymentFormRenderer
+        method={method}
+        totalPagar={totalPagar}
+        cashAmount={cashAmount}
+        setCashAmount={setCashAmount}
+        transfer={transfer}
+        setTransfer={setTransfer}
+        transferRefOk={transferRefOk}
+        manualCardData={manualCardData}
+        setManualCardData={setManualCardData}
+        ecommerceUserId={ecommerceUserId}
+        onSelectCard={onSelectCard}
+      />
+
+      <div className="checkout-actionBtn">
+        <button
+          type="button"
+          className="checkout-paybtn__back"
+          onClick={() => setStep(backStep)}
+          disabled={payNowLock}
+        >
+          Regresar
+        </button>
+
+        <button
+          type="button"
+          className="checkout-paybtn"
+          onClick={handlePayNow}
+          disabled={!canPressPay}
+        >
+          {payNowLock ? (
+            <AiOutlineLoading3Quarters />
+          ) : (
+            payButtonText
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}

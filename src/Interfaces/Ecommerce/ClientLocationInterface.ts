@@ -1,42 +1,37 @@
-export interface ClientLocationDto{
-    idDireccion?: number;
-    nombre: string;
-    referencia: string;
-    descripcion: string;
-    latitud?: number;
-    longitud?: number;
-    idUsuario?: number;
+export interface ClientLocationDto {
+  idDireccion?: number
+  nombre?: string
+  referencia?: string
+  descripcion?: string
+  latitud?: number
+  longitud?: number
+  idUsuario?: number
 }
-
 
 export interface Coords {
-  latitud: number;
-  longitud: number;
+  latitud: number
+  longitud: number
 }
 
-export type LocationMode = "existing" | "new";
+export type LocationMode = "existing" | "new"
 
-export interface ClientLocation2Dto{
-    idDireccion?: number;
-    nombre: string;
-    referencia: string;
-    descripcion: string;
-    latitud?: number;
-    longitud?: number;
+export interface ClientLocation2Dto {
+  idDireccion?: number
+  nombre?: string
+  referencia?: string
+  descripcion?: string
+  latitud?: number
+  longitud?: number
 }
 
 export interface CalculationResultDto {
-  pasasub: "S" | "N";
-  resulsub: number;
-
-  pasadesc: "S" | "N";
-  resuldesc: number;
-
-  pasaiva: "S" | "N";
-  resuliva: number;
+  pasasub: "S" | "N"
+  resulsub: number
+  pasadesc: "S" | "N"
+  resuldesc: number
+  pasaiva: "S" | "N"
+  resuliva: number
 }
-
-//req:
 
 export interface CalculationReqDto {
   usuario: string
