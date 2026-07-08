@@ -110,6 +110,11 @@
   /* padding: var(--space-sm); */
 }
 
+.carPCPanel-stepContent__animation{
+  width: 100%;
+  padding:10rem;
+}
+
 .carPCPanel-products {
   margin-top: var(--space-sm);
 }

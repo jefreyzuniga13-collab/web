@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as signalR from "@microsoft/signalr";
 import type {
   MessageDto,
@@ -15,20 +16,23 @@ const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "";
 const HUB_BASE = API_URL.replace(/\/api\/v1$/, "");
 
 const PORTAL_URL =
-  import.meta.env.VITE_PORTAL_URL?.replace(/\/+$/, "") ||
-  "https://staging.dsujq9sb48iiw.amplifyapp.com";
+  import.meta.env.VITE_PORTAL_URL?.replace(/\/+$/, "");
 
 let chatConnection: signalR.HubConnection | null = null;
 export let notificationsConnection: signalR.HubConnection | null = null;
 export let presenceConnection: signalR.HubConnection | null = null;
 export let userConeccion: signalR.HubConnection | null = null;
 
-let startPromise: Promise<{
+let startPromise: Promise<HubConnections> | null = null;
+let reconnectTimer: number | null = null;
+let isStoppingManually = false;
+
+type HubConnections = {
   chatConnection: signalR.HubConnection | null;
   notificationsConnection: signalR.HubConnection | null;
   presenceConnection: signalR.HubConnection | null;
   userConeccion: signalR.HubConnection | null;
-}> | null = null;
+};
 
 export type SoundDto = {
   conversationId: number;
@@ -155,12 +159,21 @@ const playSoundHandlers = new Map<
   (payload: unknown) => void
 >();
 
+  //Con unos usuarios se decconecta, y vuelva a reconectar, no pasa con todos,he probado con usuarios de prueba
+  //con todos los roles, pero no se descnectan tampoco los de otra clienet
+  //pero con otro cliente si pasa 
 function buildConnection(url: string): signalR.HubConnection {
   return new signalR.HubConnectionBuilder()
     .withUrl(url, {
       withCredentials: true,
+      transport:
+        signalR.HttpTransportType.WebSockets |
+        signalR.HttpTransportType.ServerSentEvents |
+        signalR.HttpTransportType.LongPolling,
     })
-    .withAutomaticReconnect()
+    .withAutomaticReconnect([0, 2000, 5000, 10000, 15000, 30000])
+    .withServerTimeout(60000)
+    .withKeepAliveInterval(15000)
     .configureLogging(signalR.LogLevel.Warning)
     .build();
 }
@@ -171,13 +184,9 @@ function getActiveCompanyId(): number | null {
   const isRoot = state.auth?.isRoot;
   const activeCompanyId = state.company?.activeCompanyId;
 
-  if (!isRoot) {
-    return null;
-  }
+  if (!isRoot) return null;
 
-  if (!activeCompanyId || Number(activeCompanyId) <= 0) {
-    return null;
-  }
+  if (!activeCompanyId || Number(activeCompanyId) <= 0) return null;
 
   return Number(activeCompanyId);
 }
@@ -189,9 +198,7 @@ function shouldStartHubs(): boolean {
   const isRoot = state.auth?.isRoot;
   const activeCompanyId = state.company?.activeCompanyId;
 
-  if (!isAuthenticated) {
-    return false;
-  }
+  if (!isAuthenticated) return false;
 
   if (isRoot && (!activeCompanyId || Number(activeCompanyId) <= 0)) {
     return false;
@@ -203,9 +210,7 @@ function shouldStartHubs(): boolean {
 function buildHubUrl(path: string): string {
   const companyId = getActiveCompanyId();
 
-  if (!companyId) {
-    return `${HUB_BASE}${path}`;
-  }
+  if (!companyId) return `${HUB_BASE}${path}`;
 
   const separator = path.includes("?") ? "&" : "?";
 
@@ -218,14 +223,38 @@ function isConnected(connection: signalR.HubConnection | null): boolean {
   return connection?.state === signalR.HubConnectionState.Connected;
 }
 
+function clearReconnectTimer() {
+  if (!reconnectTimer) return;
+
+  window.clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+}
+
+function scheduleReconnect() {
+  if (isStoppingManually) return;
+  if (reconnectTimer) return;
+  if (!shouldStartHubs()) return;
+
+  reconnectTimer = window.setTimeout(async () => {
+    reconnectTimer = null;
+
+    if (!shouldStartHubs()) return;
+
+    try {
+      await restartHubConnection();
+    } catch (err) {
+      console.warn("[SignalR] Reintento fallido", err);
+      scheduleReconnect();
+    }
+  }, 5000);
+}
+
 async function ensureStarted(
   connection: signalR.HubConnection | null
 ): Promise<void> {
   if (!connection) return;
 
-  if (connection.state === signalR.HubConnectionState.Connected) {
-    return;
-  }
+  if (connection.state === signalR.HubConnectionState.Connected) return;
 
   if (connection.state === signalR.HubConnectionState.Disconnected) {
     await connection.start();
@@ -242,7 +271,7 @@ async function ensureStarted(
 
 function waitUntilConnected(connection: signalR.HubConnection): Promise<void> {
   return new Promise((resolve, reject) => {
-    const maxWaitMs = 15000;
+    const maxWaitMs = 20000;
     const startedAt = Date.now();
 
     const interval = window.setInterval(() => {
@@ -262,7 +291,7 @@ function waitUntilConnected(connection: signalR.HubConnection): Promise<void> {
         window.clearInterval(interval);
         reject(new Error("Tiempo de espera agotado al conectar SignalR."));
       }
-    }, 50);
+    }, 100);
   });
 }
 
@@ -277,7 +306,6 @@ function emitDesktopNotify(detail: {
 
 function normalizeSoundDto(payload: unknown): SoundDto {
   const value = payload as Partial<SoundDto>;
-
   const rawKind = String(value?.kind ?? "message");
 
   const kind: SoundDto["kind"] =
@@ -296,21 +324,31 @@ function normalizeSoundDto(payload: unknown): SoundDto {
   };
 }
 
+function bindConnectionLifecycle(
+  connection: signalR.HubConnection,
+  name: string,
+  onReconnected?: () => void
+) {
+  connection.onreconnecting((err) => {
+    console.warn(`[${name}] Reconectando...`, err);
+  });
+
+  connection.onreconnected(() => {
+    console.info(`[${name}] Reconectado`);
+    onReconnected?.();
+  });
+
+  connection.onclose((err) => {
+    console.warn(`[${name}] Conexión cerrada`, err);
+    scheduleReconnect();
+  });
+}
+
 function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
   connection.off("SupportRequested");
-  connection.on(
-    "SupportRequested",
-    (payload: {
-      conversationId: number;
-      requestedAt: string;
-      clientContactName: string;
-      clientName: string;
-    }) => {
-      window.dispatchEvent(
-        new CustomEvent("SupportRequested", { detail: payload })
-      );
-    }
-  );
+  connection.on("SupportRequested", (payload) => {
+    window.dispatchEvent(new CustomEvent("SupportRequested", { detail: payload }));
+  });
 
   connection.off("cart:updated");
   connection.on(
@@ -321,13 +359,12 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
           contactId: payload.contactId,
           hasCart: true,
           count:
-            store.getState().cartBadge.byContactId?.[payload.contactId]
-              ?.count ?? 0,
+            store.getState().cartBadge.byContactId?.[payload.contactId]?.count ??
+            0,
         })
       );
 
-      const state = store.getState();
-      const activeContactId = state.cart.activeContactId;
+      const activeContactId = store.getState().cart.activeContactId;
 
       if (activeContactId === payload.contactId) {
         window.dispatchEvent(
@@ -360,8 +397,7 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
         })
       );
 
-      const state = store.getState();
-      const activeContactId = state.cart?.activeContactId ?? null;
+      const activeContactId = store.getState().cart?.activeContactId ?? null;
 
       if (activeContactId === payload.contactId) {
         store.dispatch(clearCart());
@@ -383,52 +419,25 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
   });
 
   connection.off("AssignmentResponse");
-  connection.on(
-    "AssignmentResponse",
-    (payload: {
-      conversationId: number;
-      assignedAgentName: string;
-      accepted: boolean;
-      comment?: string;
-      clientContactName: string;
-      clientName: string;
-    }) => {
-      window.dispatchEvent(
-        new CustomEvent("AssignmentResponse", { detail: payload })
-      );
-    }
-  );
+  connection.on("AssignmentResponse", (payload) => {
+    window.dispatchEvent(
+      new CustomEvent("AssignmentResponse", { detail: payload })
+    );
+  });
 
   connection.off("AssignmentForced");
-  connection.on(
-    "AssignmentForced",
-    (payload: {
-      conversationId: number;
-      comment: string;
-      clientContactName: string;
-      clientName: string;
-    }) => {
-      window.dispatchEvent(
-        new CustomEvent("AssignmentForced", { detail: payload })
-      );
-    }
-  );
+  connection.on("AssignmentForced", (payload) => {
+    window.dispatchEvent(
+      new CustomEvent("AssignmentForced", { detail: payload })
+    );
+  });
 
   connection.off("AssignmentForcedAdmin");
-  connection.on(
-    "AssignmentForcedAdmin",
-    (payload: {
-      conversationId: number;
-      targetAgentId: number;
-      comment: string;
-      clientContactName: string;
-      clientName: string;
-    }) => {
-      window.dispatchEvent(
-        new CustomEvent("AssignmentForcedAdmin", { detail: payload })
-      );
-    }
-  );
+  connection.on("AssignmentForcedAdmin", (payload) => {
+    window.dispatchEvent(
+      new CustomEvent("AssignmentForcedAdmin", { detail: payload })
+    );
+  });
 
   connection.off("newContactValidation");
   connection.on("newContactValidation", (payload: { contactLog: ContactLog }) => {
@@ -436,6 +445,14 @@ function bindNotificationBridgeHandlers(connection: signalR.HubConnection) {
       new CustomEvent("newContactValidation", { detail: payload })
     );
   });
+}
+
+function bindPresenceHandlers(connection: signalR.HubConnection) {
+  connection.off("UserIsOnline");
+  connection.on("UserIsOnline", (_userId: number) => {});
+
+  connection.off("UserIsOffline");
+  connection.on("UserIsOffline", (_userId: number) => {});
 }
 
 function rebindRegisteredHandlers() {
@@ -514,7 +531,7 @@ function rebindRegisteredHandlers() {
   }
 }
 
-export async function createHubConnection() {
+export async function createHubConnection(): Promise<HubConnections> {
   if (!shouldStartHubs()) {
     await stopHubConnection();
 
@@ -529,6 +546,9 @@ export async function createHubConnection() {
   if (startPromise) return startPromise;
 
   startPromise = (async () => {
+    isStoppingManually = false;
+    clearReconnectTimer();
+
     if (
       isConnected(chatConnection) &&
       isConnected(notificationsConnection) &&
@@ -546,68 +566,36 @@ export async function createHubConnection() {
     if (!chatConnection) {
       chatConnection = buildConnection(buildHubUrl("/hubs/chat"));
 
-      chatConnection.onreconnecting((err) =>
-        console.warn("[CHAT] Reconectando...", err)
-      );
-
-      chatConnection.onreconnected(() => {
+      bindConnectionLifecycle(chatConnection, "CHAT", () => {
         rebindRegisteredHandlers();
-      });
-
-      chatConnection.onclose((err) => {
-        if (err) console.warn("[CHAT] Conexión cerrada", err);
-      });
-    }
-
-    if (!userConeccion) {
-      userConeccion = buildConnection(buildHubUrl("/hubs/users"));
-
-      userConeccion.onreconnecting((err) =>
-        console.warn("[USER] Reconectando...", err)
-      );
-
-      userConeccion.onclose((err) => {
-        if (err) console.warn("[USER] Conexión cerrada", err);
       });
     }
 
     if (!notificationsConnection) {
       notificationsConnection = buildConnection(buildHubUrl("/hubs/notifications"));
 
-      notificationsConnection.onreconnecting((err) =>
-        console.warn("[NOTIFICATIONS] Reconectando...", err)
-      );
+      bindNotificationBridgeHandlers(notificationsConnection);
 
-      notificationsConnection.onreconnected(() => {
+      bindConnectionLifecycle(notificationsConnection, "NOTIFICATIONS", () => {
         bindNotificationBridgeHandlers(notificationsConnection!);
         rebindRegisteredHandlers();
       });
-
-      notificationsConnection.onclose((err) => {
-        if (err) console.warn("[NOTIFICATIONS] Conexión cerrada", err);
-      });
-
-      bindNotificationBridgeHandlers(notificationsConnection);
     }
 
     if (!presenceConnection) {
       presenceConnection = buildConnection(buildHubUrl("/hubs/presence"));
 
-      presenceConnection.off("UserIsOnline");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      presenceConnection.on("UserIsOnline", (_userId: number) => {});
+      bindPresenceHandlers(presenceConnection);
 
-      presenceConnection.off("UserIsOffline");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      presenceConnection.on("UserIsOffline", (_userId: number) => {});
-
-      presenceConnection.onreconnecting((err) =>
-        console.warn("[PRESENCE] Reconectando...", err)
-      );
-
-      presenceConnection.onclose((err) => {
-        if (err) console.warn("[PRESENCE] Conexión cerrada", err);
+      bindConnectionLifecycle(presenceConnection, "PRESENCE", () => {
+        bindPresenceHandlers(presenceConnection!);
       });
+    }
+
+    if (!userConeccion) {
+      userConeccion = buildConnection(buildHubUrl("/hubs/users"));
+
+      bindConnectionLifecycle(userConeccion, "USER");
     }
 
     await Promise.all([
@@ -629,12 +617,18 @@ export async function createHubConnection() {
 
   try {
     return await startPromise;
+  } catch (err) {
+    scheduleReconnect();
+    throw err;
   } finally {
     startPromise = null;
   }
 }
 
 export async function stopHubConnection(): Promise<void> {
+  isStoppingManually = true;
+  clearReconnectTimer();
+
   const connections = [
     chatConnection,
     notificationsConnection,
@@ -647,7 +641,11 @@ export async function stopHubConnection(): Promise<void> {
       if (!connection) return;
       if (connection.state === signalR.HubConnectionState.Disconnected) return;
 
-      await connection.stop();
+      try {
+        await connection.stop();
+      } catch (err) {
+        console.warn("[SignalR] Error al detener conexión", err);
+      }
     })
   );
 
@@ -660,13 +658,14 @@ export async function stopHubConnection(): Promise<void> {
 
 export async function restartHubConnection(): Promise<void> {
   await stopHubConnection();
+
+  isStoppingManually = false;
+
   await createHubConnection();
 }
 
 export async function joinConversation(conversationId: number) {
-  if (!chatConnection || chatConnection.state !== signalR.HubConnectionState.Connected) {
-    await createHubConnection();
-  }
+  await createHubConnection();
 
   if (chatConnection?.state === signalR.HubConnectionState.Connected) {
     await chatConnection.invoke("JoinConversation", conversationId.toString());
@@ -674,9 +673,7 @@ export async function joinConversation(conversationId: number) {
 }
 
 export async function leaveConversation(conversationId: number) {
-  if (!chatConnection || chatConnection.state !== signalR.HubConnectionState.Connected) {
-    return;
-  }
+  if (chatConnection?.state !== signalR.HubConnectionState.Connected) return;
 
   await chatConnection.invoke("LeaveConversation", conversationId.toString());
 }
@@ -684,8 +681,6 @@ export async function leaveConversation(conversationId: number) {
 export function onNewMessage(
   handler: (payload: { message: MessageDto; attachments: AttachmentDto[] }) => void
 ) {
-  if (!chatConnection) return () => {};
-
   if (receiveHandlers.has(handler)) {
     return () => offNewMessage(handler);
   }
@@ -714,7 +709,11 @@ export function onNewMessage(
   };
 
   receiveHandlers.set(handler, cb);
-  chatConnection.on("ReceiveMessage", cb);
+
+  if (chatConnection) {
+    chatConnection.off("ReceiveMessage", cb);
+    chatConnection.on("ReceiveMessage", cb);
+  }
 
   return () => offNewMessage(handler);
 }
@@ -726,13 +725,12 @@ export function offNewMessage(
 
   if (stored && chatConnection) {
     chatConnection.off("ReceiveMessage", stored);
-    receiveHandlers.delete(handler);
   }
+
+  receiveHandlers.delete(handler);
 }
 
 export function onConversationCreated(handler: (convo: ConversationDto) => void) {
-  if (!chatConnection) return () => {};
-
   if (conversationCreatedHandlers.has(handler)) {
     return () => offConversationCreated(handler);
   }
@@ -742,7 +740,11 @@ export function onConversationCreated(handler: (convo: ConversationDto) => void)
   };
 
   conversationCreatedHandlers.set(handler, cb);
-  chatConnection.on("ConversationCreated", cb);
+
+  if (chatConnection) {
+    chatConnection.off("ConversationCreated", cb);
+    chatConnection.on("ConversationCreated", cb);
+  }
 
   return () => offConversationCreated(handler);
 }
@@ -752,13 +754,12 @@ export function offConversationCreated(handler: (convo: ConversationDto) => void
 
   if (stored && chatConnection) {
     chatConnection.off("ConversationCreated", stored);
-    conversationCreatedHandlers.delete(handler);
   }
+
+  conversationCreatedHandlers.delete(handler);
 }
 
 export function onConversationUpdated(handler: (c: ConversationDto) => void) {
-  if (!chatConnection) return () => {};
-
   if (conversationUpdatedHandlers.has(handler)) {
     return () => offConversationUpdated(handler);
   }
@@ -768,7 +769,11 @@ export function onConversationUpdated(handler: (c: ConversationDto) => void) {
   };
 
   conversationUpdatedHandlers.set(handler, cb);
-  chatConnection.on("ConversationUpdated", cb);
+
+  if (chatConnection) {
+    chatConnection.off("ConversationUpdated", cb);
+    chatConnection.on("ConversationUpdated", cb);
+  }
 
   return () => offConversationUpdated(handler);
 }
@@ -778,15 +783,14 @@ export function offConversationUpdated(handler: (c: ConversationDto) => void) {
 
   if (stored && chatConnection) {
     chatConnection.off("ConversationUpdated", stored);
-    conversationUpdatedHandlers.delete(handler);
   }
+
+  conversationUpdatedHandlers.delete(handler);
 }
 
 export function onNewHumanRequest(
   handler: (payload: { conversationId: number; fromPhone: string }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (newHumanRequestHandlers.has(handler)) {
     return () => offNewHumanRequest(handler);
   }
@@ -796,7 +800,11 @@ export function onNewHumanRequest(
   };
 
   newHumanRequestHandlers.set(handler, cb);
-  notificationsConnection.on("NewHumanRequest", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("NewHumanRequest", cb);
+    notificationsConnection.on("NewHumanRequest", cb);
+  }
 
   return () => offNewHumanRequest(handler);
 }
@@ -808,13 +816,12 @@ export function offNewHumanRequest(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("NewHumanRequest", stored);
-    newHumanRequestHandlers.delete(handler);
   }
+
+  newHumanRequestHandlers.delete(handler);
 }
 
 export function onMessageStatusChanged(handler: (msg: MessageDto) => void) {
-  if (!notificationsConnection) return () => {};
-
   if (messageStatusChangedHandlers.has(handler)) {
     return () => offMessageStatusChanged(handler);
   }
@@ -824,7 +831,11 @@ export function onMessageStatusChanged(handler: (msg: MessageDto) => void) {
   };
 
   messageStatusChangedHandlers.set(handler, cb);
-  notificationsConnection.on("MessageStatusChanged", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("MessageStatusChanged", cb);
+    notificationsConnection.on("MessageStatusChanged", cb);
+  }
 
   return () => offMessageStatusChanged(handler);
 }
@@ -834,13 +845,12 @@ export function offMessageStatusChanged(handler: (msg: MessageDto) => void) {
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("MessageStatusChanged", stored);
-    messageStatusChangedHandlers.delete(handler);
   }
+
+  messageStatusChangedHandlers.delete(handler);
 }
 
 export function onNewNotification(handler: (dto: NotificationDto) => void) {
-  if (!notificationsConnection) return () => {};
-
   if (notificationHandlers.has(handler)) {
     return () => offNewNotification(handler);
   }
@@ -850,7 +860,11 @@ export function onNewNotification(handler: (dto: NotificationDto) => void) {
   };
 
   notificationHandlers.set(handler, cb);
-  notificationsConnection.on("Notification", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("Notification", cb);
+    notificationsConnection.on("Notification", cb);
+  }
 
   return () => offNewNotification(handler);
 }
@@ -860,8 +874,9 @@ export function offNewNotification(handler: (dto: NotificationDto) => void) {
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("Notification", stored);
-    notificationHandlers.delete(handler);
   }
+
+  notificationHandlers.delete(handler);
 }
 
 export function onSupportRequested(
@@ -872,8 +887,6 @@ export function onSupportRequested(
     clientName: string;
   }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (supportRequestedHandlers.has(handler)) {
     return () => offSupportRequested(handler);
   }
@@ -888,7 +901,11 @@ export function onSupportRequested(
   };
 
   supportRequestedHandlers.set(handler, cb);
-  notificationsConnection.on("SupportRequested", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("SupportRequested", cb);
+    notificationsConnection.on("SupportRequested", cb);
+  }
 
   return () => offSupportRequested(handler);
 }
@@ -905,13 +922,12 @@ export function offSupportRequested(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("SupportRequested", stored);
-    supportRequestedHandlers.delete(handler);
   }
+
+  supportRequestedHandlers.delete(handler);
 }
 
 export function onConversationAssigned(handler: (dto: ConversationDto) => void) {
-  if (!notificationsConnection) return () => {};
-
   if (receiveAssignmentHandlers.has(handler)) {
     return () => offConversationAssigned(handler);
   }
@@ -934,7 +950,11 @@ export function onConversationAssigned(handler: (dto: ConversationDto) => void) 
   };
 
   receiveAssignmentHandlers.set(handler, cb);
-  notificationsConnection.on("ConversationAssigned", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("ConversationAssigned", cb);
+    notificationsConnection.on("ConversationAssigned", cb);
+  }
 
   return () => offConversationAssigned(handler);
 }
@@ -944,8 +964,9 @@ export function offConversationAssigned(handler: (dto: ConversationDto) => void)
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("ConversationAssigned", stored);
-    receiveAssignmentHandlers.delete(handler);
   }
+
+  receiveAssignmentHandlers.delete(handler);
 }
 
 export function onAssignmentResponse(
@@ -958,8 +979,6 @@ export function onAssignmentResponse(
     clientName: string;
   }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (assignmentResponseHandlers.has(handler)) {
     return () => offAssignmentResponse(handler);
   }
@@ -976,7 +995,11 @@ export function onAssignmentResponse(
   };
 
   assignmentResponseHandlers.set(handler, cb);
-  notificationsConnection.on("AssignmentResponse", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("AssignmentResponse", cb);
+    notificationsConnection.on("AssignmentResponse", cb);
+  }
 
   return () => offAssignmentResponse(handler);
 }
@@ -995,8 +1018,9 @@ export function offAssignmentResponse(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("AssignmentResponse", stored);
-    assignmentResponseHandlers.delete(handler);
   }
+
+  assignmentResponseHandlers.delete(handler);
 }
 
 export function onAssignmentForced(
@@ -1007,8 +1031,6 @@ export function onAssignmentForced(
     clientName: string;
   }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (assignmentForcedHandlers.has(handler)) {
     return () => offAssignmentForced(handler);
   }
@@ -1023,7 +1045,11 @@ export function onAssignmentForced(
   };
 
   assignmentForcedHandlers.set(handler, cb);
-  notificationsConnection.on("AssignmentForced", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("AssignmentForced", cb);
+    notificationsConnection.on("AssignmentForced", cb);
+  }
 
   return () => offAssignmentForced(handler);
 }
@@ -1040,8 +1066,9 @@ export function offAssignmentForced(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("AssignmentForced", stored);
-    assignmentForcedHandlers.delete(handler);
   }
+
+  assignmentForcedHandlers.delete(handler);
 }
 
 export function onAssignmentForcedAdmin(
@@ -1053,8 +1080,6 @@ export function onAssignmentForcedAdmin(
     clientName: string;
   }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (assignmentForcedAdminHandlers.has(handler)) {
     return () => offAssignmentForcedAdmin(handler);
   }
@@ -1070,7 +1095,11 @@ export function onAssignmentForcedAdmin(
   };
 
   assignmentForcedAdminHandlers.set(handler, cb);
-  notificationsConnection.on("AssignmentForcedAdmin", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("AssignmentForcedAdmin", cb);
+    notificationsConnection.on("AssignmentForcedAdmin", cb);
+  }
 
   return () => offAssignmentForcedAdmin(handler);
 }
@@ -1088,15 +1117,14 @@ export function offAssignmentForcedAdmin(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("AssignmentForcedAdmin", stored);
-    assignmentForcedAdminHandlers.delete(handler);
   }
+
+  assignmentForcedAdminHandlers.delete(handler);
 }
 
 export function onNewContactValidation(
   handler: (payload: { contactLog: ContactLog }) => void
 ) {
-  if (!notificationsConnection) return () => {};
-
   if (newContactValidationHandlers.has(handler)) {
     return () => offNewContactValidation(handler);
   }
@@ -1106,7 +1134,11 @@ export function onNewContactValidation(
   };
 
   newContactValidationHandlers.set(handler, cb);
-  notificationsConnection.on("newContactValidation", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("newContactValidation", cb);
+    notificationsConnection.on("newContactValidation", cb);
+  }
 
   return () => offNewContactValidation(handler);
 }
@@ -1118,18 +1150,18 @@ export function offNewContactValidation(
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("newContactValidation", stored);
-    newContactValidationHandlers.delete(handler);
   }
+
+  newContactValidationHandlers.delete(handler);
 }
 
 export function offNewContact() {
   notificationsConnection?.off("newContactValidation");
   userConeccion?.off("newContactValidation");
+  newContactValidationHandlers.clear();
 }
 
 export function onPlayNewMessageSound(handler: (senderUserId: number) => void) {
-  if (!notificationsConnection) return () => {};
-
   if (legacyPlaySoundHandlers.has(handler)) {
     return () => offPlayNewMessageSound(handler);
   }
@@ -1139,7 +1171,11 @@ export function onPlayNewMessageSound(handler: (senderUserId: number) => void) {
   };
 
   legacyPlaySoundHandlers.set(handler, cb);
-  notificationsConnection.on("PlayNewMessageSound", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("PlayNewMessageSound", cb);
+    notificationsConnection.on("PlayNewMessageSound", cb);
+  }
 
   return () => offPlayNewMessageSound(handler);
 }
@@ -1149,13 +1185,12 @@ export function offPlayNewMessageSound(handler: (senderUserId: number) => void) 
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("PlayNewMessageSound", stored);
-    legacyPlaySoundHandlers.delete(handler);
   }
+
+  legacyPlaySoundHandlers.delete(handler);
 }
 
 export function onPlaySound(handler: (dto: SoundDto) => void) {
-  if (!notificationsConnection) return () => {};
-
   if (playSoundHandlers.has(handler)) {
     return () => offPlaySound(handler);
   }
@@ -1166,7 +1201,11 @@ export function onPlaySound(handler: (dto: SoundDto) => void) {
   };
 
   playSoundHandlers.set(handler, cb);
-  notificationsConnection.on("PlaySound", cb);
+
+  if (notificationsConnection) {
+    notificationsConnection.off("PlaySound", cb);
+    notificationsConnection.on("PlaySound", cb);
+  }
 
   return () => offPlaySound(handler);
 }
@@ -1176,6 +1215,7 @@ export function offPlaySound(handler: (dto: SoundDto) => void) {
 
   if (stored && notificationsConnection) {
     notificationsConnection.off("PlaySound", stored);
-    playSoundHandlers.delete(handler);
   }
+
+  playSoundHandlers.delete(handler);
 }

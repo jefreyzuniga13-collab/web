@@ -9,7 +9,7 @@ import useLogCart from "@/Hooks/Crm/useLogCard";
 import { useIniciarPago } from "@/Hooks/Ecommerce/payment/useIniciarPago";
 import { usePayWithToken } from "@/Hooks/Ecommerce/payment/usePayWithToken";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
-import { normalizeNumber, round2, safeStr } from "@/Utils/ECommerce/formatters";
+import {round2, safeStr } from "@/Utils/ECommerce/formatters";
 import {CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY, ECOMMERCEUSERID_KEY} from "@/Utils/ECommerce/keys";
 import type {ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO} from "@/Interfaces/Ecommerce/ClientLocationInterface";
 import type {Currencyto, CheckoutStep, PaymentMethod, BillingFormState} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
@@ -29,7 +29,7 @@ import type {PowertranzPayWithTokenRequestDto} from "@/Interfaces/Ecommerce/powe
 import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi";
 import { FechaManagua } from "@/Utils/FechaManagua";
-import { calculateDistance, obtenerBrowserInfo } from "@/Utils/ECommerce/utils";
+import { calculateDistance, obtenerBrowserInfo, safeNumber } from "@/Utils/ECommerce/utils";
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css";
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
@@ -122,11 +122,11 @@ const CheckoutPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const carPCG = useAppSelector(selectCarPCG);
 
-  const cartTotal = useMemo(() => normalizeNumber(carPCG?.[0]?.total), [carPCG]);
+  const cartTotal = useMemo(() => safeNumber(carPCG?.[0]?.total), [carPCG]);
 
 const getTransporteFactura = () => {
-  const stateTransp = normalizeNumber(transpCost);
-  const logTransp = normalizeNumber(existingLog?.transCost);
+  const stateTransp = safeNumber(transpCost);
+  const logTransp = safeNumber(existingLog?.transCost);
 
   // Si el cliente seleccionó en mapa, este es el correcto.
   if (stateTransp > 0) return stateTransp;
@@ -138,9 +138,9 @@ const getTransporteFactura = () => {
 };
 
 const totalPagar = useMemo(() => {
-  const totalBase = normalizeNumber(cartTotal ?? 0);
+  const totalBase = safeNumber(cartTotal ?? 0);
   const transporte = getTransporteFactura();
-  const propina = normalizeNumber(tip);
+  const propina = safeNumber(tip);
 
   return round2(totalBase + transporte + propina);
 }, [cartTotal, transpCost, existingLog?.transCost, tip]);
@@ -725,9 +725,9 @@ const totalPagar = useMemo(() => {
   };
 
 const getTotalFactura = () => {
-  const totalBase = normalizeNumber(carPCG?.[0]?.total ?? 0);
+  const totalBase = safeNumber(carPCG?.[0]?.total ?? 0);
   const transporte = getTransporteFactura();
-  const propina = normalizeNumber(tip);
+  const propina = safeNumber(tip);
 
   return round2(totalBase + transporte + propina);
 };

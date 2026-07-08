@@ -54,6 +54,8 @@
   gap: var(--space-xl);
   width: 100%;
   background-color: transparent;
+  overflow-y: scroll;
+  max-height: 100vh;
 }
 
 .checkout-section {

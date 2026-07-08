@@ -9,12 +9,6 @@ export  function safeStr(v: unknown): string {
   return String(v ?? "").trim();
 }
 
-export const normalizeNumber = (v: unknown, fallback = 0) => {
-  const n = Number(v)
-  if (!Number.isFinite(n)) return fallback
-  return n
-}
-
 export function toNumberNoLeadingZeros(raw: string): number {
   const s = String(raw ?? "").trim();
   if (!s) return 0;
@@ -84,6 +78,8 @@ export   const formatCurrencyNIO = (value?: number | null) => {
   return result
 }
 
+
+// Formatear fechas
 export const formatoNicaragua = (fecha: Date) => {
     const dia = fecha.getDate();
     const mes = fecha.getMonth() + 1;
@@ -95,7 +91,6 @@ export const formatoNicaragua = (fecha: Date) => {
     return `${año}/${mesFormateado}/${diaFormateado}`;
 };
 
-
 import type { PaymentMethod } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import { parseISO } from "date-fns";
 import { CHANNEL, type ChannelType } from '@/Interfaces/Wh/MetaChannelId';
@@ -106,6 +101,9 @@ import { es } from 'date-fns/locale/es';
 export const formatTimeNI = (iso?: string) => {
   if (!iso) return "";
   const d = parseISO(iso);
+  // Reutilizable logica de pago unico e multipago, 
+  //deberia de reutilizarse pero lo hace todo el checkout page algo malo
+
   return new Intl.DateTimeFormat("es-NI", {
     timeZone: "America/Managua",
     hour: "2-digit",
@@ -123,7 +121,6 @@ export const normalizeDate = (value?: string | Date | null) => {
 
   return String(value).slice(0, 10);
 };
-
 
 export const getManaguaToday = () => {
   const zone = "America/Managua";
@@ -146,6 +143,24 @@ export const formatDateTimeNI = (iso?: string) => {
     hour12: false,
   }).format(d);
 };
+
+export function ValidateNegativeVakue (value: number){
+  return value > 0 ? 10 : 20
+}
+
+export function  cleanApiText(value: string){
+  return (typeof value).trim()
+}
+
+export function containtFormaPago(string: string){
+  const keyWord = ["3D0", "3D1", "3D4", "3D5", "3D6"];
+
+
+  const contienePalabras = keyWord.some(palabra => palabra.includes(string));
+
+
+  return contienePalabras;
+}
 
 export function getParam(value: string | null): string {
   return typeof value === "string" ? value.trim() : "";
@@ -225,10 +240,11 @@ export const clampQty = (n: number) => {
   return Math.floor(n)
 }
 
+
+// Evita errores en codProductos
 export const cleanText = (value: string | number | null | undefined) => {
   return String(value ?? "").trim()
 }
-
 
 export const getErrorMessage = (error: unknown) => {
   if (typeof error === "string") return error
@@ -255,7 +271,6 @@ export const getErrorMessage = (error: unknown) => {
     "No se pudo agregar el producto."
   )
 }
-
 
 export const formatDateInput = (value?: string | Date | null) => {
   if (!value) return "";
@@ -294,6 +309,7 @@ const MANAGUA_OFFSET = "-06:00"
 const hasTimezoneInfo = (value: string) => {
   return /([zZ]|[+-]\d{2}:?\d{2})$/.test(value)
 }
+
 
 export const parseApiDateNI = (value?: string | Date | null): Date | null => {
   if (!value) return null

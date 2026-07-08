@@ -15,6 +15,8 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
   return turf.distance(from, to, { units: "kilometers" });
 }
 
+
+// Metodo brindado por PW
 export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   return {
     Language: window?.navigator?.language ?? "es-NI",
@@ -36,9 +38,7 @@ export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
 }
 
 
-
-//CARRITO
-
+//Validar valores numericos
 export const safeNumber = (value: unknown, fallback = 0): number => {
   const n = Number(value)
   return Number.isFinite(n) ? n : fallback
@@ -67,6 +67,7 @@ export const getLogValue = <T,>(
   return fallback
 }
 
+// Segunda tab, de ubicación. Datos a persistir y recupera al volver a acceder
 export const normalizeDraft = (raw: string | null): DraftState | null => {
   if (!raw) return null
 
@@ -89,6 +90,8 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
   }
 }
 
+
+// Conocer la cantidad de productos en el carrito PCG
 export const countMainProducts = (cartList: CarDto[]): number => {
   return (
     cartList[0]?.listDetalle?.reduce((sum, detail) => {
@@ -100,6 +103,7 @@ export const countMainProducts = (cartList: CarDto[]): number => {
     }, 0) ?? 0
   )
 }
+
 
 export const buildCalculationRequest = (
   contactId: number,
@@ -129,12 +133,7 @@ export const tooltipSlotProps = {
 }
 
 
-
-
-// ======================================================
-// Mapper LogCart
-// ======================================================
-
+// Mapper de la entidad del carrito LogCart
 export const buildLogUpdateRequest = ({
   log,
   contactId,

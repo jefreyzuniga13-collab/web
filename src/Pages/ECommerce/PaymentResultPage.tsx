@@ -21,6 +21,8 @@ export default function PaymentResultPage() {
   const dispatch = useDispatch();
   const executedRef = useRef(false);
 
+
+  // Recuperar los datos devuelto por la api, mediante flujo 3ds con pasarela n
   const approved = getParam(params.get("approved"));
   const orderIdRaw = getParam(params.get("orderId"));
   const transactionIdentifier = getParam(params.get("transactionIdentifier"));

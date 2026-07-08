@@ -1,15 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-empty */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import { Tooltip } from "@mui/material"
-import Lottie from "lottie-react"
-
 import Input from "@/Components/Common/Input"
 import Button from "@/Components/Common/Button"
-
 import type { RootState, AppDispatch } from "@/Context"
 import {
   selectCarPCG,
@@ -68,10 +66,14 @@ import { MdOutlineCancelScheduleSend } from "react-icons/md"
 import { IoSend } from "react-icons/io5"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import "@/Styles/Ecommerce/cardPCGTab.css"
-import { buildCalculationRequest, buildLogUpdateRequest, countMainProducts, normalizeDraft, safeNumber, safePositiveNumber, toLogCartFormValues, tooltipSlotProps } from "@/Utils/ECommerce/utils"
+import { buildCalculationRequest, buildLogUpdateRequest, countMainProducts, normalizeDraft, 
+  safeNumber, safePositiveNumber, toLogCartFormValues, tooltipSlotProps } from "@/Utils/ECommerce/utils"
 import { STEP_STATUS } from "@/Constants/step"
 import { GENERAL_STATUS } from "@/Constants/status"
 import { LuMapPin, LuShoppingCart } from "react-icons/lu"
+import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo"
+import type { CheckoutStep } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import Lottie from "lottie-react"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -80,7 +82,6 @@ interface Props {
   conversationId: number
   contactId: number
 }
-
 
 const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [search, setSearch] = useState("")
@@ -1450,11 +1451,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         )}
 
 
-          {activeStep === STEP_STATUS.tres && (
+        {/* # Componente y logica de formar de pago y finalizar preventas desde la perspectiva del agente*/}
+          {/* {activeStep === STEP_STATUS.tres && (
             <div className="carPCPanel-stepContent">
-                Formas de pago
+                <div className="carPCPanel-stepContent__animation">
+                <PaymentMethodComponent/>
+                </div>
             </div>
-          )}
+          )} */}
 
 
         <div className="carPCPanel-bottom">
@@ -1462,7 +1466,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             <button
               type="button"
               className={`carPCPanel-step ${
-                activeStep === STEP_STATUS.uno ? "carPCPanel-step--active" : ""
+                activeStep === STEP_STATUS.uno ? "carPCPanel-step--active" : "carPCPanel-step--inactive"
               }`}
               onClick={() => setActiveStep(STEP_STATUS.uno)}
             >
@@ -1480,6 +1484,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
               ademas de aplicar solid etc, el tercer paso agregar esa marte, nada de mapa, ni similar
               soo selecciona la divisa, el tipo de dibisa, y le puede dar pagar.
               */}
+
             <button
               type="button"
               className={`carPCPanel-step ${
@@ -1495,7 +1500,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
             <div className="carPCPanel-stepLine" />
 
-             <button
+             {/* <button
               type="button"
               className={`carPCPanel-step ${
                 activeStep === STEP_STATUS.tres
@@ -1505,7 +1510,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
               onClick={() => setActiveStep(STEP_STATUS.tres)}
             >
               <MdOutlinePayment  fontSize={16} />
-            </button>
+            </button> */}
           </div>
 
           <div className="productTab-content-footer carPCPanel-totals">

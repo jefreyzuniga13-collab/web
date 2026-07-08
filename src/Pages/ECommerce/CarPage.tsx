@@ -272,8 +272,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
             </table>
           </section>
 
-
-
           {/* LLega a mostrar el 0.00, todo cuando no deberia por eso se estaba revisando el logcart
           desde el carpcgtab
           */}
