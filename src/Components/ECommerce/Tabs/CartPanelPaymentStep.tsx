@@ -217,7 +217,7 @@ export default function CartPanelPaymentStep({
         manualCardData={manualCardData}
         setManualCardData={setManualCardData}
         backStep="location"
-        payButtonText="Finalizar"
+        payButtonText="Finalizar Pedido"
         showMethodSelector
       />
     </div>

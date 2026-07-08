@@ -744,7 +744,10 @@ export const ProductTab = ({ conversationId }: Props) => {
                     opacity: 0.7,
                   }}
                 >
-                  No hay más productos
+                   <div className="productTab-emptyState">
+                  No hay productos disponibles.
+                  <Lottie loop={false} autoplay animationData={EmptyPlayer} />
+                </div>
                 </div>
               )}
             </>

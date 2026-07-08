@@ -5,6 +5,7 @@
   color: var(--text-primary);
   overflow-y: auto;
   padding-top: 5rem;
+  max-height: 100vh;
   overflow-y: scroll;
 }
 

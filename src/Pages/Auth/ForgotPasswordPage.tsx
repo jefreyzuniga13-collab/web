@@ -9,6 +9,8 @@ import { MdOutlineSecurity } from "react-icons/md";
 import { FaKeycdn } from "react-icons/fa";
 import { FaFingerprint } from "react-icons/fa";
 import "@/Styles/Auth/ForgotPasswordPresentation.css";
+import { GrSend } from "react-icons/gr";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function ForgotPasswordPresentation() {
   const { formik, loading, canSubmit, formError } = useForgotPasswordForm();
@@ -95,8 +97,15 @@ export default function ForgotPasswordPresentation() {
                   className="forgot-password__submit-button"
                 >
                   {loading
-                    ?  "Enviando..."
-                      :"Enviar instrucciones"}
+                    ?  <>
+                      Enviando...
+                      <AiOutlineLoading3Quarters  />
+                    </>
+                      :
+                      <>
+                      Enviar instrucciones
+                      <GrSend  />
+                      </>}
                 </Button>
 
                 <Link to="/login" className="forgot-password__back-link">

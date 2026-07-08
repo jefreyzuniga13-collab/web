@@ -95,18 +95,21 @@
 
 .carPCPanel-content {
   width: 100%;
-  flex: 1;
+  /* flex: 1; */
   min-height: 0;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  overflow-y: auto;
+  gap: var(--space-3xl);
 }
 
 .carPCPanel-stepContent {
   flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  /* min-height: 0;
+  overflow-y: auto; */
   /* padding: var(--space-sm); */
 }
 
@@ -132,7 +135,7 @@
 .carPCPanel-content__list {
   display: grid;
   grid-template-columns: 52px 1fr 28px;
-  gap: var(--space-sm);
+  gap: var(--space-lg);
   align-items: center;
   margin-top: var(--space-sm);
   padding-bottom: var(--space-sm);
@@ -580,7 +583,7 @@
 }
 
 .addressMenu__content {
-  max-height: 320px;
+  /* max-height: 320px; */
   overflow-y: auto;
   padding: var(--space-sm);
 }
@@ -686,4 +689,18 @@
   .carPCPanel-stepLine {
     width: 44px;
   }
+}
+
+
+
+.checkout-actionBtn,
+.checkout-paybtn__back,
+.checkout-paybtn{
+  margin-bottom: 0;
+  font-size: var(--font-size-base);
+}
+
+.showBackButton{
+  background-color: var(--color-success) !important;
+  max-width: 100%;
 }

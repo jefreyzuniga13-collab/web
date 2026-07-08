@@ -239,6 +239,10 @@ background:
   cursor: pointer;
   box-shadow: 0 1rem 2.4rem rgba(10, 100, 218, 0.28);
   transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
 }
 
 .login__submit-button:hover {

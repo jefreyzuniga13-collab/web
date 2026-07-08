@@ -16,6 +16,8 @@ import { MdSupportAgent } from "react-icons/md";
 import { BiSupport } from "react-icons/bi";
 import { MdPayment } from "react-icons/md";
 import "@/Styles/Auth/LoginPresentation.css";
+import { FiLogIn } from "react-icons/fi";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function LoginPresentation() {
 
@@ -130,8 +132,14 @@ export default function LoginPresentation() {
                   className="login__submit-button"
                 >
                   {loading
-                    ? "Validando..."
-                    : "Ingresar al sistema"}
+                    ? <>
+                    Validando...
+                    <AiOutlineLoading3Quarters />
+                    </>
+                    : <>
+                      Ingresar al sistema
+                      <FiLogIn  />
+                      </>}
                 </Button>
               </form>
 

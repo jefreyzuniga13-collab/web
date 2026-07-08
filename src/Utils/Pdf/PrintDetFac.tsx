@@ -23,46 +23,53 @@ const fmtDate = (isoOrText: string) => {
 
 const safeText = (v?: string) => (v ?? "").toString().trim();
 
-export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, existingLog: LogCartResponseDto | null): Blob => {
+export const generateOrdeFacPDFFile = (
+  orderFac: PrintOrdenFactInterfaceRaw,
+  existingLog: LogCartResponseDto | null
+): Blob => {
   const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDoc;
 
-  const marginX = 14;
-  const marginY = 14;
+  const marginX = 20;
+  const marginY = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Header
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text(`Detalle Pedido ${safeText(orderFac.DatosGenerales?.NoFactura)}`, marginX, marginY);
-
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-
   const yInfo = marginY + 7;
-  doc.text(`A nombre de: ${safeText(orderFac.DatosGenerales?.Nombrede)}`, marginX, yInfo);
 
-  // Espera un date pero es un string, 
-  // doc.text(`Fecha: ${orderFac.DatosGenerales?.FechaFactura}`, marginX, yInfo + 6);
-  doc.text(`Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`, marginX, yInfo + 6);
-  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text(
+    `Detalle Pedido ${safeText(orderFac.DatosGenerales?.NoFactura)}`,
+    marginX,
+    marginY + 5
+  );
+
   // Separador
   doc.setDrawColor(180);
   doc.line(marginX, yInfo + 10, pageWidth - marginX, yInfo + 10);
 
-  // Dirección
-  const yDir = yInfo + 7;
-  // doc.setFont("helvetica", "bold");
-  // doc.text("Dirección:", marginX, yDir);
-  // doc.setFont("helvetica", "normal");
-  // doc.text(`Nombre: ${safeText(orderFac.DatosDireccion?.Nombre)}`, marginX, yDir + 6);
-  // doc.text(`Cantidad: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 12);
-  doc.text(`Sucursal: ${safeText(existingLog?.branchName ?? "")}`, marginX, yDir + 10);
-  doc.text(`Dirección: ${safeText(orderFac.DatosDireccion?.Descripcion)}`, marginX, yDir + 15);
-  // doc.text(`Referencia: ${safeText(orderFac.DatosDireccion?.Referencia)}`, marginX, yDir + 18);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Cliente: ${safeText(orderFac.DatosGenerales?.Nombrede)}`, marginX, marginY + 15);
+  doc.text(`Sucursal: ${safeText(existingLog?.branchName ?? "")}`, marginX, marginY + 22);
+  doc.text(`Vendedor: ${safeText(existingLog?.userName ?? existingLog?.createdByName)}`, marginX, marginY + 29);
+  doc.text(
+    `Fecha: ${fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "")}`,
+    marginX,
+    marginY + 36
+  );
 
-  // Tabla del carrito
+  let infoY = marginY + 43;
+
+  const direccion = safeText(orderFac.DatosDireccion?.Descripcion);
+  if (direccion.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Dirección:", marginX, infoY);
+    doc.setFont("helvetica", "normal");
+    doc.text(direccion, marginX + 22, infoY);
+    infoY += 7;
+  }
+
   const carritoRows: Row[] = [];
-
   for (const item of orderFac.Carrito ?? []) {
     carritoRows.push([
       safeText(item.Descripcion),
@@ -72,7 +79,6 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, exi
       money(item.TotalMenu ?? 0),
     ]);
 
-    // Descomentar al usar con asana
     for (const op of item.Opciones ?? []) {
       carritoRows.push([
         `   ${safeText(op.Descripcion)}`,
@@ -84,51 +90,115 @@ export const generateOrdeFacPDFFile = (orderFac: PrintOrdenFactInterfaceRaw, exi
     }
   }
 
-  const startCarritoY = yDir + 24;
-
   autoTable(doc, {
-    startY: startCarritoY,
-    theme: "grid",
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 2 },
-    head: [["Descripción", 'Cantidad', "UM", "Precio", "Total"]],
+    startY: infoY + 3,
+    head: [["Descripción", "Cant.", "UM", "Precio", "Total"]],
     body: carritoRows,
-    headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+    margin: { left: marginX, right: marginX },
+    styles: { font: "helvetica", fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [49, 86, 168], textColor: 255, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
     columnStyles: {
-      0: { halign: "left", cellWidth: 85 },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 25 },
-      4: { cellWidth: 25 },
-      5: { halign: "left", cellWidth: 25 },
+      0: { halign: "left", cellWidth: 80 },
+      1: { halign: "center", cellWidth: 15 },
+      2: { halign: "center", cellWidth: 20 },
+      3: { halign: "right", cellWidth: 25 },
+      4: { halign: "right", cellWidth: 30 },
     },
   });
 
-  // Totales
-  const yTotals = (doc.lastAutoTable?.finalY ?? startCarritoY) + 6;
-  const p = orderFac.DetallePago;
+  let y = doc.lastAutoTable?.finalY ?? infoY + 10;
+  y += 10;
 
-  autoTable(doc, {
-    startY: yTotals,
-    theme: "plain",
-    styles: { font: "helvetica", fontSize: 10, cellPadding: 1.5 },
-    body: [
-      ["SubTotal:", money(p?.SubTotal ?? 0)],
-      p.Descuento > 0 ? ["Descuento:", money(p?.Descuento ?? 0)] : [],
-      ["IVA:", money(p?.Iva ?? 0)],
-      ["Transporte:", money(p?.Transporte ?? 0)],
-      // ["Propina:", money(p?.Propina ?? 0)],
-      //Mostrar solo si la propina es mayor a 0, caso contrario no.
-      p?.Propina > 0 ? ["Método de pago:", safeText(p?.MetodoPago)] : [],
-      [
-        { content: "TOTAL A PAGAR:", styles: { fontStyle: "bold" } },
-        { content: money(p?.Valor_Pagar ?? 0), styles: { fontStyle: "bold" } },
-      ],
-    ],
-    columnStyles: {
-      0: { cellWidth: 40 },
-      1: { cellWidth: 45, halign: "right" },
-    },
-    margin: { left: pageWidth - marginX - 90 },
-  });
+  const pago = orderFac.DetallePago;
+  const p = Array.isArray(pago) ? pago[0] : pago;
+
+  const subtotal = p?.SubTotal ?? 0;
+  const descuento = p?.Descuento ?? 0;
+  const propina = p?.Propina ?? 0;
+  const iva = p?.Iva ?? p?.iva ?? 0;
+  const transporte = p?.Transporte ?? 0;
+  const totalPagar = p?.Valor_Pagar ?? 0;
+
+  let rowCount = 3;
+  if (descuento > 0) rowCount++;
+  if (propina > 0) rowCount++;
+  if (transporte > 0) rowCount++;
+
+  const boxWidth = 90;
+  const boxHeight = rowCount * 6 + 10;
+  const boxX = pageWidth - marginX - boxWidth;
+
+  doc.setDrawColor(209, 213, 219);
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(boxX, y - 6, boxWidth, boxHeight, 3, 3, "FD");
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("Resumen de montos", boxX + 4, y - 1);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+
+  const lineGap = 6;
+  const labelX = boxX + 4;
+  const valueX = boxX + boxWidth - 4;
+  let lineY = y + 6;
+
+  doc.text("SubTotal:", labelX, lineY);
+  doc.text(money(subtotal), valueX, lineY, { align: "right" });
+
+  if (descuento > 0) {
+    lineY += lineGap;
+    doc.text("Descuento:", labelX, lineY);
+    doc.text(money(descuento), valueX, lineY, { align: "right" });
+  }
+
+  if (propina > 0) {
+    lineY += lineGap;
+    doc.text("Propina:", labelX, lineY);
+    doc.text(money(propina), valueX, lineY, { align: "right" });
+  }
+
+  lineY += lineGap;
+  doc.text("IVA:", labelX, lineY);
+  doc.text(money(iva), valueX, lineY, { align: "right" });
+
+  if (transporte > 0) {
+    lineY += lineGap;
+    doc.text("Transporte:", labelX, lineY);
+    doc.text(money(transporte), valueX, lineY, { align: "right" });
+  }
+
+  doc.setFont("helvetica", "bold");
+  lineY += lineGap;
+  doc.text("Total:", labelX, lineY);
+  doc.text(money(totalPagar), valueX, lineY, { align: "right" });
+
+  const formasPago = Array.isArray(pago) ? pago : pago ? [pago] : [];
+
+  if (formasPago.length > 0) {
+    let pagoY = Math.max(y + boxHeight + 5, lineY + 12);
+
+    doc.setDrawColor(209, 213, 219);
+    doc.line(marginX, pagoY, pageWidth - marginX, pagoY);
+    pagoY += 8;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Formas de Pago", marginX, pagoY);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    pagoY += 6;
+
+    for (const e of formasPago) {
+      const metodo = safeText(e.MetodoPago);
+      const monto = money(e.Valor_Pagar ?? 0);
+      doc.text(`• ${metodo}: ${monto}`, marginX, pagoY);
+      pagoY += 5;
+    }
+  }
 
   return doc.output("blob");
 };

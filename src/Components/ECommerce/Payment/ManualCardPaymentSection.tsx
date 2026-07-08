@@ -96,16 +96,23 @@ export default function ManualCardPaymentSection({
           Tarjeta *
         </label>
 
-        <input
+        <select
           id="tarjeta"
-          type="text"
           className="checkout-input"
-          value={value.tarjeta}
+
+          value={value.tarjeta} 
           disabled={disabled}
           onChange={(event) => updateField("tarjeta", event.target.value)}
-          placeholder="Ej. VISA, Mastercard, BAC, Lafise"
           autoComplete="off"
-        />
+        >
+          <option value="" disabled>Selecciona una tarjeta</option> 
+          
+          <option value="Visa">Visa</option>
+          <option value="Mastercard">Mastercard</option>
+          <option value="American Express">American Express</option>
+          <option value="Discover">Discover</option>
+          <option value="OTRA">Otra</option>
+        </select>
       </div>
 
       <div className="checkout-field checkout-field--full">

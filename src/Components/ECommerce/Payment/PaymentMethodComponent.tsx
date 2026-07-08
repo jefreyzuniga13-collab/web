@@ -36,6 +36,7 @@ import { safeNumber } from "@/Utils/ECommerce/utils"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 
 import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css"
+import { TbRosetteDiscountCheck } from "react-icons/tb"
 
 interface Props {
   /**
@@ -207,6 +208,9 @@ interface Props {
    * Indica si se muestra el selector de métodos.
    */
   showMethodSelector?: boolean
+
+
+  showBackButton?: boolean
 }
 
 export default function PaymentMethodComponent({
@@ -237,7 +241,8 @@ export default function PaymentMethodComponent({
   setManualCardData,
   backStep = "currency",
   payButtonText = "Pagar ahora",
-  showMethodSelector = true
+  showMethodSelector = true,
+  showBackButton = false
 }: Props) {
   /**
    * Estos métodos necesitan seleccionar banco, tarjeta o tipo de pago.
@@ -460,25 +465,31 @@ export default function PaymentMethodComponent({
       />
 
       <div className="checkout-actionBtn">
-        <button
-          type="button"
-          className="checkout-paybtn__back"
-          onClick={() => setStep(backStep)}
-          disabled={payNowLock}
-        >
+       {
+        showBackButton && (
+           <button
+              type="button"
+              className="checkout-paybtn__back"
+              onClick={() => setStep(backStep)}
+              disabled={payNowLock}
+            >
           Regresar
         </button>
+        )
+       }
 
         <button
           type="button"
-          className="checkout-paybtn"
+          className={`checkout-paybtn ${!showBackButton ? "showBackButton" : ""}`}
           onClick={handlePayNow}
           disabled={!canPressPay}
         >
           {payNowLock ? (
             <AiOutlineLoading3Quarters />
           ) : (
-            payButtonText
+            <>
+               {payButtonText} <TbRosetteDiscountCheck fontSize={24}/>
+            </>
           )}
         </button>
       </div>

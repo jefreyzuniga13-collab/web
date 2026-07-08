@@ -5,6 +5,8 @@ import Button from "@/Components/Common/Button";
 import useResetPasswordForm from "@/Hooks/Auth/useResetPasswordForm";
 import logo from "@/assets/img/logoinicio2.png";
 import "@/Styles/Auth/ResetPasswordPresentation.css";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { VscSaveAll } from "react-icons/vsc";
 
 export default function ResetPasswordPresentation() {
 
@@ -129,8 +131,14 @@ export default function ResetPasswordPresentation() {
                   className="reset-password__submit-button"
                 >
                   {loading
-                    ? 'Guardando...'
-                    :"Guardar contraseña"}
+                    ? <>
+                      Guardando...
+                      <AiOutlineLoading3Quarters />
+                    </>
+                    :<>
+                      Guardar contraseña
+                      <VscSaveAll />
+                    </>}
                 </Button>
 
                 <Link to="/login" className="reset-password__back-link">

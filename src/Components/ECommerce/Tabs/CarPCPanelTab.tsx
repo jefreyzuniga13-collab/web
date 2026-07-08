@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-empty */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
-
 import type { RootState, AppDispatch } from "@/Context"
-
 import {
   selectCarPCG,
   selectCartError,
@@ -16,14 +13,11 @@ import {
   updateCarAsync,
   setActiveContactId
 } from "@/Context/Slices/Ecommerce/cartSlice"
-
 import {
   selectCartBadgeByContactId,
   setContactCartBadge
 } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-
 import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
-
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useContact from "@/Hooks/Auth/useContact"
@@ -31,65 +25,51 @@ import { useUserEcommerce } from "@/Hooks/Ecommerce/tabs/useUserEcommerce"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import { useAgentCartPayment } from "@/Hooks/Ecommerce/tabs/useAgentCartPayment"
-
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
-
 import CartPanelProductStep from "@/Components/ECommerce/Tabs/CartPanelProductStep"
 import CartPanelDeliveryStep from "@/Components/ECommerce/Tabs/CartPanelDeliveryStep"
 import CartPanelPaymentStep from "@/Components/ECommerce/Tabs/CartPanelPaymentStep"
 import CartPanelStepNavigation from "@/Components/ECommerce/Tabs/CartPanelStepNavigation"
 import CartPanelTotals from "@/Components/ECommerce/Tabs/CartPanelTotals"
 import CartPanelActions from "@/Components/ECommerce/Tabs/CartPanelActions"
-
 import type {
   CarDto,
   InvoiceTotalsDto
 } from "@/Interfaces/Crm/CartPCGInterface"
-
 import type {
   AddressPayload,
   CartDetailView,
   DraftState,
   LogCartResponseDto
 } from "@/Interfaces/Crm/LogCartInterface"
-
 import type {
   ContactLogInterface
 } from "@/Interfaces/Auth/ContactInterface"
-
 import type {
   ClientLocationDto
 } from "@/Interfaces/Ecommerce/ClientLocationInterface"
-
 import type {
   UserEcommerceDto
 } from "@/Interfaces/Ecommerce/UserEcommerceInterface"
-
 import type {
   SendLinkRequestDto
 } from "@/Interfaces/Ecommerce/SendLinkInterface"
-
 import type {
   SendInteractiveMessajeRequestDto
 } from "@/Interfaces/Chat/ChatInterfaces"
-
 import {
   CART_AGENT_STEP,
   type CartAgentStep
 } from "@/Interfaces/Ecommerce/CartAgentCheckoutInterface"
-
 import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import { UserSessionService } from "@/Services/auth/UserSessionService"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
-
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
-
 import {
   generateRandomString,
   formatCurrencyNIO
 } from "@/Utils/ECommerce/formatters"
-
 import {
   buildCalculationRequest,
   buildLogUpdateRequest,
@@ -99,13 +79,10 @@ import {
   safePositiveNumber,
   toLogCartFormValues
 } from "@/Utils/ECommerce/utils"
-
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { GENERAL_STATUS } from "@/Constants/status"
-
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import Lottie from "lottie-react"
-
 import "@/Styles/Ecommerce/cardPCGTab.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -1295,7 +1272,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     sendChatLoading ||
     cancelLoading ||
     totalsLoading ||
-    payLoading
+    payLoading;
 
   if (loadingCart || loading) {
     return (

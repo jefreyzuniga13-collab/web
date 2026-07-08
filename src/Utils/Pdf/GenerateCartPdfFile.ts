@@ -58,7 +58,7 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
   doc.text(`Sucursal : ${branchName}`, marginX, marginY + 15)
-  doc.text(`A nombre de: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 22)
+  doc.text(`Cliente: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 22)
   doc.setFont("helvetica", "normal")
   doc.text(`Fecha: ${time}`, marginX, marginY + 29)
 

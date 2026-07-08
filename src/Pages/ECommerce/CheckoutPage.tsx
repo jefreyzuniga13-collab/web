@@ -4,20 +4,12 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import { toast } from "react-toastify"
-
 import type { AppDispatch, RootState } from "@/Context"
-
-import {
-  getProductFromCarAsync,
-  selectCarPCG
-} from "@/Context/Slices/Ecommerce/cartSlice"
-
+import {getProductFromCarAsync,selectCarPCG} from "@/Context/Slices/Ecommerce/cartSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
-
 import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection"
 import LocationSection from "@/Components/ECommerce/Payment/LocationSection"
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
-
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { useClientLocation } from "@/Hooks/Ecommerce/payment/useClientLocation"
@@ -25,71 +17,38 @@ import { useIniciarPago } from "@/Hooks/Ecommerce/payment/useIniciarPago"
 import { usePayWithToken } from "@/Hooks/Ecommerce/payment/usePayWithToken"
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi"
 import { useCheckoutPaymentState } from "@/Hooks/Ecommerce/payment/useCheckoutPaymentState"
-
-import {
-  validateBillingForm,
-  validateLocation
-} from "@/Utils/validation"
-
+import {validateBillingForm,validateLocation} from "@/Utils/validation"
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage"
-
-import {
-  calculateDistance,
-  obtenerBrowserInfo,
-  safeNumber,
-  safePositiveNumber
-} from "@/Utils/ECommerce/utils"
-
+import {calculateDistance,obtenerBrowserInfo,safeNumber,safePositiveNumber} from "@/Utils/ECommerce/utils"
 import { safeStr } from "@/Utils/ECommerce/formatters"
-
-import {
-  buildPagoGenerico
-} from "@/Utils/ECommerce/buildPagoGenerico"
-
-import {
-  buildFacturaTempo
-} from "@/Utils/ECommerce/buildFacturaTempo"
-
-import {
-  procesarVentaCheckout
-} from "@/Utils/ECommerce/procesarVentaCheckout"
-
+import {buildPagoGenerico} from "@/Utils/ECommerce/buildPagoGenerico"
+import {buildFacturaTempo} from "@/Utils/ECommerce/buildFacturaTempo"
+import { procesarVentaCheckout} from "@/Utils/ECommerce/procesarVentaCheckout"
 import {
   CHECKOUT_INVOICE_KEY,
   CHECKOUT_PAYLOAD_KEY,
   ECOMMERCEUSERID_KEY
 } from "@/Utils/ECommerce/keys"
-
 import type {
   BillingFormState,
   CheckoutStep,
   Currencyto
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
-import type {
-  ClientLocationDto,
-  Coords,
-  LocationMode
-} from "@/Interfaces/Ecommerce/ClientLocationInterface"
-
+import type {ClientLocationDto,Coords,LocationMode} from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type {
   ObtenerDivisaPagosTipoReq,
   ObtenerDivisaPagosTipoRes
 } from "@/Interfaces/Ecommerce/FacturaTempo"
-
 import type {
   FaloteRequestDto
 } from "@/Interfaces/Crm/CartPCGInterface"
-
 import type {
   LogCartResponseDto,
   Payload
 } from "@/Interfaces/Crm/LogCartInterface"
-
 import type {
   PowertranzPayWithTokenRequestDto
 } from "@/Interfaces/Ecommerce/powertranzInterface"
-
 import type {
   CheckoutPaymentMethod
 } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
