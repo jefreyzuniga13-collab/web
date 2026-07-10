@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
+
 import type { RootState, AppDispatch } from "@/Context"
+
 import {
   selectCarPCG,
   selectCartError,
@@ -13,11 +15,17 @@ import {
   updateCarAsync,
   setActiveContactId
 } from "@/Context/Slices/Ecommerce/cartSlice"
+
 import {
   selectCartBadgeByContactId,
   setContactCartBadge
 } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
+
+import {
+  selectCompanySistema,
+  selectPermiteMultipago
+} from "@/Context/Slices/Auth/authSlice"
+
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useContact from "@/Hooks/Auth/useContact"
@@ -26,50 +34,67 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import { useAgentCartPayment } from "@/Hooks/Ecommerce/tabs/useAgentCartPayment"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
+
 import CartPanelProductStep from "@/Components/ECommerce/Tabs/CartPanelProductStep"
 import CartPanelDeliveryStep from "@/Components/ECommerce/Tabs/CartPanelDeliveryStep"
 import CartPanelPaymentStep from "@/Components/ECommerce/Tabs/CartPanelPaymentStep"
 import CartPanelStepNavigation from "@/Components/ECommerce/Tabs/CartPanelStepNavigation"
 import CartPanelTotals from "@/Components/ECommerce/Tabs/CartPanelTotals"
 import CartPanelActions from "@/Components/ECommerce/Tabs/CartPanelActions"
+
 import type {
   CarDto,
   InvoiceTotalsDto
 } from "@/Interfaces/Crm/CartPCGInterface"
+
 import type {
   AddressPayload,
   CartDetailView,
   DraftState,
   LogCartResponseDto
 } from "@/Interfaces/Crm/LogCartInterface"
+
 import type {
   ContactLogInterface
 } from "@/Interfaces/Auth/ContactInterface"
+
 import type {
   ClientLocationDto
 } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+
 import type {
   UserEcommerceDto
 } from "@/Interfaces/Ecommerce/UserEcommerceInterface"
+
 import type {
   SendLinkRequestDto
 } from "@/Interfaces/Ecommerce/SendLinkInterface"
+
 import type {
   SendInteractiveMessajeRequestDto
 } from "@/Interfaces/Chat/ChatInterfaces"
+
+import type {
+  PagoSeleccionado
+} from "@/Interfaces/Ecommerce/MultiPagoTypes"
+
 import {
   CART_AGENT_STEP,
   type CartAgentStep
 } from "@/Interfaces/Ecommerce/CartAgentCheckoutInterface"
+
 import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import { UserSessionService } from "@/Services/auth/UserSessionService"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
+
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
+
 import {
   generateRandomString,
   formatCurrencyNIO
 } from "@/Utils/ECommerce/formatters"
+
 import {
   buildCalculationRequest,
   buildLogUpdateRequest,
@@ -79,10 +104,13 @@ import {
   safePositiveNumber,
   toLogCartFormValues
 } from "@/Utils/ECommerce/utils"
+
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { GENERAL_STATUS } from "@/Constants/status"
+
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import Lottie from "lottie-react"
+
 import "@/Styles/Ecommerce/cardPCGTab.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -101,6 +129,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const error = useAppSelector(selectCartError)
   const badgeMap = useAppSelector(selectCartBadgeByContactId)
   const companySistema = useAppSelector(selectCompanySistema)
+  const permiteMultiPago = useAppSelector(selectPermiteMultipago)
 
   const contactHasCart = badgeMap?.[contactId] ?? {
     hasCart: false,
@@ -134,9 +163,15 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [selectedAddressId, setSelectedAddressId] =
     useState<number | null>(null)
 
+  const [invoiceName, setInvoiceName] = useState("")
   const [observation, setObservation] = useState("")
   const [currentLog, setCurrentLog] =
     useState<LogCartResponseDto | null>(null)
+
+  const [multiPagoActivo, setMultiPagoActivoState] = useState(false)
+
+  const [pagosMultiples, setPagosMultiples] =
+    useState<PagoSeleccionado[]>([])
 
   const totalsReqRef = useRef(0)
   const reqRef = useRef(0)
@@ -173,9 +208,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const { UpdateEcommerceUserAsync, getById } = useContact()
   const { createAsync } = useUserEcommerce()
 
-  const { InsertaFacturaAsync } = useInvoiceOrder()
+  const {
+    currency,
+    GetCurrencyAsync,
+    InsertaFacturaAsync
+  } = useInvoiceOrder()
 
-  const { setFile, setText, handleSend, sending } = useChatWindow({
+  const { handleSend, sending } = useChatWindow({
     conversationId
   })
 
@@ -239,6 +278,20 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } catch {}
   }, [draftKey])
 
+  const setMultiPagoActivo = useCallback(
+    (value: boolean) => {
+      setMultiPagoActivoState(value)
+
+      if (value) {
+        paymentResetRef.current?.()
+        return
+      }
+
+      setPagosMultiples([])
+    },
+    []
+  )
+
   /**
    * Limpia el panel completo cuando se cancela, se vacía o se procesa venta.
    */
@@ -265,8 +318,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setAddressSearch("")
 
     setSelectedAddressId(null)
+    setInvoiceName("")
     setObservation("")
     setCurrentLog(null)
+
+    setMultiPagoActivoState(false)
+    setPagosMultiples([])
 
     paymentResetRef.current?.()
 
@@ -486,12 +543,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         conversationId,
         addressPayload,
         totals,
-        observation
+        observation,
+        invoiceName
       })
 
-      await updatedLogCart(log.id, toLogCartFormValues(req, log))
+      await updatedLogCart(log.id, toLogCartFormValues(req as any, log))
 
-      setCurrentLog({
+      const updatedLog = {
         ...log,
         addressId: addressPayload.addressId ?? undefined,
         transCost: req.transCost ?? 0,
@@ -501,17 +559,21 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         totalEnPantalla: req.totalEnPantalla ?? 0,
         propina: req.propina ?? 0,
         subTotal: req.subTotal ?? 0,
-        observacion: req.observacion ?? ""
-      } as LogCartResponseDto)
+        observacion: req.observacion ?? "",
+        invoiceName: req.invoiceName ?? ""
+      } as LogCartResponseDto
+
+      setCurrentLog(updatedLog)
 
       removeDraft()
 
-      return log
+      return updatedLog
     },
     [
       contactId,
       conversationId,
       getAddressPayload,
+      invoiceName,
       observation,
       removeDraft,
       updatedLogCart
@@ -532,13 +594,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       }
 
       const req = buildLogUpdateRequest({
-        log,
-        contactId,
-        conversationId,
-        addressPayload,
-        totals: null,
-        observation
-      })
+          log,
+          contactId,
+          conversationId,
+          addressPayload,
+          totals: null,
+          observation,
+          invoiceName
+        })
 
       await updatedLogCart(log.id, toLogCartFormValues(req, log))
 
@@ -547,10 +610,18 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         addressId: nextAddressId ?? undefined,
         retiraSucursal: "N",
         transCost: addressPayload.transCost,
-        observacion: observation
+        observacion: observation,
+        invoiceName: req.invoiceName ?? ""
       } as LogCartResponseDto)
     },
-    [contactId, conversationId, observation, transCost, updatedLogCart]
+    [
+        contactId,
+        conversationId,
+        invoiceName,
+        observation,
+        transCost,
+        updatedLogCart
+      ]
   )
 
   const agentPayment = useAgentCartPayment({
@@ -572,7 +643,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     persistLogWithTotals,
     getFreshInvoiceTotals,
     resetCartPanelUi,
-    dispatch
+    dispatch,
+    multiPagoActivo,
+    pagosMultiples
   })
 
   paymentResetRef.current = agentPayment.payment.resetPayment
@@ -582,7 +655,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     divisaOpts,
     divisaLoading,
     payLoading,
-    handleAgentPayNow
+    handleAgentPayNow,
+    cargarDivisasPorMoneda
   } = agentPayment
 
   const {
@@ -675,10 +749,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       setTransCost(0)
       setDebouncedTransCost(0)
       setSelectedAddressId(null)
+      setInvoiceName("")
       setObservation("")
       setCurrentLog(null)
       setOrderId(null)
       setInvoiceTotalsDto(null)
+      setMultiPagoActivoState(false)
+      setPagosMultiples([])
       setLocked(null)
 
       paymentResetRef.current?.()
@@ -790,6 +867,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     if (existingLog?.branch) {
       lines.push(`🏬 Sucursal: ${existingLog.branchName ?? ""}`)
+    }
+
+    if (invoiceName.trim().length > 0) {
+      lines.push(`👤 A nombre de: ${invoiceName.trim()}`)
     }
 
     lines.push("")
@@ -913,10 +994,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             .join(" | ")
         : addDescription.trim()
 
+      const pdfContact = {
+        ...contact,
+        fullName: invoiceName.trim() || contact.fullName,
+        waName: invoiceName.trim() || contact.waName
+      }
+
       const pdfFile = generateCartPdfFile(
         cart,
         totals,
-        contact,
+        pdfContact,
         {
           retiraSucursal,
           transCost: effectiveShipping,
@@ -924,13 +1011,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           addressText: addressText.length > 0 ? addressText : null,
           finalTotal: totals.total
         },
-        currentLog?.branchName
+        currentLog?.branchName ?? ""
       )
 
-      setFile(pdfFile)
-      setText("Resumen de carrito")
-
-      await handleSend(pdfFile, "Resumen de carrito")
+      await handleSend([pdfFile], "Resumen de carrito")
     } catch {
       toast.error("No se pudo enviar el PDF")
     } finally {
@@ -968,7 +1052,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         orderId: orderIdToSend,
         ecommerceUserId,
         email: contact.email ?? "",
-        fullName: contact.fullName ?? "",
+        fullName: invoiceName.trim() || (contact.fullName ?? ""),
         contactId
       }
 
@@ -1094,6 +1178,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     skipPersistOnceRef.current = true
 
+    const draftWithInvoiceName = draft as DraftState & {
+      invoiceName?: string | null
+    }
+
+    setInvoiceName(String(draftWithInvoiceName.invoiceName ?? "").trim())
     setAddDescription(draft.addDescription)
     setRetiraSucursal(draft.retiraSucursal)
     setTransCost(draft.transCost)
@@ -1112,19 +1201,25 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       return
     }
 
-    writeDraft({
+    const nextDraft = {
       addDescription,
       retiraSucursal,
       transCost: safePositiveNumber(transCost),
       selectedAddressId,
+      invoiceName,
       observation
-    })
+    } as DraftState & {
+      invoiceName: string
+    }
+
+    writeDraft(nextDraft)
   }, [
     carPCG,
     addDescription,
     retiraSucursal,
     transCost,
     selectedAddressId,
+    invoiceName,
     observation,
     writeDraft
   ])
@@ -1232,6 +1327,35 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setAddDescription(draft.addDescription)
       }
 
+      const draftWithInvoiceName = draft as
+        | (DraftState & { invoiceName?: string | null })
+        | null
+
+      const logWithInvoiceName = log as
+        | (LogCartResponseDto & {
+            invoiceName?: string | null
+            nombreFactura?: string | null
+            nombreCliente?: string | null
+          })
+        | null
+
+      const invoiceNameFromDraft = String(
+        draftWithInvoiceName?.invoiceName ?? ""
+      ).trim()
+
+      const invoiceNameFromLog = String(
+        logWithInvoiceName?.invoiceName ??
+          logWithInvoiceName?.nombreFactura ??
+          logWithInvoiceName?.nombreCliente ??
+          ""
+      ).trim()
+
+      if (invoiceNameFromDraft) {
+        setInvoiceName(invoiceNameFromDraft)
+      } else if (invoiceNameFromLog) {
+        setInvoiceName(invoiceNameFromLog)
+      }
+
       if (draft?.observation?.trim()) {
         setObservation(draft.observation)
       } else if (String(log?.observacion ?? "").trim().length > 0) {
@@ -1265,6 +1389,18 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     void loadCart()
   }, [contactId, conversationId, dispatch, fetchByContactId, readDraft])
 
+  useEffect(() => {
+    if (!permiteMultiPago && multiPagoActivo) {
+      setMultiPagoActivo(false)
+    }
+  }, [permiteMultiPago, multiPagoActivo, setMultiPagoActivo])
+
+  useEffect(() => {
+    if (activeStep !== CART_AGENT_STEP.pago) return
+
+    void GetCurrencyAsync()
+  }, [activeStep, GetCurrencyAsync])
+
   const actionsDisabled =
     loadingCart ||
     loading ||
@@ -1272,7 +1408,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     sendChatLoading ||
     cancelLoading ||
     totalsLoading ||
-    payLoading;
+    payLoading
 
   if (loadingCart || loading) {
     return (
@@ -1331,6 +1467,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
         {activeStep === CART_AGENT_STEP.entrega && (
           <CartPanelDeliveryStep
+            invoiceName={invoiceName}
+            setInvoiceName={setInvoiceName}
             observation={observation}
             setObservation={setObservation}
             addDescription={addDescription}
@@ -1378,6 +1516,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             canPay={canPay}
             onBack={() => setActiveStep(CART_AGENT_STEP.entrega)}
             handlePayNow={handleAgentPayNow}
+            permiteMultiPago={permiteMultiPago}
+            multiPagoActivo={multiPagoActivo}
+            setMultiPagoActivo={setMultiPagoActivo}
+            pagosMultiples={pagosMultiples}
+            setPagosMultiples={setPagosMultiples}
+            currency={currency}
+            cargarDivisas={cargarDivisasPorMoneda}
           />
         )}
 

@@ -203,8 +203,8 @@ export const selectCompanySistema = (state: RootState) =>
   state.auth.companySistema;
 
 // Si es true, la empresa del usuario en sesión puede aplicar el pago unico, y el multipago, caso contrario solo pago unico
-export const selectPermiteMultipago = (state: RootState) =>
-  state.auth.permiteMultiPago;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const selectPermiteMultipago = (_state: RootState) => true;
 
 export const selectPermitePasarela = (state: RootState) =>
   state.auth.permitePasarela;

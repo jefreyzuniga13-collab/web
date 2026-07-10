@@ -1,28 +1,85 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.4rem;
+}
+
 .filter-modal {
   position: relative;
   width: min(72rem, calc(100vw - 3.2rem));
+  max-height: calc(100vh - 4.8rem);
   background-color: var(--bg-primary);
   border-radius: 2rem;
   padding: 3.2rem;
   box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.18);
   animation: filter-modal-enter 0.18s ease-out;
-  overflow-y: auto;
-  max-height: 100%;
+  overflow: visible;
 }
-
 
 .filter-modal__company {
   width: 100%;
+  position: relative;
+  z-index: 20;
 }
 
 .filter-modal__company .company-selector {
+  width: 100%;
   max-width: 100%;
+  position: relative;
 }
 
 .filter-modal__company .company-selector__label {
   display: none;
 }
 
+.filter-modal__company .company-selector__control,
+.filter-modal__company .company-selector__input,
+.filter-modal__company input {
+  font-size: var(--font-size-md);
+}
+
+.filter-modal__company .company-selector__menu,
+.filter-modal__company .company-selector__dropdown,
+.filter-modal__company .company-selector__options,
+.filter-modal__company .company-selector__list {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  max-height: 28rem;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+  border: 0.1rem solid var(--color-gray-200);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.12);
+}
+
+.filter-modal__company .company-selector__option,
+.filter-modal__company .company-selector__item {
+  padding: 1.2rem 1.8rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-800);
+  cursor: pointer;
+}
+
+.filter-modal__company .company-selector__option:hover,
+.filter-modal__company .company-selector__item:hover {
+  background-color: var(--color-gray-100);
+  color: var(--color-primary);
+}
+
+.filter-modal__company .company-selector__option--selected,
+.filter-modal__company .company-selector__item--selected {
+  background-color: var(--color-gray-100);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
 
 @keyframes filter-modal-enter {
   from {
@@ -51,6 +108,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-fast) var(--transition-ease);
+  z-index: 30;
 }
 
 .filter-modal__close:hover {
@@ -61,6 +119,7 @@
 .filter-modal__header {
   text-align: center;
   margin-bottom: 2.8rem;
+  padding-right: 4rem;
 }
 
 .filter-modal__title {
@@ -79,7 +138,7 @@
 }
 
 .filter-modal__section {
-  margin-bottom: 2.4rem;
+  margin-bottom: 0;
 }
 
 .filter-modal__label {
@@ -110,7 +169,6 @@
   cursor: pointer;
   user-select: none;
   transition: all var(--transition-fast) var(--transition-ease);
-  text-align:center;
 }
 
 .filter-modal__status:hover {
@@ -160,9 +218,25 @@
 }
 
 @media (max-width: 700px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 1.6rem;
+    overflow-y: auto;
+  }
+
   .filter-modal {
+    width: 100%;
+    max-height: none;
     padding: 2.4rem;
     border-radius: 1.6rem;
+    margin-top: 2rem;
+  }
+
+  .filter-modal__company .company-selector__menu,
+  .filter-modal__company .company-selector__dropdown,
+  .filter-modal__company .company-selector__options,
+  .filter-modal__company .company-selector__list {
+    max-height: 24rem;
   }
 
   .filter-modal__dates {

@@ -93,15 +93,15 @@ export interface PrintOrdenFactInterfaceRaw {
     }> | null
   }>
   DetallePago: {
-    Valor_Pagar: number
-    SubTotal: number
-    Descuento: number
-    Iva: number
-    TotalPago: number
-    MetodoPago: string
-    Monto: number
-    Propina: number
-    Transporte: number
+    Valor_Pagar: number;
+    SubTotal: number;
+    Descuento: number;
+    Iva: number;
+    TotalPago: number;
+    MetodoPago: string;
+    Monto: number;
+    Propina: number;
+    Transporte: number;
   }
 }
 

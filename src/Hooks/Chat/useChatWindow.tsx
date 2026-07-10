@@ -21,6 +21,7 @@ import {
 import useMessages from "@/Hooks/Chat/useMessages"
 import { useAudioRecorder } from "@/Hooks/Chat/useAudioRecorder"
 import { getNicaraguaIsoDate } from "@/Utils/formatters"
+import { DOCUMENT_MAX_SIZE, MAX_FILES_PER_SEND } from "@/Constants/conversation"
 
 type ReplyTarget = {
   messageId: number
@@ -48,6 +49,9 @@ type MessageWithExternal = MessageDto & {
 
 const LONG_PRESS_MS = 400
 const AUDIO_MAX_SIZE = 16 * 1024 * 1024
+const MEDIA_MAX_SIZE = 16 * 1024 * 1024
+const STATIC_STICKER_MAX_SIZE = 100 * 1024
+const ANIMATED_STICKER_MAX_SIZE = 500 * 1024
 
 const isObject = (value: unknown): value is QuickParamObject => {
   return typeof value === "object" && value !== null
@@ -331,7 +335,7 @@ export const useChatWindow = (
   const selectedOptionRef = useRef<string | null>(null)
   const sendingRef = useRef(false)
 
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [sending, setSending] = useState(false)
   const [ismaximize, setismaximize] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
@@ -378,6 +382,45 @@ export const useChatWindow = (
     selectedOptionRef.current = option
     setSelectedOptionState(option)
   }, [])
+
+  const validateSelectedFile = (selectedFile: File): string | null => {
+  /*
+   * WebP debe validarse antes que image/* porque también entra
+   * dentro de selectedFile.type.startsWith("image/").
+   */
+  if (selectedFile.type === "image/webp") {
+    const maxSize =
+      selectedFile.size > STATIC_STICKER_MAX_SIZE
+        ? ANIMATED_STICKER_MAX_SIZE
+        : STATIC_STICKER_MAX_SIZE
+
+    if (selectedFile.size > maxSize) {
+      return selectedFile.size > STATIC_STICKER_MAX_SIZE
+        ? `${selectedFile.name}: los stickers animados no pueden superar 500 KB.`
+        : `${selectedFile.name}: los stickers estáticos no pueden superar 100 KB.`
+    }
+
+    return null
+  }
+
+  if (
+    selectedFile.type.startsWith("image/") ||
+    selectedFile.type.startsWith("video/") ||
+    selectedFile.type.startsWith("audio/")
+  ) {
+    if (selectedFile.size > MEDIA_MAX_SIZE) {
+      return `${selectedFile.name}: imágenes, videos y audios no pueden superar 16 MB.`
+    }
+
+    return null
+  }
+
+  if (selectedFile.size > DOCUMENT_MAX_SIZE) {
+    return `${selectedFile.name}: los documentos no pueden superar 100 MB.`
+  }
+
+  return null
+}
 
   const updateLocalMessage = useCallback(
     (
@@ -524,7 +567,7 @@ export const useChatWindow = (
 
     setLocalMessages([])
     setText("")
-    setFile(null)
+    setFiles([])
     setReplyTo(null)
     setSelectedOption(null)
     setQuickMenuOpen(false)
@@ -709,41 +752,79 @@ export const useChatWindow = (
     updateLocalMessage,
   ])
 
-  const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0]
-
-    if (!selectedFile) return
-
-    let maxSize = 16 * 1024 * 1024
-    let errorMsg = "El archivo supera el límite permitido."
-
-    if (selectedFile.type.startsWith("application/")) {
-      maxSize = 100 * 1024 * 1024
-      errorMsg = "Los documentos no pueden superar 100MB."
-    } else if (
-      selectedFile.type.startsWith("image/") ||
-      selectedFile.type.startsWith("video/")
-    ) {
-      maxSize = 16 * 1024 * 1024
-      errorMsg = "Las imágenes y videos no pueden superar 16MB."
-    } else if (selectedFile.type === "image/webp") {
-      if (selectedFile.size > 100 * 1024 && selectedFile.size <= 500 * 1024) {
-        maxSize = 500 * 1024
-        errorMsg = "Los stickers animados no pueden superar 500KB."
-      } else {
-        maxSize = 100 * 1024
-        errorMsg = "Los stickers estáticos no pueden superar 100KB."
-      }
-    }
-
-    if (selectedFile.size > maxSize) {
-      toast.warn(errorMsg)
-      event.target.value = ""
-      return
-    }
-
-    setFile(selectedFile)
+  const removeFile = useCallback((index: number) => {
+    setFiles((currentFiles) =>
+      currentFiles.filter((_, fileIndex) => fileIndex !== index)
+    )
   }, [])
+
+  const clearFiles = useCallback(() => {
+    setFiles([])
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }, [])
+
+  const handleFileChange = useCallback(
+  (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files ?? [])
+
+    if (!selectedFiles.length) return
+
+    setFiles((currentFiles) => {
+      const availableSlots = MAX_FILES_PER_SEND - currentFiles.length
+
+      if (availableSlots <= 0) {
+        toast.warn(
+          `Solo podés adjuntar un máximo de ${MAX_FILES_PER_SEND} archivos.`
+        )
+
+        event.target.value = ""
+        return currentFiles
+      }
+
+      const validFiles: File[] = []
+
+      for (const selectedFile of selectedFiles.slice(0, availableSlots)) {
+        const validationError = validateSelectedFile(selectedFile)
+
+        if (validationError) {
+          toast.warn(validationError)
+          continue
+        }
+
+        const alreadySelected = currentFiles.some(
+          (currentFile) =>
+            currentFile.name === selectedFile.name &&
+            currentFile.size === selectedFile.size &&
+            currentFile.lastModified === selectedFile.lastModified
+        )
+
+        if (alreadySelected) {
+          toast.info(`${selectedFile.name} ya fue seleccionado.`)
+          continue
+        }
+
+        validFiles.push(selectedFile)
+      }
+
+      if (selectedFiles.length > availableSlots) {
+        toast.warn(
+          `Solo se agregaron archivos hasta completar el máximo de ${MAX_FILES_PER_SEND}.`
+        )
+      }
+
+      return [...currentFiles, ...validFiles]
+    })
+
+    /*
+     * Permite volver a seleccionar posteriormente el mismo archivo.
+     */
+    event.target.value = ""
+  },
+  []
+)
 
   const beginReply = useCallback((message: MessageDto) => {
     const externalId = getExternalId(message)
@@ -764,26 +845,47 @@ export const useChatWindow = (
     setReplyTo(null)
   }, [])
 
+
   const handlePaste = useCallback(
-    (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      if (file) return
+  (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const clipboardFiles = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
+      .filter((item): item is File => Boolean(item))
 
-      const clipboardItems = Array.from(event.clipboardData.items)
+    if (!clipboardFiles.length) return
 
-      for (const item of clipboardItems) {
-        if (item.kind !== "file") continue
+    event.preventDefault()
 
-        const pastedFile = item.getAsFile()
+    setFiles((currentFiles) => {
+      const availableSlots = MAX_FILES_PER_SEND - currentFiles.length
 
-        if (!pastedFile) continue
+      if (availableSlots <= 0) {
+        toast.warn(
+          `Solo podés adjuntar un máximo de ${MAX_FILES_PER_SEND} archivos.`
+        )
 
-        event.preventDefault()
-        setFile(pastedFile)
-        break
+        return currentFiles
       }
-    },
-    [file]
-  )
+
+      const validFiles: File[] = []
+
+      for (const pastedFile of clipboardFiles.slice(0, availableSlots)) {
+        const validationError = validateSelectedFile(pastedFile)
+
+        if (validationError) {
+          toast.warn(validationError)
+          continue
+        }
+
+        validFiles.push(pastedFile)
+      }
+
+      return [...currentFiles, ...validFiles]
+    })
+  },
+  []
+)
 
   const highlightText = useCallback((value: string, term: string) => {
     const cleanTerm = term.trim()
@@ -842,99 +944,179 @@ export const useChatWindow = (
   )
 
   const handleSend = useCallback(
-    async (fileOverride?: File | null, textOverride?: string) => {
-      if (!conversationId || sendingRef.current) return
+  async (
+    fileOverride?: File | File[] | null,
+    textOverride?: string
+  ) => {
+    if (!conversationId || sendingRef.current) return
 
-      const fileToSend = fileOverride ?? file
-      const messageText = (textOverride ?? text).trim()
-      const quickText = (selectedOptionRef.current ?? "").trim()
-      const finalText = quickText || messageText
+    let filesToSend: File[]
 
-      if (!fileToSend && !finalText) return
+    if (Array.isArray(fileOverride)) {
+      filesToSend = fileOverride
+    } else if (fileOverride instanceof File) {
+      filesToSend = [fileOverride]
+    } else if (fileOverride === null) {
+      /*
+       * null se utiliza cuando se quiere enviar solamente texto,
+       * por ejemplo desde mensajes personalizados.
+       */
+      filesToSend = []
+    } else {
+      filesToSend = files
+    }
 
-      sendingRef.current = true
+    const messageText = (textOverride ?? text).trim()
+    const quickText = (selectedOptionRef.current ?? "").trim()
+    const finalText = quickText || messageText
 
-      const currentReply = replyTo
+    if (!filesToSend.length && !finalText) return
 
-      const localMessage = createLocalMessage({
-        content: finalText,
-        file: fileToSend,
-        reply: currentReply,
+    sendingRef.current = true
+    setSending(true)
+
+    const currentReply = replyTo
+
+    setText("")
+    setFiles([])
+    setReplyTo(null)
+    setSelectedOption(null)
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+
+    /*
+     * El servicio actual sendMedia recibe únicamente un File.
+     * Por eso cada archivo se representa como un mensaje independiente.
+     *
+     * El texto se envía como caption del primer archivo.
+     */
+    const localMessagesToSend: MessageDto[] = []
+
+    if (filesToSend.length) {
+      filesToSend.forEach((selectedFile, index) => {
+        const localMessage = createLocalMessage({
+          content: index === 0 ? finalText : "",
+          file: selectedFile,
+          reply: index === 0 ? currentReply : null,
+        })
+
+        localMessagesToSend.push(localMessage)
       })
+    } else {
+      localMessagesToSend.push(
+        createLocalMessage({
+          content: finalText,
+          file: null,
+          reply: currentReply,
+        })
+      )
+    }
 
-      setLocalMessages((prev) => [...prev, localMessage])
+    setLocalMessages((currentMessages) => [
+      ...currentMessages,
+      ...localMessagesToSend,
+    ])
 
-      setText("")
-      setFile(null)
-      setReplyTo(null)
-      setSelectedOption(null)
+    try {
+      const replyExternalId = currentReply?.externalId ?? null
+      const repliedParentMessageId = currentReply?.messageId ?? null
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
+      if (filesToSend.length) {
+        let failedFiles = 0
 
-      setSending(true)
+        for (let index = 0; index < filesToSend.length; index += 1) {
+          const selectedFile = filesToSend[index]
+          const localMessage = localMessagesToSend[index]
 
-      try {
-        const replyExternalId = currentReply?.externalId ?? null
-        const repliedParentMessageId = currentReply?.messageId ?? null
+          try {
+            await sendMedia(
+              conversationId,
+              selectedFile,
+              index === 0 ? finalText : "",
+              index === 0 ? replyExternalId : null,
+              index === 0 ? repliedParentMessageId : null
+            )
 
-        if (fileToSend) {
-          await sendMedia(
-            conversationId,
-            fileToSend,
-            finalText || "",
-            replyExternalId,
-            repliedParentMessageId
-          )
+            updateLocalMessage(localMessage.clientTempId ?? "", {
+              localStatus: "sent",
+              status: "Sent",
+              localError: undefined,
+            })
+          } catch (error) {
+            console.error(
+              `No se pudo enviar el archivo ${selectedFile.name}.`,
+              error
+            )
 
-          updateLocalMessage(localMessage.clientTempId ?? "", {
-            localStatus: "sent",
-            status: "Sent",
-          })
+            failedFiles += 1
 
-          return
+            updateLocalMessage(localMessage.clientTempId ?? "", {
+              localStatus: "error",
+              status: "Failed",
+              localError: `No se pudo enviar ${selectedFile.name}.`,
+            })
+          }
         }
 
-        await sendText({
-          conversationId,
-          senderId: userId,
-          content: finalText,
-          messageType: "Text",
-          externalId: replyExternalId,
-          repliedParentMessageId,
-        })
+        if (failedFiles > 0) {
+          toast.error(
+            failedFiles === filesToSend.length
+              ? "No se pudo enviar ninguno de los archivos."
+              : `${failedFiles} archivo${
+                  failedFiles === 1 ? "" : "s"
+                } no se pudo enviar.`
+          )
+        }
 
-        updateLocalMessage(localMessage.clientTempId ?? "", {
-          localStatus: "sent",
-          status: "Sent",
-        })
-      } catch (error) {
-        console.error(error)
-
-        updateLocalMessage(localMessage.clientTempId ?? "", {
-          localStatus: "error",
-          status: "Failed",
-          localError: "No se pudo enviar el mensaje.",
-        })
-
-        toast.error("No se pudo enviar el mensaje.")
-      } finally {
-        sendingRef.current = false
-        setSending(false)
+        return
       }
-    },
-    [
-      conversationId,
-      createLocalMessage,
-      file,
-      replyTo,
-      setSelectedOption,
-      text,
-      updateLocalMessage,
-      userId,
-    ]
-  )
+
+      const localMessage = localMessagesToSend[0]
+
+      await sendText({
+        conversationId,
+        senderId: userId,
+        content: finalText,
+        messageType: "Text",
+        externalId: replyExternalId,
+        repliedParentMessageId,
+      })
+
+      updateLocalMessage(localMessage.clientTempId ?? "", {
+        localStatus: "sent",
+        status: "Sent",
+        localError: undefined,
+      })
+    } catch (error) {
+      console.error(error)
+
+      const localMessage = localMessagesToSend[0]
+
+      updateLocalMessage(localMessage.clientTempId ?? "", {
+        localStatus: "error",
+        status: "Failed",
+        localError: "No se pudo enviar el mensaje.",
+      })
+
+      toast.error("No se pudo enviar el mensaje.")
+    } finally {
+      sendingRef.current = false
+      setSending(false)
+    }
+  },
+  [
+    conversationId,
+    createLocalMessage,
+    files,
+    replyTo,
+    setSelectedOption,
+    text,
+    updateLocalMessage,
+    userId,
+  ]
+)
 
   const handleKeyPress = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1205,9 +1387,9 @@ export const useChatWindow = (
         return
       }
 
-      if (file) {
+      if (files.length > 0) {
         event.preventDefault()
-        setFile(null)
+        clearFiles()
       }
     }
 
@@ -1216,7 +1398,7 @@ export const useChatWindow = (
     return () => {
       window.removeEventListener("keydown", onGlobalKeyDown)
     }
-  }, [cancelReply, file, replyTo])
+  }, [cancelReply, clearFiles, files.length, replyTo])
 
   const onComposerKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> =
     useCallback(
@@ -1228,9 +1410,9 @@ export const useChatWindow = (
             return
           }
 
-          if (file) {
+          if (files.length > 0) {
             event.preventDefault()
-            setFile(null)
+            clearFiles()
             return
           }
         }
@@ -1240,7 +1422,7 @@ export const useChatWindow = (
           void handleSend()
         }
       },
-      [cancelReply, file, handleSend, replyTo]
+      [cancelReply, clearFiles, files.length, handleSend, replyTo]
     )
 
   useEffect(() => {
@@ -1255,10 +1437,11 @@ export const useChatWindow = (
       if (
         event.key === "Enter" &&
         !event.shiftKey &&
-        file &&
+        files.length > 0 &&
         !sendingRef.current &&
         conversationId &&
         args.conversationStatus !== "Closed" &&
+        args.conversationStatus !== "Incomplete" &&
         !isTyping
       ) {
         event.preventDefault()
@@ -1271,7 +1454,7 @@ export const useChatWindow = (
     return () => {
       window.removeEventListener("keydown", onGlobalEnter)
     }
-  }, [args.conversationStatus, conversationId, file, handleSend])
+  }, [args.conversationStatus, conversationId, files.length, handleSend])
 
   const visibleState = useMemo(
     () => ({
@@ -1347,8 +1530,10 @@ export const useChatWindow = (
 
     text,
     setText,
-    file,
-    setFile,
+    files,
+    setFiles,
+    removeFile,
+    clearFiles,
     sending,
     setSending,
     handleSend,

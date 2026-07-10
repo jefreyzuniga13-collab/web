@@ -132,7 +132,6 @@ export default function ResetPasswordPresentation() {
                 >
                   {loading
                     ? <>
-                      Guardando...
                       <AiOutlineLoading3Quarters />
                     </>
                     :<>
@@ -149,18 +148,11 @@ export default function ResetPasswordPresentation() {
 
               <div className="login__copyright">
                 <span>© {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.</span>
-                <span>Versión 26061</span>
+                <span>Versión 26071</span>
               </div>
             </section>
           </main>
 
-          {/* <svg
-            className="reset-password__wave"
-            viewBox="0 0 1440 320"
-            preserveAspectRatio="none"
-          >
-            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,229.3C1120,224,1280,160,1360,128L1440,96L1440,320L0,320Z" />
-          </svg> */}
         </aside>
       </div>
     </section>

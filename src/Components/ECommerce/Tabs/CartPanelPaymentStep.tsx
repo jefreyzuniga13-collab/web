@@ -1,3 +1,8 @@
+import type {
+  Dispatch,
+  SetStateAction
+} from "react"
+
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
 
 import {
@@ -23,8 +28,13 @@ import type {
 } from "@/Interfaces/Crm/LogCartInterface"
 
 import type {
-  CheckoutStep
+  CheckoutStep,
+  Currencyto
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+
+import type {
+  PagoSeleccionado
+} from "@/Interfaces/Ecommerce/MultiPagoTypes"
 
 interface Props {
   /**
@@ -85,7 +95,7 @@ interface Props {
   /**
    * Actualiza datos de tarjeta manual.
    */
-  setManualCardData: React.Dispatch<React.SetStateAction<ManualCardFormState>>
+  setManualCardData: Dispatch<SetStateAction<ManualCardFormState>>
 
   /**
    * Total final del carrito para pago.
@@ -123,7 +133,7 @@ interface Props {
   actionsDisabled: boolean
 
   /**
-   * Indica si el formulario de pago está completo.
+   * Indica si el formulario de pago único está completo.
    */
   canPay: boolean
 
@@ -136,6 +146,43 @@ interface Props {
    * Procesa la venta desde el agente.
    */
   handlePayNow: () => Promise<void>
+
+  /**
+   * Indica si la empresa permite multipago.
+   */
+  permiteMultiPago?: boolean
+
+  /**
+   * Indica si el modo multipago está activo.
+   */
+  multiPagoActivo?: boolean
+
+  /**
+   * Activa o desactiva el modo multipago.
+   */
+  setMultiPagoActivo?: (value: boolean) => void
+
+  /**
+   * Pagos agregados en multipago.
+   */
+  pagosMultiples?: PagoSeleccionado[]
+
+  /**
+   * Actualiza los pagos agregados en multipago.
+   */
+  setPagosMultiples?: Dispatch<SetStateAction<PagoSeleccionado[]>>
+
+  /**
+   * Formas de pago disponibles desde PCG.
+   */
+  currency?: Currencyto[]
+
+  /**
+   * Carga bancos o tipos de pago para multipago.
+   */
+  cargarDivisas?: (
+    item: Currencyto
+  ) => Promise<ObtenerDivisaPagosTipoRes[]>
 }
 
 export default function CartPanelPaymentStep({
@@ -160,41 +207,115 @@ export default function CartPanelPaymentStep({
   actionsDisabled,
   canPay,
   onBack,
-  handlePayNow
+  handlePayNow,
+  permiteMultiPago = false,
+  multiPagoActivo = false,
+  setMultiPagoActivo,
+  pagosMultiples = [],
+  setPagosMultiples,
+  currency = [],
+  cargarDivisas
 }: Props) {
   /**
    * Se crea un log visual con los totales frescos.
-   * Así el resumen del pago no muestra subtotal/IVA en 0
-   * cuando currentLog todavía no está actualizado.
+   *
+   * Así el resumen del pago no muestra subtotal, IVA o total en 0 cuando
+   * currentLog todavía no está actualizado.
    */
   const logForSummary = {
     ...currentLog,
     subTotal: invoiceTotalsDto?.subTotal ?? currentLog?.subTotal ?? 0,
     ivaPantalla: invoiceTotalsDto?.iva ?? currentLog?.ivaPantalla ?? 0,
-    descuentoPantalla:
+    DescuentoPantalla:
       invoiceTotalsDto?.descuento ?? currentLog?.DescuentoPantalla ?? 0,
     transCost: transpCost,
-    totalEnPantalla: invoiceTotalsDto?.total ?? currentLog?.totalEnPantalla ?? 0
+    totalEnPantalla:
+      invoiceTotalsDto?.total ?? currentLog?.totalEnPantalla ?? 0
   } as LogCartResponseDto
+
+  const handleChangeModoPago = (value: boolean) => {
+    if (!setMultiPagoActivo) return
+
+    setMultiPagoActivo(value)
+
+    if (value) {
+      setMethod(null)
+      setDivisaSelected(null)
+      return
+    }
+
+    setPagosMultiples?.([])
+  }
 
   return (
     <div className="carPCPanel-stepContent">
+      {permiteMultiPago && (
+        <div className="checkout-payment-mode">
+          <label
+            className={
+              !multiPagoActivo
+                ? "checkout-payment-mode__option checkout-payment-mode__option--active"
+                : "checkout-payment-mode__option"
+            }
+          >
+            <input
+              type="radio"
+              name="agentPaymentMode"
+              checked={!multiPagoActivo}
+              onChange={() => handleChangeModoPago(false)}
+              disabled={actionsDisabled || payLoading}
+            />
 
-    {!method && (
+            <span className="checkout-payment-mode__content">
+              <strong>Pago único</strong>
+              <small>Usa una sola forma de pago.</small>
+            </span>
+          </label>
+
+          <label
+            className={
+              multiPagoActivo
+                ? "checkout-payment-mode__option checkout-payment-mode__option--active"
+                : "checkout-payment-mode__option"
+            }
+          >
+            <input
+              type="radio"
+              name="agentPaymentMode"
+              checked={multiPagoActivo}
+              onChange={() => handleChangeModoPago(true)}
+              disabled={actionsDisabled || payLoading}
+            />
+
+            <span className="checkout-payment-mode__content">
+              <strong>Multipago</strong>
+              <small>Usa varias formas de pago en la misma factura.</small>
+            </span>
+          </label>
+        </div>
+      )}
+
+      {!multiPagoActivo && !method && (
         <p className="cartPanel-paymentHint">
           Selecciona una forma de pago para continuar.
         </p>
       )}
 
-      {method && !canPay && (
+      {!multiPagoActivo && method && !canPay && (
         <p className="cartPanel-paymentHint">
           Completa los datos requeridos del método seleccionado.
         </p>
       )}
 
+      {multiPagoActivo && pagosMultiples.length === 0 && (
+        <p className="cartPanel-paymentHint">
+          Agrega las formas de pago para completar el total de la factura.
+        </p>
+      )}
+
       <PaymentMethodComponent
         step={"paymentMethod" as CheckoutStep}
-        setStep={onBack}
+        setStep={() => onBack()}
         method={method}
         setMethod={setMethod}
         allowedMethods={AGENT_PAYMENT_METHODS}
@@ -213,12 +334,19 @@ export default function CartPanelPaymentStep({
         carPCG={carPCG}
         totalPagar={totalPagar}
         existingLog={logForSummary}
+        invoiceTotalsDto={invoiceTotalsDto}
         ecommerceUserId={0}
         manualCardData={manualCardData}
         setManualCardData={setManualCardData}
         backStep="location"
         payButtonText="Finalizar Pedido"
-        showMethodSelector
+        showMethodSelector={!multiPagoActivo}
+        showBackButton={false}
+        multiPagoActivo={multiPagoActivo}
+        pagosMultiples={pagosMultiples}
+        setPagosMultiples={setPagosMultiples}
+        currency={currency}
+        cargarDivisas={cargarDivisas}
       />
     </div>
   )

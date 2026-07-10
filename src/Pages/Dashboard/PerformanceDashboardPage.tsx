@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import {MdFilterListAlt, MdOutlineRefresh, MdPersonSearch} from "react-icons/md";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import usePerformanceDashboard from "@/Hooks/Dashboard/usePerformanceDashboard";
@@ -39,6 +39,9 @@ const getFilterSummary = (
 };
 
 const PerformanceDashboardPage: React.FC = () => {
+  const fromDateRef = useRef<HTMLInputElement | null>(null);
+  const toDateRef = useRef<HTMLInputElement | null>(null);
+
   const {
     filters,
     setFilters,
@@ -105,6 +108,30 @@ const PerformanceDashboardPage: React.FC = () => {
   const totalCriticalClients = waitingClients.length;
   const totalAgents = indicatorsByAgent.length;
 
+  const openDatePicker = (
+    inputRef: React.RefObject<HTMLInputElement | null>
+  ) => {
+    const input = inputRef.current;
+
+    if (!input) return;
+
+    input.focus();
+
+    if (typeof input.showPicker === "function") {
+      try {
+        input.showPicker();
+      } catch (error) {
+        console.error("No se pudo abrir el calendario:", error);
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedAgentId(null);
+    setRecentPage(1);
+    clearFilters();
+  };
+
   const handleDateChange = (field: "from" | "to", value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -168,7 +195,7 @@ const PerformanceDashboardPage: React.FC = () => {
           <button
             type="button"
             className="performance-dashboard__button performance-dashboard__button--ghost"
-            onClick={clearFilters}
+            onClick={handleClearFilters}
             disabled={fetching}
           >
             <MdFilterListAlt />
@@ -190,29 +217,55 @@ const PerformanceDashboardPage: React.FC = () => {
 
       <section className="performance-dashboard__filters">
         <div className="performance-filter">
-          <label>
-            <FaRegCalendarAlt />
-            Desde
-          </label>
+          <label htmlFor="performance-date-from">Desde</label>
 
-          <input
-            type="date"
-            value={formatDateInput(filters.from)}
-            onChange={(event) => handleDateChange("from", event.target.value)}
-          />
+          <div className="performance-filter__date">
+            <input
+              ref={fromDateRef}
+              id="performance-date-from"
+              type="date"
+              value={formatDateInput(filters.from)}
+              onChange={(event) =>
+                handleDateChange("from", event.target.value)
+              }
+            />
+
+            <button
+              type="button"
+              className="performance-filter__calendar-button"
+              onClick={() => openDatePicker(fromDateRef)}
+              aria-label="Abrir calendario de fecha inicial"
+              title="Seleccionar fecha inicial"
+            >
+              <FaRegCalendarAlt />
+            </button>
+          </div>
         </div>
 
         <div className="performance-filter">
-          <label>
-            <FaRegCalendarAlt />
-            Hasta
-          </label>
+          <label htmlFor="performance-date-to">Hasta</label>
 
-          <input
-            type="date"
-            value={formatDateInput(filters.to)}
-            onChange={(event) => handleDateChange("to", event.target.value)}
-          />
+          <div className="performance-filter__date">
+            <input
+              ref={toDateRef}
+              id="performance-date-to"
+              type="date"
+              value={formatDateInput(filters.to)}
+              onChange={(event) =>
+                handleDateChange("to", event.target.value)
+              }
+            />
+
+            <button
+              type="button"
+              className="performance-filter__calendar-button"
+              onClick={() => openDatePicker(toDateRef)}
+              aria-label="Abrir calendario de fecha final"
+              title="Seleccionar fecha final"
+            >
+              <FaRegCalendarAlt />
+            </button>
+          </div>
         </div>
 
         <div className="performance-filter">
@@ -224,8 +277,13 @@ const PerformanceDashboardPage: React.FC = () => {
           <select
             value={selectedAgentId ?? ""}
             onChange={(event) => handleAgentChange(event.target.value)}
+            disabled={queries.indicatorsByAgent.isLoading}
           >
-            <option value="">Todos los agentes</option>
+            <option value="">
+              {queries.indicatorsByAgent.isLoading
+                ? "Cargando agentes..."
+                : "Todos los agentes"}
+            </option>
 
             {indicatorsByAgent.map((agent) => (
               <option key={agent.agentId} value={agent.agentId}>

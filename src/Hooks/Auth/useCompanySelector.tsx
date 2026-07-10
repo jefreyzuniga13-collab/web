@@ -23,10 +23,10 @@ const COMPANY_SELECTOR_QUERY_KEY = ["company-selector"];
  *
  * Responsabilidades:
  * - Cargar las empresas disponibles para Root.
- * - Guardar la empresa seleccionada en Redux.
- * - Evitar modo global para SignalR.
+ * - Guardar la empresa seleccionada en Redux cuando el usuario la elija.
+ * - No seleccionar empresa automáticamente.
  * - Reiniciar SignalR al cambiar de empresa.
- * - Seleccionar automáticamente la primera empresa si Root no tiene una activa.
+ * - Evitar recargas completas de la página.
  */
 export function useCompanySelector() {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,20 +59,6 @@ export function useCompanySelector() {
     dispatch(setCompanies(data));
   }, [dispatch, isRoot, query.data]);
 
-  useEffect(() => {
-    if (!isRoot || companies.length === 0 || activeCompanyId) {
-      return;
-    }
-
-    const firstCompany = companies[0];
-
-    if (!firstCompany) {
-      return;
-    }
-
-    dispatch(setActiveCompany(firstCompany));
-  }, [dispatch, isRoot, companies, activeCompanyId]);
-
   const selectedCompany = useMemo(() => {
     if (!activeCompanyId) {
       return null;
@@ -85,18 +71,27 @@ export function useCompanySelector() {
     );
   }, [companies, activeCompanyId]);
 
+  const clearCompanyQueries = useCallback(() => {
+    queryClient.removeQueries({
+      predicate: (queryItem) => {
+        const firstKey = queryItem.queryKey[0];
+
+        return firstKey !== COMPANY_SELECTOR_QUERY_KEY[0];
+      },
+    });
+  }, [queryClient]);
+
   const changeCompany = useCallback(
     async (company: CompanySelectorItem | null) => {
       if (!isRoot) {
         return;
       }
 
+      await stopHubConnection();
+
       if (!company) {
         dispatch(clearActiveCompany());
-
-        await stopHubConnection();
-        await queryClient.invalidateQueries();
-
+        clearCompanyQueries();
         return;
       }
 
@@ -104,19 +99,17 @@ export function useCompanySelector() {
       const nextCompanyId = Number(company.companyId || 0);
 
       if (currentCompanyId === nextCompanyId) {
+        await restartHubConnection();
         return;
       }
 
-      await stopHubConnection();
-
       dispatch(setActiveCompany(company));
 
-      await queryClient.invalidateQueries();
-      await restartHubConnection();
+      clearCompanyQueries();
 
-      window.location.reload();
+      await restartHubConnection();
     },
-    [dispatch, queryClient, isRoot, activeCompanyId]
+    [dispatch, isRoot, activeCompanyId, clearCompanyQueries]
   );
 
   const clearCompany = useCallback(async () => {
@@ -124,11 +117,12 @@ export function useCompanySelector() {
       return;
     }
 
+    await stopHubConnection();
+
     dispatch(clearActiveCompany());
 
-    await stopHubConnection();
-    await queryClient.invalidateQueries();
-  }, [dispatch, queryClient, isRoot]);
+    clearCompanyQueries();
+  }, [dispatch, isRoot, clearCompanyQueries]);
 
   return {
     isRoot,

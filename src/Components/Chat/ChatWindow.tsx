@@ -1,35 +1,14 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
-import {
-  ArrowLeft,
-  Check,
-  ChevronDown,
-  Download,
-  MessageSquareMore,
-  Mic,
-  Paperclip,
-  Send,
-  Smile,
-  Square,
-  Trash2,
-  UserCheck,
-  XCircle,
-} from "lucide-react"
+import React, {  useCallback, useEffect, useMemo, useRef, useState,} from "react"
+import { ArrowLeft, Check, ChevronDown,
+  // Download,
+  MessageSquareMore, Mic, Paperclip, Send, Smile, Square, Trash2,UserCheck,XCircle,} from "lucide-react"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { TbShoppingCartX } from "react-icons/tb"
 import { AiOutlineShoppingCart } from "react-icons/ai"
-
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useCustomMessage from "@/Hooks/Chat/useCustomMesssage"
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout"
-
 import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
-
 import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
 import { formatearHoraNicaragua } from "@/Utils/formatters"
@@ -43,17 +22,14 @@ type ChatWindowProps = {
   highlightTerm?: string
   validFrom?: Date | null
   validTo?: Date | null
-
   showMobileBackButton?: boolean
   onMobileBack?: () => void
-
   showMobileActions?: boolean
   mobileAssignLabel?: string
   mobileCanAssign?: boolean
   mobileIsClosed?: boolean
   onMobileClose?: () => void
   onMobileAssign?: () => void
-
   showMobileDetailButton?: boolean
   mobileDetailOpen?: boolean
   onMobileToggleDetail?: () => void
@@ -119,15 +95,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     text,
     setText,
-    file,
-    setFile,
+    files,
+    removeFile,
+    clearFiles,
     sending,
     handleSend,
     bottomRef,
     fileInputRef,
     handleFileChange,
     handlePaste,
-    handleDownload,
+    // handleDownload,
     getStatusIcon,
     getMessageClassName,
     getMessagePosition,
@@ -151,15 +128,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     replyTo,
     cancelReply,
     beginReply,
-    // quickOptions,
-    // sendQuick,
     startLongPress,
     cancelLongPress,
-    // popoverRef,
     registerMessageRef,
     scrollToMessage,
     highlightedId,
-    // visibleState,
 
     searchTerm,
     setSearchTerm,
@@ -473,7 +446,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [customMessagesOpen])
 
   const handleSendNow = async () => {
-    if (!canType || sending || (!text.trim() && !file)) return
+    if (!canType || sending || (!text.trim() && files.length === 0)) return
 
     shouldStickToBottomRef.current = true
     setShowEmojiPicker(false)
@@ -540,16 +513,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     textarea.style.height = "auto"
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
-  }
-
-  const removeSelectedFile = () => {
-    setFile(null)
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-
-    focusComposer()
   }
 
   const renderReplyPreview = (message: MessageDto) => {
@@ -655,13 +618,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
           </div>
 
-          <Download
+          {/* <Download
             className="chat-window__document-download"
             onClick={(event) => {
               event.preventDefault()
               void handleDownload(fileName)
             }}
-          />
+          /> */}
         </a>
       </div>
     )
@@ -981,51 +944,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       )}
 
-      {/* {visibleState.quickMenuOpen && visibleState.quickMenuMsg && (
-        <div
-          ref={popoverRef}
-          className="chat-window__quick-popover"
-          style={{
-            left: visibleState.quickMenuPos.x,
-            top: visibleState.quickMenuPos.y,
-          }}
-        >
-          <div className="chat-window__quick-popover-title">
-            Opciones del mensaje
-          </div>
-
-          <button
-            type="button"
-            className="chat-window__quick-popover-btn"
-            onClick={() => beginReply(visibleState.quickMenuMsg as MessageDto)}
-          >
-            Responder
-          </button>
-
-          {quickOptions.length > 0 && (
-            <>
-              <div className="chat-window__quick-popover-divider" />
-
-              <div className="chat-window__quick-popover-list">
-                {quickOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className="chat-window__quick-popover-btn"
-                    onClick={() => {
-                      sendQuick(option)
-                      focusComposer()
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )} */}
-
       <footer className="chat-window__composer">
         <button
           type="button"
@@ -1045,19 +963,64 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           type="file"
           className="chat-window__composer-file-input"
           onChange={handleFileChange}
+          multiple={true}
         />
 
-        {file && (
-          <div className="chat-window__composer-file-preview">
-            <span className="chat-window__composer-file-name">{file.name}</span>
+        {files.length > 0 && (
+          <div className="chat-window__composer-files-preview">
+            <div className="chat-window__composer-files-header">
+              <span className="chat-window__composer-files-count">
+                {files.length} archivo{files.length === 1 ? "" : "s"} seleccionado
+                {files.length === 1 ? "" : "s"}
+              </span>
 
-            <button
-              type="button"
-              className="chat-window__composer-file-remove"
-              onClick={removeSelectedFile}
-            >
-              ✕
-            </button>
+              <button
+                type="button"
+                className="chat-window__composer-files-clear"
+                onClick={() => {
+                  clearFiles()
+                  focusComposer()
+                }}
+                title="Quitar todos los archivos"
+              >
+                Quitar todos
+              </button>
+            </div>
+
+            <div className="chat-window__composer-files-list">
+              {files.map((selectedFile, index) => (
+                <div
+                  key={`${selectedFile.name}-${selectedFile.size}-${selectedFile.lastModified}`}
+                  className="chat-window__composer-file-preview"
+                >
+                  <span className="chat-window__composer-file-icon">
+                    {getFileIcon(
+                      selectedFile.type || "application/octet-stream"
+                    )}
+                  </span>
+
+                  <span
+                    className="chat-window__composer-file-name"
+                    title={selectedFile.name}
+                  >
+                    {selectedFile.name}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="chat-window__composer-file-remove"
+                    onClick={() => {
+                      removeFile(index)
+                      focusComposer()
+                    }}
+                    title={`Quitar ${selectedFile.name}`}
+                    aria-label={`Quitar ${selectedFile.name}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -1189,8 +1152,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           type="button"
           className="chat-window__composer-send"
           onClick={handleSendNow}
-          disabled={!canType || sending || (!text.trim() && !file)}
-          title="Enviar"
+          disabled={
+            !canType || sending || (!text.trim() && files.length === 0)
+          }
+          title={
+            files.length > 1 ? `Enviar ${files.length} archivos` : "Enviar"
+          }
         >
           <Send size={18} />
         </button>
@@ -1226,4 +1193,4 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   )
 }
 
-export default ChatWindow
+export default ChatWindow;

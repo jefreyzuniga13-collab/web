@@ -74,9 +74,6 @@ export const validateBillingForm = (
   billingForm: BillingFormState,
   locationMode: LocationMode
 ): boolean => {
-  if (!billingForm.firstName.trim()) {
-    return toastError("El nombre es obligatorio.")
-  }
 
   if (!billingForm.address.trim()) {
     return toastError("La dirección es obligatoria.")

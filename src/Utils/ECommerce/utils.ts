@@ -84,6 +84,13 @@ export const safePositiveNumber = (value: unknown): number => {
 }
 
 /**
+ * Convierte un valor a texto limpio.
+ */
+export const safeText = (value: unknown): string => {
+  return String(value ?? "").trim()
+}
+
+/**
  * Obtiene un valor de LogCart buscando entre varios posibles nombres de propiedad.
  *
  * Es útil porque algunos objetos pueden venir con nombres en camelCase
@@ -111,8 +118,8 @@ export const getLogValue = <T,>(
  * Normaliza el borrador local del carrito.
  *
  * Este draft se usa para recuperar datos del paso de entrega:
- * dirección manual, retiro en sucursal, transporte,
- * dirección seleccionada y observación.
+ * nombre de factura, dirección manual, retiro en sucursal,
+ * transporte, dirección seleccionada y observación.
  */
 export const normalizeDraft = (raw: string | null): DraftState | null => {
   if (!raw) return null
@@ -121,7 +128,8 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
     const parsed = JSON.parse(raw) as Partial<DraftState>
 
     return {
-      addDescription: String(parsed.addDescription ?? ""),
+      invoiceName: safeText(parsed.invoiceName),
+      addDescription: safeText(parsed.addDescription),
       retiraSucursal: parsed.retiraSucursal === "S" ? "S" : "N",
       transCost: safePositiveNumber(parsed.transCost),
       selectedAddressId:
@@ -129,7 +137,7 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
         Number.isFinite(Number(parsed.selectedAddressId))
           ? Number(parsed.selectedAddressId)
           : null,
-      observation: String(parsed.observation ?? "")
+      observation: safeText(parsed.observation)
     }
   } catch {
     return null
@@ -195,7 +203,7 @@ export const tooltipSlotProps = {
  *
  * Este mapper centraliza la persistencia de:
  * sucursal, bodega, dirección, transporte, totales,
- * observación y datos relacionados al carrito.
+ * observación, nombre de factura y datos relacionados al carrito.
  */
 export const buildLogUpdateRequest = ({
   log,
@@ -203,7 +211,8 @@ export const buildLogUpdateRequest = ({
   conversationId,
   addressPayload,
   totals,
-  observation
+  observation,
+  invoiceName
 }: BuildLogUpdateParams): LogCartUpdateRequestDto => {
   const totalEnPantalla =
     totals != null
@@ -234,6 +243,11 @@ export const buildLogUpdateRequest = ({
       ? safeNumber(totals.subTotal, 0)
       : getLogValue<number>(log, ["subTotal", "SubTotal"], 0)
 
+  const invoiceNameFinal =
+    safeText(invoiceName) ||
+    safeText(getLogValue<string | null>(log, ["invoiceName", "InvoiceName"], null)) ||
+    null
+
   return {
     orderId: safeNumber(log.orderId, 0),
     contactId: safeNumber(log.contactId, contactId),
@@ -258,6 +272,7 @@ export const buildLogUpdateRequest = ({
 
     exonerado: getLogValue<any>(log, ["exonerado", "Exonerado"], null),
     observacion: observation ?? "",
+    invoiceName: invoiceNameFinal,
 
     destinationBranchCode: getLogValue<any>(
       log,
@@ -285,6 +300,11 @@ export const toLogCartFormValues = (
   req: LogCartUpdateRequestDto,
   log: LogCartResponseDto
 ): LogCartFormValues => {
+  const invoiceNameFinal =
+    safeText(req.invoiceName) ||
+    safeText(getLogValue<string | null>(log, ["invoiceName", "InvoiceName"], null)) ||
+    null
+
   return {
     ...req,
 
@@ -300,6 +320,8 @@ export const toLogCartFormValues = (
       log,
       ["codPrecio", "CodPrecio"],
       null
-    )
+    ),
+
+    invoiceName: invoiceNameFinal
   } as LogCartFormValues
 }

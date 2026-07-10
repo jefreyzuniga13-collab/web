@@ -15,6 +15,7 @@ import  RatingStars from '@/Utils/ConvertToStarts'
 import { ImWhatsapp } from "react-icons/im";
 import { RiMessengerLine } from "react-icons/ri";
 import { FaInstagram } from "react-icons/fa6";
+import Spinner from '@/Components/Common/Spinner'
 
 export default function ConversationsPage() {
   const location = useLocation();
@@ -78,8 +79,9 @@ useEffect(() => {
     { id: 'createdAt', label: 'Creado', minWidth: 110, render: r => new Date(r.createdAt).toLocaleString('es-NI') },
     { id: 'assignedAgentName', label: 'Asignada', minWidth: 110, render: r => r.assignedAgentName ?? '-' },
     { id: 'clientFirstMessage', label: 'Primer Mensaje Cliente', minWidth: 110, render: r => new Date(r.clientFirstMessage).toLocaleString('es-NI') ?? '-' },
-    // { id: 'clientLastMessageAt', label: 'Ultimo Mensaje Cliente', minWidth: 120, render: r => new Date(r.clientLastMessage).toLocaleString('es-NI') ?? '-' },
     { id: 'clientLastMessageAt', label: 'Último mensaje cliente', minWidth: 110, render: r => new Date(r.clientLastMessageAt!).toLocaleString('es-NI') },
+    { id: 'agentFirstMessageAt', label: 'Primer mensaje agente', minWidth: 110, render: r => new Date(r.clientLastMessageAt!).toLocaleString('es-NI') },
+    { id: 'agentLastMessageAt', label: 'Último mensaje agente', minWidth: 110, render: r => new Date(r.clientLastMessageAt!).toLocaleString('es-NI') },
     {
       id: 'actions',
       label: 'Acciones',
@@ -114,7 +116,7 @@ useEffect(() => {
         </div>
       </header>
 
-      {/* {loading && <Spinner size={40} text="Cargando datos..." />} */}
+      {loading && <Spinner size={16} text="Cargando datos..." />}
       {error && <p className="conversations-page__error">Error: {error.message}</p>}
 
       {!loading && !error && (

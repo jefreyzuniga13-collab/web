@@ -1,16 +1,7 @@
-import React from "react"
-
+import React, { useMemo, useState } from "react"
 import MapPicker from "@/Components/Common/MapPicker"
-
-import type {
-  ClientLocationDto,
-  Coords,
-  LocationMode
-} from "@/Interfaces/Ecommerce/ClientLocationInterface"
-
-import type {
-  BillingFormState
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type { BillingFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 
 interface Props {
   /**
@@ -20,12 +11,6 @@ interface Props {
 
   /**
    * Modo actual de ubicación.
-   *
-   * existing:
-   * Usa una dirección guardada.
-   *
-   * new:
-   * Usa una nueva ubicación marcada en el mapa.
    */
   locationMode: LocationMode
 
@@ -45,12 +30,12 @@ interface Props {
   setSelectedAddressId: (selectedAddressId: number | null) => void
 
   /**
-   * Datos del formulario de facturación/dirección.
+   * Datos del formulario de dirección.
    */
   billingForm: BillingFormState
 
   /**
-   * Actualiza el formulario de facturación/dirección.
+   * Actualiza el formulario de dirección.
    */
   setBillingForm: React.Dispatch<React.SetStateAction<BillingFormState>>
 
@@ -66,7 +51,6 @@ interface Props {
 
   /**
    * Dirección seleccionada completa.
-   * Se usa solo para mostrar un resumen visual.
    */
   selectedAddress: ClientLocationDto | null
 
@@ -76,7 +60,7 @@ interface Props {
   handleBillingChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 
   /**
-   * Continúa al paso de divisa/pago.
+   * Continúa al paso de divisa o pago.
    */
   handleGoToCurrency: () => void
 
@@ -86,16 +70,35 @@ interface Props {
   handleCoordsChange: (coords: Coords) => void
 
   /**
-   * Bloquea el cambio de ubicación cuando la dirección ya viene fija
-   * desde el LogCart.
+   * Indica si la ubicación venía fija desde el carrito.
    */
   isLocked?: boolean
 
   /**
    * Indica si el pedido será retirado en sucursal.
-   * En ese caso no se requiere mapa ni dirección.
    */
   isPickup?: boolean
+}
+
+const normalizeText = (value: unknown): string => {
+  return String(value ?? "")
+    .toLowerCase()
+    .trim()
+}
+
+const getAddressId = (address: ClientLocationDto): number | null => {
+  if (address.idDireccion == null) return null
+
+  return Number(address.idDireccion)
+}
+
+const hasCoords = (address: ClientLocationDto): boolean => {
+  return (
+    address.latitud !== undefined &&
+    address.longitud !== undefined &&
+    address.latitud !== null &&
+    address.longitud !== null
+  )
 }
 
 export const LocationSection = ({
@@ -115,34 +118,69 @@ export const LocationSection = ({
   isLocked = false,
   isPickup = false
 }: Props) => {
+  const [addressSearch, setAddressSearch] = useState("")
+
   const hasSaved = addressList.length > 0
 
+  const filteredAddresses = useMemo(() => {
+    const term = normalizeText(addressSearch)
+
+    if (!term) return addressList
+
+    return addressList.filter((address) => {
+      const nombre = normalizeText(address.nombre)
+      const descripcion = normalizeText(address.descripcion)
+      const referencia = normalizeText(address.referencia)
+
+      return (
+        nombre.includes(term) ||
+        descripcion.includes(term) ||
+        referencia.includes(term)
+      )
+    })
+  }, [addressList, addressSearch])
+
+  const selectedAddressText = useMemo(() => {
+    if (!selectedAddress) return ""
+
+    return [
+      selectedAddress.nombre,
+      selectedAddress.descripcion,
+      selectedAddress.referencia
+    ]
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+      .join(" | ")
+  }, [selectedAddress])
+
   /**
-   * Cambia a dirección guardada.
+   * Cambia al modo de dirección guardada.
    */
   const handleUseExistingAddress = () => {
-    if (isLocked || isPickup) return
+    if (isPickup) return
 
     setLocationMode("existing")
+    setSelectedCoords(null)
+    setAddressSearch("")
   }
 
   /**
-   * Cambia a nueva dirección en mapa.
-   *
-   * Limpia dirección seleccionada y coordenadas anteriores para evitar
-   * mezclar información vieja con la nueva ubicación.
+   * Cambia al modo de marcar ubicación en mapa.
    */
   const handleUseNewAddress = () => {
-    if (isLocked || isPickup) return
+    if (isPickup) return
 
     setLocationMode("new")
     setSelectedAddressId(null)
     setSelectedCoords(null)
+    setAddressSearch("")
 
     setBillingForm((prev) => ({
       ...prev,
-      address: prev.addressName ? "" : prev.address,
-      addressName: ""
+      address: "",
+      addressName: "",
+      city: "",
+      country: prev.country || "NI"
     }))
   }
 
@@ -150,16 +188,14 @@ export const LocationSection = ({
    * Selecciona una dirección guardada y copia sus datos al formulario.
    */
   const handleSelectAddress = (address: ClientLocationDto) => {
-    if (isLocked || isPickup) return
+    if (isPickup) return
 
-    const addressId = address.idDireccion ?? null
+    const addressId = getAddressId(address)
 
+    setLocationMode("existing")
     setSelectedAddressId(addressId)
 
-    if (
-      address.latitud !== undefined &&
-      address.longitud !== undefined
-    ) {
+    if (hasCoords(address)) {
       setSelectedCoords({
         latitud: Number(address.latitud),
         longitud: Number(address.longitud)
@@ -170,107 +206,180 @@ export const LocationSection = ({
 
     setBillingForm((prev) => ({
       ...prev,
-      address: address.descripcion ?? prev.address,
-      addressName: address.nombre ?? prev.addressName
+      address: address.descripcion ?? "",
+      addressName: address.nombre ?? "",
+      city: address.referencia ?? "",
+      country: prev.country || "NI"
     }))
   }
 
   return (
     <div className="checkout-section checkout-section__location">
-      <div className="checkout-location__container">
+      <div className="checkout-location__header">
         <h2 className="checkout-section__title">
-          Marca tu ubicación en el mapa o selecciona una guardada
+          Selecciona la dirección de entrega
         </h2>
 
-        {isPickup && (
-          <div className="checkout-pickup-info">
-            <p>
-              <strong>Retiro en sucursal</strong>
-              <br />
-              No se requiere seleccionar dirección ni ubicación en el mapa.
-            </p>
-          </div>
-        )}
-
         {!isPickup && (
-          <div className="checkout-location-mode">
-            {hasSaved ? (
-              <>
-                <label className="checkout-location-option">
-                  <input
-                    type="radio"
-                    name="locationMode"
-                    value="existing"
-                    checked={locationMode === "existing"}
-                    onChange={handleUseExistingAddress}
-                    disabled={isLocked}
-                  />
-                  Usar una dirección guardada
-                </label>
+          <p className="checkout-location__subtitle">
+            Puedes usar una dirección guardada o marcar una nueva ubicación en
+            el mapa.
+          </p>
+        )}
+      </div>
 
-                <label className="checkout-location-option">
-                  <input
-                    type="radio"
-                    name="locationMode"
-                    value="new"
-                    checked={locationMode === "new"}
-                    onChange={handleUseNewAddress}
-                    disabled={isLocked}
-                  />
-                  Usar nueva dirección en el mapa
-                </label>
-              </>
-            ) : (
-              <p>
-                No tienes direcciones guardadas. Selecciona una ubicación en el
-                mapa.
-              </p>
-            )}
+      {isPickup && (
+        <div className="checkout-pickup-info">
+          <p>
+            <strong>Retiro en sucursal</strong>
+          </p>
+
+          <span>
+            No se requiere seleccionar dirección ni ubicación en el mapa.
+          </span>
+        </div>
+      )}
+
+      {!isPickup && (
+        <div className="checkout-location-mode">
+          {hasSaved && (
+            <label
+              className={
+                locationMode === "existing"
+                  ? "checkout-location-option checkout-location-option--active"
+                  : "checkout-location-option"
+              }
+            >
+              <input
+                type="radio"
+                name="locationMode"
+                value="existing"
+                checked={locationMode === "existing"}
+                onChange={handleUseExistingAddress}
+              />
+
+              <span className="checkout-location-option__content">
+                <strong>Dirección guardada</strong>
+                <small>Usar una dirección registrada.</small>
+              </span>
+            </label>
+          )}
+
+          <label
+            className={
+              locationMode === "new"
+                ? "checkout-location-option checkout-location-option--active"
+                : "checkout-location-option"
+            }
+          >
+            <input
+              type="radio"
+              name="locationMode"
+              value="new"
+              checked={locationMode === "new"}
+              onChange={handleUseNewAddress}
+            />
+
+            <span className="checkout-location-option__content">
+              <strong>Marcar en mapa</strong>
+              <small>Seleccionar una nueva ubicación.</small>
+            </span>
+          </label>
+        </div>
+      )}
+
+      {isLocked && !isPickup && (
+        <div className="checkout-location-warning">
+          Esta dirección venía seleccionada desde el carrito. Puedes cambiarla
+          si necesitas usar otra ubicación.
+        </div>
+      )}
+
+      <div className="checkout-location__container">
+        {!isPickup && !hasSaved && locationMode !== "new" && (
+          <div className="checkout-location-empty">
+            <p>No tienes direcciones guardadas.</p>
+
+            <button
+              type="button"
+              className="checkout-location-empty__btn"
+              onClick={handleUseNewAddress}
+            >
+              Usar mapa
+            </button>
           </div>
         )}
 
         {!isPickup && locationMode === "existing" && hasSaved && (
-          <div className="checkout-address-list">
-            {addressList.map((address) => {
-              const isActive =
-                Number(selectedAddressId) === Number(address.idDireccion)
+          <div className="checkout-address-panel">
+            <div className="checkout-address-search">
+              <label className="checkout-label" htmlFor="addressSearch">
+                Buscar dirección
+              </label>
 
-              return (
-                <button
-                  key={address.idDireccion}
-                  type="button"
-                  disabled={isLocked}
-                  className={
-                    isActive
-                      ? "checkout-address checkout-address--active"
-                      : "checkout-address"
-                  }
-                  onClick={() => handleSelectAddress(address)}
-                >
-                  <span className="checkout-address__name">
-                    {address.nombre}
-                  </span>
+              <input
+                id="addressSearch"
+                type="text"
+                className="checkout-input"
+                value={addressSearch}
+                onChange={(event) => setAddressSearch(event.target.value)}
+                placeholder="Buscar por nombre, dirección o referencia"
+              />
+            </div>
 
-                  <span className="checkout-address__description">
-                    {address.descripcion}
-                  </span>
+            <div className="checkout-address-list">
+              {filteredAddresses.map((address) => {
+                const addressId = getAddressId(address)
+                const isActive = Number(selectedAddressId) === Number(addressId)
 
-                  {address.referencia && (
-                    <span className="checkout-address__description">
-                      {address.referencia}
+                return (
+                  <button
+                    key={address.idDireccion}
+                    type="button"
+                    className={
+                      isActive
+                        ? "checkout-address checkout-address--active"
+                        : "checkout-address"
+                    }
+                    onClick={() => handleSelectAddress(address)}
+                  >
+                    <span className="checkout-address__name">
+                      {address.nombre || "Dirección sin nombre"}
                     </span>
-                  )}
-                </button>
-              )
-            })}
+
+                    <span className="checkout-address__description">
+                      {address.descripcion || "Sin descripción"}
+                    </span>
+
+                    {address.referencia && (
+                      <span className="checkout-address__reference">
+                        {address.referencia}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+
+              {filteredAddresses.length === 0 && (
+                <div className="checkout-address-empty">
+                  No se encontraron direcciones con esa búsqueda.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {!isPickup && locationMode === "new" && (
-          <MapPicker
-            value={selectedCoords}
-            onChange={handleCoordsChange}
-          />
+          <div className="checkout-map-panel">
+            <p className="checkout-location__hint">
+              Haz clic en el mapa para marcar el lugar de entrega.
+            </p>
+
+            <MapPicker
+              value={selectedCoords}
+              onChange={handleCoordsChange}
+            />
+          </div>
         )}
       </div>
 
@@ -278,117 +387,75 @@ export const LocationSection = ({
         {!isPickup && locationMode === "existing" && selectedAddress && (
           <div className="checkout-current-location">
             <p>
-              <strong>Dirección seleccionada:</strong>
+              <strong>Dirección seleccionada</strong>
             </p>
-            <p>{selectedAddress.descripcion}</p>
 
-            {selectedAddress.referencia && (
-              <p>{selectedAddress.referencia}</p>
-            )}
+            <span>{selectedAddressText}</span>
           </div>
         )}
 
-        {!isPickup && locationMode === "new" && (
-          <div className="checkout-current-location">
-            <p className="checkout-location__hint">
-              Haz clic en el mapa para marcar el lugar de entrega.
-            </p>
-          </div>
-        )}
-
-        <div className="checkout-grid">
-          <div className="checkout-field">
-            <label className="checkout-label" htmlFor="firstName">
-              Nombre
-            </label>
-
-            <input
-              id="firstName"
-              type="text"
-              className="checkout-input"
-              value={billingForm.firstName}
-              onChange={handleBillingChange}
-              disabled={isLocked && locationMode !== "new"}
-            />
-          </div>
-
-          <div className="checkout-field">
-            <label className="checkout-label" htmlFor="lastName">
-              Apellidos
-            </label>
-
-            <input
-              id="lastName"
-              type="text"
-              className="checkout-input"
-              value={billingForm.lastName}
-              onChange={handleBillingChange}
-              disabled={isLocked && locationMode !== "new"}
-            />
-          </div>
-
-          <div className="checkout-field">
-            <label className="checkout-label" htmlFor="country">
-              País
-            </label>
-
-            <input
-              id="country"
-              type="text"
-              className="checkout-input"
-              value={billingForm.country}
-              onChange={handleBillingChange}
-              disabled={isLocked && locationMode !== "new"}
-            />
-          </div>
-
-          <div className="checkout-field">
-            <label className="checkout-label" htmlFor="city">
-              Ciudad
-            </label>
-
-            <input
-              id="city"
-              type="text"
-              className="checkout-input"
-              value={billingForm.city}
-              onChange={handleBillingChange}
-              disabled={isLocked && locationMode !== "new"}
-            />
-          </div>
-
-          <div className="checkout-field checkout-field--full">
-            <label className="checkout-label" htmlFor="address">
-              Dirección
-            </label>
-
-            <input
-              id="address"
-              type="text"
-              className="checkout-input"
-              value={billingForm.address}
-              onChange={handleBillingChange}
-              disabled={isLocked && locationMode !== "new"}
-            />
-          </div>
-
-          {locationMode === "new" && !isPickup && (
-            <div className="checkout-field checkout-field--full">
-              <label className="checkout-label" htmlFor="addressName">
-                Nombre de la dirección
+        {!isPickup && (
+          <div className="checkout-grid">
+            <div className="checkout-field">
+              <label className="checkout-label" htmlFor="country">
+                País
               </label>
 
               <input
-                id="addressName"
+                id="country"
                 type="text"
                 className="checkout-input"
-                value={billingForm.addressName}
+                value={billingForm.country}
                 onChange={handleBillingChange}
-                disabled={isLocked}
               />
             </div>
-          )}
-        </div>
+
+            <div className="checkout-field">
+              <label className="checkout-label" htmlFor="city">
+                Ciudad
+              </label>
+
+              <input
+                id="city"
+                type="text"
+                className="checkout-input"
+                value={billingForm.city}
+                onChange={handleBillingChange}
+              />
+            </div>
+
+            <div className="checkout-field checkout-field--full">
+              <label className="checkout-label" htmlFor="address">
+                Dirección
+              </label>
+
+              <input
+                id="address"
+                type="text"
+                className="checkout-input"
+                value={billingForm.address}
+                onChange={handleBillingChange}
+              />
+            </div>
+
+            {locationMode === "new" && (
+              <div className="checkout-field checkout-field--full">
+                <label className="checkout-label" htmlFor="addressName">
+                  Nombre de la dirección
+                </label>
+
+                <input
+                  id="addressName"
+                  type="text"
+                  className="checkout-input"
+                  value={billingForm.addressName}
+                  onChange={handleBillingChange}
+                  placeholder="Casa, trabajo, oficina, etc."
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           type="button"

@@ -86,7 +86,7 @@ const PrivacyPolicy: React.FC = () => {
 
         <div className="login__copyright">
                 <span>© 2026 PC GROUP S.A. Todos los derechos reservados.</span>
-                <span>Versión 26061</span>
+                <span>Versión 26071</span>
               </div>
       </article>
     </main>

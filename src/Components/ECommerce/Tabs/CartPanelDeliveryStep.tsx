@@ -1,10 +1,24 @@
 import type {
   ClientLocationDto
 } from "@/Interfaces/Ecommerce/ClientLocationInterface"
-
+import { BsPersonBoundingBox } from "react-icons/bs";
+import { TbCoins } from "react-icons/tb";
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
+import { FaRegNoteSticky } from "react-icons/fa6";
+import { FiMapPin } from "react-icons/fi";
+import { IoStorefrontOutline } from "react-icons/io5";
 
 interface Props {
+  /**
+   * Nombre que se usará para generar la factura/PDF.
+   */
+  invoiceName: string
+
+  /**
+   * Actualiza el nombre de facturación.
+   */
+  setInvoiceName: (value: string) => void
+
   /**
    * Observación general del pedido.
    */
@@ -108,6 +122,8 @@ interface Props {
 }
 
 export default function CartPanelDeliveryStep({
+  invoiceName,
+  setInvoiceName,
   observation,
   setObservation,
   addDescription,
@@ -134,6 +150,26 @@ export default function CartPanelDeliveryStep({
       <div className="productTab-content-footer">
         <div className="productTab-content__inputContaner">
           <div className="productTab-content__inputs">
+
+             <div className="productTab-content__divContainer">
+              <BsPersonBoundingBox fontSize={14}/>
+               <p className="productTab-content__text">Nombre de la persona que recibe</p>
+            </div>
+            <input
+              type="text"
+              name="invoiceName"
+              id="invoiceName"
+              className="productTab-content__input"
+              placeholder="A nombre de"
+              value={invoiceName}
+              maxLength={200}
+              onChange={(event) => setInvoiceName(event.target.value)}
+            />
+
+            <div className="productTab-content__divContainer">
+              <FaRegNoteSticky  fontSize={14}/>
+              <p className="productTab-content__text">Observaciones generales del pedido</p>
+            </div>
             <textarea
               rows={5}
               name="observation"
@@ -144,6 +180,10 @@ export default function CartPanelDeliveryStep({
               onChange={(event) => setObservation(event.target.value)}
             />
 
+            <div className="productTab-content__divContainer">
+              <FiMapPin  fontSize={14}/>
+              <p className="productTab-content__text">Dirección de entrega</p>
+            </div>
             <textarea
               rows={5}
               name="descripcion"
@@ -159,6 +199,10 @@ export default function CartPanelDeliveryStep({
               }}
             />
 
+              <div className="productTab-content__divContainer">
+              <TbCoins   fontSize={14}/>
+              <p className="productTab-content__text">Costo de envío</p>
+            </div>
             <div className="transportationCost__input">
               <input
                 type="number"
@@ -181,7 +225,12 @@ export default function CartPanelDeliveryStep({
               />
             </div>
 
-            <div className="transportationCost__checkbox">
+              <div className="productTab-content__divContainer">
+              <IoStorefrontOutline   fontSize={14}/>
+              <p className="productTab-content__text">Retirar en sucursal (Sin costo envío)</p>
+            </div>
+            <div className="transportationCost__checkbox"></div>
+              <div className="transportationCost__input">
               <input
                 type="checkbox"
                 id="retiraSucursal"

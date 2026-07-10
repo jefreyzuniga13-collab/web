@@ -10,6 +10,7 @@ import { logoutThunk } from "@/Context/Slices/Auth/authThunks"
 import type { AppDispatch } from "@/Context"
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import "@/Styles/Auth/MobileNavbar.css"
+import { clearCompanyState } from "@/Context/Slices/Auth/companySlice"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 
@@ -79,6 +80,9 @@ const MobileNavbar: React.FC = () => {
 
     await logoutAuth()
     dispatch(logoutThunk())
+    dispatch(clearCompanyState());
+
+
     navigate("/login", { replace: true })
   }
 

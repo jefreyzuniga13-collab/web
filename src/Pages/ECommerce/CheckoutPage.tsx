@@ -5,7 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import { toast } from "react-toastify"
 import type { AppDispatch, RootState } from "@/Context"
-import {getProductFromCarAsync,selectCarPCG} from "@/Context/Slices/Ecommerce/cartSlice"
+import { getProductFromCarAsync, selectCarPCG } from "@/Context/Slices/Ecommerce/cartSlice"
+import { selectPermiteMultipago, selectPermitePasarela } from "@/Context/Slices/Auth/authSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection"
 import LocationSection from "@/Components/ECommerce/Payment/LocationSection"
@@ -17,43 +18,27 @@ import { useIniciarPago } from "@/Hooks/Ecommerce/payment/useIniciarPago"
 import { usePayWithToken } from "@/Hooks/Ecommerce/payment/usePayWithToken"
 import { useCompleteFpi } from "@/Hooks/Ecommerce/payment/useCompleteFpi"
 import { useCheckoutPaymentState } from "@/Hooks/Ecommerce/payment/useCheckoutPaymentState"
-import {validateBillingForm,validateLocation} from "@/Utils/validation"
+import { validateBillingForm, validateLocation } from "@/Utils/validation"
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage"
-import {calculateDistance,obtenerBrowserInfo,safeNumber,safePositiveNumber} from "@/Utils/ECommerce/utils"
+import { calculateDistance, obtenerBrowserInfo, safeNumber, safePositiveNumber } from "@/Utils/ECommerce/utils"
 import { safeStr } from "@/Utils/ECommerce/formatters"
-import {buildPagoGenerico} from "@/Utils/ECommerce/buildPagoGenerico"
-import {buildFacturaTempo} from "@/Utils/ECommerce/buildFacturaTempo"
-import { procesarVentaCheckout} from "@/Utils/ECommerce/procesarVentaCheckout"
-import {
-  CHECKOUT_INVOICE_KEY,
-  CHECKOUT_PAYLOAD_KEY,
-  ECOMMERCEUSERID_KEY
-} from "@/Utils/ECommerce/keys"
-import type {
-  BillingFormState,
-  CheckoutStep,
-  Currencyto
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-import type {ClientLocationDto,Coords,LocationMode} from "@/Interfaces/Ecommerce/ClientLocationInterface"
-import type {
-  ObtenerDivisaPagosTipoReq,
-  ObtenerDivisaPagosTipoRes
-} from "@/Interfaces/Ecommerce/FacturaTempo"
-import type {
-  FaloteRequestDto
-} from "@/Interfaces/Crm/CartPCGInterface"
-import type {
-  LogCartResponseDto,
-  Payload
-} from "@/Interfaces/Crm/LogCartInterface"
-import type {
-  PowertranzPayWithTokenRequestDto
-} from "@/Interfaces/Ecommerce/powertranzInterface"
-import type {
-  CheckoutPaymentMethod
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
+import { buildPagoGenerico } from "@/Utils/ECommerce/buildPagoGenerico"
+import { buildFacturaTempo } from "@/Utils/ECommerce/buildFacturaTempo"
+import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
+import { construirDetallePago, obtenerTipoPagoDesdeMoneda, validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils"
+import { getAddressFromCoords } from "@/Utils/ECommerce/reverseGeocoding"
+import { CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY, ECOMMERCEUSERID_KEY } from "@/Utils/ECommerce/keys"
+import type { BillingFormState, CheckoutStep, Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type { FacturaTempo, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, PagoGenerico } from "@/Interfaces/Ecommerce/FacturaTempo"
+import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface"
+import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
+import type { PowertranzPayWithTokenRequestDto } from "@/Interfaces/Ecommerce/powertranzInterface"
+import type { CheckoutPaymentMethod } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
+
+const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
@@ -74,64 +59,46 @@ type FinalLocation = {
   longitud?: number | string | null
 }
 
-const round2 = (value: number): number => {
-  return Math.round((Number(value) + Number.EPSILON) * 100) / 100
-}
-
-const normalizeText = (value: unknown): string => {
-  return safeStr(value).toLowerCase().trim()
-}
-
-/**
- * Convierte el método de pago que viene de PCG
- * al método centralizado del checkout.
- */
-const resolveMethod = (item: Currencyto): CheckoutPaymentMethod => {
-  const codPago = safeStr(item?.codPago).toUpperCase()
-  const descripcion = normalizeText(item?.descripcion_Pago)
-  const monedaFija = normalizeText(item?.moneda_Fija)
-
-  if (
-    codPago === "1" ||
-    descripcion.includes("efectivo") ||
-    monedaFija.includes("efectivo")
-  ) {
-    return "cash"
-  }
-
-  if (
-    codPago === "STR" ||
-    descripcion.includes("transfer") ||
-    descripcion.includes("transferencia") ||
-    monedaFija.includes("transfer")
-  ) {
-    return "transfer"
-  }
-
-  if (
-    codPago === "STA" ||
-    descripcion.includes("tarjeta manual") ||
-    descripcion === "tarjeta"
-  ) {
-    return "manualCard"
-  }
-
-  if (codPago === "PAS") {
-    return "gatewayCard"
-  }
-
-  return "cash"
-}
-
-/**
- * Construye el request para obtener bancos, tarjetas o tipos de pago.
- */
 const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
   return {
     codigo: "0",
     formulario: "1-",
     opcion: safeStr(item?.codPago)
   }
+}
+
+const getLogText = (
+  log: LogCartResponseDto | null,
+  keys: string[]
+): string => {
+  const source = log as Record<string, unknown> | null
+
+  if (!source) return ""
+
+  for (const key of keys) {
+    const value = safeStr(source[key])
+
+    if (value) return value
+  }
+
+  return ""
+}
+
+const getPayloadText = (
+  payload: Payload | undefined,
+  keys: string[]
+): string => {
+  const source = payload as Record<string, unknown> | undefined
+
+  if (!source) return ""
+
+  for (const key of keys) {
+    const value = safeStr(source[key])
+
+    if (value) return value
+  }
+
+  return ""
 }
 
 const CheckoutPage: React.FC = () => {
@@ -141,11 +108,13 @@ const CheckoutPage: React.FC = () => {
 
   const payload = location.state?.payload as Payload | undefined
   const carPCG = useAppSelector(selectCarPCG)
+  const permiteMultiPago = useAppSelector(selectPermiteMultipago)
+  const permitePasarela = useAppSelector(selectPermitePasarela)
 
   const [ecommerceUserId, setEcommerceUserId] = useState(0)
   const [orderId, setOrderId] = useState(0)
-
   const [step, setStep] = useState<CheckoutStep>("location")
+  const [initializingCheckout, setInitializingCheckout] = useState(true)
 
   const [billingForm, setBillingForm] = useState<BillingFormState>({
     firstName: "",
@@ -157,34 +126,19 @@ const CheckoutPage: React.FC = () => {
     addressName: ""
   })
 
-  const [selectedCoords, setSelectedCoords] =
-    useState<Coords | null>(null)
-
-  const [selectedCurrency, setSelectedCurrency] =
-    useState<Currencyto | null>(null)
-
-  const [locationMode, setLocationMode] =
-    useState<LocationMode>("existing")
-
-  const [selectedAddressId, setSelectedAddressId] =
-    useState<number | null>(null)
-
+  const [selectedCoords, setSelectedCoords] = useState<Coords | null>(null)
+  const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(null)
+  const [multiPagoActivo, setMultiPagoActivoState] = useState(false)
+  const [pagosMultiples, setPagosMultiples] = useState<PagoSeleccionado[]>([])
+  const [locationMode, setLocationMode] = useState<LocationMode>("existing")
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
   const [tip, setTip] = useState(0)
   const [transpCost, setTranspCost] = useState(0)
   const [distanceKm, setDistanceKm] = useState(0)
-
-  const [divisaOpts, setDivisaOpts] =
-    useState<ObtenerDivisaPagosTipoRes[]>([])
-
+  const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([])
   const [divisaLoading, setDivisaLoading] = useState(false)
-
-  const [existingLog, setExistingLog] =
-    useState<LogCartResponseDto | null>(null)
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [nearestBranch, setNearestBranch] =
-    useState<BranchLike | null>(null)
-
+  const [existingLog, setExistingLog] = useState<LogCartResponseDto | null>(null)
+  const [, setNearestBranch] = useState<BranchLike | null>(null)
   const [payNowLock, setPayNowLock] = useState(false)
   const [payNowCooldown, setPayNowCooldown] = useState(0)
 
@@ -194,22 +148,23 @@ const CheckoutPage: React.FC = () => {
     GetTransportationCostAsync,
     GetNearestBranchAsync,
     loading: invoiceLoading,
-
     InsertaFacturaAsync
   } = useInvoiceOrder()
 
-  const {
-    fetchByContactId,
-    UpdatedStatus
-  } = useLogCart()
-
-  const {
-    CreateAsync: createLocationAsync,
-    GetAsync,
-    clientLocations
-  } = useClientLocation()
-
+  const { fetchByContactId, UpdatedStatus } = useLogCart()
+  const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation()
   const { mutateAsync: completeFpiAsync } = useCompleteFpi()
+
+  const isPickup = existingLog?.retiraSucursal === "S"
+
+  const hasAgentDelivery = useMemo(() => {
+    if (!existingLog || isPickup) return false
+
+    return Boolean(
+      existingLog.addressId != null ||
+        safePositiveNumber(existingLog.transCost) > 0
+    )
+  }, [existingLog, isPickup])
 
   const addressList = useMemo<ClientLocationDto[]>(() => {
     return clientLocations ?? []
@@ -237,21 +192,23 @@ const CheckoutPage: React.FC = () => {
   }, [carPCG, existingLog?.totalEnPantalla])
 
   const getTransporteFactura = useCallback(() => {
-    const stateTransp = safePositiveNumber(transpCost)
-    const logTransp = safePositiveNumber(existingLog?.transCost)
+    if (isPickup) return 0
 
-    if (stateTransp > 0) return stateTransp
+    const logTransp = safePositiveNumber(existingLog?.transCost)
+    const stateTransp = safePositiveNumber(transpCost)
+
     if (logTransp > 0) return logTransp
+    if (stateTransp > 0) return stateTransp
 
     return 0
-  }, [transpCost, existingLog?.transCost])
+  }, [isPickup, existingLog?.transCost, transpCost])
 
   const totalPagar = useMemo(() => {
     const totalBase = safePositiveNumber(cartTotal)
     const transporte = getTransporteFactura()
     const propina = safePositiveNumber(tip)
 
-    return round2(totalBase + transporte + propina)
+    return totalBase + transporte + propina;
   }, [cartTotal, getTransporteFactura, tip])
 
   const payment = useCheckoutPaymentState({
@@ -332,8 +289,7 @@ const CheckoutPage: React.FC = () => {
         const params = new URLSearchParams({
           approved: String(completeRes.data.approved ?? false),
           orderId: paymentResult?.orderIdentifier ?? "",
-          transactionIdentifier:
-            paymentResult?.transactionIdentifier ?? "",
+          transactionIdentifier: paymentResult?.transactionIdentifier ?? "",
           panToken: paymentResult?.panToken ?? "",
           cardBrand: paymentResult?.cardBrand ?? "",
           cardSuffix: paymentResult?.cardSuffix ?? "",
@@ -349,15 +305,7 @@ const CheckoutPage: React.FC = () => {
     }
   })
 
-  const locationLockedByLog = useMemo(() => {
-    return Boolean(
-      existingLog?.addressId ||
-        existingLog?.retiraSucursal === "S"
-    )
-  }, [existingLog])
-
-  const isPickup = existingLog?.retiraSucursal === "S"
-  const isGatewayCard = method === "gatewayCard"
+  const isGatewayCard = !multiPagoActivo && method === "gatewayCard"
 
   const isProcessingPayment =
     iniciarPagoMutation.isPending ||
@@ -368,10 +316,13 @@ const CheckoutPage: React.FC = () => {
     payNowCooldown > 0 ||
     isProcessingPayment ||
     invoiceLoading ||
-    !canPay
+    (!multiPagoActivo && !canPay)
 
   const goToStep = (nextStep: CheckoutStep | string) => {
-    if (locationLockedByLog && nextStep === "location") {
+    if (
+      (isPickup || hasAgentDelivery) &&
+      nextStep === "location"
+    ) {
       setStep("currency")
       return
     }
@@ -379,7 +330,24 @@ const CheckoutPage: React.FC = () => {
     setStep(nextStep as CheckoutStep)
   }
 
-  const loadDivisaIfNeeded = async (item: Currencyto) => {
+  const setMultiPagoActivo = (value: boolean) => {
+    setMultiPagoActivoState(value)
+    setSelectedCurrency(null)
+    setDivisaOpts([])
+    setDivisaSelected(null)
+    setSelectedSavedCard(null)
+
+    if (value) {
+      setMethod(null)
+      return
+    }
+
+    setPagosMultiples([])
+  }
+
+  const loadDivisaIfNeeded = async (
+    item: Currencyto
+  ): Promise<ObtenerDivisaPagosTipoRes[]> => {
     setDivisaLoading(true)
 
     try {
@@ -406,25 +374,38 @@ const CheckoutPage: React.FC = () => {
 
       setDivisaOpts(fixed)
       setDivisaSelected(fixed.length > 0 ? fixed[0] : null)
+
+      return fixed
     } catch {
       setDivisaOpts([])
       setDivisaSelected(null)
       toast.error("No se pudieron cargar las opciones de pago.")
+      return []
     } finally {
       setDivisaLoading(false)
     }
   }
 
   const handleSelectCurrency = async (item: Currencyto) => {
-    setSelectedCurrency(item)
+    const nextMethod = obtenerTipoPagoDesdeMoneda(item)
 
-    const nextMethod = resolveMethod(item)
+    if (nextMethod === "gatewayCard" && !permitePasarela) {
+      toast.error("La pasarela de pago no está habilitada para esta empresa.")
+      return
+    }
+
+    setSelectedCurrency(item)
     setMethod(nextMethod)
 
     await loadDivisaIfNeeded(item)
   }
 
   const handleGoToPayment = () => {
+    if (multiPagoActivo) {
+      goToStep("paymentMethod")
+      return
+    }
+
     if (!selectedCurrency) {
       toast.error("Selecciona una forma de pago.")
       return
@@ -434,8 +415,8 @@ const CheckoutPage: React.FC = () => {
   }
 
   const calcularEntrega = async (finalLocation: FinalLocation) => {
-    if (isPickup) {
-      setTranspCost(0)
+    if (isPickup || hasAgentDelivery) {
+      setTranspCost(isPickup ? 0 : safeNumber(existingLog?.transCost, 0))
       setDistanceKm(0)
       return
     }
@@ -465,8 +446,40 @@ const CheckoutPage: React.FC = () => {
     setTranspCost(Number(transportation ?? 0))
   }
 
+  const handleCoordsChangeFromMap = async (coords: Coords) => {
+    setSelectedCoords(coords)
+
+    try {
+      const address = await getAddressFromCoords(
+        Number(coords.latitud),
+        Number(coords.longitud)
+      )
+
+      setBillingForm((prev) => ({
+        ...prev,
+        city: address.city || prev.city,
+        country: address.country || prev.country || "NI",
+        address: address.fullAddress || prev.address,
+        addressName: prev.addressName || "Dirección seleccionada"
+      }))
+    } catch {
+      toast.info("Ubicación seleccionada. Completa la dirección manualmente.")
+    }
+  }
+
   const handleGoToCurrencyFromLocation = async () => {
     if (isPickup) {
+      setTranspCost(0)
+      setDistanceKm(0)
+      setSelectedAddressId(null)
+      setSelectedCoords(null)
+      goToStep("currency")
+      return
+    }
+
+    if (hasAgentDelivery) {
+      setTranspCost(safeNumber(existingLog?.transCost, 0))
+      setDistanceKm(0)
       goToStep("currency")
       return
     }
@@ -503,6 +516,34 @@ const CheckoutPage: React.FC = () => {
         nombre: "Retira en sucursal",
         descripcion: existingLog?.branchName ?? "",
         referencia: existingLog?.branch ?? ""
+      }
+    }
+
+    if (hasAgentDelivery) {
+      const saved = selectedAddressId == null
+        ? null
+        : addressList.find(
+            (item) => Number(item.idDireccion) === Number(selectedAddressId)
+          )
+
+      if (saved) return saved as FinalLocation
+
+      return {
+        idDireccion: selectedAddressId,
+        nombre:
+          getLogText(existingLog, ["addressName", "nombreDireccion"]) ||
+          "Dirección de entrega",
+        descripcion:
+          getLogText(existingLog, [
+            "address",
+            "direccion",
+            "direccionCte",
+            "descripcionDireccion",
+            "descripcion"
+          ]) || "Dirección indicada por el agente",
+        referencia:
+          getLogText(existingLog, ["referencia", "reference", "city", "ciudad"]) ||
+          safeStr(existingLog?.branch)
       }
     }
 
@@ -578,13 +619,67 @@ const CheckoutPage: React.FC = () => {
     }
   }
 
+  const construirDetallePagoFinal = ({
+    facturaBase,
+    codSucursalFactura,
+    tasaCambio
+  }: {
+    facturaBase: FacturaTempo
+    codSucursalFactura: string
+    tasaCambio: number
+  }): PagoGenerico[] => {
+    if (multiPagoActivo) {
+      const error = validarPagosSeleccionados(
+        pagosMultiples,
+        totalPagar
+      )
+
+      if (error) {
+        throw new Error(error)
+      }
+
+      const facturaParaPago = {
+        ...facturaBase,
+        tasaCambio,
+        moneda: safeStr(facturaBase.moneda) || "1",
+        codEmpresa: safeStr(facturaBase.codEmpresa)
+      } as FacturaTempo
+
+      return construirDetallePago(
+        pagosMultiples,
+        facturaParaPago,
+        codSucursalFactura,
+        totalPagar
+      )
+    }
+
+    if (!method) {
+      throw new Error("Selecciona un método de pago.")
+    }
+
+    return [
+      buildPagoGenerico({
+        method,
+        total: totalPagar,
+        selectedCurrency,
+        divisaSelected,
+        codSucursal: codSucursalFactura,
+        tasaCambio,
+        transfer,
+        manualCardData,
+        moneda: safeStr(facturaBase.moneda) || "1",
+        codEmpresa: safeStr(facturaBase.codEmpresa)
+      })
+    ]
+  }
+
   const handlePayNow = async () => {
     if (!payload) {
       toast.error("No se encontró la información del pedido.")
       return
     }
 
-    if (!method) {
+    if (!multiPagoActivo && !method) {
       toast.error("Selecciona un método de pago.")
       return
     }
@@ -602,7 +697,7 @@ const CheckoutPage: React.FC = () => {
         return
       }
 
-      if (!isPickup) {
+      if (!isPickup && !hasAgentDelivery) {
         const validLocation = validateLocation(
           locationMode,
           selectedAddressId,
@@ -613,7 +708,6 @@ const CheckoutPage: React.FC = () => {
       }
 
       const facturaBase = await loadFacturaTempo()
-
       const codSucursalFactura = safeStr(existingLog?.branch)
 
       if (!codSucursalFactura) {
@@ -621,9 +715,7 @@ const CheckoutPage: React.FC = () => {
         return
       }
 
-      await validateTotalsBeforeInvoice({
-        codSucursalFactura
-      })
+      await validateTotalsBeforeInvoice({ codSucursalFactura })
 
       const falote: FaloteRequestDto = {
         codSucursal: codSucursalFactura,
@@ -641,19 +733,69 @@ const CheckoutPage: React.FC = () => {
       const tasaCambio = 36.6243
 
       const nombreCliente =
-        safeStr(existingLog?.contactName) ||
-        `${billingForm.firstName} ${billingForm.lastName}`.trim() ||
-        "Cliente"
+      getLogText(existingLog, [
+        "invoiceName",
+        "InvoiceName",
+        "nombreFactura",
+        "nombreCliente"
+      ]) ||
+      getLogText(existingLog, [
+        "contactName",
+        "clientName",
+        "customerName",
+        "cliente"
+      ]) ||
+      getPayloadText(payload, ["fullName"]) ||
+      "Cliente"
 
-      const pagoGenerico = buildPagoGenerico({
-        method,
-        total: totalPagar,
-        selectedCurrency,
-        divisaSelected,
-        codSucursal: codSucursalFactura,
-        tasaCambio,
-        transfer,
-        manualCardData
+      const telefonoContacto =
+        getLogText(existingLog, [
+          "contactPhone",
+          "phone",
+          "telefono",
+          "telefonoCte",
+          "waId"
+        ]) ||
+        getPayloadText(payload, [
+          "phone",
+          "telefono",
+          "contactPhone"
+        ])
+
+      const sellerName =
+        getLogText(existingLog, [
+          "createdByFullName",
+          "createdByNickname",
+          "createdByName",
+          "userName",
+          "sellerName",
+        ]) ||
+        getPayloadText(payload, [
+          "sellerName",
+          "userName"
+        ]) ||
+        "Venta en línea"
+
+      const companyName =
+        getLogText(existingLog, [
+          "companyName",
+        ]) ||
+        getPayloadText(payload, [
+          "companyName"
+        ]) ||
+        "Empresa"
+
+      const pdfContext = {
+        sellerName,
+        contactName: nombreCliente,
+        contactPhone: telefonoContacto,
+        companyName
+      }
+
+      const detallePago = construirDetallePagoFinal({
+        facturaBase,
+        codSucursalFactura,
+        tasaCambio
       })
 
       const invoiceReqFinal = buildFacturaTempo({
@@ -672,14 +814,14 @@ const CheckoutPage: React.FC = () => {
             : "N",
         observacion: existingLog?.observacion ?? "",
         serie: existingLog?.serie ?? facturaBase.serie,
-        detallePago: [pagoGenerico],
+        detallePago,
         tasaCambio,
         correo: billingForm.email,
-        telefonoCte:  ""
+        telefonoCte: telefonoContacto
       })
 
       if (isGatewayCard) {
-        const totalMonto = round2(totalPagar)
+        const totalMonto = totalPagar
 
         sessionStorage.setItem(
           CHECKOUT_INVOICE_KEY,
@@ -694,6 +836,11 @@ const CheckoutPage: React.FC = () => {
         sessionStorage.setItem(
           ECOMMERCEUSERID_KEY,
           JSON.stringify(ecommerceUserId)
+        )
+
+        sessionStorage.setItem(
+          CHECKOUT_PDF_CONTEXT_KEY,
+          JSON.stringify(pdfContext)
         )
 
         if (selectedSavedCard?.panToken) {
@@ -728,7 +875,9 @@ const CheckoutPage: React.FC = () => {
 
       await procesarVentaCheckout({
         source: "customerLink",
-        paymentMethod: method,
+        paymentMethod: multiPagoActivo
+          ? "cash"
+          : method as CheckoutPaymentMethod,
         paymentState: payment.paymentState,
         invoiceReqFinal,
         payload,
@@ -737,6 +886,7 @@ const CheckoutPage: React.FC = () => {
         usarPdfPagoElectronico: false,
         codSucursalFactura,
         consecutivo,
+        pdfContext,
         fetchByContactId,
         updatedStatus: UpdatedStatus,
         insertaFacturaAsync: InsertaFacturaAsync,
@@ -777,10 +927,49 @@ const CheckoutPage: React.FC = () => {
     if (!payload?.contactId) return
 
     const loadInitialData = async () => {
+      setInitializingCheckout(true)
+
       try {
         const log = await fetchByContactId(payload.contactId)
+        const logIsPickup = log?.retiraSucursal === "S"
+        const logHasAgentDelivery =
+          !logIsPickup &&
+          (
+            log?.addressId != null ||
+            safePositiveNumber(log?.transCost) > 0
+          )
 
         setExistingLog(log)
+
+        if (logIsPickup) {
+          setTranspCost(0)
+          setDistanceKm(0)
+          setSelectedAddressId(null)
+          setSelectedCoords(null)
+          setLocationMode("existing")
+
+          await GetCurrencyAsync()
+
+          setStep("currency")
+          return
+        }
+
+        if (logHasAgentDelivery) {
+          if (log?.addressId != null) {
+            setSelectedAddressId(Number(log.addressId))
+            setLocationMode("existing")
+          }
+
+          setSelectedCoords(null)
+          setDistanceKm(0)
+          setTranspCost(safeNumber(log?.transCost, 0))
+
+          await GetCurrencyAsync()
+          await GetAsync(Number(payload.ecommerceUserId ?? 0))
+
+          setStep("currency")
+          return
+        }
 
         if (log?.addressId != null) {
           setSelectedAddressId(Number(log.addressId))
@@ -794,11 +983,11 @@ const CheckoutPage: React.FC = () => {
         await GetCurrencyAsync()
         await GetAsync(Number(payload.ecommerceUserId ?? 0))
 
-        if (log?.retiraSucursal === "S") {
-          setStep("currency")
-        }
+        setStep("location")
       } catch {
         toast.error("No se pudo cargar la información del checkout.")
+      } finally {
+        setInitializingCheckout(false)
       }
     }
 
@@ -812,6 +1001,12 @@ const CheckoutPage: React.FC = () => {
   ])
 
   useEffect(() => {
+    if (!permiteMultiPago && multiPagoActivo) {
+      setMultiPagoActivo(false)
+    }
+  }, [permiteMultiPago, multiPagoActivo])
+
+  useEffect(() => {
     if (payNowCooldown <= 0) return
 
     const timer = window.setInterval(() => {
@@ -823,6 +1018,7 @@ const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     if (!selectedCoords) return
+    if (isPickup || hasAgentDelivery) return
 
     void calcularEntrega({
       descripcion: billingForm.address,
@@ -842,7 +1038,13 @@ const CheckoutPage: React.FC = () => {
 
         <div className="checkout-main">
           <div className="checkout-left">
-            {step === "location" && (
+            {initializingCheckout && (
+              <div className="checkout-section">
+                <p className="checkout-hint">Cargando checkout...</p>
+              </div>
+            )}
+
+            {!initializingCheckout && step === "location" && (
               <LocationSection
                 addressList={addressList}
                 locationMode={locationMode}
@@ -865,15 +1067,13 @@ const CheckoutPage: React.FC = () => {
                   }))
                 }}
                 handleGoToCurrency={handleGoToCurrencyFromLocation}
-                handleCoordsChange={(coords: Coords) => {
-                  setSelectedCoords(coords)
-                }}
-                isLocked={locationLockedByLog}
+                handleCoordsChange={handleCoordsChangeFromMap}
+                isLocked={false}
                 isPickup={isPickup}
               />
             )}
 
-            {step === "currency" && (
+            {!initializingCheckout && step === "currency" && (
               <CurrencySection
                 step={step}
                 currency={currency}
@@ -882,10 +1082,14 @@ const CheckoutPage: React.FC = () => {
                 invoiceLoading={invoiceLoading}
                 setStep={goToStep}
                 handleGoToPayment={handleGoToPayment}
+                permiteMultiPago={permiteMultiPago}
+                permitePasarela={permitePasarela}
+                multiPagoActivo={multiPagoActivo}
+                setMultiPagoActivo={setMultiPagoActivo}
               />
             )}
 
-            {step === "paymentMethod" && (
+            {!initializingCheckout && step === "paymentMethod" && (
               <PaymentMethodComponent
                 step={step}
                 setStep={goToStep}
@@ -922,6 +1126,11 @@ const CheckoutPage: React.FC = () => {
                 backStep="currency"
                 payButtonText="Pagar ahora"
                 showMethodSelector={false}
+                multiPagoActivo={multiPagoActivo}
+                pagosMultiples={pagosMultiples}
+                setPagosMultiples={setPagosMultiples}
+                currency={currency}
+                cargarDivisas={loadDivisaIfNeeded}
               />
             )}
           </div>

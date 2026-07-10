@@ -1,3 +1,8 @@
+import type {
+  Dispatch,
+  SetStateAction
+} from "react"
+
 import CashPaymentSection from "@/Components/ECommerce/Payment/CashPaymentSection"
 import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection"
 import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection"
@@ -17,8 +22,6 @@ interface Props {
    * Método de pago seleccionado.
    *
    * Si es null, no se muestra ningún formulario.
-   * Esto evita que aparezca efectivo, transferencia o tarjeta
-   * antes de que el usuario seleccione una opción.
    */
   method: CheckoutPaymentMethod | null
 
@@ -60,7 +63,7 @@ interface Props {
   /**
    * Actualiza los datos de tarjeta manual.
    */
-  setManualCardData: React.Dispatch<React.SetStateAction<ManualCardFormState>>
+  setManualCardData: Dispatch<SetStateAction<ManualCardFormState>>
 
   /**
    * Id del usuario ecommerce.

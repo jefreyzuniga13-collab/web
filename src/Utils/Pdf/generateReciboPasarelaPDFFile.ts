@@ -49,6 +49,8 @@ export const generatePagoElectronicoPDFFile = ({
   const maxWidth = pageWidth - marginX * 2;
   let y = 10;
 
+
+  // Nuevo json [], lista de array.
   const noFactura = safeText(orderFac.DatosGenerales?.NoFactura) || "SN";
   const nombreCliente = safeText(orderFac.DatosGenerales?.Nombrede) || "SN";
   const fechaFactura = fmtDate(orderFac.DatosGenerales?.FechaFactura ?? "") || "SN";

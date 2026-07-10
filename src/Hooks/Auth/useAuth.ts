@@ -9,6 +9,7 @@ import { QUERY_KEYS } from "@/Constants/queryKeys";
 import type { ApiResponse, AuthData, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, VerifyEmailRequest, LogOutAtResponseDto,} from "@/Interfaces/Auth/AuthInterface";
 import { authService } from "@/Services/auth/AuthService";
 import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage";
+import { clearCompanyState } from "@/Context/Slices/Auth/companySlice";
 
 type UseAuthHook = {
   login: (payload: LoginRequest) => Promise<ApiResponse<AuthData>>;
@@ -91,6 +92,7 @@ const loginMutation = useMutation({
     mutationFn: () => authService.logoutAsync(),
     onSuccess: (response) => {
       dispatch(clearAuth());
+       dispatch(clearCompanyState());
       queryClient.removeQueries({ queryKey: QUERY_KEYS.conversations });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.agents });
       toast.success(response.message);

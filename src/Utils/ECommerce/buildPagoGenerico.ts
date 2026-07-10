@@ -21,13 +21,8 @@ const round2 = (value: number): number => {
 /**
  * Código usado para consultar opciones en GetDivisaPagosTipoAsync.
  *
- * Importante:
- * Esto NO siempre es el codPago final de PagoGenerico.
- *
- * Ejemplo:
- * manualCard usa "STA" para pedir opciones,
- * pero el codPago final puede ser 3, 6, etc.,
- * según lo que venga en divisaSelected.codigo.
+ * Este valor sirve para pedir opciones a PCG, no necesariamente para guardar
+ * el codPago final de PagoGenerico.
  */
 export const getPaymentCodeByMethod = (
   method: CheckoutPaymentMethod
@@ -43,13 +38,20 @@ export const getPaymentCodeByMethod = (
  * Concepto visible del pago.
  */
 export const getPaymentConceptByMethod = (
-  method: CheckoutPaymentMethod
+  method: CheckoutPaymentMethod,
+  divisaSelected?: ObtenerDivisaPagosTipoRes | null
 ): string => {
   if (method === "cash") return "Efectivo"
-  if (method === "transfer") return "Transferencia"
-  if (method === "manualCard") return "Tarjeta"
 
-  return "Pasarela"
+  if (method === "transfer") {
+    return safeStr(divisaSelected?.nombre) || "Transferencia"
+  }
+
+  if (method === "manualCard") {
+    return safeStr(divisaSelected?.nombre) || "Tarjeta"
+  }
+
+  return safeStr(divisaSelected?.nombre) || "Pasarela"
 }
 
 type BuildPagoGenericoParams = {
@@ -60,31 +62,60 @@ type BuildPagoGenericoParams = {
 
   /**
    * Método seleccionado desde CurrencySection.
-   * Aplica principalmente para CheckoutPage.
+   * Aplica principalmente para efectivo o para tener respaldo del método general.
    */
   selectedCurrency?: Currencyto | null
 
   /**
    * Opción seleccionada desde GetDivisaPagosTipoAsync.
-   * Para transferencia/tarjeta/pasarela, de aquí salen:
-   * codPago, tipoPago, codPagoExterno y banco.
+   *
+   * Para transferencia, tarjeta manual y pasarela, de aquí salen los valores
+   * reales de codPago, tipoPago, codPagoExterno y banco.
    */
   divisaSelected?: ObtenerDivisaPagosTipoRes | null
 
+  /**
+   * Referencia de transferencia.
+   */
   transfer?: string
+
+  /**
+   * Datos de tarjeta manual.
+   */
   manualCardData?: ManualCardFormState | null
+
+  /**
+   * Identificador de transacción de pasarela.
+   */
   transactionIdentifier?: string
+
+  /**
+   * Moneda de factura usada por PCG.
+   */
   moneda?: string
+
+  /**
+   * Código de empresa si aplica.
+   */
   codEmpresa?: string
+
+  /**
+   * Número de pago dentro del detalle.
+   */
+  numPago?: string
+
+  /**
+   * Índice del pago dentro del detalle.
+   */
+  indice?: string
 }
 
 /**
- * Construye el objeto PagoGenerico completo.
+ * Construye un PagoGenerico para pago único.
  *
- * Regla importante:
- * - Efectivo puede usar selectedCurrency.codPago o "1".
- * - Transferencia / tarjeta manual / pasarela deben usar divisaSelected.codigo
- *   cuando exista, porque ese es el código real devuelto por PCG.
+ * Regla principal:
+ * efectivo usa selectedCurrency.codPago.
+ * transferencia, tarjeta manual y pasarela usan divisaSelected.codigo.
  */
 export const buildPagoGenerico = ({
   method,
@@ -97,68 +128,70 @@ export const buildPagoGenerico = ({
   manualCardData = null,
   transactionIdentifier = "",
   moneda = "1",
-  codEmpresa = ""
+  codEmpresa = "",
+  numPago = "1",
+  indice = "0"
 }: BuildPagoGenericoParams): PagoGenerico => {
-  const concepto = getPaymentConceptByMethod(method)
-  const totalRedondeado = round2(total)
+  const concepto = getPaymentConceptByMethod(method, divisaSelected)
+
+  const esEfectivo = method === "cash"
+  const esTransferencia = method === "transfer"
+  const esTarjetaManual = method === "manualCard"
+  const esPasarela = method === "gatewayCard"
 
   /**
    * Código real del pago.
    *
-   * Para efectivo:
-   * normalmente viene del método general seleccionado en CurrencySection,
-   * o se usa "1" como respaldo.
-   *
-   * Para transferencia/tarjeta:
-   * debe venir de divisaSelected.codigo.
+   * Para efectivo viene de CurrencySection.
+   * Para los demás métodos viene de GetDivisaPagosTipoAsync.
    */
-  const codPago =
-    method === "cash"
-      ? safeStr(selectedCurrency?.codPago) || "1"
-      : safeStr(divisaSelected?.codigo)
+  const codPago = esEfectivo
+    ? safeStr(selectedCurrency?.codPago) || "1"
+    : safeStr(divisaSelected?.codigo)
 
   /**
-   * Código externo real.
+   * Código externo del pago.
    */
-  const codPagoExterno =
-    method === "cash"
-      ? safeStr(selectedCurrency?.codExterno)
-      : safeStr(divisaSelected?.codigoExterno)
+  const codPagoExterno = esEfectivo
+    ? safeStr(selectedCurrency?.codExterno) || "1"
+    : safeStr(divisaSelected?.codigoExterno)
 
   /**
-   * Tipo de pago real.
+   * Tipo de pago.
    */
-  const tipoPago =
-    method === "cash"
-      ? codPago
-      : safeStr(divisaSelected?.tipo)
+  const tipoPago = esEfectivo
+    ? ""
+    : safeStr(divisaSelected?.tipo)
 
   /**
-   * Banco real.
+   * Banco asociado al pago.
    */
-  const banco =
-    method === "cash"
-      ? safeStr(selectedCurrency?.codigo_Banco)
-      : safeStr(divisaSelected?.banco)
+  const banco = esEfectivo
+    ? safeStr(selectedCurrency?.codigo_Banco) || "00"
+    : safeStr(divisaSelected?.banco)
 
-  const referencia =
-    method === "transfer"
-      ? safeStr(transfer)
-      : method === "manualCard"
-        ? safeStr(manualCardData?.autorizacion)
-        : method === "gatewayCard"
-          ? safeStr(transactionIdentifier)
-          : ""
-
-  const autorizacion =
-    method === "manualCard"
+  const referencia = esTransferencia
+    ? safeStr(transfer)
+    : esTarjetaManual
       ? safeStr(manualCardData?.autorizacion)
-      : method === "gatewayCard"
+      : esPasarela
         ? safeStr(transactionIdentifier)
-        : referencia
+        : ""
+
+  const autorizacion = esTarjetaManual
+    ? safeStr(manualCardData?.autorizacion)
+    : esPasarela
+      ? safeStr(transactionIdentifier)
+      : referencia
+
+  const fechaOVence = esTransferencia
+    ? new Date().toISOString().slice(0, 10)
+    : esTarjetaManual
+      ? safeStr(manualCardData?.fechaVence)
+      : ""
 
   return {
-    numPago: "1",
+    numPago,
     concepto,
 
     codPago,
@@ -167,54 +200,45 @@ export const buildPagoGenerico = ({
     codPagoExterno,
     banco,
 
-    monto: totalRedondeado,
+    monto: total,
     moneda,
-    montoA: totalRedondeado,
+    montoA: total,
     cambio: 0,
     tasaCambio,
 
-    Fecha_o_Vence:
-      method === "manualCard"
-        ? safeStr(manualCardData?.fechaVence)
-        : "",
-
+    Fecha_o_Vence: fechaOVence,
     referencia,
     numeroTransaccion: referencia,
     cuentaContable: "",
     Dll: "",
     Numero: "",
 
-    ultDigito:
-      method === "manualCard"
-        ? safeStr(manualCardData?.ultDigito)
-        : "",
+    ultDigito: esTarjetaManual
+      ? safeStr(manualCardData?.ultDigito)
+      : "",
 
-    tarjeta:
-      method === "manualCard"
-        ? safeStr(manualCardData?.tarjeta)
-        : "",
+    tarjeta: esTarjetaManual
+      ? safeStr(manualCardData?.tarjeta)
+      : "",
 
-    tarjetahabiente:
-      method === "manualCard"
-        ? safeStr(manualCardData?.tarjetahabiente)
-        : "",
+    tarjetahabiente: esTarjetaManual
+      ? safeStr(manualCardData?.tarjetahabiente)
+      : "",
 
     autorizacion,
 
-    termId:
-      method === "manualCard"
-        ? safeStr(manualCardData?.termId)
-        : "",
+    termId: esTarjetaManual
+      ? safeStr(manualCardData?.termId)
+      : "",
 
-    afiliado:
-      method === "manualCard"
-        ? safeStr(manualCardData?.afiliado)
-        : "",
+    afiliado: esTarjetaManual
+      ? safeStr(manualCardData?.afiliado)
+      : "",
 
-    montoP: totalRedondeado,
-    montoS: 0,
+    montoP: total,
+    montoS: round2(total / tasaCambio),
 
-    indice: "0",
+    indice,
     codClienteCrd: "00000",
     facturaPinpad: "N",
     codEmpresa,
@@ -222,15 +246,16 @@ export const buildPagoGenerico = ({
     montoFirma: "0",
     sobrante: "0",
 
-    Codtransaccion:
-      method === "gatewayCard" ? safeStr(transactionIdentifier) : referencia,
+    Codtransaccion: esPasarela
+      ? safeStr(transactionIdentifier)
+      : referencia,
 
-    CuentaHabiente:
-      method === "manualCard"
-        ? safeStr(manualCardData?.tarjetahabiente)
-        : "",
+    CuentaHabiente: esTarjetaManual
+      ? safeStr(manualCardData?.tarjetahabiente)
+      : "",
 
-    CodStrCadsaccion:
-      method === "gatewayCard" ? safeStr(transactionIdentifier) : referencia
+    CodStrCadsaccion: esPasarela
+      ? safeStr(transactionIdentifier)
+      : referencia
   }
 }

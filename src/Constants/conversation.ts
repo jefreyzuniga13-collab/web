@@ -42,3 +42,10 @@ export function toConversationStatus(
 ): ConversationStatusType {
   return isConversationStatus(value) ? value : fallback;
 }
+
+
+export const DOCUMENT_MAX_SIZE = 100 * 1024 * 1024
+export const MEDIA_MAX_SIZE = 16 * 1024 * 1024
+export const STATIC_STICKER_MAX_SIZE = 100 * 1024
+export const ANIMATED_STICKER_MAX_SIZE = 500 * 1024
+export const MAX_FILES_PER_SEND = 10

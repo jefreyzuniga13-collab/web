@@ -1459,3 +1459,58 @@ box-shadow: rgba(0, 0, 0, 0.18) 0px 2px 4px;
     transform: translate(-50%, -50%);
   }
 }
+
+
+
+.performance-filter__date {
+  position: relative;
+  width: 100%;
+}
+
+.performance-filter__date input[type="date"] {
+  position: relative;
+  width: 100%;
+  padding-right: 4.2rem;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.performance-filter__date
+  input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.performance-filter__calendar-button {
+  position: absolute;
+  top: 50%;
+  right: 0.8rem;
+  z-index: 3;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-gray-500);
+
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.performance-filter__calendar-button:hover {
+  color: var(--color-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.performance-filter__calendar-button svg {
+  width: 1.7rem;
+  height: 1.7rem;
+  pointer-events: none;
+}

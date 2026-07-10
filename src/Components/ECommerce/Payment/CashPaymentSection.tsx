@@ -19,19 +19,44 @@ export default function CashPaymentSection({
   }, [cashAmount]);
 
   const handleChange = (value: string) => {
-    const limpio = value.replace(/\D/g, "");
+    // Reemplaza todo lo que no sea número o punto decimal
+    let limpio = value.replace(/[^0-9.]/g, "");
 
-    if (limpio === "") {
-      setCashAmountText("");
+    // Evita más de un punto decimal
+    const puntos = limpio.split(".");
+    if (puntos.length > 2) {
+      limpio = `${puntos[0]}.${puntos.slice(1).join("")}`;
+    }
+
+    if (limpio === "" || limpio === ".") {
+      setCashAmountText(limpio);
       setCashAmount(0);
       return;
     }
 
-    const sinCerosIniciales = limpio.replace(/^0+/, "") || "0";
+    // Evita ceros iniciales inválidos (ej. "05" pasa a "5", pero "0.5" se mantiene)
+    if (limpio.startsWith("0") && limpio[1] !== "." && limpio.length > 1) {
+      limpio = limpio.replace(/^0+/, "");
+    }
 
-    setCashAmountText(sinCerosIniciales);
-    setCashAmount(Number(sinCerosIniciales));
+    setCashAmountText(limpio);
+    setCashAmount(parseFloat(limpio) || 0);
   };
+
+  // const handleChange = (value: string) => {
+  //   const limpio = value.replace(/\D/g, "");
+
+  //   if (limpio === "") {
+  //     setCashAmountText("");
+  //     setCashAmount(0);
+  //     return;
+  //   }
+
+  //   const sinCerosIniciales = limpio.replace(/^0+/, "") || "0";
+
+  //   setCashAmountText(sinCerosIniciales);
+  //   setCashAmount(Number(sinCerosIniciales));
+  // };
 
   return (
     <div className="checkout-cash">

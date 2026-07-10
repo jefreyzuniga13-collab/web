@@ -98,7 +98,6 @@ export default function ForgotPasswordPresentation() {
                 >
                   {loading
                     ?  <>
-                      Enviando...
                       <AiOutlineLoading3Quarters  />
                     </>
                       :
@@ -118,7 +117,7 @@ export default function ForgotPasswordPresentation() {
 
                <div className="login__copyright">
                 <span>© {new Date().getFullYear()} PC GROUP S.A. Todos los derechos reservados.</span>
-                <span>Versión 26061</span>
+                <span>Versión 26071</span>
               </div>
             </section>
           </main>

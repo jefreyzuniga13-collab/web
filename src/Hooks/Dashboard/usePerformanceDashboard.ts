@@ -230,14 +230,16 @@ export const usePerformanceDashboardFilters = () => {
   }, []);
 
   const clearFilters = useCallback(() => {
-    const initial = getInitialFilters();
-
     localStorage.removeItem(DASHBOARD_FILTERS_KEY);
+
     setFilters({
-      ...initial,
+      from: null,
+      to: null,
       agentId: null,
       agentName: null,
     });
+
+    setIsFilterOpen(false);
   }, []);
 
   return {
@@ -640,9 +642,14 @@ export const usePerformanceDashboard = (
 
   const handleClearFilters = useCallback(() => {
     clearFilters();
-    setSelectedAgentId(null);
+
+    setSelectedAgentIdState(null);
+    setCriticalMinutesState(DEFAULT_CRITICAL_MINUTES);
     setRecentPage(DEFAULT_PAGE);
-  }, [clearFilters, setSelectedAgentId]);
+
+    localStorage.removeItem(DASHBOARD_SELECTED_AGENT_KEY);
+    localStorage.removeItem(DASHBOARD_THRESHOLD_KEY);
+  }, [clearFilters]);
 
   const refreshAll = useCallback(async () => {
     await queryClient.invalidateQueries({

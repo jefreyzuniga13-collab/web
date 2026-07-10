@@ -7,6 +7,10 @@
     font-size: var(--font-size-sm);
     border: none;
     margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
   }
 
   .btn--primary {
@@ -16,7 +20,7 @@
   }
 
   .btn--primary:hover:not(:disabled) {
-    opacity: var(--input-focus-border);
+    opacity: 0.9;
   }
 
   .btn--secondary {
