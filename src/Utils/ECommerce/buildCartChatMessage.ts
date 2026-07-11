@@ -1,5 +1,6 @@
 import type { CarDto } from "@/Interfaces/Crm/CartPCGInterface"
-import { formatCurrencyNIO } from "@/Utils/ECommerce/formatters"
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
+import { formatCurrencyNIO, safeStr } from "@/Utils/ECommerce/formatters"
 
 type AddressLite = {
   idDireccion?: number | null
@@ -12,20 +13,14 @@ type BuildCartChatMessageArgs = {
   cart: CarDto
   orderId?: number | null
   deliveryDate?: string | null
-
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
   observation?: string | null
-
   effectiveShipping?: number
   invoiceTotal?: number
-
   selectedAddressId?: number | null
   addDescription?: string
-
   addresses?: AddressLite[]
 }
-
-const clean = (v: unknown) => String(v ?? "").trim()
 
 export function buildCartChatMessage({
   cart,
@@ -47,8 +42,8 @@ export function buildCartChatMessage({
 
   cart.listDetalle?.forEach((d) => {
     const qty = d.cantidad ?? 0
-    const desc = clean(d.descripcion)
-    const obs = clean((d).observaciones)
+    const desc = safeStr(d.descripcion)
+    const obs = safeStr((d).observaciones)
     const title = [desc, obs].filter(Boolean).join(" - ")
     if (!title) return
 
@@ -56,7 +51,7 @@ export function buildCartChatMessage({
 
     const opciones =
       d.listOpciones
-        ?.map((o) => clean(o.descripcionOp) + " - " + clean(o.cantidad))
+        ?.map((o) => safeStr(o.descripcionOp) + " - " + safeStr(o.cantidad))
         .map((s) => s.trim())
         .filter(Boolean) ?? []
 
@@ -71,7 +66,7 @@ export function buildCartChatMessage({
     lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
 
     lines.push("🏬 Retira en sucursal")
-    const obs = clean(observation)
+    const obs = safeStr(observation)
     if (obs.length > 0) lines.push(`📝 Observación: ${obs}`)
   } else {
     const hasShipping = shipping > 0
@@ -81,17 +76,17 @@ export function buildCartChatMessage({
 
     if (selectedAddressId != null) {
       const selected = addresses.find((a) => Number(a.idDireccion) === Number(selectedAddressId))
-      const addrName = clean(selected?.nombre)
-      const addrDesc = clean(selected?.descripcion)
-      const addrRef = clean(selected?.referencia)
+      const addrName = safeStr(selected?.nombre)
+      const addrDesc = safeStr(selected?.descripcion)
+      const addrRef = safeStr(selected?.referencia)
       const best = [addrName, addrDesc, addrRef].filter((x) => x.length > 0).join(" | ")
       if (best.length > 0) lines.push(`📍 Dirección: ${best}`)
     } else {
-      const manual = clean(addDescription)
+      const manual = safeStr(addDescription)
       if (manual.length > 0) lines.push(`📍 Dirección: ${manual}`)
     }
 
-    const obs = clean(observation)
+    const obs = safeStr(observation)
     if (obs.length > 0) lines.push(`📝 Observación: ${obs}`)
   }
 

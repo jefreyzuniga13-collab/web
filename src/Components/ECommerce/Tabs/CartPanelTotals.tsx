@@ -3,6 +3,7 @@ import { formatearDecimales } from "@/Utils/calcularIVA"
 import type {
   InvoiceTotalsDto
 } from "@/Interfaces/Crm/CartPCGInterface"
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 
 interface Props {
   /**
@@ -18,7 +19,7 @@ interface Props {
   /**
    * Indica si retira en sucursal.
    */
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
 
   /**
    * Dirección guardada seleccionada.

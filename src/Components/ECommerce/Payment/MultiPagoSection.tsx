@@ -227,9 +227,9 @@ export default function MultiPagoSection({
         return "El tarjetahabiente es requerido."
       }
 
-      if (!safeStr(manualCardData.tarjeta)) {
-        return "La tarjeta es requerida."
-      }
+      // if (!safeStr(manualCardData.)) {
+      //   return "La tarjeta es requerida."
+      // }
 
       if (!safeStr(manualCardData.ultDigito)) {
         return "Los últimos 4 dígitos son requeridos."

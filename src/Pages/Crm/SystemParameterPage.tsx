@@ -127,7 +127,7 @@ export default function SystemParamsPage() {
           fullWidth
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
+          className="table-contaner__search-filter"
         />
       </div>
       

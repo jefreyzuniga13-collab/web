@@ -1,8 +1,9 @@
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import { useEffect, useMemo, useState } from "react"
 
 type DraftState = {
   addDescription: string
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
   transCost: number
   selectedAddressId: number | null
   observation: string
@@ -59,7 +60,7 @@ export const useCartDraft = ({ conversationId, contactId }: Props) => {
   return {
     ...state,
     setAddDescription: (v: string) => update({ addDescription: v }),
-    setRetiraSucursal: (v: "S" | "N") => update({ retiraSucursal: v }),
+    setRetiraSucursal: (v: SINO) => update({ retiraSucursal: v }),
     setTransCost: (v: number) => update({ transCost: v }),
     setSelectedAddressId: (v: number | null) =>
       update({ selectedAddressId: v }),

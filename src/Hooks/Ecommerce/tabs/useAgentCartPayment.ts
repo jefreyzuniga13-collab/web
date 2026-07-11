@@ -24,7 +24,8 @@ import type {
 import type {
   FacturaTempo,
   ObtenerDivisaPagosTipoReq,
-  ObtenerDivisaPagosTipoRes
+  ObtenerDivisaPagosTipoRes,
+  SINO
 } from "@/Interfaces/Ecommerce/FacturaTempo"
 
 import type {
@@ -86,6 +87,7 @@ import {
   construirDetallePago,
   validarPagosSeleccionados
 } from "@/Utils/ECommerce/pagoFacturaUtils"
+import { tasaCambio } from "@/Constants/tasaCambio"
 
 type EnsureEcommerceUserResult = {
   ecommerceUserId: number
@@ -133,7 +135,7 @@ type UseAgentCartPaymentParams = {
   /**
    * Indica si el cliente retira en sucursal.
    */
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
 
   /**
    * Dirección manual digitada por el agente.
@@ -872,10 +874,8 @@ export const useAgentCartPayment = ({
         const facturaBase =
           await loadFacturaTempo()
 
-        const tasaCambio = 36.6243
-
         /**
-         * Nombre del contacto.
+         * Nombre del contacto. Si el input de a nombre cotiene informacion se recupera
          */
         const nombreCliente =
           safeStr(contact.fullName) ||
@@ -933,11 +933,9 @@ export const useAgentCartPayment = ({
               existingLog.serie,
 
             detallePago,
-            tasaCambio,
-
+            tasa:tasaCambio,
             correo:
               safeStr(contact.email),
-
             telefonoCte:
               telefonoContacto
           })
@@ -979,7 +977,7 @@ export const useAgentCartPayment = ({
           pdfContext: {
             sellerName,
             contactName:
-              nombreCliente,
+            nombreCliente,
             contactPhone:
               telefonoContacto,
             companyName

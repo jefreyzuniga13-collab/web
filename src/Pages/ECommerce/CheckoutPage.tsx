@@ -37,6 +37,7 @@ import type { PowertranzPayWithTokenRequestDto } from "@/Interfaces/Ecommerce/po
 import type { CheckoutPaymentMethod } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
+import { tasaCambio } from "@/Constants/tasaCambio"
 
 const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
@@ -730,8 +731,6 @@ const CheckoutPage: React.FC = () => {
         return
       }
 
-      const tasaCambio = 36.6243
-
       const nombreCliente =
       getLogText(existingLog, [
         "invoiceName",
@@ -815,7 +814,7 @@ const CheckoutPage: React.FC = () => {
         observacion: existingLog?.observacion ?? "",
         serie: existingLog?.serie ?? facturaBase.serie,
         detallePago,
-        tasaCambio,
+        tasa: tasaCambio,
         correo: billingForm.email,
         telefonoCte: telefonoContacto
       })

@@ -3,6 +3,7 @@ import type {
   InvoiceTotalsDto,
   ListDetalleCarrito
 } from "@/Interfaces/Crm/CartPCGInterface"
+import type { SINO } from "../Ecommerce/FacturaTempo"
 
 export interface LogCartResponseDto {
   id: number
@@ -103,6 +104,9 @@ export interface LogCartResponseDto {
    * Se usa para evitar que la factura salga con nickname o "Cliente".
    */
   invoiceName?: string | null
+
+
+    onlyTextAddress:boolean
 }
 
 export interface LogCartRequestDto {
@@ -196,14 +200,15 @@ export type LogCartUpdateRequestDto = {
   subTotal?: number | null
 
   observacion?: string | null
-  retiraSucursal?: "S" | "N" | null
+  retiraSucursal?: SINO | null
 
   destinationBranchCode?: string | null
   destinationWherehouseCode?: string | null
 
   serie?: string | null
-
     invoiceName?: string | null
+
+    onlyTextAddress:boolean
 }
 
 /**
@@ -248,6 +253,9 @@ export type Payload = {
    * Empresa asociada al pedido.
    */
   companyId?: number
+
+
+  OolyTextAddress: boolean
 }
 
 /**
@@ -255,11 +263,12 @@ export type Payload = {
  */
 export type DraftState = {
   addDescription: string
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
   transCost: number
   selectedAddressId: number | null
   observation: string
   invoiceName: string
+  onlyTextAddress:boolean
 }
 
 export type CartDetailView = {
@@ -269,7 +278,7 @@ export type CartDetailView = {
 
 export type AddressPayload = {
   addressId: number | null
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
   transCost: number
 }
 
@@ -280,5 +289,6 @@ export type BuildLogUpdateParams = {
   addressPayload: AddressPayload
   totals?: InvoiceTotalsDto | null
   observation: string
-    invoiceName?: string | null
+  invoiceName?: string | null
+  onlyTextAddress:boolean
 }

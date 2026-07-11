@@ -4,28 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
-
 import type { RootState, AppDispatch } from "@/Context"
-
-import {
-  selectCarPCG,
-  selectCartError,
-  selectCartLoading,
-  getProductFromCarAsync,
-  updateCarAsync,
-  setActiveContactId
-} from "@/Context/Slices/Ecommerce/cartSlice"
-
-import {
-  selectCartBadgeByContactId,
-  setContactCartBadge
-} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-
-import {
-  selectCompanySistema,
-  selectPermiteMultipago
-} from "@/Context/Slices/Auth/authSlice"
-
+import { selectCarPCG,selectCartError,selectCartLoading,getProductFromCarAsync,updateCarAsync,setActiveContactId} from "@/Context/Slices/Ecommerce/cartSlice"
+import { selectCartBadgeByContactId, setContactCartBadge} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
+import { selectCompanySistema, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useContact from "@/Hooks/Auth/useContact"
@@ -34,83 +16,33 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import { useAgentCartPayment } from "@/Hooks/Ecommerce/tabs/useAgentCartPayment"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
-
 import CartPanelProductStep from "@/Components/ECommerce/Tabs/CartPanelProductStep"
 import CartPanelDeliveryStep from "@/Components/ECommerce/Tabs/CartPanelDeliveryStep"
 import CartPanelPaymentStep from "@/Components/ECommerce/Tabs/CartPanelPaymentStep"
 import CartPanelStepNavigation from "@/Components/ECommerce/Tabs/CartPanelStepNavigation"
 import CartPanelTotals from "@/Components/ECommerce/Tabs/CartPanelTotals"
 import CartPanelActions from "@/Components/ECommerce/Tabs/CartPanelActions"
-
-import type {
-  CarDto,
-  InvoiceTotalsDto
-} from "@/Interfaces/Crm/CartPCGInterface"
-
-import type {
-  AddressPayload,
-  CartDetailView,
-  DraftState,
-  LogCartResponseDto
-} from "@/Interfaces/Crm/LogCartInterface"
-
-import type {
-  ContactLogInterface
-} from "@/Interfaces/Auth/ContactInterface"
-
-import type {
-  ClientLocationDto
-} from "@/Interfaces/Ecommerce/ClientLocationInterface"
-
-import type {
-  UserEcommerceDto
-} from "@/Interfaces/Ecommerce/UserEcommerceInterface"
-
-import type {
-  SendLinkRequestDto
-} from "@/Interfaces/Ecommerce/SendLinkInterface"
-
-import type {
-  SendInteractiveMessajeRequestDto
-} from "@/Interfaces/Chat/ChatInterfaces"
-
-import type {
-  PagoSeleccionado
-} from "@/Interfaces/Ecommerce/MultiPagoTypes"
-
-import {
-  CART_AGENT_STEP,
-  type CartAgentStep
-} from "@/Interfaces/Ecommerce/CartAgentCheckoutInterface"
-
+import type {CarDto,InvoiceTotalsDto} from "@/Interfaces/Crm/CartPCGInterface"
+import type {AddressPayload,CartDetailView,DraftState, LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
+import type {ContactLogInterface} from "@/Interfaces/Auth/ContactInterface"
+import type {ClientLocationDto} from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type {UserEcommerceDto} from "@/Interfaces/Ecommerce/UserEcommerceInterface"
+import type { SendLinkRequestDto} from "@/Interfaces/Ecommerce/SendLinkInterface"
+import type {SendInteractiveMessajeRequestDto} from "@/Interfaces/Chat/ChatInterfaces"
+import type { PagoSeleccionado} from "@/Interfaces/Ecommerce/MultiPagoTypes"
+import {CART_AGENT_STEP,type CartAgentStep} from "@/Interfaces/Ecommerce/CartAgentCheckoutInterface"
 import { sendInterctiveMessage } from "@/Services/chat/MessageService"
 import { UserSessionService } from "@/Services/auth/UserSessionService"
 import { ClientLocationService } from "@/Services/Ecommerce/ClientLocationService"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
-
 import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
-
-import {
-  generateRandomString,
-  formatCurrencyNIO
-} from "@/Utils/ECommerce/formatters"
-
-import {
-  buildCalculationRequest,
-  buildLogUpdateRequest,
-  countMainProducts,
-  normalizeDraft,
-  safeNumber,
-  safePositiveNumber,
-  toLogCartFormValues
-} from "@/Utils/ECommerce/utils"
-
+import {generateRandomString,formatCurrencyNIO} from "@/Utils/ECommerce/formatters"
+import {buildCalculationRequest,buildLogUpdateRequest,countMainProducts,normalizeDraft,safeNumber,safePositiveNumber,toLogCartFormValues} from "@/Utils/ECommerce/utils"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { GENERAL_STATUS } from "@/Constants/status"
-
-import EmptyCartPlayer from "@/assets/lottie/Empty.json"
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo";
 import Lottie from "lottie-react"
-
+import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import "@/Styles/Ecommerce/cardPCGTab.css"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -135,41 +67,32 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     hasCart: false,
     count: 0
   }
-
   const [search, setSearch] = useState("")
   const [orderId, setOrderId] = useState<number | null>(null)
   const [cancelLoading, setCancelLoading] = useState(false)
   const [sendChatLoading, setSendChatLoading] = useState(false)
-
-  const [activeStep, setActiveStep] = useState<CartAgentStep>(
-    CART_AGENT_STEP.carrito
-  )
-
+  const [activeStep, setActiveStep] = useState<CartAgentStep>(CART_AGENT_STEP.carrito)
   const [addDescription, setAddDescription] = useState("")
-  const [retiraSucursal, setRetiraSucursal] = useState<"S" | "N">("N")
+  const [retiraSucursal, setRetiraSucursal] = useState<SINO>("N")
+  
+  const [onlyTextAddress, setOnlyTextAddress] = useState<boolean>(false)
+
   const [transCost, setTransCost] = useState(0)
   const [debouncedTransCost, setDebouncedTransCost] = useState(0)
-
   const [invoiceTotalsDto, setInvoiceTotalsDto] =
     useState<InvoiceTotalsDto | null>(null)
-
   const [totalsLoading, setTotalsLoading] = useState(false)
-
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [addresses, setAddresses] = useState<ClientLocationDto[]>([])
   const [addressLoading, setAddressLoading] = useState(false)
   const [addressSearch, setAddressSearch] = useState("")
-
   const [selectedAddressId, setSelectedAddressId] =
     useState<number | null>(null)
-
   const [invoiceName, setInvoiceName] = useState("")
   const [observation, setObservation] = useState("")
   const [currentLog, setCurrentLog] =
     useState<LogCartResponseDto | null>(null)
-
   const [multiPagoActivo, setMultiPagoActivoState] = useState(false)
-
   const [pagosMultiples, setPagosMultiples] =
     useState<PagoSeleccionado[]>([])
 
@@ -234,6 +157,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const showEmpty = !contactHasCart.hasCart || detailsCount === 0
 
   const isPickup = retiraSucursal === "S"
+  const isOnlyTextAddress = onlyTextAddress === true
   const hasSelectedAddress = selectedAddressId != null
   const hasManualAddress = addDescription.trim().length > 0
   const hasDeliveryAddress = hasSelectedAddress || hasManualAddress
@@ -241,14 +165,27 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   /**
    * En el panel del agente no hay mapa.
    * El transporte se toma únicamente del paso 2.
+   * Si onlyTextAddress está activo, el cliente escribirá la dirección
+   * en el checkout y no se cobra transporte desde el panel del agente.
    */
   const effectiveShipping =
-    !isPickup && hasDeliveryAddress ? safePositiveNumber(transCost) : 0
+    !isPickup && !isOnlyTextAddress && hasDeliveryAddress
+      ? safePositiveNumber(transCost)
+      : 0
 
-  const addressInputsDisabled = isPickup || hasSelectedAddress
-  const transportDisabled = isPickup
-  const pickupDisabled = hasSelectedAddress || hasManualAddress
-  const showAddressButton = !isPickup && !hasManualAddress
+  const addressInputsDisabled =
+    isPickup || isOnlyTextAddress || hasSelectedAddress
+
+  const transportDisabled = isPickup || isOnlyTextAddress
+
+  const pickupDisabled =
+    isOnlyTextAddress || hasSelectedAddress || hasManualAddress
+
+  const onlyTextAddressDisabled =
+    isPickup || hasSelectedAddress || hasManualAddress
+
+  const showAddressButton =
+    !isPickup && !isOnlyTextAddress && !hasManualAddress
 
   const totalPagarAgente = useMemo(() => {
     return safePositiveNumber(invoiceTotalsDto?.total ?? 0)
@@ -306,6 +243,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     setAddDescription("")
     setRetiraSucursal("N")
+    setOnlyTextAddress(false)
     setTransCost(0)
     setDebouncedTransCost(0)
 
@@ -338,11 +276,18 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       const allowShipping =
         !pickup &&
+        !onlyTextAddress &&
         (selectedAddressId != null || addDescription.trim().length > 0)
 
       return allowShipping ? cost : 0
     },
-    [addDescription, retiraSucursal, selectedAddressId, transCost]
+    [
+      addDescription,
+      onlyTextAddress,
+      retiraSucursal,
+      selectedAddressId,
+      transCost
+    ]
   )
 
   /**
@@ -481,6 +426,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
    */
   const getAddressPayload = useCallback(
     async (ecommerceUserId: number): Promise<AddressPayload> => {
+      if (onlyTextAddress) {
+        return {
+          addressId: null,
+          retiraSucursal: "N",
+          transCost: 0
+        }
+      }
+
       if (retiraSucursal === "S") {
         return {
           addressId: null,
@@ -521,7 +474,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         transCost: 0
       }
     },
-    [addDescription, effectiveShipping, retiraSucursal, selectedAddressId]
+    [
+      addDescription,
+      effectiveShipping,
+      onlyTextAddress,
+      retiraSucursal,
+      selectedAddressId
+    ]
   )
 
   /**
@@ -544,7 +503,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         addressPayload,
         totals,
         observation,
-        invoiceName
+        invoiceName,
+        onlyTextAddress
       })
 
       await updatedLogCart(log.id, toLogCartFormValues(req as any, log))
@@ -560,7 +520,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         propina: req.propina ?? 0,
         subTotal: req.subTotal ?? 0,
         observacion: req.observacion ?? "",
-        invoiceName: req.invoiceName ?? ""
+        invoiceName: req.invoiceName ?? "",
+        onlyTextAddress: req.onlyTextAddress ?? false
       } as LogCartResponseDto
 
       setCurrentLog(updatedLog)
@@ -575,6 +536,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       getAddressPayload,
       invoiceName,
       observation,
+      onlyTextAddress,
       removeDraft,
       updatedLogCart
     ]
@@ -600,7 +562,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           addressPayload,
           totals: null,
           observation,
-          invoiceName
+          invoiceName,
+          onlyTextAddress
         })
 
       await updatedLogCart(log.id, toLogCartFormValues(req, log))
@@ -611,7 +574,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         retiraSucursal: "N",
         transCost: addressPayload.transCost,
         observacion: observation,
-        invoiceName: req.invoiceName ?? ""
+        invoiceName: req.invoiceName ?? "",
+        onlyTextAddress: req.onlyTextAddress ?? false
       } as LogCartResponseDto)
     },
     [
@@ -619,6 +583,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         conversationId,
         invoiceName,
         observation,
+        onlyTextAddress,
         transCost,
         updatedLogCart
       ]
@@ -673,7 +638,22 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     canPay
   } = payment
 
+  const handleToggleOnlyTextAddress = useCallback((checked: boolean) => {
+    setOnlyTextAddress(checked)
+
+    if (checked) {
+      setRetiraSucursal("N")
+      setSelectedAddressId(null)
+      setAddDescription("")
+      setTransCost(0)
+      setDebouncedTransCost(0)
+      setShowAddressModal(false)
+    }
+  }, [])
+
   const loadAddresses = async () => {
+    if (onlyTextAddress) return
+
     try {
       setAddressLoading(true)
 
@@ -696,6 +676,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const applySelectedAddressToLog = async (addressId: number) => {
     try {
       if (retiraSucursal === "S") return
+      if (onlyTextAddress) return
       if (addDescription.trim().length > 0) return
 
       const log = await fetchByContactId(contactId)
@@ -746,6 +727,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     async (noPedido: number) => {
       setAddDescription("")
       setRetiraSucursal("N")
+      setOnlyTextAddress(false)
       setTransCost(0)
       setDebouncedTransCost(0)
       setSelectedAddressId(null)
@@ -871,6 +853,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     if (invoiceName.trim().length > 0) {
       lines.push(`👤 A nombre de: ${invoiceName.trim()}`)
+    }
+
+    if (onlyTextAddress) {
+      lines.push("📍 Dirección: el cliente la escribirá en el checkout")
     }
 
     lines.push("")
@@ -1185,6 +1171,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setInvoiceName(String(draftWithInvoiceName.invoiceName ?? "").trim())
     setAddDescription(draft.addDescription)
     setRetiraSucursal(draft.retiraSucursal)
+    setOnlyTextAddress(Boolean(draft.onlyTextAddress))
     setTransCost(draft.transCost)
     setSelectedAddressId(draft.selectedAddressId)
     setObservation(draft.observation)
@@ -1207,10 +1194,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       transCost: safePositiveNumber(transCost),
       selectedAddressId,
       invoiceName,
-      observation
-    } as DraftState & {
-      invoiceName: string
-    }
+      observation,
+      onlyTextAddress
+    } as DraftState
 
     writeDraft(nextDraft)
   }, [
@@ -1221,6 +1207,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     selectedAddressId,
     invoiceName,
     observation,
+    onlyTextAddress,
     writeDraft
   ])
 
@@ -1232,6 +1219,23 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       if (transCost !== 0) setTransCost(0)
     }
   }, [isPickup, selectedAddressId, addDescription, showAddressModal, transCost])
+
+  useEffect(() => {
+    if (isOnlyTextAddress) {
+      if (retiraSucursal === "S") setRetiraSucursal("N")
+      if (selectedAddressId != null) setSelectedAddressId(null)
+      if (addDescription.trim().length > 0) setAddDescription("")
+      if (showAddressModal) setShowAddressModal(false)
+      if (transCost !== 0) setTransCost(0)
+    }
+  }, [
+    isOnlyTextAddress,
+    retiraSucursal,
+    selectedAddressId,
+    addDescription,
+    showAddressModal,
+    transCost
+  ])
 
   useEffect(() => {
     if (hasSelectedAddress) {
@@ -1280,6 +1284,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     retiraSucursal,
     selectedAddressId,
     addDescription,
+    onlyTextAddress,
     calcTotals
   ])
 
@@ -1325,6 +1330,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       if (draft?.addDescription?.trim()) {
         setAddDescription(draft.addDescription)
+      }
+
+      if (draft?.onlyTextAddress != null) {
+        setOnlyTextAddress(Boolean(draft.onlyTextAddress))
+      } else if (log?.onlyTextAddress != null) {
+        setOnlyTextAddress(Boolean(log.onlyTextAddress))
       }
 
       const draftWithInvoiceName = draft as
@@ -1477,6 +1488,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             setTransCost={setTransCost}
             retiraSucursal={retiraSucursal}
             setRetiraSucursal={setRetiraSucursal}
+            onlyTextAddress={onlyTextAddress}
+            setOnlyTextAddress={handleToggleOnlyTextAddress}
+            onlyTextAddressDisabled={onlyTextAddressDisabled}
             addressInputsDisabled={addressInputsDisabled}
             transportDisabled={transportDisabled}
             pickupDisabled={pickupDisabled}

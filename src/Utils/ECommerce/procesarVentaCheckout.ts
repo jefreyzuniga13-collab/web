@@ -49,7 +49,7 @@ type ProcesarVentaCheckoutParams = {
    * Venta procesada directamente por el agente desde el CartTab.
    *
    * customerLink:
-   * Venta procesada por el cliente desde el link de checkout.
+   * Venta procesada por el cliente desde el enlace de checkout.
    */
   source: PaymentSource
 
@@ -145,7 +145,7 @@ type ProcesarVentaCheckoutParams = {
 }
 
 /**
- * Limpia texto sin aplicar restricciones especiales.
+ * Limpia espacios alrededor de un texto.
  *
  * La limpieza de caracteres no compatibles con jsPDF se realiza
  * dentro de generateOrdeFacPDFFile.
@@ -154,6 +154,45 @@ const safeText = (
   value?: string | number | null
 ): string => {
   return String(value ?? "").trim()
+}
+
+/**
+ * Limpia un texto para poder utilizarlo como nombre de archivo.
+ *
+ * Realiza las siguientes acciones:
+ * - Elimina tildes.
+ * - Elimina caracteres inválidos para Windows.
+ * - Reemplaza espacios por guiones bajos.
+ * - Evita guiones bajos repetidos.
+ */
+const safeFileName = (
+  value?: string | number | null,
+  fallback = "Cliente"
+): string => {
+  const text = String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+
+  const withoutControlCharacters = Array.from(text)
+    .filter((character) => {
+      const code = character.charCodeAt(0)
+
+      return code >= 32 && code !== 127
+    })
+    .join("")
+
+  const cleaned = withoutControlCharacters
+    // Caracteres inválidos en nombres de archivo de Windows.
+    .replace(/[<>:"/\\|?*]/g, "")
+    // Espacios y caracteres especiales se convierten en "_".
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    // Evita guiones bajos repetidos.
+    .replace(/_+/g, "_")
+    // Elimina guiones bajos al inicio y al final.
+    .replace(/^_+|_+$/g, "")
+    .trim()
+
+  return cleaned || fallback
 }
 
 /**
@@ -168,7 +207,7 @@ const validarPdf = async (
     pdfBlob.size < 100
   ) {
     throw new Error(
-      `El PDF ${fileName} está vacío o inválido.`
+      `El PDF ${fileName} está vacío o es inválido.`
     )
   }
 
@@ -182,7 +221,7 @@ const validarPdf = async (
 
   if (magic !== "%PDF-") {
     throw new Error(
-      `El archivo ${fileName} no parece PDF válido (magic=${magic}).`
+      `El archivo ${fileName} no parece un PDF válido (magic=${magic}).`
     )
   }
 
@@ -204,7 +243,7 @@ const intentarVoidPowertranz = async ({
 }: {
   transactionIdentifier: string
   orderId: number
-}) => {
+}): Promise<never> => {
   const voidReq: PowertranzVoidRequestDto = {
     transactionIdentifier,
     externalIdentifier: orderId.toString()
@@ -260,7 +299,8 @@ export async function procesarVentaCheckout({
     await insertaFacturaAsync(invoiceReqFinal)
 
   /**
-   * Si falla y fue pago por pasarela, intenta anularlo.
+   * Si falla y fue un pago por pasarela,
+   * intenta anular la transacción.
    */
   if (!insertFacRes?.success) {
     if (
@@ -348,12 +388,59 @@ export async function procesarVentaCheckout({
   if (resPrintPDF?.data) {
     const archivos: File[] = []
 
+    /**
+     * Número definitivo del pedido o factura.
+     *
+     * Si backend no devuelve NoFactura, se utiliza el orderId
+     * como respaldo.
+     */
     const noFactura = safeText(
       resPrintPDF.data.DatosGenerales?.NoFactura
     )
 
-    const nombreBase =
-      `Pedido-${noFactura || "SN"}`
+    const numeroPedido = safeFileName(
+      noFactura,
+      orderId.toString()
+    )
+
+    /**
+     * Nombre del cliente para el nombre del archivo.
+     *
+     * Prioridad:
+     * 1. Nombre de la factura definitiva.
+     * 2. Nombre enviado en el contexto del PDF.
+     * 3. Nombre completo del payload.
+     * 4. Nombre del contacto en el LogCart.
+     * 5. Cliente.
+     */
+    const nombreCliente =
+      safeText(pdfContext?.contactName) ||
+      safeText(payload.fullName) ||
+      "Cliente"
+
+    const nombreClienteArchivo =
+      safeFileName(
+        nombreCliente,
+        "Cliente"
+      )
+
+    /**
+     * Nombre base del archivo principal.
+     *
+     * Ejemplo:
+     * pedido_000154_Juan_Carlos_Perez.pdf
+     */
+    const nombrePedido =
+      `pedido_${numeroPedido}_${nombreClienteArchivo}`
+
+    /**
+     * Nombre base del comprobante de pago.
+     *
+     * Ejemplo:
+     * comprobante_pago_000154_Juan_Carlos_Perez.pdf
+     */
+    const nombreComprobantePago =
+      `comprobante_pago_${numeroPedido}_${nombreClienteArchivo}`
 
     /**
      * Contexto final del PDF.
@@ -373,21 +460,24 @@ export async function procesarVentaCheckout({
       contactName:
         safeText(pdfContext?.contactName) ||
         safeText(payload.fullName) ||
+        safeText(existingLog?.contactName) ||
         safeText(
           resPrintPDF.data.DatosGenerales?.Nombrede
         ) ||
         "Cliente",
 
       contactPhone:
-        safeText(pdfContext?.contactPhone),
+        safeText(pdfContext?.contactPhone) ||
+        safeText(existingLog?.contactPhone),
 
       companyName:
         safeText(pdfContext?.companyName) ||
+        safeText(existingLog?.companyName) ||
         "Empresa"
     }
 
     /**
-     * PDF principal del pedido.
+     * Genera el PDF principal del pedido.
      */
     const pdfPedido =
       generateOrdeFacPDFFile(
@@ -399,12 +489,12 @@ export async function procesarVentaCheckout({
     archivos.push(
       await validarPdf(
         pdfPedido,
-        `${nombreBase}.pdf`
+        `${nombrePedido}.pdf`
       )
     )
 
     /**
-     * PDF adicional de pago electrónico.
+     * Genera el PDF adicional del pago electrónico.
      */
     if (
       usarPdfPagoElectronico &&
@@ -421,13 +511,13 @@ export async function procesarVentaCheckout({
       archivos.push(
         await validarPdf(
           pdfPagoElectronico,
-          `${nombreBase}-PagoElectronico.pdf`
+          `${nombreComprobantePago}.pdf`
         )
       )
     }
 
     /**
-     * Envía todos los PDFs al chat.
+     * Envía todos los PDFs generados al chat.
      */
     for (const archivo of archivos) {
       await sendMediaEcommerce(

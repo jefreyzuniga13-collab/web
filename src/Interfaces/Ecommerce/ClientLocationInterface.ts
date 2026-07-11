@@ -1,3 +1,5 @@
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
+
 export interface ClientLocationDto {
   idDireccion?: number
   nombre?: string
@@ -25,11 +27,11 @@ export interface ClientLocation2Dto {
 }
 
 export interface CalculationResultDto {
-  pasasub: "S" | "N"
+  pasasub: SINO
   resulsub: number
-  pasadesc: "S" | "N"
+  pasadesc: SINO
   resuldesc: number
-  pasaiva: "S" | "N"
+  pasaiva: SINO
   resuliva: number
 }
 

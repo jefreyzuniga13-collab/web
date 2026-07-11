@@ -15,6 +15,7 @@ import {selectCompanySistema, selectCodReferenciaPCG} from "@/Context/Slices/Aut
 import { FechaManagua } from "@/Utils/FechaManagua"
 import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
 import { GENERAL_STATUS } from "@/Constants/status"
+import { tasaCambio } from "@/Constants/tasaCambio"
 
 type CartServiceWithCleanup = typeof CartService & {
   LimpiarFacturaTempo?: (
@@ -151,7 +152,7 @@ export const useCartPCGFlow = (
         tipo: "1",
         tipodesc: "N",
         tipotrabajo: "INSERT",
-        tasacambio: 36.6243,
+        tasacambio: tasaCambio,
         financiamiento: 0,
         descuento: 0,
         codvendedor: "004",
@@ -205,7 +206,7 @@ export const useCartPCGFlow = (
         tipo: "1",
         tipodesc: "N",
         tipotrabajo: "INSERT",
-        tasacambio: 36.6243,
+        tasacambio: tasaCambio,
         financiamiento: 0,
         descuento: 0,
         codvendedor: "004",

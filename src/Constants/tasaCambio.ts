@@ -1,0 +1,1 @@
+export const tasaCambio = 36.6243

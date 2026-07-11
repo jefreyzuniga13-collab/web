@@ -15,9 +15,6 @@ import * as turf from "@turf/turf"
 
 /**
  * Calcula la distancia entre dos coordenadas en kilómetros.
- *
- * Se usa para estimar distancia entre ubicación del cliente,
- * sucursal o punto de entrega.
  */
 export function calculateDistance(
   lat1: number,
@@ -33,9 +30,6 @@ export function calculateDistance(
 
 /**
  * Obtiene información del navegador requerida por PowerTranz.
- *
- * Esta información es usada principalmente en flujos 3DS,
- * fingerprint y challenge.
  */
 export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   return {
@@ -59,43 +53,22 @@ export function obtenerBrowserInfo(): PowertranzBrowserInfoDto {
   }
 }
 
-/**
- * Convierte un valor a número de forma segura.
- *
- * Si el valor no es numérico o no es finito,
- * retorna el fallback indicado.
- */
 export const safeNumber = (value: unknown, fallback = 0): number => {
   const n = Number(value)
 
   return Number.isFinite(n) ? n : fallback
 }
 
-/**
- * Convierte un valor a número positivo.
- *
- * Si el valor es negativo, inválido o cero,
- * retorna 0.
- */
 export const safePositiveNumber = (value: unknown): number => {
   const n = safeNumber(value, 0)
 
   return n > 0 ? n : 0
 }
 
-/**
- * Convierte un valor a texto limpio.
- */
 export const safeText = (value: unknown): string => {
   return String(value ?? "").trim()
 }
 
-/**
- * Obtiene un valor de LogCart buscando entre varios posibles nombres de propiedad.
- *
- * Es útil porque algunos objetos pueden venir con nombres en camelCase
- * y otros con PascalCase dependiendo del backend o del mapper.
- */
 export const getLogValue = <T,>(
   log: LogCartResponseDto,
   keys: string[],
@@ -116,10 +89,6 @@ export const getLogValue = <T,>(
 
 /**
  * Normaliza el borrador local del carrito.
- *
- * Este draft se usa para recuperar datos del paso de entrega:
- * nombre de factura, dirección manual, retiro en sucursal,
- * transporte, dirección seleccionada y observación.
  */
 export const normalizeDraft = (raw: string | null): DraftState | null => {
   if (!raw) return null
@@ -137,19 +106,14 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
         Number.isFinite(Number(parsed.selectedAddressId))
           ? Number(parsed.selectedAddressId)
           : null,
-      observation: safeText(parsed.observation)
+      observation: safeText(parsed.observation),
+      onlyTextAddress: parsed.onlyTextAddress === true
     }
   } catch {
     return null
   }
 }
 
-/**
- * Cuenta únicamente los productos principales del carrito.
- *
- * Los componentes tipo "O" normalmente representan opciones,
- * modificadores o adicionales, por eso no se cuentan como producto principal.
- */
 export const countMainProducts = (cartList: CarDto[]): number => {
   return (
     cartList[0]?.listDetalle?.reduce((sum, detail) => {
@@ -162,12 +126,6 @@ export const countMainProducts = (cartList: CarDto[]): number => {
   )
 }
 
-/**
- * Construye el request para recalcular totales del carrito.
- *
- * Este cálculo toma en cuenta transporte, impuestos,
- * descuentos y demás reglas manejadas por PCG.
- */
 export const buildCalculationRequest = (
   contactId: number,
   shippingCost: number
@@ -186,9 +144,6 @@ export const buildCalculationRequest = (
   }
 }
 
-/**
- * Configuración visual reutilizable para tooltips.
- */
 export const tooltipSlotProps = {
   tooltip: {
     sx: {
@@ -200,10 +155,6 @@ export const tooltipSlotProps = {
 
 /**
  * Construye el request de actualización de LogCart.
- *
- * Este mapper centraliza la persistencia de:
- * sucursal, bodega, dirección, transporte, totales,
- * observación, nombre de factura y datos relacionados al carrito.
  */
 export const buildLogUpdateRequest = ({
   log,
@@ -212,7 +163,8 @@ export const buildLogUpdateRequest = ({
   addressPayload,
   totals,
   observation,
-  invoiceName
+  invoiceName,
+  onlyTextAddress
 }: BuildLogUpdateParams): LogCartUpdateRequestDto => {
   const totalEnPantalla =
     totals != null
@@ -245,8 +197,22 @@ export const buildLogUpdateRequest = ({
 
   const invoiceNameFinal =
     safeText(invoiceName) ||
-    safeText(getLogValue<string | null>(log, ["invoiceName", "InvoiceName"], null)) ||
+    safeText(
+      getLogValue<string | null>(
+        log,
+        ["invoiceName", "InvoiceName"],
+        null
+      )
+    ) ||
     null
+
+  const onlyTextAddressFinal =
+    onlyTextAddress ??
+    getLogValue<boolean>(
+      log,
+      ["onlyTextAddress", "OnlyTextAddress"],
+      false
+    )
 
   return {
     orderId: safeNumber(log.orderId, 0),
@@ -273,6 +239,7 @@ export const buildLogUpdateRequest = ({
     exonerado: getLogValue<any>(log, ["exonerado", "Exonerado"], null),
     observacion: observation ?? "",
     invoiceName: invoiceNameFinal,
+    onlyTextAddress: onlyTextAddressFinal,
 
     destinationBranchCode: getLogValue<any>(
       log,
@@ -291,10 +258,6 @@ export const buildLogUpdateRequest = ({
 
 /**
  * Convierte el request de actualización a valores completos de formulario.
- *
- * Algunos endpoints de actualización necesitan conservar datos existentes
- * como id, companyId o codPrecio. Por eso se mezclan datos nuevos con datos
- * ya existentes del LogCart.
  */
 export const toLogCartFormValues = (
   req: LogCartUpdateRequestDto,
@@ -302,8 +265,22 @@ export const toLogCartFormValues = (
 ): LogCartFormValues => {
   const invoiceNameFinal =
     safeText(req.invoiceName) ||
-    safeText(getLogValue<string | null>(log, ["invoiceName", "InvoiceName"], null)) ||
+    safeText(
+      getLogValue<string | null>(
+        log,
+        ["invoiceName", "InvoiceName"],
+        null
+      )
+    ) ||
     null
+
+  const onlyTextAddressFinal =
+    req.onlyTextAddress ??
+    getLogValue<boolean>(
+      log,
+      ["onlyTextAddress", "OnlyTextAddress"],
+      false
+    )
 
   return {
     ...req,
@@ -322,6 +299,7 @@ export const toLogCartFormValues = (
       null
     ),
 
-    invoiceName: invoiceNameFinal
+    invoiceName: invoiceNameFinal,
+    onlyTextAddress: onlyTextAddressFinal
   } as LogCartFormValues
 }

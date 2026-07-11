@@ -13,7 +13,6 @@ import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Crm/SystemParamsPage.css'
 import { TextField } from '@mui/material'
 
-
 export default function ProductCatalogPage() {
   const {
     productCatalog,

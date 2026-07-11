@@ -1,12 +1,13 @@
 import type {
   ClientLocationDto
 } from "@/Interfaces/Ecommerce/ClientLocationInterface"
-import { BsPersonBoundingBox } from "react-icons/bs";
-import { TbCoins } from "react-icons/tb";
+import { BsPersonBoundingBox } from "react-icons/bs"
+import { TbCoins } from "react-icons/tb"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
-import { FaRegNoteSticky } from "react-icons/fa6";
-import { FiMapPin } from "react-icons/fi";
-import { IoStorefrontOutline } from "react-icons/io5";
+import { FaRegNoteSticky } from "react-icons/fa6"
+import { FiMapPin } from "react-icons/fi"
+import { IoStorefrontOutline } from "react-icons/io5"
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 
 interface Props {
   /**
@@ -52,26 +53,44 @@ interface Props {
   /**
    * Indica si el cliente retira en sucursal.
    */
-  retiraSucursal: "S" | "N"
+  retiraSucursal: SINO
 
   /**
    * Actualiza si retira en sucursal o no.
    */
-  setRetiraSucursal: (value: "S" | "N") => void
+  setRetiraSucursal: (value: SINO) => void
 
   /**
-   * Bloquea la dirección manual cuando ya hay dirección guardada
-   * seleccionada o cuando es retiro en sucursal.
+   * Indica si el cliente solo debe digitar dirección en checkout.
+   * No usa mapa, dirección guardada, dirección del agente ni transporte.
+   */
+  onlyTextAddress: boolean
+
+  /**
+   * Actualiza si el cliente solo digita dirección.
+   */
+  setOnlyTextAddress: (value: boolean) => void
+
+  /**
+   * Bloquea el checkbox de solo texto cuando ya hay retiro,
+   * dirección guardada o dirección manual.
+   */
+  onlyTextAddressDisabled: boolean
+
+  /**
+   * Bloquea la dirección manual cuando ya hay dirección guardada,
+   * retiro en sucursal o solo texto.
    */
   addressInputsDisabled: boolean
 
   /**
-   * Bloquea transporte cuando retira en sucursal.
+   * Bloquea transporte cuando retira en sucursal o solo texto.
    */
   transportDisabled: boolean
 
   /**
-   * Bloquea el checkbox de retiro cuando ya hay dirección definida.
+   * Bloquea el checkbox de retiro cuando ya hay dirección definida
+   * o cuando está activo solo texto.
    */
   pickupDisabled: boolean
 
@@ -132,6 +151,9 @@ export default function CartPanelDeliveryStep({
   setTransCost,
   retiraSucursal,
   setRetiraSucursal,
+  onlyTextAddress,
+  setOnlyTextAddress,
+  onlyTextAddressDisabled,
   addressInputsDisabled,
   transportDisabled,
   pickupDisabled,
@@ -150,11 +172,13 @@ export default function CartPanelDeliveryStep({
       <div className="productTab-content-footer">
         <div className="productTab-content__inputContaner">
           <div className="productTab-content__inputs">
-
-             <div className="productTab-content__divContainer">
-              <BsPersonBoundingBox fontSize={14}/>
-               <p className="productTab-content__text">Nombre de la persona que recibe</p>
+            <div className="productTab-content__divContainer">
+              <BsPersonBoundingBox fontSize={14} />
+              <p className="productTab-content__text">
+                Nombre de la persona que recibe
+              </p>
             </div>
+
             <input
               type="text"
               name="invoiceName"
@@ -167,9 +191,12 @@ export default function CartPanelDeliveryStep({
             />
 
             <div className="productTab-content__divContainer">
-              <FaRegNoteSticky  fontSize={14}/>
-              <p className="productTab-content__text">Observaciones generales del pedido</p>
+              <FaRegNoteSticky fontSize={14} />
+              <p className="productTab-content__text">
+                Observaciones generales del pedido
+              </p>
             </div>
+
             <textarea
               rows={5}
               name="observation"
@@ -181,15 +208,22 @@ export default function CartPanelDeliveryStep({
             />
 
             <div className="productTab-content__divContainer">
-              <FiMapPin  fontSize={14}/>
-              <p className="productTab-content__text">Dirección de entrega</p>
+              <FiMapPin fontSize={14} />
+              <p className="productTab-content__text">
+                Dirección de entrega
+              </p>
             </div>
+
             <textarea
               rows={5}
               name="descripcion"
               id="descripcion"
               className="productTab-content__input"
-              placeholder="Dirección"
+              placeholder={
+                onlyTextAddress
+                  ? "El cliente escribirá la dirección en el checkout"
+                  : "Dirección"
+              }
               value={addDescription}
               disabled={addressInputsDisabled}
               onChange={(event) => {
@@ -199,10 +233,11 @@ export default function CartPanelDeliveryStep({
               }}
             />
 
-              <div className="productTab-content__divContainer">
-              <TbCoins   fontSize={14}/>
+            <div className="productTab-content__divContainer">
+              <TbCoins fontSize={14} />
               <p className="productTab-content__text">Costo de envío</p>
             </div>
+
             <div className="transportationCost__input">
               <input
                 type="number"
@@ -225,12 +260,14 @@ export default function CartPanelDeliveryStep({
               />
             </div>
 
-              <div className="productTab-content__divContainer">
-              <IoStorefrontOutline   fontSize={14}/>
-              <p className="productTab-content__text">Retirar en sucursal (Sin costo envío)</p>
+            <div className="productTab-content__divContainer">
+              <IoStorefrontOutline fontSize={14} />
+              <p className="productTab-content__text">
+                Retirar en sucursal (sin costo de envío)
+              </p>
             </div>
-            <div className="transportationCost__checkbox"></div>
-              <div className="transportationCost__input">
+
+            <div className="transportationCost__input">
               <input
                 type="checkbox"
                 id="retiraSucursal"
@@ -243,11 +280,34 @@ export default function CartPanelDeliveryStep({
 
               <label htmlFor="retiraSucursal">Retira en sucursal</label>
             </div>
+
+            <div className="productTab-content__divContainer">
+              <FiMapPin fontSize={14} />
+              <p className="productTab-content__text">
+                Cliente digita dirección (sin mapa)
+              </p>
+            </div>
+
+            <div className="transportationCost__input">
+              <input
+                type="checkbox"
+                id="onlyTextAddress"
+                checked={onlyTextAddress}
+                disabled={onlyTextAddressDisabled}
+                onChange={(event) =>
+                  setOnlyTextAddress(event.target.checked)
+                }
+              />
+
+              <label htmlFor="onlyTextAddress">
+                Cliente digita dirección
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
-      {showAddressModal && (
+      {showAddressModal && !onlyTextAddress && (
         <div className="addressMenu">
           <div className="addressMenu__header">
             <strong>Direcciones</strong>
@@ -291,6 +351,7 @@ export default function CartPanelDeliveryStep({
                   }`}
                   onClick={async () => {
                     if (retiraSucursal === "S") return
+                    if (onlyTextAddress) return
 
                     await applySelectedAddressToLog(
                       Number(address.idDireccion)

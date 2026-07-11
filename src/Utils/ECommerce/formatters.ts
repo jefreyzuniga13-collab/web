@@ -23,7 +23,6 @@ export function toNumberNoLeadingZeros(raw: string): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-
 export function money(value: unknown): string {
   const amount = Number(value ?? 0);
   return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
@@ -43,8 +42,7 @@ export function randomPhoneNumber(): string {
 export   const formatCurrencyNIO = (value?: number | null) => {
     const n = Number(value ?? 0)
     return `C$ ${n.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
-
+}
 
   export const generateRandomString = () => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -77,7 +75,6 @@ export   const formatCurrencyNIO = (value?: number | null) => {
 
   return result
 }
-
 
 // Formatear fechas
 export const formatoNicaragua = (fecha: Date) => {
@@ -184,7 +181,6 @@ export function methodLabel(m: PaymentMethod): string {
   return "Transferencia";
 }
 
-
 export const getLicenseMessage = (
   expiryDateString: string,
   customMessage?: string
@@ -239,7 +235,6 @@ export const clampQty = (n: number) => {
   if (n > 100) return 100
   return Math.floor(n)
 }
-
 
 // Evita errores en codProductos
 export const cleanText = (value: string | number | null | undefined) => {
@@ -302,14 +297,12 @@ export const formatDecimal = (value?: number | null) => {
   }).format(value ?? 0);
 };
 
-
 // CHAT
-const MANAGUA_OFFSET = "-06:00"
+const MANAGUA_OFFSET = "-06:00";
 
 const hasTimezoneInfo = (value: string) => {
   return /([zZ]|[+-]\d{2}:?\d{2})$/.test(value)
 }
-
 
 export const parseApiDateNI = (value?: string | Date | null): Date | null => {
   if (!value) return null
@@ -338,7 +331,6 @@ export const parseApiDateNI = (value?: string | Date | null): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-
 export const getElapsedMsFromNI = (value?: string | Date | null): number => {
   const date = parseApiDateNI(value)
 
@@ -355,8 +347,6 @@ export const formatTime = (iso?: string) => {
   return match ? match[1] : "";
 };
 
-
-
 export const formatDuration = (ms: number): string => {
   const totalMinutes = Math.floor(ms / 60000)
   const hours = Math.floor(totalMinutes / 60)
@@ -364,8 +354,6 @@ export const formatDuration = (ms: number): string => {
 
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 }
-
-
 
 export const getChannel = (channelId?: number | null): ChannelType | null => {
   if (channelId === CHANNEL.Whatsapp) return CHANNEL.Whatsapp

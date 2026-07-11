@@ -1,5 +1,6 @@
 import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
 import type { CarDto, InvoiceTotalsDto, ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
@@ -18,7 +19,7 @@ const buildRowsFromCart = (cart: CarDto): any[][] => {
 
 type CartPdfOptions = {
   transCost?: number
-  retiraSucursal?: "S" | "N"
+  retiraSucursal?: SINO
   addressText?: string | null
   addressName?: string | null
   finalTotal?: number | null

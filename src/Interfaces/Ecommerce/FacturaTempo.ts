@@ -1,11 +1,13 @@
+export type SINO = "S" | "N";
+
 export interface FacturaTempo {
   noFactura: string;
   serie: string;
   tipo: string;
   modo: string;
   moneda: string;
-  aplicaIr: "S" | "N";
-  aplicaIMI: "S" | "N";
+  aplicaIr: SINO;
+  aplicaIMI: SINO;
   sucursal: string;
   codCli: string;
   nombreCliente: string;
@@ -14,7 +16,7 @@ export interface FacturaTempo {
   diasCredito: number;
   usuario: string;
   maquina: string;
-  exonerado: "S" | "N";
+  exonerado: SINO;
   noProforma: string;
   tipoIdentificacion: number;
   identificaicon: string; // mantener el nombre tal cual viene
@@ -27,7 +29,7 @@ export interface FacturaTempo {
   versionSistema: string;
   codSubCli: number;
   observacion: string;
-  verComoPreventa: "S" | "N";
+  verComoPreventa: SINO;
   tipoServicio: number;
   agente: number;
   fechaFactura: string; // yyyyMMdd
@@ -43,13 +45,13 @@ export interface FacturaTempo {
   detallePago: PagoGenerico[] | null;
 
   clientePadre: string;
-  hayFormaPago: "S" | "N";
+  hayFormaPago: SINO;
   valorTransporte: number;
   referencia: string;
-  aplicaPropina: "S" | "N";
+  aplicaPropina: SINO;
   etiqueta: string;
   noConsignacion: string;
-  planPago: "S" | "N";
+  planPago: SINO;
   idPromocion: string;
   codreferido: string;
   correo: string;
@@ -118,8 +120,6 @@ export interface ExistenciaSucursalItem {
   precio: string
 }
 
-
-
 //Si selecciona fectivo
 export interface PagoEfectivo {
   concepto: "Efectivo";
@@ -143,7 +143,6 @@ export interface PagoTarjeta {
   fechaOVence: string;
   ultDigito: string;
 }
-
 
 //si seleciona transfedrencia, se deve de manda a listar ExistenciaSucursalItem, enviando el codPago
 export interface PagoTransferencia {
@@ -185,16 +184,12 @@ export interface PagoTransferencia {
   sobrante: string;          
 }
 
-
-
 //solicita la lista de metod0os de transferencia y la respuesta, 
 export interface ObtenerDivisaPagosTipoReq{
   codigo: string
   formulario: string;
   opcion: string;
 }
-
-
 //se deve de listar la lista en un select, y que el usuario debe de seleccionar 1 de la fila par luego enviarla en el
 //pagoGenerico en dependenai al tipo de pago
 export interface ObtenerDivisaPagosTipoRes{

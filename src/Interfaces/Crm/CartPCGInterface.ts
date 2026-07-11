@@ -1,5 +1,5 @@
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface";
-import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { ExistenciaSucursalItem, SINO } from "@/Interfaces/Ecommerce/FacturaTempo";
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 
 export interface CarDto{
@@ -80,19 +80,19 @@ export interface DetalleFacturaTempoRequest {
   tasacambio: number;
   descuento: number;
 
-  autorizado?: string | null; //"S" | "N" 
+  autorizado?: SINO | null;
   tabla: string;
   vincularse?: string | null;
   servicioventa: number;
-  facturaexonerada?: string | null; // "S"|"N"
+  facturaexonerada?: SINO | null;
   lote?: string | null;
   vencimiento?: string | null; 
-  vienedelabusqueda?: string | null; // "S"|"N"
+  vienedelabusqueda?: SINO | null;
   observacion?: string | null;
 
   iddescuentolineal?: number | null;
-  vienedebusquedaprioridadproducto?: string | null; // "S"|"N"
-  pol_Sumacant?: string | null; // "S"|"N"
+  vienedebusquedaprioridadproducto?: SINO | null; 
+  pol_Sumacant?: SINO | null;
 
   // extra que no viene en request/valores directo
   fecha: string; // en C# la envías como DbType.String
@@ -106,8 +106,6 @@ export interface DetalleFacturaTempoRequest {
   tipoFac: string
 }
 
-
-type YesNo = "S" | "N";
 export interface ApiResponseDetalleFacturaTempo {
   success: boolean;
   data: DetalleFacturaTempoData;
@@ -121,13 +119,13 @@ export interface DetalleFacturaTempoData {
 
 export interface DetalleFacturaTempoHeader {
   msj: string;
-  cargaFila: YesNo
+  cargaFila: SINO
   icono: string;
   titulo: string;
-  permiso:  YesNo
+  permiso:  SINO
   opcionPermiso: number;
   dato: string | number | boolean | null; // en tu ejemplo es null
-  cargaSuma:  YesNo
+  cargaSuma:  SINO
   saldo: number;
 }
 
@@ -183,8 +181,8 @@ export interface FacturaTempo {
   tipo: string;
   modo: string;
   moneda: string;
-  aplicaIr: "S" | "N";
-  aplicaIMI: "S" | "N";
+  aplicaIr: SINO;
+  aplicaIMI: SINO;
   sucursal: string;
   codCli: string;
   nombreCliente: string;
@@ -193,7 +191,7 @@ export interface FacturaTempo {
   diasCredito: number;
   usuario: string;
   maquina: string;
-  exonerado: "S" | "N";
+  exonerado: SINO;
   noProforma: string;
   tipoIdentificacion: number;
   identificaicon: string; // mantener el nombre tal cual viene
@@ -206,7 +204,7 @@ export interface FacturaTempo {
   versionSistema: string;
   codSubCli: number;
   observacion: string;
-  verComoPreventa: "S" | "N";
+  verComoPreventa: SINO;
   tipoServicio: number;
   agente: number;
   fechaFactura: string; // yyyyMMdd
@@ -222,13 +220,13 @@ export interface FacturaTempo {
   detallePago: string;
 
   clientePadre: string;
-  hayFormaPago: "S" | "N";
+  hayFormaPago: SINO;
   valorTransporte: number;
   referencia: string;
-  aplicaPropina: "S" | "N";
+  aplicaPropina: SINO;
   etiqueta: string;
   noConsignacion: string;
-  planPago: "S" | "N";
+  planPago: SINO;
   idPromocion: string;
   codreferido: string;
   correo: string;

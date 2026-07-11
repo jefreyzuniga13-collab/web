@@ -2,6 +2,7 @@ import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+import { safeNumber } from "@/Utils/ECommerce/utils"
 
 type AutoTableDoc = jsPDF & {
   lastAutoTable?: {
@@ -38,20 +39,6 @@ export type OrderPdfContext = {
    */
   companyName?: string | null
 }
-
-/**
- * Convierte un valor a número válido.
- */
-const safeNumber = (
-  value?: number | string | null
-): number => {
-  const parsed = Number(value ?? 0)
-
-  return Number.isFinite(parsed)
-    ? parsed
-    : 0
-}
-
 /**
  * Formatea cantidades monetarias en córdobas.
  */
@@ -284,11 +271,6 @@ export const generateOrdeFacPDFFile = (
     "Cliente"
   )
 
-  const contactName = safePdfText(
-    context.contactName,
-    invoiceCustomerName
-  )
-
   const contactPhone = safePdfText(
     context.contactPhone
   )
@@ -353,8 +335,8 @@ export const generateOrdeFacPDFFile = (
   })
 
   const contactDescription = contactPhone
-    ? `${contactName} - ${contactPhone}`
-    : contactName
+    ? `${contactPhone}`
+    : `------`
 
   infoY = drawInfoRow({
     doc,
@@ -401,13 +383,6 @@ export const generateOrdeFacPDFFile = (
     maxWidth: usableWidth
   })
 
-  /*
-   * Dirección.
-   */
-  const addressName = safePdfText(
-    orderFac.DatosDireccion?.Nombre
-  )
-
   const addressDescription = safePdfText(
     orderFac.DatosDireccion?.Descripcion
   )
@@ -415,17 +390,6 @@ export const generateOrdeFacPDFFile = (
   const addressReference = safePdfText(
     orderFac.DatosDireccion?.Referencia
   )
-
-  if (addressName) {
-    infoY = drawInfoRow({
-      doc,
-      label: "Lugar:",
-      value: addressName,
-      x: marginX,
-      y: infoY,
-      maxWidth: usableWidth
-    })
-  }
 
   if (addressDescription) {
     infoY = drawInfoRow({
@@ -854,4 +818,5 @@ export const generateOrdeFacPDFFile = (
   )
 
   return doc.output("blob")
+  
 }

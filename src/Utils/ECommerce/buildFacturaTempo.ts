@@ -1,11 +1,13 @@
 import type {
   FacturaTempo,
-  PagoGenerico
+  PagoGenerico,
+  SINO
 } from "@/Interfaces/Ecommerce/FacturaTempo"
 
 import { FechaManagua } from "@/Utils/FechaManagua"
 import { safeStr } from "@/Utils/ECommerce/formatters"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
+import { tasaCambio } from "@/Constants/tasaCambio"
 
 type BuildFacturaTempoParams = {
   /**
@@ -56,7 +58,7 @@ type BuildFacturaTempoParams = {
   /**
    * Indica si el cliente retira en sucursal.
    */
-  retiraSucursal: "S" | "N" | string
+  retiraSucursal: SINO | string
 
   /**
    * Observación del pedido.
@@ -76,7 +78,7 @@ type BuildFacturaTempoParams = {
   /**
    * Tasa de cambio.
    */
-  tasaCambio?: number
+  tasa: number
 
   /**
    * Código de cliente PCG si existe.
@@ -114,7 +116,7 @@ export const buildFacturaTempo = ({
   observacion = "",
   serie = null,
   detallePago,
-  tasaCambio = 36.6243,
+  tasa,
   codCli,
   telefonoCte,
   correo
@@ -139,7 +141,7 @@ export const buildFacturaTempo = ({
     maquina: `CRM-${contactId}`,
 
     fechaFactura: FechaManagua.obtenerFormatoLimpio(),
-    tasaCambio,
+    tasaCambio: tasa ?? tasaCambio,
 
     numero: consecutivo,
     idPromocion: String(orderId),

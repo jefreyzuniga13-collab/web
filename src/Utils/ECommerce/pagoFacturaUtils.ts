@@ -1,25 +1,9 @@
-import type {
-  FacturaTempo,
-  ObtenerDivisaPagosTipoRes,
-  PagoGenerico
-} from "@/Interfaces/Ecommerce/FacturaTempo"
-
-import type {
-  Currencyto
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
-import type {
-  PagoSeleccionado
-} from "@/Interfaces/Ecommerce/MultiPagoTypes"
-
-import type {
-  CheckoutPaymentMethod
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
+import { tasaCambio } from "@/Constants/tasaCambio"
+import type { FacturaTempo, ObtenerDivisaPagosTipoRes, PagoGenerico} from "@/Interfaces/Ecommerce/FacturaTempo"
+import type { Currencyto} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import type { PagoSeleccionado} from "@/Interfaces/Ecommerce/MultiPagoTypes"
+import type { CheckoutPaymentMethod} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
 import { round2, safeStr } from "@/Utils/ECommerce/formatters"
-
-const TASA_CAMBIO_DEFECTO = 36.6243
-
 /**
  * Convierte una forma de pago recibida desde PCG al método interno del checkout.
  *
@@ -179,9 +163,9 @@ export const validarPagosSeleccionados = (
         return "El tarjetahabiente es requerido."
       }
 
-      if (!safeStr(pago.tarjetaManual?.tarjeta)) {
-        return "La tarjeta es requerida."
-      }
+      // if (!safeStr(pago.tarjetaManual?.tarjeta)) {
+      //   return "La tarjeta es requerida."
+      // }
 
       if (!safeStr(pago.tarjetaManual?.ultDigito)) {
         return "Los últimos 4 dígitos son requeridos."
@@ -214,29 +198,28 @@ export const construirPagoFactura = (
   const esTransferencia = metodo === "transfer"
   const esTarjetaManual = metodo === "manualCard"
 
-  const monedaFactura = safeStr(factura.moneda) || "1"
-  const tasaCambio = Number(factura.tasaCambio ?? TASA_CAMBIO_DEFECTO)
+  const monedaFactura = safeStr(factura.moneda)
   const monto = round2(Number(pago.monto ?? 0))
 
   const divisa = pago.divisa as ObtenerDivisaPagosTipoRes | null
   const moneda = pago.moneda as Currencyto | null
 
   const codPago = esEfectivo
-    ? safeStr(moneda?.codPago) || "1"
+    ? safeStr(moneda?.codPago)
     : safeStr(divisa?.codigo)
 
   const descripcionPago = esEfectivo
-    ? safeStr(moneda?.descripcion_Pago) || "Efectivo"
+    ? safeStr(moneda?.descripcion_Pago)
     : safeStr(divisa?.nombre)
 
   const tipoPago = esEfectivo ? "" : safeStr(divisa?.tipo)
 
   const banco = esEfectivo
-    ? safeStr(moneda?.codigo_Banco) || "00"
+    ? safeStr(moneda?.codigo_Banco)
     : safeStr(divisa?.banco)
 
   const codPagoExterno = esEfectivo
-    ? safeStr(moneda?.codExterno) || "1"
+    ? safeStr(moneda?.codExterno)
     : safeStr(divisa?.codigoExterno)
 
   const referencia = esTransferencia
