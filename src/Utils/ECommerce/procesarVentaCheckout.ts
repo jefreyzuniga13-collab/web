@@ -1,169 +1,53 @@
 import dayjs from "dayjs"
 import type { NavigateFunction } from "react-router-dom"
+
 import type { AppDispatch } from "@/Context"
-
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-
-import { UserSessionService } from "@/Services/auth/UserSessionService"
-import { CartService } from "@/Services/Ecommerce/CarPCGService"
-import { InvoiceOrderService } from "@/Services/Ecommerce/InvoiceOrderService"
-import { sendMediaEcommerce } from "@/Services/chat/MessageService"
-import { powertranzService } from "@/Services/Ecommerce/PowerTranzService"
-
-import {
-  generateOrdeFacPDFFile,
-  type OrderPdfContext
-} from "@/Utils/Pdf/PrintDetFac"
-
-import { generatePagoElectronicoPDFFile } from "@/Utils/Pdf/generateReciboPasarelaPDFFile"
 
 import { GENERAL_STATUS } from "@/Constants/status"
 import { PCG_SERVICES } from "@/Constants/pcgservices"
 
+import { UserSessionService } from "@/Services/auth/UserSessionService"
+import { sendMediaEcommerce } from "@/Services/chat/MessageService"
+import { CartService } from "@/Services/Ecommerce/CarPCGService"
+import { InvoiceOrderService } from "@/Services/Ecommerce/InvoiceOrderService"
+import { powertranzService } from "@/Services/Ecommerce/PowerTranzService"
+
+import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface"
+import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo"
+import type { CheckoutPaymentMethod, CheckoutPaymentState, PaymentSource } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import type { PowertranzVoidRequestDto } from "@/Interfaces/Ecommerce/powertranzInterface"
 
-import type {
-  LogCartResponseDto,
-  Payload
-} from "@/Interfaces/Crm/LogCartInterface"
-
-import type {
-  ApiResponse
-} from "@/Interfaces/Auth/AuthInterface"
-
-import type {
-  PowertranzVoidRequestDto
-} from "@/Interfaces/Ecommerce/powertranzInterface"
-
-import type {
-  CheckoutPaymentMethod,
-  CheckoutPaymentState,
-  PaymentSource
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import { generatePagoElectronicoPDFFile } from "@/Utils/Pdf/generateReciboPasarelaPDFFile"
+import { generateOrdeFacPDFFile, type OrderPdfContext } from "@/Utils/Pdf/PrintDetFac"
 
 type ProcesarVentaCheckoutParams = {
-  /**
-   * Indica desde dónde se procesa la venta.
-   *
-   * agent:
-   * Venta procesada directamente por el agente desde el CartTab.
-   *
-   * customerLink:
-   * Venta procesada por el cliente desde el enlace de checkout.
-   */
   source: PaymentSource
-
-  /**
-   * Método de pago utilizado.
-   */
   paymentMethod: CheckoutPaymentMethod
-
-  /**
-   * Estado normalizado del pago.
-   */
   paymentState?: CheckoutPaymentState
-
-  /**
-   * Request final de factura enviado al backend.
-   */
   invoiceReqFinal: FacturaTempo
-
-  /**
-   * Payload del carrito o LogCart.
-   */
   payload: Payload
-
-  /**
-   * Número del pedido temporal.
-   */
   orderId: number
-
-  /**
-   * Identificador de transacción PowerTranz.
-   */
   transactionIdentifier?: string
-
-  /**
-   * Genera también el comprobante electrónico.
-   */
   usarPdfPagoElectronico?: boolean
-
-  /**
-   * Sucursal donde se genera la factura.
-   */
   codSucursalFactura: string
-
-  /**
-   * Consecutivo generado por backend.
-   */
   consecutivo: number
-
-  /**
-   * Información adicional que aparecerá en el PDF.
-   *
-   * En el flujo del agente puede obtenerse desde Redux.
-   * En el checkout debe obtenerse desde payload, contacto o LogCart.
-   */
   pdfContext?: OrderPdfContext
-
-  /**
-   * Obtiene el LogCart actual por contacto.
-   */
-  fetchByContactId: (
-    contactId: number
-  ) => Promise<LogCartResponseDto | null>
-
-  /**
-   * Actualiza el estado del LogCart.
-   */
-  updatedStatus: (
-    id: number,
-    status: number
-  ) => Promise<LogCartResponseDto | null>
-
-  /**
-   * Inserta la factura final.
-   */
-  insertaFacturaAsync: (
-    invoice: FacturaTempo
-  ) => Promise<ApiResponse<unknown>>
-
-  /**
-   * Dispatch de Redux.
-   */
+  fetchByContactId: (contactId: number) => Promise<LogCartResponseDto | null>
+  updatedStatus: (id: number, status: number) => Promise<LogCartResponseDto | null>
+  insertaFacturaAsync: (invoice: FacturaTempo) => Promise<ApiResponse<unknown>>
   dispatch: AppDispatch
-
-  /**
-   * Navegación opcional.
-   */
   navigate?: NavigateFunction
-
-  /**
-   * Callback ejecutado cuando finaliza correctamente.
-   */
   onSuccess?: () => void
 }
 
-/**
- * Limpia espacios alrededor de un texto.
- *
- * La limpieza de caracteres no compatibles con jsPDF se realiza
- * dentro de generateOrdeFacPDFFile.
- */
-const safeText = (
-  value?: string | number | null
-): string => {
+const safeText = (value?: string | number | null): string => {
   return String(value ?? "").trim()
 }
 
 /**
- * Limpia un texto para poder utilizarlo como nombre de archivo.
- *
- * Realiza las siguientes acciones:
- * - Elimina tildes.
- * - Elimina caracteres inválidos para Windows.
- * - Reemplaza espacios por guiones bajos.
- * - Evita guiones bajos repetidos.
+ * Limpia un valor para utilizarlo dentro del nombre de un archivo.
  */
 const safeFileName = (
   value?: string | number | null,
@@ -176,19 +60,14 @@ const safeFileName = (
   const withoutControlCharacters = Array.from(text)
     .filter((character) => {
       const code = character.charCodeAt(0)
-
       return code >= 32 && code !== 127
     })
     .join("")
 
   const cleaned = withoutControlCharacters
-    // Caracteres inválidos en nombres de archivo de Windows.
     .replace(/[<>:"/\\|?*]/g, "")
-    // Espacios y caracteres especiales se convierten en "_".
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
-    // Evita guiones bajos repetidos.
     .replace(/_+/g, "_")
-    // Elimina guiones bajos al inicio y al final.
     .replace(/^_+|_+$/g, "")
     .trim()
 
@@ -196,27 +75,14 @@ const safeFileName = (
 }
 
 /**
- * Valida que un Blob generado sea realmente un PDF válido.
+ * Valida que el Blob generado corresponda realmente a un PDF.
  */
-const validarPdf = async (
-  pdfBlob: Blob,
-  fileName: string
-): Promise<File> => {
-  if (
-    !(pdfBlob instanceof Blob) ||
-    pdfBlob.size < 100
-  ) {
-    throw new Error(
-      `El PDF ${fileName} está vacío o es inválido.`
-    )
+const validarPdf = async (pdfBlob: Blob, fileName: string): Promise<File> => {
+  if (!(pdfBlob instanceof Blob) || pdfBlob.size < 100) {
+    throw new Error(`El PDF ${fileName} está vacío o es inválido.`)
   }
 
-  const head = new Uint8Array(
-    await pdfBlob
-      .slice(0, 5)
-      .arrayBuffer()
-  )
-
+  const head = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer())
   const magic = String.fromCharCode(...head)
 
   if (magic !== "%PDF-") {
@@ -225,17 +91,14 @@ const validarPdf = async (
     )
   }
 
-  return new File(
-    [pdfBlob],
-    fileName,
-    {
-      type: pdfBlob.type || "application/pdf"
-    }
-  )
+  return new File([pdfBlob], fileName, {
+    type: pdfBlob.type || "application/pdf"
+  })
 }
 
 /**
- * Intenta anular una transacción PowerTranz.
+ * Intenta anular la transacción cuando PowerTranz aprobó el pago,
+ * pero la factura no pudo insertarse.
  */
 const intentarVoidPowertranz = async ({
   transactionIdentifier,
@@ -249,8 +112,7 @@ const intentarVoidPowertranz = async ({
     externalIdentifier: orderId.toString()
   }
 
-  const voidRes =
-    await powertranzService.void(voidReq)
+  const voidRes = await powertranzService.void(voidReq)
 
   if (voidRes?.data?.approved) {
     throw new Error(
@@ -266,10 +128,14 @@ const intentarVoidPowertranz = async ({
 }
 
 /**
- * Procesa la venta completa después de confirmar el pago.
+ * Procesa la venta después de confirmar el pago.
  *
- * Puede utilizarse tanto desde el CartTab del agente como desde
- * el checkout público del cliente.
+ * Este método es compartido por:
+ * - El pago directo realizado por el agente.
+ * - El pago realizado por el cliente mediante el enlace de checkout.
+ *
+ * Cada flujo debe resolver previamente sus datos particulares y enviarlos
+ * mediante invoiceReqFinal, payload y pdfContext.
  */
 export async function procesarVentaCheckout({
   source,
@@ -289,24 +155,12 @@ export async function procesarVentaCheckout({
   navigate,
   onSuccess
 }: ProcesarVentaCheckoutParams): Promise<void> {
-  const isGatewayPayment =
-    paymentMethod === "gatewayCard"
+  const isGatewayPayment = paymentMethod === "gatewayCard"
 
-  /**
-   * Primero se inserta la factura.
-   */
-  const insertFacRes =
-    await insertaFacturaAsync(invoiceReqFinal)
+  const insertFacRes = await insertaFacturaAsync(invoiceReqFinal)
 
-  /**
-   * Si falla y fue un pago por pasarela,
-   * intenta anular la transacción.
-   */
   if (!insertFacRes?.success) {
-    if (
-      isGatewayPayment &&
-      transactionIdentifier
-    ) {
+    if (isGatewayPayment && transactionIdentifier) {
       await intentarVoidPowertranz({
         transactionIdentifier,
         orderId
@@ -314,56 +168,33 @@ export async function procesarVentaCheckout({
     }
 
     throw new Error(
-      insertFacRes?.message ??
-        "No fue posible insertar la factura."
+      insertFacRes?.message ?? "No fue posible insertar la factura."
     )
   }
 
   /**
-   * Recupera el LogCart antes de finalizarlo.
-   *
-   * También se utiliza para obtener sucursal y otros datos
-   * necesarios para imprimir el PDF.
+   * Se obtiene antes de finalizar el LogCart porque todavía contiene
+   * los datos asociados al pedido, incluyendo invoiceName.
    */
-  const existingLog =
-    await fetchByContactId(payload.contactId)
+  const existingLog = await fetchByContactId(payload.contactId)
 
-  /**
-   * La venta ya fue facturada, por lo que se finaliza el LogCart.
-   */
   if (existingLog?.id) {
-    await updatedStatus(
-      existingLog.id,
-      GENERAL_STATUS.Finalizada
-    )
+    await updatedStatus(existingLog.id, GENERAL_STATUS.Finalizada)
   }
 
-  /**
-   * Revoca el enlace temporal del checkout.
-   */
-  await UserSessionService.revokeCartTempLink(
-    orderId
-  )
+  await UserSessionService.revokeCartTempLink(orderId)
 
-  /**
-   * Limpia la factura temporal.
-   */
-  const limpiarRes =
-    await CartService.LimpiarFacturaTempo(
-      String(payload.contactId),
-      `CRM-${payload.contactId}`
-    )
+  const limpiarRes = await CartService.LimpiarFacturaTempo(
+    String(payload.contactId),
+    `CRM-${payload.contactId}`
+  )
 
   if (!limpiarRes.success) {
     throw new Error(
-      limpiarRes.message ||
-        "No fue posible limpiar la factura temporal."
+      limpiarRes.message || "No fue posible limpiar la factura temporal."
     )
   }
 
-  /**
-   * Limpia el badge del carrito.
-   */
   dispatch(
     setContactCartBadge({
       contactId: payload.contactId,
@@ -372,28 +203,18 @@ export async function procesarVentaCheckout({
     })
   )
 
-  /**
-   * Obtiene la factura definitiva para generar los PDFs.
-   */
   const date = dayjs().format("YYYYMMDD")
 
-  const resPrintPDF =
-    await InvoiceOrderService.PrintDetFac(
-      codSucursalFactura,
-      date,
-      consecutivo,
-      PCG_SERVICES.CRM
-    )
+  const resPrintPDF = await InvoiceOrderService.PrintDetFac(
+    codSucursalFactura,
+    date,
+    consecutivo,
+    PCG_SERVICES.CRM
+  )
 
   if (resPrintPDF?.data) {
     const archivos: File[] = []
 
-    /**
-     * Número definitivo del pedido o factura.
-     *
-     * Si backend no devuelve NoFactura, se utiliza el orderId
-     * como respaldo.
-     */
     const noFactura = safeText(
       resPrintPDF.data.DatosGenerales?.NoFactura
     )
@@ -404,87 +225,65 @@ export async function procesarVentaCheckout({
     )
 
     /**
-     * Nombre del cliente para el nombre del archivo.
+     * El método compartido respeta primero el contexto resuelto por
+     * el flujo que lo llamó.
      *
-     * Prioridad:
-     * 1. Nombre de la factura definitiva.
-     * 2. Nombre enviado en el contexto del PDF.
-     * 3. Nombre completo del payload.
-     * 4. Nombre del contacto en el LogCart.
-     * 5. Cliente.
+     * Agent:
+     * useAgentCartPayment envía invoiceName como contactName.
+     *
+     * CustomerLink:
+     * CheckoutPage resuelve el nombre desde LogCart, payload o formulario.
      */
-    const nombreCliente =
-      safeText(pdfContext?.contactName) ||
-      safeText(payload.fullName) ||
-      "Cliente"
+  const finalPdfContext: OrderPdfContext = {
+  sellerName:
+    safeText(existingLog?.createdByFullName) ||
+    safeText(existingLog?.createdByNickname) ||
+    safeText(existingLog?.createdByName) ||
+    safeText(existingLog?.userName) ||
+    safeText(payload.sellerName) ||
+    safeText(pdfContext?.sellerName) ||
+    (source === "customerLink" ? "Venta en línea" : "Agente"),
 
-    const nombreClienteArchivo =
-      safeFileName(
-        nombreCliente,
-        "Cliente"
-      )
+  contactName:
+    safeText(pdfContext?.contactName) ||
+    safeText(existingLog?.invoiceName) ||
+    safeText(payload.fullName) ||
+    safeText(existingLog?.contactName) ||
+    safeText(resPrintPDF.data.DatosGenerales?.Nombrede) ||
+    "Cliente",
+
+  contactPhone:
+    safeText(pdfContext?.contactPhone) ||
+    safeText(existingLog?.contactPhone) ||
+    safeText(payload.phone),
+
+  companyName:
+    safeText(existingLog?.companyName) ||
+    safeText(payload.companyName) ||
+    safeText(pdfContext?.companyName) ||
+    "Empresa"
+}
 
     /**
-     * Nombre base del archivo principal.
-     *
-     * Ejemplo:
-     * pedido_000154_Juan_Carlos_Perez.pdf
+     * El nombre del archivo se obtiene del mismo nombre que se mostrará
+     * como cliente dentro del PDF.
      */
+    const nombreClienteArchivo = safeFileName(
+      finalPdfContext.contactName,
+      "Cliente"
+    )
+
     const nombrePedido =
       `pedido_${numeroPedido}_${nombreClienteArchivo}`
 
-    /**
-     * Nombre base del comprobante de pago.
-     *
-     * Ejemplo:
-     * comprobante_pago_000154_Juan_Carlos_Perez.pdf
-     */
     const nombreComprobantePago =
       `comprobante_pago_${numeroPedido}_${nombreClienteArchivo}`
 
-    /**
-     * Contexto final del PDF.
-     *
-     * Los valores enviados explícitamente tienen prioridad.
-     * El nombre del contacto puede respaldarse con payload.fullName.
-     */
-    const finalPdfContext: OrderPdfContext = {
-      sellerName:
-        safeText(pdfContext?.sellerName) ||
-        (
-          source === "customerLink"
-            ? "Venta en línea"
-            : "Agente"
-        ),
-
-      contactName:
-        safeText(pdfContext?.contactName) ||
-        safeText(payload.fullName) ||
-        safeText(existingLog?.contactName) ||
-        safeText(
-          resPrintPDF.data.DatosGenerales?.Nombrede
-        ) ||
-        "Cliente",
-
-      contactPhone:
-        safeText(pdfContext?.contactPhone) ||
-        safeText(existingLog?.contactPhone),
-
-      companyName:
-        safeText(pdfContext?.companyName) ||
-        safeText(existingLog?.companyName) ||
-        "Empresa"
-    }
-
-    /**
-     * Genera el PDF principal del pedido.
-     */
-    const pdfPedido =
-      generateOrdeFacPDFFile(
-        resPrintPDF.data,
-        existingLog,
-        finalPdfContext
-      )
+    const pdfPedido = generateOrdeFacPDFFile(
+      resPrintPDF.data,
+      existingLog,
+      finalPdfContext
+    )
 
     archivos.push(
       await validarPdf(
@@ -493,20 +292,13 @@ export async function procesarVentaCheckout({
       )
     )
 
-    /**
-     * Genera el PDF adicional del pago electrónico.
-     */
-    if (
-      usarPdfPagoElectronico &&
-      transactionIdentifier
-    ) {
-      const pdfPagoElectronico =
-        generatePagoElectronicoPDFFile({
-          orderFac: resPrintPDF.data,
-          transactionIdentifier,
-          telefono: "+505 7545 4150",
-          existingLog
-        })
+    if (usarPdfPagoElectronico && transactionIdentifier) {
+      const pdfPagoElectronico = generatePagoElectronicoPDFFile({
+        orderFac: resPrintPDF.data,
+        transactionIdentifier,
+        telefono: "+505 7545 4150",
+        existingLog
+      })
 
       archivos.push(
         await validarPdf(
@@ -516,9 +308,6 @@ export async function procesarVentaCheckout({
       )
     }
 
-    /**
-     * Envía todos los PDFs generados al chat.
-     */
     for (const archivo of archivos) {
       await sendMediaEcommerce(
         payload.conversationId,
@@ -528,25 +317,11 @@ export async function procesarVentaCheckout({
     }
   }
 
-  /**
-   * Ejecuta el callback propio del flujo.
-   */
   onSuccess?.()
 
-  /**
-   * El checkout público navega a la página de éxito.
-   *
-   * El CartTab del agente solamente reinicia su interfaz.
-   */
-  if (
-    source === "customerLink" &&
-    navigate
-  ) {
-    navigate(
-      "/successOrder",
-      {
-        replace: true
-      }
-    )
+  if (source === "customerLink" && navigate) {
+    navigate("/successOrder", {
+      replace: true
+    })
   }
 }

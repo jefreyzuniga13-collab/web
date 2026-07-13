@@ -40,7 +40,7 @@ import {generateRandomString,formatCurrencyNIO} from "@/Utils/ECommerce/formatte
 import {buildCalculationRequest,buildLogUpdateRequest,countMainProducts,normalizeDraft,safeNumber,safePositiveNumber,toLogCartFormValues} from "@/Utils/ECommerce/utils"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { GENERAL_STATUS } from "@/Constants/status"
-import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import "@/Styles/Ecommerce/cardPCGTab.css"
@@ -158,25 +158,22 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const isPickup = retiraSucursal === "S"
   const isOnlyTextAddress = onlyTextAddress === true
-  const hasSelectedAddress = selectedAddressId != null
+  const hasSelectedAddress =
+    safeNumber(selectedAddressId, 0) > 0
   const hasManualAddress = addDescription.trim().length > 0
   const hasDeliveryAddress = hasSelectedAddress || hasManualAddress
 
-  /**
-   * En el panel del agente no hay mapa.
-   * El transporte se toma únicamente del paso 2.
-   * Si onlyTextAddress está activo, el cliente escribirá la dirección
-   * en el checkout y no se cobra transporte desde el panel del agente.
-   */
+  /** Transporte válido para dirección definida o captura de solo texto. */
   const effectiveShipping =
-    !isPickup && !isOnlyTextAddress && hasDeliveryAddress
+    !isPickup && (isOnlyTextAddress || hasDeliveryAddress)
       ? safePositiveNumber(transCost)
       : 0
 
   const addressInputsDisabled =
     isPickup || isOnlyTextAddress || hasSelectedAddress
 
-  const transportDisabled = isPickup || isOnlyTextAddress
+  /** El transporte se bloquea únicamente cuando el pedido se retira. */
+  const transportDisabled = isPickup
 
   const pickupDisabled =
     isOnlyTextAddress || hasSelectedAddress || hasManualAddress
@@ -215,8 +212,20 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     } catch {}
   }, [draftKey])
 
+  /**
+   * Activa o desactiva el multipago del agente.
+   *
+   * El agente solo puede usar multipago cuando la empresa lo permite
+   * en su sesión autenticada.
+   */
   const setMultiPagoActivo = useCallback(
     (value: boolean) => {
+      if (value && !permiteMultiPago) {
+        setMultiPagoActivoState(false)
+        setPagosMultiples([])
+        return
+      }
+
       setMultiPagoActivoState(value)
 
       if (value) {
@@ -226,7 +235,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       setPagosMultiples([])
     },
-    []
+    [permiteMultiPago]
   )
 
   /**
@@ -276,8 +285,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       const allowShipping =
         !pickup &&
-        !onlyTextAddress &&
-        (selectedAddressId != null || addDescription.trim().length > 0)
+        (
+          onlyTextAddress ||
+          safeNumber(selectedAddressId, 0) > 0 ||
+          addDescription.trim().length > 0
+        )
 
       return allowShipping ? cost : 0
     },
@@ -430,7 +442,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         return {
           addressId: null,
           retiraSucursal: "N",
-          transCost: 0
+          transCost: effectiveShipping
         }
       }
 
@@ -442,27 +454,71 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         }
       }
 
-      if (selectedAddressId != null) {
+      const validSelectedAddressId = safeNumber(selectedAddressId, 0)
+
+      if (validSelectedAddressId > 0) {
         return {
-          addressId: selectedAddressId,
+          addressId: validSelectedAddressId,
           retiraSucursal: "N",
           transCost: effectiveShipping
         }
       }
 
-      if (addDescription.trim().length > 0) {
+      const manualAddress = addDescription.trim()
+
+      if (manualAddress.length > 0) {
         const reqAddr: ClientLocationDto = {
-          descripcion: addDescription.trim(),
-          nombre: addDescription.trim(),
-          referencia: addDescription.trim(),
+          descripcion: manualAddress,
+          nombre: manualAddress,
+          referencia: "",
           idUsuario: ecommerceUserId
         }
 
-        const address = await ClientLocationService.Create(reqAddr)
-        const newId = address?.data?.idDireccion
+        const response = await ClientLocationService.Create(reqAddr)
+        const responseAny = response as any
+
+        const createdAddress =
+          responseAny?.data?.data ??
+          responseAny?.data ??
+          responseAny
+
+        const newAddressId = safeNumber(
+          createdAddress?.idDireccion ??
+            createdAddress?.addressId ??
+            createdAddress?.id,
+          0
+        )
+
+        if (newAddressId <= 0) {
+          console.error("Respuesta inválida al crear dirección:", response)
+
+          throw new Error(
+            "La dirección fue creada, pero la API no devolvió un ID válido."
+          )
+        }
+
+        const createdLocation: ClientLocationDto = {
+          ...reqAddr,
+          ...createdAddress,
+          idDireccion: newAddressId
+        }
+
+        setSelectedAddressId(newAddressId)
+
+        setAddresses((previous) => {
+          const alreadyExists = previous.some(
+            (item) => Number(item.idDireccion) === newAddressId
+          )
+
+          return alreadyExists
+            ? previous
+            : [createdLocation, ...previous]
+        })
+
+        setAddDescription("")
 
         return {
-          addressId: newId ? Number(newId) : null,
+          addressId: newAddressId,
           retiraSucursal: "N",
           transCost: effectiveShipping
         }
@@ -638,6 +694,26 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     canPay
   } = payment
 
+  const handleAgentPayNowSafe = useCallback(async () => {
+    if (multiPagoActivo && !permiteMultiPago) {
+      setMultiPagoActivo(false)
+
+      toast.error(
+        "El multipago no está habilitado para esta empresa."
+      )
+
+      return
+    }
+
+    await handleAgentPayNow()
+  }, [
+    handleAgentPayNow,
+    multiPagoActivo,
+    permiteMultiPago,
+    setMultiPagoActivo
+  ])
+
+  /** Activa dirección de solo texto sin eliminar el costo de transporte. */
   const handleToggleOnlyTextAddress = useCallback((checked: boolean) => {
     setOnlyTextAddress(checked)
 
@@ -645,8 +721,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       setRetiraSucursal("N")
       setSelectedAddressId(null)
       setAddDescription("")
-      setTransCost(0)
-      setDebouncedTransCost(0)
       setShowAddressModal(false)
     }
   }, [])
@@ -683,7 +757,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       if (!log?.id) return
 
-      const nextId = selectedAddressId === addressId ? null : addressId
+      const nextId =
+        safeNumber(selectedAddressId, 0) === addressId
+          ? null
+          : addressId
 
       setSelectedAddressId(nextId)
       setRetiraSucursal("N")
@@ -1226,15 +1303,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       if (selectedAddressId != null) setSelectedAddressId(null)
       if (addDescription.trim().length > 0) setAddDescription("")
       if (showAddressModal) setShowAddressModal(false)
-      if (transCost !== 0) setTransCost(0)
     }
   }, [
     isOnlyTextAddress,
     retiraSucursal,
     selectedAddressId,
     addDescription,
-    showAddressModal,
-    transCost
+    showAddressModal
   ])
 
   useEffect(() => {
@@ -1310,10 +1385,15 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
       if (cartClearedRef.current) return
 
-      if (draft?.selectedAddressId != null) {
-        setSelectedAddressId(draft.selectedAddressId)
-      } else if (log?.addressId != null) {
-        setSelectedAddressId(Number(log.addressId))
+      const draftAddressId = safeNumber(draft?.selectedAddressId, 0)
+      const logAddressId = safeNumber(log?.addressId, 0)
+
+      if (draftAddressId > 0) {
+        setSelectedAddressId(draftAddressId)
+      } else if (logAddressId > 0) {
+        setSelectedAddressId(logAddressId)
+      } else {
+        setSelectedAddressId(null)
       }
 
       if (draft?.transCost != null) {
@@ -1529,7 +1609,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             actionsDisabled={actionsDisabled}
             canPay={canPay}
             onBack={() => setActiveStep(CART_AGENT_STEP.entrega)}
-            handlePayNow={handleAgentPayNow}
+            handlePayNow={handleAgentPayNowSafe}
             permiteMultiPago={permiteMultiPago}
             multiPagoActivo={multiPagoActivo}
             setMultiPagoActivo={setMultiPagoActivo}

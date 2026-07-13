@@ -1,16 +1,26 @@
 import React, { useMemo, useState } from "react"
 import MapPicker from "@/Components/Common/MapPicker"
-import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface"
-import type { BillingFormState } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import type {
+  ClientLocationDto,
+  Coords,
+  LocationMode
+} from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type {BillingFormState} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 
 interface Props {
   /**
    * Direcciones guardadas del usuario ecommerce.
    */
-  addressList: ClientLocationDto[] | []
+  addressList: ClientLocationDto[]
 
   /**
    * Modo actual de ubicación.
+   *
+   * Este componente administra únicamente:
+   * - existing
+   * - new
+   *
+   * El modo text se muestra mediante OnlyTextAddressSection.
    */
   locationMode: LocationMode
 
@@ -30,14 +40,16 @@ interface Props {
   setSelectedAddressId: (selectedAddressId: number | null) => void
 
   /**
-   * Datos del formulario de dirección.
+   * Datos actuales del formulario de dirección.
    */
   billingForm: BillingFormState
 
   /**
    * Actualiza el formulario de dirección.
    */
-  setBillingForm: React.Dispatch<React.SetStateAction<BillingFormState>>
+  setBillingForm: React.Dispatch<
+    React.SetStateAction<BillingFormState>
+  >
 
   /**
    * Coordenadas seleccionadas en el mapa.
@@ -50,22 +62,24 @@ interface Props {
   setSelectedCoords: (selectedCoords: Coords | null) => void
 
   /**
-   * Dirección seleccionada completa.
+   * Dirección guardada actualmente seleccionada.
    */
   selectedAddress: ClientLocationDto | null
 
   /**
-   * Maneja cambios del formulario.
+   * Maneja cambios de los campos del formulario.
    */
-  handleBillingChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  handleBillingChange: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void
 
   /**
-   * Continúa al paso de divisa o pago.
+   * Continúa al paso de moneda o pago.
    */
   handleGoToCurrency: () => void
 
   /**
-   * Maneja cambios de coordenadas desde el mapa.
+   * Maneja el cambio de coordenadas desde el mapa.
    */
   handleCoordsChange: (coords: Coords) => void
 
@@ -80,27 +94,47 @@ interface Props {
   isPickup?: boolean
 }
 
+/**
+ * Normaliza texto para búsquedas.
+ */
 const normalizeText = (value: unknown): string => {
   return String(value ?? "")
     .toLowerCase()
     .trim()
 }
 
-const getAddressId = (address: ClientLocationDto): number | null => {
-  if (address.idDireccion == null) return null
+/**
+ * Obtiene el identificador numérico de una dirección.
+ */
+const getAddressId = (
+  address: ClientLocationDto
+): number | null => {
+  if (address.idDireccion == null) {
+    return null
+  }
 
   return Number(address.idDireccion)
 }
 
-const hasCoords = (address: ClientLocationDto): boolean => {
+/**
+ * Indica si una dirección tiene coordenadas válidas.
+ */
+const hasCoords = (
+  address: ClientLocationDto
+): boolean => {
   return (
-    address.latitud !== undefined &&
-    address.longitud !== undefined &&
-    address.latitud !== null &&
-    address.longitud !== null
+    address.latitud != null &&
+    address.longitud != null
   )
 }
 
+/**
+ * Sección para seleccionar una dirección guardada o marcar una
+ * nueva ubicación en el mapa.
+ *
+ * El flujo de solo texto se mantiene separado en
+ * OnlyTextAddressSection para respetar responsabilidad única.
+ */
 export const LocationSection = ({
   addressList,
   locationMode,
@@ -125,7 +159,9 @@ export const LocationSection = ({
   const filteredAddresses = useMemo(() => {
     const term = normalizeText(addressSearch)
 
-    if (!term) return addressList
+    if (!term) {
+      return addressList
+    }
 
     return addressList.filter((address) => {
       const nombre = normalizeText(address.nombre)
@@ -138,17 +174,24 @@ export const LocationSection = ({
         referencia.includes(term)
       )
     })
-  }, [addressList, addressSearch])
+  }, [
+    addressList,
+    addressSearch
+  ])
 
   const selectedAddressText = useMemo(() => {
-    if (!selectedAddress) return ""
+    if (!selectedAddress) {
+      return ""
+    }
 
     return [
       selectedAddress.nombre,
       selectedAddress.descripcion,
       selectedAddress.referencia
     ]
-      .map((item) => String(item ?? "").trim())
+      .map((item) =>
+        String(item ?? "").trim()
+      )
       .filter(Boolean)
       .join(" | ")
   }, [selectedAddress])
@@ -165,7 +208,7 @@ export const LocationSection = ({
   }
 
   /**
-   * Cambia al modo de marcar ubicación en mapa.
+   * Cambia al modo de nueva dirección con mapa.
    */
   const handleUseNewAddress = () => {
     if (isPickup) return
@@ -175,19 +218,21 @@ export const LocationSection = ({
     setSelectedCoords(null)
     setAddressSearch("")
 
-    setBillingForm((prev) => ({
-      ...prev,
+    setBillingForm((previous) => ({
+      ...previous,
       address: "",
       addressName: "",
       city: "",
-      country: prev.country || "NI"
+      country: previous.country || "NI"
     }))
   }
 
   /**
    * Selecciona una dirección guardada y copia sus datos al formulario.
    */
-  const handleSelectAddress = (address: ClientLocationDto) => {
+  const handleSelectAddress = (
+    address: ClientLocationDto
+  ) => {
     if (isPickup) return
 
     const addressId = getAddressId(address)
@@ -204,12 +249,12 @@ export const LocationSection = ({
       setSelectedCoords(null)
     }
 
-    setBillingForm((prev) => ({
-      ...prev,
+    setBillingForm((previous) => ({
+      ...previous,
       address: address.descripcion ?? "",
       addressName: address.nombre ?? "",
       city: address.referencia ?? "",
-      country: prev.country || "NI"
+      country: previous.country || "NI"
     }))
   }
 
@@ -222,8 +267,8 @@ export const LocationSection = ({
 
         {!isPickup && (
           <p className="checkout-location__subtitle">
-            Puedes usar una dirección guardada o marcar una nueva ubicación en
-            el mapa.
+            Puedes usar una dirección guardada o marcar una nueva ubicación
+            en el mapa.
           </p>
         )}
       </div>
@@ -296,108 +341,127 @@ export const LocationSection = ({
       )}
 
       <div className="checkout-location__container">
-        {!isPickup && !hasSaved && locationMode !== "new" && (
-          <div className="checkout-location-empty">
-            <p>No tienes direcciones guardadas.</p>
+        {!isPickup &&
+          !hasSaved &&
+          locationMode !== "new" && (
+            <div className="checkout-location-empty">
+              <p>No tienes direcciones guardadas.</p>
 
-            <button
-              type="button"
-              className="checkout-location-empty__btn"
-              onClick={handleUseNewAddress}
-            >
-              Usar mapa
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                className="checkout-location-empty__btn"
+                onClick={handleUseNewAddress}
+              >
+                Usar mapa
+              </button>
+            </div>
+          )}
 
-        {!isPickup && locationMode === "existing" && hasSaved && (
-          <div className="checkout-address-panel">
-            <div className="checkout-address-search">
-              <label className="checkout-label" htmlFor="addressSearch">
-                Buscar dirección
-              </label>
+        {!isPickup &&
+          locationMode === "existing" &&
+          hasSaved && (
+            <div className="checkout-address-panel">
+              <div className="checkout-address-search">
+                <label
+                  className="checkout-label"
+                  htmlFor="addressSearch"
+                >
+                  Buscar dirección
+                </label>
 
-              <input
-                id="addressSearch"
-                type="text"
-                className="checkout-input"
-                value={addressSearch}
-                onChange={(event) => setAddressSearch(event.target.value)}
-                placeholder="Buscar por nombre, dirección o referencia"
+                <input
+                  id="addressSearch"
+                  type="text"
+                  className="checkout-input"
+                  value={addressSearch}
+                  onChange={(event) =>
+                    setAddressSearch(event.target.value)
+                  }
+                  placeholder="Buscar por nombre, dirección o referencia"
+                />
+              </div>
+
+              <div className="checkout-address-list">
+                {filteredAddresses.map((address) => {
+                  const addressId = getAddressId(address)
+                  const isActive =
+                    Number(selectedAddressId) ===
+                    Number(addressId)
+
+                  return (
+                    <button
+                      key={address.idDireccion}
+                      type="button"
+                      className={
+                        isActive
+                          ? "checkout-address checkout-address--active"
+                          : "checkout-address"
+                      }
+                      onClick={() =>
+                        handleSelectAddress(address)
+                      }
+                    >
+                      <span className="checkout-address__name">
+                        {address.nombre || "Dirección sin nombre"}
+                      </span>
+
+                      <span className="checkout-address__description">
+                        {address.descripcion || "Sin descripción"}
+                      </span>
+
+                      {address.referencia && (
+                        <span className="checkout-address__reference">
+                          {address.referencia}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+
+                {filteredAddresses.length === 0 && (
+                  <div className="checkout-address-empty">
+                    No se encontraron direcciones con esa búsqueda.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+        {!isPickup &&
+          locationMode === "new" && (
+            <div className="checkout-map-panel">
+              <p className="checkout-location__hint">
+                Haz clic en el mapa para marcar el lugar de entrega.
+              </p>
+
+              <MapPicker
+                value={selectedCoords}
+                onChange={handleCoordsChange}
               />
             </div>
-
-            <div className="checkout-address-list">
-              {filteredAddresses.map((address) => {
-                const addressId = getAddressId(address)
-                const isActive = Number(selectedAddressId) === Number(addressId)
-
-                return (
-                  <button
-                    key={address.idDireccion}
-                    type="button"
-                    className={
-                      isActive
-                        ? "checkout-address checkout-address--active"
-                        : "checkout-address"
-                    }
-                    onClick={() => handleSelectAddress(address)}
-                  >
-                    <span className="checkout-address__name">
-                      {address.nombre || "Dirección sin nombre"}
-                    </span>
-
-                    <span className="checkout-address__description">
-                      {address.descripcion || "Sin descripción"}
-                    </span>
-
-                    {address.referencia && (
-                      <span className="checkout-address__reference">
-                        {address.referencia}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-
-              {filteredAddresses.length === 0 && (
-                <div className="checkout-address-empty">
-                  No se encontraron direcciones con esa búsqueda.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {!isPickup && locationMode === "new" && (
-          <div className="checkout-map-panel">
-            <p className="checkout-location__hint">
-              Haz clic en el mapa para marcar el lugar de entrega.
-            </p>
-
-            <MapPicker
-              value={selectedCoords}
-              onChange={handleCoordsChange}
-            />
-          </div>
-        )}
+          )}
       </div>
 
       <div className="checkout-grid__container">
-        {!isPickup && locationMode === "existing" && selectedAddress && (
-          <div className="checkout-current-location">
-            <p>
-              <strong>Dirección seleccionada</strong>
-            </p>
+        {!isPickup &&
+          locationMode === "existing" &&
+          selectedAddress && (
+            <div className="checkout-current-location">
+              <p>
+                <strong>Dirección seleccionada</strong>
+              </p>
 
-            <span>{selectedAddressText}</span>
-          </div>
-        )}
+              <span>{selectedAddressText}</span>
+            </div>
+          )}
 
         {!isPickup && (
           <div className="checkout-grid">
             <div className="checkout-field">
-              <label className="checkout-label" htmlFor="country">
+              <label
+                className="checkout-label"
+                htmlFor="country"
+              >
                 País
               </label>
 
@@ -411,7 +475,10 @@ export const LocationSection = ({
             </div>
 
             <div className="checkout-field">
-              <label className="checkout-label" htmlFor="city">
+              <label
+                className="checkout-label"
+                htmlFor="city"
+              >
                 Ciudad
               </label>
 
@@ -425,7 +492,10 @@ export const LocationSection = ({
             </div>
 
             <div className="checkout-field checkout-field--full">
-              <label className="checkout-label" htmlFor="address">
+              <label
+                className="checkout-label"
+                htmlFor="address"
+              >
                 Dirección
               </label>
 
@@ -440,7 +510,10 @@ export const LocationSection = ({
 
             {locationMode === "new" && (
               <div className="checkout-field checkout-field--full">
-                <label className="checkout-label" htmlFor="addressName">
+                <label
+                  className="checkout-label"
+                  htmlFor="addressName"
+                >
                   Nombre de la dirección
                 </label>
 

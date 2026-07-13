@@ -1,5 +1,11 @@
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 
+/**
+ * Dirección guardada de un usuario ecommerce.
+ *
+ * Las coordenadas son opcionales porque una dirección puede provenir
+ * del flujo de solo texto.
+ */
 export interface ClientLocationDto {
   idDireccion?: number
   nombre?: string
@@ -10,13 +16,34 @@ export interface ClientLocationDto {
   idUsuario?: number
 }
 
+/**
+ * Coordenadas seleccionadas en el mapa.
+ */
 export interface Coords {
   latitud: number
   longitud: number
 }
 
-export type LocationMode = "existing" | "new"
+/**
+ * Modos de captura de dirección disponibles en checkout.
+ *
+ * existing:
+ * Usa una dirección guardada.
+ *
+ * new:
+ * Crea una nueva dirección utilizando el mapa.
+ *
+ * text:
+ * Permite ingresar únicamente texto, sin mapa ni coordenadas.
+ */
+export type LocationMode =
+  | "existing"
+  | "new"
+  | "text"
 
+/**
+ * Modelo alternativo de dirección utilizado por algunos servicios.
+ */
 export interface ClientLocation2Dto {
   idDireccion?: number
   nombre?: string
@@ -26,6 +53,9 @@ export interface ClientLocation2Dto {
   longitud?: number
 }
 
+/**
+ * Resultado de la validación de totales.
+ */
 export interface CalculationResultDto {
   pasasub: SINO
   resulsub: number
@@ -35,6 +65,9 @@ export interface CalculationResultDto {
   resuliva: number
 }
 
+/**
+ * Solicitud para calcular totales del checkout.
+ */
 export interface CalculationReqDto {
   usuario: string
   maquina: string
@@ -48,6 +81,9 @@ export interface CalculationReqDto {
   exonerada: string
 }
 
+/**
+ * Solicitud para validar los totales mostrados en pantalla.
+ */
 export interface TotalesPantallaReqDTO {
   usuario: string
   maquina: string

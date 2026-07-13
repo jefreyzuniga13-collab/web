@@ -7,14 +7,17 @@ export interface ApiPCGResponse<T> {
     totalItems?: string;
 }
 
-export interface TempLinkResolveResponseDto{
-    conversationId: number;
-    fullName: string;
-    ecommerceUserId: number;
-    email: string;
-    expiresAtUtc: Date
-    orderId: number
-    contactId: number
-    userId: number;
-    empresaId: string
+export interface TempLinkResolveResponseDto {
+  conversationId: number
+  fullName: string
+  ecommerceUserId: number
+  email: string
+  expiresAtUtc: string
+  orderId: number
+  contactId: number
+  userId: number
+  empresaId: string
+
+  permiteMultiPago: boolean
+  permitePasarela: boolean
 }

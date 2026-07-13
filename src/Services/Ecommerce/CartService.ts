@@ -20,18 +20,20 @@ class CartServ {
     return data;
   }
 
-async resolveToken(
+  async resolveToken(
     token: string
   ): Promise<ApiResponse<TempLinkResolveResponseDto>> {
     const cleanToken = String(token ?? "").trim()
 
-    const { data } = await api.post<ApiResponse<TempLinkResolveResponseDto>>(
+    const { data } = await api.post<
+      ApiResponse<TempLinkResolveResponseDto>
+    >(
       "/Auth/TempLink/Resolve",
       JSON.stringify(cleanToken),
       {
         headers: {
-          "Content-Type": "application/json",
-        },
+          "Content-Type": "application/json"
+        }
       }
     )
 

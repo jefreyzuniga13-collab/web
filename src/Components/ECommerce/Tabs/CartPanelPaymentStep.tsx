@@ -1,6 +1,7 @@
-import type {
-  Dispatch,
-  SetStateAction
+import {
+  useEffect,
+  type Dispatch,
+  type SetStateAction
 } from "react"
 
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
@@ -60,7 +61,9 @@ interface Props {
   /**
    * Actualiza banco/tipo de pago.
    */
-  setDivisaSelected: (value: ObtenerDivisaPagosTipoRes | null) => void
+  setDivisaSelected: (
+    value: ObtenerDivisaPagosTipoRes | null
+  ) => void
 
   /**
    * Indica si se están cargando las opciones de pago.
@@ -95,7 +98,9 @@ interface Props {
   /**
    * Actualiza datos de tarjeta manual.
    */
-  setManualCardData: Dispatch<SetStateAction<ManualCardFormState>>
+  setManualCardData: Dispatch<
+    SetStateAction<ManualCardFormState>
+  >
 
   /**
    * Total final del carrito para pago.
@@ -103,7 +108,7 @@ interface Props {
   totalPagar: number
 
   /**
-   * Costo transporte tomado desde el paso 2.
+   * Costo de transporte tomado desde el paso 2.
    */
   transpCost: number
 
@@ -149,38 +154,42 @@ interface Props {
 
   /**
    * Indica si la empresa permite multipago.
+   *
+   * Este valor viene de la sesión autenticada del agente.
    */
-  permiteMultiPago?: boolean
+  permiteMultiPago: boolean
 
   /**
    * Indica si el modo multipago está activo.
    */
-  multiPagoActivo?: boolean
+  multiPagoActivo: boolean
 
   /**
    * Activa o desactiva el modo multipago.
    */
-  setMultiPagoActivo?: (value: boolean) => void
+  setMultiPagoActivo: (value: boolean) => void
 
   /**
    * Pagos agregados en multipago.
    */
-  pagosMultiples?: PagoSeleccionado[]
+  pagosMultiples: PagoSeleccionado[]
 
   /**
    * Actualiza los pagos agregados en multipago.
    */
-  setPagosMultiples?: Dispatch<SetStateAction<PagoSeleccionado[]>>
+  setPagosMultiples: Dispatch<
+    SetStateAction<PagoSeleccionado[]>
+  >
 
   /**
    * Formas de pago disponibles desde PCG.
    */
-  currency?: Currencyto[]
+  currency: Currencyto[]
 
   /**
    * Carga bancos o tipos de pago para multipago.
    */
-  cargarDivisas?: (
+  cargarDivisas: (
     item: Currencyto
   ) => Promise<ObtenerDivisaPagosTipoRes[]>
 }
@@ -208,14 +217,40 @@ export default function CartPanelPaymentStep({
   canPay,
   onBack,
   handlePayNow,
-  permiteMultiPago = false,
-  multiPagoActivo = false,
+  permiteMultiPago,
+  multiPagoActivo,
   setMultiPagoActivo,
-  pagosMultiples = [],
+  pagosMultiples,
   setPagosMultiples,
-  currency = [],
+  currency,
   cargarDivisas
 }: Props) {
+  /**
+   * Multipago solo se considera activo cuando:
+   * - el estado local está activo;
+   * - la empresa realmente lo permite.
+   *
+   * Esto evita que un estado inconsistente renderice MultiPagoSection.
+   */
+  const multipagoHabilitado =
+    permiteMultiPago && multiPagoActivo
+
+  /**
+   * Si la sesión indica que la empresa no permite multipago,
+   * se fuerza el regreso a pago único y se limpian los pagos parciales.
+   */
+  useEffect(() => {
+    if (permiteMultiPago || !multiPagoActivo) return
+
+    setMultiPagoActivo(false)
+    setPagosMultiples([])
+  }, [
+    permiteMultiPago,
+    multiPagoActivo,
+    setMultiPagoActivo,
+    setPagosMultiples
+  ])
+
   /**
    * Se crea un log visual con los totales frescos.
    *
@@ -224,17 +259,31 @@ export default function CartPanelPaymentStep({
    */
   const logForSummary = {
     ...currentLog,
-    subTotal: invoiceTotalsDto?.subTotal ?? currentLog?.subTotal ?? 0,
-    ivaPantalla: invoiceTotalsDto?.iva ?? currentLog?.ivaPantalla ?? 0,
+    subTotal:
+      invoiceTotalsDto?.subTotal ??
+      currentLog?.subTotal ??
+      0,
+    ivaPantalla:
+      invoiceTotalsDto?.iva ??
+      currentLog?.ivaPantalla ??
+      0,
     DescuentoPantalla:
-      invoiceTotalsDto?.descuento ?? currentLog?.DescuentoPantalla ?? 0,
+      invoiceTotalsDto?.descuento ??
+      currentLog?.DescuentoPantalla ??
+      0,
     transCost: transpCost,
     totalEnPantalla:
-      invoiceTotalsDto?.total ?? currentLog?.totalEnPantalla ?? 0
+      invoiceTotalsDto?.total ??
+      currentLog?.totalEnPantalla ??
+      0
   } as LogCartResponseDto
 
   const handleChangeModoPago = (value: boolean) => {
-    if (!setMultiPagoActivo) return
+    if (value && !permiteMultiPago) {
+      setMultiPagoActivo(false)
+      setPagosMultiples([])
+      return
+    }
 
     setMultiPagoActivo(value)
 
@@ -244,7 +293,7 @@ export default function CartPanelPaymentStep({
       return
     }
 
-    setPagosMultiples?.([])
+    setPagosMultiples([])
   }
 
   return (
@@ -253,7 +302,7 @@ export default function CartPanelPaymentStep({
         <div className="checkout-payment-mode">
           <label
             className={
-              !multiPagoActivo
+              !multipagoHabilitado
                 ? "checkout-payment-mode__option checkout-payment-mode__option--active"
                 : "checkout-payment-mode__option"
             }
@@ -261,7 +310,7 @@ export default function CartPanelPaymentStep({
             <input
               type="radio"
               name="agentPaymentMode"
-              checked={!multiPagoActivo}
+              checked={!multipagoHabilitado}
               onChange={() => handleChangeModoPago(false)}
               disabled={actionsDisabled || payLoading}
             />
@@ -274,7 +323,7 @@ export default function CartPanelPaymentStep({
 
           <label
             className={
-              multiPagoActivo
+              multipagoHabilitado
                 ? "checkout-payment-mode__option checkout-payment-mode__option--active"
                 : "checkout-payment-mode__option"
             }
@@ -282,32 +331,34 @@ export default function CartPanelPaymentStep({
             <input
               type="radio"
               name="agentPaymentMode"
-              checked={multiPagoActivo}
+              checked={multipagoHabilitado}
               onChange={() => handleChangeModoPago(true)}
               disabled={actionsDisabled || payLoading}
             />
 
             <span className="checkout-payment-mode__content">
               <strong>Multipago</strong>
-              <small>Usa varias formas de pago en la misma factura.</small>
+              <small>
+                Usa varias formas de pago en la misma factura.
+              </small>
             </span>
           </label>
         </div>
       )}
 
-      {!multiPagoActivo && !method && (
+      {!multipagoHabilitado && !method && (
         <p className="cartPanel-paymentHint">
           Selecciona una forma de pago para continuar.
         </p>
       )}
 
-      {!multiPagoActivo && method && !canPay && (
+      {!multipagoHabilitado && method && !canPay && (
         <p className="cartPanel-paymentHint">
           Completa los datos requeridos del método seleccionado.
         </p>
       )}
 
-      {multiPagoActivo && pagosMultiples.length === 0 && (
+      {multipagoHabilitado && pagosMultiples.length === 0 && (
         <p className="cartPanel-paymentHint">
           Agrega las formas de pago para completar el total de la factura.
         </p>
@@ -340,9 +391,9 @@ export default function CartPanelPaymentStep({
         setManualCardData={setManualCardData}
         backStep="location"
         payButtonText="Finalizar Pedido"
-        showMethodSelector={!multiPagoActivo}
+        showMethodSelector={!multipagoHabilitado}
         showBackButton={false}
-        multiPagoActivo={multiPagoActivo}
+        multiPagoActivo={multipagoHabilitado}
         pagosMultiples={pagosMultiples}
         setPagosMultiples={setPagosMultiples}
         currency={currency}

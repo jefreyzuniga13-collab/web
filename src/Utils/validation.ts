@@ -12,18 +12,13 @@ import { toast } from "react-toastify"
 
 /**
  * Elimina todo carácter que no sea número.
- *
- * Se usa para limpiar tarjeta, CVC y fecha de vencimiento.
  */
 export const onlyDigits = (value: string): string => {
   return value.replace(/\D/g, "")
 }
 
 /**
- * Formatea el número de tarjeta en bloques de 4 dígitos.
- *
- * Ejemplo:
- * 1234567812345678 -> 1234 5678 1234 5678
+ * Formatea el número de tarjeta en bloques de cuatro dígitos.
  */
 export const formatCardNumber = (value: string): string => {
   const digits = onlyDigits(value).slice(0, 19)
@@ -33,9 +28,6 @@ export const formatCardNumber = (value: string): string => {
 
 /**
  * Formatea la fecha de expiración en formato MM/AA.
- *
- * Ejemplo:
- * 1228 -> 12/28
  */
 export const formatExpiry = (value: string): string => {
   const digits = onlyDigits(value).slice(0, 4)
@@ -46,40 +38,43 @@ export const formatExpiry = (value: string): string => {
 }
 
 /**
- * Formatea el CVC permitiendo solo números.
+ * Formatea el CVC permitiendo únicamente números.
  */
 export const formatCvc = (value: string): string => {
   return onlyDigits(value).slice(0, 4)
 }
 
 /**
- * Muestra un error y retorna false.
- *
- * Se centraliza para que las validaciones puedan usarse directamente
- * dentro de condicionales.
+ * Muestra un mensaje y retorna false.
  */
 const toastError = (message: string): false => {
   toast.error(message)
-
   return false
 }
 
 /**
- * Valida los datos básicos de facturación y dirección.
+ * Valida los datos de dirección.
  *
- * Cuando locationMode es "new", el usuario debe ingresar también
- * un nombre para guardar o identificar la dirección.
+ * Solo texto:
+ * exige únicamente la dirección escrita.
+ *
+ * Nueva dirección con mapa:
+ * exige dirección y nombre.
  */
 export const validateBillingForm = (
   billingForm: BillingFormState,
-  locationMode: LocationMode
+  locationMode: LocationMode,
+  onlyTextAddress = false
 ): boolean => {
-
   if (!billingForm.address.trim()) {
     return toastError("La dirección es obligatoria.")
   }
 
-  if (locationMode === "new" && !billingForm.addressName.trim()) {
+  if (
+    !onlyTextAddress &&
+    locationMode === "new" &&
+    !billingForm.addressName.trim()
+  ) {
     return toastError("El nombre de la dirección es obligatorio.")
   }
 
@@ -88,11 +83,10 @@ export const validateBillingForm = (
 
 /**
  * Valida una tarjeta del formulario antiguo del checkout.
- *
- * Este flujo aplica solo si todavía existe un formulario de tarjeta directa.
- * Para tarjeta manual se usa ManualCardPaymentSection.
  */
-export const validateCardForm = (cardForm: CardFormState): boolean => {
+export const validateCardForm = (
+  cardForm: CardFormState
+): boolean => {
   if (!/^\d{2}\/\d{2}$/.test(cardForm.expiry.trim())) {
     return toastError("Formato expiración MM/AA inválido.")
   }
@@ -105,19 +99,32 @@ export const validateCardForm = (cardForm: CardFormState): boolean => {
 }
 
 /**
- * Valida la ubicación seleccionada según el modo.
+ * Valida la ubicación seleccionada.
  *
- * existing:
- * Debe existir una dirección guardada seleccionada.
+ * Solo texto:
+ * no requiere dirección guardada ni coordenadas.
  *
- * new:
- * Debe existir una coordenada seleccionada en el mapa.
+ * Existing:
+ * requiere una dirección guardada.
+ *
+ * New:
+ * requiere coordenadas del mapa.
  */
 export const validateLocation = (
   locationMode: LocationMode,
   selectedAddressId: number | null,
-  selectedCoords: Coords | null
+  selectedCoords: Coords | null,
+  onlyTextAddress = false,
+  manualAddress = ""
 ): boolean => {
+  if (onlyTextAddress) {
+    if (!manualAddress.trim()) {
+      return toastError("Escribe la dirección de entrega.")
+    }
+
+    return true
+  }
+
   if (locationMode === "existing") {
     if (!selectedAddressId) {
       return toastError("Selecciona una dirección de entrega.")

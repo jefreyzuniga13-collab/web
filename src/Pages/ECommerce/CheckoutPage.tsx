@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import { toast } from "react-toastify"
 import type { AppDispatch, RootState } from "@/Context"
 import { getProductFromCarAsync, selectCarPCG } from "@/Context/Slices/Ecommerce/cartSlice"
-import { selectPermiteMultipago, selectPermitePasarela } from "@/Context/Slices/Auth/authSlice"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection"
 import LocationSection from "@/Components/ECommerce/Payment/LocationSection"
+import OnlyTextAddressSection from "@/Components/ECommerce/Payment/OnlyTextAddressSection"
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import useLogCart from "@/Hooks/Crm/useLogCard"
@@ -36,6 +35,7 @@ import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterf
 import type { PowertranzPayWithTokenRequestDto } from "@/Interfaces/Ecommerce/powertranzInterface"
 import type { CheckoutPaymentMethod } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
+import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
 import { tasaCambio } from "@/Constants/tasaCambio"
 
@@ -59,6 +59,8 @@ type FinalLocation = {
   latitud?: number | string | null
   longitud?: number | string | null
 }
+
+type CheckoutPayload = Payload & TempLinkResolveResponseDto
 
 const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
   return {
@@ -86,10 +88,11 @@ const getLogText = (
 }
 
 const getPayloadText = (
-  payload: Payload | undefined,
+  payload: CheckoutPayload | undefined,
   keys: string[]
 ): string => {
-  const source = payload as Record<string, unknown> | undefined
+  const source =
+    payload as unknown as Record<string, unknown> | undefined
 
   if (!source) return ""
 
@@ -107,10 +110,17 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
 
-  const payload = location.state?.payload as Payload | undefined
+  const payload =
+    location.state?.payload as CheckoutPayload | undefined
+
   const carPCG = useAppSelector(selectCarPCG)
-  const permiteMultiPago = useAppSelector(selectPermiteMultipago)
-  const permitePasarela = useAppSelector(selectPermitePasarela)
+
+  /**
+   * El cliente público no inicia sesión ni consulta /Auth/me.
+   * Estos permisos vienen desde /Auth/TempLink/Resolve.
+   */
+  const permiteMultiPago = payload?.permiteMultiPago === true
+  const permitePasarela = payload?.permitePasarela === true
 
   const [ecommerceUserId, setEcommerceUserId] = useState(0)
   const [orderId, setOrderId] = useState(0)
@@ -157,15 +167,20 @@ const CheckoutPage: React.FC = () => {
   const { mutateAsync: completeFpiAsync } = useCompleteFpi()
 
   const isPickup = existingLog?.retiraSucursal === "S"
+  const isOnlyTextAddress = existingLog?.onlyTextAddress === true
 
+  /**
+   * Indica que el agente dejó una dirección guardada seleccionada.
+   *
+   * El costo de transporte por sí solo no significa que exista una
+   * dirección seleccionada. En modo solo texto, el cliente todavía debe
+   * escribir su dirección aunque transCost ya venga definido en LogCart.
+   */
   const hasAgentDelivery = useMemo(() => {
-    if (!existingLog || isPickup) return false
+    if (!existingLog || isPickup || isOnlyTextAddress) return false
 
-    return Boolean(
-      existingLog.addressId != null ||
-        safePositiveNumber(existingLog.transCost) > 0
-    )
-  }, [existingLog, isPickup])
+    return safeNumber(existingLog.addressId, 0) > 0
+  }, [existingLog, isPickup, isOnlyTextAddress])
 
   const addressList = useMemo<ClientLocationDto[]>(() => {
     return clientLocations ?? []
@@ -209,7 +224,7 @@ const CheckoutPage: React.FC = () => {
     const transporte = getTransporteFactura()
     const propina = safePositiveNumber(tip)
 
-    return totalBase + transporte + propina;
+    return totalBase + transporte + propina
   }, [cartTotal, getTransporteFactura, tip])
 
   const payment = useCheckoutPaymentState({
@@ -416,7 +431,7 @@ const CheckoutPage: React.FC = () => {
   }
 
   const calcularEntrega = async (finalLocation: FinalLocation) => {
-    if (isPickup || hasAgentDelivery) {
+    if (isPickup || hasAgentDelivery || isOnlyTextAddress) {
       setTranspCost(isPickup ? 0 : safeNumber(existingLog?.transCost, 0))
       setDistanceKm(0)
       return
@@ -461,7 +476,7 @@ const CheckoutPage: React.FC = () => {
         city: address.city || prev.city,
         country: address.country || prev.country || "NI",
         address: address.fullAddress || prev.address,
-        addressName: prev.addressName || "Dirección seleccionada"
+        addressName: prev.addressName || ""
       }))
     } catch {
       toast.info("Ubicación seleccionada. Completa la dirección manualmente.")
@@ -474,6 +489,24 @@ const CheckoutPage: React.FC = () => {
       setDistanceKm(0)
       setSelectedAddressId(null)
       setSelectedCoords(null)
+      goToStep("currency")
+      return
+    }
+
+    if (isOnlyTextAddress) {
+      const validBilling = validateBillingForm(
+        billingForm,
+        "text",
+        true
+      )
+
+      if (!validBilling) return
+
+      setLocationMode("text")
+      setSelectedAddressId(null)
+      setSelectedCoords(null)
+      setDistanceKm(0)
+      setTranspCost(safeNumber(existingLog?.transCost, 0))
       goToStep("currency")
       return
     }
@@ -520,6 +553,25 @@ const CheckoutPage: React.FC = () => {
       }
     }
 
+    if (isOnlyTextAddress) {
+      const validBilling = validateBillingForm(
+        billingForm,
+        "text",
+        true
+      )
+
+      if (!validBilling) return null
+
+      return {
+        idDireccion: null,
+        nombre: safeStr(billingForm.addressName) || "Dirección de entrega",
+        descripcion: safeStr(billingForm.address),
+        referencia: null,
+        latitud: null,
+        longitud: null
+      }
+    }
+
     if (hasAgentDelivery) {
       const saved = selectedAddressId == null
         ? null
@@ -548,7 +600,7 @@ const CheckoutPage: React.FC = () => {
       }
     }
 
-    if (selectedAddressId != null) {
+    if (safeNumber(selectedAddressId, 0) > 0) {
       const saved = addressList.find(
         (item) => Number(item.idDireccion) === Number(selectedAddressId)
       )
@@ -702,7 +754,9 @@ const CheckoutPage: React.FC = () => {
         const validLocation = validateLocation(
           locationMode,
           selectedAddressId,
-          selectedCoords
+          selectedCoords,
+          isOnlyTextAddress,
+          billingForm.address
         )
 
         if (!validLocation) return
@@ -906,6 +960,29 @@ const CheckoutPage: React.FC = () => {
   }
 
   useEffect(() => {
+    if (!payload) return
+
+    const hasMultiPagoPermission =
+      typeof payload.permiteMultiPago === "boolean"
+
+    const hasGatewayPermission =
+      typeof payload.permitePasarela === "boolean"
+
+    if (!hasMultiPagoPermission || !hasGatewayPermission) {
+      console.error(
+        "TempLink/Resolve no devolvió los permisos de pago requeridos.",
+        payload
+      )
+
+      toast.error(
+        "No se pudo obtener la configuración de pagos de la empresa."
+      )
+
+      navigate("/unauthorized", { replace: true })
+    }
+  }, [payload, navigate])
+
+  useEffect(() => {
     if (!payload) {
       navigate("/unauthorized", { replace: true })
       return
@@ -931,12 +1008,13 @@ const CheckoutPage: React.FC = () => {
       try {
         const log = await fetchByContactId(payload.contactId)
         const logIsPickup = log?.retiraSucursal === "S"
+        const logOnlyTextAddress = log?.onlyTextAddress === true
+        // SQL puede devolver 0 cuando no existe dirección; solo valores mayores que cero son válidos.
+        const logAddressId = safeNumber(log?.addressId, 0)
         const logHasAgentDelivery =
           !logIsPickup &&
-          (
-            log?.addressId != null ||
-            safePositiveNumber(log?.transCost) > 0
-          )
+          !logOnlyTextAddress &&
+          logAddressId > 0
 
         setExistingLog(log)
 
@@ -953,11 +1031,29 @@ const CheckoutPage: React.FC = () => {
           return
         }
 
+        if (logOnlyTextAddress) {
+          setLocationMode("text")
+          setSelectedAddressId(null)
+          setSelectedCoords(null)
+          setDistanceKm(0)
+          setTranspCost(safeNumber(log?.transCost, 0))
+
+          setBillingForm((previous) => ({
+            ...previous,
+            address: "",
+            addressName: "",
+            city: ""
+          }))
+
+          await GetCurrencyAsync()
+
+          setStep("location")
+          return
+        }
+
         if (logHasAgentDelivery) {
-          if (log?.addressId != null) {
-            setSelectedAddressId(Number(log.addressId))
-            setLocationMode("existing")
-          }
+          setSelectedAddressId(logAddressId)
+          setLocationMode("existing")
 
           setSelectedCoords(null)
           setDistanceKm(0)
@@ -970,10 +1066,8 @@ const CheckoutPage: React.FC = () => {
           return
         }
 
-        if (log?.addressId != null) {
-          setSelectedAddressId(Number(log.addressId))
-          setLocationMode("existing")
-        }
+        setSelectedAddressId(null)
+        setLocationMode("existing")
 
         if (log?.transCost != null) {
           setTranspCost(safeNumber(log.transCost, 0))
@@ -1017,7 +1111,7 @@ const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     if (!selectedCoords) return
-    if (isPickup || hasAgentDelivery) return
+    if (isPickup || hasAgentDelivery || isOnlyTextAddress) return
 
     void calcularEntrega({
       descripcion: billingForm.address,
@@ -1043,34 +1137,51 @@ const CheckoutPage: React.FC = () => {
               </div>
             )}
 
-            {!initializingCheckout && step === "location" && (
-              <LocationSection
-                addressList={addressList}
-                locationMode={locationMode}
-                setLocationMode={setLocationMode}
-                selectedAddressId={selectedAddressId}
-                setSelectedAddressId={setSelectedAddressId}
-                selectedCoords={selectedCoords}
-                setSelectedCoords={setSelectedCoords}
-                billingForm={billingForm}
-                setBillingForm={setBillingForm}
-                selectedAddress={selectedAddress}
-                handleBillingChange={(
-                  event: React.ChangeEvent<HTMLInputElement>
-                ) => {
-                  const { id, value } = event.target
+            {!initializingCheckout &&
+              step === "location" &&
+              isOnlyTextAddress && (
+                <OnlyTextAddressSection
+                  billingForm={billingForm}
+                  transpCost={getTransporteFactura()}
+                  disabled={invoiceLoading}
+                  onChange={(field, value) => {
+                    setBillingForm((previous) => ({
+                      ...previous,
+                      [field]: value
+                    }))
+                  }}
+                  onContinue={handleGoToCurrencyFromLocation}
+                />
+              )}
 
-                  setBillingForm((prev) => ({
-                    ...prev,
-                    [id]: value
-                  }))
-                }}
-                handleGoToCurrency={handleGoToCurrencyFromLocation}
-                handleCoordsChange={handleCoordsChangeFromMap}
-                isLocked={false}
-                isPickup={isPickup}
-              />
-            )}
+            {!initializingCheckout &&
+              step === "location" &&
+              !isOnlyTextAddress && (
+                <LocationSection
+                  addressList={addressList}
+                  locationMode={locationMode}
+                  setLocationMode={setLocationMode}
+                  selectedAddressId={selectedAddressId}
+                  setSelectedAddressId={setSelectedAddressId}
+                  selectedCoords={selectedCoords}
+                  setSelectedCoords={setSelectedCoords}
+                  billingForm={billingForm}
+                  setBillingForm={setBillingForm}
+                  selectedAddress={selectedAddress}
+                  handleBillingChange={(event) => {
+                    const { id, value } = event.target
+
+                    setBillingForm((previous) => ({
+                      ...previous,
+                      [id]: value
+                    }))
+                  }}
+                  handleGoToCurrency={handleGoToCurrencyFromLocation}
+                  handleCoordsChange={handleCoordsChangeFromMap}
+                  isLocked={false}
+                  isPickup={isPickup}
+                />
+              )}
 
             {!initializingCheckout && step === "currency" && (
               <CurrencySection
