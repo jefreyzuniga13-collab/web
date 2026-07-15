@@ -714,6 +714,7 @@ const CheckoutPage: React.FC = () => {
       buildPagoGenerico({
         method,
         total: totalPagar,
+        cashAmount,
         selectedCurrency,
         divisaSelected,
         codSucursal: codSucursalFactura,

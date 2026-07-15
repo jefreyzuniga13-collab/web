@@ -6,25 +6,33 @@ import type { AppDispatch } from "@/Context"
 import { selectIsRoot } from "@/Context/Slices/Auth/authSlice"
 import { selectActiveCompanyName } from "@/Context/Slices/Auth/companySlice"
 import { tasaCambio } from "@/Constants/tasaCambio"
-
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
-
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface"
 import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
 import type { FaloteRequestDto, InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
-import type { FacturaTempo, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
+import type {
+  FacturaTempo,
+  ObtenerDivisaPagosTipoReq,
+  ObtenerDivisaPagosTipoRes,
+  PagoGenerico,
+  SINO
+} from "@/Interfaces/Ecommerce/FacturaTempo"
 import type { Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
 import type { CheckoutPaymentMethod } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
 import { useCheckoutPaymentState } from "@/Hooks/Ecommerce/payment/useCheckoutPaymentState"
-
 import { loadFacturaTempo } from "@/Utils/facturaTempoStorage"
 import { buildFacturaTempo } from "@/Utils/ECommerce/buildFacturaTempo"
-import { buildPagoGenerico, getPaymentCodeByMethod } from "@/Utils/ECommerce/buildPagoGenerico"
+import {
+  buildPagoGenerico,
+  getPaymentCodeByMethod
+} from "@/Utils/ECommerce/buildPagoGenerico"
 import { safeStr } from "@/Utils/ECommerce/formatters"
-import { construirDetallePago, validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils"
+import {
+  construirDetallePago,
+  validarPagosSeleccionados
+} from "@/Utils/ECommerce/pagoFacturaUtils"
 import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
 
@@ -43,30 +51,48 @@ type UseAgentCartPaymentParams = {
   addDescription: string
   observation: string
   selectedAddressId: number | null
+
   addresses: Array<{
     idDireccion?: number
     nombre?: string
     descripcion?: string
     referencia?: string
   }>
+
   currentLog: LogCartResponseDto | null
+
   ensureEcommerceUser: () => Promise<EnsureEcommerceUserResult>
-  fetchByContactId: (contactId: number) => Promise<LogCartResponseDto | null>
-  UpdatedStatus: (id: number, status: number) => Promise<LogCartResponseDto | null>
-  InsertaFacturaAsync: (invoice: FacturaTempo) => Promise<ApiResponse<unknown>>
+
+  fetchByContactId: (
+    contactId: number
+  ) => Promise<LogCartResponseDto | null>
+
+  UpdatedStatus: (
+    id: number,
+    status: number
+  ) => Promise<LogCartResponseDto | null>
+
+  InsertaFacturaAsync: (
+    invoice: FacturaTempo
+  ) => Promise<ApiResponse<unknown>>
+
   persistLogWithTotals: (
     log: LogCartResponseDto,
     ecommerceUserId: number,
     totals: InvoiceTotalsDto
   ) => Promise<LogCartResponseDto | null | undefined>
+
   getFreshInvoiceTotals: () => Promise<InvoiceTotalsDto>
+
   resetCartPanelUi: () => void
   dispatch: AppDispatch
   multiPagoActivo?: boolean
   pagosMultiples?: PagoSeleccionado[]
 }
 
-const normalizarDivisas = (data: unknown): ObtenerDivisaPagosTipoRes[] => {
+const normalizarDivisas = (
+  data: unknown
+): ObtenerDivisaPagosTipoRes[] => {
   const list = Array.isArray(data)
     ? data as ObtenerDivisaPagosTipoRes[]
     : data
@@ -83,7 +109,12 @@ const normalizarDivisas = (data: unknown): ObtenerDivisaPagosTipoRes[] => {
       banco: safeStr(item.banco),
       aCambio: safeStr(item.aCambio)
     }))
-    .filter((item) => item.codigo || item.codigoExterno || item.nombre)
+    .filter(
+      (item) =>
+        item.codigo ||
+        item.codigoExterno ||
+        item.nombre
+    )
 }
 
 export const useAgentCartPayment = ({
@@ -112,7 +143,9 @@ export const useAgentCartPayment = ({
   const isRoot = useSelector(selectIsRoot)
   const activeCompanyName = useSelector(selectActiveCompanyName)
 
-  const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([])
+  const [divisaOpts, setDivisaOpts] =
+    useState<ObtenerDivisaPagosTipoRes[]>([])
+
   const [divisaLoading, setDivisaLoading] = useState(false)
   const [payLoading, setPayLoading] = useState(false)
 
@@ -125,491 +158,658 @@ export const useAgentCartPayment = ({
     method,
     divisaSelected,
     setDivisaSelected,
+    cashAmount,
     transfer,
     manualCardData,
     canPay
   } = payment
 
-  const loadDivisa = useCallback(async (
-    nextMethod: CheckoutPaymentMethod | null
-  ) => {
-    if (!nextMethod || nextMethod === "cash") {
-      setDivisaOpts([])
-      setDivisaSelected(null)
-      return
-    }
-
-    setDivisaLoading(true)
-
-    try {
-      const req: ObtenerDivisaPagosTipoReq = {
-        codigo: "0",
-        formulario: "1-",
-        opcion: getPaymentCodeByMethod(nextMethod)
+  const loadDivisa = useCallback(
+    async (
+      nextMethod: CheckoutPaymentMethod | null
+    ) => {
+      if (!nextMethod || nextMethod === "cash") {
+        setDivisaOpts([])
+        setDivisaSelected(null)
+        return
       }
 
-      const resp = await CartService.GetDivisaPagosTipoAsync(req)
-      const fixed = normalizarDivisas(resp?.data)
+      setDivisaLoading(true)
 
-      setDivisaOpts(fixed)
-      setDivisaSelected(fixed.length > 0 ? fixed[0] : null)
-    } catch {
-      setDivisaOpts([])
-      setDivisaSelected(null)
-      toast.error("No se pudieron cargar las opciones de pago.")
-    } finally {
-      setDivisaLoading(false)
-    }
-  }, [setDivisaSelected])
+      try {
+        const req: ObtenerDivisaPagosTipoReq = {
+          codigo: "0",
+          formulario: "1-",
+          opcion: getPaymentCodeByMethod(nextMethod)
+        }
 
-  const cargarDivisasPorMoneda = useCallback(async (
-    item: Currencyto
-  ): Promise<ObtenerDivisaPagosTipoRes[]> => {
-    setDivisaLoading(true)
+        const resp =
+          await CartService.GetDivisaPagosTipoAsync(req)
 
-    try {
-      const req: ObtenerDivisaPagosTipoReq = {
-        codigo: "0",
-        formulario: "1-",
-        opcion: safeStr(item.codPago)
+        const fixed = normalizarDivisas(resp?.data)
+
+        setDivisaOpts(fixed)
+        setDivisaSelected(
+          fixed.length > 0
+            ? fixed[0]
+            : null
+        )
+      } catch {
+        setDivisaOpts([])
+        setDivisaSelected(null)
+
+        toast.error(
+          "No se pudieron cargar las opciones de pago."
+        )
+      } finally {
+        setDivisaLoading(false)
+      }
+    },
+    [setDivisaSelected]
+  )
+
+  const cargarDivisasPorMoneda = useCallback(
+    async (
+      item: Currencyto
+    ): Promise<ObtenerDivisaPagosTipoRes[]> => {
+      setDivisaLoading(true)
+
+      try {
+        const req: ObtenerDivisaPagosTipoReq = {
+          codigo: "0",
+          formulario: "1-",
+          opcion: safeStr(item.codPago)
+        }
+
+        const resp =
+          await CartService.GetDivisaPagosTipoAsync(req)
+
+        return normalizarDivisas(resp?.data)
+      } catch {
+        toast.error(
+          "No se pudieron cargar las opciones de pago."
+        )
+
+        return []
+      } finally {
+        setDivisaLoading(false)
+      }
+    },
+    []
+  )
+
+  const getDireccionFactura = useCallback(
+    (
+      log: LogCartResponseDto | null
+    ): string => {
+      if (retiraSucursal === "S") {
+        return safeStr(log?.branchName)
       }
 
-      const resp = await CartService.GetDivisaPagosTipoAsync(req)
+      if (selectedAddressId != null) {
+        const selected = addresses.find(
+          (address) =>
+            Number(address.idDireccion) ===
+            Number(selectedAddressId)
+        )
 
-      return normalizarDivisas(resp?.data)
-    } catch {
-      toast.error("No se pudieron cargar las opciones de pago.")
-      return []
-    } finally {
-      setDivisaLoading(false)
-    }
-  }, [])
-
-  const getDireccionFactura = useCallback((
-    log: LogCartResponseDto | null
-  ): string => {
-    if (retiraSucursal === "S") {
-      return safeStr(log?.branchName)
-    }
-
-    if (selectedAddressId != null) {
-      const selected = addresses.find(
-        (address) =>
-          Number(address.idDireccion) === Number(selectedAddressId)
-      )
-
-      return safeStr(selected?.descripcion)
-    }
-
-    return safeStr(addDescription)
-  }, [
-    addDescription,
-    addresses,
-    retiraSucursal,
-    selectedAddressId
-  ])
-
-  const getReferenciaFactura = useCallback((
-    log: LogCartResponseDto | null
-  ): string => {
-    if (retiraSucursal === "S") {
-      return safeStr(log?.branch)
-    }
-
-    if (selectedAddressId != null) {
-      const selected = addresses.find(
-        (address) =>
-          Number(address.idDireccion) === Number(selectedAddressId)
-      )
-
-      return safeStr(selected?.referencia)
-    }
-
-    return safeStr(addDescription)
-  }, [
-    addDescription,
-    addresses,
-    retiraSucursal,
-    selectedAddressId
-  ])
-
-  const validateTotalsBeforeInvoice = useCallback(async ({
-    totals,
-    codSucursalFactura
-  }: {
-    totals: InvoiceTotalsDto
-    codSucursalFactura: string
-  }) => {
-    const req = {
-      descuentoPantalla: totals.descuento ?? 0,
-      exonerado: "N",
-      ivaPantalla: totals.iva ?? 0,
-      maquina: `CRM-${contactId}`,
-      sucursal: codSucursalFactura,
-      tabla: "det_factura_tempo",
-      totalEnPantalla: totals.subTotal ?? 0,
-      usuario: contactId.toString()
-    }
-
-    const validacionTotales =
-      await CartService.sp_valida_SobTotalFactura(req)
-
-    const {
-      pasasub,
-      pasadesc,
-      pasaiva
-    } = validacionTotales.data?.[0] ?? {}
-
-    const errores: Record<string, string> = {
-      pasasub: "Subtotal no válido, diferencia con el valor real.",
-      pasadesc: "Descuento no válido, diferencia con el valor real.",
-      pasaiva: "IVA no válido, diferencia con el valor real."
-    }
-
-    const fallo = [
-      { key: "pasasub", value: pasasub },
-      { key: "pasadesc", value: pasadesc },
-      { key: "pasaiva", value: pasaiva }
-    ].find((item) => item.value === "N")
-
-    if (fallo) {
-      throw new Error(`(${errores[fallo.key]})`)
-    }
-  }, [contactId])
-
-  const construirDetallePagoFinal = useCallback(({
-    facturaBase,
-    codSucursalFactura,
-    tasaCambio,
-    totalFinal
-  }: {
-    facturaBase: FacturaTempo
-    codSucursalFactura: string
-    tasaCambio: number
-    totalFinal: number
-  }) => {
-    if (multiPagoActivo) {
-      const error = validarPagosSeleccionados(
-        pagosMultiples,
-        totalFinal
-      )
-
-      if (error) {
-        throw new Error(error)
+        return safeStr(selected?.descripcion)
       }
 
-      const facturaParaPago = {
-        ...facturaBase,
-        tasaCambio,
-        moneda: safeStr(facturaBase.moneda) || "1",
-        codEmpresa: safeStr(facturaBase.codEmpresa)
-      } as FacturaTempo
-
-      return construirDetallePago(
-        pagosMultiples,
-        facturaParaPago,
-        codSucursalFactura,
-        totalFinal
-      )
-    }
-
-    if (!method) {
-      throw new Error("Selecciona un método de pago.")
-    }
-
-    if (!canPay) {
-      throw new Error("Completa la información del pago.")
-    }
-
-    return [
-      buildPagoGenerico({
-        method,
-        total: totalFinal,
-        divisaSelected,
-        codSucursal: codSucursalFactura,
-        tasaCambio,
-        transfer,
-        manualCardData,
-        moneda: safeStr(facturaBase.moneda) || "1",
-        codEmpresa: safeStr(facturaBase.codEmpresa)
-      })
+      return safeStr(addDescription)
+    },
+    [
+      addDescription,
+      addresses,
+      retiraSucursal,
+      selectedAddressId
     ]
-  }, [
-    multiPagoActivo,
-    pagosMultiples,
-    method,
-    canPay,
-    divisaSelected,
-    transfer,
-    manualCardData
-  ])
+  )
 
-  const handleAgentPayNow = useCallback(async () => {
-    if (payLoading) return
-
-    if (!multiPagoActivo && !method) {
-      toast.error("Selecciona un método de pago.")
-      return
-    }
-
-    if (!multiPagoActivo && !canPay) {
-      toast.error("Completa la información del pago.")
-      return
-    }
-
-    if (multiPagoActivo) {
-      const error = validarPagosSeleccionados(
-        pagosMultiples,
-        totalPagar
-      )
-
-      if (error) {
-        toast.error(error)
-        return
+  const getReferenciaFactura = useCallback(
+    (
+      log: LogCartResponseDto | null
+    ): string => {
+      if (retiraSucursal === "S") {
+        return safeStr(log?.branch)
       }
-    }
 
-    if (!orderId || orderId <= 0) {
-      toast.error("No hay pedido asociado a este carrito.")
-      return
-    }
+      if (selectedAddressId != null) {
+        const selected = addresses.find(
+          (address) =>
+            Number(address.idDireccion) ===
+            Number(selectedAddressId)
+        )
 
-    setPayLoading(true)
+        return safeStr(selected?.referencia)
+      }
 
-    try {
+      return safeStr(addDescription)
+    },
+    [
+      addDescription,
+      addresses,
+      retiraSucursal,
+      selectedAddressId
+    ]
+  )
+
+  const validateTotalsBeforeInvoice = useCallback(
+    async ({
+      totals,
+      codSucursalFactura
+    }: {
+      totals: InvoiceTotalsDto
+      codSucursalFactura: string
+    }) => {
+      const req = {
+        descuentoPantalla: totals.descuento ?? 0,
+        exonerado: "N",
+        ivaPantalla: totals.iva ?? 0,
+        maquina: `CRM-${contactId}`,
+        sucursal: codSucursalFactura,
+        tabla: "det_factura_tempo",
+        totalEnPantalla: totals.subTotal ?? 0,
+        usuario: contactId.toString()
+      }
+
+      const validacionTotales =
+        await CartService.sp_valida_SobTotalFactura(req)
+
       const {
-        ecommerceUserId,
-        contact
-      } = await ensureEcommerceUser()
+        pasasub,
+        pasadesc,
+        pasaiva
+      } = validacionTotales.data?.[0] ?? {}
 
-      if (!ecommerceUserId || !contact) {
-        toast.error("No se pudo obtener el usuario ecommerce.")
-        return
+      const errores: Record<string, string> = {
+        pasasub:
+          "Subtotal no válido, diferencia con el valor real.",
+
+        pasadesc:
+          "Descuento no válido, diferencia con el valor real.",
+
+        pasaiva:
+          "IVA no válido, diferencia con el valor real."
       }
 
-      const existingLog =
-        currentLog ??
-        await fetchByContactId(contactId)
-
-      if (!existingLog?.id) {
-        toast.error("Log no encontrado.")
-        return
-      }
-
-      const totals = await getFreshInvoiceTotals()
-
-      const persistedLog = await persistLogWithTotals(
-        existingLog,
-        ecommerceUserId,
-        totals
+      const fallo = [
+        { key: "pasasub", value: pasasub },
+        { key: "pasadesc", value: pasadesc },
+        { key: "pasaiva", value: pasaiva }
+      ].find(
+        (item) => item.value === "N"
       )
 
-      const refreshedLog =
-        await fetchByContactId(contactId)
-
-      const logForInvoice =
-        refreshedLog ??
-        persistedLog ??
-        existingLog
-
-      const sellerName =
-        safeStr(logForInvoice?.createdByFullName) ||
-        safeStr(logForInvoice?.createdByNickname) ||
-        safeStr(logForInvoice?.createdByName) ||
-        safeStr(logForInvoice?.userName) ||
-        safeStr(existingLog.createdByFullName) ||
-        safeStr(existingLog.createdByNickname) ||
-        safeStr(existingLog.createdByName) ||
-        safeStr(existingLog.userName) ||
-        "Agente"
-
-      const companyName =
-        (isRoot ? safeStr(activeCompanyName) : "") ||
-        safeStr(logForInvoice?.companyName) ||
-        safeStr(existingLog.companyName) ||
-        "Empresa"
-
-      const codSucursalFactura = safeStr(
-        logForInvoice?.branch ||
-        existingLog.branch
-      )
-
-      if (!codSucursalFactura) {
-        toast.error(
-          "No fue posible determinar la sucursal de factura."
+      if (fallo) {
+        throw new Error(
+          `(${errores[fallo.key]})`
         )
+      }
+    },
+    [contactId]
+  )
+
+  const construirDetallePagoFinal = useCallback(
+    ({
+      facturaBase,
+      codSucursalFactura,
+      tasaCambio,
+      totalFinal
+    }: {
+      facturaBase: FacturaTempo
+      codSucursalFactura: string
+      tasaCambio: number
+      totalFinal: number
+    }): PagoGenerico[] => {
+      if (multiPagoActivo) {
+        const error = validarPagosSeleccionados(
+          pagosMultiples,
+          totalFinal
+        )
+
+        if (error) {
+          throw new Error(error)
+        }
+
+        const facturaParaPago: FacturaTempo = {
+          ...facturaBase,
+          tasaCambio,
+          moneda:
+            safeStr(facturaBase.moneda) ||
+            "1",
+          codEmpresa:
+            safeStr(facturaBase.codEmpresa)
+        }
+
+        return construirDetallePago(
+          pagosMultiples,
+          facturaParaPago,
+          codSucursalFactura,
+          totalFinal
+        )
+      }
+
+      if (!method) {
+        throw new Error(
+          "Selecciona un método de pago."
+        )
+      }
+
+      if (!canPay) {
+        throw new Error(
+          "Completa la información del pago."
+        )
+      }
+
+      return [
+        buildPagoGenerico({
+          method,
+          total: totalFinal,
+          cashAmount,
+          divisaSelected,
+          codSucursal: codSucursalFactura,
+          tasaCambio,
+          transfer,
+          manualCardData,
+          moneda:
+            safeStr(facturaBase.moneda) ||
+            "1",
+          codEmpresa:
+            safeStr(facturaBase.codEmpresa)
+        })
+      ]
+    },
+    [
+      multiPagoActivo,
+      pagosMultiples,
+      method,
+      canPay,
+      cashAmount,
+      divisaSelected,
+      transfer,
+      manualCardData
+    ]
+  )
+
+  const handleAgentPayNow = useCallback(
+    async () => {
+      if (payLoading) {
         return
       }
 
-      await validateTotalsBeforeInvoice({
-        totals,
-        codSucursalFactura
-      })
-
-      const falote: FaloteRequestDto = {
-        codSucursal: codSucursalFactura,
-        documento: "OrdenFactura"
-      }
-
-      const dataconse =
-        await CartService.GetConsecDocAsync(falote)
-
-      const consecutivo =
-        Number(dataconse?.data?.consecutivo ?? 0)
-
-      if (!consecutivo) {
+      if (!multiPagoActivo && !method) {
         toast.error(
-          "No fue posible obtener el consecutivo de factura."
+          "Selecciona un método de pago."
         )
+
         return
       }
 
-      const facturaBase = await loadFacturaTempo()
+      if (!multiPagoActivo && !canPay) {
+        toast.error(
+          "Completa la información del pago."
+        )
 
-      const nombreCliente =
-        safeStr(persistedLog?.invoiceName) ||
-        safeStr(logForInvoice?.invoiceName) ||
-        safeStr(existingLog.invoiceName) ||
-        safeStr(contact.fullName) ||
-        safeStr(contact.waName) ||
-        safeStr(contact.phone) ||
-        "Cliente"
+        return
+      }
 
-      const telefonoContacto =
-        safeStr(contact.phone)
-
-      const totalFinal =
-        safePositiveNumber(
-          totals.total ??
+      if (multiPagoActivo) {
+        const error = validarPagosSeleccionados(
+          pagosMultiples,
           totalPagar
         )
 
-      const detallePago = construirDetallePagoFinal({
-        facturaBase,
-        codSucursalFactura,
-        tasaCambio,
-        totalFinal
-      })
-
-      const invoiceReqFinal = buildFacturaTempo({
-        facturaBase,
-        codSucursalFactura,
-        consecutivo,
-        orderId,
-        contactId,
-        nombreCliente,
-        direccionCte:
-          getDireccionFactura(logForInvoice),
-        referencia:
-          getReferenciaFactura(logForInvoice),
-        valorTransporte:
-          effectiveShipping,
-        retiraSucursal,
-        observacion:
-          safeStr(logForInvoice?.observacion) ||
-          observation,
-        serie:
-          logForInvoice?.serie ??
-          existingLog.serie,
-        detallePago,
-        tasa: tasaCambio,
-        correo: safeStr(contact.email),
-        telefonoCte: telefonoContacto
-      })
-
-      const payload: Payload = {
-        contactId,
-        conversationId,
-        orderId,
-        ecommerceUserId,
-        fullName: nombreCliente,
-        phone: telefonoContacto,
-        sellerName,
-        companyName,
-        userId:
-          existingLog.createdById,
-        companyId:
-          existingLog.companyId,
-        expiresAtUtc: "",
-        email:
-          safeStr(contact.email),
-        OolyTextAddress:
-          Boolean(logForInvoice?.onlyTextAddress)
+        if (error) {
+          toast.error(error)
+          return
+        }
       }
 
-      await procesarVentaCheckout({
-        source: "agent",
-        paymentMethod:
-          multiPagoActivo
-            ? "cash"
-            : method as CheckoutPaymentMethod,
-        paymentState:
-          payment.paymentState,
-        invoiceReqFinal,
-        payload,
-        orderId,
-        transactionIdentifier: "",
-        usarPdfPagoElectronico: false,
-        codSucursalFactura,
-        consecutivo,
-        pdfContext: {
-          sellerName,
-          contactName: nombreCliente,
-          contactPhone: telefonoContacto,
-          companyName
-        },
-        fetchByContactId,
-        updatedStatus: UpdatedStatus,
-        insertaFacturaAsync: InsertaFacturaAsync,
-        dispatch,
-        onSuccess: () => {
-          toast.success(
-            "Venta procesada correctamente."
+      if (!orderId || orderId <= 0) {
+        toast.error(
+          "No hay pedido asociado a este carrito."
+        )
+
+        return
+      }
+
+      setPayLoading(true)
+
+      try {
+        const {
+          ecommerceUserId,
+          contact
+        } = await ensureEcommerceUser()
+
+        if (!ecommerceUserId || !contact) {
+          toast.error(
+            "No se pudo obtener el usuario ecommerce."
           )
 
-          resetCartPanelUi()
+          return
         }
-      })
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "No se pudo procesar la venta."
 
-      toast.error(message)
-    } finally {
-      setPayLoading(false)
-    }
-  }, [
-    payLoading,
-    multiPagoActivo,
-    method,
-    canPay,
-    pagosMultiples,
-    totalPagar,
-    orderId,
-    ensureEcommerceUser,
-    currentLog,
-    fetchByContactId,
-    contactId,
-    getFreshInvoiceTotals,
-    persistLogWithTotals,
-    validateTotalsBeforeInvoice,
-    construirDetallePagoFinal,
-    effectiveShipping,
-    retiraSucursal,
-    observation,
-    conversationId,
-    payment.paymentState,
-    UpdatedStatus,
-    InsertaFacturaAsync,
-    dispatch,
-    resetCartPanelUi,
-    getDireccionFactura,
-    getReferenciaFactura,
-    isRoot,
-    activeCompanyName
-  ])
+        const existingLog =
+          currentLog ??
+          await fetchByContactId(contactId)
+
+        if (!existingLog?.id) {
+          toast.error(
+            "Log no encontrado."
+          )
+
+          return
+        }
+
+        const totals =
+          await getFreshInvoiceTotals()
+
+        const persistedLog =
+          await persistLogWithTotals(
+            existingLog,
+            ecommerceUserId,
+            totals
+          )
+
+        const refreshedLog =
+          await fetchByContactId(contactId)
+
+        const logForInvoice =
+          refreshedLog ??
+          persistedLog ??
+          existingLog
+
+        const sellerName =
+          safeStr(
+            logForInvoice?.createdByFullName
+          ) ||
+          safeStr(
+            logForInvoice?.createdByNickname
+          ) ||
+          safeStr(
+            logForInvoice?.createdByName
+          ) ||
+          safeStr(
+            logForInvoice?.userName
+          ) ||
+          safeStr(
+            existingLog.createdByFullName
+          ) ||
+          safeStr(
+            existingLog.createdByNickname
+          ) ||
+          safeStr(
+            existingLog.createdByName
+          ) ||
+          safeStr(
+            existingLog.userName
+          ) ||
+          "Agente"
+
+        const companyName =
+          (
+            isRoot
+              ? safeStr(activeCompanyName)
+              : ""
+          ) ||
+          safeStr(
+            logForInvoice?.companyName
+          ) ||
+          safeStr(
+            existingLog.companyName
+          ) ||
+          "Empresa"
+
+        const codSucursalFactura =
+          safeStr(
+            logForInvoice?.branch ||
+            existingLog.branch
+          )
+
+        if (!codSucursalFactura) {
+          toast.error(
+            "No fue posible determinar la sucursal de factura."
+          )
+
+          return
+        }
+
+        await validateTotalsBeforeInvoice({
+          totals,
+          codSucursalFactura
+        })
+
+        const falote: FaloteRequestDto = {
+          codSucursal:
+            codSucursalFactura,
+          documento:
+            "OrdenFactura"
+        }
+
+        const dataconse =
+          await CartService.GetConsecDocAsync(
+            falote
+          )
+
+        const consecutivo = Number(
+          dataconse?.data?.consecutivo ?? 0
+        )
+
+        if (!consecutivo) {
+          toast.error(
+            "No fue posible obtener el consecutivo de factura."
+          )
+
+          return
+        }
+
+        const facturaBase =
+          await loadFacturaTempo()
+
+        const nombreCliente =
+          safeStr(
+            persistedLog?.invoiceName
+          ) ||
+          safeStr(
+            logForInvoice?.invoiceName
+          ) ||
+          safeStr(
+            existingLog.invoiceName
+          ) ||
+          safeStr(
+            contact.fullName
+          ) ||
+          safeStr(
+            contact.waName
+          ) ||
+          safeStr(
+            contact.phone
+          ) ||
+          "Cliente"
+
+        const telefonoContacto =
+          safeStr(contact.phone)
+
+        const totalFinal =
+          safePositiveNumber(
+            totals.total ??
+            totalPagar
+          )
+
+        const detallePago =
+          construirDetallePagoFinal({
+            facturaBase,
+            codSucursalFactura,
+            tasaCambio,
+            totalFinal
+          })
+
+        const invoiceReqFinal =
+          buildFacturaTempo({
+            facturaBase,
+            codSucursalFactura,
+            consecutivo,
+            orderId,
+            contactId,
+            nombreCliente,
+
+            direccionCte:
+              getDireccionFactura(
+                logForInvoice
+              ),
+
+            referencia:
+              getReferenciaFactura(
+                logForInvoice
+              ),
+
+            valorTransporte:
+              effectiveShipping,
+
+            retiraSucursal,
+
+            observacion:
+              safeStr(
+                logForInvoice?.observacion
+              ) ||
+              observation,
+
+            serie:
+              logForInvoice?.serie ??
+              existingLog.serie,
+
+            detallePago,
+
+            tasa:
+              tasaCambio,
+
+            correo:
+              safeStr(contact.email),
+
+            telefonoCte:
+              telefonoContacto
+          })
+
+        const payload: Payload = {
+          contactId,
+          conversationId,
+          orderId,
+          ecommerceUserId,
+          fullName:
+            nombreCliente,
+          phone:
+            telefonoContacto,
+          sellerName,
+          companyName,
+          userId:
+            existingLog.createdById,
+          companyId:
+            existingLog.companyId,
+          expiresAtUtc:
+            "",
+          email:
+            safeStr(contact.email),
+          OolyTextAddress:
+            Boolean(
+              logForInvoice?.onlyTextAddress
+            )
+        }
+
+        await procesarVentaCheckout({
+          source:
+            "agent",
+
+          paymentMethod:
+            multiPagoActivo
+              ? "cash"
+              : method as CheckoutPaymentMethod,
+
+          paymentState:
+            payment.paymentState,
+
+          invoiceReqFinal,
+          payload,
+          orderId,
+
+          transactionIdentifier:
+            "",
+
+          usarPdfPagoElectronico:
+            false,
+
+          codSucursalFactura,
+          consecutivo,
+
+          pdfContext: {
+            sellerName,
+            contactName:
+              nombreCliente,
+            contactPhone:
+              telefonoContacto,
+            companyName
+          },
+
+          fetchByContactId,
+
+          updatedStatus:
+            UpdatedStatus,
+
+          insertaFacturaAsync:
+            InsertaFacturaAsync,
+
+          dispatch,
+
+          onSuccess: () => {
+            toast.success(
+              "Venta procesada correctamente."
+            )
+
+            resetCartPanelUi()
+          }
+        })
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "No se pudo procesar la venta."
+
+        toast.error(message)
+      } finally {
+        setPayLoading(false)
+      }
+    },
+    [
+      payLoading,
+      multiPagoActivo,
+      method,
+      canPay,
+      pagosMultiples,
+      totalPagar,
+      orderId,
+      ensureEcommerceUser,
+      currentLog,
+      fetchByContactId,
+      contactId,
+      getFreshInvoiceTotals,
+      persistLogWithTotals,
+      validateTotalsBeforeInvoice,
+      construirDetallePagoFinal,
+      effectiveShipping,
+      retiraSucursal,
+      observation,
+      conversationId,
+      payment.paymentState,
+      UpdatedStatus,
+      InsertaFacturaAsync,
+      dispatch,
+      resetCartPanelUi,
+      getDireccionFactura,
+      getReferenciaFactura,
+      isRoot,
+      activeCompanyName
+    ]
+  )
 
   useEffect(() => {
     if (multiPagoActivo) {

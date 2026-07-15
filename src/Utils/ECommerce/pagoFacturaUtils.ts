@@ -1,20 +1,50 @@
-import { tasaCambio } from "@/Constants/tasaCambio"
-import type { FacturaTempo, ObtenerDivisaPagosTipoRes, PagoGenerico} from "@/Interfaces/Ecommerce/FacturaTempo"
-import type { Currencyto} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-import type { PagoSeleccionado} from "@/Interfaces/Ecommerce/MultiPagoTypes"
-import type { CheckoutPaymentMethod} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-import { round2, safeStr } from "@/Utils/ECommerce/formatters"
+import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio"
+
+import type {
+  FacturaTempo,
+  ObtenerDivisaPagosTipoRes,
+  PagoGenerico
+} from "@/Interfaces/Ecommerce/FacturaTempo"
+
+import type {
+  Currencyto
+} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+
+import type {
+  PagoSeleccionado
+} from "@/Interfaces/Ecommerce/MultiPagoTypes"
+
+import type {
+  CheckoutPaymentMethod
+} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+
+import {
+  safeStr
+} from "@/Utils/ECommerce/formatters"
+
 /**
- * Convierte una forma de pago recibida desde PCG al método interno del checkout.
+ * Se utiliza únicamente para comparar números decimales.
  *
- * La pasarela se representa como gatewayCard en la refactorización actual.
+ * No redondea ni modifica los valores enviados a PCG.
+ */
+const PAYMENT_EPSILON = 0.000001
+
+/**
+ * Convierte una forma de pago recibida desde PCG al método interno
+ * utilizado por el checkout.
  */
 export const obtenerTipoPagoDesdeMoneda = (
   item: Currencyto
 ): CheckoutPaymentMethod => {
   const codPago = safeStr(item?.codPago).toUpperCase()
-  const descripcion = safeStr(item?.descripcion_Pago).toLowerCase().trim()
-  const moneda = safeStr(item?.moneda_Fija).toLowerCase().trim()
+
+  const descripcion = safeStr(item?.descripcion_Pago)
+    .toLowerCase()
+    .trim()
+
+  const moneda = safeStr(item?.moneda_Fija)
+    .toLowerCase()
+    .trim()
 
   if (
     codPago === "1" ||
@@ -49,10 +79,10 @@ export const obtenerTipoPagoDesdeMoneda = (
 }
 
 /**
- * Retorna las formas de pago que se pueden usar dentro de multipago.
+ * Retorna las formas de pago permitidas dentro de multipago.
  *
- * La pasarela no se permite en multipago porque requiere Hosted Page,
- * tokenización o 3DS como pago único.
+ * La pasarela no se permite porque requiere Hosted Page,
+ * tokenización o autenticación 3DS como pago único.
  */
 export const filtrarFormasPagoMultipago = (
   currency: Currencyto[]
@@ -66,8 +96,6 @@ export const filtrarFormasPagoMultipago = (
 
 /**
  * Retorna las formas de pago disponibles para pago único.
- *
- * Si la empresa no permite pasarela, se oculta gatewayCard.
  */
 export const filtrarFormasPagoUnico = (
   currency: Currencyto[],
@@ -76,7 +104,10 @@ export const filtrarFormasPagoUnico = (
   return currency.filter((item) => {
     const metodo = obtenerTipoPagoDesdeMoneda(item)
 
-    if (!permitePasarela && metodo === "gatewayCard") {
+    if (
+      !permitePasarela &&
+      metodo === "gatewayCard"
+    ) {
       return false
     }
 
@@ -85,26 +116,61 @@ export const filtrarFormasPagoUnico = (
 }
 
 /**
- * Suma todos los montos agregados al multipago.
+ * Suma los montos ingresados en multipago.
+ *
+ * No redondea ni modifica los valores.
  */
-export const totalPagado = (pagos: PagoSeleccionado[]): number => {
-  return round2(
-    pagos.reduce((acc, item) => acc + Number(item.monto ?? 0), 0)
+export const totalPagado = (
+  pagos: PagoSeleccionado[]
+): number => {
+  return pagos.reduce(
+    (acumulado, pago) =>
+      acumulado + Number(pago.monto ?? 0),
+    0
   )
 }
 
 /**
- * Calcula cuánto falta para cubrir el total de factura.
+ * Calcula cuánto falta por cubrir.
+ *
+ * Un resultado negativo se transforma en cero porque representa
+ * un posible cambio en efectivo.
  */
 export const totalPendiente = (
   pagos: PagoSeleccionado[],
   totalFactura: number
 ): number => {
-  return round2(Number(totalFactura ?? 0) - totalPagado(pagos))
+  return Math.max(
+    0,
+    Number(totalFactura ?? 0) - totalPagado(pagos)
+  )
 }
 
 /**
- * Valida que el multipago sea consistente antes de construir detallePago.
+ * Retorna el índice del último pago con monto mayor que cero.
+ */
+const obtenerIndiceUltimoPagoValido = (
+  pagos: PagoSeleccionado[]
+): number => {
+  for (
+    let index = pagos.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
+    if (Number(pagos[index]?.monto ?? 0) > 0) {
+      return index
+    }
+  }
+
+  return -1
+}
+
+/**
+ * Valida que los pagos seleccionados puedan construir detallePago.
+ *
+ * El excedente solamente se permite cuando:
+ * - el último pago es efectivo;
+ * - los pagos anteriores todavía no habían cubierto la factura.
  */
 export const validarPagosSeleccionados = (
   pagos: PagoSeleccionado[],
@@ -114,83 +180,149 @@ export const validarPagosSeleccionados = (
     return "Debe agregar al menos una forma de pago."
   }
 
-  const total = round2(totalFactura)
+  const total = Number(totalFactura ?? 0)
   const pagado = totalPagado(pagos)
 
-  if (pagos.some((pago) => pago.metodo === "gatewayCard")) {
+  if (!Number.isFinite(total) || total <= 0) {
+    return "El total de la factura no es válido."
+  }
+
+  if (
+    pagos.some(
+      (pago) => pago.metodo === "gatewayCard"
+    )
+  ) {
     return "La tarjeta en línea no está disponible dentro de multipago. Úsala como pago único."
   }
 
-  if (pagado < total) {
-    return `Monto insuficiente. Pendiente C$${round2(total - pagado)}.`
-  }
-
-  if (pagado > total) {
-    return `El monto pagado no puede superar el total. Exceso C$${round2(
-      pagado - total
-    )}.`
-  }
-
   for (const pago of pagos) {
+    const monto = Number(pago.monto ?? 0)
+
     if (!pago.moneda) {
       return "Hay una forma de pago sin método seleccionado."
     }
 
-    if (Number(pago.monto ?? 0) <= 0) {
+    if (!Number.isFinite(monto) || monto <= 0) {
       return "Hay una forma de pago con monto inválido."
     }
 
     if (
-      (pago.metodo === "transfer" || pago.metodo === "manualCard") &&
+      (
+        pago.metodo === "transfer" ||
+        pago.metodo === "manualCard"
+      ) &&
       !pago.divisa
     ) {
       return "Debe seleccionar banco / tipo de pago."
     }
 
     if (
-      (pago.metodo === "transfer" || pago.metodo === "manualCard") &&
+      (
+        pago.metodo === "transfer" ||
+        pago.metodo === "manualCard"
+      ) &&
       !safeStr(pago.divisa?.codigo)
     ) {
       return "La forma de pago seleccionada no tiene código válido."
     }
 
-    if (pago.metodo === "transfer" && !safeStr(pago.referencia)) {
+    if (
+      pago.metodo === "transfer" &&
+      !safeStr(pago.referencia)
+    ) {
       return "La referencia de transferencia es requerida."
     }
 
     if (pago.metodo === "manualCard") {
-      if (!safeStr(pago.tarjetaManual?.tarjetahabiente)) {
+      if (
+        !safeStr(
+          pago.tarjetaManual?.tarjetahabiente
+        )
+      ) {
         return "El tarjetahabiente es requerido."
       }
 
-      // if (!safeStr(pago.tarjetaManual?.tarjeta)) {
-      //   return "La tarjeta es requerida."
-      // }
-
-      if (!safeStr(pago.tarjetaManual?.ultDigito)) {
+      if (
+        safeStr(
+          pago.tarjetaManual?.ultDigito
+        ).length !== 4
+      ) {
         return "Los últimos 4 dígitos son requeridos."
       }
 
-      if (!safeStr(pago.tarjetaManual?.fechaVence)) {
+      if (
+        !safeStr(
+          pago.tarjetaManual?.fechaVence
+        )
+      ) {
         return "La fecha de vencimiento es requerida."
       }
+    }
+  }
+
+  if (pagado < total - PAYMENT_EPSILON) {
+    return `Monto insuficiente. Pendiente C$${
+      total - pagado
+    }.`
+  }
+
+  if (pagado > total + PAYMENT_EPSILON) {
+    const ultimoIndice =
+      obtenerIndiceUltimoPagoValido(pagos)
+
+    if (ultimoIndice < 0) {
+      return "No se encontró un pago válido."
+    }
+
+    const ultimoPago = pagos[ultimoIndice]
+
+    if (ultimoPago.metodo !== "cash") {
+      return "Solamente un pago en efectivo puede superar el total para generar cambio."
+    }
+
+    const totalAnterior = pagos
+      .slice(0, ultimoIndice)
+      .reduce(
+        (acumulado, pago) =>
+          acumulado + Number(pago.monto ?? 0),
+        0
+      )
+
+    if (totalAnterior >= total - PAYMENT_EPSILON) {
+      return "El pago en efectivo no puede agregarse después de haber cubierto completamente la factura."
     }
   }
 
   return null
 }
 
+type ConstruirPagoFacturaOptions = {
+  /**
+   * Monto de este pago que realmente se aplica a la factura.
+   */
+  montoAplicado: number
+}
+
 /**
- * Construye un PagoGenerico individual.
+ * Construye un PagoGenerico individual dentro de multipago.
  *
- * Para efectivo usa la moneda seleccionada.
- * Para transferencia y tarjeta manual usa divisa.codigo como codPago real.
+ * Efectivo:
+ * - monto: dinero recibido;
+ * - montoA: dinero recibido;
+ * - montoP: monto aplicado a la factura;
+ * - cambio: monto recibido menos monto aplicado;
+ * - montoS: dinero recibido convertido por tasa de cambio.
+ *
+ * Transferencia y tarjeta:
+ * - monto, montoA y montoP tienen el mismo valor;
+ * - cambio es cero.
  */
 export const construirPagoFactura = (
   pago: PagoSeleccionado,
   factura: FacturaTempo,
   codSucursalFactura: string,
-  index: number
+  index: number,
+  options: ConstruirPagoFacturaOptions
 ): PagoGenerico => {
   const metodo = pago.metodo
 
@@ -198,40 +330,63 @@ export const construirPagoFactura = (
   const esTransferencia = metodo === "transfer"
   const esTarjetaManual = metodo === "manualCard"
 
-  const monedaFactura = safeStr(factura.moneda)
-  const monto = round2(Number(pago.monto ?? 0))
+  const montoRecibido = Number(pago.monto ?? 0)
 
-  const divisa = pago.divisa as ObtenerDivisaPagosTipoRes | null
-  const moneda = pago.moneda as Currencyto | null
+  const montoAplicado = Math.max(
+    0,
+    Number(options.montoAplicado ?? 0)
+  )
+
+  const cambio = esEfectivo
+    ? Math.max(
+        0,
+        montoRecibido - montoAplicado
+      )
+    : 0
+
+  const monedaFactura =
+    safeStr(factura.moneda) || "1"
+
+  const divisa =
+    pago.divisa as ObtenerDivisaPagosTipoRes | null
+
+  const moneda =
+    pago.moneda as Currencyto | null
 
   const codPago = esEfectivo
-    ? safeStr(moneda?.codPago)
+    ? safeStr(moneda?.codPago) || "1"
     : safeStr(divisa?.codigo)
 
   const descripcionPago = esEfectivo
     ? safeStr(moneda?.descripcion_Pago)
     : safeStr(divisa?.nombre)
 
-  const tipoPago = esEfectivo ? "" : safeStr(divisa?.tipo)
+  const tipoPago = esEfectivo
+    ? safeStr(moneda?.moneda_Fija) || "1"
+    : safeStr(divisa?.tipo)
 
   const banco = esEfectivo
-    ? safeStr(moneda?.codigo_Banco)
+    ? safeStr(moneda?.codigo_Banco) || "00"
     : safeStr(divisa?.banco)
 
   const codPagoExterno = esEfectivo
-    ? safeStr(moneda?.codExterno)
+    ? safeStr(moneda?.codExterno) || "1"
     : safeStr(divisa?.codigoExterno)
 
   const referencia = esTransferencia
     ? safeStr(pago.referencia)
     : esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.autorizacion)
+      ? safeStr(
+          pago.tarjetaManual?.autorizacion
+        )
       : ""
 
   const fechaOVence = esTransferencia
     ? new Date().toISOString().slice(0, 10)
     : esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.fechaVence)
+      ? safeStr(
+          pago.tarjetaManual?.fechaVence
+        )
       : ""
 
   const concepto = esEfectivo
@@ -242,56 +397,59 @@ export const construirPagoFactura = (
         ? descripcionPago || "Tarjeta manual"
         : descripcionPago || "Pago"
 
+  const tasaFactura = Number(
+    factura.tasaCambio ?? tasaCambioSistema
+  )
+
+  const tasa = Number.isFinite(tasaFactura) &&
+    tasaFactura > 0
+    ? tasaFactura
+    : tasaCambioSistema
+
   return {
     numPago: String(index + 1),
     concepto,
     codPago,
     tipoPago,
-    aplicaCambio: "True",
+    aplicaCambio: esEfectivo,
     codPagoExterno,
     banco,
 
-    monto,
+    monto: montoRecibido,
     moneda: monedaFactura,
-    montoA: monto,
-    cambio: 0,
-    tasaCambio,
+    montoA: montoRecibido,
+    cambio,
+    tasaCambio: tasa,
 
     Fecha_o_Vence: fechaOVence,
     referencia,
-    numeroTransaccion: referencia,
-    cuentaContable: "",
-    Dll: "",
-    Numero: "",
 
     ultDigito: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.ultDigito)
+      ? safeStr(
+          pago.tarjetaManual?.ultDigito
+        )
       : "",
 
     tarjeta: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.tarjeta)
+      ? safeStr(
+          pago.tarjetaManual?.tarjeta
+        )
       : "",
 
     tarjetahabiente: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.tarjetahabiente)
+      ? safeStr(
+          pago.tarjetaManual?.tarjetahabiente
+        )
       : "",
 
-    autorizacion: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.autorizacion)
-      : "",
+    montoP: montoAplicado,
 
-    termId: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.termId)
-      : "",
+    /**
+     * No redondear. PCG recibe la precisión completa.
+     */
+    montoS: montoRecibido / tasa,
 
-    afiliado: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.afiliado)
-      : "",
-
-    montoP: monto,
-    montoS: round2(monto / tasaCambio),
-
-    indice: String(index),
+    indice: String(index + 1),
     codClienteCrd: "00000",
     facturaPinpad: "N",
     codEmpresa: safeStr(factura.codEmpresa),
@@ -299,16 +457,33 @@ export const construirPagoFactura = (
     montoFirma: "0",
     sobrante: "0",
 
-    Codtransaccion: referencia,
     CuentaHabiente: esTarjetaManual
-      ? safeStr(pago.tarjetaManual?.tarjetahabiente)
+      ? safeStr(
+          pago.tarjetaManual?.tarjetahabiente
+        )
       : "",
-    CodStrCadsaccion: referencia
+
+    cuentaContable: "",
+    Dll: "",
+    Numero: "",
+
+    Codtransaccion: "",
+    CodStrCadsaccion: "",
+
+    afiliado: "",
+    autorizacion: "",
+    numeroTransaccion: "",
+    termId: ""
   }
 }
 
 /**
  * Construye todos los pagos de una factura con multipago.
+ *
+ * Los montos se aplican a la factura siguiendo el orden en que
+ * fueron agregados.
+ *
+ * No redondea ni modifica la precisión original.
  */
 export const construirDetallePago = (
   pagos: PagoSeleccionado[],
@@ -316,18 +491,40 @@ export const construirDetallePago = (
   codSucursalFactura: string,
   totalFactura: number
 ): PagoGenerico[] => {
-  const error = validarPagosSeleccionados(pagos, totalFactura)
+  const error = validarPagosSeleccionados(
+    pagos,
+    totalFactura
+  )
 
   if (error) {
     throw new Error(error)
   }
 
-  return pagos.map((pago, index) =>
-    construirPagoFactura(
+  let pendiente = Number(totalFactura ?? 0)
+
+  return pagos.map((pago, index) => {
+    const montoRecibido = Number(
+      pago.monto ?? 0
+    )
+
+    const montoAplicado = Math.min(
+      montoRecibido,
+      Math.max(0, pendiente)
+    )
+
+    pendiente = Math.max(
+      0,
+      pendiente - montoAplicado
+    )
+
+    return construirPagoFactura(
       pago,
       factura,
       codSucursalFactura,
-      index
+      index,
+      {
+        montoAplicado
+      }
     )
-  )
+  })
 }
