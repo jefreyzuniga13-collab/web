@@ -5,7 +5,7 @@ import { toast } from "react-toastify"
 import { TiArrowBack } from "react-icons/ti"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import { MdClear, MdSelectAll } from "react-icons/md"
+import { MdClear } from "react-icons/md"
 import { useSelector } from "react-redux"
 import Lottie from "lottie-react"
 import { useCategoryPCG } from "@/Hooks/Ecommerce/tabs/useCategoryPCG"
@@ -600,7 +600,7 @@ export const ProductTab = ({ conversationId }: Props) => {
                     onClick={selectVisibleProducts}
                     disabled={productPcg.length === 0 || addingSelected}
                   >
-                    <MdSelectAll fontSize={20} />
+                    <MdClear fontSize={20} />
                   </button>
                 </span>
               </Tooltip>
@@ -659,20 +659,34 @@ export const ProductTab = ({ conversationId }: Props) => {
       </header>
 
       <section className="productTab-clientHeaderActions">
-        <Input
-          id="searchProduct"
-          name="searchProduct"
-          value={search}
-          max={500}
-          placeholder="Buscar categoría o producto"
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={async (e) => {
-            if (e.key === "Enter") {
-              await handleSearchEnter(search)
-            }
-          }}
-        />
-      </section>
+  <div className="searchInputWithClear">
+    <Input
+      id="searchProduct"
+      name="searchProduct"
+      value={search}
+      max={500}
+      placeholder="Buscar categoría o producto"
+      onChange={(event) => setSearch(event.target.value)}
+      onKeyDown={async (event) => {
+        if (event.key === "Enter") {
+          await handleSearchEnter(search)
+        }
+      }}
+    />
+
+    {search.trim() && (
+      <button
+        type="button"
+        className="searchInputWithClear__button"
+        onClick={resetToCategories}
+        aria-label="Limpiar búsqueda"
+        title="Limpiar búsqueda"
+      >
+        <MdClear fontSize={20} />
+      </button>
+    )}
+  </div>
+</section>
 
       {showCategories && (
         <div className="productTab-category__container">

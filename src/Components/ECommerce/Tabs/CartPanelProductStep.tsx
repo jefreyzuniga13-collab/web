@@ -1,7 +1,7 @@
 import Input from "@/Components/Common/Input"
 import vacio from "@/assets/vacio.png"
 
-import { MdDelete } from "react-icons/md"
+import { MdDelete, MdClear } from "react-icons/md"
 
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { safeNumber } from "@/Utils/ECommerce/utils"
@@ -58,13 +58,27 @@ export default function CartPanelProductStep({
 }: Props) {
   return (
     <div className="carPCPanel-stepContent">
-      <Input
-        id="searchProduct"
-        name="searchProduct"
-        value={search}
-        placeholder="Buscar categoría o producto"
-        onChange={(event) => setSearch(event.target.value)}
-      />
+      <div className="searchInputWithClear">
+        <Input
+          id="searchProduct"
+          name="searchProduct"
+          value={search}
+          placeholder="Buscar categoría o producto"
+          onChange={(event) => setSearch(event.target.value)}
+        />
+
+        {search.trim() && (
+          <button
+            type="button"
+            className="searchInputWithClear__button"
+            onClick={() => setSearch("")}
+            aria-label="Limpiar búsqueda"
+            title="Limpiar búsqueda"
+          >
+            <MdClear fontSize={20} />
+          </button>
+        )}
+      </div>
 
       <div className="carPCPanel-products">
         {filteredDetails.map(({ detail }, index) => {

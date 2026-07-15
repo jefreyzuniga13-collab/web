@@ -423,7 +423,7 @@ export default function MultiPagoSection({
               id="multipagoReferencia"
               type="text"
               className="checkout-input"
-              maxLength={4}
+              // maxLength={4}
               value={referencia}
               disabled={disabled}
               onChange={(event) => setReferencia(event.target.value)}
