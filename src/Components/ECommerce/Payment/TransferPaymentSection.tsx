@@ -24,7 +24,7 @@ export default function TransferPaymentSection({
         <input
           className="checkout-input"
           value={transfer}
-          // maxLength={4}
+          maxLength={50}
           onChange={(e) => setTransfer(e.target.value)}
         />
 

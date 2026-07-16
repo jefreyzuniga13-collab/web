@@ -1,4 +1,4 @@
-import { FaEye, FaEyeSlash, FaLock, FaArrowLeft } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
@@ -57,10 +57,6 @@ export default function ResetPasswordPresentation() {
             >
               <div className="reset-password__mobile-logo">
                 <img src={logo} alt="Logo" />
-              </div>
-
-              <div className="reset-password__icon">
-                <FaLock />
               </div>
 
               <div className="reset-password__card-header">

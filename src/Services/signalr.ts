@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as signalR from "@microsoft/signalr";
-import type {
-  MessageDto,
-  AttachmentDto,
-  ConversationDto,
-  NotificationDto,
-} from "@/Interfaces/Chat/ChatInterfaces";
+import type { MessageDto, AttachmentDto,  ConversationDto,  NotificationDto} from "@/Interfaces/Chat/ChatInterfaces";
 import type { ContactLog } from "@/Interfaces/Auth/UserInterfaces";
+import type {  ForceLogoutDto,  LoginApprovalRequestedDto} from "@/Interfaces/Auth/AuthInterface";
 import { formatDateTimeNI } from "@/Utils/ECommerce/formatters";
 import { store } from "@/Context";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
@@ -159,9 +155,24 @@ const playSoundHandlers = new Map<
   (payload: unknown) => void
 >();
 
-  //Con unos usuarios se decconecta, y vuelva a reconectar, no pasa con todos,he probado con usuarios de prueba
-  //con todos los roles, pero no se descnectan tampoco los de otra clienet
-  //pero con otro cliente si pasa 
+/**
+ * Eventos recibidos desde UserHub para el flujo de sesión única.
+ */
+const loginApprovalRequestedHandlers = new Map<
+  (payload: LoginApprovalRequestedDto) => void,
+  (payload: LoginApprovalRequestedDto) => void
+>();
+
+const forceLogoutHandlers = new Map<
+  (payload: ForceLogoutDto) => void,
+  (payload: ForceLogoutDto) => void
+>();
+
+/*
+ * Nota técnica histórica:
+ * algunos usuarios presentaron ciclos de desconexión y reconexión.
+ * La reconexión manual se conserva como respaldo de AutomaticReconnect.
+ */
 function buildConnection(url: string): signalR.HubConnection {
   return new signalR.HubConnectionBuilder()
     .withUrl(url, {
@@ -529,6 +540,22 @@ function rebindRegisteredHandlers() {
       notificationsConnection!.on("PlaySound", cb);
     });
   }
+
+  /*
+   * UserHub contiene los eventos vinculados al usuario y a su sesión.
+   * Se vuelven a registrar después de cada reconexión.
+   */
+  if (userConeccion) {
+    loginApprovalRequestedHandlers.forEach((cb) => {
+      userConeccion!.off("LoginApprovalRequested", cb);
+      userConeccion!.on("LoginApprovalRequested", cb);
+    });
+
+    forceLogoutHandlers.forEach((cb) => {
+      userConeccion!.off("ForceLogout", cb);
+      userConeccion!.on("ForceLogout", cb);
+    });
+  }
 }
 
 export async function createHubConnection(): Promise<HubConnections> {
@@ -595,7 +622,9 @@ export async function createHubConnection(): Promise<HubConnections> {
     if (!userConeccion) {
       userConeccion = buildConnection(buildHubUrl("/hubs/users"));
 
-      bindConnectionLifecycle(userConeccion, "USER");
+      bindConnectionLifecycle(userConeccion, "USER", () => {
+        rebindRegisteredHandlers();
+      });
     }
 
     await Promise.all([
@@ -1159,6 +1188,84 @@ export function offNewContact() {
   notificationsConnection?.off("newContactValidation");
   userConeccion?.off("newContactValidation");
   newContactValidationHandlers.clear();
+}
+
+/**
+ * Escucha una solicitud de acceso recibida por la sesión actualmente activa.
+ */
+export function onLoginApprovalRequested(
+  handler: (payload: LoginApprovalRequestedDto) => void
+) {
+  if (loginApprovalRequestedHandlers.has(handler)) {
+    return () => offLoginApprovalRequested(handler);
+  }
+
+  const cb = (payload: LoginApprovalRequestedDto) => {
+    handler(payload);
+  };
+
+  loginApprovalRequestedHandlers.set(handler, cb);
+
+  if (userConeccion) {
+    userConeccion.off("LoginApprovalRequested", cb);
+    userConeccion.on("LoginApprovalRequested", cb);
+  }
+
+  return () => offLoginApprovalRequested(handler);
+}
+
+/**
+ * Deja de escuchar solicitudes de acceso en UserHub.
+ */
+export function offLoginApprovalRequested(
+  handler: (payload: LoginApprovalRequestedDto) => void
+) {
+  const stored = loginApprovalRequestedHandlers.get(handler);
+
+  if (stored && userConeccion) {
+    userConeccion.off("LoginApprovalRequested", stored);
+  }
+
+  loginApprovalRequestedHandlers.delete(handler);
+}
+
+/**
+ * Escucha el cierre forzado dirigido exclusivamente a la sesión anterior.
+ */
+export function onForceLogout(
+  handler: (payload: ForceLogoutDto) => void
+) {
+  if (forceLogoutHandlers.has(handler)) {
+    return () => offForceLogout(handler);
+  }
+
+  const cb = (payload: ForceLogoutDto) => {
+    handler(payload);
+  };
+
+  forceLogoutHandlers.set(handler, cb);
+
+  if (userConeccion) {
+    userConeccion.off("ForceLogout", cb);
+    userConeccion.on("ForceLogout", cb);
+  }
+
+  return () => offForceLogout(handler);
+}
+
+/**
+ * Deja de escuchar el cierre forzado de sesión.
+ */
+export function offForceLogout(
+  handler: (payload: ForceLogoutDto) => void
+) {
+  const stored = forceLogoutHandlers.get(handler);
+
+  if (stored && userConeccion) {
+    userConeccion.off("ForceLogout", stored);
+  }
+
+  forceLogoutHandlers.delete(handler);
 }
 
 export function onPlayNewMessageSound(handler: (senderUserId: number) => void) {

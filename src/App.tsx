@@ -5,9 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "@mui/material/styles";
-
 import { AppRouter } from "@/Routers/AppRouter";
-import ReLoginModal from "@/Components/Common/ReLoginModal";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
 import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
 import { useOnline } from "@/Hooks/Auth/useOnline";
@@ -17,9 +15,10 @@ import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
 import type { RootState } from "@/Context";
 import { theme } from "@/Utils/materialTheme";
 import { LicenseExpiredModalWatcher } from "@/Components/Auth/LicenseExpiredModalWatcher";
-
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
+import { LoginApprovalWatcher } from "./Components/Auth/LoginApprovalWatcher";
+import ReLoginModal from "./Components/Common/ReLoginModal";
 
 const BASE_URL = import.meta.env.BASE_URL || "/";
 
@@ -181,19 +180,26 @@ function AppRealtimeEffects() {
 }
 
 function AuthenticatedAppContent() {
-  const online = useOnline();
+  const online = useOnline()
 
   return (
     <SignalRProvider>
       <AppRealtimeEffects />
 
-      {!online && <OfflineBanner onRetry={() => window.location.reload()} />}
+      {/* Escucha solicitudes de acceso enviadas a la sesión activa. */}
+      <LoginApprovalWatcher />
+
+      {!online && (
+        <OfflineBanner
+          onRetry={() => window.location.reload()}
+        />
+      )}
 
       <ReLoginModal />
       <LicenseExpiredModalWatcher />
       <AppRouter />
     </SignalRProvider>
-  );
+  )
 }
 
 export default function App() {
@@ -230,3 +236,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+

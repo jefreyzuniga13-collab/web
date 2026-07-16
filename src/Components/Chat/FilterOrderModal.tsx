@@ -1,6 +1,6 @@
 import Button from "@/Components/Common/Button";
 import CustomAutocomplete from "@/Components/Common/CustomAutocomplete";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
 import { IoClose } from "react-icons/io5";
@@ -175,9 +175,11 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
         <section className="filter-modal__section">
           <span className="filter-modal__label">Rango de fechas</span>
 
+            {/*Aplicar filtro de fecha y hora
+            debe aplicar a signal  */}
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <div className="filter-modal__dates">
-              <DatePicker
+              <DateTimePicker
                 label="Desde"
                 value={form.validFrom}
                 onChange={(date) => handleDate("validFrom", date)}
@@ -192,7 +194,7 @@ const FilterOrderModal: React.FC<FilterOrderModalProps> = ({
                 }}
               />
 
-              <DatePicker
+              <DateTimePicker
                 label="Hasta"
                 value={form.validTo}
                 onChange={(date) => handleDate("validTo", date)}

@@ -349,7 +349,7 @@ export default function CartPanelPaymentStep({
       {!multipagoHabilitado && !method && (
         <p className="cartPanel-paymentHint">
           Selecciona una forma de pago para continuar.
-        </p>
+        </p>  
       )}
 
       {!multipagoHabilitado && method && !canPay && (

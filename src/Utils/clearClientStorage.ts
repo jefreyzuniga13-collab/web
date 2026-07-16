@@ -1,60 +1,101 @@
 /* eslint-disable no-empty */
 
-import { persistor } from "@/Context";
-import { queryClient } from "@/Utils/Https/reactQuery";
+import { persistor } from "@/Context"
+import { queryClient } from "@/Utils/Https/reactQuery"
 
-export const limpiarAlmacenamientoCliente = async () => {
+/**
+ * Limpia los datos privados de la sesión actual.
+ *
+ * No elimina el service worker ni los cachés públicos de la PWA.
+ */
+export async function limpiarSesionCliente(): Promise<void> {
   try {
-    queryClient.clear();
+    queryClient.clear()
   } catch {}
 
   try {
-    persistor.pause();
-    await persistor.purge();
-    await persistor.flush();
+    persistor.pause()
+    await persistor.purge()
+    await persistor.flush()
   } catch {}
 
   try {
-    localStorage.removeItem("persist:root");
-    localStorage.clear();
-    sessionStorage.clear();
+    localStorage.removeItem("persist:root")
+    sessionStorage.clear()
   } catch {}
+}
+
+/**
+ * Limpieza completa para mantenimiento o recuperación.
+ *
+ * No debe ejecutarse en cada logout normal.
+ */
+export async function limpiarAplicacionCompleta(): Promise<void> {
+  await limpiarSesionCliente()
 
   try {
-    if (document.cookie) {
-      document.cookie.split(";").forEach((cookie) => {
-        const partes = cookie.split("=");
-        const nombre = partes[0].trim();
-
-        if (nombre) {
-          document.cookie = `${nombre}=; Max-Age=0; path=/;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm;`;
-
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=orbitrachat.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=orbitrachat.com;`;
-
-          document.cookie = `${nombre}=; Max-Age=0; path=/; domain=.orbitrachat.com;`;
-          document.cookie = `${nombre}=; Max-Age=0; path=/crm; domain=.orbitrachat.com;`;
-        }
-      });
-    }
+    localStorage.clear()
   } catch {}
 
   try {
     if ("caches" in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      const cacheNames = await caches.keys()
+
+      await Promise.all(
+        cacheNames.map((name) => caches.delete(name))
+      )
     }
   } catch {}
 
   try {
     if ("serviceWorker" in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
+      const registrations =
+        await navigator.serviceWorker.getRegistrations()
+
       await Promise.all(
-        registrations.map((registration) => registration.unregister())
-      );
+        registrations.map((registration) =>
+          registration.unregister()
+        )
+      )
     }
   } catch {}
+}
 
-  window.location.replace("/crm/login");
-};
+/**
+ * Limpiar el local storage local
+ */
+
+export async function ClearSiteMetadata(): Promise<void>{
+
+  localStorage.clear();
+  sessionStorage.clear();
+  cookieStore.delete(".orbitrachat.com");
+  limpiarAlmacenamientoCliente();
+  limpiarAplicacionCompleta();
+}
+
+/**
+ * Limpia la sesión y redirige al login.
+ */
+export async function limpiarSesionYRedirigir(
+  message?: string
+): Promise<void> {
+  if (message) {
+    try {
+      sessionStorage.setItem(
+        "logoutMessage",
+        message
+      )
+    } catch {}
+  }
+
+  await limpiarSesionCliente()
+
+  window.location.replace("/crm/login")
+}
+
+/**
+ * Alias para no romper llamadas existentes.
+ */
+export const limpiarAlmacenamientoCliente =
+  limpiarSesionYRedirigir

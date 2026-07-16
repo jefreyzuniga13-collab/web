@@ -1,14 +1,10 @@
 import Input from "@/Components/Common/Input"
 import vacio from "@/assets/vacio.png"
-
 import { MdDelete, MdClear } from "react-icons/md"
-
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { safeNumber } from "@/Utils/ECommerce/utils"
-
-import type {
-  CartDetailView
-} from "@/Interfaces/Crm/LogCartInterface"
+import type {CartDetailView} from "@/Interfaces/Crm/LogCartInterface"
+import { Tooltip } from "@mui/material"
 
 interface Props {
   /**
@@ -113,7 +109,8 @@ export default function CartPanelProductStep({
                   </p>
                 </div>
 
-                <MdDelete
+                <Tooltip title="Eliminar">
+                  <MdDelete
                   fontSize={24}
                   onClick={() =>
                     handleRemoveItem(
@@ -127,6 +124,7 @@ export default function CartPanelProductStep({
                   }
                   className="carPCPanel-content__removeIcon"
                 />
+                </Tooltip>
               </div>
             )
           }

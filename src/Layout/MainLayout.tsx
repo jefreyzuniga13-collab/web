@@ -7,7 +7,6 @@ import { AssignModal } from "@/Components/Chat/AssignModal"
 import type { RootState } from "@/Context"
 
 const MOBILE_QUERY = "(max-width: 700px)"
-
 const MOBILE_ALLOWED_ROUTES = new Set([
   "",
   "chat",

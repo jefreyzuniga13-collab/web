@@ -1,9 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-
 html {
   font-size: 62.5%;
 }
-
 *,
 *::before,
 *::after {
@@ -29,7 +27,7 @@ body {
   background: var(--bg-secondary);
   color: var(--text-default);
   line-height: 1.5;
-  font-size: 1.6rem;
+  /* font-size: 1.6rem; */
 }
 
 #root {

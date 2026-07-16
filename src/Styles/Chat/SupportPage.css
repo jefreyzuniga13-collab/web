@@ -19,10 +19,7 @@
   --details-w: clamp(320px, 28vw, 460px);
 }
 
-/* ============================= */
 /* Sidebar / lista conversaciones */
-/* ============================= */
-
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -54,6 +51,12 @@
   align-items: center;
   min-width: 100%;
   max-width: 100%;
+}
+
+.inbox-title__headerfilters{
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .inbox-title-container__filter {
@@ -90,7 +93,7 @@
 }
 
 .sort-button-icon {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
   background-color: transparent;
   color: var(--color-primary);
 }
@@ -100,10 +103,7 @@
   border-radius: var(--space-sm);
 }
 
-/* ============================= */
 /* Contenido principal */
-/* ============================= */
-
 .main-content {
   display: flex;
   flex-direction: column;
@@ -184,9 +184,7 @@
   animation: pulse-subtle 2s infinite ease-in-out;
 }
 
-/* ============================= */
 /* Botones header */
-/* ============================= */
 
 .btn-container {
   display: flex;
@@ -306,9 +304,7 @@
   background-color: transparent;
 }
 
-/* ============================= */
 /* Panel derecho */
-/* ============================= */
 
 .detail-aside {
   width: 100%;
@@ -363,10 +359,7 @@
   cursor: not-allowed;
 }
 
-/* ============================= */
 /* Modales */
-/* ============================= */
-
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -394,10 +387,7 @@
   z-index: 1000;
 }
 
-/* ============================= */
 /* Animaciones */
-/* ============================= */
-
 @keyframes pulse-subtle {
   0% {
     transform: scale(1);
@@ -415,9 +405,6 @@
   }
 }
 
-/* ============================= */
-/* Desktop responsive */
-/* ============================= */
 
 @media (min-width: 1600px) {
   .support-layout {
@@ -460,10 +447,6 @@
     --details-w: clamp(300px, 32vw, 400px);
   }
 }
-
-/* ============================= */
-/* Tablet: detalle como overlay */
-/* ============================= */
 
 @media (max-width: 1023px) {
   .support-layout {

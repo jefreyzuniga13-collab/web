@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from "react"
 import { InboxList } from "@/Components/Chat/InboxList"
 import { ChatWindow } from "@/Components/Chat/ChatWindow"
 import { ContactDetail } from "@/Components/Chat/ContactDetail"
-import { FaBuilding, FaFilter, FaPhoneAlt, FaUserAlt } from "react-icons/fa"
+import { FaBuilding, FaPhoneAlt, FaUserAlt } from "react-icons/fa"
+import { MdFilterListAlt } from "react-icons/md";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage"
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal"
 import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter"
@@ -25,7 +26,9 @@ import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamVal
 import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams"
 import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
 import { isValidSaleCompany } from "@/Utils/isValidSaleCompany"
+import { FaUsers } from "react-icons/fa";
 import "@/Styles/Chat/SupportPage.css"
+import { Tooltip } from "@mui/material"
 
 export const useAppDispatch: () => AppDispatch = useDispatch
 
@@ -39,7 +42,7 @@ const SupportPage: React.FC = () => {
 
   const dispatch = useAppDispatch()
 
-  const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
+  const {isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth
   )
 
@@ -277,9 +280,12 @@ const handleMobileBack = () => {
           <div className="inbox-title-container">
             <h3 className="inbox-title">Conversaciones</h3>
 
-            <div>
+            <div className="inbox-title__headerfilters">
               {isRoot && (
-                <button
+
+
+                  <Tooltip title="Filtrar Por Empresa">
+                  <button
                   className="sort-button"
                   onClick={() => setShowCompanyModal(true)}
                   title="Seleccionar Empresa"
@@ -287,16 +293,38 @@ const handleMobileBack = () => {
                 >
                   <FaBuilding className="sort-button-icon" />
                 </button>
+                </Tooltip>
               )}
 
+              {isAdmin && (
+                // Boton de asignar conversaciones (Cuando se inica el dia, y todas las conversaciones fuera de horarios de atención
+                // El administradorm debe de poder seleccionar los agentes a asignar, cantidad por cada agente, o asignar todas las conversacions entre
+                // Los agentes que esten conectados, o bien a todos los agntes, por defcto a los conectados, se listan todos los agentes eso si, pero deseleccionados
+                // Nueva distribvucion de conversacione sin agente asignados.
+                // )
+
+                 <Tooltip title="Asignación de chats pendientes">
+                 <button
+                  className="sort-button"
+                  onClick={()=>{}}
+                  title="Seleccionar Empresa"
+                  type="button"
+                >
+                  {/* Mostrar en rojo la cantidad de conversaciones sin asignar */}
+                  <FaUsers className="sort-button-icon" />
+                </button>
+               </Tooltip>
+              )}
+            <Tooltip title="Filtrar Conversaciones">
               <button
                 className="sort-button"
                 onClick={() => setOrderModalVisible(true)}
                 title="Filtrar conversaciones"
                 type="button"
               >
-                <FaFilter className="sort-button-icon" />
+                <MdFilterListAlt  className="sort-button-icon" />
               </button>
+              </Tooltip>
             </div>
           </div>
 

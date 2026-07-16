@@ -31,26 +31,6 @@ const AgentAverageResponseChart: React.FC<AgentAverageResponseChartProps> = ({
       }));
   }, [rows]);
 
-    //   agentId
-    // : 
-    // 9
-    // agentName
-    // : 
-    // "Giselle"
-    // averageMinutes
-    // : 
-    // 0
-    // averageSeconds
-    // : 
-    // 0
-    // conversationCount
-    // : 
-    // 14
-    // responseCount
-    // : 
-    // 210
-    // Se debe de mostrar responseCount, conversationCount
-
   const labels = chartData.map((item) => item.agentName);
   const values = chartData.map((item) => item.value);
 
