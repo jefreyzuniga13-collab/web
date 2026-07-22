@@ -1,7 +1,6 @@
 import type {
   LogCartResponseDto
 } from "@/Interfaces/Crm/LogCartInterface"
-
 import type {
   PrintDetallePagoRaw,
   PrintOrdenFactInterfaceRaw
