@@ -16,6 +16,7 @@ import { FechaManagua } from "@/Utils/FechaManagua"
 import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
 import { GENERAL_STATUS } from "@/Constants/status"
 import { tasaCambio } from "@/Constants/tasaCambio"
+import { TipoFalote } from "@/Constants/falote"
 
 type CartServiceWithCleanup = typeof CartService & {
   LimpiarFacturaTempo?: (
@@ -153,9 +154,9 @@ export const useCartPCGFlow = (
         tipodesc: "N",
         tipotrabajo: "INSERT",
         tasacambio: tasaCambio,
-        financiamiento: 0,
+        financiamiento: 1,
         descuento: 0,
-        codvendedor: "004",
+        // codvendedor: "004",
         codcliente: "00000",
         autorizado: "N",
         producto: cleanText(product.descripcion),
@@ -171,10 +172,11 @@ export const useCartPCGFlow = (
         vienedebusquedaprioridadproducto: "S",
         pol_Sumacant: "S",
         codModificador: "00000",
-        tipoComponente: "P",
+        tipoComponente: companySistema == "P" ? "" : "P",
         unico: "",
         sistema: String(companySistema),
-        ordenServicio: codReferenciaPCG,
+        codvendedor: companySistema == "P" ? codReferenciaPCG : "000",
+        ordenServicio:  companySistema == "A" ? codReferenciaPCG : "",
         tipoFac: metaChannelValue,
       }
     },
@@ -209,7 +211,6 @@ export const useCartPCGFlow = (
         tasacambio: tasaCambio,
         financiamiento: 0,
         descuento: 0,
-        codvendedor: "004",
         codcliente: "00000",
         autorizado: "N",
         producto: cleanText(option.descripcionOp),
@@ -225,10 +226,12 @@ export const useCartPCGFlow = (
         vienedebusquedaprioridadproducto: "S",
         pol_Sumacant: "S",
         codModificador,
-        tipoComponente: "O",
+       tipoComponente: companySistema == "P" ? "" : "O",
         unico,
-        sistema: String(companySistema),
-        ordenServicio: codReferenciaPCG,
+        
+        sistema: String(companySistema),//pcg o atento
+        codvendedor: companySistema == "P" ? codReferenciaPCG : "000",
+        ordenServicio:  companySistema == "A" ? codReferenciaPCG : "",
         tipoFac: metaChannel,
       }
     },
@@ -296,7 +299,7 @@ export const useCartPCGFlow = (
 
       const falote: FaloteRequestDto = {
         codSucursal: branch,
-        documento: "GetConsecDoc",
+        documento: TipoFalote.GetConsecDoc,
       }
 
       const conse = await CartService.GetConsecDocAsync(falote)
@@ -448,7 +451,7 @@ export const useCartPCGFlow = (
 
         const [createdDetail] = resProduct.detalle
 
-        if (!createdDetail || !createdDetail.unico) {
+        if ((!createdDetail || !createdDetail.unico) && companySistema == 'A') {
           throw new Error("No se pudo obtener el identificador del producto.")
         }
 

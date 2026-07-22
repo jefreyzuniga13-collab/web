@@ -114,6 +114,16 @@ const getMessagePreview = (message: MessageDto): string => {
 
   if (content) return content
 
+  const referralHeadline = message.referral?.headline?.trim()
+
+  if (referralHeadline) {
+    return `[Anuncio] ${referralHeadline}`
+  }
+
+  if (message.referral) {
+    return "[Anuncio]"
+  }
+
   const attachment = message.attachments?.[0]
 
   if (attachment?.fileName) return attachment.fileName
@@ -124,6 +134,17 @@ const getMessagePreview = (message: MessageDto): string => {
   if (message.messageType === "Document") return "[Documento]"
 
   return "[Adjunto]"
+}
+
+const getMessageSearchText = (message: MessageDto): string => {
+  return [
+    message.content,
+    message.referral?.headline,
+    message.referral?.body,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(" ")
+    .toLowerCase()
 }
 
 const getMediaMessageType = (file: File): MessageType => {
@@ -538,12 +559,14 @@ export const useChatWindow = (
               sentAt: now,
               attachments: [],
               contact: [],
+              referral: null,
             } as MessageDto)
           : null,
         messageSourceId: null,
         messageSourceName: null,
         messageSourceColor: null,
         contact: [],
+        referral: null,
         clientTempId,
         localStatus: "sending",
         isLocal: true,
@@ -649,6 +672,7 @@ export const useChatWindow = (
       (message) =>
         hasMedia(message) ||
         hasText(message) ||
+        message.referral != null ||
         message.messageType === "Interactive" ||
         message.messageType === "Contact"
     )
@@ -1131,7 +1155,10 @@ export const useChatWindow = (
   const handleDownload = useCallback(async (fileName: string) => {
     try {
       const response = await DownloadMedia(fileName)
-      const blob = new Blob([response.data])
+      const blob =
+        response.data instanceof Blob
+          ? response.data
+          : new Blob([response.data])
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
 
@@ -1471,12 +1498,9 @@ export const useChatWindow = (
     if (!term) return []
 
     return visibleMessages
-      .filter(
-        (message) =>
-          hasText(message) && (message.content ?? "").toLowerCase().includes(term)
-      )
+      .filter((message) => getMessageSearchText(message).includes(term))
       .map((message) => message.messageId)
-  }, [hasText, searchTerm, visibleMessages])
+  }, [searchTerm, visibleMessages])
 
   useEffect(() => {
     if (!matchIds.length) {

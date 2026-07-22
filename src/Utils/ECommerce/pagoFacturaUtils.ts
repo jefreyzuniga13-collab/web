@@ -195,6 +195,15 @@ export const validarPagosSeleccionados = (
     return "La tarjeta en línea no está disponible dentro de multipago. Úsala como pago único."
   }
 
+  /** Efectivo solo puede registrarse una vez dentro del multipago. */
+  const cantidadPagosEfectivo = pagos.filter(
+    (pago) => pago.metodo === "cash"
+  ).length
+
+  if (cantidadPagosEfectivo > 1) {
+    return "Solamente puede agregar un pago en efectivo."
+  }
+
   for (const pago of pagos) {
     const monto = Number(pago.monto ?? 0)
 

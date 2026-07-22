@@ -338,3 +338,30 @@ export type WithCodPrecio = {
   codprecio?: string | null
   CodPrecio?: string | null
 }
+
+
+// Descuento
+export enum TipoDescuento {
+  A = "A",
+  P = "P"
+}
+// Descuento
+export enum Vertical {
+  A = "A",
+  P = "P"
+}
+
+export interface DescuentoGlobalReq {
+    descuento: string;
+    usuario: string;
+    maquina: string;
+    sucursal: string;
+    cliente: string;
+    idDescuento: string;
+    sumaDescuento: SINO;
+    exonerado: SINO;
+    sistema: Vertical;
+    tipo: TipoDescuento;
+    idCuenta: string;
+    idOrden: string;
+}

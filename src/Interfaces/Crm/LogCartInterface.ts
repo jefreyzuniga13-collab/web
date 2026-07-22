@@ -141,7 +141,6 @@ export interface LogCartRequestDto {
 
     invoiceName?: string | null
 }
-
 export interface LogCartFormValues {
   orderId: number
   contactId: number

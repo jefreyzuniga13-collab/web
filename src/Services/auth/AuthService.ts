@@ -7,7 +7,6 @@ import type {
   AuthData,
   AuthMe,
   ForgotPasswordRequest,
-  LoginAccessRequestResponseDto,
   LoginConflictResponseDto,
   LoginRequest,
   LogOutAtResponseDto,
@@ -20,8 +19,8 @@ import type {
  * Error controlado para diferenciar una sesión activa
  * de cualquier otro fallo de autenticación.
  *
- * El formulario utilizará este error para mostrar
- * la pantalla de espera en lugar de un mensaje genérico.
+ * El formulario usará este error para mostrar el modal local:
+ * "Ya existe una sesión activa. ¿Deseas reemplazarla?"
  */
 export class ActiveSessionConflictError extends Error {
   readonly conflict: LoginConflictResponseDto
@@ -35,7 +34,10 @@ export class ActiveSessionConflictError extends Error {
     this.name = "ActiveSessionConflictError"
     this.conflict = conflict
 
-    Object.setPrototypeOf(this, ActiveSessionConflictError.prototype)
+    Object.setPrototypeOf(
+      this,
+      ActiveSessionConflictError.prototype
+    )
   }
 }
 
@@ -44,160 +46,55 @@ class AuthService {
    * Inicia sesión normalmente.
    *
    * Si la API devuelve 409 ACTIVE_SESSION_EXISTS,
-   * transforma la respuesta en ActiveSessionConflictError.
+   * se lanza ActiveSessionConflictError para que el frontend
+   * muestre el modal de reemplazo en la máquina nueva.
    */
   async loginAsync(
     request: LoginRequest
   ): Promise<ApiResponse<AuthData>> {
-    const email = request.email?.trim()
-    const password = request.password
-
-    if (!email || !password) {
-      throw new Error("Email y contraseña son requeridos.")
-    }
+    const payload = this.buildLoginPayload(request)
 
     try {
       const { data } = await api.post<ApiResponse<AuthData>>(
         "/Auth/login",
-        {
-          email,
-          password,
-        }
+        payload
       )
 
       return data
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status
-
-        const response =
-          error.response
-            ?.data as ApiResponse<LoginConflictResponseDto> | undefined
-
-        const conflict = response?.data
-
-        if (
-          statusCode === 409 &&
-          conflict?.code === "ACTIVE_SESSION_EXISTS" &&
-          conflict.requestKey
-        ) {
-          throw new ActiveSessionConflictError(
-            conflict,
-            response?.message ||
-              "Existe una sesión activa esperando autorización."
-          )
-        }
-      }
+      this.throwIfActiveSessionConflict(error)
 
       throw error
     }
   }
 
   /**
-   * Consulta el estado de una solicitud.
+   * Fuerza el reemplazo de la sesión activa anterior.
    *
-   * También sirve como respaldo cuando SignalR se desconecta.
+   * Flujo:
+   * 1. La máquina 2 confirma que desea continuar.
+   * 2. La API revoca la sesión anterior.
+   * 3. La API crea la nueva sesión.
+   * 4. La API envía ForceLogout a la máquina 1.
+   * 5. La máquina 2 queda autenticada.
    */
-  async getLoginAccessRequestAsync(
-    requestKey: string
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>> {
-    this.validateRequestKey(requestKey)
-
-    const { data } = await api.get<
-      ApiResponse<LoginAccessRequestResponseDto>
-    >(`/Auth/login-requests/${encodeURIComponent(requestKey)}`)
-
-    return data
-  }
-
-  /**
-   * Aprueba la solicitud desde la sesión actualmente conectada.
-   */
-  async approveLoginAccessRequestAsync(
-    requestKey: string
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>> {
-    this.validateRequestKey(requestKey)
-
-    const { data } = await api.post<
-      ApiResponse<LoginAccessRequestResponseDto>
-    >(
-      `/Auth/login-requests/${encodeURIComponent(
-        requestKey
-      )}/approve`
-    )
-
-    return data
-  }
-
-  /**
-   * Rechaza la solicitud desde la sesión actualmente conectada.
-   */
-  async rejectLoginAccessRequestAsync(
-    requestKey: string
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>> {
-    this.validateRequestKey(requestKey)
-
-    const { data } = await api.post<
-      ApiResponse<LoginAccessRequestResponseDto>
-    >(
-      `/Auth/login-requests/${encodeURIComponent(
-        requestKey
-      )}/reject`
-    )
-
-    return data
-  }
-
-  /**
-   * Cancela la espera desde el nuevo dispositivo.
-   */
-  async cancelLoginAccessRequestAsync(
-    requestKey: string
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>> {
-    this.validateRequestKey(requestKey)
-
-    const { data } = await api.post<
-      ApiResponse<LoginAccessRequestResponseDto>
-    >(
-      `/Auth/login-requests/${encodeURIComponent(
-        requestKey
-      )}/cancel`
-    )
-
-    return data
-  }
-
-  /**
-   * Completa el inicio de sesión después de que la solicitud
-   * fue aprobada por el dispositivo anterior.
-   *
-   * La API vuelve a validar correo y contraseña antes
-   * de emitir las cookies de la nueva sesión.
-   */
-  async completeApprovedLoginAsync(
-    requestKey: string,
+  async forceReplaceLoginAsync(
     request: LoginRequest
   ): Promise<ApiResponse<AuthData>> {
-    this.validateRequestKey(requestKey)
+    const payload = this.buildLoginPayload(request)
 
-    const email = request.email?.trim()
-    const password = request.password
+    try {
+      const { data } = await api.post<ApiResponse<AuthData>>(
+        "/Auth/force-replace-login",
+        payload
+      )
 
-    if (!email || !password) {
-      throw new Error("Email y contraseña son requeridos.")
+      return data
+    } catch (error) {
+      this.throwIfActiveSessionConflict(error)
+
+      throw error
     }
-
-    const { data } = await api.post<ApiResponse<AuthData>>(
-      `/Auth/login-requests/${encodeURIComponent(
-        requestKey
-      )}/complete`,
-      {
-        email,
-        password,
-      }
-    )
-
-    return data
   }
 
   /**
@@ -307,12 +204,46 @@ class AuthService {
     return data.data
   }
 
-  /**
-   * Evita construir endpoints con un RequestKey vacío.
-   */
-  private validateRequestKey(requestKey: string): void {
-    if (!requestKey?.trim()) {
-      throw new Error("RequestKey es requerido.")
+  private buildLoginPayload(
+    request: LoginRequest
+  ): LoginRequest {
+    const email = request.email?.trim()
+    const password = request.password
+
+    if (!email || !password) {
+      throw new Error("Email y contraseña son requeridos.")
+    }
+
+    return {
+      email,
+      password,
+    }
+  }
+
+  private throwIfActiveSessionConflict(
+    error: unknown
+  ): never | void {
+    if (!axios.isAxiosError(error)) {
+      return
+    }
+
+    const statusCode = error.response?.status
+
+    const response =
+      error.response
+        ?.data as ApiResponse<LoginConflictResponseDto> | undefined
+
+    const conflict = response?.data
+
+    if (
+      statusCode === 409 &&
+      conflict?.code === "ACTIVE_SESSION_EXISTS"
+    ) {
+      throw new ActiveSessionConflictError(
+        conflict,
+        response?.message ||
+          "El usuario ya tiene una sesión activa."
+      )
     }
   }
 }

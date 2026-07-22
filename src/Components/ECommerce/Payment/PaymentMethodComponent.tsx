@@ -1,246 +1,214 @@
-import { useMemo, useState } from "react"
-import type { Dispatch, SetStateAction } from "react"
-import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import { TbRosetteDiscountCheck } from "react-icons/tb"
-
-import {CustomConfirmModal} from "@/Components/Common/CustomConfirmModal"
-import PaymentMethodSelector from "@/Components/ECommerce/Payment/PaymentMethodSelector"
-import PaymentCurrencySelect from "@/Components/ECommerce/Payment/PaymentCurrencySelect"
-import PaymentFormRenderer from "@/Components/ECommerce/Payment/PaymentFormRenderer"
-import MultiPagoSection from "@/Components/ECommerce/Payment/MultiPagoSection"
-
-import type {
-  CheckoutStep,
-  Currencyto
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
-import type {
-  ObtenerDivisaPagosTipoRes
-} from "@/Interfaces/Ecommerce/FacturaTempo"
-
-import type {
-  CarDto,
-  InvoiceTotalsDto
-} from "@/Interfaces/Crm/CartPCGInterface"
-
-import type {
-  LogCartResponseDto
-} from "@/Interfaces/Crm/LogCartInterface"
-
-import type {
-  TarjetaModelInterface
-} from "@/Interfaces/Ecommerce/TarjetaInterface"
-
-import type {
-  CheckoutPaymentMethod,
-  ManualCardFormState
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
-import type {
-  PagoSeleccionado
-} from "@/Interfaces/Ecommerce/MultiPagoTypes"
-
-import {
-  totalPagado
-} from "@/Utils/ECommerce/pagoFacturaUtils"
-
-import { safeStr } from "@/Utils/ECommerce/formatters"
-import { safeNumber } from "@/Utils/ECommerce/utils"
-import { formatearDecimales } from "@/Utils/calcularIVA"
-
-import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css"
+import { useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { TbRosetteDiscountCheck } from "react-icons/tb";
+import { CustomConfirmModal } from "@/Components/Common/CustomConfirmModal";
+import PaymentMethodSelector from "@/Components/ECommerce/Payment/PaymentMethodSelector";
+import PaymentCurrencySelect from "@/Components/ECommerce/Payment/PaymentCurrencySelect";
+import PaymentFormRenderer from "@/Components/ECommerce/Payment/PaymentFormRenderer";
+import MultiPagoSection from "@/Components/ECommerce/Payment/MultiPagoSection";
+import type {CheckoutStep, Currencyto,} from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { CarDto, InvoiceTotalsDto,} from "@/Interfaces/Crm/CartPCGInterface";
+import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
+import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
+import type { CheckoutPaymentMethod, ManualCardFormState,} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
+import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes";
+import { validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils";
+import { safeStr } from "@/Utils/ECommerce/formatters";
+import { safeNumber } from "@/Utils/ECommerce/utils";
+import { formatearDecimales } from "@/Utils/calcularIVA";
+import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 
 interface Props {
   /**
    * Paso actual del checkout.
    * El componente solo renderiza cuando el paso es paymentMethod.
    */
-  step: CheckoutStep
+  step: CheckoutStep;
 
   /**
    * Regresa o cambia de paso.
    */
-  setStep: (step: CheckoutStep | string) => void
+  setStep: (step: CheckoutStep | string) => void;
 
   /**
    * Método de pago seleccionado.
    */
-  method: CheckoutPaymentMethod | null
+  method: CheckoutPaymentMethod | null;
 
   /**
    * Actualiza el método de pago seleccionado.
    */
-  setMethod: (method: CheckoutPaymentMethod | null) => void
+  setMethod: (method: CheckoutPaymentMethod | null) => void;
 
   /**
    * Métodos permitidos para el flujo actual.
    */
-  allowedMethods: CheckoutPaymentMethod[]
+  allowedMethods: CheckoutPaymentMethod[];
 
   /**
    * Costo de transporte final.
    */
-  transpCost: number
+  transpCost: number;
 
   /**
    * Distancia en kilómetros, si aplica.
    */
-  distanceKm?: number
+  distanceKm?: number;
 
   /**
    * Propina, si aplica.
    */
-  tip?: number
+  tip?: number;
 
   /**
    * Actualiza propina, si aplica.
    */
-  setTip?: (tip: number) => void
+  setTip?: (tip: number) => void;
 
   /**
    * Monto recibido en efectivo.
    */
-  cashAmount: number
+  cashAmount: number;
 
   /**
    * Actualiza monto recibido en efectivo.
    */
-  setCashAmount: (cashAmount: number) => void
+  setCashAmount: (cashAmount: number) => void;
 
   /**
    * Referencia de transferencia.
    */
-  transfer: string
+  transfer: string;
 
   /**
    * Actualiza referencia de transferencia.
    */
-  setTransfer: (transfer: string) => void
+  setTransfer: (transfer: string) => void;
 
   /**
    * Bloquea el botón de procesar pago.
    *
    * No debe bloquear el selector de método.
    */
-  payNowDisabled: boolean
+  payNowDisabled: boolean;
 
   /**
    * Bloqueo por proceso de pago en curso.
    */
-  payNowLock: boolean
+  payNowLock: boolean;
 
   /**
    * Acción final de pago.
    */
-  handlePayNow: () => void | Promise<void>
+  handlePayNow: () => void | Promise<void>;
 
   /**
    * Indica si se cargan bancos/tipos de pago.
    */
-  divisaLoading: boolean
+  divisaLoading: boolean;
 
   /**
    * Opciones de banco/tipo de pago.
    */
-  divisaOpts: ObtenerDivisaPagosTipoRes[]
+  divisaOpts: ObtenerDivisaPagosTipoRes[];
 
   /**
    * Banco/tipo de pago seleccionado.
    */
-  divisaSelected: ObtenerDivisaPagosTipoRes | null
+  divisaSelected: ObtenerDivisaPagosTipoRes | null;
 
   /**
    * Actualiza banco/tipo de pago.
    */
-  setDivisaSelected: (value: ObtenerDivisaPagosTipoRes | null) => void
+  setDivisaSelected: (value: ObtenerDivisaPagosTipoRes | null) => void;
 
   /**
    * Carrito actual.
    */
-  carPCG?: CarDto[]
+  carPCG?: CarDto[];
 
   /**
    * Total final a pagar.
    */
-  totalPagar: number
+  totalPagar: number;
 
   /**
    * LogCart actual.
    */
-  existingLog: LogCartResponseDto | null
+  existingLog: LogCartResponseDto | null;
 
   /**
    * Totales frescos calculados por PCG.
    */
-  invoiceTotalsDto?: InvoiceTotalsDto | null
+  invoiceTotalsDto?: InvoiceTotalsDto | null;
 
   /**
    * Id de usuario ecommerce.
    */
-  ecommerceUserId?: number
+  ecommerceUserId?: number;
 
   /**
    * Selección de tarjeta guardada.
    * Solo aplica para gatewayCard.
    */
-  onSelectCard?: (card: TarjetaModelInterface | null) => void
+  onSelectCard?: (card: TarjetaModelInterface | null) => void;
 
   /**
    * Datos de tarjeta manual.
    */
-  manualCardData: ManualCardFormState
+  manualCardData: ManualCardFormState;
 
   /**
    * Actualiza datos de tarjeta manual.
    */
-  setManualCardData: Dispatch<SetStateAction<ManualCardFormState>>
+  setManualCardData: Dispatch<SetStateAction<ManualCardFormState>>;
 
   /**
    * Paso al que se regresa.
    */
-  backStep?: CheckoutStep | string
+  backStep?: CheckoutStep | string;
 
   /**
    * Texto del botón final.
    */
-  payButtonText?: string
+  payButtonText?: string;
 
   /**
    * Indica si se muestra el selector de métodos.
    */
-  showMethodSelector?: boolean
+  showMethodSelector?: boolean;
 
   /**
    * Indica si se muestra el botón regresar.
    */
-  showBackButton?: boolean
+  showBackButton?: boolean;
 
   /**
    * Indica si el modo multipago está activo.
    */
-  multiPagoActivo?: boolean
+  multiPagoActivo?: boolean;
 
   /**
    * Pagos agregados en multipago.
    */
-  pagosMultiples?: PagoSeleccionado[]
+  pagosMultiples?: PagoSeleccionado[];
 
   /**
    * Actualiza los pagos agregados en multipago.
    */
-  setPagosMultiples?: Dispatch<SetStateAction<PagoSeleccionado[]>>
+  setPagosMultiples?: Dispatch<SetStateAction<PagoSeleccionado[]>>;
 
   /**
    * Formas de pago disponibles desde PCG.
    */
-  currency?: Currencyto[]
+  currency?: Currencyto[];
 
   /**
    * Carga bancos o tipos de pago para multipago.
    */
-  cargarDivisas?: (
-    item: Currencyto
-  ) => Promise<ObtenerDivisaPagosTipoRes[]>
+  cargarDivisas?: (item: Currencyto) => Promise<ObtenerDivisaPagosTipoRes[]>;
 }
 
 export default function PaymentMethodComponent({
@@ -277,11 +245,8 @@ export default function PaymentMethodComponent({
   pagosMultiples = [],
   setPagosMultiples,
   currency = [],
-  cargarDivisas
+  cargarDivisas,
 }: Props) {
-
-
-
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   /**
@@ -290,82 +255,77 @@ export default function PaymentMethodComponent({
    */
   const showDivisaSelect =
     !multiPagoActivo &&
-    (
-      method === "transfer" ||
+    (method === "transfer" ||
       method === "manualCard" ||
-      method === "gatewayCard"
-    )
+      method === "gatewayCard");
 
   /**
    * Valida referencia de transferencia.
    */
   const transferRefOk = useMemo(() => {
-    if (method !== "transfer") return true
+    if (method !== "transfer") return true;
 
-    const ref = safeStr(transfer)
+    const ref = safeStr(transfer);
 
-    if (!ref) return false
+    if (!ref) return false;
 
-    return /^[A-Za-z0-9-]{4,40}$/.test(ref)
-  }, [method, transfer])
+    return /^[A-Za-z0-9-]{4,40}$/.test(ref);
+  }, [method, transfer]);
 
   /**
    * Valida datos mínimos de tarjeta manual.
    */
   const manualCardOk = useMemo(() => {
-    if (method !== "manualCard") return true
+    if (method !== "manualCard") return true;
 
     return (
       !!safeStr(manualCardData.tarjetahabiente) &&
       !!safeStr(manualCardData.tarjeta) &&
       safeStr(manualCardData.ultDigito).length === 4 &&
       !!safeStr(manualCardData.fechaVence)
-    )
-  }, [method, manualCardData])
+    );
+  }, [method, manualCardData]);
 
   /**
    * Valida efectivo.
    */
   const cashOk = useMemo(() => {
-    if (method !== "cash") return true
+    if (method !== "cash") return true;
 
-    return safeNumber(cashAmount, 0) >= safeNumber(totalPagar, 0)
-  }, [method, cashAmount, totalPagar])
+    return safeNumber(cashAmount, 0) >= safeNumber(totalPagar, 0);
+  }, [method, cashAmount, totalPagar]);
 
   /**
-   * Valida que multipago cubra exactamente el total.
+   * Valida el multipago completo.
+   *
+   * Permite que el último pago en efectivo supere el pendiente
+   * para registrar el vuelto.
    */
   const multipagoOk = useMemo(() => {
-    if (!multiPagoActivo) return true
+    if (!multiPagoActivo) return true;
 
-    const total = safeNumber(totalPagar, 0)
-    const pagado = totalPagado(pagosMultiples)
-
-    return pagosMultiples.length > 0 && Math.abs(pagado - total) < 0.01
-  }, [multiPagoActivo, pagosMultiples, totalPagar])
+    return (
+      validarPagosSeleccionados(pagosMultiples, safeNumber(totalPagar, 0)) ===
+      null
+    );
+  }, [multiPagoActivo, pagosMultiples, totalPagar]);
 
   /**
    * Habilita únicamente el botón final.
    */
   const canPressPay = multiPagoActivo
-    ? (
-      !payNowDisabled &&
-      !payNowLock &&
-      multipagoOk
-    )
-    : (
-      !!method &&
+    ? !payNowDisabled && !payNowLock && multipagoOk
+    : !!method &&
       !payNowDisabled &&
       !payNowLock &&
       (showDivisaSelect ? !!divisaSelected : true) &&
       (method === "transfer" ? transferRefOk : true) &&
       (method === "manualCard" ? manualCardOk : true) &&
-      (method === "cash" ? cashOk : true)
-    )
+      (method === "cash" ? cashOk : true);
 
   const totalResumen = useMemo(() => {
-    return safeNumber(totalPagar, 0)
-  }, [totalPagar])
+    return safeNumber(totalPagar, 0);
+  }, [totalPagar]);
 
   /**
    * Se toman primero los totales frescos.
@@ -375,68 +335,58 @@ export default function PaymentMethodComponent({
     return {
       subTotal: safeNumber(
         invoiceTotalsDto?.subTotal ?? existingLog?.subTotal ?? 0,
-        0
+        0,
       ),
       descuento: safeNumber(
         invoiceTotalsDto?.descuento ?? existingLog?.DescuentoPantalla ?? 0,
-        0
+        0,
       ),
       iva: safeNumber(
         invoiceTotalsDto?.iva ?? existingLog?.ivaPantalla ?? 0,
-        0
+        0,
       ),
-      transporte: safeNumber(
-        transpCost || existingLog?.transCost || 0,
-        0
-      ),
-      total: totalResumen
-    }
-  }, [
-    invoiceTotalsDto,
-    existingLog,
-    transpCost,
-    totalResumen
-  ])
+      transporte: safeNumber(transpCost || existingLog?.transCost || 0, 0),
+      total: totalResumen,
+    };
+  }, [invoiceTotalsDto, existingLog, transpCost, totalResumen]);
 
   const divisaLabel = useMemo(() => {
-    if (method === "transfer") return "Tipo de transferencia / banco *"
-    if (method === "manualCard") return "Tipo de tarjeta / banco manual *"
-    if (method === "gatewayCard") return "Tipo de tarjeta / banco *"
+    if (method === "transfer") return "Tipo de transferencia / banco *";
+    if (method === "manualCard") return "Tipo de tarjeta / banco manual *";
+    if (method === "gatewayCard") return "Tipo de tarjeta / banco *";
 
-    return "Tipo de pago / banco *"
-  }, [method])
+    return "Tipo de pago / banco *";
+  }, [method]);
 
   if (step !== "paymentMethod") {
-    return null
+    return null;
   }
 
-// Funciones para manejar la apertura y cierre
-const handleOpenConfirmModal = () => {
-  setIsConfirmModalOpen(true);
-};
+  // Funciones para manejar la apertura y cierre
+  const handleOpenConfirmModal = () => {
+    setIsConfirmModalOpen(true);
+  };
 
-const handleCloseConfirmModal = () => {
-  setIsConfirmModalOpen(false);
-};
+  const handleCloseConfirmModal = () => {
+    setIsConfirmModalOpen(false);
+  };
 
-const handleConfirmPay = () => {
-  setIsConfirmModalOpen(false);
-  handlePayNow(); // Llama a la función que procesa el pago real
-};
+  const handleConfirmPay = () => {
+    setIsConfirmModalOpen(false);
+    handlePayNow(); // Llama a la función que procesa el pago real
+  };
 
   return (
     <div className="checkout-section">
-      <h2 className="checkout-section__title">
-        Pago y confirmar venta
-      </h2>
+      <h2 className="checkout-section__title">Pago y confirmar venta</h2>
 
       {!multiPagoActivo && showMethodSelector && (
         <PaymentMethodSelector
           value={method}
           methods={allowedMethods}
           onChange={(nextMethod) => {
-            setMethod(nextMethod)
-            setDivisaSelected(null)
+            setMethod(nextMethod);
+            setDivisaSelected(null);
           }}
           disabled={payNowLock}
         />
@@ -563,32 +513,32 @@ const handleConfirmPay = () => {
         )}
 
         {/* Botón que ahora abre el modal en lugar de pagar directamente */}
-    <button
-      type="button"
-      className={`checkout-paybtn ${!showBackButton ? "showBackButton" : ""}`}
-      onClick={handleOpenConfirmModal}
-      disabled={!canPressPay}
-    >
-      {payNowLock ? (
-        <AiOutlineLoading3Quarters className="animate-spin" />
-      ) : (
-        <>
-          {payButtonText} <TbRosetteDiscountCheck fontSize={24} />
-        </>
-      )}
-    </button>
 
-    {/* Renderizado condicional del modal */}
-    {isConfirmModalOpen && (
-      <CustomConfirmModal 
-        title="¿Finalizar pedido?" 
-        subtitle="Para crear su pedido, haga clic en confirmar. En caso de equivocación, haga clic en cancelar para cerrar el modal." 
-        onConfirm={handleConfirmPay} 
-        onCancel={handleCloseConfirmModal}  
-      />
-    )}
+        <button
+          type="button"
+          className={`checkout-paybtn ${!showBackButton ? "showBackButton" : ""}`}
+          onClick={handleOpenConfirmModal}
+          disabled={!canPressPay}
+        >
+          {payNowLock ? (
+            <AiOutlineLoading3Quarters className="animate-spin" />
+          ) : (
+            <>
+              {payButtonText} <TbRosetteDiscountCheck fontSize={24} />
+            </>
+          )}
+        </button>
 
+        {/* Renderizado condicional del modal */}
+        {isConfirmModalOpen && (
+          <CustomConfirmModal
+            title="¿Finalizar pedido?"
+            subtitle="Para crear su pedido, haga clic en confirmar. En caso de equivocación, haga clic en cancelar para cerrar el modal."
+            onConfirm={handleConfirmPay}
+            onCancel={handleCloseConfirmModal}
+          />
+        )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,6 @@
 import type {
   CarDto,
+  DescuentoGlobalReq,
   DetalleFacturaTempoData,
   DetalleFacturaTempoRequest,
   FaloteRequestDto,
@@ -118,6 +119,17 @@ class CartServ {
     );
 
     return data.data;
+  }
+
+  // Aplicar descuento global, porcentual como absoluto.
+  //Regresa la cantidad de filas afectadas
+  async AplicarDescuentoGlobal(
+    req: DescuentoGlobalReq
+  ):Promise<ApiPCGResponse<number>>{
+    const {data} = await apiPCG.put<ApiPCGResponse<number>>(
+      `CarritoCompra/AplicarDescuentoGlobal`, req
+    )
+    return data
   }
   
   async getBranchByCod(

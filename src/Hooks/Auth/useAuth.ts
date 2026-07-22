@@ -3,37 +3,38 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+
 import type { AppDispatch } from "@/Context";
-import { setCredentials, logout as clearAuth} from "@/Context/Slices/Auth/authSlice";
+import type {
+  ApiResponse,
+  AuthData,
+  ForgotPasswordRequest,
+  LoginRequest,
+  LogOutAtResponseDto,
+  RegisterRequest,
+  ResetPasswordRequest,
+  VerifyEmailRequest,
+} from "@/Interfaces/Auth/AuthInterface";
+
+import {
+  logout as clearAuth,
+  setCredentials,
+} from "@/Context/Slices/Auth/authSlice";
 import { clearCompanyState } from "@/Context/Slices/Auth/companySlice";
-import { clearLoginAccessState } from "@/Context/Slices/Auth/loginAccessSlice";
-import { QUERY_KEYS } from "@/Constants/queryKeys";
-import type { ApiResponse, AuthData,  ForgotPasswordRequest,  LoginAccessRequestResponseDto, LoginRequest, LogOutAtResponseDto,  
-  RegisterRequest, ResetPasswordRequest, VerifyEmailRequest,} from "@/Interfaces/Auth/AuthInterface";
+
 import { authService } from "@/Services/auth/AuthService";
 import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage";
 
 type UseAuthHook = {
   login(payload: LoginRequest): Promise<ApiResponse<AuthData>>;
 
-  completeApprovedLogin(
-    requestKey: string,
+  forceReplaceLogin(
     payload: LoginRequest,
   ): Promise<ApiResponse<AuthData>>;
 
-  approveLoginRequest(
-    requestKey: string,
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>>;
-
-  rejectLoginRequest(
-    requestKey: string,
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>>;
-
-  cancelLoginRequest(
-    requestKey: string,
-  ): Promise<ApiResponse<LoginAccessRequestResponseDto>>;
-
-  registerAsync(payload: RegisterRequest): Promise<ApiResponse<string>>;
+  registerAsync(
+    payload: RegisterRequest,
+  ): Promise<ApiResponse<string>>;
 
   forgotPasswordAsync(
     payload: ForgotPasswordRequest,
@@ -43,7 +44,9 @@ type UseAuthHook = {
     payload: ResetPasswordRequest,
   ): Promise<ApiResponse<string>>;
 
-  verifyEmail(payload: VerifyEmailRequest): Promise<ApiResponse<string>>;
+  verifyEmail(
+    payload: VerifyEmailRequest,
+  ): Promise<ApiResponse<string>>;
 
   logout(): Promise<LogOutAtResponseDto>;
 
@@ -51,24 +54,24 @@ type UseAuthHook = {
   error: string;
 };
 
+/**
+ * Operaciones centrales de autenticación.
+ *
+ * El conflicto ACTIVE_SESSION_EXISTS no se convierte en toast aquí.
+ * Se propaga hasta useLoginForm para mostrar el modal local
+ * de reemplazo de sesión.
+ */
 export function useAuth(): UseAuthHook {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-
   const queryClient = useQueryClient();
-  /**
-   * Inicio de sesión normal.
-   *
-   * El conflicto ACTIVE_SESSION_EXISTS se deja subir
-   * hasta useLoginForm para activar la pantalla de espera.
-   */
+
   const loginMutation = useMutation({
-    mutationFn: (payload: LoginRequest) => authService.loginAsync(payload),
+    mutationFn: (payload: LoginRequest) =>
+      authService.loginAsync(payload),
 
     onSuccess: (response) => {
       dispatch(setCredentials(response.data));
-
-      dispatch(clearLoginAccessState());
 
       toast.success(response.message);
 
@@ -78,22 +81,12 @@ export function useAuth(): UseAuthHook {
     },
   });
 
-  /**
-   * Completa el login después de una aprobación.
-   */
-  const completeApprovedLoginMutation = useMutation({
-    mutationFn: ({
-      requestKey,
-      payload,
-    }: {
-      requestKey: string;
-      payload: LoginRequest;
-    }) => authService.completeApprovedLoginAsync(requestKey, payload),
+  const forceReplaceLoginMutation = useMutation({
+    mutationFn: (payload: LoginRequest) =>
+      authService.forceReplaceLoginAsync(payload),
 
     onSuccess: (response) => {
       dispatch(setCredentials(response.data));
-
-      dispatch(clearLoginAccessState());
 
       toast.success(response.message);
 
@@ -101,21 +94,6 @@ export function useAuth(): UseAuthHook {
         replace: true,
       });
     },
-  });
-
-  const approveLoginRequestMutation = useMutation({
-    mutationFn: (requestKey: string) =>
-      authService.approveLoginAccessRequestAsync(requestKey),
-  });
-
-  const rejectLoginRequestMutation = useMutation({
-    mutationFn: (requestKey: string) =>
-      authService.rejectLoginAccessRequestAsync(requestKey),
-  });
-
-  const cancelLoginRequestMutation = useMutation({
-    mutationFn: (requestKey: string) =>
-      authService.cancelLoginAccessRequestAsync(requestKey),
   });
 
   const registerMutation = useMutation({
@@ -130,8 +108,8 @@ export function useAuth(): UseAuthHook {
       });
     },
 
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
+    onError: (currentError) => {
+      toast.error(formatErrorMessage(currentError));
     },
   });
 
@@ -147,8 +125,8 @@ export function useAuth(): UseAuthHook {
       });
     },
 
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
+    onError: (currentError) => {
+      toast.error(formatErrorMessage(currentError));
     },
   });
 
@@ -160,8 +138,8 @@ export function useAuth(): UseAuthHook {
       toast.success(response.message);
     },
 
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
+    onError: (currentError) => {
+      toast.error(formatErrorMessage(currentError));
     },
   });
 
@@ -173,8 +151,8 @@ export function useAuth(): UseAuthHook {
       toast.success(response.message);
     },
 
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
+    onError: (currentError) => {
+      toast.error(formatErrorMessage(currentError));
     },
   });
 
@@ -183,18 +161,12 @@ export function useAuth(): UseAuthHook {
 
     onSuccess: (response) => {
       dispatch(clearAuth());
-
       dispatch(clearCompanyState());
 
-      dispatch(clearLoginAccessState());
-
-      queryClient.removeQueries({
-        queryKey: QUERY_KEYS.conversations,
-      });
-
-      queryClient.removeQueries({
-        queryKey: QUERY_KEYS.agents,
-      });
+      /*
+       * Elimina datos en caché asociados a la sesión anterior.
+       */
+      queryClient.clear();
 
       toast.success(response.message);
 
@@ -203,73 +175,66 @@ export function useAuth(): UseAuthHook {
       });
     },
 
-    onError: (error) => {
-      toast.error(formatErrorMessage(error));
+    onError: (currentError) => {
+      toast.error(formatErrorMessage(currentError));
     },
   });
 
+  const loginAsync = loginMutation.mutateAsync;
+  const forceReplaceLoginAsync =
+    forceReplaceLoginMutation.mutateAsync;
+  const registerMutationAsync = registerMutation.mutateAsync;
+  const forgotPasswordMutationAsync =
+    forgotPasswordMutation.mutateAsync;
+  const resetPasswordMutationAsync =
+    resetPasswordMutation.mutateAsync;
+  const verifyEmailMutationAsync =
+    verifyEmailMutation.mutateAsync;
+  const logoutMutationAsync = logoutMutation.mutateAsync;
+
   const login = useCallback(
-    (payload: LoginRequest) => loginMutation.mutateAsync(payload),
-    [loginMutation],
+    (payload: LoginRequest) => loginAsync(payload),
+    [loginAsync],
   );
 
-  const completeApprovedLogin = useCallback(
-    (requestKey: string, payload: LoginRequest) =>
-      completeApprovedLoginMutation.mutateAsync({
-        requestKey,
-        payload,
-      }),
-    [completeApprovedLoginMutation],
-  );
-
-  const approveLoginRequest = useCallback(
-    (requestKey: string) => approveLoginRequestMutation.mutateAsync(requestKey),
-    [approveLoginRequestMutation],
-  );
-
-  const rejectLoginRequest = useCallback(
-    (requestKey: string) => rejectLoginRequestMutation.mutateAsync(requestKey),
-    [rejectLoginRequestMutation],
-  );
-
-  const cancelLoginRequest = useCallback(
-    (requestKey: string) => cancelLoginRequestMutation.mutateAsync(requestKey),
-    [cancelLoginRequestMutation],
+  const forceReplaceLogin = useCallback(
+    (payload: LoginRequest) =>
+      forceReplaceLoginAsync(payload),
+    [forceReplaceLoginAsync],
   );
 
   const registerAsync = useCallback(
-    (payload: RegisterRequest) => registerMutation.mutateAsync(payload),
-    [registerMutation],
+    (payload: RegisterRequest) =>
+      registerMutationAsync(payload),
+    [registerMutationAsync],
   );
 
   const forgotPasswordAsync = useCallback(
     (payload: ForgotPasswordRequest) =>
-      forgotPasswordMutation.mutateAsync(payload),
-    [forgotPasswordMutation],
+      forgotPasswordMutationAsync(payload),
+    [forgotPasswordMutationAsync],
   );
 
   const resetPasswordAsync = useCallback(
     (payload: ResetPasswordRequest) =>
-      resetPasswordMutation.mutateAsync(payload),
-    [resetPasswordMutation],
+      resetPasswordMutationAsync(payload),
+    [resetPasswordMutationAsync],
   );
 
   const verifyEmail = useCallback(
-    (payload: VerifyEmailRequest) => verifyEmailMutation.mutateAsync(payload),
-    [verifyEmailMutation],
+    (payload: VerifyEmailRequest) =>
+      verifyEmailMutationAsync(payload),
+    [verifyEmailMutationAsync],
   );
 
   const logout = useCallback(
-    () => logoutMutation.mutateAsync(),
-    [logoutMutation],
+    () => logoutMutationAsync(),
+    [logoutMutationAsync],
   );
 
   const loading =
     loginMutation.isPending ||
-    completeApprovedLoginMutation.isPending ||
-    approveLoginRequestMutation.isPending ||
-    rejectLoginRequestMutation.isPending ||
-    cancelLoginRequestMutation.isPending ||
+    forceReplaceLoginMutation.isPending ||
     registerMutation.isPending ||
     forgotPasswordMutation.isPending ||
     resetPasswordMutation.isPending ||
@@ -279,36 +244,29 @@ export function useAuth(): UseAuthHook {
   const error = useMemo(() => {
     const currentError =
       loginMutation.error ||
-      completeApprovedLoginMutation.error ||
-      approveLoginRequestMutation.error ||
-      rejectLoginRequestMutation.error ||
-      cancelLoginRequestMutation.error ||
+      forceReplaceLoginMutation.error ||
       registerMutation.error ||
       forgotPasswordMutation.error ||
       resetPasswordMutation.error ||
       verifyEmailMutation.error ||
       logoutMutation.error;
 
-    return currentError ? formatErrorMessage(currentError) : "";
+    return currentError
+      ? formatErrorMessage(currentError)
+      : "";
   }, [
-    loginMutation.error,
-    completeApprovedLoginMutation.error,
-    approveLoginRequestMutation.error,
-    rejectLoginRequestMutation.error,
-    cancelLoginRequestMutation.error,
-    registerMutation.error,
     forgotPasswordMutation.error,
+    forceReplaceLoginMutation.error,
+    loginMutation.error,
+    logoutMutation.error,
+    registerMutation.error,
     resetPasswordMutation.error,
     verifyEmailMutation.error,
-    logoutMutation.error,
   ]);
 
   return {
     login,
-    completeApprovedLogin,
-    approveLoginRequest,
-    rejectLoginRequest,
-    cancelLoginRequest,
+    forceReplaceLogin,
     registerAsync,
     forgotPasswordAsync,
     resetPasswordAsync,

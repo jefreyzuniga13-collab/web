@@ -1,6 +1,15 @@
-import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+
 import { authService } from "@/Services/auth/AuthService";
-import type { AuthData, AuthMe } from "@/Interfaces/Auth/AuthInterface";
+
+import type {
+  AuthData,
+  AuthMe,
+} from "@/Interfaces/Auth/AuthInterface";
 import type { RootState } from "@/Context/index";
 
 interface AuthState {
@@ -10,6 +19,7 @@ interface AuthState {
   checkingSession: boolean;
   isRoot: boolean;
   isAdmin: boolean;
+
   // Valor encriptado de empresa PCG
   empresaId: string;
   companyImageUrl: string;
@@ -17,7 +27,7 @@ interface AuthState {
   // Vertical restaurante o PCG
   companySistema: string;
 
-  // Permite mas de 1 metodo de pago para el mismo pedido
+  // Permite más de 1 método de pago para el mismo pedido
   permiteMultiPago: boolean;
 
   // Cliente permite pasarela de pago
@@ -28,6 +38,7 @@ interface AuthState {
   licenseExpireAt: string;
   showLicenseWarning: boolean;
   showLicenseModalOnLogin: boolean;
+  isAutomaticallyAssigned: boolean;
 }
 
 const initialState: AuthState = {
@@ -46,6 +57,7 @@ const initialState: AuthState = {
   licenseExpireAt: "",
   showLicenseWarning: false,
   showLicenseModalOnLogin: false,
+  isAutomaticallyAssigned: false,
 };
 
 /**
@@ -78,7 +90,7 @@ export const checkSessionThunk = createAsyncThunk<
   }
 });
 
-const limpiarSesion = (state: AuthState) => {
+const limpiarSesion = (state: AuthState): void => {
   state.isAuthenticated = false;
   state.userId = null;
   state.expiresAt = null;
@@ -88,15 +100,19 @@ const limpiarSesion = (state: AuthState) => {
   state.empresaId = "";
   state.companyImageUrl = "";
   state.companySistema = "";
-  state.permiteMultiPago= false;
-  state.permitePasarela= false;
+  state.permiteMultiPago = false;
+  state.permitePasarela = false;
   state.codReferenciaPCG = "";
   state.licenseExpireAt = "";
   state.showLicenseWarning = false;
   state.showLicenseModalOnLogin = false;
+  state.isAutomaticallyAssigned = false;
 };
 
-const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
+const aplicarSesion = (
+  state: AuthState,
+  payload: AuthData | AuthMe,
+): void => {
   state.isAuthenticated = true;
   state.userId = String(payload.userId ?? "");
   state.empresaId = String(payload.empresaId ?? "");
@@ -110,16 +126,23 @@ const aplicarSesion = (state: AuthState, payload: AuthData | AuthMe) => {
   state.checkingSession = false;
   state.licenseExpireAt = payload.licenseExpireAt ?? "";
   state.showLicenseWarning = Boolean(payload.showLicenseWarning);
+  state.isAutomaticallyAssigned = Boolean(
+    payload.isAutomaticallyAssigned,
+  );
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
+
   reducers: {
     setCredentials(state, action: PayloadAction<AuthData>) {
       aplicarSesion(state, action.payload);
+
       state.expiresAt = action.payload.expiresAt;
-      state.showLicenseModalOnLogin = Boolean(action.payload.showLicenseWarning);
+      state.showLicenseModalOnLogin = Boolean(
+        action.payload.showLicenseWarning,
+      );
     },
 
     markLicenseModalShown(state) {
@@ -188,13 +211,17 @@ export const {
   markLicenseModalShown,
 } = authSlice.actions;
 
-export const selectIsAdmin = (state: RootState) => state.auth.isAdmin;
+export const selectIsAdmin = (state: RootState) =>
+  state.auth.isAdmin;
 
-export const selectIsRoot = (state: RootState) => state.auth.isRoot;
+export const selectIsRoot = (state: RootState) =>
+  state.auth.isRoot;
 
-export const selectUserId = (state: RootState) => Number(state.auth.userId ?? 0);
+export const selectUserId = (state: RootState) =>
+  Number(state.auth.userId ?? 0);
 
-export const selectEmpresaId = (state: RootState) => state.auth.empresaId;
+export const selectEmpresaId = (state: RootState) =>
+  state.auth.empresaId;
 
 export const selectCompanyImageUrl = (state: RootState) =>
   state.auth.companyImageUrl || null;
@@ -202,9 +229,8 @@ export const selectCompanyImageUrl = (state: RootState) =>
 export const selectCompanySistema = (state: RootState) =>
   state.auth.companySistema;
 
-// Si es true, la empresa del usuario en sesión puede aplicar el pago unico, y el multipago, caso contrario solo pago unico
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const selectPermiteMultipago = (_state: RootState) => true;
+export const selectPermiteMultipago = (state: RootState) =>
+  state.auth.permiteMultiPago;
 
 export const selectPermitePasarela = (state: RootState) =>
   state.auth.permitePasarela;
@@ -223,5 +249,8 @@ export const selectShowLicenseModalOnLogin = (state: RootState) =>
 
 export const selectIsAuthenticated = (state: RootState) =>
   state.auth.isAuthenticated;
+
+export const selectIsAutomaticallyAssigned = (state: RootState) =>
+  state.auth.isAutomaticallyAssigned;
 
 export default authSlice.reducer;

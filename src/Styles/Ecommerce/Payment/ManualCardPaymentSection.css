@@ -72,3 +72,46 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Incluir moneda */
+.checkout-checkbox-container{
+  display: flex;
+  width: 100%;
+  overflow-x: hidden;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+
+.checkout-field__payment-methods{
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  width: 100%;
+  overflow-x: hidden;
+  flex-wrap: wrap;
+  margin: var(--space-sm) 0;
+  gap: var(--space-md);
+}
+
+
+.checkout-field__payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.checkout-title-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+}
+
+
+
+.checkout-checkbox-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}

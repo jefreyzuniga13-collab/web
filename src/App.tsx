@@ -1,31 +1,55 @@
-/* eslint-disable no-empty */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect } from "react";
-import { ToastContainer } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
+import { ToastContainer } from "react-toastify";
+
+import type { AppDispatch, RootState } from "@/Context";
+
 import { AppRouter } from "@/Routers/AppRouter";
-import OfflineBanner from "@/Components/Common/OfflineBanner";
-import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
-import { useOnline } from "@/Hooks/Auth/useOnline";
 import { SignalRProvider } from "@/Context/SignalRContext";
-import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
 import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
-import type { RootState } from "@/Context";
-import { theme } from "@/Utils/materialTheme";
+
+import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
 import { LicenseExpiredModalWatcher } from "@/Components/Auth/LicenseExpiredModalWatcher";
+import OfflineBanner from "@/Components/Common/OfflineBanner";
+import ReLoginModal from "@/Components/Common/ReLoginModal";
+
+import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
+import { useOnline } from "@/Hooks/Auth/useOnline";
+import { useNotificationsHub } from "@/Hooks/Hub/useNotificationsHub";
+
+import { theme } from "@/Utils/materialTheme";
+
 import "react-toastify/dist/ReactToastify.css";
 import "@/App.css";
-import { LoginApprovalWatcher } from "./Components/Auth/LoginApprovalWatcher";
-import ReLoginModal from "./Components/Common/ReLoginModal";
 
 const BASE_URL = import.meta.env.BASE_URL || "/";
 
+interface NotificationEventPayload {
+  title?: string | null;
+  body?: string | null;
+  content?: string | null;
+  url?: string | null;
+  [key: string]: unknown;
+}
+
+interface ServiceWorkerNavigateMessage {
+  type?: string;
+  url?: string;
+}
+
+/**
+ * Indica si una URL utiliza un protocolo externo permitido.
+ */
 function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
+/**
+ * Normaliza rutas internas para trabajar correctamente
+ * con el basename configurado, por ejemplo /crm/.
+ */
 function normalizeInternalUrl(url?: string | null): string {
   const rawUrl = String(url ?? "").trim();
 
@@ -37,9 +61,16 @@ function normalizeInternalUrl(url?: string | null): string {
     return rawUrl;
   }
 
-  if (rawUrl.startsWith(BASE_URL)) {
-    const withoutBase = rawUrl.slice(BASE_URL.length - 1);
-    return withoutBase.startsWith("/") ? withoutBase : `/${withoutBase}`;
+  const normalizedBase = BASE_URL.endsWith("/")
+    ? BASE_URL
+    : `${BASE_URL}/`;
+
+  if (rawUrl.startsWith(normalizedBase)) {
+    const withoutBase = rawUrl.slice(normalizedBase.length);
+
+    return withoutBase
+      ? `/${withoutBase.replace(/^\/+/, "")}`
+      : "/";
   }
 
   if (rawUrl.startsWith("/")) {
@@ -49,6 +80,9 @@ function normalizeInternalUrl(url?: string | null): string {
   return `/${rawUrl}`;
 }
 
+/**
+ * Evita abrir direcciones externas con un formato inválido.
+ */
 function sanitizeExternalUrl(url?: string | null): string {
   const rawUrl = String(url ?? "").trim();
 
@@ -67,127 +101,246 @@ function sanitizeExternalUrl(url?: string | null): string {
   return `https://${rawUrl.replace(/^\/+/, "")}`;
 }
 
+/**
+ * Construye la URL de un recurso público respetando BASE_URL.
+ */
 function getPublicAssetUrl(fileName: string): string {
-  return `${BASE_URL}${fileName}`.replace(/\/{2,}/g, "/");
+  const normalizedBase = BASE_URL.endsWith("/")
+    ? BASE_URL
+    : `${BASE_URL}/`;
+
+  return `${normalizedBase}${fileName.replace(/^\/+/, "")}`;
 }
 
-function shouldShowDesktopNotification() {
-  return document.visibilityState === "hidden" || !document.hasFocus();
+/**
+ * Solo muestra notificaciones del sistema cuando
+ * la aplicación no tiene el foco.
+ */
+function shouldShowDesktopNotification(): boolean {
+  return (
+    document.visibilityState === "hidden" ||
+    !document.hasFocus()
+  );
 }
 
+/**
+ * Maneja efectos globales relacionados con notificaciones,
+ * sonido y navegación desde el service worker.
+ */
 function AppRealtimeEffects() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const lastEvent = useNotificationsHub();
 
-  const mapNotificationPayload = useCallback((evt: any) => {
-    const title = evt?.title ?? "Nueva notificación";
+  const mapNotificationPayload = useCallback(
+    (event: NotificationEventPayload) => {
+      const title =
+        typeof event?.title === "string" && event.title.trim()
+          ? event.title.trim()
+          : "Nueva notificación";
 
-    const body =
-      evt?.body ??
-      (evt?.content && String(evt.content).trim()) ??
-      "Tienes una nueva notificación";
+      const content =
+        typeof event?.content === "string"
+          ? event.content.trim()
+          : "";
 
-    const url = normalizeInternalUrl(evt?.url ?? "/chat");
+      const body =
+        typeof event?.body === "string" && event.body.trim()
+          ? event.body.trim()
+          : content || "Tienes una nueva notificación";
 
-    return { title, body, url };
-  }, []);
+      const url = normalizeInternalUrl(
+        typeof event?.url === "string"
+          ? event.url
+          : "/chat",
+      );
+
+      return {
+        title,
+        body,
+        url,
+      };
+    },
+    [],
+  );
 
   const showDesktopNotification = useCallback(
-    async (evt: any) => {
-      if (!("Notification" in window)) return;
-      if (!("serviceWorker" in navigator)) return;
-      if (Notification.permission !== "granted") return;
+    async (event: NotificationEventPayload) => {
+      if (
+        !("Notification" in window) ||
+        !("serviceWorker" in navigator) ||
+        Notification.permission !== "granted"
+      ) {
+        return;
+      }
 
-      const { title, body, url } = mapNotificationPayload(evt);
+      const { title, body, url } =
+        mapNotificationPayload(event);
 
-      const reg = await navigator.serviceWorker.ready;
+      const registration =
+        await navigator.serviceWorker.ready;
 
-      await reg.showNotification(title, {
+      await registration.showNotification(title, {
         body,
         icon: getPublicAssetUrl("icono.jpeg"),
         badge: getPublicAssetUrl("icono.jpeg"),
         requireInteraction: true,
         tag: "latest-message",
         renotify: true,
-        data: { url },
-      } as NotificationOptions & { renotify: boolean });
+        data: {
+          url,
+        },
+      } as NotificationOptions & {
+        renotify: boolean;
+      });
     },
-    [mapNotificationPayload]
+    [mapNotificationPayload],
   );
 
   useEffect(() => {
-    const onDesktopNotify = (e: Event) => {
-      const evt = (e as CustomEvent).detail;
+    const handleDesktopNotification = (event: Event) => {
+      const detail = (
+        event as CustomEvent<NotificationEventPayload>
+      ).detail;
 
-      if (shouldShowDesktopNotification()) {
-        showDesktopNotification(evt).catch(() => {});
+      if (!shouldShowDesktopNotification()) {
+        return;
       }
+
+      void showDesktopNotification(detail).catch((error) => {
+        console.warn(
+          "[App] No se pudo mostrar la notificación.",
+          error,
+        );
+      });
     };
 
-    window.addEventListener("DesktopNotify", onDesktopNotify);
+    window.addEventListener(
+      "DesktopNotify",
+      handleDesktopNotification,
+    );
 
     return () => {
-      window.removeEventListener("DesktopNotify", onDesktopNotify);
+      window.removeEventListener(
+        "DesktopNotify",
+        handleDesktopNotification,
+      );
     };
   }, [showDesktopNotification]);
 
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
 
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type !== "NAVIGATE" || !e.data?.url) {
+    const handleServiceWorkerMessage = (
+      event: MessageEvent<ServiceWorkerNavigateMessage>,
+    ) => {
+      if (
+        event.data?.type !== "NAVIGATE" ||
+        !event.data.url
+      ) {
         return;
       }
 
-      const url = String(e.data.url);
+      const url = String(event.data.url).trim();
+
+      if (!url) {
+        return;
+      }
 
       if (isExternalUrl(url)) {
-        window.open(sanitizeExternalUrl(url), "_blank", "noopener,noreferrer");
+        window.open(
+          sanitizeExternalUrl(url),
+          "_blank",
+          "noopener,noreferrer",
+        );
+
         return;
       }
 
       navigate(normalizeInternalUrl(url));
     };
 
-    navigator.serviceWorker.addEventListener("message", handler);
+    navigator.serviceWorker.addEventListener(
+      "message",
+      handleServiceWorkerMessage,
+    );
 
     return () => {
-      navigator.serviceWorker.removeEventListener("message", handler);
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        handleServiceWorkerMessage,
+      );
     };
   }, [navigate]);
 
   useEffect(() => {
-    if (!lastEvent) return;
+    if (!lastEvent) {
+      return;
+    }
 
     dispatch(enqueuePopup(lastEvent));
 
-    if (shouldShowDesktopNotification()) {
-      showDesktopNotification(lastEvent).catch(() => {});
+    if (!shouldShowDesktopNotification()) {
+      return;
     }
-  }, [lastEvent, dispatch, showDesktopNotification]);
+
+    void showDesktopNotification(
+      lastEvent as NotificationEventPayload,
+    ).catch((error) => {
+      console.warn(
+        "[App] No se pudo mostrar la notificación recibida.",
+        error,
+      );
+    });
+  }, [
+    dispatch,
+    lastEvent,
+    showDesktopNotification,
+  ]);
 
   useEffect(() => {
-    if (!lastEvent) return;
+    if (!lastEvent) {
+      return;
+    }
 
-    try {
-      const audio = new Audio(getPublicAssetUrl("notification.mp3"));
-      audio.play().catch(() => {});
-    } catch {}
+    const audio = new Audio(
+      getPublicAssetUrl("notification.mp3"),
+    );
+
+    void audio.play().catch(() => {
+      /*
+       * Algunos navegadores bloquean reproducción automática
+       * hasta que el usuario interactúa con la página.
+       */
+    });
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
   }, [lastEvent]);
 
   return null;
 }
 
+/**
+ * Contenido disponible únicamente cuando
+ * el usuario ya está autenticado.
+ */
 function AuthenticatedAppContent() {
-  const online = useOnline()
+  const online = useOnline();
+
+  /*
+   * Único punto donde se escucha ForceLogout.
+   * No debe repetirse en RequireAuth.
+   */
+  useForceLogoutListener();
 
   return (
     <SignalRProvider>
       <AppRealtimeEffects />
-
-      {/* Escucha solicitudes de acceso enviadas a la sesión activa. */}
-      <LoginApprovalWatcher />
 
       {!online && (
         <OfflineBanner
@@ -199,20 +352,29 @@ function AuthenticatedAppContent() {
       <LicenseExpiredModalWatcher />
       <AppRouter />
     </SignalRProvider>
-  )
+  );
 }
 
 export default function App() {
   const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
+    (state: RootState) =>
+      state.auth.isAuthenticated,
   );
 
   useEffect(() => {
-    if (!("Notification" in window)) return;
-
-    if (Notification.permission === "default") {
-      Notification.requestPermission().catch(() => {});
+    if (
+      !("Notification" in window) ||
+      Notification.permission !== "default"
+    ) {
+      return;
     }
+
+    void Notification.requestPermission().catch((error) => {
+      console.warn(
+        "[App] No se pudo solicitar permiso de notificaciones.",
+        error,
+      );
+    });
   }, []);
 
   return (
@@ -231,10 +393,12 @@ export default function App() {
           className="custom-toast-body"
         />
 
-        {isAuthenticated ? <AuthenticatedAppContent /> : <AppRouter />}
+        {isAuthenticated ? (
+          <AuthenticatedAppContent />
+        ) : (
+          <AppRouter />
+        )}
       </SessionBootstrap>
     </ThemeProvider>
   );
 }
-
-

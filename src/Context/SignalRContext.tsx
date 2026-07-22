@@ -1,110 +1,72 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode,} from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useSelector } from "react-redux";
-import type { RootState } from "@/Context";
-import {createHubConnection,joinConversation,leaveConversation,onNewMessage,offNewMessage,onNewHumanRequest,offNewHumanRequest,onConversationCreated,offConversationCreated,
-  onConversationUpdated,offConversationUpdated,onMessageStatusChanged,offMessageStatusChanged,onNewNotification,offNewNotification,onLoginApprovalRequested,
-  offLoginApprovalRequested,onForceLogout,offForceLogout,stopHubConnection,} from "@/Services/signalr";
-import type {MessageDto,AttachmentDto,ConversationDto,NotificationDto,} from "@/Interfaces/Chat/ChatInterfaces";
 
-import type {
-  ForceLogoutDto,
-  LoginApprovalRequestedDto,
-} from "@/Interfaces/Auth/AuthInterface";
+import type { RootState } from "@/Context";
+
+import {
+  createHubConnection,
+  joinConversation,
+  leaveConversation,
+  offConversationCreated,
+  offConversationUpdated,
+  offForceLogout,
+  offMessageStatusChanged,
+  offNewHumanRequest,
+  offNewMessage,
+  offNewNotification,
+  onConversationCreated,
+  onConversationUpdated,
+  onForceLogout,
+  onMessageStatusChanged,
+  onNewHumanRequest,
+  onNewMessage,
+  onNewNotification,
+  stopHubConnection,
+} from "@/Services/signalr";
 
 interface SignalRContextValue {
   ready: boolean;
 
-  joinConversation(id: number): void;
-  leaveConversation(id: number): void;
+  joinConversation: typeof joinConversation;
+  leaveConversation: typeof leaveConversation;
 
-  onNewMessage(
-    handler: (payload: {
-      message: MessageDto;
-      attachments: AttachmentDto[];
-    }) => void,
-  ): void;
+  onNewMessage: typeof onNewMessage;
+  offNewMessage: typeof offNewMessage;
 
-  offNewMessage(
-    handler: (payload: {
-      message: MessageDto;
-      attachments: AttachmentDto[];
-    }) => void,
-  ): void;
+  onNewHumanRequest: typeof onNewHumanRequest;
+  offNewHumanRequest: typeof offNewHumanRequest;
 
-  onNewHumanRequest(
-    handler: (payload: { conversationId: number; fromPhone: string }) => void,
-  ): void;
+  onConversationCreated: typeof onConversationCreated;
+  offConversationCreated: typeof offConversationCreated;
 
-  offNewHumanRequest(
-    handler: (payload: { conversationId: number; fromPhone: string }) => void,
-  ): void;
+  onConversationUpdated: typeof onConversationUpdated;
+  offConversationUpdated: typeof offConversationUpdated;
 
-  onConversationCreated(handler: (conversation: ConversationDto) => void): void;
+  onMessageStatusChanged: typeof onMessageStatusChanged;
+  offMessageStatusChanged: typeof offMessageStatusChanged;
 
-  offConversationCreated(
-    handler: (conversation: ConversationDto) => void,
-  ): void;
+  onNewNotification: typeof onNewNotification;
+  offNewNotification: typeof offNewNotification;
 
-  onConversationUpdated(handler: (conversation: ConversationDto) => void): void;
-
-  offConversationUpdated(
-    handler: (conversation: ConversationDto) => void,
-  ): void;
-
-  onMessageStatusChanged(handler: (message: MessageDto) => void): void;
-
-  offMessageStatusChanged(handler: (message: MessageDto) => void): void;
-
-  onNewNotification(handler: (notification: NotificationDto) => void): void;
-
-  offNewNotification(handler: (notification: NotificationDto) => void): void;
-
-  onLoginApprovalRequested(
-    handler: (payload: LoginApprovalRequestedDto) => void,
-  ): void;
-
-  offLoginApprovalRequested(
-    handler: (payload: LoginApprovalRequestedDto) => void,
-  ): void;
-
-  onForceLogout(handler: (payload: ForceLogoutDto) => void): void;
-
-  offForceLogout(handler: (payload: ForceLogoutDto) => void): void;
+  onForceLogout: typeof onForceLogout;
+  offForceLogout: typeof offForceLogout;
 }
 
-const SignalRContext = createContext<SignalRContextValue>({
-  ready: false,
-
-  joinConversation: () => {},
-  leaveConversation: () => {},
-
-  onNewMessage: () => {},
-  offNewMessage: () => {},
-
-  onNewHumanRequest: () => {},
-  offNewHumanRequest: () => {},
-
-  onConversationCreated: () => {},
-  offConversationCreated: () => {},
-
-  onConversationUpdated: () => {},
-  offConversationUpdated: () => {},
-
-  onMessageStatusChanged: () => {},
-  offMessageStatusChanged: () => {},
-
-  onNewNotification: () => {},
-  offNewNotification: () => {},
-
-  onLoginApprovalRequested: () => {},
-  offLoginApprovalRequested: () => {},
-
-  onForceLogout: () => {},
-  offForceLogout: () => {},
-});
+const SignalRContext =
+  createContext<SignalRContextValue | null>(null);
 
 /**
- * Proveedor global de SignalR para usuarios autenticados.
+ * Proveedor global de SignalR.
+ *
+ * Reinicia las conexiones cuando cambia la autenticación
+ * o la empresa activa del usuario Root.
  */
 export const SignalRProvider: React.FC<{
   children: ReactNode;
@@ -112,111 +74,122 @@ export const SignalRProvider: React.FC<{
   const [ready, setReady] = useState(false);
 
   const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated,
+    (state: RootState) =>
+      state.auth.isAuthenticated,
   );
 
-  const isRoot = useSelector((state: RootState) => state.auth.isRoot);
+  const isRoot = useSelector(
+    (state: RootState) =>
+      state.auth.isRoot,
+  );
 
   const activeCompanyId = useSelector(
-    (state: RootState) => state.company.activeCompanyId,
+    (state: RootState) =>
+      state.company.activeCompanyId,
   );
 
   useEffect(() => {
     let mounted = true;
 
-    const startSignalR = async () => {
+    const synchronizeSignalR = async () => {
+      setReady(false);
+
       try {
-        setReady(false);
+        /*
+         * Detiene conexiones anteriores para evitar conservar
+         * grupos SignalR de otra empresa.
+         */
+        await stopHubConnection();
 
-        if (!isAuthenticated) {
-          await stopHubConnection();
+        if (!mounted) return;
 
-          if (mounted) {
-            setReady(true);
-          }
+        // Sin autenticación no se crean conexiones.
+        if (!isAuthenticated) return;
 
-          return;
-        }
-
-        if (isRoot && (!activeCompanyId || Number(activeCompanyId) <= 0)) {
-          await stopHubConnection();
-
-          if (mounted) {
-            setReady(true);
-          }
-
+        /*
+         * El usuario Root debe seleccionar una empresa
+         * antes de conectarse a los hubs del tenant.
+         */
+        if (
+          isRoot &&
+          (!activeCompanyId ||
+            Number(activeCompanyId) <= 0)
+        ) {
           return;
         }
 
         await createHubConnection();
-
-        if (mounted) {
-          setReady(true);
-        }
       } catch (error) {
-        console.error("[SignalRProvider] Error al iniciar SignalR.", error);
-
+        console.error(
+          "[SignalRProvider] Error al iniciar SignalR.",
+          error,
+        );
+      } finally {
         if (mounted) {
-          /*
-           * No se bloquea toda la aplicación por una caída
-           * temporal de SignalR.
-           */
           setReady(true);
         }
       }
     };
 
-    void startSignalR();
+    void synchronizeSignalR();
 
     return () => {
       mounted = false;
+      void stopHubConnection();
     };
-  }, [isAuthenticated, isRoot, activeCompanyId]);
+  }, [
+    activeCompanyId,
+    isAuthenticated,
+    isRoot,
+  ]);
+
+  const contextValue =
+    useMemo<SignalRContextValue>(
+      () => ({
+        ready,
+
+        // Chat
+        joinConversation,
+        leaveConversation,
+        onNewMessage,
+        offNewMessage,
+        onNewHumanRequest,
+        offNewHumanRequest,
+        onConversationCreated,
+        offConversationCreated,
+        onConversationUpdated,
+        offConversationUpdated,
+        onMessageStatusChanged,
+        offMessageStatusChanged,
+        onNewNotification,
+        offNewNotification,
+
+        // Sesión única
+        onForceLogout,
+        offForceLogout,
+      }),
+      [ready],
+    );
 
   if (!ready) {
     return null;
   }
 
   return (
-    <SignalRContext.Provider
-      value={{
-        ready,
-
-        // Chat
-        joinConversation,
-        leaveConversation,
-
-        onNewMessage,
-        offNewMessage,
-
-        onNewHumanRequest,
-        offNewHumanRequest,
-
-        onConversationCreated,
-        offConversationCreated,
-
-        onConversationUpdated,
-        offConversationUpdated,
-
-        onMessageStatusChanged,
-        offMessageStatusChanged,
-
-        onNewNotification,
-        offNewNotification,
-
-        // Auth
-        onLoginApprovalRequested,
-        offLoginApprovalRequested,
-
-        onForceLogout,
-        offForceLogout,
-      }}
-    >
+    <SignalRContext.Provider value={contextValue}>
       {children}
     </SignalRContext.Provider>
   );
 };
 
 export function useSignalR(): SignalRContextValue {
-  return useContext(SignalRContext);
+  const context = useContext(SignalRContext);
+
+  if (!context) {
+    throw new Error(
+      "useSignalR debe utilizarse dentro de SignalRProvider.",
+    );
+  }
+
+  return context;
 }

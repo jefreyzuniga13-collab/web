@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import type {
   // ApiResponse,
   CarDto,
+  DescuentoGlobalReq,
   DetalleFacturaTempoData,
   DetalleFacturaTempoRequest,
   ListDetalleCarrito,
@@ -153,7 +154,6 @@ export const updateCarAsync = createAsyncThunk<
 >(
   "cart/updateCar",
   async ({ idUsuario, noPedido, codProducto, unico }, { rejectWithValue }) => {
-    // try {
     const res = await CartService.removeProductFromCar(
       idUsuario,
       noPedido,
@@ -167,11 +167,6 @@ export const updateCarAsync = createAsyncThunk<
     }
 
     return res.data;
-    // } catch (error: unknown) {
-    //   const message = errMsg(error, "Error al actualizar el carrito");
-    //   toast.error(message);
-    //   return rejectWithValue(message);
-    // }
   },
 );
 
@@ -343,3 +338,23 @@ export const selectCartItemsCount = (state: RootState): number => {
     return acc + count;
   }, 0);
 };
+
+// Aplicar descuento global (Absoluto o porcentual)
+export const AplicarDescuentoGlobal = createAsyncThunk<
+  number, // Tipo de lo que RETORNA el thunk en fulfill (res.data)
+  DescuentoGlobalReq, //  Simplificado: pasamos directamente el objeto payload
+  { rejectValue: string } // Tipo del rejectWithValue
+>(
+  "cart/aplicarDescuentoGlobal",
+  async (req, { rejectWithValue }) => {
+      const res = await CartService.AplicarDescuentoGlobal(req);
+
+      if (!res.success) {
+        toast.error(res.message || "No se pudo aplicar el descuento");
+        return rejectWithValue(res.message);
+      }
+
+      toast.success(res.message || "Descuento aplicado correctamente");
+      return res.data; // Retornamos únicamente el 'data' (number), no toda la envoltura 'res'
+  }
+);

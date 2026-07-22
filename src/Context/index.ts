@@ -1,5 +1,4 @@
 import authReducer from "@/Context/Slices/Auth/authSlice"
-import loginAccessReducer from "@/Context/Slices/Auth/loginAccessSlice"
 
 import uiReducer from "@/Context/Slices/Chat/uiSlice"
 import userReducer from "@/Context/Slices/Auth/userSlice"
@@ -55,12 +54,6 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
-
-  /**
-   * Estado temporal y exclusivo de la pestaña
-   * que intentó iniciar sesión.
-   */
-  loginAccess: loginAccessReducer,
 
   ui: uiReducer,
   users: userReducer,

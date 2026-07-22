@@ -79,50 +79,79 @@ export interface SendOrderMessage {
 /**
  * Respuesta utilizada para generar el PDF de la orden facturada.
  */
-export interface PrintOrdenFactInterfaceRaw {
-  DatosGenerales: {
-    NoFactura: string
-    FechaFactura: string
-    Nombrede: string
-  }
-
-  DatosDireccion: {
-    Nombre: string
-    Descripcion: string
-    Referencia: string
-  }
-
-  Carrito: Array<{
-    Codigo: string
-    Descripcion: string
-    Imagen: string
-    UnidadMedida: string
-    Precio: number
-    Cantidad: number
-    TotalMenu: number
-    Opciones: Array<{
-      Codigo: string
-      Descripcion: string
-      Cantidad: number
-      UnidadMedida: string
-      Precio: number
-      TotalMenu: number
-    }> | null
-  }>
-
-  DetallePago: {
-    Valor_Pagar: number
-    SubTotal: number
-    Descuento: number
-    Iva: number
-    TotalPago: number
-    MetodoPago: string
-    Monto: number
-    Propina: number
-    Transporte: number
-  }
+/**
+ * Información general de la factura impresa.
+ */
+export interface PrintDatosGeneralesRaw {
+  NoFactura: string
+  FechaFactura: string
+  Nombrede: string
 }
 
+/**
+ * Dirección asociada a la factura.
+ */
+export interface PrintDatosDireccionRaw {
+  Nombre: string
+  Descripcion: string
+  Referencia: string
+  Latitud: number | null
+  Longitud: number | null
+}
+
+/**
+ * Opción o modificador asociado a un producto.
+ */
+export interface PrintOpcionOrdenRaw {
+  Codigo: string
+  Descripcion: string
+  Cantidad: number
+  UnidadMedida: string
+  Precio: number
+  TotalMenu: number
+}
+
+/**
+ * Producto incluido en la factura.
+ */
+export interface PrintCarritoItemRaw {
+  Codigo: string
+  Descripcion: string
+  Imagen: string
+  UnidadMedida: string
+  Cantidad: number
+  Precio: number
+  TotalMenu: number
+  Opciones: PrintOpcionOrdenRaw[] | null
+}
+
+/**
+ * Forma de pago utilizada en la factura.
+ *
+ * Puede haber uno o varios registros cuando se utiliza multipago.
+ */
+export interface PrintDetallePagoRaw {
+  Valor_Pagar: number
+  SubTotal: number
+  Descuento: number
+  Iva: number
+  TotalPago: number
+  MetodoPago: string
+  Monto: number
+  Propina: number
+  Transporte: number
+  Vuelto: number
+}
+
+/**
+ * Respuesta utilizada para generar el PDF de la orden facturada.
+ */
+export interface PrintOrdenFactInterfaceRaw {
+  DatosGenerales: PrintDatosGeneralesRaw
+  DatosDireccion: PrintDatosDireccionRaw
+  Carrito: PrintCarritoItemRaw[]
+  DetallePago: PrintDetallePagoRaw[]
+}
 /**
  * Pasos disponibles dentro del checkout.
  */

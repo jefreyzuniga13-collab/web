@@ -19,9 +19,10 @@ export interface AuthData {
   isRoot: boolean;
   isAdmin: boolean;
 
-  // Licencia de usuario.
+  // Licencia de usuario
   licenseExpireAt: string;
   showLicenseWarning: boolean;
+  isAutomaticallyAssigned: boolean;
 }
 
 export interface LoginRequest {
@@ -122,81 +123,20 @@ export interface AuthMe {
   isAdmin: boolean;
   licenseExpireAt: string;
   showLicenseWarning: boolean;
+  isAutomaticallyAssigned: boolean;
 }
-
-//  Solicitudes de acceso
-export const LOGIN_ACCESS_REQUEST_STATUS = {
-  pending: "Pending",
-  approved: "Approved",
-  rejected: "Rejected",
-  expired: "Expired",
-  completed: "Completed",
-  cancelled: "Cancelled",
-} as const;
-
-export type LoginAccessRequestStatus =
-  (typeof LOGIN_ACCESS_REQUEST_STATUS)[keyof typeof LOGIN_ACCESS_REQUEST_STATUS];
 
 /**
  * Respuesta 409 cuando el usuario ya tiene una sesión activa.
+ *
+ * En el nuevo flujo ya no existe requestKey ni aprobación.
+ * La máquina nueva decide si reemplaza la sesión anterior.
  */
 export interface LoginConflictResponseDto {
   code: "ACTIVE_SESSION_EXISTS";
-  requestKey: string;
-  status: string;
-  requestedAt: string;
-  expiresAt: string;
   currentDevice?: string | null;
   currentLocation?: string | null;
   currentPublicIp?: string | null;
-}
-
-/**
- * Estado completo de una solicitud de acceso.
- */
-export interface LoginAccessRequestResponseDto {
-  id: number;
-  requestKey: string;
-  userId: number;
-  currentSessionId: number;
-  status: LoginAccessRequestStatus;
-  publicIp?: string | null;
-  location?: string | null;
-  device?: string | null;
-  userAgent?: string | null;
-  origin?: string | null;
-  referer?: string | null;
-  requestedAt: string;
-  expiresAt: string;
-  resolvedAt?: string | null;
-  completedAt?: string | null;
-}
-
-// Eventos SignalR
-
-
-/**
- * Solicitud recibida por el dispositivo actualmente conectado.
- */
-export interface LoginApprovalRequestedDto {
-  requestKey: string;
-  status: string;
-  publicIp?: string | null;
-  location?: string | null;
-  device?: string | null;
-  userAgent?: string | null;
-  requestedAt: string;
-  expiresAt: string;
-}
-
-/**
- * Resolución recibida por el dispositivo que está esperando.
- */
-export interface LoginRequestResolvedDto {
-  requestKey: string;
-  status: string;
-  message: string;
-  resolvedAt?: string | null;
 }
 
 /**

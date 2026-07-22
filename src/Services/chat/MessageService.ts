@@ -7,7 +7,7 @@ import type {
 } from "@/Interfaces/Chat/ChatInterfaces"
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface"
 import type { PagedResponse } from "@/Interfaces/Common/GlobalInterface"
-import { toZonedTime, format } from "date-fns-tz"
+import { formatInTimeZone } from "date-fns-tz"
 
 export type GetMessagesParams = {
   conversationId: number
@@ -26,37 +26,48 @@ type MessageQueryParams = {
   to?: string
 }
 
-type MessageApiPayload = PagedResponse<MessageDto> | MessageDto[]
-
 const TIME_ZONE = "America/Managua"
 
 const formatDateToNicaragua = (date: Date | null): string | null => {
-  if (date === null) return null
+  if (!date) return null
 
-  const zonedDate = toZonedTime(date, TIME_ZONE)
-
-  return format(zonedDate, "yyyy-MM-dd", { timeZone: TIME_ZONE })
+  return formatInTimeZone(date, TIME_ZONE, "yyyy-MM-dd")
 }
 
-const isPagedMessages = (
-  payload: MessageApiPayload
-): payload is PagedResponse<MessageDto> => {
-  return !Array.isArray(payload) && Array.isArray(payload.items)
+const normalizeNestedMessage = (
+  message: MessageDto
+): MessageDto => {
+  return {
+    ...message,
+    attachments: Array.isArray(message.attachments)
+      ? message.attachments
+      : [],
+    contact: Array.isArray(message.contact)
+      ? message.contact
+      : [],
+    referral: message.referral ?? null,
+  }
 }
 
-const buildFallbackPagedMessages = (
-  items: MessageDto[],
-  pageNumber: number,
-  pageSize: number
+export const normalizeMessage = (
+  message: MessageDto
+): MessageDto => {
+  return {
+    ...normalizeNestedMessage(message),
+    repliedMessage: message.repliedMessage
+      ? normalizeNestedMessage(message.repliedMessage)
+      : null,
+  }
+}
+
+const normalizePagedMessages = (
+  response: PagedResponse<MessageDto>
 ): PagedResponse<MessageDto> => {
   return {
-    items,
-    meta: {
-      currentPage: pageNumber,
-      totalPages: 1,
-      totalCount: items.length,
-      pageSize,
-    },
+    ...response,
+    items: Array.isArray(response.items)
+      ? response.items.map(normalizeMessage)
+      : [],
   }
 }
 
@@ -68,40 +79,31 @@ export async function getMessages({
   pageNumber = 1,
   pageSize = 30,
 }: GetMessagesParams): Promise<PagedResponse<MessageDto>> {
+  if (conversationId <= 0) {
+    throw new Error("El conversationId debe ser mayor que cero.")
+  }
+
   const from = formatDateToNicaragua(validFrom)
   const to = formatDateToNicaragua(validTo)
 
   const params: MessageQueryParams = {
     agentId: agentId > 0 ? agentId : 0,
-    pageNumber,
-    pageSize,
+    pageNumber: pageNumber > 0 ? pageNumber : 1,
+    pageSize: Math.min(Math.max(pageSize, 1), 100),
   }
 
-  // Aplica fecha inicial.
-  if (from !== null) {
-    params.from = from
-  }
+  if (from) params.from = from
+  if (to) params.to = to
 
-  // Aplica fecha final.
-  if (to !== null) {
-    params.to = to
-  }
+  const { data } = await api.get<
+    ApiResponse<PagedResponse<MessageDto>>
+  >(`/conversations/${conversationId}/messages`, { params })
 
-  const { data } = await api.get<ApiResponse<MessageApiPayload>>(
-    `/conversations/${conversationId}/messages`,
-    { params }
-  )
-
-  // Soporta API actual sin paginación.
-  if (!isPagedMessages(data.data)) {
-    return buildFallbackPagedMessages(data.data, pageNumber, pageSize)
-  }
-
-  return data.data
+  return normalizePagedMessages(data.data)
 }
 
 export function sendText(message: SentMessage) {
-  return api.post<{ data: MessageDto }>(
+  return api.post<ApiResponse<MessageDto>>(
     `/Webhook/${message.conversationId}/send`,
     {
       conversationId: message.conversationId,
@@ -114,19 +116,31 @@ export function sendText(message: SentMessage) {
   )
 }
 
-export function sendInterctiveMessage(req: SendInteractiveMessajeRequestDto) {
-  return api.post<{ data: MessageDto }>(`/Webhook/sendInterctiveMessage`, req)
+export function sendInteractiveMessage(
+  request: SendInteractiveMessajeRequestDto
+) {
+  return api.post<ApiResponse<MessageDto>>(
+    "/Webhook/sendInterctiveMessage",
+    request
+  )
 }
 
-export function SendMediaECommerceFromUrlAsync(
+// Compatibilidad con el nombre anterior.
+export const sendInterctiveMessage = sendInteractiveMessage
+
+export function sendMediaECommerceFromUrl(
   conversationId: number,
   payload: SendMediaFromUrlDto
 ) {
-  return api.post(
+  return api.post<ApiResponse<MessageDto>>(
     `/Webhook/${conversationId}/sendEcommerce/media-from-url`,
     payload
   )
 }
+
+// Compatibilidad con el nombre anterior.
+export const SendMediaECommerceFromUrlAsync =
+  sendMediaECommerceFromUrl
 
 export function sendMediaEcommerce(
   conversationId: number,
@@ -135,26 +149,21 @@ export function sendMediaEcommerce(
   externalId?: string | null,
   repliedParentMessageId?: number | null
 ) {
-  const form = new FormData()
+  const form = buildMediaForm(
+    file,
+    caption,
+    externalId,
+    repliedParentMessageId
+  )
 
-  form.append("file", file)
-
-  if (caption) {
-    form.append("caption", caption)
-  }
-
-  if (externalId) {
-    form.append("externalId", externalId)
-  }
-
-  if (repliedParentMessageId !== null && repliedParentMessageId !== undefined) {
-    form.append("repliedParentMessageId", String(repliedParentMessageId))
-  }
-
-  return api.post(`/Webhook/${conversationId}/sendEcommerce/media`, form, {
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  })
+  return api.post<ApiResponse<MessageDto>>(
+    `/Webhook/${conversationId}/sendEcommerce/media`,
+    form,
+    {
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    }
+  )
 }
 
 export function sendMedia(
@@ -164,23 +173,14 @@ export function sendMedia(
   externalId?: string | null,
   repliedParentMessageId?: number | null
 ) {
-  const form = new FormData()
+  const form = buildMediaForm(
+    file,
+    caption,
+    externalId,
+    repliedParentMessageId
+  )
 
-  form.append("file", file)
-
-  if (caption) {
-    form.append("caption", caption)
-  }
-
-  if (externalId) {
-    form.append("externalId", externalId)
-  }
-
-  if (repliedParentMessageId !== null && repliedParentMessageId !== undefined) {
-    form.append("repliedParentMessageId", String(repliedParentMessageId))
-  }
-
-  return api.post<{ data: MessageDto }>(
+  return api.post<ApiResponse<MessageDto>>(
     `/Webhook/${conversationId}/send/media`,
     form,
     {
@@ -190,48 +190,101 @@ export function sendMedia(
   )
 }
 
+const buildMediaForm = (
+  file: File,
+  caption?: string,
+  externalId?: string | null,
+  repliedParentMessageId?: number | null
+): FormData => {
+  const form = new FormData()
+
+  form.append("file", file)
+
+  if (caption?.trim()) {
+    form.append("caption", caption)
+  }
+
+  if (externalId?.trim()) {
+    form.append("externalId", externalId)
+  }
+
+  if (
+    repliedParentMessageId !== null &&
+    repliedParentMessageId !== undefined
+  ) {
+    form.append(
+      "repliedParentMessageId",
+      String(repliedParentMessageId)
+    )
+  }
+
+  return form
+}
+
 export function blockWhatsapp(waId: string) {
-  return api.post(`/Webhook/blocks/${encodeURIComponent(waId)}`)
+  return api.post(
+    `/Webhook/blocks/${encodeURIComponent(waId)}`
+  )
 }
 
 export function unblockWhatsapp(waId: string) {
-  return api.delete(`/Webhook/blocks/${encodeURIComponent(waId)}`)
+  return api.delete(
+    `/Webhook/blocks/${encodeURIComponent(waId)}`
+  )
 }
 
 export function blockMessenger(psid: string) {
-  return api.post(`/Webhook/messenger/blocks/${encodeURIComponent(psid)}`)
+  return api.post(
+    `/Webhook/messenger/blocks/${encodeURIComponent(psid)}`
+  )
 }
 
 export function unblockMessenger(psid: string) {
-  return api.delete(`/Webhook/messenger/blocks/${encodeURIComponent(psid)}`)
+  return api.delete(
+    `/Webhook/messenger/blocks/${encodeURIComponent(psid)}`
+  )
 }
 
 export function moveMessengerToSpam(psid: string) {
-  return api.post(`/Webhook/messenger/spam/${encodeURIComponent(psid)}`)
+  return api.post(
+    `/Webhook/messenger/spam/${encodeURIComponent(psid)}`
+  )
 }
 
 export function blockInstagram(instagramScopedId: string) {
   return api.post(
-    `/Webhook/instagram/blocks/${encodeURIComponent(instagramScopedId)}`
+    `/Webhook/instagram/blocks/${encodeURIComponent(
+      instagramScopedId
+    )}`
   )
 }
 
 export function unblockInstagram(instagramScopedId: string) {
   return api.delete(
-    `/Webhook/instagram/blocks/${encodeURIComponent(instagramScopedId)}`
+    `/Webhook/instagram/blocks/${encodeURIComponent(
+      instagramScopedId
+    )}`
   )
 }
 
-export function moveInstagramToSpam(instagramScopedId: string) {
+export function moveInstagramToSpam(
+  instagramScopedId: string
+) {
   return api.post(
-    `/Webhook/instagram/spam/${encodeURIComponent(instagramScopedId)}`
+    `/Webhook/instagram/spam/${encodeURIComponent(
+      instagramScopedId
+    )}`
   )
 }
 
-export async function DownloadMedia(fileName: string) {
-  const response = await api.get(`Media/${fileName}`, {
-    responseType: "blob",
-  })
-
-  return response
+export async function downloadMedia(fileName: string) {
+  return api.get<Blob>(
+    `Media/${encodeURIComponent(fileName)}`,
+    {
+      responseType: "blob",
+    }
+  )
 }
+
+// Compatibilidad con el nombre anterior.
+export const DownloadMedia = downloadMedia

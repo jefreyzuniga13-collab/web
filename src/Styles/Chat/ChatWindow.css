@@ -2330,3 +2330,62 @@
     min-width: 11rem;
   }
 }
+
+
+/* Integración de anuncios dentro del mensaje. */
+.chat-window__message-content > .meta-ad-referral {
+  margin-bottom: var(--space-sm);
+}
+
+.chat-window__message-content > .meta-ad-referral:last-child {
+  margin-bottom: 0;
+}
+
+/* Mantiene el texto legible dentro de mensajes salientes. */
+.chat-window__message--outgoing .meta-ad-referral,
+.chat-window__message--autoSend .meta-ad-referral {
+  color: var(--color-gray-800);
+}
+
+@media (max-width: 768px) {
+  .chat-window__message-content > .meta-ad-referral {
+    width: min(100%, 24rem);
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-window__message-content > .meta-ad-referral {
+    width: 100%;
+  }
+}
+
+
+.chat-window__message-group:has(.meta-ad-referral) {
+  width: min(90%, 36rem);
+  max-width: 36rem;
+}
+
+.chat-window__message:has(.meta-ad-referral) {
+  width: 100%;
+}
+
+.chat-window__message-content:has(.meta-ad-referral) {
+  padding: 0.8rem;
+}
+
+.chat-window__message-content:has(.meta-ad-referral)
+  .chat-window__message-text {
+  margin-top: var(--space-sm);
+}
+
+@media (max-width: 48rem) {
+  .chat-window__message-group:has(.meta-ad-referral) {
+    width: min(94%, 32rem);
+    max-width: 32rem;
+  }
+
+  .meta-ad-referral__media {
+    height: 13rem;
+  }
+}

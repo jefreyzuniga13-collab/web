@@ -38,6 +38,7 @@ import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
 import { tasaCambio } from "@/Constants/tasaCambio"
+import { TipoFalote } from "@/Constants/falote"
 
 const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
@@ -775,7 +776,7 @@ const CheckoutPage: React.FC = () => {
 
       const falote: FaloteRequestDto = {
         codSucursal: codSucursalFactura,
-        documento: "OrdenFactura"
+        documento: TipoFalote.OrdenFactura
       }
 
       const dataconse = await CartService.GetConsecDocAsync(falote)

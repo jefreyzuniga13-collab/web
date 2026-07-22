@@ -1,8 +1,18 @@
-import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
-import type { PrintOrdenFactInterfaceRaw } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import type {
+  LogCartResponseDto
+} from "@/Interfaces/Crm/LogCartInterface"
+
+import type {
+  PrintDetallePagoRaw,
+  PrintOrdenFactInterfaceRaw
+} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { safeNumber } from "@/Utils/ECommerce/utils"
+
+import {
+  safeNumber
+} from "@/Utils/ECommerce/utils"
 
 type AutoTableDoc = jsPDF & {
   lastAutoTable?: {
@@ -39,6 +49,7 @@ export type OrderPdfContext = {
    */
   companyName?: string | null
 }
+
 /**
  * Formatea cantidades monetarias en córdobas.
  */
@@ -51,6 +62,23 @@ const money = (
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(safeNumber(value))
+}
+
+/**
+ * Devuelve el primer número mayor que cero.
+ */
+const firstPositive = (
+  ...values: unknown[]
+): number => {
+  for (const value of values) {
+    const numberValue = safeNumber(value)
+
+    if (numberValue > 0) {
+      return numberValue
+    }
+  }
+
+  return 0
 }
 
 /**
@@ -81,20 +109,7 @@ const fmtDate = (
 }
 
 /**
- * Limpia texto para evitar errores de jsPDF.
- *
- * Helvetica incluida en jsPDF no soporta todos los caracteres Unicode,
- * especialmente emojis y algunos símbolos especiales.
- *
- * Se permiten:
- * - Letras latinas
- * - Acentos
- * - Números
- * - Espacios
- * - Signos comunes
- *
- * Los caracteres Unicode no compatibles se reemplazan por un espacio
- * para evitar símbolos dañados dentro del PDF.
+ * Limpia texto para evitar caracteres no soportados por jsPDF.
  */
 const safePdfText = (
   value?: string | number | null,
@@ -110,7 +125,8 @@ const safePdfText = (
 
   const cleaned = Array.from(text)
     .map((character) => {
-      const codePoint = character.codePointAt(0) ?? 0
+      const codePoint =
+        character.codePointAt(0) ?? 0
 
       /*
        * Caracteres de control.
@@ -129,9 +145,7 @@ const safePdfText = (
       }
 
       /*
-       * Latin básico y Latin extendido.
-       *
-       * Incluye letras, números, puntuación, ñ y acentos.
+       * Latin básico y extendido.
        */
       if (
         (codePoint >= 32 && codePoint <= 126) ||
@@ -141,24 +155,21 @@ const safePdfText = (
       }
 
       /*
-       * Símbolos frecuentes compatibles.
+       * Símbolos frecuentes.
        */
       if (
-        codePoint === 8211 || // –
-        codePoint === 8212 || // —
-        codePoint === 8216 || // ‘
-        codePoint === 8217 || // ’
-        codePoint === 8220 || // “
-        codePoint === 8221 || // ”
-        codePoint === 8226 || // •
-        codePoint === 8364    // €
+        codePoint === 8211 ||
+        codePoint === 8212 ||
+        codePoint === 8216 ||
+        codePoint === 8217 ||
+        codePoint === 8220 ||
+        codePoint === 8221 ||
+        codePoint === 8226 ||
+        codePoint === 8364
       ) {
         return character
       }
 
-      /*
-       * Emojis y caracteres no soportados por Helvetica.
-       */
       return " "
     })
     .join("")
@@ -169,9 +180,37 @@ const safePdfText = (
 }
 
 /**
- * Revisa si existe suficiente espacio en la página.
+ * Normaliza DetallePago.
  *
- * Si no existe, agrega una página nueva.
+ * La API actual devuelve un arreglo. El respaldo para objeto individual
+ * evita que el PDF falle si algún ambiente antiguo todavía devuelve
+ * un solo objeto.
+ */
+const normalizePaymentDetails = (
+  value: unknown
+): PrintDetallePagoRaw[] => {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (item): item is PrintDetallePagoRaw =>
+        item != null &&
+        typeof item === "object"
+    )
+  }
+
+  if (
+    value != null &&
+    typeof value === "object"
+  ) {
+    return [
+      value as PrintDetallePagoRaw
+    ]
+  }
+
+  return []
+}
+
+/**
+ * Verifica si existe suficiente espacio en la página.
  */
 const ensurePageSpace = (
   doc: jsPDF,
@@ -196,8 +235,7 @@ const ensurePageSpace = (
 }
 
 /**
- * Imprime una fila de información y permite que el valor
- * ocupe varias líneas.
+ * Imprime una fila de información.
  */
 const drawInfoRow = ({
   doc,
@@ -217,14 +255,23 @@ const drawInfoRow = ({
   labelWidth?: number
 }): number => {
   doc.setFont("helvetica", "bold")
-  doc.text(label, x, y)
+
+  doc.text(
+    label,
+    x,
+    y
+  )
 
   doc.setFont("helvetica", "normal")
 
-  const valueLines = doc.splitTextToSize(
-    value || "No especificado",
-    Math.max(maxWidth - labelWidth, 20)
-  )
+  const valueLines =
+    doc.splitTextToSize(
+      value || "No especificado",
+      Math.max(
+        maxWidth - labelWidth,
+        20
+      )
+    )
 
   doc.text(
     valueLines,
@@ -232,7 +279,51 @@ const drawInfoRow = ({
     y
   )
 
-  return y + Math.max(valueLines.length, 1) * 5 + 2
+  return (
+    y +
+    Math.max(
+      valueLines.length,
+      1
+    ) * 5 +
+    2
+  )
+}
+
+/**
+ * Obtiene el monto mostrado para una forma de pago.
+ */
+const getPaymentAmount = ({
+  detail,
+  paymentCount,
+  finalTotal
+}: {
+  detail: PrintDetallePagoRaw
+  paymentCount: number
+  finalTotal: number
+}): number => {
+  const amount = safeNumber(
+    detail.Monto
+  )
+
+  if (amount > 0) {
+    return amount
+  }
+
+  /*
+   * En pago único se puede utilizar el total como respaldo.
+   *
+   * En multipago no se utiliza TotalPago como monto individual
+   * porque normalmente representa el total completo de la factura.
+   */
+  if (paymentCount === 1) {
+    return firstPositive(
+      detail.Valor_Pagar,
+      detail.TotalPago,
+      finalTotal
+    )
+  }
+
+  return 0
 }
 
 /**
@@ -271,6 +362,11 @@ export const generateOrdeFacPDFFile = (
     "Cliente"
   )
 
+  const contactName = safePdfText(
+    context.contactName,
+    invoiceCustomerName
+  )
+
   const contactPhone = safePdfText(
     context.contactPhone
   )
@@ -300,7 +396,11 @@ export const generateOrdeFacPDFFile = (
   /*
    * Encabezado.
    */
-  doc.setFont("helvetica", "bold")
+  doc.setFont(
+    "helvetica",
+    "bold"
+  )
+
   doc.setFontSize(18)
 
   doc.text(
@@ -309,7 +409,11 @@ export const generateOrdeFacPDFFile = (
     marginTop + 5
   )
 
-  doc.setDrawColor(180, 180, 180)
+  doc.setDrawColor(
+    180,
+    180,
+    180
+  )
 
   doc.line(
     marginX,
@@ -323,7 +427,8 @@ export const generateOrdeFacPDFFile = (
    */
   doc.setFontSize(10)
 
-  let infoY = marginTop + 18
+  let infoY =
+    marginTop + 18
 
   infoY = drawInfoRow({
     doc,
@@ -334,9 +439,10 @@ export const generateOrdeFacPDFFile = (
     maxWidth: usableWidth
   })
 
-  const contactDescription = contactPhone
-    ? `${contactPhone}`
-    : `------`
+  const contactDescription =
+    contactPhone
+      ? `${contactName} - ${contactPhone}`
+      : contactName
 
   infoY = drawInfoRow({
     doc,
@@ -377,11 +483,20 @@ export const generateOrdeFacPDFFile = (
   infoY = drawInfoRow({
     doc,
     label: "Fecha:",
-    value: invoiceDate || "No especificada",
+    value:
+      invoiceDate ||
+      "No especificada",
     x: marginX,
     y: infoY,
     maxWidth: usableWidth
   })
+
+  /*
+   * Dirección.
+   */
+  const addressName = safePdfText(
+    orderFac.DatosDireccion?.Nombre
+  )
 
   const addressDescription = safePdfText(
     orderFac.DatosDireccion?.Descripcion
@@ -390,6 +505,17 @@ export const generateOrdeFacPDFFile = (
   const addressReference = safePdfText(
     orderFac.DatosDireccion?.Referencia
   )
+
+  if (addressName) {
+    infoY = drawInfoRow({
+      doc,
+      label: "Lugar:",
+      value: addressName,
+      x: marginX,
+      y: infoY,
+      maxWidth: usableWidth
+    })
+  }
 
   if (addressDescription) {
     infoY = drawInfoRow({
@@ -418,11 +544,17 @@ export const generateOrdeFacPDFFile = (
    */
   const productRows: ProductRow[] = []
 
-  for (const item of orderFac.Carrito ?? []) {
+  for (
+    const item of
+    orderFac.Carrito ?? []
+  ) {
     productRows.push([
       safePdfText(
         item.Descripcion,
-        safePdfText(item.Codigo, "Producto")
+        safePdfText(
+          item.Codigo,
+          "Producto"
+        )
       ),
       safePdfText(item.Cantidad),
       safePdfText(item.UnidadMedida),
@@ -430,17 +562,22 @@ export const generateOrdeFacPDFFile = (
       money(item.TotalMenu)
     ])
 
-    /*
-     * Opciones puede venir null según la interfaz.
-     */
-    for (const option of item.Opciones ?? []) {
+    for (
+      const option of
+      item.Opciones ?? []
+    ) {
       productRows.push([
         `   • ${safePdfText(
           option.Descripcion,
-          safePdfText(option.Codigo, "Opción")
+          safePdfText(
+            option.Codigo,
+            "Opción"
+          )
         )}`,
         safePdfText(option.Cantidad),
-        safePdfText(option.UnidadMedida),
+        safePdfText(
+          option.UnidadMedida
+        ),
         money(option.Precio),
         money(option.TotalMenu)
       ])
@@ -499,18 +636,22 @@ export const generateOrdeFacPDFFile = (
         halign: "left",
         cellWidth: 76
       },
+
       1: {
         halign: "center",
         cellWidth: 16
       },
+
       2: {
         halign: "center",
         cellWidth: 20
       },
+
       3: {
         halign: "right",
         cellWidth: 28
       },
+
       4: {
         halign: "right",
         cellWidth: 30
@@ -519,51 +660,76 @@ export const generateOrdeFacPDFFile = (
   })
 
   /*
-   * DetallePago es un objeto, no un arreglo.
+   * Detalles de pago.
+   *
+   * Puede contener una o varias formas de pago.
    */
-  const paymentDetail =
-    orderFac.DetallePago
+  const paymentDetails =
+    normalizePaymentDetails(
+      orderFac.DetallePago
+    )
+
+  /*
+   * Los totales generales normalmente se repiten en cada
+   * registro de pago. Se toma un único registro para evitar
+   * duplicar subtotal, IVA o total en multipago.
+   */
+  const summaryDetail =
+    paymentDetails.find((detail) => {
+      return (
+        safeNumber(detail.SubTotal) > 0 ||
+        safeNumber(detail.TotalPago) > 0 ||
+        safeNumber(detail.Valor_Pagar) > 0
+      )
+    }) ??
+    paymentDetails[0] ??
+    null
 
   const subtotal = safeNumber(
-    paymentDetail?.SubTotal
+    summaryDetail?.SubTotal
   )
 
   const discount = safeNumber(
-    paymentDetail?.Descuento
+    summaryDetail?.Descuento
   )
 
   const tax = safeNumber(
-    paymentDetail?.Iva
+    summaryDetail?.Iva
   )
 
   const tip = safeNumber(
-    paymentDetail?.Propina
+    summaryDetail?.Propina
   )
 
   const transportation = safeNumber(
-    paymentDetail?.Transporte
+    summaryDetail?.Transporte
   )
 
   const paymentValue = safeNumber(
-    paymentDetail?.Valor_Pagar
+    summaryDetail?.Valor_Pagar
   )
 
   const totalPayment = safeNumber(
-    paymentDetail?.TotalPago
-  )
-
-  const paymentAmount = safeNumber(
-    paymentDetail?.Monto
+    summaryDetail?.TotalPago
   )
 
   /*
-   * Orden de prioridad para el total:
+   * Solo se suman los montos individuales.
    *
-   * 1. TotalPago devuelto por backend.
-   * 2. Valor_Pagar.
-   * 3. Monto.
-   * 4. Cálculo manual.
+   * No se suman TotalPago, SubTotal o IVA porque pueden
+   * repetirse en cada registro cuando existe multipago.
    */
+  const totalPaidByMethods =
+    paymentDetails.reduce(
+      (total, detail) => {
+        return (
+          total +
+          safeNumber(detail.Monto)
+        )
+      },
+      0
+    )
+
   const calculatedTotal =
     subtotal -
     discount +
@@ -571,17 +737,21 @@ export const generateOrdeFacPDFFile = (
     tip +
     transportation
 
-  const finalTotal =
-    totalPayment > 0
-      ? totalPayment
-      : paymentValue > 0
-        ? paymentValue
-        : paymentAmount > 0
-          ? paymentAmount
-          : calculatedTotal
+  const finalTotal = firstPositive(
+    totalPayment,
+    paymentValue,
+    calculatedTotal,
+    totalPaidByMethods
+  )
 
+  /*
+   * Resumen de montos.
+   */
   let summaryY =
-    (doc.lastAutoTable?.finalY ?? infoY) + 10
+    (
+      doc.lastAutoTable?.finalY ??
+      infoY
+    ) + 10
 
   let amountRows = 3
 
@@ -598,6 +768,7 @@ export const generateOrdeFacPDFFile = (
   }
 
   const summaryBoxWidth = 90
+
   const summaryBoxHeight =
     amountRows * 6 + 12
 
@@ -612,8 +783,17 @@ export const generateOrdeFacPDFFile = (
     marginX -
     summaryBoxWidth
 
-  doc.setDrawColor(209, 213, 219)
-  doc.setFillColor(249, 250, 251)
+  doc.setDrawColor(
+    209,
+    213,
+    219
+  )
+
+  doc.setFillColor(
+    249,
+    250,
+    251
+  )
 
   doc.roundedRect(
     summaryBoxX,
@@ -625,7 +805,11 @@ export const generateOrdeFacPDFFile = (
     "FD"
   )
 
-  doc.setFont("helvetica", "bold")
+  doc.setFont(
+    "helvetica",
+    "bold"
+  )
+
   doc.setFontSize(11)
 
   doc.text(
@@ -647,7 +831,11 @@ export const generateOrdeFacPDFFile = (
   let lineY =
     summaryY + 15
 
-  doc.setFont("helvetica", "normal")
+  doc.setFont(
+    "helvetica",
+    "normal"
+  )
+
   doc.setFontSize(10)
 
   doc.text(
@@ -741,7 +929,10 @@ export const generateOrdeFacPDFFile = (
 
   lineY += lineGap
 
-  doc.setFont("helvetica", "bold")
+  doc.setFont(
+    "helvetica",
+    "bold"
+  )
 
   doc.text(
     "Total:",
@@ -759,7 +950,7 @@ export const generateOrdeFacPDFFile = (
   )
 
   /*
-   * Forma de pago.
+   * Formas de pago.
    */
   let paymentY =
     summaryY +
@@ -772,7 +963,11 @@ export const generateOrdeFacPDFFile = (
     30
   )
 
-  doc.setDrawColor(209, 213, 219)
+  doc.setDrawColor(
+    209,
+    213,
+    219
+  )
 
   doc.line(
     marginX,
@@ -783,40 +978,165 @@ export const generateOrdeFacPDFFile = (
 
   paymentY += 8
 
-  doc.setFont("helvetica", "bold")
+  doc.setFont(
+    "helvetica",
+    "bold"
+  )
+
   doc.setFontSize(11)
 
   doc.text(
-    "Forma de pago",
+    paymentDetails.length > 1
+      ? "Formas de pago"
+      : "Forma de pago",
     marginX,
     paymentY
   )
 
-  paymentY += 7
+  paymentY += 4
 
-  const paymentMethod = safePdfText(
-    paymentDetail?.MetodoPago,
-    "No especificado"
-  )
+  const hasChange =
+    paymentDetails.some(
+      (detail) =>
+        safeNumber(detail.Vuelto) > 0
+    )
 
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
+  const paymentRows =
+    paymentDetails.length > 0
+      ? paymentDetails.map((detail) => {
+          const method = safePdfText(
+            detail.MetodoPago,
+            "No especificado"
+          )
 
-  doc.text(
-    `Método: ${paymentMethod}`,
-    marginX,
-    paymentY
-  )
+          const amount = getPaymentAmount({
+            detail,
+            paymentCount:
+              paymentDetails.length,
+            finalTotal
+          })
 
-  doc.text(
-    `Monto: ${money(finalTotal)}`,
-    pageWidth - marginX,
-    paymentY,
-    {
-      align: "right"
-    }
-  )
+          if (hasChange) {
+            return [
+              method,
+              money(amount),
+              money(detail.Vuelto)
+            ]
+          }
+
+          return [
+            method,
+            money(amount)
+          ]
+        })
+      : hasChange
+        ? [[
+            "No especificado",
+            money(0),
+            money(0)
+          ]]
+        : [[
+            "No especificado",
+            money(0)
+          ]]
+
+  if (hasChange) {
+    autoTable(doc, {
+      startY: paymentY,
+
+      head: [[
+        "Método",
+        "Monto",
+        "Vuelto"
+      ]],
+
+      body: paymentRows,
+
+      margin: {
+        left: marginX,
+        right: marginX
+      },
+
+      styles: {
+        font: "helvetica",
+        fontSize: 10,
+        cellPadding: 3,
+        valign: "middle"
+      },
+
+      headStyles: {
+        fillColor: [49, 86, 168],
+        textColor: [255, 255, 255],
+        fontStyle: "bold"
+      },
+
+      alternateRowStyles: {
+        fillColor: [249, 250, 251]
+      },
+
+      columnStyles: {
+        0: {
+          halign: "left",
+          cellWidth: 90
+        },
+
+        1: {
+          halign: "right",
+          cellWidth: 40
+        },
+
+        2: {
+          halign: "right",
+          cellWidth: 40
+        }
+      }
+    })
+  } else {
+    autoTable(doc, {
+      startY: paymentY,
+
+      head: [[
+        "Método",
+        "Monto"
+      ]],
+
+      body: paymentRows,
+
+      margin: {
+        left: marginX,
+        right: marginX
+      },
+
+      styles: {
+        font: "helvetica",
+        fontSize: 10,
+        cellPadding: 3,
+        valign: "middle"
+      },
+
+      headStyles: {
+        fillColor: [49, 86, 168],
+        textColor: [255, 255, 255],
+        fontStyle: "bold"
+      },
+
+      alternateRowStyles: {
+        fillColor: [249, 250, 251]
+      },
+
+      columnStyles: {
+        0: {
+          halign: "left",
+          cellWidth: 110
+        },
+
+        1: {
+          halign: "right",
+          cellWidth: 60
+        }
+      }
+    })
+  }
 
   return doc.output("blob")
-  
 }

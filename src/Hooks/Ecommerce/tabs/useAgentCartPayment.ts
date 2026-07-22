@@ -35,6 +35,7 @@ import {
 } from "@/Utils/ECommerce/pagoFacturaUtils"
 import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
+import { TipoFalote } from "@/Constants/falote"
 
 type EnsureEcommerceUserResult = {
   ecommerceUserId: number
@@ -583,8 +584,7 @@ export const useAgentCartPayment = ({
         const falote: FaloteRequestDto = {
           codSucursal:
             codSucursalFactura,
-          documento:
-            "OrdenFactura"
+          documento: TipoFalote.OrdenFactura
         }
 
         const dataconse =

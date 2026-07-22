@@ -1,4 +1,4 @@
-import type React from "react"
+import type { ReactNode } from "react"
 
 export type MessageType =
   | "Text"
@@ -102,42 +102,65 @@ export interface UpdateConversationRequest {
   isArchived?: boolean
 }
 
+export interface MetaAdReferralDto {
+  sourceId?: string | null
+  sourceType?: string | null
+  sourceUrl?: string | null
+  headline?: string | null
+  body?: string | null
+  mediaType?: string | null
+  imageUrl?: string | null
+  videoUrl?: string | null
+  thumbnailUrl?: string | null
+  clickId?: string | null
+}
+
 export interface MessageDto {
   messageId: number
   conversationId: number
-  senderUserId?: number
-  senderUserName?: string
-  senderContactId?: number
-  senderContactName?: string
-  senderClientName?: string
-  incognitoMode?: boolean
+
+  senderUserId?: number | null
+  senderUserName?: string | null
+  senderContactId?: number | null
+  senderContactName?: string | null
+  senderClientName?: string | null
+  incognitoMode?: boolean | null
+
   isIncoming: boolean
-  content?: string
+  isAutoSend: boolean
+
+  content?: string | null
   externalId: string
   messageType: MessageType
-  interactiveId?: string
-  isAutoSend: boolean
-  interactiveTitle?: string
+
+  interactiveId?: string | null
+  interactiveTitle?: string | null
+
   status: MessageStatus
   sentAt: string
-  deliveredAt?: string
-  readAt?: string
+  deliveredAt?: string | null
+  readAt?: string | null
+
   attachments: AttachmentDto[]
+
   waTemplateId?: number | null
   templateName?: string | null
   templateLanguage?: string | null
   templateBodyVars?: string[] | null
 
   // Relación recursiva para respuestas.
-  repliedMessageId?: number
+  repliedMessageId?: number | null
   repliedMessage?: MessageDto | null
 
   messageSourceId?: number | null
   messageSourceName?: string | null
   messageSourceColor?: string | null
 
-  // Contacto.
+  // Contactos compartidos.
   contact: WhatsAppContact[]
+
+  // Anuncio desde el cual inició el contacto.
+  referral?: MetaAdReferralDto | null
 
   // Campos locales para mensajes optimistas.
   clientTempId?: string
@@ -196,11 +219,11 @@ export interface SentMedia {
 export interface AttachmentDto {
   attachmentId: number
   messageId: number
-  mediaId: string
-  fileName?: string
-  mimeType?: string
-  mediaUrl?: string
-  createdAt: string
+  mediaId?: string | null
+  fileName?: string | null
+  mimeType?: string | null
+  mediaUrl?: string | null
+  createdAt?: string | null
 }
 
 export interface AgentDto {
@@ -241,7 +264,7 @@ export interface TagDto {
 }
 
 export interface MenuItemProps {
-  icon: React.ReactNode
+  icon: ReactNode
   text: string
   onClick?: () => void
   selectedOption: string
@@ -260,14 +283,15 @@ export interface MenuDto {
 
 export interface MessageWithAttachmentsDto {
   messageId: number
-  senderUserId?: number
-  senderUserName?: string
-  senderContactId?: number
-  senderContactName?: string
-  content?: string
+  senderUserId?: number | null
+  senderUserName?: string | null
+  senderContactId?: number | null
+  senderContactName?: string | null
+  content?: string | null
   sentAt: string
   messageType: string
   attachments: AttachmentDto[]
+  referral?: MetaAdReferralDto | null
 }
 
 export interface ConversationHistoryDto {

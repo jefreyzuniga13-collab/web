@@ -1,269 +1,340 @@
-import React, { useEffect, useMemo, useState } from "react"
-import { InboxList } from "@/Components/Chat/InboxList"
-import { ChatWindow } from "@/Components/Chat/ChatWindow"
-import { ContactDetail } from "@/Components/Chat/ContactDetail"
-import { FaBuilding, FaPhoneAlt, FaUserAlt } from "react-icons/fa"
-import { MdFilterListAlt } from "react-icons/md";
-import { useSupportPage } from "@/Hooks/Chat/useSupportPage"
-import FilterOrderModal from "@/Components/Chat/FilterOrderModal"
-import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter"
-import Input from "@/Components/Common/Input"
-import DetailPanel from "@/Components/Chat/DetailPanel"
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Tooltip } from "@mui/material";
+import { FaBuilding, FaPhoneAlt } from "react-icons/fa";
+import { MdContacts, MdFilterListAlt } from "react-icons/md";
+import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { PiSticker } from "react-icons/pi";
-import { useConversations, type Filter } from "@/Hooks/Chat/useConversations"
-import TicketModal from "@/Components/Crm/TicketModal"
-import useContact from "@/Hooks/Auth/useContact"
-import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice"
-import { useDispatch, useSelector } from "react-redux"
-import type { AppDispatch, RootState } from "@/Context"
-import useLogCart from "@/Hooks/Crm/useLogCard"
-import { MdContacts } from "react-icons/md"
-import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io"
-import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId"
-import { getLicenseMessage } from "@/Utils/ECommerce/formatters"
-import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamValue"
-import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams"
-import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice"
-import { isValidSaleCompany } from "@/Utils/isValidSaleCompany"
-import { FaUsers } from "react-icons/fa";
-import "@/Styles/Chat/SupportPage.css"
-import { Tooltip } from "@mui/material"
+import { LuLoaderCircle } from "react-icons/lu";
+import { InboxList } from "@/Components/Chat/InboxList";
+import { ChatWindow } from "@/Components/Chat/ChatWindow";
+import { ContactDetail } from "@/Components/Chat/ContactDetail";
+import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
+import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter";
+import DetailPanel from "@/Components/Chat/DetailPanel";
+import TicketModal from "@/Components/Crm/TicketModal";
+import BulkAssignmentModal from "@/Components/Chat/BulkAssignmentModal";
+import Input from "@/Components/Common/Input";
+import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
+import { useConversations, type Filter } from "@/Hooks/Chat/useConversations";
+import useContact from "@/Hooks/Auth/useContact";
+import useLogCart from "@/Hooks/Crm/useLogCard";
+import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamValue";
+import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import type { AppDispatch, RootState } from "@/Context";
+import { selectCompanySistema, selectIsAutomaticallyAssigned } from "@/Context/Slices/Auth/authSlice";
+import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
+import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
+import { isValidSaleCompany } from "@/Utils/isValidSaleCompany";
+import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams";
+import { FaPeopleGroup } from "react-icons/fa6";
 
-export const useAppDispatch: () => AppDispatch = useDispatch
+import "@/Styles/Chat/SupportPage.css";
 
-const MOBILE_QUERY = "(max-width: 768px)"
+export const useAppDispatch: () => AppDispatch = useDispatch;
+
+const MOBILE_QUERY = "(max-width: 768px)";
 
 const SupportPage: React.FC = () => {
-  const [searchConversation, setSearchConversation] = useState<string>("")
-  const [ticketOpen, setTicketOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [mobileChatVisible, setMobileChatVisible] = useState(false)
+  const [searchConversation, setSearchConversation] = useState<string>("");
 
-  const dispatch = useAppDispatch()
+  const [ticketOpen, setTicketOpen] = useState(false);
+  const [bulkAssignmentOpen, setBulkAssignmentOpen] = useState(false);
 
-  const {isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
-    (state: RootState) => state.auth
-  )
+  const [isMobile, setIsMobile] = useState(false);
 
-  const companySistema = useSelector(selectCompanySistema)
+  const [mobileChatVisible, setMobileChatVisible] = useState(false);
 
-  const { fetchById, selectedData: contact } = useContact()
-  const { fetchByContactId } = useLogCart()
+  const dispatch = useAppDispatch();
+
+  const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
+    (state: RootState) => state.auth,
+  );
+
+  const companySistema = useSelector(selectCompanySistema);
+  const isAutomaticallyAssigned = useSelector(selectIsAutomaticallyAssigned);
+
+  const { fetchById, selectedData: contact } = useContact();
+
+  const { fetchByContactId } = useLogCart();
 
   const {
     conversation,
+
     setOrderModalVisible,
+    orderModalVisible,
+
     saveOrder,
     filterOrder,
     DEFAULT_OPTIONS,
-    orderModalVisible,
+    sortedOptions,
+
     setContactDetailToggle,
     contactDetailToggle,
+
     detailToggle,
     setDetailToggle,
+
     convId,
+    setConvId,
+
     isAdmin,
+    userId,
+
     handleAssignClick,
     handleCloseClick,
-    sortedOptions,
+
     handleOptionChange,
-    setConvId,
+
     filter,
-    userId,
     selectedParam,
+
     label,
     canAssign,
+
     showCompanyModal,
     setShowCompanyModal,
+
     agentOptions,
     loadingAgents,
-  } = useSupportPage()
+
+    isClosing,
+  } = useSupportPage();
 
   const { value: licenseWarningMessageParam } = useCompanySystemParamValue(
     LICENSE_WARNING_MESSAGE_PARAM_ID,
-    showLicenseWarning
-  )
+    showLicenseWarning,
+  );
 
-  const convHook = useConversations(filter as Filter, searchConversation)
+  const convHook = useConversations(filter as Filter, searchConversation);
 
+  /**
+   * Obtiene la conversación seleccionada desde la lista
+   * en tiempo real. Si todavía no existe ahí, utiliza
+   * la conversación obtenida por el hook principal.
+   */
   const activeConversation = useMemo(() => {
-    if (!convId) return null
+    if (!convId) return null;
 
     return (
       convHook.conversations.find((item) => item.conversationId === convId) ??
       conversation ??
       null
-    )
-  }, [convId, convHook.conversations, conversation])
+    );
+  }, [convId, convHook.conversations, conversation]);
 
   const isClosed =
     activeConversation?.status === "Closed" ||
-    activeConversation?.status === "Incomplete"
+    activeConversation?.status === "Incomplete";
 
-  const canShowSaleDetail = isValidSaleCompany(companySistema)
+  const canShowSaleDetail = isValidSaleCompany(companySistema);
 
   const licenseWarningMessage = useMemo(() => {
-    return getLicenseMessage(licenseExpireAt, licenseWarningMessageParam)
-  }, [licenseExpireAt, licenseWarningMessageParam])
+    return getLicenseMessage(licenseExpireAt, licenseWarningMessageParam);
+  }, [licenseExpireAt, licenseWarningMessageParam]);
 
+  /**
+   * Detecta si la interfaz se encuentra
+   * en modo móvil.
+   */
   useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_QUERY)
+    const mediaQuery = window.matchMedia(MOBILE_QUERY);
 
-    const syncMobile = () => {
-      setIsMobile(mediaQuery.matches)
+    const syncMobile = (): void => {
+      setIsMobile(mediaQuery.matches);
 
       if (!mediaQuery.matches) {
-        setMobileChatVisible(false)
+        setMobileChatVisible(false);
       }
-    }
+    };
 
-    syncMobile()
+    syncMobile();
 
-    mediaQuery.addEventListener("change", syncMobile)
+    mediaQuery.addEventListener("change", syncMobile);
 
     return () => {
-      mediaQuery.removeEventListener("change", syncMobile)
-    }
-  }, [])
+      mediaQuery.removeEventListener("change", syncMobile);
+    };
+  }, []);
 
+  /**
+   * Carga el contacto asociado
+   * a la conversación seleccionada.
+   */
   useEffect(() => {
-    if (!activeConversation?.clientContactId) return
+    if (!activeConversation?.clientContactId) {
+      return;
+    }
 
-    fetchById(activeConversation.clientContactId)
-  }, [activeConversation?.clientContactId, fetchById])
+    void fetchById(activeConversation.clientContactId);
+  }, [activeConversation?.clientContactId, fetchById]);
 
+  /**
+   * Si la conversación desaparece de la lista,
+   * limpia la selección actual.
+   */
   useEffect(() => {
     if (
       !convHook.loading &&
       convId &&
       !convHook.conversations.some((item) => item.conversationId === convId)
     ) {
-      setConvId(null)
-      setMobileChatVisible(false)
-      setDetailToggle(false)
-    }
-  }, [convId, convHook.conversations, convHook.loading, setConvId, setDetailToggle])
-
-  useEffect(() => {
-    const handleEscapePress = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return
-
-      if (isMobile && mobileChatVisible) {
-        setMobileChatVisible(false)
-        setContactDetailToggle(false)
-        setTicketOpen(false)
-        setDetailToggle(false)
-        return
-      }
-
-      setContactDetailToggle(false)
-      setTicketOpen(false)
-      setDetailToggle(false)
-
-      if (convId) {
-        setConvId(null)
-      }
-    }
-
-    window.addEventListener("keydown", handleEscapePress)
-
-    return () => {
-      window.removeEventListener("keydown", handleEscapePress)
+      setConvId(null);
+      setMobileChatVisible(false);
+      setDetailToggle(false);
     }
   }, [
+    convId,
+    convHook.conversations,
+    convHook.loading,
+    setConvId,
+    setDetailToggle,
+  ]);
+
+  /**
+   * Cierra paneles o la conversación seleccionada
+   * cuando se presiona Escape.
+   */
+  useEffect(() => {
+    const handleEscapePress = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") return;
+
+      if (bulkAssignmentOpen) {
+        setBulkAssignmentOpen(false);
+        return;
+      }
+
+      if (isMobile && mobileChatVisible) {
+        setMobileChatVisible(false);
+        setContactDetailToggle(false);
+        setTicketOpen(false);
+        setDetailToggle(false);
+        return;
+      }
+
+      setContactDetailToggle(false);
+      setTicketOpen(false);
+      setDetailToggle(false);
+
+      if (convId) {
+        setConvId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscapePress);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscapePress);
+    };
+  }, [
+    bulkAssignmentOpen,
     convId,
     isMobile,
     mobileChatVisible,
     setContactDetailToggle,
     setConvId,
     setDetailToggle,
-  ])
+  ]);
 
+  /**
+   * Consulta el carrito asociado al contacto activo.
+   */
   useEffect(() => {
     if (!convId && canShowSaleDetail) {
       void dispatch(
         getProductFromCarAsync({
           codCliente: contact?.id ?? 0,
           noPedido: 0,
-        })
-      )
+        }),
+      );
 
-      return
+      return;
     }
 
-    if (!contact?.id) return
-    if (!canShowSaleDetail) return
+    if (!contact?.id) return;
+    if (!canShowSaleDetail) return;
 
-    let cancelled = false
+    let cancelled = false;
 
-    const loadCart = async () => {
-      const log = await fetchByContactId(contact.id)
+    const loadCart = async (): Promise<void> => {
+      const log = await fetchByContactId(contact.id);
 
-      if (cancelled) return
+      if (cancelled) return;
 
-      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0
+      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
 
       const cart = await dispatch(
         getProductFromCarAsync({
           codCliente: contact.id,
           noPedido,
-        })
-      ).unwrap()
+        }),
+      ).unwrap();
 
-      if (cancelled) return
+      if (cancelled) return;
 
-      const arr = Array.isArray(cart) ? cart : []
+      const items = Array.isArray(cart) ? cart : [];
 
       const count =
-        arr[0]?.listDetalle?.reduce((sum, detail) => {
+        items[0]?.listDetalle?.reduce((sum, detail) => {
           if (detail.tipoComponente !== "O") {
-            return sum + Number(detail.cantidad ?? 0)
+            return sum + Number(detail.cantidad ?? 0);
           }
 
-          return sum
-        }, 0) ?? 0
+          return sum;
+        }, 0) ?? 0;
 
       dispatch(
         setContactCartBadge({
           contactId: contact.id,
           hasCart: count > 0,
           count,
-        })
-      )
-    }
+        }),
+      );
+    };
 
-    void loadCart()
+    void loadCart();
 
     return () => {
-      cancelled = true
-    }
-  }, [convId, contact?.id, dispatch, fetchByContactId, canShowSaleDetail])
+      cancelled = true;
+    };
+  }, [convId, contact?.id, dispatch, fetchByContactId, canShowSaleDetail]);
 
-  const handleSelectConversation = (id: number | null) => {
-  setConvId(id)
+  /**
+   * Selecciona una conversación.
+   */
+  const handleSelectConversation = (id: number | null): void => {
+    setConvId(id);
 
-  if (!isMobile) return
+    if (!isMobile) return;
 
-  setDetailToggle(false)
-  setContactDetailToggle(false)
-  setTicketOpen(false)
+    setDetailToggle(false);
+    setContactDetailToggle(false);
+    setTicketOpen(false);
 
-  setMobileChatVisible(Boolean(id))
-}
+    setMobileChatVisible(Boolean(id));
+  };
 
-const handleMobileBack = () => {
-  setMobileChatVisible(false)
-  setDetailToggle(false)
-  setContactDetailToggle(false)
-  setTicketOpen(false)
-}
+  /**
+   * Regresa desde el chat móvil
+   * hacia la lista de conversaciones.
+   */
+  const handleMobileBack = (): void => {
+    setMobileChatVisible(false);
+    setDetailToggle(false);
+    setContactDetailToggle(false);
+    setTicketOpen(false);
+  };
 
-  const handleMobileToggleDetail = () => {
-    if (!convId) return
+  /**
+   * Abre o cierra el detalle
+   * desde la vista móvil.
+   */
+  const handleMobileToggleDetail = (): void => {
+    if (!convId) return;
 
-    setDetailToggle((current) => !current)
-  }
+    setDetailToggle((current) => !current);
+  };
 
   const layoutClassName = [
     "support-layout",
@@ -271,7 +342,7 @@ const handleMobileBack = () => {
     isMobile && mobileChatVisible ? "support-layout--mobile-chat" : "",
   ]
     .filter(Boolean)
-    .join(" ")
+    .join(" ");
 
   return (
     <div className={layoutClassName}>
@@ -282,48 +353,42 @@ const handleMobileBack = () => {
 
             <div className="inbox-title__headerfilters">
               {isRoot && (
-
-
-                  <Tooltip title="Filtrar Por Empresa">
+                <Tooltip title="Filtrar por empresa">
                   <button
-                  className="sort-button"
-                  onClick={() => setShowCompanyModal(true)}
-                  title="Seleccionar Empresa"
-                  type="button"
-                >
-                  <FaBuilding className="sort-button-icon" />
-                </button>
+                    className="sort-button"
+                    onClick={() => setShowCompanyModal(true)}
+                    title="Seleccionar empresa"
+                    type="button"
+                  >
+                    <FaBuilding className="sort-button-icon" />
+                  </button>
                 </Tooltip>
               )}
 
-              {isAdmin && (
-                // Boton de asignar conversaciones (Cuando se inica el dia, y todas las conversaciones fuera de horarios de atención
-                // El administradorm debe de poder seleccionar los agentes a asignar, cantidad por cada agente, o asignar todas las conversacions entre
-                // Los agentes que esten conectados, o bien a todos los agntes, por defcto a los conectados, se listan todos los agentes eso si, pero deseleccionados
-                // Nueva distribvucion de conversacione sin agente asignados.
-                // )
 
-                 <Tooltip title="Asignación de chats pendientes">
-                 <button
+              {(isRoot || isAdmin) && !isAutomaticallyAssigned &&  (
+              <Tooltip title="Asignar conversaciones">
+                <button
                   className="sort-button"
-                  onClick={()=>{}}
-                  title="Seleccionar Empresa"
+                  onClick={() => setBulkAssignmentOpen(true)}
+                  title="Asignar conversaciones"
                   type="button"
                 >
-                  {/* Mostrar en rojo la cantidad de conversaciones sin asignar */}
-                  <FaUsers className="sort-button-icon" />
+                  <FaPeopleGroup className="sort-button-icon" size={18} />
                 </button>
-               </Tooltip>
+              </Tooltip>
               )}
-            <Tooltip title="Filtrar Conversaciones">
-              <button
-                className="sort-button"
-                onClick={() => setOrderModalVisible(true)}
-                title="Filtrar conversaciones"
-                type="button"
-              >
-                <MdFilterListAlt  className="sort-button-icon" />
-              </button>
+
+
+              <Tooltip title="Filtrar conversaciones">
+                <button
+                  className="sort-button"
+                  onClick={() => setOrderModalVisible(true)}
+                  title="Filtrar conversaciones"
+                  type="button"
+                >
+                  <MdFilterListAlt className="sort-button-icon" size={18} />
+                </button>
               </Tooltip>
             </div>
           </div>
@@ -335,8 +400,8 @@ const handleMobileBack = () => {
               onChange={(event) => setSearchConversation(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  event.preventDefault()
-                  event.stopPropagation()
+                  event.preventDefault();
+                  event.stopPropagation();
                 }
               }}
               placeholder="Filtrar conversaciones"
@@ -361,9 +426,7 @@ const handleMobileBack = () => {
           <div className="main-license__container">
             <IoMdHourglass fontSize={12} className="main-license__icon" />
 
-            <span className="main-license__text">
-              {licenseWarningMessage}
-            </span>
+            <span className="main-license__text">{licenseWarningMessage}</span>
           </div>
         )}
 
@@ -405,31 +468,57 @@ const handleMobileBack = () => {
                 className="crearTicket-button"
                 onClick={() => setTicketOpen(true)}
                 type="button"
+                disabled={isClosing}
               >
-                <PiSticker size={16} /> Crear Ticket
+                <PiSticker size={16} />
+                Crear Ticket
               </button>
             )}
 
             {convId && (
-              <div className={`inbox-list__action ${isClosed ? "btnDisabled" : ""}`}>
+              <div
+                className={`inbox-list__action ${
+                  isClosed ? "btnDisabled" : ""
+                }`}
+              >
                 <button
                   className="close-btn"
-                  onClick={handleCloseClick}
+                  onClick={() => void handleCloseClick()}
                   type="button"
-                  disabled={isClosed}
+                  disabled={isClosed || isClosing}
+                  aria-busy={isClosing}
                 >
-                  <IoMdCloseCircleOutline size={14} /> Cerrar
+                  {isClosing ? (
+                    <>
+                      <LuLoaderCircle
+                        size={14}
+                        className="button-loading-icon"
+                      />
+
+                      <span>Cerrando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IoMdCloseCircleOutline size={14} />
+
+                      <span>Cerrar</span>
+                    </>
+                  )}
                 </button>
 
                 <button
-                  className={`assign-button ${!canAssign ? "button-cerrar" : ""} ${
-                    isClosed ? "btnDisabled" : ""
-                  }`}
+                  className={[
+                    "assign-button",
+                    !canAssign ? "button-cerrar" : "",
+                    isClosed ? "btnDisabled" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   onClick={handleAssignClick}
-                  disabled={isClosed || !canAssign}
                   type="button"
+                  disabled={isClosed || isClosing || loadingAgents}
                 >
-                  <FaUserAlt size={16} /> {label}
+                  {label}
                 </button>
               </div>
             )}
@@ -449,8 +538,8 @@ const handleMobileBack = () => {
           showMobileActions={isMobile && mobileChatVisible && Boolean(convId)}
           mobileAssignLabel={label}
           mobileCanAssign={canAssign}
-          mobileIsClosed={isClosed}
-          onMobileClose={handleCloseClick}
+          mobileIsClosed={isClosed || isClosing}
+          onMobileClose={() => void handleCloseClick()}
           onMobileAssign={handleAssignClick}
           showMobileDetailButton={
             isMobile &&
@@ -476,8 +565,6 @@ const handleMobileBack = () => {
                   ? "Messenger"
                   : "Instagram"
             }
-            
-            // onSendNow={(txt) => (window as any).__CHAT_SEND_QUICK__?.(txt)}
             isAdmin={isAdmin}
           />
         )}
@@ -490,7 +577,7 @@ const handleMobileBack = () => {
             detailToggle ? "is-open" : "is-closed"
           }`}
           onClick={() => setDetailToggle((current) => !current)}
-          disabled={!convId}
+          disabled={!convId || isClosing}
           aria-label={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
           title={detailToggle ? "Ocultar detalles" : "Mostrar detalles"}
         >
@@ -515,8 +602,8 @@ const handleMobileBack = () => {
           currentOrder={filterOrder}
           options={DEFAULT_OPTIONS}
           onSave={(newOrder) => {
-            saveOrder(newOrder)
-            setOrderModalVisible(false)
+            saveOrder(newOrder);
+            setOrderModalVisible(false);
           }}
           onClose={() => setOrderModalVisible(false)}
           form={convHook.form}
@@ -536,6 +623,16 @@ const handleMobileBack = () => {
         <CompanyModalFilter onClose={() => setShowCompanyModal(false)} />
       )}
 
+      {bulkAssignmentOpen && (
+        <BulkAssignmentModal
+          isOpen={bulkAssignmentOpen}
+          onClose={() => setBulkAssignmentOpen(false)}
+          onCompleted={() => {
+            convHook.applyDateFilter();
+          }}
+        />
+      )}
+
       {ticketOpen &&
         convId &&
         contact?.isVerified &&
@@ -551,7 +648,7 @@ const handleMobileBack = () => {
           />
         )}
     </div>
-  )
-}
+  );
+};
 
-export default SupportPage
+export default SupportPage;

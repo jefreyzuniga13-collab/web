@@ -126,3 +126,54 @@ export const getNicaraguaIsoDate = () => {
 
   return nicaraguaDate.toISOString().replace("Z", "")
 }
+
+
+
+
+const NICARAGUA_TIME_ZONE = "America/Managua"
+
+const getDateKey = (value?: string | null) => {
+  if (!value) return ""
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ""
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: NICARAGUA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date)
+}
+
+export const formatDateDivider = (value?: string | null) => {
+  if (!value) return ""
+
+  const messageDate = new Date(value)
+
+  if (Number.isNaN(messageDate.getTime())) return ""
+
+  const today = new Date()
+
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const messageKey = getDateKey(value)
+  const todayKey = getDateKey(today.toISOString())
+  const yesterdayKey = getDateKey(yesterday.toISOString())
+
+  if (messageKey === todayKey) return "Hoy"
+  if (messageKey === yesterdayKey) return "Ayer"
+
+  return new Intl.DateTimeFormat("es-NI", {
+    timeZone: NICARAGUA_TIME_ZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year:
+      messageDate.getFullYear() !== today.getFullYear()
+        ? "numeric"
+        : undefined,
+  }).format(messageDate)
+}

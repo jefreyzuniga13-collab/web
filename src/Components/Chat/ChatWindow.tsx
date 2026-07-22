@@ -1,17 +1,37 @@
-import React, {  useCallback, useEffect, useMemo, useRef, useState,} from "react"
-import { ArrowLeft, Check, ChevronDown,
-  // Download,
-  MessageSquareMore, Mic, Paperclip, Send, Smile, Square, Trash2,UserCheck,XCircle,} from "lucide-react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  MessageSquareMore,
+  Mic,
+  Paperclip,
+  Send,
+  Smile,
+  Square,
+  Trash2,
+  UserCheck,
+  XCircle,
+} from "lucide-react"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { TbShoppingCartX } from "react-icons/tb"
 import { AiOutlineShoppingCart } from "react-icons/ai"
+
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useCustomMessage from "@/Hooks/Chat/useCustomMesssage"
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout"
+import { MetaAdReferralCard } from "@/Components/Chat/MetaAdReferralCard"
 import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
+import { formatearHoraNicaragua, formatDateDivider } from "@/Utils/formatters"
+
 import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
-import { formatearHoraNicaragua } from "@/Utils/formatters"
 
 type ChatWindowProps = {
   conversationId?: number
@@ -35,15 +55,6 @@ type ChatWindowProps = {
   onMobileToggleDetail?: () => void
 }
 
-const getDateKey = (value?: string | null) => {
-  if (!value) return ""
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) return ""
-
-  return date.toISOString().slice(0, 10)
-}
 
 const getAttachmentUrl = (attachment: AttachmentDto) => {
   return attachment.mediaUrl || ""
@@ -59,6 +70,33 @@ const isVideo = (mimeType?: string | null) => {
 
 const isAudio = (mimeType?: string | null) => {
   return String(mimeType ?? "").startsWith("audio/")
+}
+
+const getReplyPreviewText = (message: MessageDto): string => {
+  const content = message.content?.trim()
+
+  if (content) return content
+
+  const referralHeadline = message.referral?.headline?.trim()
+
+  if (referralHeadline) return `[Anuncio] ${referralHeadline}`
+  if (message.referral) return "[Anuncio]"
+
+  return message.attachments?.[0]?.fileName || "Adjunto"
+}
+
+const getReplyPreviewImage = (message: MessageDto): string | null => {
+  const attachment = message.attachments?.[0]
+
+  if (attachment?.mediaUrl && isImage(attachment.mimeType)) {
+    return attachment.mediaUrl
+  }
+
+  return (
+    message.referral?.thumbnailUrl ||
+    message.referral?.imageUrl ||
+    null
+  )
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -195,7 +233,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     let lastDateKey = ""
 
     return visibleMessages.map((message) => {
-      const currentDateKey = getDateKey(message.sentAt)
+      const currentDateKey = formatDateDivider(message.sentAt)
       const showDate = currentDateKey !== lastDateKey
 
       if (currentDateKey) {
@@ -520,6 +558,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     if (!replied) return null
 
+    const previewImage = getReplyPreviewImage(replied)
+
     return (
       <button
         type="button"
@@ -533,17 +573,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
 
         <div className="chat-window__reply-row">
-          {replied.attachments?.[0]?.mediaUrl &&
-            isImage(replied.attachments[0].mimeType) && (
-              <img
-                src={replied.attachments[0].mediaUrl}
-                alt="Respuesta"
-                className="chat-window__reply-thumb-img"
-              />
-            )}
+          {previewImage && (
+            <img
+              src={previewImage}
+              alt="Respuesta"
+              className="chat-window__reply-thumb-img"
+            />
+          )}
 
           <span className="chat-window__reply-content">
-            {replied.content || replied.attachments?.[0]?.fileName || "Adjunto"}
+            {getReplyPreviewText(replied)}
           </span>
         </div>
       </button>
@@ -706,6 +745,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {renderReplyPreview(message)}
 
           <div className="chat-window__message-content">
+            {message.referral && (
+              <MetaAdReferralCard referral={message.referral} />
+            )}
+
             {hasMedia(message) && (
               <div className="chat-window__media">
                 {message.attachments?.map((attachment) => (
@@ -886,7 +929,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             {showDate && (
               <div className="chat-window__date-divider">
                 <span className="chat-window__date-text">
-                  {formatearHoraNicaragua(message.sentAt)}
+                  {formatDateDivider(message.sentAt)}
                 </span>
               </div>
             )}

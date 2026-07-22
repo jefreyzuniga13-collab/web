@@ -1,108 +1,83 @@
-import { useMemo, useState } from "react"
-import { toast } from "react-toastify"
-
-import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection"
-
-import type {
-  Currencyto
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
-import type {
-  ObtenerDivisaPagosTipoRes
-} from "@/Interfaces/Ecommerce/FacturaTempo"
-
-import type {
-  PagoSeleccionado
-} from "@/Interfaces/Ecommerce/MultiPagoTypes"
-
-import type {
-  CheckoutPaymentMethod,
-  ManualCardFormState
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
-import {
-  initialManualCardFormState
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
-import {
-  filtrarFormasPagoMultipago,
-  obtenerTipoPagoDesdeMoneda,
-  totalPagado,
-  totalPendiente
-} from "@/Utils/ECommerce/pagoFacturaUtils"
-
-import { formatearDecimales } from "@/Utils/calcularIVA"
-import { safeStr } from "@/Utils/ECommerce/formatters"
-
-import "@/Styles/Ecommerce/Payment/MultiPagoSection.css"
+import { useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection";
+import type { Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
+import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
+import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes";
+import type { CheckoutPaymentMethod,  ManualCardFormState} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
+import { initialManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
+import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, totalPendiente} from "@/Utils/ECommerce/pagoFacturaUtils";
+import { formatearDecimales } from "@/Utils/calcularIVA";
+import { safeStr } from "@/Utils/ECommerce/formatters";
+import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
 
 type Props = {
   /**
    * Formas de pago disponibles desde PCG.
    */
-  currency: Currencyto[]
+  currency: Currencyto[];
 
   /**
    * Total final que debe cubrir el multipago.
    */
-  totalPagar: number
+  totalPagar: number;
 
   /**
    * Pagos agregados actualmente.
    */
-  pagos: PagoSeleccionado[]
+  pagos: PagoSeleccionado[];
 
   /**
    * Actualiza la lista de pagos.
    */
-  setPagos: React.Dispatch<React.SetStateAction<PagoSeleccionado[]>>
+  setPagos: React.Dispatch<React.SetStateAction<PagoSeleccionado[]>>;
 
   /**
    * Carga bancos o tipos de pago según la forma seleccionada.
    */
-  cargarDivisas: (item: Currencyto) => Promise<ObtenerDivisaPagosTipoRes[]>
+  cargarDivisas: (item: Currencyto) => Promise<ObtenerDivisaPagosTipoRes[]>;
 
   /**
    * Bloquea los controles cuando hay proceso activo.
    */
-  disabled?: boolean
-}
+  disabled?: boolean;
+};
 
 const crearIdPago = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID()
+    return crypto.randomUUID();
   }
 
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
 
 const getCurrencyKey = (item: Currencyto, index: number) => {
-  return `${safeStr(item.codPago)}-${safeStr(item.descripcion_Pago)}-${index}`
-}
+  return `${safeStr(item.codPago)}-${safeStr(item.descripcion_Pago)}-${index}`;
+};
 
 const getMetodoLabel = (metodo: CheckoutPaymentMethod) => {
-  if (metodo === "cash") return "Efectivo"
-  if (metodo === "transfer") return "Transferencia"
-  if (metodo === "manualCard") return "Tarjeta manual"
+  if (metodo === "cash") return "Efectivo";
+  if (metodo === "transfer") return "Transferencia";
+  if (metodo === "manualCard") return "Tarjeta manual";
 
-  return "Tarjeta en línea"
-}
+  return "Tarjeta en línea";
+};
 
 const getPagoTitulo = (pago: PagoSeleccionado) => {
   if (pago.metodo === "cash") {
-    return safeStr(pago.moneda?.descripcion_Pago) || "Efectivo"
+    return safeStr(pago.moneda?.descripcion_Pago) || "Efectivo";
   }
 
   if (pago.metodo === "transfer") {
-    return safeStr(pago.divisa?.nombre) || "Transferencia"
+    return safeStr(pago.divisa?.nombre) || "Transferencia";
   }
 
   if (pago.metodo === "manualCard") {
-    return safeStr(pago.divisa?.nombre) || "Tarjeta manual"
+    return safeStr(pago.divisa?.nombre) || "Tarjeta manual";
   }
 
-  return "Pago"
-}
+  return "Pago";
+};
 
 export default function MultiPagoSection({
   currency,
@@ -110,145 +85,172 @@ export default function MultiPagoSection({
   pagos,
   setPagos,
   cargarDivisas,
-  disabled = false
+  disabled = false,
 }: Props) {
-  const [selectedCurrency, setSelectedCurrency] =
-    useState<Currencyto | null>(null)
-
-  const [method, setMethod] =
-    useState<CheckoutPaymentMethod | null>(null)
-
-  const [monto, setMonto] = useState<number>(0)
-  const [referencia, setReferencia] = useState("")
-  const [divisaOpts, setDivisaOpts] =
-    useState<ObtenerDivisaPagosTipoRes[]>([])
+  const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(
+    null,
+  );
+  const [method, setMethod] = useState<CheckoutPaymentMethod | null>(null);
+  const [monto, setMonto] = useState<number>(0);
+  const [referencia, setReferencia] = useState("");
+  const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([]);
 
   const [divisaSelected, setDivisaSelected] =
-    useState<ObtenerDivisaPagosTipoRes | null>(null)
+    useState<ObtenerDivisaPagosTipoRes | null>(null);
 
-  const [divisaLoading, setDivisaLoading] = useState(false)
+  const [divisaLoading, setDivisaLoading] = useState(false);
 
-  const [manualCardData, setManualCardData] =
-    useState<ManualCardFormState>(initialManualCardFormState)
+  const [manualCardData, setManualCardData] = useState<ManualCardFormState>(
+    initialManualCardFormState,
+  );
 
   const formasPagoMultipago = useMemo(() => {
-    return filtrarFormasPagoMultipago(currency)
-  }, [currency])
+    return filtrarFormasPagoMultipago(currency);
+  }, [currency]);
+
+  const efectivoAgregado = useMemo(() => {
+    return pagos.some((pago) => pago.metodo === "cash");
+  }, [pagos]);
+
+  /**
+   * Después de agregar efectivo se ocultan todas las opciones de efectivo.
+   */
+  const formasPagoDisponibles = useMemo(() => {
+    return formasPagoMultipago.filter((item) => {
+      return !(
+        efectivoAgregado &&
+        obtenerTipoPagoDesdeMoneda(item) === "cash"
+      );
+    });
+  }, [efectivoAgregado, formasPagoMultipago]);
 
   const pagado = useMemo(() => {
-    return totalPagado(pagos)
-  }, [pagos])
+    return totalPagado(pagos);
+  }, [pagos]);
 
   const pendiente = useMemo(() => {
-    return totalPendiente(pagos, totalPagar)
-  }, [pagos, totalPagar])
+    return totalPendiente(pagos, totalPagar);
+  }, [pagos, totalPagar]);
 
-  const requiereDivisa =
-    method === "transfer" || method === "manualCard"
+  const vuelto = useMemo(() => {
+    return Math.max(0, pagado - Number(totalPagar ?? 0));
+  }, [pagado, totalPagar]);
+
+  const requiereDivisa = method === "transfer" || method === "manualCard";
 
   const resetFormulario = () => {
-    setSelectedCurrency(null)
-    setMethod(null)
-    setMonto(0)
-    setReferencia("")
-    setDivisaOpts([])
-    setDivisaSelected(null)
-    setManualCardData(initialManualCardFormState)
-  }
+    setSelectedCurrency(null);
+    setMethod(null);
+    setMonto(0);
+    setReferencia("");
+    setDivisaOpts([]);
+    setDivisaSelected(null);
+    setManualCardData(initialManualCardFormState);
+  };
 
   const handleSelectCurrency = async (value: string) => {
-    const selected = formasPagoMultipago.find(
-      (item, index) => getCurrencyKey(item, index) === value
-    )
+    const selected = formasPagoDisponibles.find(
+      (item, index) => getCurrencyKey(item, index) === value,
+    );
 
     if (!selected) {
-      resetFormulario()
-      return
+      resetFormulario();
+      return;
     }
 
-    const nextMethod = obtenerTipoPagoDesdeMoneda(selected)
+    const nextMethod = obtenerTipoPagoDesdeMoneda(selected);
 
-    setSelectedCurrency(selected)
-    setMethod(nextMethod)
-    setReferencia("")
-    setDivisaOpts([])
-    setDivisaSelected(null)
-    setManualCardData(initialManualCardFormState)
+    setSelectedCurrency(selected);
+    setMethod(nextMethod);
+    setReferencia("");
+    setDivisaOpts([]);
+    setDivisaSelected(null);
+    setManualCardData(initialManualCardFormState);
 
-    const pendienteActual = totalPendiente(pagos, totalPagar)
+    const pendienteActual = totalPendiente(pagos, totalPagar);
 
-    setMonto(pendienteActual > 0 ? pendienteActual : 0)
+    setMonto(pendienteActual > 0 ? pendienteActual : 0);
 
     if (nextMethod === "transfer" || nextMethod === "manualCard") {
-      setDivisaLoading(true)
+      setDivisaLoading(true);
 
       try {
-        const opts = await cargarDivisas(selected)
+        const opts = await cargarDivisas(selected);
 
-        setDivisaOpts(opts)
-        setDivisaSelected(opts.length > 0 ? opts[0] : null)
+        setDivisaOpts(opts);
+        setDivisaSelected(opts.length > 0 ? opts[0] : null);
       } catch {
-        setDivisaOpts([])
-        setDivisaSelected(null)
-        toast.error("No se pudieron cargar las opciones de pago.")
+        setDivisaOpts([]);
+        setDivisaSelected(null);
+        toast.error("No se pudieron cargar las opciones de pago.");
       } finally {
-        setDivisaLoading(false)
+        setDivisaLoading(false);
       }
     }
-  }
+  };
 
   const validarPagoActual = () => {
     if (!selectedCurrency || !method) {
-      return "Selecciona una forma de pago."
+      return "Selecciona una forma de pago.";
+    }
+
+    if (pendiente <= 0) {
+      return "El total de la factura ya está cubierto.";
     }
 
     if (method === "gatewayCard") {
-      return "La tarjeta en línea no está disponible dentro de multipago."
+      return "La tarjeta en línea no está disponible dentro de multipago.";
     }
 
-    if (Number(monto) <= 0) {
-      return "El monto debe ser mayor a 0."
+    if (method === "cash" && efectivoAgregado) {
+      return "Solamente puede agregar un pago en efectivo.";
     }
 
-    if (Number(monto) > pendiente) {
-      return "El monto no puede superar el pendiente."
+    const montoActual = Number(monto);
+
+    if (!Number.isFinite(montoActual) || montoActual <= 0) {
+      return "El monto debe ser mayor a 0.";
+    }
+
+    /**
+     * Efectivo puede superar el pendiente para generar vuelto.
+     * Los demás métodos no pueden excederlo.
+     */
+    if (method !== "cash" && montoActual > pendiente) {
+      return "El monto no puede superar el pendiente.";
     }
 
     if (requiereDivisa && !divisaSelected) {
-      return "Selecciona banco o tipo de pago."
+      return "Selecciona banco o tipo de pago.";
     }
 
     if (method === "transfer" && !safeStr(referencia)) {
-      return "La referencia de transferencia es requerida."
+      return "La referencia de transferencia es requerida.";
     }
 
     if (method === "manualCard") {
       if (!safeStr(manualCardData.tarjetahabiente)) {
-        return "El tarjetahabiente es requerido."
+        return "El tarjetahabiente es requerido.";
       }
 
-      // if (!safeStr(manualCardData.)) {
-      //   return "La tarjeta es requerida."
-      // }
-
-      if (!safeStr(manualCardData.ultDigito)) {
-        return "Los últimos 4 dígitos son requeridos."
+      if (safeStr(manualCardData.ultDigito).length !== 4) {
+        return "Los últimos 4 dígitos son requeridos.";
       }
 
       if (!safeStr(manualCardData.fechaVence)) {
-        return "La fecha de vencimiento es requerida."
+        return "La fecha de vencimiento es requerida.";
       }
     }
 
-    return null
-  }
+    return null;
+  };
 
   const handleAgregarPago = () => {
-    const error = validarPagoActual()
+    const error = validarPagoActual();
 
     if (error) {
-      toast.error(error)
-      return
+      toast.error(error);
+      return;
     }
 
     const nuevoPago: PagoSeleccionado = {
@@ -258,25 +260,29 @@ export default function MultiPagoSection({
       divisa: requiereDivisa ? divisaSelected : null,
       monto: Number(monto),
       referencia: method === "transfer" ? referencia.trim() : "",
-      tarjetaManual:
-        method === "manualCard" ? manualCardData : undefined
-    }
+      tarjetaManual: method === "manualCard" ? manualCardData : undefined,
+    };
 
-    setPagos((prev) => [...prev, nuevoPago])
-    resetFormulario()
-  }
+    setPagos((prev) => [...prev, nuevoPago]);
+    resetFormulario();
+  };
 
   const handleQuitarPago = (id: string) => {
-    setPagos((prev) => prev.filter((pago) => pago.id !== id))
-  }
+    setPagos((prev) => prev.filter((pago) => pago.id !== id));
+  };
+
+  const montoActual = Number(monto);
 
   const puedeAgregar =
     !disabled &&
+    pendiente > 0 &&
     !!selectedCurrency &&
     !!method &&
-    Number(monto) > 0 &&
-    Number(monto) <= pendiente &&
-    (!requiereDivisa || !!divisaSelected)
+    Number.isFinite(montoActual) &&
+    montoActual > 0 &&
+    (method === "cash" || montoActual <= pendiente) &&
+    (method !== "cash" || !efectivoAgregado) &&
+    (!requiereDivisa || !!divisaSelected);
 
   return (
     <div className="multipago-section">
@@ -289,7 +295,7 @@ export default function MultiPagoSection({
         </div>
 
         <div className="checkout-summary__subtitle">
-          <p className="checkout-summary__p">Total pagado:</p>
+          <p className="checkout-summary__p">Total recibido:</p>
           <strong className="checkout-summary__strong">
             C$ {formatearDecimales(pagado)}
           </strong>
@@ -301,6 +307,15 @@ export default function MultiPagoSection({
             C$ {formatearDecimales(pendiente)}
           </strong>
         </div>
+
+        {vuelto > 0 && (
+          <div className="checkout-summary__subtitle">
+            <p className="checkout-summary__p">Vuelto:</p>
+            <strong className="checkout-summary__strong">
+              C$ {formatearDecimales(vuelto)}
+            </strong>
+          </div>
+        )}
       </div>
 
       <div className="multipago-form">
@@ -314,22 +329,22 @@ export default function MultiPagoSection({
             className="checkout-input"
             value={
               selectedCurrency
-                ? formasPagoMultipago
+                ? (formasPagoDisponibles
                     .map((item, index) => ({
                       item,
-                      key: getCurrencyKey(item, index)
+                      key: getCurrencyKey(item, index),
                     }))
-                    .find(({ item }) => item === selectedCurrency)?.key ?? ""
+                    .find(({ item }) => item === selectedCurrency)?.key ?? "")
                 : ""
             }
-            disabled={disabled}
+            disabled={disabled || pendiente <= 0}
             onChange={(event) => {
-              void handleSelectCurrency(event.target.value)
+              void handleSelectCurrency(event.target.value);
             }}
           >
             <option value="">Seleccionar</option>
 
-            {formasPagoMultipago.map((item, index) => (
+            {formasPagoDisponibles.map((item, index) => (
               <option
                 key={getCurrencyKey(item, index)}
                 value={getCurrencyKey(item, index)}
@@ -359,14 +374,13 @@ export default function MultiPagoSection({
               value={safeStr(divisaSelected?.codigo)}
               disabled={disabled || divisaLoading}
               onChange={(event) => {
-                const code = safeStr(event.target.value)
+                const code = safeStr(event.target.value);
 
                 const found =
-                  divisaOpts.find(
-                    (item) => safeStr(item.codigo) === code
-                  ) ?? null
+                  divisaOpts.find((item) => safeStr(item.codigo) === code) ??
+                  null;
 
-                setDivisaSelected(found)
+                setDivisaSelected(found);
               }}
             >
               <option value="">
@@ -395,21 +409,23 @@ export default function MultiPagoSection({
               id="multipagoMonto"
               type="number"
               min={0}
-              max={pendiente}
+              max={method === "cash" ? undefined : pendiente}
               className="checkout-input"
               value={monto}
-              disabled={disabled}
-
-              // Efectivo, debe permitir ingresar mas del monto
+              disabled={disabled || pendiente <= 0}
               onChange={(event) => {
                 const value =
-                  event.target.value === ""
-                    ? 0
-                    : Number(event.target.value)
+                  event.target.value === "" ? 0 : Number(event.target.value);
 
-                setMonto(value)
+                setMonto(value);
               }}
             />
+
+            {method === "cash" && (
+              <small className="multipago-cash-help">
+                Puede superar el pendiente; el excedente será el vuelto.
+              </small>
+            )}
           </div>
         )}
 
@@ -474,8 +490,7 @@ export default function MultiPagoSection({
 
                   {pago.metodo === "manualCard" && (
                     <span className="multipago-card__text">
-                      Tarjeta: ****{" "}
-                      {safeStr(pago.tarjetaManual?.ultDigito)}
+                      Tarjeta: **** {safeStr(pago.tarjetaManual?.ultDigito)}
                     </span>
                   )}
                 </div>
@@ -494,5 +509,5 @@ export default function MultiPagoSection({
         </div>
       )}
     </div>
-  )
+  );
 }
