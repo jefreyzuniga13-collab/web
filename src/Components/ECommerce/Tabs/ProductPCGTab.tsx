@@ -8,40 +8,62 @@
  * La sucursal no se maneja aquí. El flujo global del carrito aplica una sola
  * sucursal para todos los productos seleccionados.
  */
-import { useCallback } from "react"
-import type { ChangeEvent, MouseEvent } from "react"
+import {
+  memo,
+  useCallback,
+  useRef,
+} from "react"
+import type {
+  ChangeEvent,
+  MouseEvent,
+} from "react"
 import Tooltip from "@mui/material/Tooltip"
 import { IoMdSend } from "react-icons/io"
-import { MdInventory, MdAddTask, MdCheckCircle } from "react-icons/md"
+import {
+  MdInventory,
+  MdAddTask,
+  MdCheckCircle,
+} from "react-icons/md"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { toast } from "react-toastify"
+
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
 import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
-import "@/Styles/Ecommerce/ProductPCGTab.css"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import { useProductMessageComposer } from "@/Hooks/Ecommerce/tabs/useProductMessageComposer"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { clampQty } from "@/Utils/ECommerce/formatters"
 
+import "@/Styles/Ecommerce/ProductPCGTab.css"
+
 interface Props {
   prod: ProductoPCGInterface
-  onClick?: (product: ProductoPCGInterface) => void
+  onClick?: (
+    product: ProductoPCGInterface
+  ) => void
   conversationId: number
   simpleQuantity: number
-  handleChangeSimpleQuantity: (e: ChangeEvent<HTMLInputElement>) => void
+  handleChangeSimpleQuantity: (
+    event: ChangeEvent<HTMLInputElement>
+  ) => void
   cartLoading: boolean
 
   batchMode?: boolean
   selectedCount?: number
   isSelected?: boolean
   isConfigured?: boolean
-  onToggleSelect?: (product: ProductoPCGInterface) => void
-  onChangeBatchQuantity?: (product: ProductoPCGInterface, qty: number) => void
+  onToggleSelect?: (
+    product: ProductoPCGInterface
+  ) => void
+  onChangeBatchQuantity?: (
+    product: ProductoPCGInterface,
+    qty: number
+  ) => void
 }
 
-export const ProductPCGTab = ({
+const ProductPCGTabComponent = ({
   prod,
   onClick,
   conversationId,
@@ -57,18 +79,34 @@ export const ProductPCGTab = ({
   onChangeBatchQuantity,
 }: Props) => {
   const { addProduct } = useCartPCGFlowCtx()
-  const { sending, sendProductMessage } = useProductMessageComposer()
+  const {
+    sending,
+    sendProductMessage,
+  } = useProductMessageComposer()
 
-  const hasActiveSelection = batchMode && selectedCount > 0
+  /*
+   * Evitan que dos clics rápidos entren antes de que
+   * React alcance a actualizar los estados de loading.
+   */
+  const addLockRef = useRef(false)
+  const sendLockRef = useRef(false)
+
+  const hasActiveSelection =
+    batchMode && selectedCount > 0
+
+  const productName =
+    String(prod.descripcion ?? "").trim() ||
+    String(prod.codProducto ?? "").trim() ||
+    "Producto"
 
   const handleOpenDetail = useCallback(() => {
     onClick?.(prod)
   }, [onClick, prod])
 
   const handleToggleSelection = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation()
-      e.preventDefault()
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      event.preventDefault()
 
       onToggleSelect?.(prod)
     },
@@ -76,18 +114,29 @@ export const ProductPCGTab = ({
   )
 
   const handleBatchQuantityChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const qty = clampQty(Number(e.target.value))
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const qty = clampQty(
+        Number(event.target.value)
+      )
+
       onChangeBatchQuantity?.(prod, qty)
     },
     [onChangeBatchQuantity, prod]
   )
 
   const handleSimpleAdd = useCallback(async () => {
-    const qty = clampQty(Number(simpleQuantity))
+    if (addLockRef.current || cartLoading) {
+      return
+    }
+
+    const qty = clampQty(
+      Number(simpleQuantity)
+    )
 
     if (qty <= 0) {
-      toast.warning("La cantidad debe ser al menos 1.")
+      toast.warning(
+        "La cantidad debe ser al menos 1."
+      )
       return
     }
 
@@ -96,69 +145,120 @@ export const ProductPCGTab = ({
       return
     }
 
-    await addProduct({
-      product: prod,
-      qty,
-      observacion: "",
-      modifierOptions: [],
-      onDoneUiReset: false,
-      branch: "",
-      branchName: "",
-      wherehouse: "",
-      wherehouseCode: "",
-      serie: "",
-      codPrecio: "",
-    })
-  }, [addProduct, prod, simpleQuantity, handleOpenDetail])
+    addLockRef.current = true
+
+    try {
+      await addProduct({
+        product: prod,
+        qty,
+        observacion: "",
+        modifierOptions: [],
+        onDoneUiReset: false,
+        branch: "",
+        branchName: "",
+        wherehouse: "",
+        wherehouseCode: "",
+        serie: "",
+        codPrecio: "",
+      })
+    } finally {
+      addLockRef.current = false
+    }
+  }, [
+    addProduct,
+    cartLoading,
+    prod,
+    simpleQuantity,
+    handleOpenDetail,
+  ])
 
   const handleCartButtonClick = useCallback(
-    async (e: MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation()
-      e.preventDefault()
+    async (
+      event: MouseEvent<HTMLButtonElement>
+    ) => {
+      event.stopPropagation()
+      event.preventDefault()
 
-      if (hasActiveSelection) return
+      if (hasActiveSelection) {
+        return
+      }
 
       await handleSimpleAdd()
     },
-    [hasActiveSelection, handleSimpleAdd]
+    [
+      hasActiveSelection,
+      handleSimpleAdd,
+    ]
   )
 
   const handleSendMessage = useCallback(
-    async (e: MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation()
-      e.preventDefault()
+    async (
+      event: MouseEvent<HTMLButtonElement>
+    ) => {
+      event.stopPropagation()
+      event.preventDefault()
 
-      await sendProductMessage({
-        product: prod,
-        conversationId,
-      })
+      if (
+        sendLockRef.current ||
+        sending ||
+        conversationId <= 0
+      ) {
+        return
+      }
+
+      sendLockRef.current = true
+
+      try {
+        await sendProductMessage({
+          product: prod,
+          conversationId,
+        })
+      } finally {
+        sendLockRef.current = false
+      }
     },
-    [sendProductMessage, prod, conversationId]
+    [
+      sendProductMessage,
+      prod,
+      conversationId,
+      sending,
+    ]
   )
 
   const disabledCartButton =
-    cartLoading || simpleQuantity <= 0 || hasActiveSelection
+    cartLoading ||
+    simpleQuantity <= 0 ||
+    hasActiveSelection
 
-  const quantityDisabled = batchMode && !isSelected
+  const quantityDisabled =
+    batchMode && !isSelected
 
   return (
     <div
       className={`productPCG-row ${
-        isSelected ? "productPCG-row--selected" : ""
+        isSelected
+          ? "productPCG-row--selected"
+          : ""
       }`}
     >
-      <div className="productPCG-row-header" onClick={handleOpenDetail}>
+      <div
+        className="productPCG-row-header"
+        onClick={handleOpenDetail}
+      >
         <div className="productPCG-row__image">
           <img
             src={prod.imagen || vacio}
-            aria-label="product image"
+            alt={productName}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
             className="product-image"
           />
         </div>
 
         <div className="product-rowContent">
           <span className="product-row__description">
-            <Tooltip title={prod.descripcion}>
+            <Tooltip title={productName}>
               <p className="product-row__description-text product-row__description-text-margin">
                 {prod.codProducto}{" "}
                 <span className="product-row__description-text">
@@ -182,7 +282,11 @@ export const ProductPCGTab = ({
           </span>
 
           <span className="product-row__description-text-price">
-            {prod.precio > 0 ? `C$ ${formatearDecimales(prod.precio)}` : ""}
+            {prod.precio > 0
+              ? `C$ ${formatearDecimales(
+                  prod.precio
+                )}`
+              : ""}
           </span>
 
           {batchMode && isSelected && (
@@ -193,7 +297,9 @@ export const ProductPCGTab = ({
                   : "product-row__batchStatus--pending"
               }`}
             >
-              {isConfigured ? "✓ Listo" : "Pendiente"}
+              {isConfigured
+                ? "✓ Listo"
+                : "Pendiente"}
             </span>
           )}
         </div>
@@ -213,16 +319,25 @@ export const ProductPCGTab = ({
             }
             className="productTab-simpleAddBar__input"
             disabled={quantityDisabled}
+            aria-label={`Cantidad de ${productName}`}
           />
 
           {batchMode && (
-            <Tooltip title={isSelected ? "Deseleccionar" : "Seleccionar"}>
+            <Tooltip
+              title={
+                isSelected
+                  ? "Deseleccionar"
+                  : "Seleccionar"
+              }
+            >
               <span>
                 <Button
                   type="button"
                   onClick={handleToggleSelection}
                   className={`productTab-simpleAddBar__btn simpleAddBar-select ${
-                    isSelected ? "simpleAddBar-select--active" : ""
+                    isSelected
+                      ? "simpleAddBar-select--active"
+                      : ""
                   }`}
                   disabled={cartLoading}
                 >
@@ -260,13 +375,19 @@ export const ProductPCGTab = ({
           <Tooltip title="Enviar producto">
             <span>
               <Button
+                type="button"
                 variant="primary"
-                disabled={sending}
+                disabled={
+                  sending ||
+                  conversationId <= 0
+                }
                 onClick={handleSendMessage}
                 className="productTab-simpleAddBar__btn"
               >
                 {sending ? (
-                  <AiOutlineLoading3Quarters fontSize={20} />
+                  <AiOutlineLoading3Quarters
+                    fontSize={20}
+                  />
                 ) : (
                   <IoMdSend fontSize={20} />
                 )}
@@ -278,3 +399,7 @@ export const ProductPCGTab = ({
     </div>
   )
 }
+
+export const ProductPCGTab = memo(
+  ProductPCGTabComponent
+)

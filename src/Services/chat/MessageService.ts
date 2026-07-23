@@ -16,6 +16,7 @@ export type GetMessagesParams = {
   agentId: number
   pageNumber?: number
   pageSize?: number
+  signal?: AbortSignal
 }
 
 type MessageQueryParams = {
@@ -78,6 +79,7 @@ export async function getMessages({
   agentId,
   pageNumber = 1,
   pageSize = 30,
+  signal,
 }: GetMessagesParams): Promise<PagedResponse<MessageDto>> {
   if (conversationId <= 0) {
     throw new Error("El conversationId debe ser mayor que cero.")
@@ -97,7 +99,10 @@ export async function getMessages({
 
   const { data } = await api.get<
     ApiResponse<PagedResponse<MessageDto>>
-  >(`/conversations/${conversationId}/messages`, { params })
+  >(`/conversations/${conversationId}/messages`, {
+    params,
+    signal,
+  })
 
   return normalizePagedMessages(data.data)
 }

@@ -26,7 +26,9 @@ type MessagesInfiniteData = InfiniteData<
   number
 >
 
-const DEFAULT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 30
+const MESSAGES_STALE_TIME_MS = 2 * 60 * 1000
+const MESSAGES_GC_TIME_MS = 10 * 60 * 1000
 
 const MEDIA_MESSAGE_TYPES = new Set([
   "Image",
@@ -38,17 +40,25 @@ const MEDIA_MESSAGE_TYPES = new Set([
 
 const buildMessageKey = (
   conversationId: number,
-  validFrom: Date | null,
-  validTo: Date | null,
+  validFromKey: string,
+  validToKey: string,
   agentId: number
 ) => {
   return [
     "chat-messages",
     conversationId,
-    validFrom?.toISOString() ?? "",
-    validTo?.toISOString() ?? "",
+    validFromKey,
+    validToKey,
     agentId,
   ] as const
+}
+
+const getDateKey = (date: Date | null): string => {
+  if (!date) return ""
+
+  const time = date.getTime()
+
+  return Number.isNaN(time) ? "" : date.toISOString()
 }
 
 const getMessageTime = (message: MessageDto): number => {
@@ -138,18 +148,20 @@ const mergeMessage = (
   currentMessages: MessageDto[],
   nextMessage: MessageDto
 ): MessageDto[] => {
-  const exists = currentMessages.some(
-    (message) =>
-      message.messageId === nextMessage.messageId
+  const existingIndex = currentMessages.findIndex(
+    (message) => message.messageId === nextMessage.messageId
   )
 
-  const merged = exists
-    ? currentMessages.map((message) =>
-        message.messageId === nextMessage.messageId
-          ? mergeMessageData(message, nextMessage)
-          : message
-      )
-    : [...currentMessages, nextMessage]
+  const merged = [...currentMessages]
+
+  if (existingIndex >= 0) {
+    merged[existingIndex] = mergeMessageData(
+      merged[existingIndex],
+      nextMessage
+    )
+  } else {
+    merged.push(nextMessage)
+  }
 
   return merged.sort(compareMessages)
 }
@@ -201,16 +213,29 @@ const updateMessageInPages = (
   current: MessagesInfiniteData,
   updatedMessage: MessageDto
 ): MessagesInfiniteData => {
+  const pageIndex = current.pages.findIndex((page) =>
+    page.items.some(
+      (message) => message.messageId === updatedMessage.messageId
+    )
+  )
+
+  if (pageIndex < 0) return current
+
+  const pages = [...current.pages]
+  const page = pages[pageIndex]
+
+  pages[pageIndex] = {
+    ...page,
+    items: page.items.map((message) =>
+      message.messageId === updatedMessage.messageId
+        ? mergeMessageData(message, updatedMessage)
+        : message
+    ),
+  }
+
   return {
     ...current,
-    pages: current.pages.map((page) => ({
-      ...page,
-      items: page.items.map((message) =>
-        message.messageId === updatedMessage.messageId
-          ? mergeMessageData(message, updatedMessage)
-          : message
-      ),
-    })),
+    pages,
   }
 }
 
@@ -313,6 +338,9 @@ const useMessages = (
   const currentAgentId =
     agentId > 0 ? agentId : 0
 
+  const validFromKey = getDateKey(validFrom)
+  const validToKey = getDateKey(validTo)
+
   const {
     joinConversation,
     leaveConversation,
@@ -326,14 +354,14 @@ const useMessages = (
     () =>
       buildMessageKey(
         currentConversationId,
-        validFrom,
-        validTo,
+        validFromKey,
+        validToKey,
         currentAgentId
       ),
     [
       currentConversationId,
-      validFrom,
-      validTo,
+      validFromKey,
+      validToKey,
       currentAgentId,
     ]
   )
@@ -350,7 +378,7 @@ const useMessages = (
     enabled: currentConversationId > 0,
     initialPageParam: 1,
 
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam, signal }) => {
       return getMessages({
         conversationId:
           currentConversationId,
@@ -359,6 +387,7 @@ const useMessages = (
         agentId: currentAgentId,
         pageNumber: pageParam,
         pageSize: DEFAULT_PAGE_SIZE,
+        signal,
       })
     },
 
@@ -378,8 +407,9 @@ const useMessages = (
     },
 
     refetchOnWindowFocus: false,
-    staleTime: 15_000,
-    gcTime: 60_000,
+    refetchOnReconnect: true,
+    staleTime: MESSAGES_STALE_TIME_MS,
+    gcTime: MESSAGES_GC_TIME_MS,
     retry: 1,
   })
 
@@ -459,6 +489,8 @@ const useMessages = (
       if (requiresMediaRefresh) {
         void queryClient.invalidateQueries({
           queryKey,
+          exact: true,
+          refetchType: "active",
         })
       }
     },

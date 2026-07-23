@@ -242,42 +242,27 @@ export function useSupportPage() {
   }, [fetchByName]);
 
   /**
-   * Carga la conversación seleccionada.
+   * Conserva en el hook la conversación que ya fue obtenida
+   * por la lista paginada.
+   *
+   * Esto evita ejecutar GET /Conversations/{id}
+   * cada vez que el usuario selecciona un chat.
+   */
+  const setConversationSnapshot = useCallback(
+    (value: ConversationDto | null): void => {
+      setConversation(value);
+    },
+    []
+  );
+
+  /**
+   * Al limpiar la selección también se descarta
+   * la instantánea de la conversación anterior.
    */
   useEffect(() => {
     if (!convId) {
       setConversation(null);
-      return;
     }
-
-    let cancelled = false;
-
-    const loadConversation = async (): Promise<void> => {
-      try {
-        setConversation(null);
-
-        const response = await getConversation(convId);
-
-        if (cancelled) return;
-
-        setConversation(response.data.data ?? null);
-      } catch (error) {
-        if (cancelled) return;
-
-        console.error(
-          "Error al obtener la conversación:",
-          error
-        );
-
-        setConversation(null);
-      }
-    };
-
-    void loadConversation();
-
-    return () => {
-      cancelled = true;
-    };
   }, [convId]);
 
   /**
@@ -513,6 +498,7 @@ export function useSupportPage() {
 
   return {
     conversation,
+    setConversationSnapshot,
 
     setOrderModalVisible,
     orderModalVisible,

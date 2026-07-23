@@ -45,6 +45,21 @@ type ConversationGroup = {
   conversations: ConversationDto[]
 }
 
+const getUnreadCount = (
+  conversation: ConversationDto,
+  userId: number
+): number => {
+  if (userId === conversation.assignedAgentId) {
+    return Number(conversation.unreadForAgent ?? 0)
+  }
+
+  if (userId === conversation.assignedByUserId) {
+    return Number(conversation.unreadForAssigner ?? 0)
+  }
+
+  return 0
+}
+
 export const InboxList: React.FC<Props> = ({
   selectedId,
   onSelect,
@@ -58,6 +73,7 @@ export const InboxList: React.FC<Props> = ({
   const listRef = useRef<HTMLUListElement>(null)
   const loaderRef = useRef<HTMLLIElement>(null)
   const pressTimerRef = useRef<number | null>(null)
+  const markedReadRef = useRef<Map<number, number>>(new Map())
 
   const { blockContact, unblockContact, isBlocking, isUnblocking } =
     useContactBlock()
@@ -140,6 +156,23 @@ export const InboxList: React.FC<Props> = ({
     }
   }, [])
 
+  useEffect(() => {
+    const conversationsById = new Map(
+      conversations.map((conversation) => [
+        conversation.conversationId,
+        conversation,
+      ])
+    )
+
+    markedReadRef.current.forEach((_, conversationId) => {
+      const conversation = conversationsById.get(conversationId)
+
+      if (!conversation || getUnreadCount(conversation, userId) <= 0) {
+        markedReadRef.current.delete(conversationId)
+      }
+    })
+  }, [conversations, userId])
+
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
       window.clearTimeout(pressTimerRef.current)
@@ -165,16 +198,36 @@ export const InboxList: React.FC<Props> = ({
     clearPressTimer()
   }
 
-  const handleSelect = (id: number) => {
-    if (menuState?.conversationId === id) return
+  const handleSelect = (conversation: ConversationDto) => {
+    const conversationId = conversation.conversationId
 
-    if (id === selectedId) {
+    if (menuState?.conversationId === conversationId) return
+
+    if (conversationId === selectedId) {
       onSelect(null)
       return
     }
 
-    onSelect(id)
-    void markConversationRead(id)
+    onSelect(conversationId)
+
+    const unreadCount = getUnreadCount(conversation, userId)
+    const alreadyMarkedCount =
+      markedReadRef.current.get(conversationId) ?? 0
+
+    if (unreadCount <= 0 || alreadyMarkedCount >= unreadCount) {
+      return
+    }
+
+    markedReadRef.current.set(conversationId, unreadCount)
+
+    void markConversationRead(conversationId).catch((error) => {
+      markedReadRef.current.delete(conversationId)
+
+      console.error(
+        "No se pudo marcar la conversación como leída:",
+        error
+      )
+    })
   }
 
   const handleContextMenu = (
@@ -279,12 +332,7 @@ export const InboxList: React.FC<Props> = ({
               conversation.status ??
               "Pendiente"
 
-            const unread =
-              userId === conversation.assignedAgentId
-                ? conversation.unreadForAgent ?? 0
-                : userId === conversation.assignedByUserId
-                  ? conversation.unreadForAssigner ?? 0
-                  : 0
+            const unread = getUnreadCount(conversation, userId)
 
             const hasUnread = unread > 0
 
@@ -320,10 +368,10 @@ export const InboxList: React.FC<Props> = ({
                 role="button"
                 tabIndex={0}
                 aria-pressed={isSelected}
-                onClick={() => handleSelect(conversation.conversationId)}
+                onClick={() => handleSelect(conversation)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    handleSelect(conversation.conversationId)
+                    handleSelect(conversation)
                   }
                 }}
                 onContextMenu={(event) =>

@@ -197,10 +197,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     activeCustomMessages,
     loading: loadingCustomMessages,
     error: customMessagesError,
+    loaded: customMessagesLoaded,
+    load: loadCustomMessages,
     create,
     update,
     toggleStatus,
-  } = useCustomMessage(true)
+  } = useCustomMessage(false)
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const emojiPickerRef = useRef<HTMLDivElement | null>(null)
@@ -243,6 +245,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       return {
         message,
         showDate,
+        dateLabel: currentDateKey,
       }
     })
   }, [visibleMessages])
@@ -286,8 +289,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       customMessagesButtonRef.current?.getBoundingClientRect() ?? null
 
     setCustomMessagesAnchor(rect)
-    setCustomMessagesOpen((current) => !current)
-  }, [canType])
+    setCustomMessagesOpen((current) => {
+      const nextOpen = !current
+
+      if (nextOpen && !customMessagesLoaded) {
+        void loadCustomMessages()
+      }
+
+      return nextOpen
+    })
+  }, [canType, customMessagesLoaded, loadCustomMessages])
 
   const closeCustomMessages = useCallback(() => {
     setCustomMessagesOpen(false)
@@ -578,6 +589,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               src={previewImage}
               alt="Respuesta"
               className="chat-window__reply-thumb-img"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
             />
           )}
 
@@ -602,7 +616,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             className="chat-window__image-container"
             onClick={() => openImagePreview(url)}
           >
-            <img src={url} alt={fileName} className="chat-window__image" />
+            <img
+              src={url}
+              alt={fileName}
+              className="chat-window__image"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
           </button>
         </div>
       )
@@ -611,7 +632,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (isVideo(mimeType)) {
       return (
         <div className="chat-window__media-video">
-          <video controls className="chat-window__video">
+          <video controls preload="metadata" className="chat-window__video">
             <source src={url} type={mimeType} />
           </video>
         </div>
@@ -629,7 +650,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <div className="chat-window__audio-info">
               <div className="chat-window__audio-name">{fileName}</div>
 
-              <audio controls className="chat-window__audio-player">
+              <audio
+                controls
+                preload="metadata"
+                className="chat-window__audio-player"
+              >
                 <source src={url} type={mimeType} />
               </audio>
             </div>
@@ -924,12 +949,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         )}
 
-        {groupedMessages.map(({ message, showDate }) => (
+        {groupedMessages.map(({ message, showDate, dateLabel }) => (
           <React.Fragment key={message.clientTempId ?? message.messageId}>
             {showDate && (
               <div className="chat-window__date-divider">
                 <span className="chat-window__date-text">
-                  {formatDateDivider(message.sentAt)}
+                  {dateLabel}
                 </span>
               </div>
             )}
@@ -1229,6 +1254,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             src={previewImageUrl}
             alt="Vista previa"
             className="chat-window__image-preview-full"
+            decoding="async"
           />
         </div>
       )}

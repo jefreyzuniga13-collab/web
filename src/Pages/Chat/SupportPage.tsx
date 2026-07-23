@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "@mui/material";
 import { FaBuilding, FaPhoneAlt } from "react-icons/fa";
 import { MdContacts, MdFilterListAlt } from "react-icons/md";
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
-import { PiSticker } from "react-icons/pi";
 import { LuLoaderCircle } from "react-icons/lu";
 import { InboxList } from "@/Components/Chat/InboxList";
 import { ChatWindow } from "@/Components/Chat/ChatWindow";
@@ -12,7 +11,6 @@ import { ContactDetail } from "@/Components/Chat/ContactDetail";
 import FilterOrderModal from "@/Components/Chat/FilterOrderModal";
 import CompanyModalFilter from "@/Components/Chat/CompanyModalFilter";
 import DetailPanel from "@/Components/Chat/DetailPanel";
-import TicketModal from "@/Components/Crm/TicketModal";
 import BulkAssignmentModal from "@/Components/Chat/BulkAssignmentModal";
 import Input from "@/Components/Common/Input";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
@@ -38,8 +36,6 @@ const MOBILE_QUERY = "(max-width: 768px)";
 
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
-
-  const [ticketOpen, setTicketOpen] = useState(false);
   const [bulkAssignmentOpen, setBulkAssignmentOpen] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
@@ -61,6 +57,7 @@ const SupportPage: React.FC = () => {
 
   const {
     conversation,
+    setConversationSnapshot,
 
     setOrderModalVisible,
     orderModalVisible,
@@ -124,6 +121,21 @@ const SupportPage: React.FC = () => {
     );
   }, [convId, convHook.conversations, conversation]);
 
+  /**
+   * Evita utilizar accidentalmente el contacto de una
+   * conversación seleccionada anteriormente.
+   */
+  const activeContact = useMemo(() => {
+    if (!contact || !activeConversation?.clientContactId) {
+      return null;
+    }
+
+    return contact.id === activeConversation.clientContactId
+      ? contact
+      : null;
+  }, [activeConversation?.clientContactId, contact]);
+
+
   const isClosed =
     activeConversation?.status === "Closed" ||
     activeConversation?.status === "Incomplete";
@@ -159,16 +171,24 @@ const SupportPage: React.FC = () => {
   }, []);
 
   /**
-   * Carga el contacto asociado
-   * a la conversación seleccionada.
+   * El contacto es información secundaria.
+   *
+   * Se consulta únicamente cuando se abre el panel de detalle.
+   * Así, seleccionar una conversación prioriza la carga del chat.
    */
   useEffect(() => {
-    if (!activeConversation?.clientContactId) {
-      return;
-    }
+    const contactId = activeConversation?.clientContactId;
 
-    void fetchById(activeConversation.clientContactId);
-  }, [activeConversation?.clientContactId, fetchById]);
+    if (!detailToggle || !contactId) return;
+    if (activeContact?.id === contactId) return;
+
+    void fetchById(contactId);
+  }, [
+    activeContact?.id,
+    activeConversation?.clientContactId,
+    detailToggle,
+    fetchById,
+  ]);
 
   /**
    * Si la conversación desaparece de la lista,
@@ -181,6 +201,7 @@ const SupportPage: React.FC = () => {
       !convHook.conversations.some((item) => item.conversationId === convId)
     ) {
       setConvId(null);
+      setConversationSnapshot(null);
       setMobileChatVisible(false);
       setDetailToggle(false);
     }
@@ -189,6 +210,7 @@ const SupportPage: React.FC = () => {
     convHook.conversations,
     convHook.loading,
     setConvId,
+    setConversationSnapshot,
     setDetailToggle,
   ]);
 
@@ -208,17 +230,16 @@ const SupportPage: React.FC = () => {
       if (isMobile && mobileChatVisible) {
         setMobileChatVisible(false);
         setContactDetailToggle(false);
-        setTicketOpen(false);
         setDetailToggle(false);
         return;
       }
 
       setContactDetailToggle(false);
-      setTicketOpen(false);
       setDetailToggle(false);
 
       if (convId) {
         setConvId(null);
+        setConversationSnapshot(null);
       }
     };
 
@@ -234,63 +255,63 @@ const SupportPage: React.FC = () => {
     mobileChatVisible,
     setContactDetailToggle,
     setConvId,
+    setConversationSnapshot,
     setDetailToggle,
   ]);
 
   /**
-   * Consulta el carrito asociado al contacto activo.
+   * El carrito también es información secundaria.
+   *
+   * Solo se consulta cuando el usuario abre el panel de detalle,
+   * evitando dos solicitudes adicionales al seleccionar el chat.
    */
   useEffect(() => {
-    if (!convId && canShowSaleDetail) {
-      void dispatch(
-        getProductFromCarAsync({
-          codCliente: contact?.id ?? 0,
-          noPedido: 0,
-        }),
-      );
-
+    if (!detailToggle || !convId || !canShowSaleDetail || !activeContact?.id) {
       return;
     }
-
-    if (!contact?.id) return;
-    if (!canShowSaleDetail) return;
 
     let cancelled = false;
 
     const loadCart = async (): Promise<void> => {
-      const log = await fetchByContactId(contact.id);
+      try {
+        const log = await fetchByContactId(activeContact.id);
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
+        const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
 
-      const cart = await dispatch(
-        getProductFromCarAsync({
-          codCliente: contact.id,
-          noPedido,
-        }),
-      ).unwrap();
+        const cart = await dispatch(
+          getProductFromCarAsync({
+            codCliente: activeContact.id,
+            noPedido,
+          }),
+        ).unwrap();
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      const items = Array.isArray(cart) ? cart : [];
+        const items = Array.isArray(cart) ? cart : [];
 
-      const count =
-        items[0]?.listDetalle?.reduce((sum, detail) => {
-          if (detail.tipoComponente !== "O") {
-            return sum + Number(detail.cantidad ?? 0);
-          }
+        const count =
+          items[0]?.listDetalle?.reduce((sum, detail) => {
+            if (detail.tipoComponente !== "O") {
+              return sum + Number(detail.cantidad ?? 0);
+            }
 
-          return sum;
-        }, 0) ?? 0;
+            return sum;
+          }, 0) ?? 0;
 
-      dispatch(
-        setContactCartBadge({
-          contactId: contact.id,
-          hasCart: count > 0,
-          count,
-        }),
-      );
+        dispatch(
+          setContactCartBadge({
+            contactId: activeContact.id,
+            hasCart: count > 0,
+            count,
+          }),
+        );
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error al cargar el carrito del contacto:", error);
+        }
+      }
     };
 
     void loadCart();
@@ -298,22 +319,49 @@ const SupportPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [convId, contact?.id, dispatch, fetchByContactId, canShowSaleDetail]);
+  }, [
+    activeContact?.id,
+    canShowSaleDetail,
+    convId,
+    detailToggle,
+    dispatch,
+    fetchByContactId,
+  ]);
 
   /**
-   * Selecciona una conversación.
+   * Selecciona una conversación usando la información que
+   * ya se encuentra disponible en la lista paginada.
+   *
+   * El snapshot permite asignar y cerrar sin ejecutar
+   * nuevamente GET /Conversations/{id}.
    */
-  const handleSelectConversation = (id: number | null): void => {
-    setConvId(id);
+  const handleSelectConversation = useCallback(
+    (id: number | null): void => {
+      const selectedConversation =
+        id === null
+          ? null
+          : convHook.conversations.find(
+              (item) => item.conversationId === id,
+            ) ?? null;
 
-    if (!isMobile) return;
+      setConvId(id);
+      setConversationSnapshot(selectedConversation);
+      setDetailToggle(false);
+      setContactDetailToggle(false);
 
-    setDetailToggle(false);
-    setContactDetailToggle(false);
-    setTicketOpen(false);
-
-    setMobileChatVisible(Boolean(id));
-  };
+      if (isMobile) {
+        setMobileChatVisible(Boolean(id));
+      }
+    },
+    [
+      convHook.conversations,
+      isMobile,
+      setContactDetailToggle,
+      setConversationSnapshot,
+      setConvId,
+      setDetailToggle,
+    ],
+  );
 
   /**
    * Regresa desde el chat móvil
@@ -323,7 +371,6 @@ const SupportPage: React.FC = () => {
     setMobileChatVisible(false);
     setDetailToggle(false);
     setContactDetailToggle(false);
-    setTicketOpen(false);
   };
 
   /**
@@ -463,18 +510,6 @@ const SupportPage: React.FC = () => {
           </h2>
 
           <div className="btn-container">
-            {convId && contact?.clienteCodigo && (
-              <button
-                className="crearTicket-button"
-                onClick={() => setTicketOpen(true)}
-                type="button"
-                disabled={isClosing}
-              >
-                <PiSticker size={16} />
-                Crear Ticket
-              </button>
-            )}
-
             {convId && (
               <div
                 className={`inbox-list__action ${
@@ -632,21 +667,6 @@ const SupportPage: React.FC = () => {
           }}
         />
       )}
-
-      {ticketOpen &&
-        convId &&
-        contact?.isVerified &&
-        activeConversation &&
-        contact?.clienteCodigo && (
-          <TicketModal
-            isOpen={ticketOpen}
-            onClose={() => setTicketOpen(false)}
-            conversationId={activeConversation.conversationId}
-            codCliente={contact.clienteCodigo ?? ""}
-            clientName={contact.clienteNombre ?? ""}
-            contactId={contact.id}
-          />
-        )}
     </div>
   );
 };

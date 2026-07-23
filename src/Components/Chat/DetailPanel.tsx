@@ -1,123 +1,150 @@
+import { useEffect, type FC } from "react";
+import { useDispatch } from "react-redux";
+
 import { useDetailPanel } from "@/Hooks/Chat/useDetailPanel";
 import DetailPanelHeaderTabs from "@/Components/Chat/DetailPanel/DetailPanelHeaderTabs";
 import DetailPanelCurrentConversationTab from "@/Components/Chat/DetailPanel/DetailPanelCurrentConversationTab";
 import DetailPanelOptionsContact from "@/Components/Chat/DetailPanelOptionsContact";
-// import DetailPanelMensajesRapidos from "@/Components/Chat/DetailPanelMensajesRapidos";
-import {ProductTab} from '@/Components/ECommerce/Tabs/ProductTab'
+import { ProductTab } from "@/Components/ECommerce/Tabs/ProductTab";
 import CarPCPanelTab from "@/Components/ECommerce/Tabs/CarPCPanelTab";
-import "@/Styles/Chat/DetailPanel.css";
-import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
-import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/Context";
 import { CartPCGFlowProvider } from "@/Context/CartPCGFlowProvider";
 import { CartFlowSignalCleaner } from "@/Hooks/Ecommerce/tabs/CartFlowSignalCleaner";
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
+import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
+import type { AppDispatch } from "@/Context";
+
+import "@/Styles/Chat/DetailPanel.css";
 
 type Props = {
   contactId?: number;
   conversationId?: number;
   selectedParam?: unknown;
-  metaChannel: string
+  metaChannel: string;
   isAdmin?: boolean;
   onSendNow?: (txt: string) => void | Promise<void>;
 };
 
-const DetailPanel: React.FC<Props> = ({
+type CartReloadDetail = {
+  contactId?: number;
+  orderId?: number;
+};
+
+const DetailPanel: FC<Props> = ({
   contactId,
   conversationId,
   metaChannel,
   selectedParam,
-  // onSendNow,
-  isAdmin
+  isAdmin,
 }) => {
+  const normalizedContactId = Number(contactId ?? 0);
+  const normalizedConversationId = Number(conversationId ?? 0);
+
   const {
     optionMenu,
     setOptionMenu,
     selectedData,
-    // qQuick,
-    // setQQuick,
-    // filteredQuick,
-    // handleSendQuick,
     formatNiPhone,
     displayOrDash,
     formatDate,
-  } = useDetailPanel(contactId, selectedParam);
+  } = useDetailPanel(normalizedContactId, selectedParam);
 
-     const dispatch = useDispatch<AppDispatch>();
-   
-   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onReload = async (e: any) => {
-      const { contactId: cid, orderId } = e.detail ?? {};
-      if (!cid || !orderId) return;
+  const dispatch = useDispatch<AppDispatch>();
 
-      const updated = await dispatch(
-        getProductFromCarAsync({ codCliente: contactId ?? 0, noPedido: orderId })
-      ).unwrap();
+  /*
+   * El flujo de carrito emite este evento después de una modificación.
+   * Solo se procesa cuando pertenece al contacto activo del panel.
+   */
+  useEffect(() => {
+    const onReload = async (event: Event): Promise<void> => {
+      const detail = (event as CustomEvent<CartReloadDetail>).detail;
 
-      const arr = Array.isArray(updated) ? updated : [];
+      const eventContactId = Number(detail?.contactId ?? 0);
+      const orderId = Number(detail?.orderId ?? 0);
 
-      const count = arr[0]?.listDetalle?.reduce((sum, d) => {
-        // Solo sumamos si tipoComponente NO es "O"
-        if (d.tipoComponente !== "O") {
-          return sum + Number(d.cantidad ?? 0);
-        }
-        // Si es "O", retornamos el acumulador tal cual
-        return sum;
-      }, 0) ?? 0;
-      
-      dispatch(setContactCartBadge({
-        contactId: cid,
-        hasCart: count > 0,
-        count
-      }));
+      if (eventContactId <= 0 || orderId <= 0) return;
+      if (eventContactId !== normalizedContactId) return;
+
+      try {
+        const updated = await dispatch(
+          getProductFromCarAsync({
+            codCliente: eventContactId,
+            noPedido: orderId,
+          })
+        ).unwrap();
+
+        const cart = Array.isArray(updated) ? updated : [];
+
+        const count =
+          cart[0]?.listDetalle?.reduce((sum, item) => {
+            if (item.tipoComponente === "O") {
+              return sum;
+            }
+
+            return sum + Number(item.cantidad ?? 0);
+          }, 0) ?? 0;
+
+        dispatch(
+          setContactCartBadge({
+            contactId: eventContactId,
+            hasCart: count > 0,
+            count,
+          })
+        );
+      } catch (error) {
+        console.error(
+          "No se pudo actualizar el indicador del carrito:",
+          error
+        );
+      }
     };
 
     window.addEventListener("CartReloadForActiveContact", onReload);
-    return () =>
+
+    return () => {
       window.removeEventListener("CartReloadForActiveContact", onReload);
-  }, [contactId, dispatch]);
-  
+    };
+  }, [dispatch, normalizedContactId]);
+
+  const showCartFlow =
+    normalizedContactId > 0 &&
+    normalizedConversationId > 0 &&
+    (optionMenu === 1 || optionMenu === 2);
+
   return (
-    <div
-      key={`${contactId ?? "c"}-${conversationId ?? "v"}-${
-        selectedParam ?? ""
-      }`}
-      className="detailPanel-container"
-    >
+    <div className="detailPanel-container">
       <DetailPanelHeaderTabs
         optionMenu={optionMenu}
         onSelectTab={setOptionMenu}
-        contactId={contactId ?? 0}
+        contactId={normalizedContactId}
       />
 
       <section className="detailPanel-content detailPanel-content--padded">
-
-        <CartPCGFlowProvider
-            conversationId={Number(conversationId)}
-            contactId={Number(contactId)}
+        {showCartFlow && (
+          <CartPCGFlowProvider
+            conversationId={normalizedConversationId}
+            contactId={normalizedContactId}
             metaChannel={String(metaChannel)}
           >
             <CartFlowSignalCleaner
-              contactId={Number(contactId)}
-              conversationId={Number(conversationId)}
+              contactId={normalizedContactId}
+              conversationId={normalizedConversationId}
             />
 
             {optionMenu === 1 && (
               <ProductTab
-                conversationId={Number(conversationId)}
-                contactId={Number(contactId)}
+                conversationId={normalizedConversationId}
+                contactId={normalizedContactId}
               />
             )}
 
             {optionMenu === 2 && (
               <CarPCPanelTab
-                conversationId={Number(conversationId)}
-                contactId={Number(contactId)}
+                conversationId={normalizedConversationId}
+                contactId={normalizedContactId}
               />
             )}
           </CartPCGFlowProvider>
+        )}
 
         {optionMenu === 3 &&
           (selectedData ? (
@@ -133,24 +160,13 @@ const DetailPanel: React.FC<Props> = ({
             </div>
           ))}
 
-        {optionMenu === 4 && (
+        {optionMenu === 4 && normalizedConversationId > 0 && (
           <DetailPanelCurrentConversationTab
-            conversationId={(Number(conversationId))}
+            conversationId={normalizedConversationId}
             formatDate={formatDate}
             isAdmin={isAdmin}
           />
         )}
-
-        {/* {optionMenu === 5 && (
-          <DetailPanelMensajesRapidos
-            filteredQuick={filteredQuick}
-            handleSendQuick={txt => handleSendQuick(txt, onSendNow)}
-            qQuick={qQuick}
-            setQQuick={setQQuick}
-            onSendNow={onSendNow}
-          />
-        )} */}
-        
       </section>
     </div>
   );

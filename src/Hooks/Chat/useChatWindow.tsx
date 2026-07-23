@@ -329,11 +329,15 @@ export const useChatWindow = (
   validFrom: Date | null = null,
   validTo: Date | null = null
 ) => {
-  const [conversationId, setConversationId] = useState<number>(
-    Number(args.conversationId ?? 0)
-  )
-
-  const [userId, setUserId] = useState<number>(Number(args.userId ?? 0))
+  /*
+   * Estos valores provienen directamente de las props.
+   *
+   * No deben duplicarse en useState porque, al cambiar de conversación,
+   * React renderizaba primero con el ID anterior y luego ejecutaba otro
+   * render al sincronizar el estado mediante useEffect.
+   */
+  const conversationId = Number(args.conversationId ?? 0)
+  const userId = Number(args.userId ?? 0)
   const agentId = Number(args.agentId ?? 0)
 
   const {
@@ -574,11 +578,6 @@ export const useChatWindow = (
     },
     [conversationId, userId]
   )
-
-  useEffect(() => {
-    setConversationId(Number(args.conversationId ?? 0))
-    setUserId(Number(args.userId ?? 0))
-  }, [args.conversationId, args.userId])
 
   useEffect(() => {
     setSearchTerm((args.highlightTerm ?? "").trim())
@@ -1542,9 +1541,6 @@ export const useChatWindow = (
   }, [])
 
   return {
-    setConversationId,
-    setUserId,
-
     messages: mergedMessages,
     loadingMessages,
     messagesError,

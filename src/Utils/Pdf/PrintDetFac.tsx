@@ -1,17 +1,8 @@
-import type {
-  LogCartResponseDto
-} from "@/Interfaces/Crm/LogCartInterface"
-import type {
-  PrintDetallePagoRaw,
-  PrintOrdenFactInterfaceRaw
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
+import type {LogCartResponseDto} from "@/Interfaces/Crm/LogCartInterface"
+import type {PrintDetallePagoRaw,PrintOrdenFactInterfaceRaw} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-
-import {
-  safeNumber
-} from "@/Utils/ECommerce/utils"
+import {safeNumber} from "@/Utils/ECommerce/utils"
 
 type AutoTableDoc = jsPDF & {
   lastAutoTable?: {
