@@ -1,32 +1,14 @@
-import { useCallback, useMemo, useState } from "react";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useCallback, useMemo, useState,} from "react";
+import {keepPreviousData,useMutation,useQuery,useQueryClient,} from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import {
-  userService,
-  type CompanyOption,
-  type RoleOption,
-} from "@/Services/auth/UserService";
-import type {
-  ApiResponse,
-  PaginatedUsers,
-  User,
-  UpdateUserRequest,
-} from "@/Interfaces/Auth/UserInterfaces";
+import {userService,type CompanyOption,} from "@/Services/auth/UserService";
+import type { ApiResponse, PaginatedUsers, User, UpdateUserRequest,} from "@/Interfaces/Auth/UserInterfaces";
 
 type ModalMode = "create" | "edit" | "view";
 
 type UpdateUserMutationRequest = {
   id: number;
   data: UpdateUserRequest;
-};
-
-type ToggleUserMutationRequest = {
-  id: number;
 };
 
 type UsersListParams = {
@@ -48,196 +30,312 @@ const userKeys = {
       params.pageSize,
     ] as const,
 
-  detail: (id: number) => [...userKeys.all, "detail", id] as const,
+  detail: (id: number) =>
+    [...userKeys.all, "detail", id] as const,
 
-  detailIdle: () => [...userKeys.all, "detail", "idle"] as const,
-
-  roles: () => [...userKeys.all, "roles"] as const,
-
-  companies: () => [...userKeys.all, "companies"] as const,
+  companies: () =>
+    [...userKeys.all, "companies"] as const,
 };
 
 const isPaginatedUsersResponse = (
-  response: ApiResponse<PaginatedUsers> | undefined | null
+  response:
+    | ApiResponse<PaginatedUsers>
+    | undefined,
 ): response is ApiResponse<PaginatedUsers> => {
-  return (
-    response !== undefined &&
-    response !== null &&
-    response.data !== undefined &&
-    response.data !== null &&
-    Array.isArray(response.data.items) &&
-    response.data.meta !== undefined &&
-    response.data.meta !== null
+  return Boolean(
+    response?.data &&
+      Array.isArray(response.data.items) &&
+      response.data.meta,
   );
 };
 
 const updateUserInCachedLists = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  updatedUser: User
+  queryClient: ReturnType<
+    typeof useQueryClient
+  >,
+  updatedUser: User,
 ): void => {
-  const cachedQueries = queryClient.getQueriesData<ApiResponse<PaginatedUsers>>({
-    queryKey: userKeys.lists(),
-  });
-
-  cachedQueries.forEach(([queryKey, cachedResponse]) => {
-    if (!isPaginatedUsersResponse(cachedResponse)) return;
-
-    const existsUser = cachedResponse.data.items.some(
-      (item) => item.userId === updatedUser.userId
-    );
-
-    if (!existsUser) return;
-
-    const updatedItems = cachedResponse.data.items.map((item) =>
-      item.userId === updatedUser.userId ? updatedUser : item
-    );
-
-    queryClient.setQueryData<ApiResponse<PaginatedUsers>>(queryKey, {
-      ...cachedResponse,
-      data: {
-        ...cachedResponse.data,
-        items: updatedItems,
-      },
+  const cachedQueries =
+    queryClient.getQueriesData<
+      ApiResponse<PaginatedUsers>
+    >({
+      queryKey: userKeys.lists(),
     });
-  });
-};
 
-const prependUserToFirstPageIfMatches = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  createdUser: User
-): void => {
-  const cachedQueries = queryClient.getQueriesData<ApiResponse<PaginatedUsers>>({
-    queryKey: userKeys.lists(),
-  });
+  cachedQueries.forEach(
+    ([queryKey, cachedResponse]) => {
+      if (
+        !isPaginatedUsersResponse(
+          cachedResponse,
+        )
+      ) {
+        return;
+      }
 
-  cachedQueries.forEach(([queryKey, cachedResponse]) => {
-    if (!isPaginatedUsersResponse(cachedResponse)) return;
+      const exists = cachedResponse.data.items.some(
+        (user) =>
+          user.userId ===
+          updatedUser.userId,
+      );
 
-    const typedKey = queryKey as ReturnType<typeof userKeys.list>;
-    const [, , filterValue, pageValue, pageSizeValue] = typedKey;
+      if (!exists) {
+        return;
+      }
 
-    if (pageValue !== 1) return;
-
-    const normalizedFilter = String(filterValue ?? "")
-      .trim()
-      .toLowerCase();
-
-    const fullName = createdUser.fullName.trim().toLowerCase();
-    const email = (createdUser.email ?? "").trim().toLowerCase();
-
-    const matchesFilter =
-      normalizedFilter.length === 0 ||
-      fullName.includes(normalizedFilter) ||
-      email.includes(normalizedFilter);
-
-    if (!matchesFilter) return;
-
-    const exists = cachedResponse.data.items.some(
-      (item) => item.userId === createdUser.userId
-    );
-
-    if (exists) return;
-
-    const updatedItems = [createdUser, ...cachedResponse.data.items].slice(
-      0,
-      pageSizeValue
-    );
-
-    queryClient.setQueryData<ApiResponse<PaginatedUsers>>(queryKey, {
-      ...cachedResponse,
-      data: {
-        ...cachedResponse.data,
-        items: updatedItems,
-        meta: {
-          ...cachedResponse.data.meta,
-          totalCount: cachedResponse.data.meta.totalCount + 1,
+      queryClient.setQueryData<
+        ApiResponse<PaginatedUsers>
+      >(queryKey, {
+        ...cachedResponse,
+        data: {
+          ...cachedResponse.data,
+          items:
+            cachedResponse.data.items.map(
+              (user) =>
+                user.userId ===
+                updatedUser.userId
+                  ? updatedUser
+                  : user,
+            ),
         },
-      },
-    });
-  });
+      });
+    },
+  );
 };
 
-const useClasicUser = (userId: number | null = null) => {
+const prependUserToCachedFirstPages = (
+  queryClient: ReturnType<
+    typeof useQueryClient
+  >,
+  createdUser: User,
+): void => {
+  const cachedQueries =
+    queryClient.getQueriesData<
+      ApiResponse<PaginatedUsers>
+    >({
+      queryKey: userKeys.lists(),
+    });
+
+  cachedQueries.forEach(
+    ([queryKey, cachedResponse]) => {
+      if (
+        !isPaginatedUsersResponse(
+          cachedResponse,
+        )
+      ) {
+        return;
+      }
+
+      const typedKey =
+        queryKey as ReturnType<
+          typeof userKeys.list
+        >;
+
+      const [
+        ,
+        ,
+        filterValue,
+        pageValue,
+        pageSizeValue,
+      ] = typedKey;
+
+      if (pageValue !== 1) {
+        return;
+      }
+
+      const normalizedFilter = String(
+        filterValue ?? "",
+      )
+        .trim()
+        .toLowerCase();
+
+      const fullName =
+        createdUser.fullName
+          .trim()
+          .toLowerCase();
+
+      const email = (
+        createdUser.email ?? ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const matchesFilter =
+        normalizedFilter.length === 0 ||
+        fullName.includes(
+          normalizedFilter,
+        ) ||
+        email.includes(normalizedFilter);
+
+      if (!matchesFilter) {
+        return;
+      }
+
+      const alreadyExists =
+        cachedResponse.data.items.some(
+          (user) =>
+            user.userId ===
+            createdUser.userId,
+        );
+
+      if (alreadyExists) {
+        return;
+      }
+
+      const updatedItems = [
+        createdUser,
+        ...cachedResponse.data.items,
+      ].slice(0, pageSizeValue);
+
+      queryClient.setQueryData<
+        ApiResponse<PaginatedUsers>
+      >(queryKey, {
+        ...cachedResponse,
+        data: {
+          ...cachedResponse.data,
+          items: updatedItems,
+          meta: {
+            ...cachedResponse.data.meta,
+            totalCount:
+              cachedResponse.data.meta
+                .totalCount + 1,
+          },
+        },
+      });
+    },
+  );
+};
+
+const useClasicUser = () => {
   const queryClient = useQueryClient();
 
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(20);
-  const [globalFilter, setGlobalFilterState] = useState<string>("");
-  const [modalMode, setModalMode] = useState<ModalMode>("create");
-  const [isModalOpen, setModalOpen] = useState<boolean>(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [page, setPageState] =
+    useState(1);
 
-  const listParams = useMemo<UsersListParams>(
-    () => ({
-      globalFilter,
-      page,
-      pageSize,
-    }),
-    [globalFilter, page, pageSize]
-  );
+  const [pageSize, setPageSizeState] =
+    useState(20);
 
-  const usersQuery = useQuery<ApiResponse<PaginatedUsers>, Error>({
-    queryKey: userKeys.list(listParams),
+  const [
+    globalFilter,
+    setGlobalFilterState,
+  ] = useState("");
+
+  const [modalMode, setModalMode] =
+    useState<ModalMode>("create");
+
+  const [isModalOpen, setModalOpen] =
+    useState(false);
+
+  const [
+    selectedUser,
+    setSelectedUser,
+  ] = useState<User | null>(null);
+
+  const listParams =
+    useMemo<UsersListParams>(
+      () => ({
+        globalFilter:
+          globalFilter.trim(),
+        page,
+        pageSize,
+      }),
+      [
+        globalFilter,
+        page,
+        pageSize,
+      ],
+    );
+
+  /*
+   * Esta petición solamente se ejecuta cuando
+   * UsersPage monta este hook.
+   */
+  const usersQuery = useQuery<
+    ApiResponse<PaginatedUsers>,
+    Error
+  >({
+    queryKey:
+      userKeys.list(listParams),
+
     queryFn: () =>
       userService.getUsersAsync(
         listParams.globalFilter,
         listParams.page,
-        listParams.pageSize
+        listParams.pageSize,
       ),
+
     placeholderData: keepPreviousData,
-    staleTime: 1000 * 30,
+
+    staleTime: 30 * 1000,
+
+    gcTime: 5 * 60 * 1000,
+
+    refetchOnWindowFocus: false,
   });
 
-  const userByIdQuery = useQuery<ApiResponse<User>, Error>({
-    queryKey: userId !== null ? userKeys.detail(userId) : userKeys.detailIdle(),
-    queryFn: () => {
-      if (userId === null) {
-        throw new Error("Se requiere un userId válido.");
-      }
-
-      return userService.getUserAsync(userId);
-    },
-    enabled: userId !== null,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const rolesQuery = useQuery<ApiResponse<RoleOption[]>, Error>({
-    queryKey: userKeys.roles(),
-    queryFn: () => userService.getRolesAsync(),
-    staleTime: 1000 * 60 * 30,
-    gcTime: 1000 * 60 * 60,
-  });
-
-  const companiesQuery = useQuery<ApiResponse<CompanyOption[]>, Error>({
+  /*
+   * Las empresas también se cargan únicamente
+   * al entrar en la administración de usuarios.
+   */
+  const companiesQuery = useQuery<
+    ApiResponse<CompanyOption[]>,
+    Error
+  >({
     queryKey: userKeys.companies(),
-    queryFn: () => userService.getCompaniesAsync(),
-    staleTime: 1000 * 60 * 30,
-    gcTime: 1000 * 60 * 60,
+
+    queryFn: () =>
+      userService.getCompaniesAsync(),
+
+    staleTime: 30 * 60 * 1000,
+
+    gcTime: 60 * 60 * 1000,
+
+    refetchOnWindowFocus: false,
   });
 
-  const createMutation = useMutation<ApiResponse<User>, Error, FormData>({
-    mutationFn: (formData: FormData) => userService.createUserAsync(formData),
+  const createMutation = useMutation<
+    ApiResponse<User>,
+    Error,
+    FormData
+  >({
+    mutationFn: (formData) =>
+      userService.createUserAsync(
+        formData,
+      ),
 
-    onSuccess: (response: ApiResponse<User>) => {
-      const createdUser = response.data;
+    onSuccess: (response) => {
+      const createdUser =
+        response.data;
 
-      queryClient.setQueryData<ApiResponse<User>>(
-        userKeys.detail(createdUser.userId),
-        response
+      queryClient.setQueryData<
+        ApiResponse<User>
+      >(
+        userKeys.detail(
+          createdUser.userId,
+        ),
+        response,
       );
 
-      prependUserToFirstPageIfMatches(queryClient, createdUser);
+      prependUserToCachedFirstPages(
+        queryClient,
+        createdUser,
+      );
 
-      toast.success(response.message || "Usuario creado");
+      toast.success(
+        response.message ||
+          "Usuario creado",
+      );
 
       setModalOpen(false);
       setSelectedUser(null);
       setModalMode("create");
-      setPage(1);
+      setPageState(1);
     },
 
-    onError: (error: Error) => {
-      toast.error(error.message || "Error al crear usuario");
+    onError: (error) => {
+      toast.error(
+        error.message ||
+          "Error al crear usuario",
+      );
     },
   });
 
@@ -246,123 +344,149 @@ const useClasicUser = (userId: number | null = null) => {
     Error,
     UpdateUserMutationRequest
   >({
-    mutationFn: ({ id, data }: UpdateUserMutationRequest) =>
-      userService.updateUserAsync(id, data),
+    mutationFn: ({ id, data }) =>
+      userService.updateUserAsync(
+        id,
+        data,
+      ),
 
-    onSuccess: (response: ApiResponse<User>) => {
-      const updatedUser = response.data;
+    onSuccess: (response) => {
+      const updatedUser =
+        response.data;
 
-      queryClient.setQueryData<ApiResponse<User>>(
-        userKeys.detail(updatedUser.userId),
-        response
+      queryClient.setQueryData<
+        ApiResponse<User>
+      >(
+        userKeys.detail(
+          updatedUser.userId,
+        ),
+        response,
       );
 
-      updateUserInCachedLists(queryClient, updatedUser);
+      updateUserInCachedLists(
+        queryClient,
+        updatedUser,
+      );
 
-      if (selectedUser !== null && selectedUser.userId === updatedUser.userId) {
-        setSelectedUser(updatedUser);
-      }
-
-      toast.success(response.message || "Usuario actualizado");
+      toast.success(
+        response.message ||
+          "Usuario actualizado",
+      );
 
       setModalOpen(false);
       setSelectedUser(null);
       setModalMode("create");
     },
 
-    onError: (error: Error) => {
-      toast.error(error.message || "Error al actualizar usuario");
+    onError: (error) => {
+      toast.error(
+        error.message ||
+          "Error al actualizar usuario",
+      );
     },
   });
 
   const toggleMutation = useMutation<
     ApiResponse<User>,
     Error,
-    ToggleUserMutationRequest
+    number
   >({
-    mutationFn: ({ id }: ToggleUserMutationRequest) =>
+    mutationFn: (id) =>
       userService.toggleUserAsync(id),
 
-    onSuccess: (response: ApiResponse<User>) => {
-      const updatedUser = response.data;
+    onSuccess: (response) => {
+      const updatedUser =
+        response.data;
 
-      queryClient.setQueryData<ApiResponse<User>>(
-        userKeys.detail(updatedUser.userId),
-        response
+      queryClient.setQueryData<
+        ApiResponse<User>
+      >(
+        userKeys.detail(
+          updatedUser.userId,
+        ),
+        response,
       );
 
-      updateUserInCachedLists(queryClient, updatedUser);
+      updateUserInCachedLists(
+        queryClient,
+        updatedUser,
+      );
 
-      if (selectedUser !== null && selectedUser.userId === updatedUser.userId) {
-        setSelectedUser(updatedUser);
-      }
+      setSelectedUser(
+        (currentUser) =>
+          currentUser?.userId ===
+          updatedUser.userId
+            ? updatedUser
+            : currentUser,
+      );
 
-      toast.success(response.message || "Estado de usuario actualizado");
+      toast.success(
+        response.message ||
+          "Estado de usuario actualizado",
+      );
     },
 
-    onError: (error: Error) => {
-      toast.error(error.message || "Error al cambiar estado");
+    onError: (error) => {
+      toast.error(
+        error.message ||
+          "Error al cambiar estado",
+      );
     },
   });
 
-  const fetchById = useCallback(
-    async (id: number): Promise<ApiResponse<User>> => {
-      const cached = queryClient.getQueryData<ApiResponse<User>>(
-        userKeys.detail(id)
+  const openCreate =
+    useCallback((): void => {
+      setSelectedUser(null);
+      setModalMode("create");
+      setModalOpen(true);
+    }, []);
+
+  /*
+   * No realiza GET /user/{id}.
+   * Utiliza el usuario que ya vino en la tabla.
+   */
+  const openEdit = useCallback(
+    (user: User): void => {
+      setSelectedUser(user);
+      setModalMode("edit");
+      setModalOpen(true);
+    },
+    [],
+  );
+
+  const openView = useCallback(
+    (user: User): void => {
+      setSelectedUser(user);
+      setModalMode("view");
+      setModalOpen(true);
+    },
+    [],
+  );
+
+  const closeModal =
+    useCallback((): void => {
+      setModalOpen(false);
+      setSelectedUser(null);
+      setModalMode("create");
+    }, []);
+
+  const create = useCallback(
+    (formData: FormData) => {
+      return createMutation.mutateAsync(
+        formData,
       );
-
-      if (cached !== undefined && cached !== null) {
-        setSelectedUser(cached.data);
-        return cached;
-      }
-
-      const response = await queryClient.fetchQuery<ApiResponse<User>, Error>({
-        queryKey: userKeys.detail(id),
-        queryFn: () => userService.getUserAsync(id),
-        staleTime: 1000 * 60 * 5,
-      });
-
-      setSelectedUser(response.data);
-      return response;
     },
-    [queryClient]
+    [createMutation],
   );
 
-  const openCreate = useCallback((): void => {
-    setSelectedUser(null);
-    setModalMode("create");
-    setModalOpen(true);
-  }, []);
-
-  const openEdit = useCallback((user: User): void => {
-    setSelectedUser(user);
-    setModalMode("edit");
-    setModalOpen(true);
-  }, []);
-
-  const openView = useCallback((user: User): void => {
-    setSelectedUser(user);
-    setModalMode("view");
-    setModalOpen(true);
-  }, []);
-
-  const closeModal = useCallback((): void => {
-    setModalOpen(false);
-    setSelectedUser(null);
-    setModalMode("create");
-  }, []);
-
-  const handleCreate = useCallback(
-    async (formData: FormData): Promise<ApiResponse<User>> => {
-      return createMutation.mutateAsync(formData);
-    },
-    [createMutation]
-  );
-
-  const handleUpdate = useCallback(
-    async (data: UpdateUserRequest): Promise<ApiResponse<User>> => {
-      if (selectedUser === null) {
-        throw new Error("No hay usuario seleccionado para actualizar.");
+  const update = useCallback(
+    (data: UpdateUserRequest) => {
+      if (!selectedUser) {
+        return Promise.reject(
+          new Error(
+            "No hay un usuario seleccionado.",
+          ),
+        );
       }
 
       return updateMutation.mutateAsync({
@@ -370,102 +494,120 @@ const useClasicUser = (userId: number | null = null) => {
         data,
       });
     },
-    [selectedUser, updateMutation]
+    [
+      selectedUser,
+      updateMutation,
+    ],
   );
 
-  const handleToggle = useCallback(
-    async (id: number): Promise<ApiResponse<User>> => {
-      return toggleMutation.mutateAsync({ id });
+  const toggle = useCallback(
+    (id: number) => {
+      return toggleMutation.mutateAsync(
+        id,
+      );
     },
-    [toggleMutation]
+    [toggleMutation],
   );
 
-  const handleChangeFilter = useCallback((value: string): void => {
-    setGlobalFilterState(value);
-    setPage(1);
-  }, []);
+  const setPage = useCallback(
+    (newPage: number): void => {
+      setPageState(newPage);
+    },
+    [],
+  );
 
-  const users = usersQuery.data?.data.items ?? [];
-  const totalCount = usersQuery.data?.data.meta.totalCount ?? 0;
-  const currentPage = usersQuery.data?.data.meta.currentPage ?? page;
-  const currentPageSize = usersQuery.data?.data.meta.pageSize ?? pageSize;
+  const setPageSize = useCallback(
+    (newPageSize: number): void => {
+      setPageSizeState(newPageSize);
+      setPageState(1);
+    },
+    [],
+  );
 
-  const selectedUserResolved = useMemo<User | null>(() => {
-    if (selectedUser !== null) {
-      return selectedUser;
-    }
+  const setGlobalFilter =
+    useCallback(
+      (value: string): void => {
+        setGlobalFilterState(value);
+        setPageState(1);
+      },
+      [],
+    );
 
-    if (userId !== null) {
-      return userByIdQuery.data?.data ?? null;
-    }
+  const users =
+    usersQuery.data?.data.items ?? [];
 
-    return null;
-  }, [selectedUser, userId, userByIdQuery.data]);
+  const totalCount =
+    usersQuery.data?.data.meta
+      .totalCount ?? 0;
+
+  const currentPage =
+    usersQuery.data?.data.meta
+      .currentPage ?? page;
+
+  const currentPageSize =
+    usersQuery.data?.data.meta
+      .pageSize ?? pageSize;
 
   const error =
     usersQuery.error ??
-    userByIdQuery.error ??
-    rolesQuery.error ??
     companiesQuery.error ??
     createMutation.error ??
     updateMutation.error ??
     toggleMutation.error ??
     null;
 
+  const loadingMutation =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    toggleMutation.isPending;
+
   return {
-    usersResponse: usersQuery.data ?? null,
-    userResponse: userByIdQuery.data ?? null,
-    rolesResponse: rolesQuery.data ?? null,
-    companiesResponse: companiesQuery.data ?? null,
-
     users,
-    selectedUser: selectedUserResolved,
-    roles: rolesQuery.data?.data ?? [],
-    companies: companiesQuery.data?.data ?? [],
+    selectedUser,
 
-    loading:
-      usersQuery.isLoading ||
-      userByIdQuery.isLoading ||
-      rolesQuery.isLoading ||
-      companiesQuery.isLoading ||
-      createMutation.isPending ||
-      updateMutation.isPending ||
-      toggleMutation.isPending,
-
-    loadingList: usersQuery.isFetching,
-
-    loadingItem:
-      userByIdQuery.isFetching ||
-      createMutation.isPending ||
-      updateMutation.isPending ||
-      toggleMutation.isPending,
-
-    error,
+    companies:
+      companiesQuery.data?.data ??
+      [],
 
     page: currentPage,
     pageSize: currentPageSize,
     totalCount,
+
     globalFilter,
-    isModalOpen,
+
     modalMode,
+    isModalOpen,
+
+    loading:
+      usersQuery.isLoading ||
+      companiesQuery.isLoading ||
+      loadingMutation,
+
+    loadingList:
+      usersQuery.isFetching,
+
+    loadingItem: loadingMutation,
+
+    error,
 
     setPage,
     setPageSize,
-    setGlobalFilter: handleChangeFilter,
+    setGlobalFilter,
 
     openCreate,
     openEdit,
     openView,
     closeModal,
 
-    fetchById,
-    create: handleCreate,
-    update: handleUpdate,
-    toggle: handleToggle,
+    create,
+    update,
+    toggle,
 
-    refetchUsers: usersQuery.refetch,
-    refetchRoles: rolesQuery.refetch,
-    refetchCompanies: companiesQuery.refetch,
+    refetchUsers:
+      usersQuery.refetch,
+
+    refetchCompanies:
+      companiesQuery.refetch,
   };
 };
 

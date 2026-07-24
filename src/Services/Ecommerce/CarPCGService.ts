@@ -21,7 +21,7 @@ import type {
   CalculationResultDto,
   TotalesPantallaReqDTO,
 } from "@/Interfaces/Ecommerce/ClientLocationInterface";
-import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
+// import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface";
 
 class CartServ {
   async AddProductToCar(req: CarDto): Promise<ApiPCGResponse<CarDto[]>> {
@@ -171,16 +171,16 @@ class CartServ {
 
     return data;
   }
-  async LimpiarFacturaTempo(
-  usuario: string,
-  maquina: string,
-): Promise<ApiResponse<null>> {
-  const { data } = await apiPCG.get<ApiResponse<null>>(
-    `CarritoCompra/Limpiar_Factura_Tempo/${usuario}/${maquina}`,
-  )
+//   async LimpiarFacturaTempo(
+//   usuario: string,
+//   maquina: string,
+// ): Promise<ApiResponse<null>> {
+//   const { data } = await apiPCG.get<ApiResponse<null>>(
+//     `CarritoCompra/Limpiar_Factura_Tempo/${usuario}/${maquina}`,
+//   )
 
-  return data
-}
+//   return data
+// }
   
 }
 

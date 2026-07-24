@@ -106,11 +106,38 @@
   gap: var(--space-3xl);
 }
 
+
+.carPCPanel-stepContent__descuentoHelp{
+  font-size: var(--space-md);
+  color: var(--color-gray-600);
+  margin-top: var(--space-sm);
+  color: var(--color-info);
+}
 .carPCPanel-stepContent {
   flex: 1;
   /* min-height: 0;
   overflow-y: auto; */
   /* padding: var(--space-sm); */
+}
+
+.carPCPanel-stepContent__descuento{
+  display: flex;
+  flex-direction: column;
+}
+
+.carPCPanel-stepContent__descuentoText{
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--font-size-base);
+  margin: 0;
+  padding: 0;
+  justify-content: end;
+  align-items: center;
+  color: var(--color-warning);
+}
+
+.carPCPanel-stepContent__descuentoButton .input-field-wrapper{
+  justify-content: end;
 }
 
 .carPCPanel-stepContent__animation{
@@ -125,7 +152,7 @@
   font-size: var(--font-size-sm);
 }
 .carPCPanel-products {
-  margin-top: var(--space-sm);
+  margin: var(--space-lg) 0;
 }
 
 .carPCPanel-listaOpciones {
@@ -158,6 +185,8 @@
   display: none;
   color: var(--color-destructive);
   cursor: pointer;
+  background-color: transparent;
+  border: none;
 }
 
 .carPCPanel-content__list:hover .carPCPanel-content__removeIcon {
@@ -170,6 +199,12 @@
   align-items: center;
   justify-content: center;
   max-height: 24px;
+}
+
+.carPCPanel-stepContent__descuentoControls{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
 }
 
 .carPCPanel-content__list-image {
@@ -857,7 +892,6 @@
   }
 }
 
-
 .searchInputWithClear {
   position: relative;
   width: 100%;
@@ -901,4 +935,270 @@
 .searchInputWithClear__button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* =========================================================
+   LISTA DE PRODUCTOS
+   ========================================================= */
+
+.carPCPanel-content__list {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: var(--space-lg);
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 0.8rem;
+  border: 1px solid transparent;
+  border-top-color: var(--color-gray-200);
+  border-radius: 0.65rem;
+  position: relative;
+  box-sizing: border-box;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.carPCPanel-content__list--selectable {
+  cursor: pointer;
+}
+
+.carPCPanel-content__list--selectable:hover {
+  border-color: rgba(249, 157, 28, 0.42);
+  background: rgba(249, 157, 28, 0.045);
+}
+
+.carPCPanel-content__list--selectable:focus-visible {
+  outline: 2px solid rgba(249, 157, 28, 0.8);
+  outline-offset: 2px;
+}
+
+.carPCPanel-content__list--selected {
+  border-color: rgba(249, 157, 28, 0.82);
+  background: rgba(249, 157, 28, 0.08);
+  box-shadow: 0 0 0 2px rgba(249, 157, 28, 0.1);
+}
+
+.carPCPanel-content__list--selected:hover {
+  border-color: rgba(249, 157, 28, 1);
+  background: rgba(249, 157, 28, 0.1);
+}
+
+.carPCPanel-content__list--discountDisabled {
+  cursor: default;
+}
+
+.carPCPanel-content__list-info {
+  min-width: 0;
+}
+
+.carPCPanel-content__list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  min-width: 0;
+}
+
+.carPCPanel-content__list-text {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.carPCPanel-content__selectedIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  padding: 0.18rem 0.42rem;
+  border: 1px solid rgba(249, 157, 28, 0.45);
+  border-radius: 999px;
+  color: #b96600;
+  background: rgba(249, 157, 28, 0.1);
+  font-size: var(--font-size-1xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.carPCPanel-content__discountStatus {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: 0.35rem;
+  color: var(--color-gray-600);
+  font-size:var(--font-size-xs);
+  line-height: 1.35;
+}
+
+.carPCPanel-content__discountStatus span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.carPCPanel-content__discountStatus--disabled {
+  color: var(--color-gray-500);
+  font-style: italic;
+}
+
+.carPCPanel-content__removeIcon {
+  position: relative;
+  z-index: 2;
+}
+
+.carPCPanel-content__removeIcon:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
+/* =========================================================
+   CONTROL ÚNICO DE DESCUENTO
+   ========================================================= */
+
+.carPCPanel-stepContent__descuento {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border-top: 1px solid var(--color-gray-200);
+  /* border-radius: 0.75rem; */
+  box-sizing: border-box;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.carPCPanel-stepContent__descuento--global {
+  background: var(--color-white);
+}
+
+.carPCPanel-stepContent__descuento--product {
+  border-color: rgba(249, 157, 28, 0.55);
+  background: rgba(249, 157, 28, 0.055);
+  box-shadow: 0 0 0 2px rgba(249, 157, 28, 0.06);
+}
+
+.carPCPanel-stepContent__descuentoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.carPCPanel-stepContent__descuentoText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.carPCPanel-stepContent__clearSelection {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  color: var(--color-gray-600);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-destructive);
+  transition: color ease-in-out 0.3s;
+}
+
+.carPCPanel-stepContent__clearSelection:hover {
+  opacity: 0.7;
+}
+
+.carPCPanel-stepContent__clearSelection:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.carPCPanel-stepContent__selectedProduct {
+  margin: 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.carPCPanel-stepContent__descuentoControls {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.carPCPanel-stepContent__descuentoControls .checkout-input,
+.carPCPanel-stepContent__descuentoButton {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.carPCPanel-stepContent__descuentoHelp {
+  display: block;
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+}
+
+
+/* =========================================================
+   ELIMINAR ESTILOS ANTERIORES
+   ========================================================= */
+
+/*
+Elimina del CSS las reglas antiguas de:
+
+.carPCPanel-productDiscount
+.carPCPanel-productDiscount__title
+.carPCPanel-productDiscount__controls
+.carPCPanel-productDiscount__input
+.carPCPanel-productDiscount__help
+*/
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 560px) {
+  .carPCPanel-content__list {
+    grid-template-columns: 46px minmax(0, 1fr) 26px;
+    gap: 0.65rem;
+    padding: 0.7rem 0.55rem;
+  }
+
+  .carPCPanel-content__list-header {
+    display: block;
+  }
+
+  .carPCPanel-content__selectedIndicator {
+    margin-top: 0.35rem;
+  }
+
+  .carPCPanel-stepContent__descuentoControls {
+    grid-template-columns: 1fr;
+  }
+
+  .carPCPanel-stepContent__descuentoHeader {
+    align-items: flex-start;
+  }
 }

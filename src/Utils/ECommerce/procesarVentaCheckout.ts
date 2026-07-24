@@ -9,7 +9,7 @@ import { PCG_SERVICES } from "@/Constants/pcgservices"
 
 import { UserSessionService } from "@/Services/auth/UserSessionService"
 import { sendMediaEcommerce } from "@/Services/chat/MessageService"
-import { CartService } from "@/Services/Ecommerce/CarPCGService"
+// import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import { InvoiceOrderService } from "@/Services/Ecommerce/InvoiceOrderService"
 import { powertranzService } from "@/Services/Ecommerce/PowerTranzService"
 
@@ -184,16 +184,16 @@ export async function procesarVentaCheckout({
 
   await UserSessionService.revokeCartTempLink(orderId)
 
-  const limpiarRes = await CartService.LimpiarFacturaTempo(
-    String(payload.contactId),
-    `CRM-${payload.contactId}`
-  )
+  // const limpiarRes = await CartService.LimpiarFacturaTempo(
+  //   String(payload.contactId),
+  //   `CRM-${payload.contactId}`
+  // )
 
-  if (!limpiarRes.success) {
-    throw new Error(
-      limpiarRes.message || "No fue posible limpiar la factura temporal."
-    )
-  }
+  // if (!limpiarRes.success) {
+  //   throw new Error(
+  //     limpiarRes.message || "No fue posible limpiar la factura temporal."
+  //   )
+  // }
 
   dispatch(
     setContactCartBadge({

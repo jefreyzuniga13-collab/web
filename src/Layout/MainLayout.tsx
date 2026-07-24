@@ -62,7 +62,7 @@ const MainLayout: React.FC = () => {
         isMobile ? "general-container--mobile" : ""
       }`}
     >
-      {!isMobile && <Navbar id={Number(userId)} />}
+      {!isMobile && <Navbar />}
 
       <AssignModal />
 

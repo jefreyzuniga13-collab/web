@@ -342,7 +342,7 @@ export const selectCartItemsCount = (state: RootState): number => {
 // Aplicar descuento global (Absoluto o porcentual)
 export const AplicarDescuentoGlobal = createAsyncThunk<
   number, // Tipo de lo que RETORNA el thunk en fulfill (res.data)
-  DescuentoGlobalReq, //  Simplificado: pasamos directamente el objeto payload
+  DescuentoGlobalReq, //  pasar directamente el objeto payload
   { rejectValue: string } // Tipo del rejectWithValue
 >(
   "cart/aplicarDescuentoGlobal",
@@ -355,6 +355,6 @@ export const AplicarDescuentoGlobal = createAsyncThunk<
       }
 
       toast.success(res.message || "Descuento aplicado correctamente");
-      return res.data; // Retornamos únicamente el 'data' (number), no toda la envoltura 'res'
+      return res.data;
   }
 );

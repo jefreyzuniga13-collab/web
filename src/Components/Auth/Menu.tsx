@@ -1,130 +1,282 @@
-import React, { useEffect, useState } from 'react';
-import * as Icons from 'lucide-react';
-import { useMenus } from '@/Hooks/Auth/useMenus';
-import MenuItem from '@/Components/Auth/MenuItem';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import '@/Styles/Auth/Navbar.css';
-import { SquareArrowLeft, SquareArrowRight } from 'lucide-react';
-import { useUsers } from '@/Hooks/Auth/useUsers';
-import { presenceConnection } from '@/Services/signalr';
-import { markOffline } from '@/Hooks/Auth/useUserPresence';
-import type { AuthData } from '@/Interfaces/Auth/AuthInterface';
-import { useAuth } from '@/Hooks/Auth/useAuth'
-import Profile from '@/assets/img/profile.png'
-import { logoutThunk } from '@/Context/Slices/Auth/authThunks';
-import type { AppDispatch } from '@/Context';
-import { selectActiveCompanyImage, selectActiveCompanyName, selectActiveCompanyWhPhone } from '@/Context/Slices/Auth/companySlice';
-import { selectCompanyImageUrl } from '@/Context/Slices/Auth/authSlice';
-interface NavbarProps {
-  id: number;
-}
-export const useAppDispatch: () => AppDispatch = useDispatch;
+import React, { useState } from "react";
+import * as Icons from "lucide-react";
+import {SquareArrowLeft,SquareArrowRight} from "lucide-react";
+import {useLocation,useNavigate} from "react-router-dom";
+import {useDispatch,useSelector} from "react-redux";
+import { useMenus } from "@/Hooks/Auth/useMenus";
+import MenuItem from "@/Components/Auth/MenuItem";
+import { markOffline } from "@/Hooks/Auth/useUserPresence";
+import { logoutThunk } from "@/Context/Slices/Auth/authThunks";
+import type { AppDispatch } from "@/Context";
+import { selectActiveCompanyImage, selectActiveCompanyName, selectActiveCompanyWhPhone,} from "@/Context/Slices/Auth/companySlice";
+import { selectCompanyImageUrl, selectUserFullName, selectUserId, selectUserImageUrl,} from "@/Context/Slices/Auth/authSlice"
+import Profile from "@/assets/img/profile.png";
+import "@/Styles/Auth/Navbar.css";
 
-const Navbar: React.FC<NavbarProps> = ({ id }) => {
-  const { menus, error } = useMenus();
-  const [collapsed, setCollapsed] = useState(true);
+const normalizePath = (
+  value: string,
+): string => {
+  return value
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "")
+    .toLowerCase();
+};
+
+const getLucideIcon = (
+  iconName: string,
+): React.ElementType => {
+  const icons =
+    Icons as unknown as Record<
+      string,
+      React.ElementType
+    >;
+
+  return icons[iconName] ?? Icons.Menu;
+};
+
+const Navbar: React.FC = () => {
+  const {
+    menus,
+    loading,
+    error,
+  } = useMenus();
+
+  const [collapsed, setCollapsed] =
+    useState(true);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const activeCompanyImage = useSelector(selectActiveCompanyImage);
-  const activeCompanyName = useSelector(selectActiveCompanyName);
-  const activeCompanyWhPhone = useSelector(selectActiveCompanyWhPhone);
-  const CompanyImageUrl = useSelector(selectCompanyImageUrl);
 
-  const { currentUser, loading: userLoading, fetchOne } = useUsers();
+  const dispatch =
+    useDispatch<AppDispatch>();
 
-  const { logout: logoutAuth } = useAuth()
+  const userId = useSelector(
+    selectUserId,
+  );
 
-    const authRaw = localStorage.getItem('auth') || '{}';
-    const { userId } = JSON.parse(authRaw) as AuthData;
+  const userFullName = useSelector(
+    selectUserFullName,
+  );
 
-  useEffect(() => {
-    if (!currentUser) {
-      fetchOne(id);
+  const userImageUrl = useSelector(
+    selectUserImageUrl,
+  );
+
+  const companyImageUrl = useSelector(
+    selectCompanyImageUrl,
+  );
+
+  const activeCompanyImage = useSelector(
+    selectActiveCompanyImage,
+  );
+
+  const activeCompanyName = useSelector(
+    selectActiveCompanyName,
+  );
+
+  const activeCompanyWhPhone =
+    useSelector(
+      selectActiveCompanyWhPhone,
+    );
+
+  const selectedUrl = normalizePath(
+    location.pathname,
+  );
+
+  const companyImageSrc =
+    activeCompanyImage ||
+    companyImageUrl;
+
+  const companyHeader = [
+    activeCompanyName,
+    activeCompanyWhPhone,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+
+  const handleLogout =
+    async (): Promise<void> => {
+      try {
+        if (userId > 0) {
+          await markOffline(userId);
+        }
+      } catch (currentError) {
+        console.warn(
+          "[Navbar] No se pudo marcar al usuario como desconectado.",
+          currentError,
+        );
+      }
+
+      try {
+        await dispatch(
+          logoutThunk(),
+        ).unwrap();
+      } catch (currentError) {
+        console.error(
+          "[Navbar] No se pudo cerrar la sesión.",
+          currentError,
+        );
+      }
+    };
+
+  const handleMenuClick = async (
+    url: string,
+    text: string,
+  ): Promise<void> => {
+    const normalizedUrl =
+      normalizePath(url);
+
+    const normalizedText =
+      text.toLowerCase();
+
+    const isLogout =
+      normalizedText.includes(
+        "cerrar",
+      ) ||
+      normalizedText.includes(
+        "salir",
+      ) ||
+      normalizedUrl === "logout";
+
+    if (isLogout) {
+      await handleLogout();
+      return;
     }
-  }, [currentUser, fetchOne, id]);
 
-  const selectedUrl = location.pathname.replace(/^\//, '');
-
- const onClick = async (url: string, text: string) => {
-    if (text.toLowerCase().includes('cerrar')) {
-      try { await markOffline(Number(userId)); } catch (e) { console.warn(e); }
-      // eslint-disable-next-line no-empty
-      try { await presenceConnection?.stop(); } catch {}
-
-      await logoutAuth();
-      // dispatch(logout());
-      dispatch(logoutThunk());
-      navigate('/login', { replace: true });
-    } else {
-      navigate(`/${url}`);
-    }
+    navigate(
+      `/${url.replace(/^\/+/, "")}`,
+    );
   };
-  if (error) return <div className="navbar__error">Error cargando menú.</div>;
 
-  const companyImageSrc = activeCompanyImage || CompanyImageUrl;
+  if (error) {
+    return (
+      <div className="navbar__error">
+        Error cargando menú.
+      </div>
+    );
+  }
+
   return (
-    <nav className={`navbar ${collapsed ? 'navbar--collapsed' : ''}`}>
+    <nav
+      className={`navbar ${
+        collapsed
+          ? "navbar--collapsed"
+          : ""
+      }`}
+      aria-label="Navegación principal"
+    >
       <div className="navbar__header">
-       <div className='navbar__header-container'>
-         {companyImageSrc && (
+        <div className="navbar__header-container">
+          {companyImageSrc && (
             <img
               src={companyImageSrc}
               alt="Logo de la empresa"
-            className="navbar__logo"
+              className="navbar__logo"
             />
           )}
-        <p className='navbar__header__text'>{activeCompanyName + ' - ' + activeCompanyWhPhone}</p>
-       </div>
-        <button 
-          className="navbar__collapse-btn" 
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed
-            ? <SquareArrowRight size={20} />
-            : <SquareArrowLeft size={20} />}
-        </button>
 
+          {companyHeader && (
+            <p className="navbar__header__text">
+              {companyHeader}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="navbar__collapse-btn"
+          onClick={() => {
+            setCollapsed(
+              (current) => !current,
+            );
+          }}
+          aria-label={
+            collapsed
+              ? "Expandir menú"
+              : "Contraer menú"
+          }
+          title={
+            collapsed
+              ? "Expandir menú"
+              : "Contraer menú"
+          }
+        >
+          {collapsed ? (
+            <SquareArrowRight
+              size={20}
+            />
+          ) : (
+            <SquareArrowLeft
+              size={20}
+            />
+          )}
+        </button>
       </div>
 
-      <ul className={`navbar__menu`}>
-        {menus.map(m => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const Icon = (Icons as any)[m.icon] ?? Icons.Menu;
-          const isSelected = selectedUrl === m.url;
-      
-          return (
-                 <MenuItem
-                    key={m.menuId}
-                    icon={<Icon size={20} />}
-                    text={m.name}
-                    onClick={() => onClick(m.url, m.name)}
-                    selected={isSelected}
-                    className = {collapsed ? 'collapsed-styles' : ''}
-                    collapsed={collapsed}
-                  />
-          );
-        })}
-      </ul>
-      
-        {userLoading ? (
-          <div className="navbar__profile">
-            <div className="navbar__profile-loading">Cargando usuario...</div>
-          </div>
-        ) : currentUser && (
-          <div className="navbar__profile">
-            <img 
-               src={currentUser?.imageUrl && currentUser.imageUrl !== "" ? currentUser.imageUrl : Profile} 
-              alt="Foto de perfil" 
-              className="navbar__profile-photo"
-           />
-            <span className="navbar__profile-name">{currentUser.fullName}</span>
-          </div>
-        )}
-        
-        <p className="navbar__copyright">© {new Date().getFullYear()} PC Group S.A.</p>
+      <ul className="navbar__menu">
+        {loading &&
+        menus.length === 0 ? (
+          <li className="navbar__menu-loading">
+            Cargando menú...
+          </li>
+        ) : (
+          menus.map((menu) => {
+            const Icon =
+              getLucideIcon(
+                menu.icon,
+              );
 
+            const isSelected =
+              selectedUrl ===
+              normalizePath(
+                menu.url,
+              );
+
+            return (
+              <MenuItem
+                key={menu.menuId}
+                icon={
+                  <Icon size={20} />
+                }
+                text={menu.name}
+                onClick={() => {
+                  void handleMenuClick(
+                    menu.url,
+                    menu.name,
+                  );
+                }}
+                selected={isSelected}
+                className={
+                  collapsed
+                    ? "collapsed-styles"
+                    : ""
+                }
+                collapsed={collapsed}
+              />
+            );
+          })
+        )}
+      </ul>
+
+      <div className="navbar__profile">
+        <img
+          src={
+            userImageUrl || Profile
+          }
+          alt="Foto de perfil"
+          className="navbar__profile-photo"
+        />
+
+        <span className="navbar__profile-name">
+          {userFullName ||
+            "Usuario"}
+        </span>
+      </div>
+
+      <p className="navbar__copyright">
+        © {new Date().getFullYear()}{" "}
+        PC Group S.A.
+      </p>
     </nav>
   );
 };

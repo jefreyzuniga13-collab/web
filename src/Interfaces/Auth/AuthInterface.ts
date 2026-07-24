@@ -9,19 +9,31 @@ export interface AuthData {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+
   userId: string;
+
+  fullName?: string;
+  email?: string;
+  imageUrl?: string | null;
+
   empresaId: string;
+
   companyImageUrl?: string;
+
   companySistema: string;
+
   permiteMultiPago: boolean;
   permitePasarela: boolean;
+  aplicaDescuento: boolean;
+
   codReferenciaPCG?: string;
+
   isRoot: boolean;
   isAdmin: boolean;
 
-  // Licencia de usuario
   licenseExpireAt: string;
   showLicenseWarning: boolean;
+
   isAutomaticallyAssigned: boolean;
 }
 
@@ -30,7 +42,8 @@ export interface LoginRequest {
   password: string;
 }
 
-export type LoginResponse = ApiResponse<AuthData>;
+export type LoginResponse =
+  ApiResponse<AuthData>;
 
 export interface RegisterRequest {
   fullName: string;
@@ -41,13 +54,15 @@ export interface RegisterRequest {
   identifier: string;
 }
 
-export type RegisterResponse = ApiResponse<AuthData>;
+export type RegisterResponse =
+  ApiResponse<AuthData>;
 
 export interface ForgotPasswordRequest {
   email: string;
 }
 
-export type ForgotPasswordResponse = ApiResponse<string>;
+export type ForgotPasswordResponse =
+  ApiResponse<string>;
 
 export interface ResetPasswordRequest {
   token: string;
@@ -55,13 +70,15 @@ export interface ResetPasswordRequest {
   confirmNewPassword: string;
 }
 
-export type ResetPasswordResponse = ApiResponse<string>;
+export type ResetPasswordResponse =
+  ApiResponse<string>;
 
 export interface VerifyEmailRequest {
   token: string;
 }
 
-export type VerifyEmailResponse = ApiResponse<string>;
+export type VerifyEmailResponse =
+  ApiResponse<string>;
 
 export interface RegisterForm {
   fullName: string;
@@ -110,27 +127,37 @@ export interface JwtPayload {
 
 export interface AuthMe {
   userId: string;
+
   fullName?: string;
   email?: string;
+  imageUrl?: string | null;
+
   roles?: string[];
+
   empresaId: string;
+
   companyImageUrl?: string;
+
   companySistema: string;
+
   permiteMultiPago: boolean;
   permitePasarela: boolean;
+  aplicaDescuento: boolean;
+
   codReferenciaPCG?: string;
+
   isRoot: boolean;
   isAdmin: boolean;
+
   licenseExpireAt: string;
   showLicenseWarning: boolean;
+
   isAutomaticallyAssigned: boolean;
 }
 
 /**
- * Respuesta 409 cuando el usuario ya tiene una sesión activa.
- *
- * En el nuevo flujo ya no existe requestKey ni aprobación.
- * La máquina nueva decide si reemplaza la sesión anterior.
+ * Respuesta 409 cuando el usuario ya tiene
+ * una sesión activa.
  */
 export interface LoginConflictResponseDto {
   code: "ACTIVE_SESSION_EXISTS";

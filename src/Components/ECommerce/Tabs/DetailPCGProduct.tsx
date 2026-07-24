@@ -9,11 +9,7 @@ import Button from "@/Components/Common/Button"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
 import "@/Styles/Ecommerce/ModifierAccordion.css"
-import type {
-  listaOpciones,
-  ProductoModificadorPCGInterface,
-  ProductoPCGInterface,
-} from "@/Interfaces/Chat/ProductPCGInterface"
+import type {listaOpciones,ProductoModificadorPCGInterface,ProductoPCGInterface} from "@/Interfaces/Chat/ProductPCGInterface"
 import type { SelectedInterface } from "@/Components/ECommerce/Tabs/ProductTab"
 import { useProductPCG } from "@/Hooks/Ecommerce/tabs/useProductPCG"
 import { useBranchesByProduct } from "@/Hooks/Ecommerce/tabs/useBranchesByProduct"

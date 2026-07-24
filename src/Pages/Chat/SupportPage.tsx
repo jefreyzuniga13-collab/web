@@ -426,16 +426,16 @@ const SupportPage: React.FC = () => {
               </Tooltip>
               )}
 
-
               <Tooltip title="Filtrar conversaciones">
-                <button
-                  className="sort-button"
-                  onClick={() => setOrderModalVisible(true)}
-                  title="Filtrar conversaciones"
-                  type="button"
-                >
-                  <MdFilterListAlt className="sort-button-icon" size={18} />
-                </button>
+                <span>
+                  <button
+                    className="sort-button"
+                    onClick={() => setOrderModalVisible(true)}
+                    type="button"
+                  >
+                    <MdFilterListAlt className="sort-button-icon" size={18} />
+                  </button>
+                </span>
               </Tooltip>
             </div>
           </div>

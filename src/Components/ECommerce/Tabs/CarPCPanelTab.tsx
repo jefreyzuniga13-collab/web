@@ -74,9 +74,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [activeStep, setActiveStep] = useState<CartAgentStep>(CART_AGENT_STEP.carrito)
   const [addDescription, setAddDescription] = useState("")
   const [retiraSucursal, setRetiraSucursal] = useState<SINO>("N")
-  
   const [onlyTextAddress, setOnlyTextAddress] = useState<boolean>(false)
-
   const [transCost, setTransCost] = useState(0)
   const [debouncedTransCost, setDebouncedTransCost] = useState(0)
   const [invoiceTotalsDto, setInvoiceTotalsDto] =
@@ -113,21 +111,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     contact: ContactLogInterface | null
   }> | null>(null)
 
-  const { setLocked } = useCartPCGFlowCtx()
-
   const {
-    sendMessageLinkAsync,
-    getMessageLinkAsync,
-    error: errorCart,
-    loading: loadingCart
-  } = useCart()
-
-  const {
-    UpdatedStatus,
-    fetchByContactId,
-    update: updatedLogCart
-  } = useLogCart()
-
+    setLocked,
+    aplicarDescuentoGlobal,
+    aplicarDescuentoProducto,
+  } = useCartPCGFlowCtx()
+  const {sendMessageLinkAsync,getMessageLinkAsync,error: errorCart,loading: loadingCart} = useCart()
+  const {UpdatedStatus,fetchByContactId,update: updatedLogCart} = useLogCart()
   const { UpdateEcommerceUserAsync, getById } = useContact()
   const { createAsync } = useUserEcommerce()
 
@@ -1346,7 +1336,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   }, [transCost])
 
   useEffect(() => {
-    if (!contactId) return
+    if (!contactId || detailsCount === 0) return
     if (cartClearedRef.current) return
 
     void calcTotals({
@@ -1355,6 +1345,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     })
   }, [
     contactId,
+    carPCG,
+    detailsCount,
     debouncedTransCost,
     retiraSucursal,
     selectedAddressId,
@@ -1553,6 +1545,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             companySistema={companySistema}
             handleRemoveItem={handleRemoveItem}
             cartUserId={cart?.idUsuario ?? 0}
+            aplicarDescuentoGlobal={aplicarDescuentoGlobal}
+            aplicarDescuentoProducto={aplicarDescuentoProducto}
           />
         )}
 
@@ -1626,6 +1620,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             setActiveStep={setActiveStep}
           />
 
+          
           <CartPanelTotals
             invoiceTotalsDto={invoiceTotalsDto}
             effectiveShipping={effectiveShipping}

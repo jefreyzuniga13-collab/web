@@ -1,19 +1,50 @@
-import { useState, useEffect } from 'react'
-import { menuService } from '@/Services/auth/MenuService'
-import type { MenuDto } from '@/Interfaces/Chat/ChatInterfaces'
+import { useQuery } from "@tanstack/react-query";
+import { menuService } from "@/Services/auth/MenuService";
+import type { MenuDto } from "@/Interfaces/Chat/ChatInterfaces";
+
+const menuKeys = {
+  all: ["menus"] as const,
+  authenticated: () =>
+    [...menuKeys.all, "authenticated"] as const,
+};
 
 export function useMenus() {
-  const [menus, setMenus] = useState<MenuDto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const menusQuery = useQuery<
+    MenuDto[],
+    Error
+  >({
+    queryKey: menuKeys.authenticated(),
 
-useEffect(() => {
-    setLoading(true)
-    menuService.getMenusAsync()
-      .then(setMenus)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
-}, [])
+    queryFn: () =>
+      menuService.getMenusAsync(),
 
-  return { menus, loading, error }
+    /*
+     * El menú normalmente no cambia durante
+     * la sesión actual.
+     */
+    staleTime: 30 * 60 * 1000,
+
+    gcTime: 60 * 60 * 1000,
+
+    refetchOnWindowFocus: false,
+
+    refetchOnReconnect: false,
+
+    retry: 1,
+  });
+
+  return {
+    menus: menusQuery.data ?? [],
+
+    loading:
+      menusQuery.isLoading ||
+      menusQuery.isFetching,
+
+    error:
+      menusQuery.error?.message ?? null,
+
+    refetch: menusQuery.refetch,
+  };
 }
+
+export { menuKeys };

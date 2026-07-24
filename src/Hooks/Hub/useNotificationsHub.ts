@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
+
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces";
 import type { ContactLog } from "@/Interfaces/Auth/UserInterfaces";
-import { notificationsConnection } from "@/Services/signalr";
-import { notificationSound } from "@/Utils/sound";
+
+import {
+  onSupportRequested,
+  onConversationAssigned,
+  onAssignmentResponse,
+  onAssignmentForced,
+  onAssignmentForcedAdmin,
+  onNewContactValidation,
+} from "@/Services/signalr";
+
 import { useSignalR } from "@/Context/SignalRContext";
 
 type SupportRequestedPayload = {
@@ -38,72 +47,121 @@ type AssignmentForcedAdminPayload = {
 };
 
 export type NotificationEvent =
-  | { type: "SupportRequested"; payload: SupportRequestedPayload }
-  | { type: "ConversationAssigned"; payload: ConversationDto }
-  | { type: "AssignmentResponse"; payload: AssignmentResponsePayload }
-  | { type: "AssignmentForced"; payload: AssignmentForcedPayload }
-  | { type: "AssignmentForcedAdmin"; payload: AssignmentForcedAdminPayload }
-  | { type: "newContactValidation"; payload: ContactLog };
+  | {
+      type: "SupportRequested";
+      payload: SupportRequestedPayload;
+    }
+  | {
+      type: "ConversationAssigned";
+      payload: ConversationDto;
+    }
+  | {
+      type: "AssignmentResponse";
+      payload: AssignmentResponsePayload;
+    }
+  | {
+      type: "AssignmentForced";
+      payload: AssignmentForcedPayload;
+    }
+  | {
+      type: "AssignmentForcedAdmin";
+      payload: AssignmentForcedAdminPayload;
+    }
+  | {
+      type: "newContactValidation";
+      payload: ContactLog;
+    };
 
 export function useNotificationsHub(): NotificationEvent | null {
   const { ready } = useSignalR();
-  const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null);
+
+  const [lastEvent, setLastEvent] =
+    useState<NotificationEvent | null>(null);
 
   useEffect(() => {
-    if (!ready || !notificationsConnection) return;
+    if (!ready) {
+      return;
+    }
 
-    const conn = notificationsConnection;
+    const unsubscribeSupportRequested =
+      onSupportRequested((payload) => {
+        setLastEvent({
+          type: "SupportRequested",
+          payload: {
+            conversationId: payload.conversationId,
+            requestedAt: payload.requestedAt,
+            clientContactName: payload.clientContactName,
+            systemDefinedCompanyName: payload.clientName,
+          },
+        });
+      });
 
-    const play = () => {
-      if (!notificationSound.playing()) {
-        notificationSound.play();
-      }
-    };
+    const unsubscribeConversationAssigned =
+      onConversationAssigned((conversation) => {
+        setLastEvent({
+          type: "ConversationAssigned",
+          payload: conversation,
+        });
+      });
 
-    const supportRequested = (payload: SupportRequestedPayload) => {
-      setLastEvent({ type: "SupportRequested", payload });
-      play();
-    };
+    const unsubscribeAssignmentResponse =
+      onAssignmentResponse((payload) => {
+        setLastEvent({
+          type: "AssignmentResponse",
+          payload: {
+            conversationId: payload.conversationId,
+            AssignedAgentName: payload.assignedAgentName,
+            accepted: payload.accepted,
+            comment: payload.comment,
+            justification: payload.comment,
+            clientContactName: payload.clientContactName,
+            systemDefinedCompanyName: payload.clientName,
+          },
+        });
+      });
 
-    const conversationAssigned = (payload: ConversationDto) => {
-      setLastEvent({ type: "ConversationAssigned", payload });
-      play();
-    };
+    const unsubscribeAssignmentForced =
+      onAssignmentForced((payload) => {
+        setLastEvent({
+          type: "AssignmentForced",
+          payload: {
+            conversationId: payload.conversationId,
+            assignmentComment: payload.comment,
+            clientContactName: payload.clientContactName,
+            systemDefinedCompanyName: payload.clientName,
+          },
+        });
+      });
 
-    const assignmentResponse = (payload: AssignmentResponsePayload) => {
-      setLastEvent({ type: "AssignmentResponse", payload });
-      play();
-    };
+    const unsubscribeAssignmentForcedAdmin =
+      onAssignmentForcedAdmin((payload) => {
+        setLastEvent({
+          type: "AssignmentForcedAdmin",
+          payload: {
+            conversationId: payload.conversationId,
+            targetAgentId: payload.targetAgentId,
+            comment: payload.comment,
+            clientContactName: payload.clientContactName,
+            systemDefinedCompanyName: payload.clientName,
+          },
+        });
+      });
 
-    const assignmentForced = (payload: AssignmentForcedPayload) => {
-      setLastEvent({ type: "AssignmentForced", payload });
-      play();
-    };
-
-    const assignmentForcedAdmin = (payload: AssignmentForcedAdminPayload) => {
-      setLastEvent({ type: "AssignmentForcedAdmin", payload });
-      play();
-    };
-
-    const newContactValidation = (payload: ContactLog) => {
-      setLastEvent({ type: "newContactValidation", payload });
-      play();
-    };
-
-    conn.on("SupportRequested", supportRequested);
-    conn.on("ConversationAssigned", conversationAssigned);
-    conn.on("AssignmentResponse", assignmentResponse);
-    conn.on("AssignmentForced", assignmentForced);
-    conn.on("AssignmentForcedAdmin", assignmentForcedAdmin);
-    conn.on("newContactValidation", newContactValidation);
+    const unsubscribeNewContactValidation =
+      onNewContactValidation(({ contactLog }) => {
+        setLastEvent({
+          type: "newContactValidation",
+          payload: contactLog,
+        });
+      });
 
     return () => {
-      conn.off("SupportRequested", supportRequested);
-      conn.off("ConversationAssigned", conversationAssigned);
-      conn.off("AssignmentResponse", assignmentResponse);
-      conn.off("AssignmentForced", assignmentForced);
-      conn.off("AssignmentForcedAdmin", assignmentForcedAdmin);
-      conn.off("newContactValidation", newContactValidation);
+      unsubscribeSupportRequested();
+      unsubscribeConversationAssigned();
+      unsubscribeAssignmentResponse();
+      unsubscribeAssignmentForced();
+      unsubscribeAssignmentForcedAdmin();
+      unsubscribeNewContactValidation();
     };
   }, [ready]);
 

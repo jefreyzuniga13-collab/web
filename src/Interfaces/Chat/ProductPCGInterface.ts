@@ -6,6 +6,8 @@ export interface CategoriaPCGInterface {
     grupo: string;
     imagen: string;
 }
+
+
 export interface ProductoPCGInterface{
     id: number;
     idProducto: number;
@@ -22,6 +24,7 @@ export interface ProductoPCGInterface{
     marca: string | null;
     existencia: number;
 }
+
 export interface ProductoModificadorPCGInterface{
     codTipoModificador: string;
     codModificador: string;

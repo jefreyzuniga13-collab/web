@@ -500,6 +500,9 @@ export default function PaymentMethodComponent({
         />
       )}
 
+
+      {/* Desceunto */}
+        
       <div className="checkout-actionBtn">
         {showBackButton && (
           <button
@@ -513,7 +516,6 @@ export default function PaymentMethodComponent({
         )}
 
         {/* Botón que ahora abre el modal en lugar de pagar directamente */}
-
         <button
           type="button"
           className={`checkout-paybtn ${!showBackButton ? "showBackButton" : ""}`}

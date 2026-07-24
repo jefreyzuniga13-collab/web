@@ -1,7 +1,6 @@
 import { useEffect } from "react"
 import { useDispatch } from "react-redux"
 import { useQueryClient } from "@tanstack/react-query"
-
 import type { AppDispatch } from "@/Context"
 import { clearCart } from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
