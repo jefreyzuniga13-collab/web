@@ -90,7 +90,7 @@ export const powertranzService = {
         payload,
         {
           params:{
-            codReferencia: '01'
+            codReferencia: '13'
           }
         }
       );
@@ -107,7 +107,7 @@ export const powertranzService = {
         payload,
         {
           params:{
-            codReferencia: '01'
+            codReferencia: '13'
           }
         }
       );
@@ -136,7 +136,7 @@ export const powertranzService = {
         payload,
          {
           params:{
-            codReferencia: '01'
+            codReferencia: '13'
           }
         }
       );

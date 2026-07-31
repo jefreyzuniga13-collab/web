@@ -267,9 +267,9 @@ export default function CartPanelPaymentStep({
       invoiceTotalsDto?.iva ??
       currentLog?.ivaPantalla ??
       0,
-    DescuentoPantalla:
+    descuentoPantalla:
       invoiceTotalsDto?.descuento ??
-      currentLog?.DescuentoPantalla ??
+      currentLog?.descuentoPantalla ??
       0,
     transCost: transpCost,
     totalEnPantalla:

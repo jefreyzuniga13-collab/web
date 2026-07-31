@@ -43,21 +43,6 @@ export default function CashPaymentSection({
     setCashAmount(parseFloat(limpio) || 0);
   };
 
-  // const handleChange = (value: string) => {
-  //   const limpio = value.replace(/\D/g, "");
-
-  //   if (limpio === "") {
-  //     setCashAmountText("");
-  //     setCashAmount(0);
-  //     return;
-  //   }
-
-  //   const sinCerosIniciales = limpio.replace(/^0+/, "") || "0";
-
-  //   setCashAmountText(sinCerosIniciales);
-  //   setCashAmount(Number(sinCerosIniciales));
-  // };
-
   return (
     <div className="checkout-cash">
       <div className="checkout-field checkout-field--full">

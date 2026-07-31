@@ -140,11 +140,7 @@ export default function PaymentHostedPage() {
     return null;
   }
 
-
-
-
-  // Evitar que cuando se refresque s pierda la informacion, en este caso en el redirecTData hay un html, de una hostedPage?
-  // Mostrar el formulario HTML que devuelve PowerTranz.
+  // Mostrar al montar la hosted-page, ocultar cuando se autentica
   return (
     <iframe
       srcDoc={redirectData}

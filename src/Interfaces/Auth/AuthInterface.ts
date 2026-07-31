@@ -23,6 +23,7 @@ export interface AuthData {
   companySistema: string;
 
   permiteMultiPago: boolean;
+  aplicaMultimoneda: boolean;
   permitePasarela: boolean;
   aplicaDescuento: boolean;
 
@@ -35,6 +36,7 @@ export interface AuthData {
   showLicenseWarning: boolean;
 
   isAutomaticallyAssigned: boolean;
+  isClientEditableByAgent: boolean;
 }
 
 export interface LoginRequest {
@@ -142,6 +144,7 @@ export interface AuthMe {
 
   permiteMultiPago: boolean;
   permitePasarela: boolean;
+  aplicaMultimoneda: boolean;
   aplicaDescuento: boolean;
 
   codReferenciaPCG?: string;
@@ -153,6 +156,7 @@ export interface AuthMe {
   showLicenseWarning: boolean;
 
   isAutomaticallyAssigned: boolean;
+  isClientEditableByAgent: boolean;
 }
 
 /**

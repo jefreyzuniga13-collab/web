@@ -76,6 +76,31 @@ const useContact = (contactId?: number) => {
     },
   })
 
+  const updateFullNameMutation = useMutation<
+    boolean,
+    Error,
+    { id: number; newFullName: string }
+  >({
+    mutationFn: async ({ id, newFullName }) => {
+      return await contactService.UpdateFullNameAsync(id, newFullName)
+    },
+    onSuccess: async (_, variables) => {
+      queryClient.setQueryData<ContactLogInterface | null>(
+        contactKeys.detail(variables.id),
+        old => (old ? { ...old, fullName: variables.newFullName } : null)
+      )
+      setSelectedData(prev =>
+        prev?.id === variables.id ? { ...prev, fullName: variables.newFullName } : prev
+      )
+      await queryClient.invalidateQueries({ queryKey: contactKeys.all })
+    },
+    onError: err => {
+      toast.error('Error al actualizar el nombre del contacto')
+      throw err
+    },
+  })
+
+
   const updateMutation = useMutation<
     ContactLogInterface,
     Error,
@@ -364,6 +389,7 @@ const useContact = (contactId?: number) => {
     if (detailData) {
       setSelectedData(detailData)
     }
+    
   }, [contactId, detailData])
 
   const data = useMemo(() => pagedContacts?.items ?? [], [pagedContacts])
@@ -374,6 +400,7 @@ const useContact = (contactId?: number) => {
     createMutation.isPending ||
     updateMutation.isPending ||
     toggleMutation.isPending ||
+    updateFullNameMutation.isPending ||
     updateEcommerceUserMutation.isPending
 
   const loading =
@@ -392,14 +419,7 @@ const useContact = (contactId?: number) => {
       detailError ||
       listError ||
       null,
-    [
-      createMutation.error,
-      updateMutation.error,
-      toggleMutation.error,
-      updateEcommerceUserMutation.error,
-      detailError,
-      listError,
-    ]
+    [createMutation.error, updateMutation.error, toggleMutation.error, updateEcommerceUserMutation.error, detailError, listError]
   )
 
   return {
@@ -438,6 +458,8 @@ const useContact = (contactId?: number) => {
     contactByClient,
     UpdateEcommerceUserAsync,
     getById,
+
+    updateFullNameMutation
   }
 }
 

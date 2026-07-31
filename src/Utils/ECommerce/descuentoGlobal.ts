@@ -336,3 +336,20 @@ export const prepararDescuentoGlobal = ({
     requiereCuentaOrden: true,
   }
 }
+
+
+export  const formatearPorcentaje = (
+  value: string | number | null | undefined
+): string => {
+  const numero = Number(value)
+
+  if (!Number.isFinite(numero)) {
+    return "0"
+  }
+
+  return numero.toLocaleString("es-NI", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+    useGrouping: false,
+  })
+}

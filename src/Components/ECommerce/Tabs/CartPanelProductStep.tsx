@@ -1,11 +1,13 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
 } from "react"
+import { useSelector } from "react-redux"
 import { Tooltip } from "@mui/material"
 import { toast } from "react-toastify"
 import { MdCheckCircle, MdClear, MdDelete } from "react-icons/md"
@@ -14,9 +16,14 @@ import { GiPriceTag } from "react-icons/gi"
 import Input from "@/Components/Common/Input"
 import vacio from "@/assets/vacio.png"
 
+import { selectAplicaDescuento } from "@/Context/Slices/Auth/authSlice"
+
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { safeNumber } from "@/Utils/ECommerce/utils"
-import { normalizarDescuentoInput } from "@/Utils/ECommerce/descuentoGlobal"
+import {
+  formatearPorcentaje,
+  normalizarDescuentoInput,
+} from "@/Utils/ECommerce/descuentoGlobal"
 
 import {
   TipoDescuento,
@@ -27,12 +34,7 @@ import {
 import type { CartDetailView } from "@/Interfaces/Crm/LogCartInterface"
 
 /**
- * Porcentaje máximo visible permitido.
- *
- * Ejemplos:
- * 50    -> 50%
- * 50.25 -> 50.25%
- * 100   -> 100%
+ * Porcentaje máximo permitido en la interfaz.
  */
 const MAX_DESCUENTO_PORCENTUAL_UI = 100
 
@@ -93,7 +95,7 @@ const crearClaveProducto = (
 const obtenerPorcentajeActual = (
   detail: CartDetailView["detail"]
 ): string => {
-  const value = String(detail.porcenDescto ?? "").trim();
+  const value = String(detail.porcenDescto ?? "").trim()
 
   return value && Number(value) !== 0 ? value : ""
 }
@@ -114,6 +116,8 @@ export default function CartPanelProductStep({
   aplicarDescuentoGlobal,
   aplicarDescuentoProducto,
 }: Props) {
+  const aplicaDescuento = useSelector(selectAplicaDescuento)
+
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<ProductoSeleccionado | null>(null)
 
@@ -128,15 +132,28 @@ export default function CartPanelProductStep({
    */
   const descuentoLockRef = useRef(false)
 
+  /**
+   * Limpia cualquier estado de descuento si la empresa
+   * deshabilita esta funcionalidad.
+   */
+  useEffect(() => {
+    if (aplicaDescuento) return
+
+    descuentoLockRef.current = false
+    setProductoSeleccionado(null)
+    setDescuentoInput("")
+    setAplicandoDescuento(false)
+  }, [aplicaDescuento])
+
   const seleccionarProducto = useCallback(
     (
       key: string,
       detail: AplicarDescuentoProductoParams["detalle"]
     ) => {
-      if (aplicandoDescuento) return
+      if (!aplicaDescuento || aplicandoDescuento) return
 
       if (detail.permiteDescuento !== "S") {
-        toast.info("Este producto no permite descuento.")
+        toast.info("Este producto no permite descuento individual.")
         return
       }
 
@@ -157,7 +174,7 @@ export default function CartPanelProductStep({
        */
       setDescuentoInput("")
     },
-    [aplicandoDescuento]
+    [aplicaDescuento, aplicandoDescuento]
   )
 
   const handleProductKeyDown = useCallback(
@@ -192,8 +209,7 @@ export default function CartPanelProductStep({
       let descuentoNormalizado = ""
 
       try {
-        descuentoNormalizado =
-          normalizarDescuentoInput(valor)
+        descuentoNormalizado = normalizarDescuentoInput(valor)
       } catch (error) {
         toast.warning(
           error instanceof Error
@@ -210,10 +226,7 @@ export default function CartPanelProductStep({
 
       const valorNumerico = Number(descuentoNormalizado)
 
-      if (
-        !Number.isFinite(valorNumerico) ||
-        valorNumerico < 0
-      ) {
+      if (!Number.isFinite(valorNumerico) || valorNumerico < 0) {
         toast.warning("Ingrese un descuento válido.")
         return null
       }
@@ -229,10 +242,6 @@ export default function CartPanelProductStep({
         return null
       }
 
-      /*
-       * No se usa toFixed, Math.round, parseInt
-       * ni ninguna transformación que recorte decimales.
-       */
       return descuentoNormalizado
     },
     []
@@ -241,16 +250,15 @@ export default function CartPanelProductStep({
   /**
    * Aplica el descuento desde un único control:
    *
-   * - Con producto seleccionado: descuento por producto.
+   * - Con producto seleccionado: descuento individual.
    * - Sin producto seleccionado: descuento global.
    */
   const handleDiscountBlur = useCallback(
     async (event: FocusEvent<HTMLInputElement>) => {
-      if (descuentoLockRef.current) return
+      if (!aplicaDescuento || descuentoLockRef.current) return
 
       const input = event.currentTarget
-      const nextTarget =
-        event.relatedTarget as HTMLElement | null
+      const nextTarget = event.relatedTarget as HTMLElement | null
 
       /*
        * No aplicar cuando el usuario está cambiando
@@ -264,9 +272,7 @@ export default function CartPanelProductStep({
        * No aplicar al producto anterior cuando el usuario
        * está seleccionando otra fila.
        */
-      if (
-        nextTarget?.dataset.discountProductKey !== undefined
-      ) {
+      if (nextTarget?.dataset.discountProductKey !== undefined) {
         return
       }
 
@@ -318,6 +324,7 @@ export default function CartPanelProductStep({
       }
     },
     [
+      aplicaDescuento,
       aplicarDescuentoGlobal,
       aplicarDescuentoProducto,
       descuentoInput,
@@ -334,15 +341,12 @@ export default function CartPanelProductStep({
     ) => {
       event.stopPropagation()
 
-      const productoEliminadoKey =
-        productoSeleccionado?.key
+      const productoEliminadoKey = productoSeleccionado?.key
 
       void handleRemoveItem(
         cartUserId,
         detail.noPedido,
-        String(companySistema)
-          .trim()
-          .toUpperCase() === "P"
+        String(companySistema).trim().toUpperCase() === "P"
           ? String(detail.codProducto ?? "")
           : "",
         String(detail.unico ?? "")
@@ -376,9 +380,7 @@ export default function CartPanelProductStep({
           name="searchProduct"
           value={search}
           placeholder="Buscar categoría o producto"
-          onChange={(event) =>
-            setSearch(event.target.value)
-          }
+          onChange={(event) => setSearch(event.target.value)}
         />
 
         {search.trim() && (
@@ -396,38 +398,33 @@ export default function CartPanelProductStep({
 
       <div className="carPCPanel-products">
         {filteredDetails.map(({ detail }, index) => {
-          const itemKey = crearClaveLinea(
-            detail,
-            index
-          )
+          const itemKey = crearClaveLinea(detail, index)
 
           if (detail.tipoComponente === "P") {
-            const productoKey = crearClaveProducto(
-              detail,
-              index
-            )
+            const productoKey = crearClaveProducto(detail, index)
 
-            const permiteDescuento =
-              detail.permiteDescuento === "S"
+            const permiteDescuento = detail.permiteDescuento === "S"
+
+            const puedeSeleccionarDescuento =
+              aplicaDescuento && permiteDescuento
 
             const estaSeleccionado =
+              puedeSeleccionarDescuento &&
               productoSeleccionado?.key === productoKey
 
-            const porcentajeActual =
-              obtenerPorcentajeActual(detail)
-
-            const montoActual =
-              obtenerMontoActual(detail)
+            const porcentajeActual = obtenerPorcentajeActual(detail)
+            const montoActual = obtenerMontoActual(detail)
 
             const tieneDescuentoActual =
-              Boolean(porcentajeActual) ||
-              montoActual > 0
+              Boolean(porcentajeActual) || montoActual > 0
 
             const className = [
               "carPCPanel-content__list",
-              permiteDescuento
+              puedeSeleccionarDescuento
                 ? "carPCPanel-content__list--selectable"
-                : "carPCPanel-content__list--discountDisabled",
+                : aplicaDescuento
+                  ? "carPCPanel-content__list--discountDisabled"
+                  : "",
               estaSeleccionado
                 ? "carPCPanel-content__list--selected"
                 : "",
@@ -439,49 +436,40 @@ export default function CartPanelProductStep({
               <div
                 key={itemKey}
                 className={className}
-                role={
-                  permiteDescuento
-                    ? "button"
-                    : undefined
-                }
+                role={puedeSeleccionarDescuento ? "button" : undefined}
                 tabIndex={
-                  permiteDescuento && !aplicandoDescuento
+                  puedeSeleccionarDescuento && !aplicandoDescuento
                     ? 0
                     : -1
                 }
                 data-discount-product-key={
-                  productoKey
+                  puedeSeleccionarDescuento ? productoKey : undefined
                 }
                 aria-pressed={
-                  permiteDescuento
+                  puedeSeleccionarDescuento
                     ? estaSeleccionado
                     : undefined
                 }
                 aria-disabled={
-                  !permiteDescuento ||
-                  aplicandoDescuento
+                  aplicaDescuento
+                    ? !puedeSeleccionarDescuento || aplicandoDescuento
+                    : undefined
                 }
-                onClick={() =>
-                  seleccionarProducto(
-                    productoKey,
-                    detail
-                  )
-                }
-                onKeyDown={(event) =>
-                  handleProductKeyDown(
-                    event,
-                    productoKey,
-                    detail
-                  )
-                }
+                onClick={() => {
+                  if (!puedeSeleccionarDescuento) return
+
+                  seleccionarProducto(productoKey, detail)
+                }}
+                onKeyDown={(event) => {
+                  if (!puedeSeleccionarDescuento) return
+
+                  handleProductKeyDown(event, productoKey, detail)
+                }}
               >
                 <div className="carPCPanel-content__list-imgContainer">
                   <img
                     src={detail.imagen || vacio}
-                    alt={
-                      detail.descripcion ||
-                      "Imagen del producto"
-                    }
+                    alt={detail.descripcion || "Imagen del producto"}
                     className="carPCPanel-content__list-image"
                   />
 
@@ -506,40 +494,41 @@ export default function CartPanelProductStep({
 
                   <p className="carPCPanel-content__list-price">
                     {safeNumber(detail.precioV, 0) > 0
-                      ? `C$ ${formatearDecimales(
-                          detail.precioV
-                        )}`
+                      ? `C$ ${formatearDecimales(detail.precioV)}`
                       : ""}
                   </p>
 
-                  <div className="carPCPanel-content__discountStatus">
-                    {!permiteDescuento ? (
-                      <span className="carPCPanel-content__discountStatus--disabled">
-                        No permite descuento
-                      </span>
-                    ) : tieneDescuentoActual ? (
-                      <>
-                        {porcentajeActual && (
-                          <span>
-                            Descuento: {porcentajeActual}%
-                          </span>
-                        )}
+                  {aplicaDescuento && (
+                    <div className="carPCPanel-content__discountStatus">
+                      {!permiteDescuento && (
+                        <span className="carPCPanel-content__discountStatus--disabled">
+                          No permite descuento individual
+                        </span>
+                      )}
 
-                        {montoActual > 0 && (
-                          <span>
-                            Monto: C${" "}
-                            {formatearDecimales(
-                              montoActual
-                            )}
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <span>
-                        Sin descuento aplicado
-                      </span>
-                    )}
-                  </div>
+                      {tieneDescuentoActual ? (
+                        <>
+                          {porcentajeActual && (
+                            <span>
+                              Descuento aplicado:{" "}
+                              {formatearPorcentaje(porcentajeActual)}%
+                            </span>
+                          )}
+
+                          {montoActual > 0 && (
+                            <span>
+                              Monto descontado: C${" "}
+                              {formatearDecimales(montoActual)}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        permiteDescuento && (
+                          <span>Sin descuento aplicado</span>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <Tooltip title="Eliminar producto">
@@ -548,15 +537,11 @@ export default function CartPanelProductStep({
                       type="button"
                       className="carPCPanel-content__removeIcon"
                       aria-label={`Eliminar ${
-                        detail.descripcion ||
-                        "producto"
+                        detail.descripcion || "producto"
                       }`}
                       disabled={aplicandoDescuento}
                       onClick={(event) =>
-                        handleRemoveProduct(
-                          event,
-                          detail
-                        )
+                        handleRemoveProduct(event, detail)
                       }
                     >
                       <MdDelete fontSize={24} />
@@ -580,9 +565,7 @@ export default function CartPanelProductStep({
 
                   <p className="carPCPanel-content__list-price">
                     {safeNumber(detail.precioV, 0) > 0
-                      ? `C$ ${formatearDecimales(
-                          detail.precioV
-                        )}`
+                      ? `C$ ${formatearDecimales(detail.precioV)}`
                       : ""}
                   </p>
                 </div>
@@ -600,107 +583,107 @@ export default function CartPanelProductStep({
         })}
       </div>
 
-      <div
-        className={[
-          "carPCPanel-stepContent__descuento",
-          productoSeleccionado
-            ? "carPCPanel-stepContent__descuento--product"
-            : "carPCPanel-stepContent__descuento--global",
-        ].join(" ")}
-      >
-        <div className="carPCPanel-stepContent__descuentoHeader">
-          <div className="carPCPanel-stepContent__descuentoText">
-            <GiPriceTag size={18} />
+      {aplicaDescuento && (
+        <div
+          className={[
+            "carPCPanel-stepContent__descuento",
+            productoSeleccionado
+              ? "carPCPanel-stepContent__descuento--product"
+              : "carPCPanel-stepContent__descuento--global",
+          ].join(" ")}
+        >
+          <div className="carPCPanel-stepContent__descuentoHeader">
+            <div className="carPCPanel-stepContent__descuentoText">
+              <GiPriceTag size={18} />
 
-            <span>
-              {productoSeleccionado
-                ? "Descuento del producto"
-                : "Descuento global"}
-            </span>
+              <span>
+                {productoSeleccionado
+                  ? "Descuento del producto"
+                  : "Descuento global"}
+              </span>
+            </div>
+
+            {productoSeleccionado && (
+              <button
+                type="button"
+                className="carPCPanel-stepContent__clearSelection"
+                disabled={aplicandoDescuento}
+                onClick={() => {
+                  setProductoSeleccionado(null)
+                  setDescuentoInput("")
+                }}
+              >
+                <MdClear size={17} />
+                Quitar selección
+              </button>
+            )}
           </div>
 
           {productoSeleccionado && (
-            <button
-              type="button"
-              className="carPCPanel-stepContent__clearSelection"
-              disabled={aplicandoDescuento}
-              onClick={() => {
-                setProductoSeleccionado(null)
-                setDescuentoInput("")
-              }}
-            >
-              <MdClear size={17} />
-              Quitar selección
-            </button>
+            <p className="carPCPanel-stepContent__selectedProduct">
+              {productoSeleccionado.detail.descripcion ||
+                productoSeleccionado.detail.codProducto}
+            </p>
           )}
+
+          <div className="carPCPanel-stepContent__descuentoControls">
+            <select
+              id="tipoDescuento"
+              className="checkout-input"
+              value={tipoDescuento}
+              disabled={aplicandoDescuento}
+              aria-label="Tipo de descuento"
+              onChange={(event) =>
+                handleTipoDescuentoChange(event.target.value)
+              }
+            >
+              <option value={TipoDescuento.P}>
+                Porcentual (%)
+              </option>
+
+              <option value={TipoDescuento.A}>
+                Monto absoluto (C$)
+              </option>
+            </select>
+
+            <Input
+              type="text"
+              inputMode="decimal"
+              id="descuentoInput"
+              name="descuento"
+              value={descuentoInput}
+              className="carPCPanel-stepContent__descuentoButton"
+              aria-label={
+                productoSeleccionado
+                  ? "Descuento del producto seleccionado"
+                  : "Descuento global"
+              }
+              placeholder={
+                tipoDescuento === TipoDescuento.P
+                  ? "Ejemplo: 50.25"
+                  : "Ejemplo: 150.75"
+              }
+              disabled={aplicandoDescuento}
+              onChange={(event) =>
+                setDescuentoInput(event.target.value)
+              }
+              onBlur={(event) => {
+                void handleDiscountBlur(event)
+              }}
+            />
+          </div>
+
+          <small className="carPCPanel-stepContent__descuentoHelp">
+            {aplicandoDescuento
+              ? productoSeleccionado
+                ? "Aplicando descuento al producto..."
+                : "Aplicando descuento global..."
+              : tipoDescuento === TipoDescuento.P
+                ? `Ingrese un porcentaje entre 0 y ${MAX_DESCUENTO_PORCENTUAL_UI}.`
+                : "Ingrese el monto exacto que desea descontar."}
+          </small>
         </div>
-
-        {productoSeleccionado && (
-          <p className="carPCPanel-stepContent__selectedProduct">
-            {productoSeleccionado.detail.descripcion ||
-              productoSeleccionado.detail.codProducto}
-          </p>
-        )}
-
-        <div className="carPCPanel-stepContent__descuentoControls">
-          <select
-            id="tipoDescuento"
-            className="checkout-input"
-            value={tipoDescuento}
-            disabled={aplicandoDescuento}
-            aria-label="Tipo de descuento"
-            onChange={(event) =>
-              handleTipoDescuentoChange(
-                event.target.value
-              )
-            }
-          >
-            <option value={TipoDescuento.P}>
-              Porcentual (%)
-            </option>
-
-            <option value={TipoDescuento.A}>
-              Monto absoluto (C$)
-            </option>
-          </select>
-
-          <Input
-            type="text"
-            inputMode="decimal"
-            id="descuentoInput"
-            name="descuento"
-            value={descuentoInput}
-            className="carPCPanel-stepContent__descuentoButton"
-            aria-label={
-              productoSeleccionado
-                ? "Descuento del producto seleccionado"
-                : "Descuento global"
-            }
-            placeholder={
-              tipoDescuento === TipoDescuento.P
-                ? "Ejemplo: 50.25"
-                : "Ejemplo: 150.75"
-            }
-            disabled={aplicandoDescuento}
-            onChange={(event) =>
-              setDescuentoInput(event.target.value)
-            }
-            onBlur={(event) => {
-              void handleDiscountBlur(event)
-            }}
-          />
-        </div>
-
-        <small className="carPCPanel-stepContent__descuentoHelp">
-          {aplicandoDescuento
-            ? productoSeleccionado
-              ? "Aplicando descuento al producto..."
-              : "Aplicando descuento global..."
-            : tipoDescuento === TipoDescuento.P
-              ? `Ingrese un porcentaje entre 0 y ${MAX_DESCUENTO_PORCENTUAL_UI}.`
-              : "Ingrese el monto exacto que desea descontar."}
-        </small>
-      </div>
+      )}
     </div>
   )
 }

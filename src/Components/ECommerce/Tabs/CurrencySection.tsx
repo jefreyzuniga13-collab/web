@@ -1,13 +1,15 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import type { CheckoutStep, Currencyto} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
+import { filtrarFormasPagoUnico} from "@/Utils/ECommerce/pagoFacturaUtils"
+import {selectPermiteMultiMoneda} from "@/Context/Slices/Auth/authSlice"
+import { safeStr } from "@/Utils/ECommerce/formatters"
+import { useMoneda } from "@/Hooks/Ecommerce/payment/useMoneda"
+import type { MonedaInterface } from "@/Interfaces/Ecommerce/Moneda"
+import { useSelector, type TypedUseSelectorHook} from "react-redux"
+import type { RootState } from "@/Context"
 
-import type {
-  CheckoutStep,
-  Currencyto
-} from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
-import {
-  filtrarFormasPagoUnico
-} from "@/Utils/ECommerce/pagoFacturaUtils"
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 export interface Props {
   /**
@@ -66,6 +68,10 @@ export interface Props {
   setMultiPagoActivo?: (value: boolean) => void
 }
 
+const getCurrencyKey = (item: MonedaInterface, index: number) => {
+  return `${safeStr(item.moneda)}-${safeStr(item.simbolo)}-${index}`;
+};
+
 export const CurrencySection = ({
   step,
   currency,
@@ -79,6 +85,34 @@ export const CurrencySection = ({
   multiPagoActivo = false,
   setMultiPagoActivo
 }: Props) => {
+
+  // Permite o no multimoneda
+  const permiteMultiMoneda = useAppSelector(selectPermiteMultiMoneda)
+  const [monedaSeleccionada, setMonedaSeleccionada] = useState<MonedaInterface>({
+    abreviatura: '',
+    activo: '',
+    id:'',
+    moneda:'',
+    simbolo:''
+  });
+  const {monedas, loadingMonedas} = useMoneda()
+
+
+
+  const handleSelectMoneda = (value: string)=>{
+
+    const selected = monedas.find(
+      (item, index) => getCurrencyKey(item, index) === value
+    )
+
+    if(!selected){
+      return;
+    }
+
+
+    setMonedaSeleccionada(selected)
+
+  }
   /**
    * En pago único se filtran las formas de pago según la configuración
    * de la empresa. Si no permite pasarela, no se muestra gatewayCard.
@@ -127,13 +161,18 @@ export const CurrencySection = ({
   if (step !== "currency") {
     return null
   }
+  
+  // Cuando se va a relaizar el pago, se debe de seleccionar la moneda, por ejemplo 100 en efectivo, 400 en dolares, etc. Pero se debe de validar
+  // MontoA: Es el monto del pago sin importar si es cordoba o dolar
+  // MontoP: Es el monto del pago pero en cordobas, es el mismo que MontoA si el monto del pago aplicado es cordoba, y el equivalente en cordobas del MontoA si el monto del pago es dolar
+  // MontoS: Es el monto del pago pero en dolar, es el mismo que MontoA si el monto del pago aplicado es dolar, y el equivalente en dolares de MontoA si el monto del pago es cordoba
 
   return (
     <div className="checkout-methods-list">
       <h2 className="checkout-section__title">
         Selecciona cómo deseas pagar
       </h2>
-
+    
       {permiteMultiPago && (
         <div className="checkout-payment-mode">
           <label
@@ -179,6 +218,46 @@ export const CurrencySection = ({
               </small>
             </span>
           </label>
+        </div>
+      )}
+
+
+      {/* Agregar la moneda, usando el useMoneda, realizo */}
+      {permiteMultiMoneda && (
+        <div className="checkout-field checkout-field--full">
+          <label className="checkout-label" htmlFor="multipagoCurrency">
+           Selecionar Moneda
+          </label>
+
+          <select
+            id="multipagoCurrency"
+            className="checkout-input"
+            value={
+              monedaSeleccionada
+                ? (monedas
+                    .map((item, index) => ({
+                      item,
+                      key: getCurrencyKey(item, index),
+                    }))
+                    .find(({ item }) => item === monedaSeleccionada)?.key ?? "")
+                : ""
+            }
+            disabled={loadingMonedas}
+            onChange={(event) => {
+              void handleSelectMoneda(event.target.value);
+            }}
+          >
+            <option value="">Seleccionar moneda</option>
+
+            {monedas.map((item, index) => (
+              <option
+                key={getCurrencyKey(item, index)}
+                value={getCurrencyKey(item, index)}
+              >
+                {safeStr(item.moneda)}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 

@@ -111,8 +111,7 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
 
-  const payload =
-    location.state?.payload as CheckoutPayload | undefined
+  const payload =  location.state?.payload
 
   const carPCG = useAppSelector(selectCarPCG)
 
@@ -120,8 +119,8 @@ const CheckoutPage: React.FC = () => {
    * El cliente público no inicia sesión ni consulta /Auth/me.
    * Estos permisos vienen desde /Auth/TempLink/Resolve.
    */
-  const permiteMultiPago = payload?.permiteMultiPago === true
-  const permitePasarela = payload?.permitePasarela === true
+  const permiteMultiPago = payload.permiteMultiPago
+  const permitePasarela = payload.permitePasarela
 
   const [ecommerceUserId, setEcommerceUserId] = useState(0)
   const [orderId, setOrderId] = useState(0)
@@ -640,7 +639,7 @@ const CheckoutPage: React.FC = () => {
     codSucursalFactura: string
   }) => {
     const totalesPantallaReq = {
-      descuentoPantalla: existingLog?.DescuentoPantalla ?? 0,
+      descuentoPantalla: existingLog?.descuentoPantalla ?? 0,
       exonerado: "N",
       ivaPantalla: existingLog?.ivaPantalla ?? 0,
       maquina: `CRM-${payload?.contactId}`,

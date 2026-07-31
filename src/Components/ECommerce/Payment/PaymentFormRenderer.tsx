@@ -1,21 +1,12 @@
-import type {
-  Dispatch,
-  SetStateAction
-} from "react"
+import type { Dispatch, SetStateAction} from "react"
 
 import CashPaymentSection from "@/Components/ECommerce/Payment/CashPaymentSection"
 import TransferPaymentSection from "@/Components/ECommerce/Payment/TransferPaymentSection"
 import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection"
 import CardPaymentSection from "@/Components/ECommerce/Payment/CardPaymentSection"
+import type {  CheckoutPaymentMethod,  ManualCardFormState} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
 
-import type {
-  CheckoutPaymentMethod,
-  ManualCardFormState
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
-import type {
-  TarjetaModelInterface
-} from "@/Interfaces/Ecommerce/TarjetaInterface"
+import type {TarjetaModelInterface} from "@/Interfaces/Ecommerce/TarjetaInterface"
 
 interface Props {
   /**

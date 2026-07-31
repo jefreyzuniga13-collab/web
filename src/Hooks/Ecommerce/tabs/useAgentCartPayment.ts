@@ -29,10 +29,7 @@ import {
   getPaymentCodeByMethod
 } from "@/Utils/ECommerce/buildPagoGenerico"
 import { safeStr } from "@/Utils/ECommerce/formatters"
-import {
-  construirDetallePago,
-  validarPagosSeleccionados
-} from "@/Utils/ECommerce/pagoFacturaUtils"
+import { construirDetallePago, validarPagosSeleccionados} from "@/Utils/ECommerce/pagoFacturaUtils"
 import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
 import { TipoFalote } from "@/Constants/falote"

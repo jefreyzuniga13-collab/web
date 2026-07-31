@@ -58,10 +58,6 @@ const getErrorMessage = (
   )
 }
 
-
-// Enviar decimal, cuando se aplique el monto el procentaje o bien en absoluto cundo se haga el descuento pt pocucto
-//no se puede por ejemplo si el usuariio escribe 40, se envia 0.4, o si el monto es 100 y el subtotoal 900, se hace el caclulo y se envia el deciaml
-//dame este componente completo yactualizado
 export const useCartPCGFlow = (
   conversationId: number,
   contactId: number,
@@ -426,642 +422,332 @@ export const useCartPCGFlow = (
    * El SP recibe el porcentaje visible, por ejemplo 10, porque
    * su rama %desc. realiza internamente la división entre 100.
    */
-// const aplicarDescuentoProducto = useCallback(
-//   async ({
-//     detalle,
-//     descuento,
-//     tipo,
-//   }: AplicarDescuentoProductoParams): Promise<boolean> => {
-//     if (discountLockRef.current) return false
+  const aplicarDescuentoProducto = useCallback(
+    async ({
+      detalle,
+      descuento,
+      tipo,
+    }: AplicarDescuentoProductoParams): Promise<boolean> => {
+      if (discountLockRef.current) return false
 
-//     if (detalle.tipoComponente !== "P") {
-//       toast.warning(
-//         "El descuento solo puede aplicarse al producto principal."
-//       )
-//       return false
-//     }
-
-//     if (detalle.permiteDescuento !== "S") {
-//       toast.warning("Este producto no permite aplicar descuento.")
-//       return false
-//     }
-
-//     let valorNormalizado = ""
-
-//     try {
-//       valorNormalizado = normalizarDescuentoInput(descuento)
-//     } catch (error) {
-//       toast.warning(
-//         getErrorMessage(error, "Ingrese un descuento válido.")
-//       )
-//       return false
-//     }
-
-//     if (!valorNormalizado) {
-//       toast.warning("Debe ingresar un descuento.")
-//       return false
-//     }
-
-//     const valorNumerico = Number(valorNormalizado)
-
-//     if (!Number.isFinite(valorNumerico) || valorNumerico < 0) {
-//       toast.warning("Ingrese un descuento válido.")
-//       return false
-//     }
-
-//     const cantidad = Number(detalle.cantidad ?? 0)
-//     const precioUnitario = Number(detalle.precioV ?? 0)
-//     const subtotalLinea = cantidad * precioUnitario
-
-//     if (
-//       !Number.isFinite(subtotalLinea) ||
-//       subtotalLinea <= 0
-//     ) {
-//       toast.warning(
-//         "No se pudo calcular el subtotal del producto."
-//       )
-//       return false
-//     }
-
-//     if (
-//       tipo === TipoDescuento.P &&
-//       valorNumerico > MAX_DESCUENTO_PORCENTUAL_UI
-//     ) {
-//       toast.warning(
-//         `El descuento porcentual debe estar entre 0 y ${MAX_DESCUENTO_PORCENTUAL_UI}.`
-//       )
-//       return false
-//     }
-
-//     if (
-//       tipo === TipoDescuento.A &&
-//       valorNumerico > subtotalLinea
-//     ) {
-//       toast.warning(
-//         "El descuento no puede superar el subtotal del producto."
-//       )
-//       return false
-//     }
-
-//     /*
-//      * El SP espera el descuento como factor decimal:
-//      *
-//      * Porcentaje:
-//      * 40 % => 40 / 100 => 0.4
-//      *
-//      * Monto absoluto:
-//      * $100 sobre subtotal $900 => 100 / 900 => 0.11111111
-//      */
-//     // const descuentoDecimal =
-//     //   tipo === TipoDescuento.P
-//     //     ? valorNumerico / 100
-//     //     : valorNumerico / subtotalLinea
-
-//     if (
-//       !Number.isFinite(valorNumerico) ||
-//       valorNumerico < 0 ||
-//       valorNumerico > 1
-//     ) {
-//       toast.warning(
-//         "No se pudo calcular correctamente el descuento."
-//       )
-//       return false
-//     }
-
-//     /*
-//      * Evita enviar decimales binarios extensos, por ejemplo:
-//      * 0.1111111111111111
-//      */
-//     const descuentoApi =
-//   tipo === TipoDescuento.P
-//     ? valorNumerico
-//     : Number((valorNumerico / subtotalLinea).toFixed(8))
-
-//     discountLockRef.current = true
-
-//     try {
-//       const existingLog = await fetchByContactId(contactId)
-
-//       const noPedido = Number(
-//         existingLog?.orderId ?? detalle.noPedido ?? 0
-//       )
-
-//       const sucursal = cleanText(
-//         existingLog?.branch || locked?.branch
-//       )
-
-//       const bodega = cleanText(
-//         existingLog?.wherehouseCode ||
-//           locked?.wherehouseCode
-//       )
-
-//       const codPrecio =
-//         existingLog?.codPrecio ||
-//         cleanText(locked?.codPrecio) ||
-//         "01"
-
-//       const codProducto = cleanText(
-//         detalle.codProducto
-//       )
-
-//       const financiamiento = Number(
-//         detalle.financiamiento
-//       )
-
-//       if (!noPedido || noPedido <= 0) {
-//         toast.warning(
-//           "No existe una orden activa para aplicar el descuento."
-//         )
-//         return false
-//       }
-
-//       if (!sucursal) {
-//         toast.warning(
-//           "No se pudo identificar la sucursal de la orden."
-//         )
-//         return false
-//       }
-
-//       if (!bodega) {
-//         toast.warning(
-//           "No se pudo identificar la bodega de la orden."
-//         )
-//         return false
-//       }
-
-//       if (!codProducto) {
-//         toast.warning(
-//           "No se pudo identificar el producto."
-//         )
-//         return false
-//       }
-
-//       if (!Number.isFinite(financiamiento)) {
-//         toast.warning(
-//           "No se pudo identificar la línea del producto."
-//         )
-//         return false
-//       }
-
-//       const request: DetalleFacturaTempoRequest = {
-//         usuario: String(contactId),
-//         maquina: `CRM-${contactId}`,
-//         fecha: FechaManagua.obtenerFormatoLimpio(),
-
-//         codproducto: codProducto,
-//         codprecio: codPrecio,
-//         precio: precioUnitario,
-//         cantidadmovimiento: cantidad,
-//         medidamovimiento: cleanText(detalle.codUm),
-
-//         tipotrabajo:
-//           tipo === TipoDescuento.P
-//             ? "%desc."
-//             : "Descuento",
-
-//         financiamiento,
-
-//         codvendedor:codReferenciaPCG,
-//           // companySistema 
-//           // === "P"
-//           //   ? codReferenciaPCG
-//           //   : "005",
-
-//         codcliente: "00000",
-//         producto: cleanText(detalle.descripcion),
-//         sucursal,
-//         bodega,
-//         nofactura: String(noPedido),
-
-//         tipo: "1",
-
-//         tipodesc:
-//           tipo === TipoDescuento.P ? "P" : "V",
-
-//         tasacambio: tasaCambio,
-
-//         /*
-//          * Siempre se envía el factor decimal.
-//          */
-//         descuento: descuentoApi,
-
-//         autorizado: "N",
-//         tabla: "det_factura_tempo",
-//         vincularse: "N",
-
-//         servicioventa: Number(
-//           detalle.tipoServicio ?? 1
-//         ),
-
-//         facturaexonerada: "N",
-//         lote: "Sin Lote",
-//         vencimiento: "20260116",
-//         vienedelabusqueda: "N",
-
-//         observacion: cleanText(
-//           detalle.observaciones
-//         ),
-
-//         iddescuentolineal: 0,
-//         vienedebusquedaprioridadproducto: "S",
-//         pol_Sumacant: "N",
-
-//         tipoComponente:
-//           companySistema === "P" ? "" : "P",
-
-//         unico: cleanText(detalle.unico),
-
-//         codModificador:
-//           cleanText(detalle.codModificador) ||
-//           "00000",
-
-//         sistema: String(companySistema),
-
-//         ordenServicio:
-//           companySistema === "A"
-//             ? codReferenciaPCG
-//             : "",
-
-//         tipoFac: metaChannel,
-//       }
-
-//       const result = await dispatch(
-//         addProductTempoAsync(request)
-//       ).unwrap()
-
-//       const message = cleanText(
-//         result.header?.msj
-//       )
-
-//       if (result.header?.cargaFila === "N") {
-//         throw new Error(
-//           message ||
-//             "No se pudo aplicar el descuento al producto."
-//         )
-//       }
-
-//       await refreshBadge(noPedido)
-
-//       toast.success(
-//         message ||
-//           "Descuento aplicado al producto correctamente."
-//       )
-
-//       return true
-//     } catch (error) {
-//       toast.error(
-//         getErrorMessage(
-//           error,
-//           "No se pudo aplicar el descuento al producto."
-//         )
-//       )
-
-//       return false
-//     } finally {
-//       discountLockRef.current = false
-//     }
-//   },
-//   [
-//     codReferenciaPCG,
-//     companySistema,
-//     contactId,
-//     dispatch,
-//     fetchByContactId,
-//     locked?.branch,
-//     locked?.codPrecio,
-//     locked?.wherehouseCode,
-//     metaChannel,
-//     refreshBadge,
-//   ]
-// )
-
-
-const aplicarDescuentoProducto = useCallback(
-  async ({
-    detalle,
-    descuento,
-    tipo,
-  }: AplicarDescuentoProductoParams): Promise<boolean> => {
-    if (discountLockRef.current) return false
-
-    if (detalle.tipoComponente !== "P") {
-      toast.warning(
-        "El descuento solo puede aplicarse al producto principal."
-      )
-      return false
-    }
-
-    if (detalle.permiteDescuento !== "S") {
-      toast.warning("Este producto no permite aplicar descuento.")
-      return false
-    }
-
-    let valorNormalizado = ""
-
-    try {
-      valorNormalizado = normalizarDescuentoInput(descuento)
-    } catch (error) {
-      toast.warning(
-        getErrorMessage(
-          error,
-          "Ingrese un descuento válido."
+      if (detalle.tipoComponente !== "P") {
+        toast.warning(
+          "El descuento solo puede aplicarse al producto principal."
         )
-      )
-      return false
-    }
+        return false
+      }
 
-    if (!valorNormalizado) {
-      toast.warning("Debe ingresar un descuento.")
-      return false
-    }
+      if (detalle.permiteDescuento !== "S") {
+        toast.warning("Este producto no permite aplicar descuento.")
+        return false
+      }
 
-    const valorNumerico = Number(valorNormalizado)
+      let valorNormalizado = ""
 
-    if (
-      !Number.isFinite(valorNumerico) ||
-      valorNumerico < 0
-    ) {
-      toast.warning("Ingrese un descuento válido.")
-      return false
-    }
-
-    const cantidad = Number(detalle.cantidad ?? 0)
-    const precioUnitario = Number(detalle.precioV ?? 0)
-    const subtotalLinea = cantidad * precioUnitario
-
-    if (
-      !Number.isFinite(cantidad) ||
-      cantidad <= 0 ||
-      !Number.isFinite(precioUnitario) ||
-      precioUnitario <= 0 ||
-      !Number.isFinite(subtotalLinea) ||
-      subtotalLinea <= 0
-    ) {
-      toast.warning(
-        "No se pudo calcular el subtotal del producto."
-      )
-      return false
-    }
-
-    /*
-     * PORCENTAJE:
-     * El SP %desc. recibe el valor visible.
-     * Ejemplo: 50 % se envía como 50.
-     */
-    if (
-      tipo === TipoDescuento.P &&
-      valorNumerico > MAX_DESCUENTO_PORCENTUAL_UI
-    ) {
-      toast.warning(
-        `El descuento porcentual debe estar entre 0 y ${MAX_DESCUENTO_PORCENTUAL_UI}.`
-      )
-      return false
-    }
-
-    /*
-     * ABSOLUTO:
-     * El monto no puede superar el subtotal de la línea.
-     */
-    if (
-      tipo === TipoDescuento.A &&
-      valorNumerico > subtotalLinea
-    ) {
-      toast.warning(
-        "El descuento no puede superar el subtotal del producto."
-      )
-      return false
-    }
-
-    /*
-     * Porcentaje:
-     * 50 se envía como 50 porque el SP divide entre 100.
-     *
-     * Absoluto:
-     * C$40 sobre C$80 se convierte en 0.5.
-     */
-    const descuentoApi =
-      tipo === TipoDescuento.P
-        ? valorNumerico
-        : Number(
-            (valorNumerico).toFixed(8)
+      try {
+        valorNormalizado = normalizarDescuentoInput(descuento)
+      } catch (error) {
+        toast.warning(
+          getErrorMessage(
+            error,
+            "Ingrese un descuento válido."
           )
+        )
+        return false
+      }
 
-    if (
-      !Number.isFinite(descuentoApi) ||
-      descuentoApi < 0 ||
-      (
+      if (!valorNormalizado) {
+        toast.warning("Debe ingresar un descuento.")
+        return false
+      }
+
+      const valorNumerico = Number(valorNormalizado)
+
+      if (
+        !Number.isFinite(valorNumerico) ||
+        valorNumerico < 0
+      ) {
+        toast.warning("Ingrese un descuento válido.")
+        return false
+      }
+
+      const cantidad = Number(detalle.cantidad ?? 0)
+      const precioUnitario = Number(detalle.precioV ?? 0)
+      const subtotalLinea = cantidad * precioUnitario
+
+      if (
+        !Number.isFinite(cantidad) ||
+        cantidad <= 0 ||
+        !Number.isFinite(precioUnitario) ||
+        precioUnitario <= 0 ||
+        !Number.isFinite(subtotalLinea) ||
+        subtotalLinea <= 0
+      ) {
+        toast.warning(
+          "No se pudo calcular el subtotal del producto."
+        )
+        return false
+      }
+
+      /*
+      * PORCENTAJE:
+      * El SP %desc. recibe el valor visible.
+      * Ejemplo: 50 % se envía como 50.
+      */
+      if (
+        tipo === TipoDescuento.P &&
+        valorNumerico > MAX_DESCUENTO_PORCENTUAL_UI
+      ) {
+        toast.warning(
+          `El descuento porcentual debe estar entre 0 y ${MAX_DESCUENTO_PORCENTUAL_UI}.`
+        )
+        return false
+      }
+
+      /*
+      * ABSOLUTO:
+      * El monto no puede superar el subtotal de la línea.
+      */
+      if (
         tipo === TipoDescuento.A &&
-        descuentoApi > 100
-      )
-    ) {
-      toast.warning(
-        "No se pudo calcular correctamente el descuento."
-      )
-      return false
-    }
-
-    discountLockRef.current = true
-
-    try {
-      const existingLog =
-        await fetchByContactId(contactId)
-
-      const noPedido = Number(
-        existingLog?.orderId ??
-          detalle.noPedido ??
-          0
-      )
-
-      const sucursal = cleanText(
-        existingLog?.branch ||
-          locked?.branch
-      )
-
-      const bodega = cleanText(
-        existingLog?.wherehouseCode ||
-          locked?.wherehouseCode
-      )
-
-      const codPrecio =
-        existingLog?.codPrecio ||
-        cleanText(locked?.codPrecio) ||
-        "01"
-
-      const codProducto = cleanText(
-        detalle.codProducto
-      )
-
-      const financiamiento = Number(
-        detalle.financiamiento
-      )
-
-      if (!noPedido || noPedido <= 0) {
+        valorNumerico > subtotalLinea
+      ) {
         toast.warning(
-          "No existe una orden activa para aplicar el descuento."
+          "El descuento no puede superar el subtotal del producto."
         )
         return false
       }
 
-      if (!sucursal) {
+      /*
+      * Porcentaje:
+      * 50 se envía como 50 porque el SP divide entre 100.
+      *
+      * Absoluto:
+      * C$40 sobre C$80 se convierte en 0.5.
+      */
+      const descuentoApi =
+        tipo === TipoDescuento.P
+          ? valorNumerico
+          : Number(
+              (valorNumerico).toFixed(8)
+            )
+
+      if (
+        !Number.isFinite(descuentoApi) ||
+        descuentoApi < 0 ||
+        (
+          tipo === TipoDescuento.A &&
+          descuentoApi > 100
+        )
+      ) {
         toast.warning(
-          "No se pudo identificar la sucursal de la orden."
+          "No se pudo calcular correctamente el descuento."
         )
         return false
       }
 
-      if (!bodega) {
-        toast.warning(
-          "No se pudo identificar la bodega de la orden."
+      discountLockRef.current = true
+
+      try {
+        const existingLog =
+          await fetchByContactId(contactId)
+
+        const noPedido = Number(
+          existingLog?.orderId ??
+            detalle.noPedido ??
+            0
         )
-        return false
-      }
 
-      if (!codProducto) {
-        toast.warning(
-          "No se pudo identificar el producto."
+        const sucursal = cleanText(
+          existingLog?.branch ||
+            locked?.branch
         )
-        return false
-      }
 
-      if (!Number.isFinite(financiamiento)) {
-        toast.warning(
-          "No se pudo identificar la línea del producto."
+        const bodega = cleanText(
+          existingLog?.wherehouseCode ||
+            locked?.wherehouseCode
         )
-        return false
-      }
 
-      const request: DetalleFacturaTempoRequest = {
-        usuario: String(contactId),
-        maquina: `CRM-${contactId}`,
-        fecha: FechaManagua.obtenerFormatoLimpio(),
+        const codPrecio =
+          existingLog?.codPrecio ||
+          cleanText(locked?.codPrecio) ||
+          "01"
 
-        codproducto: codProducto,
-        codprecio: codPrecio,
-        precio: precioUnitario,
-        cantidadmovimiento: cantidad,
-        medidamovimiento: cleanText(detalle.codUm),
+        const codProducto = cleanText(
+          detalle.codProducto
+        )
 
-        tipotrabajo:
-          tipo === TipoDescuento.P
-            ? "%desc."
-            : "Descuento",
+        const financiamiento = Number(
+          detalle.financiamiento
+        )
 
-        financiamiento,
+        if (!noPedido || noPedido <= 0) {
+          toast.warning(
+            "No existe una orden activa para aplicar el descuento."
+          )
+          return false
+        }
 
-        codvendedor: codReferenciaPCG,
-        codcliente: "00000",
+        if (!sucursal) {
+          toast.warning(
+            "No se pudo identificar la sucursal de la orden."
+          )
+          return false
+        }
 
-        producto: cleanText(detalle.descripcion),
-        sucursal,
-        bodega,
-        nofactura: String(noPedido),
+        if (!bodega) {
+          toast.warning(
+            "No se pudo identificar la bodega de la orden."
+          )
+          return false
+        }
 
-        tipo: "1",
+        if (!codProducto) {
+          toast.warning(
+            "No se pudo identificar el producto."
+          )
+          return false
+        }
 
-        tipodesc:
-          tipo === TipoDescuento.P
-            ? "P"
-            : "V",
+        if (!Number.isFinite(financiamiento)) {
+          toast.warning(
+            "No se pudo identificar la línea del producto."
+          )
+          return false
+        }
 
-        tasacambio: tasaCambio,
+        const request: DetalleFacturaTempoRequest = {
+          usuario: String(contactId),
+          maquina: `CRM-${contactId}`,
+          fecha: FechaManagua.obtenerFormatoLimpio(),
 
-        /*
-         * Porcentaje: valor visible, por ejemplo 50.
-         * Absoluto: factor decimal, por ejemplo 0.5.
-         */
-        descuento: descuentoApi,
+          codproducto: codProducto,
+          codprecio: codPrecio,
+          precio: precioUnitario,
+          cantidadmovimiento: cantidad,
+          medidamovimiento: cleanText(detalle.codUm),
 
-        autorizado: "N",
-        tabla: "det_factura_tempo",
-        vincularse: "N",
+          tipotrabajo:
+            tipo === TipoDescuento.P
+              ? "%desc."
+              : "Descuento",
 
-        servicioventa: Number(
-          detalle.tipoServicio ?? 1
-        ),
+          financiamiento,
 
-        facturaexonerada: "N",
-        lote: "Sin Lote",
-        vencimiento: "20260116",
-        vienedelabusqueda: "N",
+          codvendedor: codReferenciaPCG,
+          codcliente: "00000",
 
-        observacion: cleanText(
-          detalle.observaciones
-        ),
+          producto: cleanText(detalle.descripcion),
+          sucursal,
+          bodega,
+          nofactura: String(noPedido),
 
-        iddescuentolineal: 0,
-        vienedebusquedaprioridadproducto: "S",
-        pol_Sumacant: "N",
+          tipo: "1",
 
-        tipoComponente:
-          companySistema === "P"
-            ? ""
-            : "P",
+          tipodesc:
+            tipo === TipoDescuento.P
+              ? "P"
+              : "V",
 
-        unico: cleanText(detalle.unico),
+          tasacambio: tasaCambio,
 
-        codModificador:
-          cleanText(detalle.codModificador) ||
-          "00000",
+          /*
+          * Porcentaje: valor visible, por ejemplo 50.
+          * Absoluto: factor decimal, por ejemplo 0.5.
+          */
+          descuento: descuentoApi,
 
-        sistema: String(companySistema),
+          autorizado: "N",
+          tabla: "det_factura_tempo",
+          vincularse: "N",
 
-        ordenServicio:
-          companySistema === "A"
-            ? codReferenciaPCG
-            : "",
+          servicioventa: Number(
+            detalle.tipoServicio ?? 1
+          ),
 
-        tipoFac: metaChannel,
-      }
+          facturaexonerada: "N",
+          lote: "Sin Lote",
+          vencimiento: "20260116",
+          vienedelabusqueda: "N",
 
-      const result = await dispatch(
-        addProductTempoAsync(request)
-      ).unwrap()
+          observacion: cleanText(
+            detalle.observaciones
+          ),
 
-      const message = cleanText(
-        result.header?.msj
-      )
+          iddescuentolineal: 0,
+          vienedebusquedaprioridadproducto: "S",
+          pol_Sumacant: "N",
 
-      if (result.header?.cargaFila === "N") {
-        throw new Error(
+          tipoComponente:
+            companySistema === "P"
+              ? ""
+              : "P",
+
+          unico: cleanText(detalle.unico),
+
+          codModificador:
+            cleanText(detalle.codModificador) ||
+            "00000",
+
+          sistema: String(companySistema),
+
+          ordenServicio:
+            companySistema === "A"
+              ? codReferenciaPCG
+              : "",
+
+          tipoFac: metaChannel,
+        }
+
+        const result = await dispatch(
+          addProductTempoAsync(request)
+        ).unwrap()
+
+        const message = cleanText(
+          result.header?.msj
+        )
+
+        if (result.header?.cargaFila === "N") {
+          throw new Error(
+            message ||
+              "No se pudo aplicar el descuento al producto."
+          )
+        }
+
+        await refreshBadge(noPedido)
+
+        toast.success(
           message ||
+            "Descuento aplicado al producto correctamente."
+        )
+
+        return true
+      } catch (error) {
+        toast.error(
+          getErrorMessage(
+            error,
             "No se pudo aplicar el descuento al producto."
+          )
         )
+
+        return false
+      } finally {
+        discountLockRef.current = false
       }
-
-      await refreshBadge(noPedido)
-
-      toast.success(
-        message ||
-          "Descuento aplicado al producto correctamente."
-      )
-
-      return true
-    } catch (error) {
-      toast.error(
-        getErrorMessage(
-          error,
-          "No se pudo aplicar el descuento al producto."
-        )
-      )
-
-      return false
-    } finally {
-      discountLockRef.current = false
-    }
-  },
-  [
-    codReferenciaPCG,
-    companySistema,
-    contactId,
-    dispatch,
-    fetchByContactId,
-    locked?.branch,
-    locked?.codPrecio,
-    locked?.wherehouseCode,
-    metaChannel,
-    refreshBadge,
-  ]
-)
+    },
+    [
+      codReferenciaPCG,
+      companySistema,
+      contactId,
+      dispatch,
+      fetchByContactId,
+      locked?.branch,
+      locked?.codPrecio,
+      locked?.wherehouseCode,
+      metaChannel,
+      refreshBadge,
+    ]
+  )
   const resolveOrder = useCallback(
     async (branch: string, codPrecio: string): Promise<ResolveOrderResult> => {
       const existingLog = await fetchByContactId(contactId)
@@ -1549,7 +1235,7 @@ const aplicarDescuentoProducto = useCallback(
         wherehouse: value.nombodega,
         wherehouseCode: value.codBodega,
         serie: value.serie,
-        codPrecio: value.CodPrecio || "01",
+        codPrecio: value.codPrecio || "01",
       }
 
       setCodPrecioActivo(lockInfo.codPrecio)

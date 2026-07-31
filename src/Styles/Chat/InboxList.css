@@ -544,3 +544,45 @@
     padding: 2px 4px;
   }
 }
+
+
+
+/* No alterar la fuente, solo contenido */
+
+/* Agregar al final de InboxList.css */
+.inbox-list__name-editor {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.inbox-list__name-input {
+  width: min(12rem, 42vw);
+  min-width: 4rem;
+  margin: 0 0.15rem;
+  padding: 0 0.15rem 0.1rem;
+  border: 0;
+
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.inbox-list__name-input:focus {
+  border-bottom-width: 2px;
+}
+
+.inbox-list__name-input:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.inbox-list__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+

@@ -41,6 +41,12 @@ export interface ApiResponse<T> {
   errors: string[] | null;
 }
 
+
+export interface OperationResultProj {
+  // Define las propiedades que devuelve tu servicio
+  id: number;
+  fullName: string;
+}
 export interface CreateUserRequest {
   fullName: string;
   email: string;

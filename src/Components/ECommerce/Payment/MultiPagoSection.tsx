@@ -10,6 +10,20 @@ import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, to
 import { formatearDecimales } from "@/Utils/calcularIVA";
 import { safeStr } from "@/Utils/ECommerce/formatters";
 import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
+import { useMoneda } from "@/Hooks/Ecommerce/payment/useMoneda";
+import type { MonedaInterface } from "@/Interfaces/Ecommerce/Moneda";
+import { useSelector, type TypedUseSelectorHook } from "react-redux";
+import type { RootState } from "@/Context";
+import { selectPermiteMultiMoneda } from "@/Context/Slices/Auth/authSlice";
+
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+
+const getMonedaKey = (item: MonedaInterface, index: number) => {
+  return `${safeStr(item.moneda)}-${safeStr(item.simbolo)}-${index}`;
+};
+
+
 
 type Props = {
   /**
@@ -95,6 +109,38 @@ export default function MultiPagoSection({
   const [referencia, setReferencia] = useState("");
   const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([]);
 
+
+  
+    // Permite o no multimoneda
+  const permiteMultiMoneda = useAppSelector(selectPermiteMultiMoneda)
+  const [monedaSeleccionada, setMonedaSeleccionada] = useState<MonedaInterface>({
+    abreviatura: '',
+    activo: '',
+    id:'',
+    moneda:'',
+    simbolo:''
+  });
+  const {monedas, loadingMonedas} = useMoneda()
+
+
+
+  const handleSelectMoneda = (value: string)=>{
+
+    const selected = monedas.find(
+      (item, index) => getMonedaKey(item, index) === value
+    )
+
+    if(!selected){
+      return;
+    }
+
+
+    setMonedaSeleccionada(selected)
+
+  }
+
+
+  
   const [divisaSelected, setDivisaSelected] =
     useState<ObtenerDivisaPagosTipoRes | null>(null);
 
@@ -317,6 +363,46 @@ export default function MultiPagoSection({
           </div>
         )}
       </div>
+
+
+      {/* Agregar la moneda, usando el useMoneda, realizo */}
+      {permiteMultiMoneda && (
+        <div className="checkout-field checkout-field--full">
+          <label className="checkout-label" htmlFor="multipagoCurrency">
+           Selecionar Moneda
+          </label>
+
+          <select
+            id="multipagoCurrency"
+            className="checkout-input"
+            value={
+              monedaSeleccionada
+                ? (monedas
+                    .map((item, index) => ({
+                      item,
+                      key: getMonedaKey(item, index),
+                    }))
+                    .find(({ item }) => item === monedaSeleccionada)?.key ?? "")
+                : ""
+            }
+            disabled={loadingMonedas}
+            onChange={(event) => {
+              void handleSelectMoneda(event.target.value);
+            }}
+          >
+            <option value="">Seleccionar moneda</option>
+
+            {monedas.map((item, index) => (
+              <option
+                key={getMonedaKey(item, index)}
+                value={getMonedaKey(item, index)}
+              >
+                {safeStr(item.moneda)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="multipago-form">
         <div className="checkout-field checkout-field--full">

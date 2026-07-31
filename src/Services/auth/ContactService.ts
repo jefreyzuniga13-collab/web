@@ -4,7 +4,6 @@ import type {
   ClienteResponseDto,
   ContactLogInterface,
 } from "@/Interfaces/Auth/ContactInterface";
-
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces";
 import type { PagedResponse } from "@/Interfaces/Common/GlobalInterface";
 import type { ContactClassificationGroupProj, ContactLogProj } from "@/Interfaces/Auth/ContactLogProj";
@@ -116,6 +115,17 @@ class ContactService {
     }
   }
 
+async UpdateFullNameAsync(
+  id: number,
+  newFullName: string
+): Promise<boolean> {
+  const { data } = await api.patch<ApiResponse<boolean>>(
+    `/ContactLogs/UpdateFullName/${id}`,
+    { newFullName }
+  );
+
+  return data.data;
+}
   async searchClientesAsync(filtro: string) {
     const { data } = await api.get<ApiResponse<ClienteResponseDto[]>>(
       `/innova/clientes`,

@@ -46,41 +46,6 @@ export default function PaymentCurrencySelect({
 }: Props) {
   return (
     <div className="checkout-field checkout-field--full">
-
-    {/* <div className="checkout-field__payment-methods">
-   <span className="checkout-title-label">Tipo de moneda</span>
-
-    <div className="checkout-checkbox-container">
-      <div className="checkout-checkbox-containerBody">
-        <input
-          type="radio"
-          id="payTypeCordoba"
-          name="currencyType"
-          className="checkout-radio"
-          checked
-        />
-        <label htmlFor="payTypeCordoba" className="checkout-label">
-          Córdoba
-        </label>
-      </div>
-
-      <div className="checkout-checkbox-containerBody">
-        <input
-          type="radio"
-          id="payTypeDolar"
-          name="currencyType"
-          className="checkout-radio"
-        />
-        <label htmlFor="payTypeDolar" className="checkout-label">
-          Dólar
-        </label>
-      </div>
-    </div>
-    </div> */}
-
-    {/* <div>
-      <input type="number" value={100} max={100000}/>
-    </div> */}
     
     <div className="checkout-field__payment-methods">
       <label className="checkout-label" htmlFor="payType">

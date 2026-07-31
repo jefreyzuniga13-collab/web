@@ -1053,19 +1053,20 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         waName: invoiceName.trim() || contact.waName
       }
 
-      const pdfFile = generateCartPdfFile(
-        cart,
-        totals,
-        pdfContact,
-        {
-          retiraSucursal,
-          transCost: effectiveShipping,
-          addressName: addressName.length > 0 ? addressName : null,
-          addressText: addressText.length > 0 ? addressText : null,
-          finalTotal: totals.total
-        },
-        currentLog?.branchName ?? ""
-      )
+  const pdfFile = generateCartPdfFile(
+    cart,
+    totals,
+    pdfContact,
+    {
+      retiraSucursal,
+      transCost: effectiveShipping,
+      addressName: addressName.length > 0 ? addressName : null,
+      addressText: addressText.length > 0 ? addressText : null,
+      observation: observation.trim() || null,
+      finalTotal: totals.total
+    },
+    currentLog?.branchName ?? ""
+  )
 
       await handleSend([pdfFile], "Resumen de carrito")
     } catch {

@@ -407,3 +407,14 @@ export const getConversationGroupLabel = (date: Date): string => {
 export const getConversationGroupKey = (date: Date): string => {
   return format(date, "yyyy-MM-dd")
 }
+
+export const toNullableNumber = (value: string): number | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+

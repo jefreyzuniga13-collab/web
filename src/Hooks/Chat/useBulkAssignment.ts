@@ -1,19 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
-
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
-
+import { useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-
 import { BulkAssignmentService } from '@/Services/chat/BulkAssignmentService'
-
-import type {
-  BulkAssignmentJob,
-  BulkAssignmentRequest,
-} from '@/Interfaces/Chat/BulkAssignmentInterface'
+import type { BulkAssignmentJob, BulkAssignmentRequest} from '@/Interfaces/Chat/BulkAssignmentInterface'
 
 const bulkAssignmentKeys = {
   all: ['bulk-assignment'] as const,

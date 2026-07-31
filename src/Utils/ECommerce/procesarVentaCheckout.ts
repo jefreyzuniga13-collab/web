@@ -296,7 +296,7 @@ export async function procesarVentaCheckout({
       const pdfPagoElectronico = generatePagoElectronicoPDFFile({
         orderFac: resPrintPDF.data,
         transactionIdentifier,
-        telefono: "+505 7545 4150",
+        telefono: "",
         existingLog
       })
 

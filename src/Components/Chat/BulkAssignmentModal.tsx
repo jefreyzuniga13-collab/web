@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-
-import {AlertCircle,CalendarDays,Check,CheckCircle2,ChevronDown,Loader2,Search,UserRound,UsersRound,X} from "lucide-react";
-
+import {AlertCircle,CalendarDays,Check,CheckCircle2,ChevronDown,Loader2,Search,UserRound,UsersRound, X} from "lucide-react";
 import useBulkAssignment from "@/Hooks/Chat/useBulkAssignment";
 import useAssignableAgents from "@/Hooks/Auth/useAssignableAgents";
 import type { BulkAssignmentRequest } from "@/Interfaces/Chat/BulkAssignmentInterface";
+import { metaChannels } from "@/Interfaces/Crm/CompanySystemParams";
+import { safeStr, toNullableNumber } from "@/Utils/ECommerce/formatters";
 import "@/Styles/Chat/BulkAssignmentModal.css";
 
 interface BulkAssignmentModalProps {
@@ -28,21 +28,6 @@ const initialFilters: BulkAssignmentFormFilters = {
   metaChannelId: null,
   searchConversation: null,
 };
-
-const metaChannels = [
-  {
-    id: 1,
-    name: "WhatsApp",
-  },
-  {
-    id: 2,
-    name: "Messenger",
-  },
-  {
-    id: 3,
-    name: "Instagram",
-  },
-];
 
 const normalizeStatus = (status?: string | null): string => {
   return status?.trim().toLowerCase() ?? "";
@@ -70,22 +55,6 @@ const getStatusLabel = (status?: string | null): string => {
   }
 };
 
-const toNullableNumber = (value: string): number | null => {
-  if (!value) {
-    return null;
-  }
-
-  const parsedValue = Number(value);
-
-  return Number.isFinite(parsedValue) ? parsedValue : null;
-};
-
-const toNullableText = (value: string): string | null => {
-  const normalizedValue = value.trim();
-
-  return normalizedValue || null;
-};
-
 const toUtcIso = (value: string | null): string | null => {
   if (!value) {
     return null;
@@ -105,6 +74,7 @@ export default function BulkAssignmentModal({
   onClose,
   onCompleted,
 }: BulkAssignmentModalProps) {
+  
   const {
     job,
     createAssignment,
@@ -368,7 +338,7 @@ export default function BulkAssignmentModal({
 
       metaChannelId: filters.metaChannelId,
 
-      searchConversation: toNullableText(filters.searchConversation ?? ""),
+      searchConversation: safeStr(filters.searchConversation ?? ""),
 
       useAllAgents,
 
@@ -376,7 +346,7 @@ export default function BulkAssignmentModal({
 
       onlyOnlineAgents: onlyOnline,
 
-      comment: toNullableText(comment),
+      comment: safeStr(comment),
     };
 
     try {
@@ -963,3 +933,4 @@ export default function BulkAssignmentModal({
     </div>
   );
 }
+

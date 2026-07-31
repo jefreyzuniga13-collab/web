@@ -1,5 +1,7 @@
+
+
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { MessageSquareOff, MoreVertical } from "lucide-react"
+import { MessageSquareOff, MoreVertical, Pencil } from "lucide-react"
 import "@/Styles/Chat/InboxList.css"
 import { toast } from "react-toastify"
 import { markConversationRead } from "@/Services/chat/ConversationService"
@@ -11,6 +13,7 @@ import { useSelector } from "react-redux"
 import { FaCartFlatbedSuitcase } from "react-icons/fa6"
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import { useContactBlock } from "@/Hooks/Wh/useContactBlock"
+import useContact from "@/Hooks/Auth/useContact"
 import {
   formatDuration,
   formatTimeNI,
@@ -74,16 +77,24 @@ export const InboxList: React.FC<Props> = ({
   const loaderRef = useRef<HTMLLIElement>(null)
   const pressTimerRef = useRef<number | null>(null)
   const markedReadRef = useRef<Map<number, number>>(new Map())
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const cancelNameEditRef = useRef(false)
+  const savingNameRef = useRef(false)
 
   const { blockContact, unblockContact, isBlocking, isUnblocking } =
     useContactBlock()
+  const { updateFullNameMutation } = useContact()
 
   const [menuState, setMenuState] = useState<MenuState>(null)
+  const [editingContactId, setEditingContactId] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState("")
+  const [editedNames, setEditedNames] = useState<Record<number, string>>({})
 
   const userId = useSelector(selectUserId)
   const badgeMap = useSelector(selectCartBadgeByContactId)
 
-  const actionLoading = isBlocking || isUnblocking
+  const actionLoading =
+    isBlocking || isUnblocking || updateFullNameMutation.isPending
 
   const groupedConversations = useMemo<ConversationGroup[]>(() => {
     const groups = new Map<string, ConversationGroup>()
@@ -157,6 +168,13 @@ export const InboxList: React.FC<Props> = ({
   }, [])
 
   useEffect(() => {
+    if (editingContactId == null) return
+
+    nameInputRef.current?.focus()
+    nameInputRef.current?.select()
+  }, [editingContactId])
+
+  useEffect(() => {
     const conversationsById = new Map(
       conversations.map((conversation) => [
         conversation.conversationId,
@@ -196,6 +214,91 @@ export const InboxList: React.FC<Props> = ({
 
   const handlePointerEnd = () => {
     clearPressTimer()
+  }
+
+  const closeNameEditor = () => {
+    setEditingContactId(null)
+    setEditingName("")
+  }
+
+  const cancelNameEditing = () => {
+    cancelNameEditRef.current = true
+    closeNameEditor()
+  }
+
+  const startNameEditing = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    conversation: ConversationDto
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const contactId = conversation.clientContactId ?? 0
+
+    if (contactId <= 0) {
+      toast.warning("No se encontró el contacto asociado.")
+      return
+    }
+
+    cancelNameEditRef.current = false
+    setMenuState(null)
+    setEditingContactId(contactId)
+    setEditingName(
+      editedNames[contactId] ?? conversation.clientContactName?.trim() ?? ""
+    )
+  }
+
+  const saveContactName = async (conversation: ConversationDto) => {
+    if (cancelNameEditRef.current) {
+      cancelNameEditRef.current = false
+      return
+    }
+
+    if (savingNameRef.current) return
+
+    const contactId = conversation.clientContactId ?? 0
+    const newFullName = editingName.trim()
+    const currentFullName =
+      editedNames[contactId] ?? conversation.clientContactName?.trim() ?? ""
+
+    if (contactId <= 0) {
+      toast.warning("No se encontró el contacto asociado.")
+      closeNameEditor()
+      return
+    }
+
+    if (!newFullName) {
+      toast.warning("El nombre del contacto no puede quedar vacío.")
+      nameInputRef.current?.focus()
+      return
+    }
+
+    if (newFullName === currentFullName) {
+      closeNameEditor()
+      return
+    }
+
+    savingNameRef.current = true
+
+    try {
+      await updateFullNameMutation.mutateAsync({
+        id: contactId,
+        newFullName,
+      })
+
+      setEditedNames((previous) => ({
+        ...previous,
+        [contactId]: newFullName,
+      }))
+
+      toast.success("Nombre del contacto actualizado correctamente.")
+      closeNameEditor()
+    } catch (error) {
+      console.error("No se pudo actualizar el nombre del contacto:", error)
+      nameInputRef.current?.focus()
+    } finally {
+      savingNameRef.current = false
+    }
   }
 
   const handleSelect = (conversation: ConversationDto) => {
@@ -356,6 +459,13 @@ export const InboxList: React.FC<Props> = ({
 
             const contactId = conversation.clientContactId ?? 0
             const badge = contactId > 0 ? badgeMap?.[contactId] : null
+            const isEditingName = editingContactId === contactId
+            const contactName =
+              contactId > 0
+                ? editedNames[contactId] ??
+                  conversation.clientContactName ??
+                  ""
+                : conversation.clientContactName ?? ""
 
             const hasCart =
               contactId > 0
@@ -398,11 +508,52 @@ export const InboxList: React.FC<Props> = ({
                         </span>
 
                         <span className="inbox-list__namecontactClassification">
-                          <span>
-                            {conversation.clientContactId != null
-                              ? ` (${conversation.clientContactName})`
-                              : ""}
-                          </span>
+                          {conversation.clientContactId != null && (
+                            <>
+                              {isEditingName ? (
+                                <span
+                                  className="inbox-list__name-editor"
+                                  onClick={(event) => event.stopPropagation()}
+                                  onPointerDown={(event) =>
+                                    event.stopPropagation()
+                                  }
+                                >
+                                  <span>(</span>
+                                  <input
+                                    ref={nameInputRef}
+                                    type="text"
+                                    className="inbox-list__name-input"
+                                    value={editingName}
+                                    maxLength={150}
+                                    disabled={updateFullNameMutation.isPending}
+                                    aria-label="Nombre del contacto"
+                                    onChange={(event) =>
+                                      setEditingName(event.target.value)
+                                    }
+                                    onBlur={() => {
+                                      void saveContactName(conversation)
+                                    }}
+                                    onKeyDown={(event) => {
+                                      event.stopPropagation()
+
+                                      if (event.key === "Enter") {
+                                        event.preventDefault()
+                                        event.currentTarget.blur()
+                                      }
+
+                                      if (event.key === "Escape") {
+                                        event.preventDefault()
+                                        cancelNameEditing()
+                                      }
+                                    }}
+                                  />
+                                  <span>)</span>
+                                </span>
+                              ) : (
+                                <span>{` (${contactName})`}</span>
+                              )}
+                            </>
+                          )}
 
                           <span
                             className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}
@@ -469,21 +620,28 @@ export const InboxList: React.FC<Props> = ({
                           className="inbox-list__menu-item"
                           disabled={actionLoading}
                           onClick={(event) =>
-                            executeBlockAction(event, conversation, "block")
+                            executeBlockAction(
+                              event,
+                              conversation,
+                              conversation.isBlocked ? "unblock" : "block"
+                            )
                           }
                         >
-                          Bloquear contacto
+                          {conversation.isBlocked
+                            ? "Desbloquear contacto"
+                            : "Bloquear contacto"}
                         </button>
 
                         <button
                           type="button"
                           className="inbox-list__menu-item"
-                          disabled={actionLoading}
+                          disabled={actionLoading || contactId <= 0}
                           onClick={(event) =>
-                            executeBlockAction(event, conversation, "unblock")
+                            startNameEditing(event, conversation)
                           }
                         >
-                          Desbloquear contacto
+                          <Pencil size={14} />
+                          Actualizar nombre
                         </button>
                       </div>
                     )}

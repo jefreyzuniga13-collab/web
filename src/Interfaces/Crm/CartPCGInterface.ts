@@ -477,7 +477,7 @@ export interface PickerSelectValue {
    */
   codPrecio?: string | null
   codprecio?: string | null
-  CodPrecio?: string | null
+  precio?: string | null
 }
 
 /**
