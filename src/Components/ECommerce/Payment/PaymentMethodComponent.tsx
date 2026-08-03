@@ -338,7 +338,7 @@ export default function PaymentMethodComponent({
         0,
       ),
       descuento: safeNumber(
-        invoiceTotalsDto?.descuento ?? existingLog?.DescuentoPantalla ?? 0,
+        invoiceTotalsDto?.descuento ?? existingLog?. descuentoPantalla ?? 0,
         0,
       ),
       iva: safeNumber(

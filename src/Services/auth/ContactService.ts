@@ -219,6 +219,19 @@ class ContactService {
 
         return data.data;
       }
+
+
+      async updateFullNameAsync(
+      id: number,
+      newFullName: string
+    ): Promise<void> {
+      await api.patch<ApiResponse<unknown>>(
+        `/ContactLogs/UpdateFullName/${id}`,
+        {
+          newFullName,
+        }
+      );
+    }
 }
 
 export const contactService = new ContactService();

@@ -1,36 +1,7 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import React, {createContext, useContext,useEffect,useMemo,useState, type ReactNode,} from "react";
 import { useSelector } from "react-redux";
-
 import type { RootState } from "@/Context";
-
-import {
-  createHubConnection,
-  joinConversation,
-  leaveConversation,
-  offConversationCreated,
-  offConversationUpdated,
-  offForceLogout,
-  offMessageStatusChanged,
-  offNewHumanRequest,
-  offNewMessage,
-  offNewNotification,
-  onConversationCreated,
-  onConversationUpdated,
-  onForceLogout,
-  onMessageStatusChanged,
-  onNewHumanRequest,
-  onNewMessage,
-  onNewNotification,
-  stopHubConnection,
-} from "@/Services/signalr";
-
+import { createHubConnection, joinConversation, leaveConversation, offConversationAssigned, offConversationCreated, offConversationUpdated, offForceLogout, offMessageStatusChanged,  offNewHumanRequest, offNewMessage, offNewNotification, onConversationAssigned, onConversationCreated, onConversationUpdated, onForceLogout, onMessageStatusChanged, onNewHumanRequest, onNewMessage, onNewNotification, stopHubConnection,} from "@/Services/signalr";
 interface SignalRContextValue {
   ready: boolean;
 
@@ -49,6 +20,9 @@ interface SignalRContextValue {
   onConversationUpdated: typeof onConversationUpdated;
   offConversationUpdated: typeof offConversationUpdated;
 
+  onConversationAssigned: typeof onConversationAssigned;
+  offConversationAssigned: typeof offConversationAssigned;
+
   onMessageStatusChanged: typeof onMessageStatusChanged;
   offMessageStatusChanged: typeof offMessageStatusChanged;
 
@@ -59,8 +33,7 @@ interface SignalRContextValue {
   offForceLogout: typeof offForceLogout;
 }
 
-const SignalRContext =
-  createContext<SignalRContextValue | null>(null);
+const SignalRContext = createContext<SignalRContextValue | null>(null);
 
 /**
  * Proveedor global de SignalR.
@@ -74,56 +47,47 @@ export const SignalRProvider: React.FC<{
   const [ready, setReady] = useState(false);
 
   const isAuthenticated = useSelector(
-    (state: RootState) =>
-      state.auth.isAuthenticated,
+    (state: RootState) => state.auth.isAuthenticated,
   );
 
-  const isRoot = useSelector(
-    (state: RootState) =>
-      state.auth.isRoot,
-  );
+  const isRoot = useSelector((state: RootState) => state.auth.isRoot);
 
   const activeCompanyId = useSelector(
-    (state: RootState) =>
-      state.company.activeCompanyId,
+    (state: RootState) => state.company.activeCompanyId,
   );
 
   useEffect(() => {
     let mounted = true;
 
-    const synchronizeSignalR = async () => {
+    const synchronizeSignalR = async (): Promise<void> => {
       setReady(false);
 
       try {
-        /*
-         * Detiene conexiones anteriores para evitar conservar
-         * grupos SignalR de otra empresa.
+        /**
+         * Detiene conexiones anteriores para evitar
+         * conservar grupos SignalR de otra empresa.
          */
         await stopHubConnection();
 
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
 
-        // Sin autenticación no se crean conexiones.
-        if (!isAuthenticated) return;
+        if (!isAuthenticated) {
+          return;
+        }
 
-        /*
+        /**
          * El usuario Root debe seleccionar una empresa
          * antes de conectarse a los hubs del tenant.
          */
-        if (
-          isRoot &&
-          (!activeCompanyId ||
-            Number(activeCompanyId) <= 0)
-        ) {
+        if (isRoot && (!activeCompanyId || Number(activeCompanyId) <= 0)) {
           return;
         }
 
         await createHubConnection();
       } catch (error) {
-        console.error(
-          "[SignalRProvider] Error al iniciar SignalR.",
-          error,
-        );
+        console.error("[SignalRProvider] Error al iniciar SignalR.", error);
       } finally {
         if (mounted) {
           setReady(true);
@@ -137,39 +101,43 @@ export const SignalRProvider: React.FC<{
       mounted = false;
       void stopHubConnection();
     };
-  }, [
-    activeCompanyId,
-    isAuthenticated,
-    isRoot,
-  ]);
+  }, [activeCompanyId, isAuthenticated, isRoot]);
 
-  const contextValue =
-    useMemo<SignalRContextValue>(
-      () => ({
-        ready,
+  const contextValue = useMemo<SignalRContextValue>(
+    () => ({
+      ready,
 
-        // Chat
-        joinConversation,
-        leaveConversation,
-        onNewMessage,
-        offNewMessage,
-        onNewHumanRequest,
-        offNewHumanRequest,
-        onConversationCreated,
-        offConversationCreated,
-        onConversationUpdated,
-        offConversationUpdated,
-        onMessageStatusChanged,
-        offMessageStatusChanged,
-        onNewNotification,
-        offNewNotification,
+      // Chat
+      joinConversation,
+      leaveConversation,
 
-        // Sesión única
-        onForceLogout,
-        offForceLogout,
-      }),
-      [ready],
-    );
+      onNewMessage,
+      offNewMessage,
+
+      onNewHumanRequest,
+      offNewHumanRequest,
+
+      onConversationCreated,
+      offConversationCreated,
+
+      onConversationUpdated,
+      offConversationUpdated,
+
+      onConversationAssigned,
+      offConversationAssigned,
+
+      onMessageStatusChanged,
+      offMessageStatusChanged,
+
+      onNewNotification,
+      offNewNotification,
+
+      // Sesión única
+      onForceLogout,
+      offForceLogout,
+    }),
+    [ready],
+  );
 
   if (!ready) {
     return null;
@@ -186,9 +154,7 @@ export function useSignalR(): SignalRContextValue {
   const context = useContext(SignalRContext);
 
   if (!context) {
-    throw new Error(
-      "useSignalR debe utilizarse dentro de SignalRProvider.",
-    );
+    throw new Error("useSignalR debe utilizarse dentro de SignalRProvider.");
   }
 
   return context;

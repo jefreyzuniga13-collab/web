@@ -214,6 +214,10 @@ const aplicarSesion = (
   state.permitePasarela =
     payload.permitePasarela ?? false;
 
+    state.aplicaDescuento =
+  payload.aplicaDescuento ?? false;
+
+
   state.codReferenciaPCG =
     payload.codReferenciaPCG ?? "";
 
@@ -403,7 +407,7 @@ export const selectPermitePasarela = (
   state: RootState,
 ) => state.auth.permitePasarela;
 
-export const selectAplicaDescuento= (
+export const selectAplicaDescuento = (
   state: RootState,
 ) => state.auth.aplicaDescuento;
 

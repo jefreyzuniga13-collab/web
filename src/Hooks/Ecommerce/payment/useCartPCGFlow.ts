@@ -1549,7 +1549,7 @@ const aplicarDescuentoProducto = useCallback(
         wherehouse: value.nombodega,
         wherehouseCode: value.codBodega,
         serie: value.serie,
-        codPrecio: value.CodPrecio || "01",
+        codPrecio: value.codPrecio || "01",
       }
 
       setCodPrecioActivo(lockInfo.codPrecio)

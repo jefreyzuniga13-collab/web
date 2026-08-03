@@ -544,3 +544,121 @@
     padding: 2px 4px;
   }
 }
+
+
+/* Contenedor del nombre editable */
+.inbox-list__editable-name {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 180px;
+  vertical-align: middle;
+}
+
+/* Paréntesis que rodean el nombre */
+.inbox-list__editable-name-parenthesis {
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+/* Input que reemplaza temporalmente el nombre */
+.inbox-list__inline-name-input {
+  width: 135px;
+  min-width: 70px;
+  max-width: 160px;
+  height: 24px;
+
+  margin: 0 2px;
+  padding: 0;
+
+  border: none;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+
+  background: transparent;
+  color: inherit;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+
+  box-sizing: border-box;
+}
+
+.inbox-list__inline-name-input:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.inbox-list__inline-name-input:disabled {
+  background: transparent;
+  color: #6b7280;
+  cursor: wait;
+}
+
+/* Mantiene alineados nombre y clasificación */
+.inbox-list__namecontactClassification {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Mantiene alineado el icono con el nombre */
+.inbox-list__name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Menú de opciones */
+.inbox-list__menu {
+  position: absolute;
+  z-index: 1000;
+
+  min-width: 190px;
+  padding: 6px 0;
+
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Opciones del menú */
+.inbox-list__menu-item {
+  display: block;
+  width: 100%;
+
+  padding: 10px 14px;
+  border: 0;
+
+  background: transparent;
+  color: #111827;
+
+  font-size: 14px;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.inbox-list__menu-item:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+.inbox-list__menu-item:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.inbox-list__menu-item:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}

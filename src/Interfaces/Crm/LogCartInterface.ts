@@ -82,7 +82,7 @@ export interface LogCartResponseDto {
    * Validación de datos y totales.
    */
   Exonerado?: string | null
-  DescuentoPantalla?: number | null
+  descuentoPantalla?: number | null
   totalEnPantalla?: number | null
   ivaPantalla?: number | null
   subTotal?: number | null

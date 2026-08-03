@@ -23,6 +23,7 @@ import {
   parseConversationDate,
 } from "@/Utils/ECommerce/formatters"
 import { getChannelIcon } from "@/Utils/Chat/Utils"
+import useContact from "@/Hooks/Auth/useContact"
 
 interface Props {
   selectedId?: number
@@ -75,25 +76,44 @@ export const InboxList: React.FC<Props> = ({
   const pressTimerRef = useRef<number | null>(null)
   const markedReadRef = useRef<Map<number, number>>(new Map())
 
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const cancelNameEditRef = useRef(false)
+
   const { blockContact, unblockContact, isBlocking, isUnblocking } =
     useContactBlock()
 
+  const { updateFullName, updatingFullName } = useContact()
+
   const [menuState, setMenuState] = useState<MenuState>(null)
+
+  const [editingContactId, setEditingContactId] = useState<number | null>(null)
+
+  const [editingNames, setEditingNames] = useState<Record<number, string>>({})
+
+  const [updatedNames, setUpdatedNames] = useState<Record<number, string>>({})
 
   const userId = useSelector(selectUserId)
   const badgeMap = useSelector(selectCartBadgeByContactId)
 
-  const actionLoading = isBlocking || isUnblocking
+  const actionLoading =
+    isBlocking ||
+    isUnblocking ||
+    updatingFullName
 
   const groupedConversations = useMemo<ConversationGroup[]>(() => {
     const groups = new Map<string, ConversationGroup>()
 
-    conversations.forEach((conversation) => {
+    conversations.forEach(conversation => {
       const rawDate = getConversationDateValue(conversation)
       const date = parseConversationDate(rawDate)
 
-      const key = date ? getConversationGroupKey(date) : "sin-fecha"
-      const label = date ? getConversationGroupLabel(date) : "Sin fecha"
+      const key = date
+        ? getConversationGroupKey(date)
+        : "sin-fecha"
+
+      const label = date
+        ? getConversationGroupLabel(date)
+        : "Sin fecha"
 
       if (!groups.has(key)) {
         groups.set(key, {
@@ -110,16 +130,35 @@ export const InboxList: React.FC<Props> = ({
   }, [conversations])
 
   useEffect(() => {
+    if (editingContactId === null) {
+      return
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      nameInputRef.current?.focus()
+      nameInputRef.current?.select()
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [editingContactId])
+
+  useEffect(() => {
     const root = listRef.current
     const loader = loaderRef.current
 
     if (!root || !loader) return
 
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         const entry = entries[0]
 
-        if (entry.isIntersecting && page < pagination.totalPages && !loading) {
+        if (
+          entry.isIntersecting &&
+          page < pagination.totalPages &&
+          !loading
+        ) {
           onPageChange(page + 1)
         }
       },
@@ -133,7 +172,12 @@ export const InboxList: React.FC<Props> = ({
     observer.observe(loader)
 
     return () => observer.disconnect()
-  }, [loading, onPageChange, page, pagination.totalPages])
+  }, [
+    loading,
+    onPageChange,
+    page,
+    pagination.totalPages,
+  ])
 
   useEffect(() => {
     const closeMenu = () => setMenuState(null)
@@ -158,7 +202,7 @@ export const InboxList: React.FC<Props> = ({
 
   useEffect(() => {
     const conversationsById = new Map(
-      conversations.map((conversation) => [
+      conversations.map(conversation => [
         conversation.conversationId,
         conversation,
       ])
@@ -167,11 +211,146 @@ export const InboxList: React.FC<Props> = ({
     markedReadRef.current.forEach((_, conversationId) => {
       const conversation = conversationsById.get(conversationId)
 
-      if (!conversation || getUnreadCount(conversation, userId) <= 0) {
+      if (
+        !conversation ||
+        getUnreadCount(conversation, userId) <= 0
+      ) {
         markedReadRef.current.delete(conversationId)
       }
     })
   }, [conversations, userId])
+
+  const getDisplayedContactName = (
+    conversation: ConversationDto
+  ): string => {
+    const contactId = conversation.clientContactId ?? 0
+
+    if (contactId <= 0) {
+      return conversation.clientContactName ?? ""
+    }
+
+    return (
+      updatedNames[contactId] ??
+      conversation.clientContactName ??
+      ""
+    )
+  }
+
+  const handleStartEditName = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    conversation: ConversationDto
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const contactId = conversation.clientContactId
+
+    if (!contactId || contactId <= 0) {
+      toast.warning("No se encontró el contacto.")
+      return
+    }
+
+    const currentName = getDisplayedContactName(conversation)
+
+    cancelNameEditRef.current = false
+
+    setEditingNames(prev => ({
+      ...prev,
+      [contactId]: currentName,
+    }))
+
+    setEditingContactId(contactId)
+    setMenuState(null)
+  }
+
+  const handleCancelNameEdit = (
+    conversation: ConversationDto
+  ) => {
+    const contactId = conversation.clientContactId
+
+    if (!contactId || contactId <= 0) {
+      setEditingContactId(null)
+      return
+    }
+
+    cancelNameEditRef.current = true
+
+    setEditingNames(prev => ({
+      ...prev,
+      [contactId]: getDisplayedContactName(conversation),
+    }))
+
+    setEditingContactId(null)
+  }
+
+  const handleUpdateFullName = async (
+    conversation: ConversationDto
+  ) => {
+    const contactId = conversation.clientContactId
+
+    if (!contactId || contactId <= 0) {
+      setEditingContactId(null)
+      toast.warning("No se encontró el contacto.")
+      return
+    }
+
+    if (cancelNameEditRef.current) {
+      cancelNameEditRef.current = false
+      return
+    }
+
+    const currentName = getDisplayedContactName(conversation)
+
+    const newFullName = (
+      editingNames[contactId] ??
+      currentName
+    ).trim()
+
+    if (!newFullName) {
+      setEditingNames(prev => ({
+        ...prev,
+        [contactId]: currentName,
+      }))
+
+      setEditingContactId(null)
+
+      toast.warning("El nombre es obligatorio.")
+      return
+    }
+
+    if (newFullName === currentName.trim()) {
+      setEditingNames(prev => ({
+        ...prev,
+        [contactId]: currentName,
+      }))
+
+      setEditingContactId(null)
+      return
+    }
+
+    const success = await updateFullName(
+      contactId,
+      newFullName
+    )
+
+    if (!success) {
+      return
+    }
+
+    setUpdatedNames(prev => ({
+      ...prev,
+      [contactId]: newFullName,
+    }))
+
+    setEditingNames(prev => ({
+      ...prev,
+      [contactId]: newFullName,
+    }))
+
+    setEditingContactId(null)
+
+    toast.success("Nombre actualizado correctamente.")
+  }
 
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
@@ -181,8 +360,10 @@ export const InboxList: React.FC<Props> = ({
   }
 
   const openMenu = (conversationId: number) => {
-    setMenuState((prev) =>
-      prev?.conversationId === conversationId ? null : { conversationId }
+    setMenuState(prev =>
+      prev?.conversationId === conversationId
+        ? null
+        : { conversationId }
     )
   }
 
@@ -201,7 +382,13 @@ export const InboxList: React.FC<Props> = ({
   const handleSelect = (conversation: ConversationDto) => {
     const conversationId = conversation.conversationId
 
-    if (menuState?.conversationId === conversationId) return
+    if (menuState?.conversationId === conversationId) {
+      return
+    }
+
+    if (editingContactId === conversation.clientContactId) {
+      return
+    }
 
     if (conversationId === selectedId) {
       onSelect(null)
@@ -211,16 +398,23 @@ export const InboxList: React.FC<Props> = ({
     onSelect(conversationId)
 
     const unreadCount = getUnreadCount(conversation, userId)
+
     const alreadyMarkedCount =
       markedReadRef.current.get(conversationId) ?? 0
 
-    if (unreadCount <= 0 || alreadyMarkedCount >= unreadCount) {
+    if (
+      unreadCount <= 0 ||
+      alreadyMarkedCount >= unreadCount
+    ) {
       return
     }
 
-    markedReadRef.current.set(conversationId, unreadCount)
+    markedReadRef.current.set(
+      conversationId,
+      unreadCount
+    )
 
-    void markConversationRead(conversationId).catch((error) => {
+    void markConversationRead(conversationId).catch(error => {
       markedReadRef.current.delete(conversationId)
 
       console.error(
@@ -236,6 +430,7 @@ export const InboxList: React.FC<Props> = ({
   ) => {
     event.preventDefault()
     event.stopPropagation()
+
     openMenu(conversationId)
   }
 
@@ -248,7 +443,9 @@ export const InboxList: React.FC<Props> = ({
     event.stopPropagation()
 
     const channel = getChannel(conversation.metaChannelId)
-    const identifier = await getConversationIdentifier(conversation)
+
+    const identifier =
+      await getConversationIdentifier(conversation)
 
     if (!channel) {
       toast.warning("Canal no soportado.")
@@ -256,25 +453,41 @@ export const InboxList: React.FC<Props> = ({
     }
 
     if (!identifier) {
-      toast.warning("No se encontró un identificador válido del contacto.")
+      toast.warning(
+        "No se encontró un identificador válido del contacto."
+      )
       return
     }
 
     try {
       if (action === "block") {
-        await blockContact({ channel, identifier })
-        toast.success("Contacto bloqueado correctamente.")
+        await blockContact({
+          channel,
+          identifier,
+        })
+
+        toast.success(
+          "Contacto bloqueado correctamente."
+        )
       }
 
       if (action === "unblock") {
-        await unblockContact({ channel, identifier })
-        toast.success("Contacto desbloqueado correctamente.")
+        await unblockContact({
+          channel,
+          identifier,
+        })
+
+        toast.success(
+          "Contacto desbloqueado correctamente."
+        )
       }
 
       setMenuState(null)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "No se pudo completar la acción."
+        err instanceof Error
+          ? err.message
+          : "No se pudo completar la acción."
 
       toast.error(message)
     }
@@ -282,26 +495,42 @@ export const InboxList: React.FC<Props> = ({
 
   if (error) {
     return (
-      <ul ref={listRef} className="inbox-list">
-        <li className="inbox-list__empty">{error}</li>
+      <ul
+        ref={listRef}
+        className="inbox-list"
+      >
+        <li className="inbox-list__empty">
+          {error}
+        </li>
       </ul>
     )
   }
 
-  if (conversations.length === 0 && !loading) {
+  if (
+    conversations.length === 0 &&
+    !loading
+  ) {
     return (
-      <ul ref={listRef} className="inbox-list">
+      <ul
+        ref={listRef}
+        className="inbox-list"
+      >
         <li className="inbox-list__empty">
           <MessageSquareOff size={48} />
-          <span>No hay conversaciones disponibles</span>
+          <span>
+            No hay conversaciones disponibles
+          </span>
         </li>
       </ul>
     )
   }
 
   return (
-    <ul ref={listRef} className="inbox-list">
-      {groupedConversations.map((group) => (
+    <ul
+      ref={listRef}
+      className="inbox-list"
+    >
+      {groupedConversations.map(group => (
         <React.Fragment key={group.key}>
           {group.label !== "Hoy" && (
             <li className="inbox-list__date-group">
@@ -309,13 +538,19 @@ export const InboxList: React.FC<Props> = ({
             </li>
           )}
 
-          {group.conversations.map((conversation) => {
-            const isSelected = conversation.conversationId === selectedId
-            const isMenuOpen =
-              menuState?.conversationId === conversation.conversationId
+          {group.conversations.map(conversation => {
+            const isSelected =
+              conversation.conversationId === selectedId
 
-            const statusClass = conversation.status?.toLowerCase() ?? ""
-            const normalizedStatus = conversation.status?.toLowerCase() ?? ""
+            const isMenuOpen =
+              menuState?.conversationId ===
+              conversation.conversationId
+
+            const statusClass =
+              conversation.status?.toLowerCase() ?? ""
+
+            const normalizedStatus =
+              conversation.status?.toLowerCase() ?? ""
 
             const statusTextMap: Record<string, string> = {
               new: "Nueva",
@@ -332,34 +567,56 @@ export const InboxList: React.FC<Props> = ({
               conversation.status ??
               "Pendiente"
 
-            const unread = getUnreadCount(conversation, userId)
+            const unread = getUnreadCount(
+              conversation,
+              userId
+            )
 
             const hasUnread = unread > 0
 
-            const clientLast = formatTimeNI(conversation.clientLastMessageAt)
+            const clientLast = formatTimeNI(
+              conversation.clientLastMessageAt
+            )
 
             let previewText = clientLast
               ? `Cliente últ. msj: ${clientLast}`
               : "Cliente últ. msj:"
 
-            if (!conversation.assignedAt && conversation.requestedAgentAt) {
+            if (
+              !conversation.assignedAt &&
+              conversation.requestedAgentAt
+            ) {
               const elapsedMs = getElapsedMsFromNI(
                 conversation.requestedAgentAt
               )
 
               if (elapsedMs > 0) {
-                previewText += ` · Desde solicitud: ${formatDuration(
-                  elapsedMs
-                )}`
+                previewText +=
+                  ` · Desde solicitud: ${formatDuration(
+                    elapsedMs
+                  )}`
               }
             }
 
-            const contactId = conversation.clientContactId ?? 0
-            const badge = contactId > 0 ? badgeMap?.[contactId] : null
+            const contactId =
+              conversation.clientContactId ?? 0
+
+            const displayedContactName =
+              getDisplayedContactName(conversation)
+
+            const isEditingName =
+              contactId > 0 &&
+              editingContactId === contactId
+
+            const badge =
+              contactId > 0
+                ? badgeMap?.[contactId]
+                : null
 
             const hasCart =
               contactId > 0
-                ? badge?.hasCart ?? conversation.isItemsInCart
+                ? badge?.hasCart ??
+                  conversation.isItemsInCart
                 : conversation.isItemsInCart
 
             return (
@@ -368,25 +625,39 @@ export const InboxList: React.FC<Props> = ({
                 role="button"
                 tabIndex={0}
                 aria-pressed={isSelected}
-                onClick={() => handleSelect(conversation)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                onClick={() =>
+                  handleSelect(conversation)
+                }
+                onKeyDown={event => {
+                  if (
+                    event.key === "Enter" &&
+                    !isEditingName
+                  ) {
                     handleSelect(conversation)
                   }
                 }}
-                onContextMenu={(event) =>
-                  handleContextMenu(event, conversation.conversationId)
+                onContextMenu={event =>
+                  handleContextMenu(
+                    event,
+                    conversation.conversationId
+                  )
                 }
                 onPointerDown={() =>
-                  handlePointerDown(conversation.conversationId)
+                  handlePointerDown(
+                    conversation.conversationId
+                  )
                 }
                 onPointerUp={handlePointerEnd}
                 onPointerLeave={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
                 className={`inbox-list__item${
-                  isSelected ? " inbox-list__item--selected" : ""
+                  isSelected
+                    ? " inbox-list__item--selected"
+                    : ""
                 } ${
-                  conversation.isBlocked ? "inbox-list__item--isblocked" : ""
+                  conversation.isBlocked
+                    ? " inbox-list__item--isblocked"
+                    : ""
                 }`}
               >
                 <div className="inbox-list__top">
@@ -394,26 +665,97 @@ export const InboxList: React.FC<Props> = ({
                     <div className="inbox-list__name-row">
                       <span className="inbox-list__name">
                         <span className="inbox-list-icon_conversation">
-                          {getChannelIcon(conversation.metaChannelId)}
+                          {getChannelIcon(
+                            conversation.metaChannelId
+                          )}
                         </span>
 
                         <span className="inbox-list__namecontactClassification">
-                          <span>
-                            {conversation.clientContactId != null
-                              ? ` (${conversation.clientContactName})`
-                              : ""}
+                          <span className="inbox-list__editable-name">
+                            {isEditingName ? (
+                              <>
+                                <span
+                                  aria-hidden="true"
+                                  className="inbox-list__editable-name-parenthesis"
+                                >
+                                  (
+                                </span>
+
+                                <input
+                                  ref={nameInputRef}
+                                  type="text"
+                                  className="inbox-list__inline-name-input"
+                                  value={
+                                    editingNames[contactId] ??
+                                    displayedContactName
+                                  }
+                                  disabled={updatingFullName}
+                                  aria-label="Nombre del contacto"
+                                  onClick={event => {
+                                    event.stopPropagation()
+                                  }}
+                                  onPointerDown={event => {
+                                    event.stopPropagation()
+                                  }}
+                                  onChange={event => {
+                                    setEditingNames(prev => ({
+                                      ...prev,
+                                      [contactId]:
+                                        event.target.value,
+                                    }))
+                                  }}
+                                  onBlur={() => {
+                                    void handleUpdateFullName(
+                                      conversation
+                                    )
+                                  }}
+                                  onKeyDown={event => {
+                                    event.stopPropagation()
+
+                                    if (event.key === "Enter") {
+                                      event.preventDefault()
+                                      event.currentTarget.blur()
+                                    }
+
+                                    if (event.key === "Escape") {
+                                      event.preventDefault()
+
+                                      handleCancelNameEdit(
+                                        conversation
+                                      )
+                                    }
+                                  }}
+                                />
+
+                                <span
+                                  aria-hidden="true"
+                                  className="inbox-list__editable-name-parenthesis"
+                                >
+                                  )
+                                </span>
+                              </>
+                            ) : conversation.clientContactId !=
+                              null ? (
+                              ` (${displayedContactName})`
+                            ) : (
+                              ""
+                            )}
                           </span>
 
                           <span
                             className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}
                           >
-                            {conversation.contactClassificationName}
+                            {
+                              conversation.contactClassificationName
+                            }
                           </span>
                         </span>
 
                         {hasCart && (
                           <span className="inbox-list__isItemsInCart">
-                            <FaCartFlatbedSuitcase fontSize={16} />
+                            <FaCartFlatbedSuitcase
+                              fontSize={16}
+                            />
                           </span>
                         )}
                       </span>
@@ -421,10 +763,13 @@ export const InboxList: React.FC<Props> = ({
                       <button
                         type="button"
                         className="inbox-list__menu-button"
-                        onClick={(event) => {
+                        onClick={event => {
                           event.preventDefault()
                           event.stopPropagation()
-                          openMenu(conversation.conversationId)
+
+                          openMenu(
+                            conversation.conversationId
+                          )
                         }}
                         disabled={actionLoading}
                         title="Opciones"
@@ -438,12 +783,18 @@ export const InboxList: React.FC<Props> = ({
                       {conversation.assignedAgentName && (
                         <span>
                           Agente:{" "}
-                          <strong>{conversation.assignedAgentName}</strong>
+                          <strong>
+                            {
+                              conversation.assignedAgentName
+                            }
+                          </strong>
                         </span>
                       )}
                     </div>
 
-                    <span className="inbox-list__preview">{previewText}</span>
+                    <span className="inbox-list__preview">
+                      {previewText}
+                    </span>
                   </div>
 
                   <div className="inbox-list__bottom">
@@ -456,20 +807,45 @@ export const InboxList: React.FC<Props> = ({
                     </div>
 
                     {hasUnread && (
-                      <span className="inbox-list__unread-badge">{unread}</span>
+                      <span className="inbox-list__unread-badge">
+                        {unread}
+                      </span>
                     )}
 
                     {isMenuOpen && (
                       <div
                         className="inbox-list__menu"
-                        onClick={(event) => event.stopPropagation()}
+                        onClick={event => {
+                          event.stopPropagation()
+                        }}
                       >
                         <button
                           type="button"
                           className="inbox-list__menu-item"
+                          disabled={
+                            actionLoading ||
+                            contactId <= 0
+                          }
+                          onClick={event =>
+                            handleStartEditName(
+                              event,
+                              conversation
+                            )
+                          }
+                        >
+                          Editar nombre
+                        </button>
+
+                        <button
+                          type="button"
+                          className="inbox-list__menu-item"
                           disabled={actionLoading}
-                          onClick={(event) =>
-                            executeBlockAction(event, conversation, "block")
+                          onClick={event =>
+                            executeBlockAction(
+                              event,
+                              conversation,
+                              "block"
+                            )
                           }
                         >
                           Bloquear contacto
@@ -479,8 +855,12 @@ export const InboxList: React.FC<Props> = ({
                           type="button"
                           className="inbox-list__menu-item"
                           disabled={actionLoading}
-                          onClick={(event) =>
-                            executeBlockAction(event, conversation, "unblock")
+                          onClick={event =>
+                            executeBlockAction(
+                              event,
+                              conversation,
+                              "unblock"
+                            )
                           }
                         >
                           Desbloquear contacto
@@ -501,7 +881,10 @@ export const InboxList: React.FC<Props> = ({
         </li>
       )}
 
-      <li ref={loaderRef} className="inbox-list__loader-anchor" />
+      <li
+        ref={loaderRef}
+        className="inbox-list__loader-anchor"
+      />
     </ul>
   )
 }

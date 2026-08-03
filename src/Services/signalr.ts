@@ -34,6 +34,17 @@ let startPromise: Promise<HubConnections> | null = null;
 let reconnectTimer: number | null = null;
 let isStoppingManually = false;
 
+/*
+ * SignalR no conserva la pertenencia a grupos cuando cambia el connectionId.
+ * Se mantienen los IDs localmente para volver a unir la conexión después
+ * de una reconexión automática o de un reinicio del hub.
+ */
+const joinedConversationIds = new Set<number>();
+
+type StopHubConnectionOptions = {
+  preserveConversationGroups?: boolean;
+};
+
 type HubConnections = {
   chatConnection: signalR.HubConnection | null;
   notificationsConnection: signalR.HubConnection | null;
@@ -437,10 +448,32 @@ function getDesktopMessageBody(message: MessageDto): string {
   return "Nuevo mensaje recibido";
 }
 
+async function rejoinTrackedConversations(): Promise<void> {
+  if (chatConnection?.state !== signalR.HubConnectionState.Connected) {
+    return;
+  }
+
+  const conversationIds = Array.from(joinedConversationIds);
+
+  for (const conversationId of conversationIds) {
+    try {
+      await chatConnection.invoke(
+        "JoinConversation",
+        conversationId.toString(),
+      );
+    } catch (error) {
+      console.warn(
+        `[SignalR] No se pudo volver a unir a la conversación ${conversationId}.`,
+        error,
+      );
+    }
+  }
+}
+
 function bindConnectionLifecycle(
   connection: signalR.HubConnection,
   name: string,
-  onReconnected?: () => void,
+  onReconnected?: () => void | Promise<void>,
 ): void {
   connection.onreconnecting((error) => {
     console.warn(`[${name}] Reconectando...`, error);
@@ -448,7 +481,17 @@ function bindConnectionLifecycle(
 
   connection.onreconnected(() => {
     console.info(`[${name}] Reconectado`);
-    onReconnected?.();
+
+    if (!onReconnected) {
+      return;
+    }
+
+    void Promise.resolve(onReconnected()).catch((error) => {
+      console.warn(
+        `[${name}] Error al restaurar el estado después de reconectar.`,
+        error,
+      );
+    });
   });
 
   connection.onclose((error) => {
@@ -662,8 +705,9 @@ export async function createHubConnection(): Promise<HubConnections> {
     if (!chatConnection) {
       chatConnection = buildConnection(buildHubUrl("/hubs/chat"));
 
-      bindConnectionLifecycle(chatConnection, "CHAT", () => {
+      bindConnectionLifecycle(chatConnection, "CHAT", async () => {
         rebindRegisteredHandlers();
+        await rejoinTrackedConversations();
       });
     }
 
@@ -707,6 +751,7 @@ export async function createHubConnection(): Promise<HubConnections> {
     ]);
 
     rebindRegisteredHandlers();
+    await rejoinTrackedConversations();
 
     return {
       chatConnection,
@@ -726,9 +771,15 @@ export async function createHubConnection(): Promise<HubConnections> {
   }
 }
 
-export async function stopHubConnection(): Promise<void> {
+export async function stopHubConnection(
+  options: StopHubConnectionOptions = {},
+): Promise<void> {
   isStoppingManually = true;
   clearReconnectTimer();
+
+  if (!options.preserveConversationGroups) {
+    joinedConversationIds.clear();
+  }
 
   const connections = [
     chatConnection,
@@ -763,7 +814,9 @@ export async function stopHubConnection(): Promise<void> {
 }
 
 export async function restartHubConnection(): Promise<void> {
-  await stopHubConnection();
+  await stopHubConnection({
+    preserveConversationGroups: true,
+  });
 
   isStoppingManually = false;
 
@@ -771,19 +824,51 @@ export async function restartHubConnection(): Promise<void> {
 }
 
 export async function joinConversation(conversationId: number): Promise<void> {
+  const normalizedConversationId = Number(conversationId);
+
+  if (
+    !Number.isInteger(normalizedConversationId) ||
+    normalizedConversationId <= 0
+  ) {
+    return;
+  }
+
+  /*
+   * Se registra antes de conectar para que, si createHubConnection crea
+   * una conexión nueva, rejoinTrackedConversations también pueda unirla.
+   */
+  joinedConversationIds.add(normalizedConversationId);
+
   await createHubConnection();
 
   if (chatConnection?.state === signalR.HubConnectionState.Connected) {
-    await chatConnection.invoke("JoinConversation", conversationId.toString());
+    await chatConnection.invoke(
+      "JoinConversation",
+      normalizedConversationId.toString(),
+    );
   }
 }
 
 export async function leaveConversation(conversationId: number): Promise<void> {
+  const normalizedConversationId = Number(conversationId);
+
+  if (
+    !Number.isInteger(normalizedConversationId) ||
+    normalizedConversationId <= 0
+  ) {
+    return;
+  }
+
+  joinedConversationIds.delete(normalizedConversationId);
+
   if (chatConnection?.state !== signalR.HubConnectionState.Connected) {
     return;
   }
 
-  await chatConnection.invoke("LeaveConversation", conversationId.toString());
+  await chatConnection.invoke(
+    "LeaveConversation",
+    normalizedConversationId.toString(),
+  );
 }
 
 export function onNewMessage(handler: NewMessageHandler) {

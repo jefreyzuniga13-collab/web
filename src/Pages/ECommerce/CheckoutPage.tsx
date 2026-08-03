@@ -640,7 +640,7 @@ const CheckoutPage: React.FC = () => {
     codSucursalFactura: string
   }) => {
     const totalesPantallaReq = {
-      descuentoPantalla: existingLog?.DescuentoPantalla ?? 0,
+      descuentoPantalla: existingLog?.descuentoPantalla ?? 0,
       exonerado: "N",
       ivaPantalla: existingLog?.ivaPantalla ?? 0,
       maquina: `CRM-${payload?.contactId}`,

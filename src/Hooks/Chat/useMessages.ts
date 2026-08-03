@@ -27,7 +27,12 @@ type MessagesInfiniteData = InfiniteData<
 >
 
 const DEFAULT_PAGE_SIZE = 30
-const MESSAGES_STALE_TIME_MS = 2 * 60 * 1000
+/*
+ * El ChatWindow permanece montado al cambiar de conversación.
+ * Por eso los mensajes no deben considerarse frescos durante dos minutos:
+ * al volver a un chat, React Query debe consultar nuevamente la API.
+ */
+const MESSAGES_STALE_TIME_MS = 0
 const MESSAGES_GC_TIME_MS = 10 * 60 * 1000
 
 const MEDIA_MESSAGE_TYPES = new Set([
@@ -342,8 +347,6 @@ const useMessages = (
   const validToKey = getDateKey(validTo)
 
   const {
-    joinConversation,
-    leaveConversation,
     onNewMessage,
     offNewMessage,
     onMessageStatusChanged,
@@ -406,6 +409,11 @@ const useMessages = (
       return currentPage + 1
     },
 
+    /*
+     * Refresca al montar y, junto con staleTime = 0, también al cambiar
+     * nuevamente hacia una conversación que ya estaba en caché.
+     */
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     staleTime: MESSAGES_STALE_TIME_MS,
@@ -532,63 +540,29 @@ const useMessages = (
     ]
   )
 
+  /*
+   * useConversations mantiene la conexión unida a las conversaciones
+   * visibles de la bandeja. Este hook únicamente escucha los eventos
+   * y actualiza el caché del chat que se encuentra abierto.
+   *
+   * No se debe ejecutar leaveConversation al cambiar o cerrar el chat,
+   * porque eso expulsaría la conexión del grupo que usa la bandeja para
+   * recibir mensajes de conversaciones que no están abiertas.
+   */
   useEffect(() => {
     if (currentConversationId <= 0) {
       return
     }
 
-    let cancelled = false
-
     onNewMessage(receiveHandler)
     onMessageStatusChanged(statusHandler)
 
-    const joinCurrentConversation =
-      async () => {
-        try {
-          await joinConversation(
-            currentConversationId
-          )
-
-          /*
-           * Evita quedar unido cuando el componente
-           * se desmonta antes de terminar el join.
-           */
-          if (cancelled) {
-            await leaveConversation(
-              currentConversationId
-            )
-          }
-        } catch (connectionError) {
-          console.error(
-            "[useMessages] No se pudo unir a la conversación.",
-            connectionError
-          )
-        }
-      }
-
-    void joinCurrentConversation()
-
     return () => {
-      cancelled = true
-
       offNewMessage(receiveHandler)
-      offMessageStatusChanged(
-        statusHandler
-      )
-
-      void leaveConversation(
-        currentConversationId
-      ).catch((connectionError) => {
-        console.error(
-          "[useMessages] No se pudo abandonar la conversación.",
-          connectionError
-        )
-      })
+      offMessageStatusChanged(statusHandler)
     }
   }, [
     currentConversationId,
-    joinConversation,
-    leaveConversation,
     onNewMessage,
     offNewMessage,
     onMessageStatusChanged,

@@ -295,6 +295,15 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                 </div>
               )}
 
+            {existingLog != null && Number(existingLog.descuentoPantalla) > 0 && (
+                <div className="cart-totals__row">
+                  <span className="cart-totals__label">Descuento</span>
+                  <span className="cart-totals__value cart-totals__value--strong">
+                    {formatMoney(existingLog.descuentoPantalla)}
+                  </span>
+                </div>
+              )}
+
               {existingLog != null && Number(existingLog.ivaPantalla) > 0 && (
                 <div className="cart-totals__row">
                   <span className="cart-totals__label">IVA</span>
