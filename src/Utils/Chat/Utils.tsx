@@ -101,4 +101,77 @@ export const getChannelIcon = (channelId?: number | null) => {
   );
 };
 
+// Asignar masivamente
+export const normalizeStatus = (status?: string | null): string => {
+  return status?.trim().toLowerCase() ?? "";
+};
 
+export const getStatusLabel = (status?: string | null): string => {
+  switch (normalizeStatus(status)) {
+    case "pending":
+      return "Pendiente";
+
+    case "processing":
+      return "Procesando";
+
+    case "completed":
+      return "Completado";
+
+    case "partial":
+      return "Completado parcialmente";
+
+    case "failed":
+      return "Fallido";
+
+    default:
+      return status || "Preparando";
+  }
+};
+
+export const toNullableNumber = (value: string): number | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+export const toNullableText = (value: string): string | null => {
+  const normalizedValue = value.trim();
+
+  return normalizedValue || null;
+};
+
+export const toUtcIso = (value: string | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+};
+
+export const metaChannels = [
+  {
+    id: 1,
+    name: "WhatsApp",
+  },
+  {
+    id: 2,
+    name: "Messenger",
+  },
+  {
+    id: 3,
+    name: "Instagram",
+  },
+];
+
+
+// 

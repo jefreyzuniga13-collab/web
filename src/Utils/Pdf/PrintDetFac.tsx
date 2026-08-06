@@ -492,9 +492,13 @@ export const generateOrdeFacPDFFile = (
     orderFac.DatosDireccion?.Descripcion
   )
 
-  const addressReference = safePdfText(
-    orderFac.DatosDireccion?.Referencia
+  const observaciones = safePdfText(
+    orderFac.DatosGenerales?.Observaciones
   )
+
+  // const addressReference = safePdfText(
+  //   orderFac.DatosDireccion?.Referencia
+  // )
 
   if (addressName) {
     infoY = drawInfoRow({
@@ -510,7 +514,7 @@ export const generateOrdeFacPDFFile = (
   if (addressDescription) {
     infoY = drawInfoRow({
       doc,
-      label: "Dirección:",
+      label: "Dirección: ",
       value: addressDescription,
       x: marginX,
       y: infoY,
@@ -518,11 +522,11 @@ export const generateOrdeFacPDFFile = (
     })
   }
 
-  if (addressReference) {
+  if (observaciones) {
     infoY = drawInfoRow({
       doc,
-      label: "Referencia:",
-      value: addressReference,
+      label: "Observaciones: ",
+      value: observaciones,
       x: marginX,
       y: infoY,
       maxWidth: usableWidth

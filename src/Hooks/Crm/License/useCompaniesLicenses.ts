@@ -357,3 +357,11 @@ const useCompaniesLicenses = () => {
 }
 
 export default useCompaniesLicenses
+
+// 00073 12 PZA ALITAS PICANT (SOL
+// multiseleccion
+//00090 6 PZA ALITAS PICANTES
+// Opcional, 
+//00018 SUPER FAMILIAR
+//opcion 2, el maximo es 4
+

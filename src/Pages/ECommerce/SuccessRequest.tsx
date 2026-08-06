@@ -3,6 +3,7 @@ import "@/styles/Ecommerce/SuccessRequest.css";
 export default function SuccessRequest() {
   return (
     <div className="success-container">
+      
       <img
         src="https://i.ibb.co/GQXXZ7Mc/undraw-success-288d.png"
         alt="order-success"
@@ -10,7 +11,6 @@ export default function SuccessRequest() {
       />
 
       <h1 className="success-title">Pedido procesado con éxito</h1>
-
       <p className="success-description">
         Tu pedido ha sido registrado correctamente y el proceso finalizó con éxito.
         Gracias por tu preferencia.

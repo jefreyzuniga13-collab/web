@@ -86,6 +86,7 @@ export interface PrintDatosGeneralesRaw {
   NoFactura: string
   FechaFactura: string
   Nombrede: string
+  Observaciones: string
 }
 
 /**

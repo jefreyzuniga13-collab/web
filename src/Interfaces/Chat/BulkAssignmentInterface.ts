@@ -61,3 +61,23 @@ export interface AssignableAgent {
   isOnline: boolean
   isActive: boolean
 }
+
+// Interfaces usado en el formulario
+export interface BulkAssignmentFormFilters {
+  from: string | null;
+  to: string | null;
+  metaChannelId: number | null;
+  searchConversation: string | null;
+}
+
+export interface BulkAssignmentFormFilters {
+  from: string | null;
+  to: string | null;
+  metaChannelId: number | null;
+  searchConversation: string | null;
+}
+
+
+
+
+export type ModalStep = "form" | "processing" | "completed" | "failed";

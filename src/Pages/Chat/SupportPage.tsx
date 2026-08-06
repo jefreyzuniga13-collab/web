@@ -37,13 +37,9 @@ const MOBILE_QUERY = "(max-width: 768px)";
 const SupportPage: React.FC = () => {
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [bulkAssignmentOpen, setBulkAssignmentOpen] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
-
   const [mobileChatVisible, setMobileChatVisible] = useState(false);
-
   const dispatch = useAppDispatch();
-
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth,
   );

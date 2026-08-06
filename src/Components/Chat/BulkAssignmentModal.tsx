@@ -1,10 +1,35 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
-import {AlertCircle,CalendarDays,Check,CheckCircle2,ChevronDown,Loader2,Search,UserRound,UsersRound,X} from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Loader2,
+  Search,
+  UserRound,
+  UsersRound,
+  X,
+} from "lucide-react";
 
 import useBulkAssignment from "@/Hooks/Chat/useBulkAssignment";
 import useAssignableAgents from "@/Hooks/Auth/useAssignableAgents";
-import type { BulkAssignmentRequest } from "@/Interfaces/Chat/BulkAssignmentInterface";
+
+import type {
+  BulkAssignmentRequest,
+  BulkAssignmentFormFilters,
+  ModalStep,
+} from "@/Interfaces/Chat/BulkAssignmentInterface";
+
+import {
+  toUtcIso,
+  toNullableNumber,
+  toNullableText,
+  metaChannels,
+} from "@/Utils/Chat/Utils";
+
+import BulkAssignmentResume from "./BulkAssignmentResume";
+
 import "@/Styles/Chat/BulkAssignmentModal.css";
 
 interface BulkAssignmentModalProps {
@@ -13,91 +38,11 @@ interface BulkAssignmentModalProps {
   onCompleted?: () => void | Promise<void>;
 }
 
-interface BulkAssignmentFormFilters {
-  from: string | null;
-  to: string | null;
-  metaChannelId: number | null;
-  searchConversation: string | null;
-}
-
-type ModalStep = "form" | "processing" | "completed" | "failed";
-
 const initialFilters: BulkAssignmentFormFilters = {
   from: null,
   to: null,
   metaChannelId: null,
   searchConversation: null,
-};
-
-const metaChannels = [
-  {
-    id: 1,
-    name: "WhatsApp",
-  },
-  {
-    id: 2,
-    name: "Messenger",
-  },
-  {
-    id: 3,
-    name: "Instagram",
-  },
-];
-
-const normalizeStatus = (status?: string | null): string => {
-  return status?.trim().toLowerCase() ?? "";
-};
-
-const getStatusLabel = (status?: string | null): string => {
-  switch (normalizeStatus(status)) {
-    case "pending":
-      return "Pendiente";
-
-    case "processing":
-      return "Procesando";
-
-    case "completed":
-      return "Completado";
-
-    case "partial":
-      return "Completado parcialmente";
-
-    case "failed":
-      return "Fallido";
-
-    default:
-      return status || "Preparando";
-  }
-};
-
-const toNullableNumber = (value: string): number | null => {
-  if (!value) {
-    return null;
-  }
-
-  const parsedValue = Number(value);
-
-  return Number.isFinite(parsedValue) ? parsedValue : null;
-};
-
-const toNullableText = (value: string): string | null => {
-  const normalizedValue = value.trim();
-
-  return normalizedValue || null;
-};
-
-const toUtcIso = (value: string | null): string | null => {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toISOString();
 };
 
 export default function BulkAssignmentModal({
@@ -107,16 +52,21 @@ export default function BulkAssignmentModal({
 }: BulkAssignmentModalProps) {
   const {
     job,
+
     createAssignment,
+    refetchJob,
     reset,
 
     isSubmitting,
     isPolling,
+    isFetchingJob,
+
     isCompleted,
     isFailed,
+    hasPollingError,
 
-    progressPercentage,
     errorMessage,
+    progressPercentage,
   } = useBulkAssignment();
 
   const {
@@ -161,8 +111,24 @@ export default function BulkAssignmentModal({
     }
 
     return "form";
-  }, [isFailed, isCompleted, job, isSubmitting, isPolling]);
+  }, [isCompleted, isFailed, isPolling, isSubmitting, job]);
 
+  /**
+   * Agentes realmente disponibles para la asignación,
+   * respetando el filtro de conectados.
+   */
+  const eligibleAgents = useMemo(
+    () =>
+      agents.filter(
+        (agent) => agent.isActive && (!onlyOnline || agent.isOnline),
+      ),
+    [agents, onlyOnline],
+  );
+
+  /**
+   * Agentes visibles después de aplicar búsqueda
+   * y filtro de conectados.
+   */
   const availableAgentIds = useMemo(
     () =>
       filteredAgents.filter((agent) => agent.isActive).map((agent) => agent.id),
@@ -176,21 +142,12 @@ export default function BulkAssignmentModal({
     [availableAgentIds, selectedAgentIds],
   );
 
-  const selectedAgents = useMemo(
-    () =>
-      agents.filter(
-        (agent) => agent.isActive && selectedAgentIds.includes(agent.id),
-      ),
-    [agents, selectedAgentIds],
-  );
-
   const dateRangeInvalid = useMemo(() => {
     if (!filters.from || !filters.to) {
       return false;
     }
 
     const from = new Date(filters.from);
-
     const to = new Date(filters.to);
 
     if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
@@ -200,19 +157,28 @@ export default function BulkAssignmentModal({
     return from > to;
   }, [filters.from, filters.to]);
 
-  const isBusy = isSubmitting || isPolling;
+  const noEligibleAgents =
+    !isLoadingAgents && !isAgentsError && eligibleAgents.length === 0;
 
   const canSubmit =
-    !isBusy &&
+    !isSubmitting &&
     !dateRangeInvalid &&
-    (useAllAgents || selectedAgentIds.length > 0);
-
-  const isPartial = normalizeStatus(job?.status) === "partial";
+    !isLoadingAgents &&
+    !isAgentsError &&
+    (useAllAgents ? eligibleAgents.length > 0 : selectedAgentIds.length > 0);
 
   const displayedErrorMessage = dateRangeInvalid
     ? "La fecha inicial no puede ser mayor que la fecha final."
-    : errorMessage;
+    : useAllAgents && noEligibleAgents
+      ? onlyOnline
+        ? "No hay agentes conectados disponibles."
+        : "No hay agentes activos disponibles."
+      : errorMessage;
 
+  /**
+   * Actualiza la lista de agentes cada vez
+   * que se abre el modal.
+   */
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -221,6 +187,10 @@ export default function BulkAssignmentModal({
     void refetchAgents();
   }, [isOpen, refetchAgents]);
 
+  /**
+   * Refresca la bandeja una sola vez cuando
+   * finaliza correctamente el job.
+   */
   useEffect(() => {
     if (!isCompleted || completionHandled) {
       return;
@@ -228,9 +198,27 @@ export default function BulkAssignmentModal({
 
     setCompletionHandled(true);
 
-    void onCompleted?.();
-  }, [isCompleted, completionHandled, onCompleted]);
+    const complete = async (): Promise<void> => {
+      try {
+        await onCompleted?.();
+      } catch (error) {
+        console.error(
+          "[BulkAssignmentModal] No se pudo refrescar la bandeja.",
+          error,
+        );
+      }
+    };
 
+    void complete();
+  }, [completionHandled, isCompleted, onCompleted]);
+
+  /**
+   * Limpia únicamente el estado del formulario.
+   *
+   * El JobKey activo continúa persistido desde
+   * useBulkAssignment y podrá recuperarse cuando
+   * el modal vuelva a abrirse.
+   */
   useEffect(() => {
     if (isOpen) {
       return;
@@ -245,8 +233,12 @@ export default function BulkAssignmentModal({
     setSearch("");
     setOnlyOnline(false);
     setCompletionHandled(false);
-  }, [isOpen, reset, setSearch, setOnlyOnline]);
+  }, [isOpen, reset, setOnlyOnline, setSearch]);
 
+  /**
+   * Elimina selecciones que ya no son válidas
+   * al cambiar disponibilidad o conexión.
+   */
   useEffect(() => {
     if (useAllAgents || selectedAgentIds.length === 0) {
       return;
@@ -270,7 +262,7 @@ export default function BulkAssignmentModal({
 
       return nextIds;
     });
-  }, [agents, onlyOnline, useAllAgents, selectedAgentIds.length]);
+  }, [agents, onlyOnline, selectedAgentIds.length, useAllAgents]);
 
   if (!isOpen) {
     return null;
@@ -279,14 +271,14 @@ export default function BulkAssignmentModal({
   const updateFilter = <K extends keyof BulkAssignmentFormFilters>(
     field: K,
     value: BulkAssignmentFormFilters[K],
-  ) => {
+  ): void => {
     setFilters((currentFilters) => ({
       ...currentFilters,
       [field]: value,
     }));
   };
 
-  const handleUseAllAgentsChange = (checked: boolean) => {
+  const handleUseAllAgentsChange = (checked: boolean): void => {
     setUseAllAgents(checked);
 
     if (checked) {
@@ -295,7 +287,7 @@ export default function BulkAssignmentModal({
     }
   };
 
-  const handleOnlyOnlineChange = (checked: boolean) => {
+  const handleOnlyOnlineChange = (checked: boolean): void => {
     setOnlyOnline(checked);
 
     if (!checked) {
@@ -313,7 +305,7 @@ export default function BulkAssignmentModal({
     );
   };
 
-  const toggleAgent = (agentId: number) => {
+  const toggleAgent = (agentId: number): void => {
     if (useAllAgents) {
       return;
     }
@@ -325,7 +317,7 @@ export default function BulkAssignmentModal({
     );
   };
 
-  const toggleAllVisibleAgents = () => {
+  const toggleAllVisibleAgents = (): void => {
     if (useAllAgents) {
       return;
     }
@@ -341,20 +333,44 @@ export default function BulkAssignmentModal({
     });
   };
 
-  const handleClose = () => {
-    if (isBusy) {
+  /**
+   * Se permite cerrar mientras el backend procesa.
+   *
+   * Solo se bloquea durante la creación inicial,
+   * porque todavía no se ha recibido el JobKey.
+   */
+  const handleClose = (): void => {
+    if (isSubmitting) {
       return;
     }
 
     onClose();
   };
 
-  const handleRetry = () => {
+  /**
+   * Reinicia después de un fallo terminal del job.
+   */
+  const handleRetry = (): void => {
     reset();
     setCompletionHandled(false);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  /**
+   * Reintenta únicamente la consulta del job.
+   *
+   * No elimina el JobKey ni reinicia el proceso.
+   */
+  const handlePollingRetry = async (): Promise<void> => {
+    try {
+      await refetchJob();
+    } catch {
+      // El hook expone el mensaje correspondiente.
+    }
+  };
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
 
     if (!canSubmit) {
@@ -363,7 +379,6 @@ export default function BulkAssignmentModal({
 
     const request: BulkAssignmentRequest = {
       from: toUtcIso(filters.from),
-
       to: toUtcIso(filters.to),
 
       metaChannelId: filters.metaChannelId,
@@ -382,7 +397,7 @@ export default function BulkAssignmentModal({
     try {
       await createAssignment(request);
     } catch {
-      return;
+      // El hook controla el mensaje y el toast.
     }
   };
 
@@ -409,8 +424,7 @@ export default function BulkAssignmentModal({
             </h2>
 
             <p className="bulkAssignmentModal-subtitle">
-              Asigna conversaciones pendientes entre agentes
-              activos.
+              Asigna conversaciones pendientes entre agentes activos.
             </p>
           </div>
 
@@ -418,7 +432,7 @@ export default function BulkAssignmentModal({
             type="button"
             className="bulkAssignmentModal-closeButton"
             onClick={handleClose}
-            disabled={isBusy}
+            disabled={isSubmitting}
             aria-label="Cerrar"
           >
             <X />
@@ -536,7 +550,7 @@ export default function BulkAssignmentModal({
 
                     <p className="bulkAssignmentSection-description">
                       {useAllAgents
-                        ? "Se utilizarán todos los agentes Support activos."
+                        ? `Se utilizarán ${eligibleAgents.length} agentes disponibles.`
                         : `Seleccionados: ${selectedAgentIds.length}`}
                     </p>
                   </div>
@@ -585,6 +599,13 @@ export default function BulkAssignmentModal({
                     />
                   </div>
 
+                  {isFetchingAgents && !isLoadingAgents && (
+                    <Loader2
+                      className="bulkAssignmentSpin"
+                      aria-label="Actualizando agentes"
+                    />
+                  )}
+
                   <button
                     type="button"
                     className="bulkAssignmentTextButton"
@@ -597,14 +618,14 @@ export default function BulkAssignmentModal({
                   </button>
                 </div>
 
-                {isLoadingAgents || isFetchingAgents ? (
+                {isLoadingAgents ? (
                   <div className="bulkAssignmentEmptyState">
                     <Loader2 className="bulkAssignmentSpin" />
 
                     <span>Cargando agentes...</span>
                   </div>
                 ) : isAgentsError ? (
-                  <div className="bulkAssignmentErrorState">
+                  <div className="bulkAssignmentErrorState" role="alert">
                     <AlertCircle />
 
                     <div>
@@ -638,9 +659,12 @@ export default function BulkAssignmentModal({
                         <button
                           key={agent.id}
                           type="button"
-                          className={`bulkAssignmentAgent ${
-                            isSelected ? "bulkAssignmentAgent--selected" : ""
-                          }`}
+                          className={[
+                            "bulkAssignmentAgent",
+                            isSelected ? "bulkAssignmentAgent--selected" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
                           onClick={() => toggleAgent(agent.id)}
                           disabled={useAllAgents || !agent.isActive}
                         >
@@ -666,11 +690,12 @@ export default function BulkAssignmentModal({
 
                           <span className="bulkAssignmentAgent-meta">
                             <span
-                              className={`bulkAssignmentAgent-status ${
+                              className={[
+                                "bulkAssignmentAgent-status",
                                 agent.isOnline
                                   ? "bulkAssignmentAgent-status--online"
-                                  : "bulkAssignmentAgent-status--offline"
-                              }`}
+                                  : "bulkAssignmentAgent-status--offline",
+                              ].join(" ")}
                             >
                               {agent.isOnline ? "Conectado" : "Desconectado"}
                             </span>
@@ -691,8 +716,9 @@ export default function BulkAssignmentModal({
                       </h3>
 
                       <p className="bulkAssignmentSection-description">
-                        Las conversaciones se distribuirán equitativamente,
-                        priorizando agentes con menor carga.
+                        Las conversaciones se distribuirán entre los agentes
+                        disponibles, priorizando la carga configurada por el
+                        backend.
                       </p>
                     </div>
                   </div>
@@ -720,14 +746,16 @@ export default function BulkAssignmentModal({
                       <span>Agentes</span>
 
                       <strong>
-                        {useAllAgents ? "Todos" : selectedAgentIds.length}
+                        {useAllAgents
+                          ? eligibleAgents.length
+                          : selectedAgentIds.length}
                       </strong>
                     </div>
 
                     <div className="bulkAssignmentSummary-item">
                       <span>Distribución</span>
 
-                      <strong>Equitativa</strong>
+                      <strong>Automática</strong>
                     </div>
 
                     <div className="bulkAssignmentSummary-item">
@@ -739,12 +767,12 @@ export default function BulkAssignmentModal({
                     </div>
 
                     <div className="bulkAssignmentSummary-item">
-                      <span>Primer agente</span>
+                      <span>Canal</span>
 
                       <strong>
-                        {useAllAgents
-                          ? "Automático"
-                          : (selectedAgents[0]?.name ?? "Sin seleccionar")}
+                        {metaChannels.find(
+                          (channel) => channel.id === filters.metaChannelId,
+                        )?.name ?? "Todos"}
                       </strong>
                     </div>
                   </div>
@@ -752,7 +780,7 @@ export default function BulkAssignmentModal({
               </section>
 
               {displayedErrorMessage && (
-                <div className="bulkAssignmentErrorState">
+                <div className="bulkAssignmentErrorState" role="alert">
                   <AlertCircle />
 
                   <div>
@@ -769,7 +797,7 @@ export default function BulkAssignmentModal({
                 type="button"
                 className="bulkAssignmentButton bulkAssignmentButton--secondary"
                 onClick={handleClose}
-                disabled={isBusy}
+                disabled={isSubmitting}
               >
                 Cancelar
               </button>
@@ -795,170 +823,17 @@ export default function BulkAssignmentModal({
           </form>
         )}
 
-        {modalStep === "processing" && (
-          <div className="bulkAssignmentProcessView">
-            <div className="bulkAssignmentProcessIcon">
-              <Loader2 className="bulkAssignmentSpin" />
-            </div>
-
-            <h3>Procesando asignación</h3>
-
-            <p>
-              Las conversaciones están siendo validadas y distribuidas entre los
-              agentes disponibles.
-            </p>
-
-            <div className="bulkAssignmentProgress">
-              <div className="bulkAssignmentProgress-header">
-                <span>Progreso</span>
-
-                <strong>{progressPercentage}%</strong>
-              </div>
-
-              <div className="bulkAssignmentProgress-track">
-                <div
-                  className="bulkAssignmentProgress-fill"
-                  style={{
-                    width: `${progressPercentage}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="bulkAssignmentProcessStats">
-              <div>
-                <span>Total</span>
-
-                <strong>{job?.totalRequested ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Procesadas</span>
-
-                <strong>{job?.totalProcessed ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Asignadas</span>
-
-                <strong>{job?.totalAssigned ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Omitidas</span>
-
-                <strong>{job?.totalSkipped ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Fallidas</span>
-
-                <strong>{job?.totalFailed ?? 0}</strong>
-              </div>
-            </div>
-
-            <div className="bulkAssignmentProcessStatus">
-              Estado: <strong>{getStatusLabel(job?.status)}</strong>
-            </div>
-
-            {job?.message && <p>{job.message}</p>}
-          </div>
-        )}
-
-        {modalStep === "completed" && (
-          <div className="bulkAssignmentResultView">
-            <div className="bulkAssignmentResultIcon bulkAssignmentResultIcon--success">
-              <CheckCircle2 />
-            </div>
-
-            <h3>
-              {isPartial
-                ? "Asignación completada parcialmente"
-                : "Asignación completada"}
-            </h3>
-
-            <p>
-              Se asignaron {job?.totalAssigned ?? 0} de{" "}
-              {job?.totalRequested ?? 0} conversaciones.
-            </p>
-
-            <div className="bulkAssignmentProcessStats">
-              <div>
-                <span>Total</span>
-
-                <strong>{job?.totalRequested ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Procesadas</span>
-
-                <strong>{job?.totalProcessed ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Asignadas</span>
-
-                <strong>{job?.totalAssigned ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Omitidas</span>
-
-                <strong>{job?.totalSkipped ?? 0}</strong>
-              </div>
-
-              <div>
-                <span>Fallidas</span>
-
-                <strong>{job?.totalFailed ?? 0}</strong>
-              </div>
-            </div>
-
-            {job?.message && <p>{job.message}</p>}
-
-            <div className="bulkAssignmentResultFooter">
-              <button
-                type="button"
-                className="bulkAssignmentButton bulkAssignmentButton--primary"
-                onClick={handleClose}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {modalStep === "failed" && (
-          <div className="bulkAssignmentResultView">
-            <div className="bulkAssignmentResultIcon bulkAssignmentResultIcon--error">
-              <AlertCircle />
-            </div>
-
-            <h3>No se completó la asignación</h3>
-
-            <p>
-              {errorMessage || "El proceso finalizó con un error inesperado."}
-            </p>
-
-            <div className="bulkAssignmentResultFooter">
-              <button
-                type="button"
-                className="bulkAssignmentButton bulkAssignmentButton--secondary"
-                onClick={handleClose}
-              >
-                Cerrar
-              </button>
-
-              <button
-                type="button"
-                className="bulkAssignmentButton bulkAssignmentButton--primary"
-                onClick={handleRetry}
-              >
-                Intentar nuevamente
-              </button>
-            </div>
-          </div>
-        )}
+        <BulkAssignmentResume
+          modalStep={modalStep}
+          progressPercentage={progressPercentage}
+          job={job}
+          errorMessage={errorMessage}
+          hasPollingError={hasPollingError}
+          isRetryingPolling={isFetchingJob}
+          handleClose={handleClose}
+          handleRetry={handleRetry}
+          handlePollingRetry={handlePollingRetry}
+        />
       </div>
     </div>
   );
