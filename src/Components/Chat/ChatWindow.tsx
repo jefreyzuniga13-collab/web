@@ -415,35 +415,36 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       return
     }
 
-    const messagesCountChanged =
-      previousMessagesLengthRef.current !== visibleMessages.length
+const messagesCountChanged =
+  previousMessagesLengthRef.current !== visibleMessages.length
 
-    previousMessagesLengthRef.current = visibleMessages.length
+previousMessagesLengthRef.current = visibleMessages.length
 
-    if (
-      messagesCountChanged &&
-      shouldStickToBottomRef.current &&
-      !isFetchingOlderMessages
-    ) {
-      requestAnimationFrame(() => {
-        scrollToBottom("auto")
-        updateScrollButtonState()
-      })
+const lastMessage =
+  visibleMessages[visibleMessages.length - 1]
 
-      return
-    }
+const isIncomingMessage =
+  Boolean(lastMessage?.senderContactId) ||
+  lastMessage?.isIncoming === true
+
+if (
+  messagesCountChanged &&
+  !isFetchingOlderMessages &&
+  (shouldStickToBottomRef.current || isIncomingMessage)
+) {
+  requestAnimationFrame(() => {
+    shouldStickToBottomRef.current = true
+    scrollToBottom("auto")
+    updateScrollButtonState()
+  })
+
+  return
+}
 
     requestAnimationFrame(() => {
       updateScrollButtonState()
     })
-  }, [
-    conversationId,
-    visibleMessages.length,
-    isFetchingOlderMessages,
-    scrollToBottom,
-    updateScrollButtonState,
-    focusComposer,
-  ])
+  }, [conversationId, visibleMessages.length, isFetchingOlderMessages, scrollToBottom, updateScrollButtonState, focusComposer, visibleMessages])
 
   useEffect(() => {
     if (!showEmojiPicker) return

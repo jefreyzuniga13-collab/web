@@ -529,6 +529,21 @@ export const generateOrdeFacPDFFile = (
     })
   }
 
+  const observation = safePdfText(
+      existingLog?.observacion
+    )
+
+    if (observation) {
+      infoY = drawInfoRow({
+        doc,
+        label: "Observación:",
+        value: observation,
+        x: marginX,
+        y: infoY,
+        maxWidth: usableWidth
+      })
+    }
+
   /*
    * Productos.
    */

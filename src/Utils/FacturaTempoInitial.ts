@@ -21,7 +21,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   noProforma: "",
   tipoIdentificacion: 1,
   identificaicon: "",
-  noOrden: "-1",
+  noOrden: "",
   imprimir: "C",
   numero: 66867,
   noApartado: "",

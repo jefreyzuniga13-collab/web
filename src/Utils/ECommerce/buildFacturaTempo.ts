@@ -106,6 +106,7 @@ export const buildFacturaTempo = ({
   facturaBase,
   codSucursalFactura,
   consecutivo,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   orderId,
   contactId,
   nombreCliente,
@@ -144,8 +145,8 @@ export const buildFacturaTempo = ({
     tasaCambio: tasa ?? tasaCambio,
 
     numero: consecutivo,
-    idPromocion: String(orderId),
-    noOrden: String(orderId),
+    idPromocion: "",
+    noOrden: "",
 
     valorTransporte: safePositiveNumber(valorTransporte),
     aplicaPropina: "N",
