@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Input from "@/Components/Common/Input";
+import { Label } from "@/Components/Common/Label";
 import "@/Styles/Ecommerce/Payment/CashPaymentSection.css";
 
 interface Props {
@@ -61,15 +63,12 @@ export default function CashPaymentSection({
   return (
     <div className="checkout-cash">
       <div className="checkout-field checkout-field--full">
-        <label className="checkout-label" htmlFor="cashAmount">
-          Monto con el que pagas
-        </label>
+        <Label htmlFor="cashAmount">Monto con el que pagas</Label>
 
-        <input
+        <Input
           id="cashAmount"
           type="text"
           inputMode="numeric"
-          className="checkout-input"
           value={cashAmountText}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Ej. 300"

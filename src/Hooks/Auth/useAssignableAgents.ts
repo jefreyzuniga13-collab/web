@@ -4,15 +4,24 @@ import { useQuery } from '@tanstack/react-query'
 
 import { AgentService } from '@/Services/auth/AgentService'
 
+import type { AgentDto } from '@/Interfaces/Chat/ChatInterfaces'
 import type { AssignableAgent } from '@/Interfaces/Chat/BulkAssignmentInterface'
 
-const assignableAgentKeys = {
-  all: ['assignable-agents'] as const,
-  list: () =>
-    [...assignableAgentKeys.all, 'list'] as const,
+const toAssignableAgent = (agent: AgentDto): AssignableAgent => ({
+  id: agent.userId,
+  name: agent.fullName,
+  email: agent.email,
+  imageUrl: agent.imageUrl,
+  isOnline: agent.isOnline ?? false,
+  isActive: agent.isActive ?? true,
+})
+
+export const supportAgentKeys = {
+  all: ['users', 'agents'] as const,
+  list: () => supportAgentKeys.all,
 }
 
-export const useAssignableAgents = () => {
+export const useAssignableAgents = (options?: { enabled?: boolean }) => {
   const [search, setSearch] = useState('')
   const [onlyOnline, setOnlyOnline] =
     useState(false)
@@ -21,19 +30,24 @@ export const useAssignableAgents = () => {
     useState(false)
 
   const {
-    data: agents = [],
+    data: rawAgents = [],
     isLoading,
     isFetching,
     isError,
     error,
     refetch,
-  } = useQuery<AssignableAgent[], Error>({
-    queryKey: assignableAgentKeys.list(),
-    queryFn: () =>
-      AgentService.getAssignableAgentsAsync(),
+  } = useQuery<AgentDto[], Error>({
+    queryKey: supportAgentKeys.list(),
+    queryFn: () => AgentService.getAgentsAsync(),
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     retry: 2,
   })
+
+  const agents = useMemo(
+    () => rawAgents.map(toAssignableAgent),
+    [rawAgents]
+  )
 
   const filteredAgents = useMemo(() => {
     const normalizedSearch = search

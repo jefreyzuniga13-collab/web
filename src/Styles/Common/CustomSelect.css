@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   border-radius: var(--radius-md);
-  border: 0.1rem solid var(--color-border-primary);
+  border: var(--control-border-width) solid var(--control-border);
   background-color: var(--color-background-primary);
   padding: 0 var(--spacing-md);
   font-size: var(--font-size-sm);
@@ -75,7 +75,7 @@
   max-height: 20rem;
   overflow: hidden;
   border-radius: var(--radius-md);
-  border: 0.1rem solid var(--color-border-primary);
+  border: var(--control-border-width) solid var(--control-border);
   background-color: var(--color-background-primary);
   color: var(--color-text-primary);
   box-shadow: var(--shadow-lg);

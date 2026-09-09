@@ -99,7 +99,7 @@
 .filter-modal__title {
   margin: 0;
 
-  color: var(--color-gray-900);
+  color: var(--text-muted);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   text-align: left;
@@ -136,41 +136,40 @@
   margin-bottom: 1rem;
 
   color: var(--color-gray-700);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   text-align: left;
 }
 
 .filter-modal__status-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
   width: 100%;
 }
 
 .filter-modal__status {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 
-  min-width: 9.5rem;
-  min-height: 4rem;
+  min-width: 0;
+  min-height: 4.2rem;
 
-  padding: 0.8rem 1.4rem;
+  padding: 1rem 1.4rem;
 
-  border: 0.1rem solid var(--color-primary);
-  border-radius: var(--radius-full);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 
-  background-color: var(--bg-primary);
-  color: var(--color-primary);
+  background-color: #f8fafc;
+  color: #344054;
 
   box-sizing: border-box;
 
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
-  text-align: center;
+  text-align: left !important;
 
   cursor: pointer;
   user-select: none;
@@ -181,23 +180,24 @@
     border-color var(--transition-fast)
       var(--transition-ease),
     color var(--transition-fast)
-      var(--transition-ease),
-    transform var(--transition-fast)
       var(--transition-ease);
 }
 
-.filter-modal__status:hover {
-  background-color: var(--color-blue-light);
+.filter-modal__status:first-child {
+  grid-column: 1 / -1;
 }
 
-.filter-modal__status:active {
-  transform: scale(0.98);
+.filter-modal__status:hover {
+  background-color: #eef2f6;
+  border-color: #d0d5dd;
 }
 
 .filter-modal__status--active {
-  background-color: var(--color-primary);
+  background-color: #eff6ff;
   border-color: var(--color-primary);
-  color: var(--text-white);
+  color: var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .filter-modal__status-input {
@@ -216,6 +216,13 @@
 
   width: 100%;
   min-width: 0;
+}
+
+.filter-modal .MuiInputBase-input,
+.filter-modal .MuiAutocomplete-input,
+.filter-modal .MuiFormLabel-root,
+.filter-modal__autocomplete .MuiInputBase-input {
+  font-size: var(--font-size-sm) !important;
 }
 
 .filter-modal__autocomplete > * {
@@ -251,9 +258,10 @@
 .filter-modal__date-field
   .MuiOutlinedInput-root {
   width: 100%;
-  min-height: 5.6rem;
+  min-height: var(--control-height);
+  height: var(--control-height);
 
-  border-radius: var(--radius-md);
+  border-radius: var(--control-radius);
   box-sizing: border-box;
 }
 
@@ -261,7 +269,7 @@
   .MuiInputBase-input {
   min-width: 0;
 
-  font-size: var(--font-size-md);
+  font-size: var(--control-font-size);
   text-overflow: ellipsis;
 }
 
@@ -284,6 +292,9 @@
 
 .filter-modal__actions button {
   min-width: 12rem;
+  font-size: var(--font-size-base);
+  text-align: center;
+  justify-content: center;
 }
 
 .filter-modal__company {
@@ -314,7 +325,7 @@
   width: 100%;
   max-width: 100%;
 
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   box-sizing: border-box;
 }
 
@@ -447,10 +458,7 @@
   }
 
   .filter-modal__status-list {
-    display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-    gap: 0.8rem;
+    grid-template-columns: 1fr;
   }
 
   .filter-modal__status {

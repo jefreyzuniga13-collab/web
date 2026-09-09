@@ -5,7 +5,6 @@ import Button from '@/Components/Common/Button'
 import { useContactForm } from '@/Hooks/Auth/UseContactForm'
 import '@/Styles/Auth/ContactModal.css'
 import type { ContactFormValues, ContactLogInterface } from '@/Interfaces/Auth/ContactInterface'
-import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 // import CustomAutocomplete  from '@/Components/Common/CustomAutocomplete'
 
 interface ContactModalProps {
@@ -50,12 +49,17 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
     <div className="cm-modal__overlay">
       <div className="cm-modal__container">
         <header className="cm-modal__header">
-          <h2 className="cm-modal__title">
-            {mode === 'create' && 'Nuevo Contacto'}
-            {mode === 'edit' && 'Editar Contacto'}
-            {mode === 'view' && 'Detalle Contacto'}
-          </h2>
-          <button type="button" className="cm-modal__close" onClick={onClose}>
+          <div className="cm-modal__header-text">
+            <h2 className="cm-modal__title">
+              {mode === 'create' && 'Nuevo Contacto'}
+              {mode === 'edit' && 'Editar Contacto'}
+              {mode === 'view' && 'Detalle Contacto'}
+            </h2>
+            <p className="cm-modal__subtitle">
+              Completa los datos del contacto y su estado.
+            </p>
+          </div>
+          <button type="button" className="cm-modal__close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
         </header>
@@ -63,7 +67,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
           <div className="cm-modal__grid">
 
             <div className="cm-modal__col">
-              <Label htmlFor="fullName">Nombre Contacto Completo *</Label>
+              <Label htmlFor="fullName" >Nombre Contacto Completo *</Label>
               <Input
                 id="fullName"
                 name="fullName"
@@ -75,7 +79,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             </div>
 
             <div className="cm-modal__col">
-              <Label htmlFor="phone">Teléfono *</Label>
+              <Label htmlFor="phone" >Teléfono *</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -87,7 +91,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             </div>
 
             <div className="cm-modal__col">
-              <Label htmlFor="idType">Tipo ID</Label>
+              <Label htmlFor="idType" >Tipo ID</Label>
               <Select
                 id="idType"
                 value={form.idType ?? ''}
@@ -98,7 +102,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             </div>
             {form.idType === 'NationalCard' && (
               <div className="cm-modal__col">
-                <Label htmlFor="idCard">Cédula Nacional</Label>
+                <Label htmlFor="idCard" >Cédula Nacional</Label>
                 <Input
                   id="idCard"
                   name="idCard"
@@ -111,7 +115,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             )}
             {form.idType === 'Passport' && (
               <div className="cm-modal__col">
-                <Label htmlFor="passport">Pasaporte</Label>
+                <Label htmlFor="passport" >Pasaporte</Label>
                 <Input
                   id="passport"
                   name="passport"
@@ -124,7 +128,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             )}
             {form.idType === 'ResidenceCard' && (
               <div className="cm-modal__col">
-                <Label htmlFor="residenceCard">Cédula Residencia</Label>
+                <Label htmlFor="residenceCard" >Cédula Residencia</Label>
                 <Input
                   id="residenceCard"
                   name="residenceCard"
@@ -137,7 +141,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
             )}
 
             <div className="cm-modal__col">
-              <Label htmlFor="status">Estado</Label>
+              <Label htmlFor="status" >Estado</Label>
               <Select
                 id="status"
                 value={form.status}
@@ -146,8 +150,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 options={statusOptions}
               />
             </div>
-            <div className="cm-modal__col">
-              <Label htmlFor="isVerified">Verificado</Label>
+            <div className="cm-modal__col cm-modal__check">
               <input
                 type="checkbox"
                 id="isVerified"
@@ -156,9 +159,9 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 onChange={handleCheckbox}
                 disabled={isView}
               />
+              <Label htmlFor="isVerified" >Verificado</Label>
             </div>
-            <div className="cm-modal__col">
-              <Label htmlFor="isActive">Activo</Label>
+            <div className="cm-modal__col cm-modal__check">
               <input
                 type="checkbox"
                 id="isActive"
@@ -167,6 +170,7 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
                 onChange={handleCheckbox}
                 disabled={isView}
               />
+              <Label htmlFor="isActive" >Activo</Label>
             </div>
           </div>
           <footer className="cm-modal__footer">
@@ -174,10 +178,8 @@ export default function ContactModalForm({ mode, isOpen, data, onClose, onSubmit
               Cancelar
             </Button>
             {!isView && (
-              <Button variant="primary" type="submit" className='cm-modal__footer__btn' disabled={loading}>
-                {loading ? <AiOutlineLoading3Quarters /> :
-                  
-                mode === 'create' ? 'Crear' : 'Guardar'}
+              <Button variant="primary" type="submit" className='cm-modal__footer__btn' loading={loading}>
+                {mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}
           </footer>

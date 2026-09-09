@@ -14,7 +14,7 @@ import Tooltip from "@mui/material/Tooltip"
 import { toast } from "react-toastify"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import { MdClear, MdSelectAll } from "react-icons/md"
+import { ListPlus, ListX } from "lucide-react"
 import { ProductPCGTab } from "@/Components/ECommerce/Tabs/ProductPCGTab"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
 import type { ProductoPCGInterface } from "@/Interfaces/Chat/ProductPCGInterface"
@@ -260,12 +260,12 @@ const ProductPCGList = ({
                 onClick={selectVisibleProducts}
                 disabled={products.length === 0 || addingSelected}
               >
-                <MdSelectAll fontSize={16} />
+                <ListPlus size={18} strokeWidth={2.2} />
               </button>
             </span>
           </Tooltip>
 
-          <Tooltip title="Limpiar selección">
+          <Tooltip title="Deseleccionar">
             <span>
               <button
                 type="button"
@@ -273,7 +273,7 @@ const ProductPCGList = ({
                 onClick={clearSelection}
                 disabled={selectedCount === 0 || addingSelected}
               >
-                <MdClear fontSize={16} />
+                <ListX size={18} strokeWidth={2.2} />
               </button>
             </span>
           </Tooltip>

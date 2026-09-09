@@ -11,7 +11,7 @@ import { useDynamicParam } from '@/Hooks/Crm/useDynamicParam'
 import type { DynamicParamResponseDto } from '@/Interfaces/Crm/DynamicParamInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Crm/SystemParamsPage.css'
-import { TextField } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 
 export default function DynamicParamPage() {
   const {
@@ -31,7 +31,8 @@ export default function DynamicParamPage() {
     handleSubmit,
     toggleStatus,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loadingList
   } = useDynamicParam()
 
   const columns: Column<DynamicParamResponseDto>[] = useMemo(() => [
@@ -116,21 +117,14 @@ export default function DynamicParamPage() {
 
       {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
 
-      <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
+      <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div>
       
       <CustomTable<DynamicParamResponseDto>
         columns={columns}
         rows={dynamicParams}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

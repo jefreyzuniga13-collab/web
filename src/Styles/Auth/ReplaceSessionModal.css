@@ -41,25 +41,14 @@
 .replace-session__card {
   position: relative;
   z-index: 1;
-
-  /*
-   * Más ancho en PC, pero nunca mayor que
-   * el espacio disponible de la pantalla.
-   */
-  width: min(76rem, calc(100vw - 4rem));
+  width: min(56rem, calc(100vw - 4rem));
   max-height: calc(100dvh - 4rem);
   overflow-y: auto;
-
-  padding: 2.4rem 2.6rem;
-  border: 0.1rem solid rgba(17, 24, 39, 0.08);
-  border-radius: 2rem;
-
+  padding: var(--space-lg) var(--space-xl);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--modal-radius);
   background: var(--bg-primary);
-
-  box-shadow:
-    0 2.4rem 7rem rgba(5, 14, 32, 0.28),
-    0 0.6rem 1.8rem rgba(5, 14, 32, 0.1);
-
+  box-shadow: var(--shadow-xl);
   animation: replace-session-enter 180ms ease-out;
 }
 
@@ -67,22 +56,26 @@
    ICONO PRINCIPAL
    ========================= */
 
+.replace-session__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
 .replace-session__icon {
   width: auto;
   height: auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-
-  margin: 0 0 1rem;
+  margin: 0;
   padding: 0;
-
   border-radius: 0;
   color: var(--color-secondary);
   background: transparent;
-
-  font-size: 3rem;
+  font-size: 2rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .replace-session__icon svg {
@@ -101,33 +94,32 @@
 
 .replace-session__eyebrow {
   width: fit-content;
-  padding: 0.45rem 1rem;
-  border-radius: var(--radius-full);
-
-  color: var(--color-primary);
-
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  padding: 0;
+  border-radius: 0;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .replace-session__header h2 {
   margin: 0;
-  color: var(--color-gray-900);
-
-  font-size: clamp(2.2rem, 2.4vw, 2.8rem);
-  line-height: 1.15;
-  font-weight: 900;
-  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  line-height: 1.2;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .replace-session__header p {
   max-width: 68rem;
   margin: 0;
-
-  color: var(--color-gray-600);
-  font-size: 1.4rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 
@@ -199,21 +191,18 @@
 .replace-session__info-item strong {
   display: block;
   margin: 0 0 0.25rem;
-
-  color: var(--color-gray-900);
-  font-size: 1.25rem;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
   line-height: 1.25;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .replace-session__info-item span:not(.replace-session__info-icon) {
   display: block;
   min-width: 0;
-
-  color: var(--color-gray-600);
-  font-size: 1.35rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
   line-height: 1.35;
-
   overflow-wrap: anywhere;
 }
 
@@ -231,9 +220,9 @@
   color: #92400e;
   background: #fff7ed;
 
-  font-size: 1.3rem;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
-  font-weight: 700;
+  font-weight: var(--font-weight-medium);
 }
 
 /* =========================
@@ -250,15 +239,13 @@
 }
 
 .replace-session__button {
-  min-height: 4.6rem;
-  padding: 0 1.8rem;
-
+  min-height: var(--control-height);
+  padding: 0 var(--space-lg);
   border: 0;
-  border-radius: 1.2rem;
-
-  font-size: 1.35rem;
+  border-radius: var(--control-radius);
+  font-size: var(--font-size-base);
   line-height: 1.2;
-  font-weight: 900;
+  font-weight: var(--font-weight-semibold);
 
   cursor: pointer;
 
@@ -289,25 +276,19 @@
 }
 
 .replace-session__button--primary {
-  min-width: 27rem;
-
+  min-width: 16rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-
   color: var(--text-white);
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    #1559b7
-  );
-
-  box-shadow: 0 1rem 2rem rgba(37, 119, 225, 0.25);
+  background: var(--gradient-brand);
+  box-shadow: none;
 }
 
 .replace-session__button--primary:not(:disabled):hover {
-  box-shadow: 0 1.3rem 2.6rem rgba(37, 119, 225, 0.32);
+  background: var(--gradient-brand-hover);
+  box-shadow: none;
 }
 
 .replace-session__spinner {

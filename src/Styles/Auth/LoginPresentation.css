@@ -120,8 +120,8 @@
 
 .login__card {
   width: 100%;
-  max-width: 48rem;
-  padding: clamp(3rem, 2.6vw, 4rem);
+  max-width: 42rem;
+  padding: clamp(2.4rem, 2vw, 3.2rem);
   border-radius: var(--radius-2xl);
   background: var(--bg-primary);
   border: 0.1rem solid var(--border-secondary);
@@ -135,7 +135,7 @@
 .login__card-header h2 {
   margin: 0 !important;
   padding: 0 !important;
-  font-size: clamp(2.8rem, 2vw, 3.8rem);
+  font-size: clamp(2.2rem, 1.6vw, 2.8rem);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   letter-spacing: -0.03em;
@@ -157,27 +157,13 @@
 .login__field label {
   display: block;
   margin-bottom: var(--space-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--text-secondary);
 }
 
-.login__field input {
-  width: 100%;
-  height: 5rem;
-  padding: 0 var(--space-lg);
-  border-radius: var(--radius-xl);
-  border: 0.1rem solid var(--border-primary);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  outline: none;
-  transition: 0.25s ease;
-}
-
-.login__field input:focus {
-  border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 0.4rem rgba(0, 112, 180, 0.12);
+.login__field .input-wrapper {
+  min-width: 0;
 }
 
 .login__options {
@@ -218,16 +204,16 @@
 
 .login__submit-button {
   width: 100%;
-  min-height: 5.2rem;
+  min-height: var(--control-height);
   margin-top: var(--space-sm);
   border: none;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: var(--control-radius);
+  background: var(--gradient-brand);
   color: var(--text-white);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
-  box-shadow: 0 1rem 2.4rem rgba(10, 100, 218, 0.28);
+  box-shadow: none;
   transition: 0.25s ease;
   display: flex;
   align-items: center;
@@ -390,16 +376,12 @@
   }
 
   .login__card {
-    max-width: 50rem;
-    padding: 4rem;
-  }
-
-  .login__field input {
-    height: 5.2rem;
+    max-width: 44rem;
+    padding: 3.2rem;
   }
 
   .login__submit-button {
-    min-height: 5.4rem;
+    min-height: var(--control-height-lg);
   }
 }
 
@@ -409,8 +391,8 @@
   }
 
   .login__card {
-    max-width: 54rem;
-    padding: 4.5rem;
+    max-width: 46rem;
+    padding: 3.4rem;
   }
 }
 
@@ -420,8 +402,8 @@
   }
 
   .login__card {
-    max-width: 58rem;
-    padding: 5rem;
+    max-width: 48rem;
+    padding: 3.6rem;
   }
 }
 
@@ -454,8 +436,8 @@
   }
 
   .login__card {
-    max-width: 45rem;
-    padding: 3.2rem;
+    max-width: 42rem;
+    padding: 2.8rem;
   }
 }
 
@@ -598,10 +580,6 @@
   .login__card {
     padding: 2rem 1.5rem;
     border-radius: 1.8rem;
-  }
-
-  .login__field input {
-    height: 4.6rem;
   }
 
   .login__social a {

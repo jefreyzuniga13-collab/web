@@ -178,7 +178,7 @@ export default function UserForm({
           <h3 className="user-form__section-title">Información Personal</h3>
           <div className="user-form__grid">
             <div className="user-form__field">
-              <Label htmlFor="fullName">Nombre completo *</Label>
+              <Label htmlFor="fullName" >Nombre completo *</Label>
               <Input
                 id="fullName"
                 name="fullName"
@@ -192,7 +192,7 @@ export default function UserForm({
             </div>
 
             <div className="user-form__field">
-              <Label htmlFor="fullName">Código  PCG </Label>
+              <Label htmlFor="fullName" >Código  PCG </Label>
               <Input
                 id="codReferenciaPCG"
                 name="codReferenciaPCG"
@@ -207,7 +207,7 @@ export default function UserForm({
 
 
             <div className="user-form__field">
-              <Label htmlFor="email">Correo electrónico *</Label>
+              <Label htmlFor="email" >Correo electrónico *</Label>
               <Input
                 id="email"
                 name="email"
@@ -221,7 +221,7 @@ export default function UserForm({
               {errors.email && <span className="user-form__error">{errors.email}</span>}
             </div>
             <div className="user-form__field">
-              <Label htmlFor="password">{isEditing ? 'Nueva contraseña' : 'Contraseña *'}</Label>
+              <Label htmlFor="password" >{isEditing ? 'Nueva contraseña' : 'Contraseña *'}</Label>
               <div className="user-form__password-field">
                 <Input
                   id="password"
@@ -242,7 +242,7 @@ export default function UserForm({
               {errors.password && <span className="user-form__error">{errors.password}</span>}
             </div>
             <div className="user-form__field">
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone" >Teléfono</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -253,7 +253,7 @@ export default function UserForm({
               />
             </div>
             <div className="user-form__field">
-              <Label htmlFor="identifier">Número de cédula</Label>
+              <Label htmlFor="identifier" >Número de cédula</Label>
               <Input
                 id="identifier"
                 name="identifier"
@@ -264,7 +264,7 @@ export default function UserForm({
               />
             </div>
             <div className="user-form__field">
-              <Label htmlFor="companyId">Empresa *</Label>
+              <Label htmlFor="companyId" >Empresa *</Label>
               <select
                 id="companyId"
                 name="companyId"

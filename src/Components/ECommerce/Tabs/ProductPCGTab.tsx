@@ -19,11 +19,8 @@ import type {
 } from "react"
 import Tooltip from "@mui/material/Tooltip"
 import { IoMdSend } from "react-icons/io"
-import {
-  MdInventory,
-  MdAddTask,
-  MdCheckCircle,
-} from "react-icons/md"
+import { MdInventory } from "react-icons/md"
+import { CirclePlus, CircleMinus, Send } from "lucide-react"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { toast } from "react-toastify"
@@ -193,7 +190,8 @@ const ProductPCGTabComponent = ({
 
   const handleSendMessage = useCallback(
     async (
-      event: MouseEvent<HTMLButtonElement>
+      event: MouseEvent<HTMLButtonElement>,
+      includeModifiers: boolean
     ) => {
       event.stopPropagation()
       event.preventDefault()
@@ -212,6 +210,7 @@ const ProductPCGTabComponent = ({
         await sendProductMessage({
           product: prod,
           conversationId,
+          includeModifiers,
         })
       } finally {
         sendLockRef.current = false
@@ -333,6 +332,7 @@ const ProductPCGTabComponent = ({
               <span>
                 <Button
                   type="button"
+                  variant="secondary"
                   onClick={handleToggleSelection}
                   className={`productTab-simpleAddBar__btn simpleAddBar-select ${
                     isSelected
@@ -342,9 +342,9 @@ const ProductPCGTabComponent = ({
                   disabled={cartLoading}
                 >
                   {isSelected ? (
-                    <MdCheckCircle fontSize={20} />
+                    <CircleMinus size={18} strokeWidth={2.2} />
                   ) : (
-                    <MdAddTask fontSize={20} />
+                    <CirclePlus size={18} strokeWidth={2.2} />
                   )}
                 </Button>
               </span>
@@ -363,6 +363,7 @@ const ProductPCGTabComponent = ({
             <span>
               <Button
                 type="button"
+                variant="secondary"
                 onClick={handleCartButtonClick}
                 className="productTab-simpleAddBar__btn simpleAddBar-secondary"
                 disabled={disabledCartButton}
@@ -372,28 +373,57 @@ const ProductPCGTabComponent = ({
             </span>
           </Tooltip>
 
-          <Tooltip title="Enviar producto">
+          <Tooltip title="Enviar principal">
             <span>
               <Button
                 type="button"
-                variant="primary"
+                variant="secondary"
                 disabled={
                   sending ||
                   conversationId <= 0
                 }
-                onClick={handleSendMessage}
-                className="productTab-simpleAddBar__btn"
+                onClick={(event) =>
+                  void handleSendMessage(event, false)
+                }
+                className="productTab-simpleAddBar__btn simpleAddBar-send"
               >
                 {sending ? (
                   <AiOutlineLoading3Quarters
                     fontSize={20}
                   />
                 ) : (
-                  <IoMdSend fontSize={20} />
+                  <Send size={18} strokeWidth={2.2} />
                 )}
               </Button>
             </span>
           </Tooltip>
+
+          {prod.tieneOpcion && (
+            <Tooltip title="Enviar completo">
+              <span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={
+                    sending ||
+                    conversationId <= 0
+                  }
+                  onClick={(event) =>
+                    void handleSendMessage(event, true)
+                  }
+                  className="productTab-simpleAddBar__btn simpleAddBar-send"
+                >
+                  {sending ? (
+                    <AiOutlineLoading3Quarters
+                      fontSize={20}
+                    />
+                  ) : (
+                    <IoMdSend fontSize={20} />
+                  )}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </div>
       </div>
     </div>

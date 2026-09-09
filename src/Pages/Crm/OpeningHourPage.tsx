@@ -12,12 +12,11 @@ import type { OpeningHourInterface } from '@/Interfaces/Crm/OpeningHour'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Crm/OpeningHourPage.css'
 import { format, parseISO } from 'date-fns';
-import { TextField } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 
 export default function OpeningHourPage() {
   const {
     openingHours,
-    error,
     page,
     pageSize,
     totalCount,
@@ -33,14 +32,15 @@ export default function OpeningHourPage() {
     handleSubmit,
     toggleOpeningHourStatus,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loadingList
   } = useOpeningHour();
 
   const columns: Column<OpeningHourInterface>[] = useMemo(
     () => [
       { id: 'name',       label: 'Nombre',       minWidth: 100,
        },
-      { id: 'description',label: 'Descripción',  minWidth: 150 },
+      { id: 'description',label: 'Descripción',  minWidth: 150, hideBelow: 'md' },
       { id: 'recurrence', label: 'Recurrencia',  minWidth: 100,
         render: row => {
           if (row.recurrence === 'Weekly') return 'Semanal';
@@ -51,6 +51,7 @@ export default function OpeningHourPage() {
         id: 'daysOfWeek',
         label: 'Días',
         minWidth: 150,
+        hideBelow: 'sm',
         render: row => {
           if (!row.daysOfWeek || row.daysOfWeek.length === 0) return '-';
           return row.daysOfWeek.map(day => {
@@ -73,6 +74,7 @@ export default function OpeningHourPage() {
         id: 'holidayDate',
         label: 'Fecha Feriado',
         minWidth: 110,
+        hideBelow: 'lg',
         render: row =>
           row.holidayDate
             ? `${String(row.holidayDate.day).padStart(2, '0')}/${
@@ -85,6 +87,7 @@ export default function OpeningHourPage() {
       id: 'effectiveFrom',
       label: 'Vigencia Desde',
       minWidth: 110,
+      hideBelow: 'md',
       render: row => {
         if (!row.effectiveFrom) return '-';
         const date = parseISO(row.effectiveFrom);
@@ -95,6 +98,7 @@ export default function OpeningHourPage() {
       id: 'effectiveTo',
       label: 'Vigencia Hasta',
       minWidth: 110,
+      hideBelow: 'md',
       render: row => {
         if (!row.effectiveTo) return '-';
         const date = parseISO(row.effectiveTo);
@@ -150,25 +154,16 @@ export default function OpeningHourPage() {
         </div>
       </div>
 
-  <div className='table-contaner__search-filter__container'>
-          <TextField
-            label="Filtrar"
-            variant="outlined"
-            size="medium"
-            fullWidth
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className='table-contaner__search-filter'
-          />
-        </div> 
+      <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
+      </div> 
       {/* {loading &&  <div className="loader-container">
         <ThreeDot color="#3142cc" size="medium" /></div>} */}
         
-      {error   && <p className="oh-page__error">Error: {error.message}</p>}
-
       <CustomTable<OpeningHourInterface>
         columns={columns}
         rows={openingHours}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}                     // Hook devuelve page 1-based
         rowsPerPage={pageSize}

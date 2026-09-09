@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  LoaderCircle,
   MessageSquareMore,
   Mic,
   Paperclip,
@@ -19,6 +20,7 @@ import {
   UserCheck,
   XCircle,
 } from "lucide-react"
+import Tooltip from "@mui/material/Tooltip"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { TbShoppingCartX } from "react-icons/tb"
 import { AiOutlineShoppingCart } from "react-icons/ai"
@@ -26,12 +28,22 @@ import { AiOutlineShoppingCart } from "react-icons/ai"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useCustomMessage from "@/Hooks/Chat/useCustomMesssage"
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { MetaAdReferralCard } from "@/Components/Chat/MetaAdReferralCard"
 import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
 import { formatearHoraNicaragua, formatDateDivider } from "@/Utils/formatters"
 
 import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
+
+const composerTooltipSlotProps = {
+  tooltip: {
+    sx: {
+      fontSize: "1.3rem",
+      padding: "6px 10px",
+    },
+  },
+}
 
 type ChatWindowProps = {
   conversationId?: number
@@ -48,6 +60,7 @@ type ChatWindowProps = {
   mobileAssignLabel?: string
   mobileCanAssign?: boolean
   mobileIsClosed?: boolean
+  mobileIsClosing?: boolean
   onMobileClose?: () => void
   onMobileAssign?: () => void
   showMobileDetailButton?: boolean
@@ -116,6 +129,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   mobileAssignLabel = "Asignar",
   mobileCanAssign = true,
   mobileIsClosed = false,
+  mobileIsClosing = false,
   onMobileClose,
   onMobileAssign,
 
@@ -224,10 +238,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollTop: number
   } | null>(null)
 
-  const isClosed =
-    conversationStatus === "Closed" || conversationStatus === "Incomplete"
-
-  const canType = Boolean(conversationId) && !isClosed
+  const canType = Boolean(conversationId)
 
   const showSearchBar = Boolean(searchTerm || matchIds.length)
 
@@ -870,12 +881,25 @@ if (
                 <button
                   type="button"
                   className="chat-window__mobile-action chat-window__mobile-action--close"
-                  onClick={onMobileClose}
-                  disabled={mobileIsClosed}
+                  onClick={() => {
+                    if (mobileIsClosed || mobileIsClosing) return
+                    onMobileClose?.()
+                  }}
+                  disabled={mobileIsClosed || mobileIsClosing}
+                  aria-busy={mobileIsClosing}
                   title="Cerrar"
                 >
-                  <XCircle size={15} />
-                  <span>Cerrar</span>
+                  {mobileIsClosing ? (
+                    <>
+                      <LoaderCircle size={15} className="button-loading-icon" />
+                      <span>Cerrando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={15} />
+                      <span>Cerrar</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -933,15 +957,21 @@ if (
         onScroll={handleMessagesScroll}
       >
         {hasMoreMessages && (
-          <div className="chat-window__loading-older">
-            {isFetchingOlderMessages
-              ? "Cargando mensajes..."
-              : "Deslizá hacia arriba"}
-          </div>
+          isFetchingOlderMessages ? (
+            <ListSkeleton variant="message" count={2} />
+          ) : (
+            <div className="chat-window__loading-older">
+              Deslizá hacia arriba
+            </div>
+          )
         )}
 
         {loadingMessages && !visibleMessages.length && (
-          <div className="chat-window__loading-older">Cargando mensajes...</div>
+          <ListSkeleton
+            variant="message"
+            count={14}
+            className="list-skeleton--fill"
+          />
         )}
 
         {messagesError && (
@@ -1014,18 +1044,22 @@ if (
       )}
 
       <footer className="chat-window__composer">
-        <button
-          type="button"
-          className="chat-window__composer-attachment"
-          onClick={() => {
-            fileInputRef.current?.click()
-            focusComposer()
-          }}
-          disabled={!canType}
-          title="Adjuntar"
-        >
-          <Paperclip size={18} />
-        </button>
+        <Tooltip title="Adjuntar archivo" arrow slotProps={composerTooltipSlotProps}>
+          <span className="chat-window__composer-tip">
+            <button
+              type="button"
+              className="chat-window__composer-attachment"
+              onClick={() => {
+                fileInputRef.current?.click()
+                focusComposer()
+              }}
+              disabled={!canType}
+              aria-label="Adjuntar archivo"
+            >
+              <Paperclip size={19} strokeWidth={1.8} />
+            </button>
+          </span>
+        </Tooltip>
 
         <input
           ref={fileInputRef}
@@ -1094,16 +1128,20 @@ if (
         )}
 
         <div className="chat-window__quick">
-          <button
-            ref={customMessagesButtonRef}
-            type="button"
-            className="chat-window__quick-toggle"
-            disabled={!canType}
-            title="Mensajes personalizados"
-            onClick={toggleCustomMessages}
-          >
-            <MessageSquareMore size={18} />
-          </button>
+          <Tooltip title="Mensajes personalizados" arrow slotProps={composerTooltipSlotProps}>
+            <span className="chat-window__composer-tip">
+              <button
+                ref={customMessagesButtonRef}
+                type="button"
+                className="chat-window__quick-toggle"
+                disabled={!canType}
+                aria-label="Mensajes personalizados"
+                onClick={toggleCustomMessages}
+              >
+                <MessageSquareMore size={19} strokeWidth={1.8} />
+              </button>
+            </span>
+          </Tooltip>
         </div>
 
         <div className="chat-window__composer-input-container">
@@ -1120,116 +1158,146 @@ if (
 
               onComposerKeyDown(event)
             }}
-            placeholder={
-              isClosed ? "Conversación cerrada" : "Escribí un mensaje..."
-            }
+            placeholder="Escribí un mensaje..."
             disabled={!canType}
           />
         </div>
 
-        <div className="chat-window__emoji-container" ref={emojiPickerRef}>
-          <button
-            type="button"
-            className="chat-window__emoji-btn"
-            disabled={!canType}
-            title="Agregar emoji"
-            onClick={() => {
-              setCustomMessagesOpen(false)
-              setShowEmojiPicker((current) => !current)
-              focusComposer()
-            }}
-          >
-            <Smile size={20} />
-          </button>
+        <div className="chat-window__composer-actions">
+            <div className="chat-window__emoji-container" ref={emojiPickerRef}>
+              <Tooltip title="Agregar emoji" arrow slotProps={composerTooltipSlotProps}>
+                <span className="chat-window__composer-tip">
+                  <button
+                    type="button"
+                    className="chat-window__emoji-btn"
+                    disabled={!canType}
+                    aria-label="Agregar emoji"
+                    onClick={() => {
+                      setCustomMessagesOpen(false)
+                      setShowEmojiPicker((current) => !current)
+                      focusComposer()
+                    }}
+                  >
+                    <Smile size={19} strokeWidth={1.8} />
+                  </button>
+                </span>
+              </Tooltip>
 
-          {showEmojiPicker && (
-            <div className="chat-window__emoji-picker">
-              <EmojiPicker
-                onEmojiClick={insertEmoji}
-                width="100%"
-                height={300}
-                searchPlaceHolder="Buscar emoji"
-                previewConfig={{
-                  showPreview: false,
-                }}
-                skinTonesDisabled
-                lazyLoadEmojis
-              />
+              {showEmojiPicker && (
+                <div className="chat-window__emoji-picker">
+                  <EmojiPicker
+                    onEmojiClick={insertEmoji}
+                    width="100%"
+                    height={300}
+                    searchPlaceHolder="Buscar emoji"
+                    previewConfig={{
+                      showPreview: false,
+                    }}
+                    skinTonesDisabled
+                    lazyLoadEmojis
+                  />
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="chat-window__composer-audio">
+              {!isRecording && !audioBlob && (
+                <Tooltip title="Grabar audio" arrow slotProps={composerTooltipSlotProps}>
+                  <span className="chat-window__composer-tip">
+                    <button
+                      type="button"
+                      className="chat-window__audio-btn"
+                      onClick={startRecording}
+                      disabled={!canType}
+                      aria-label="Grabar audio"
+                    >
+                      <Mic className="chat-window__audio-icons" size={19} strokeWidth={1.8} />
+                    </button>
+                  </span>
+                </Tooltip>
+              )}
+
+              {isRecording && (
+                <>
+                  <span className="chat-window__audio-timer audio-timer__recording">
+                    {secondsToTime(recordingTime)}
+                  </span>
+
+                  <Tooltip title="Detener grabación" arrow slotProps={composerTooltipSlotProps}>
+                    <span className="chat-window__composer-tip">
+                      <button
+                        type="button"
+                        className="chat-window__audio-btn chat-window__audio-btn--stop"
+                        onClick={stopRecording}
+                        aria-label="Detener grabación"
+                      >
+                        <Square size={16} />
+                      </button>
+                    </span>
+                  </Tooltip>
+                </>
+              )}
+
+              {audioBlob && !isRecording && (
+                <>
+                  <Tooltip title="Eliminar audio" arrow slotProps={composerTooltipSlotProps}>
+                    <span className="chat-window__composer-tip">
+                      <button
+                        type="button"
+                        className="chat-window__audio-btn chat-window__audio-btn--trash"
+                        onClick={clearRecording}
+                        aria-label="Eliminar audio"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </span>
+                  </Tooltip>
+
+                  <Tooltip title="Enviar audio" arrow slotProps={composerTooltipSlotProps}>
+                    <span className="chat-window__composer-tip">
+                      <button
+                        type="button"
+                        className="chat-window__audio-btn chat-window__audio-btn--send"
+                        onClick={() => {
+                          shouldStickToBottomRef.current = true
+                          void handleSendAudio()
+                          focusComposer()
+                        }}
+                        disabled={sending}
+                        aria-label="Enviar audio"
+                      >
+                        <Check size={16} />
+                      </button>
+                    </span>
+                  </Tooltip>
+                </>
+              )}
+            </div>
         </div>
 
-        <div className="chat-window__composer-audio">
-          {!isRecording && !audioBlob && (
+        <Tooltip
+          title={
+            files.length > 1 ? `Enviar ${files.length} archivos` : "Enviar mensaje"
+          }
+          arrow
+          slotProps={composerTooltipSlotProps}
+        >
+          <span className="chat-window__composer-tip">
             <button
               type="button"
-              className="chat-window__audio-btn"
-              onClick={startRecording}
-              disabled={!canType}
-              title="Grabar audio"
+              className="chat-window__composer-send"
+              onClick={handleSendNow}
+              disabled={
+                !canType || sending || (!text.trim() && files.length === 0)
+              }
+              aria-label={
+                files.length > 1 ? `Enviar ${files.length} archivos` : "Enviar mensaje"
+              }
             >
-              <Mic className="chat-window__audio-icons" size={18} />
+              <Send size={19} strokeWidth={1.8} />
             </button>
-          )}
-
-          {isRecording && (
-            <>
-              <span className="chat-window__audio-timer audio-timer__recording">
-                {secondsToTime(recordingTime)}
-              </span>
-
-              <button
-                type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--stop"
-                onClick={stopRecording}
-                title="Detener"
-              >
-                <Square size={16} />
-              </button>
-            </>
-          )}
-
-          {audioBlob && !isRecording && (
-            <>
-              <button
-                type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--trash"
-                onClick={clearRecording}
-                title="Eliminar audio"
-              >
-                <Trash2 size={16} />
-              </button>
-
-              <button
-                type="button"
-                className="chat-window__audio-btn chat-window__audio-btn--send"
-                onClick={() => {
-                  shouldStickToBottomRef.current = true
-                  void handleSendAudio()
-                  focusComposer()
-                }}
-                disabled={sending}
-                title="Enviar audio"
-              >
-                <Check size={16} />
-              </button>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="chat-window__composer-send"
-          onClick={handleSendNow}
-          disabled={
-            !canType || sending || (!text.trim() && files.length === 0)
-          }
-          title={
-            files.length > 1 ? `Enviar ${files.length} archivos` : "Enviar"
-          }
-        >
-          <Send size={18} />
-        </button>
+          </span>
+        </Tooltip>
       </footer>
 
       <CustomMessagesFlyout

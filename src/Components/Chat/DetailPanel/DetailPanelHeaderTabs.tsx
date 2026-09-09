@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { IoChatboxEllipsesOutline } from "react-icons/io5"
 import { AiOutlineWechatWork } from "react-icons/ai"
-import { TbShoppingCartSearch } from "react-icons/tb"
+import { ShoppingCart } from "lucide-react"
 import { LuChartBarStacked } from "react-icons/lu"
 import type { OptionMenu } from "@/Hooks/DetailPanel/useDetailTabs"
 import type { RootState } from "@/Context"
@@ -62,8 +62,9 @@ const cartItemsCount = useMemo(() => {
           onClick={() => onSelectTab(2)}
           aria-label="Carrito de compra"
         >
-          <TbShoppingCartSearch
+          <ShoppingCart
             size={18}
+            strokeWidth={1.8}
             className="detailPanel-optionBtn__icon"
           />
 

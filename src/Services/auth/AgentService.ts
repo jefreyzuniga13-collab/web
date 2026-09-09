@@ -31,10 +31,17 @@ class AgentServi {
     AssignableAgent[]
   > {
     const { data } = await api.get<
-      ApiResponse<AssignableAgent[]>
+      ApiResponse<AgentDto[]>
     >('/Users/agents?role=Support')
 
-    return data.data
+    return (data.data ?? []).map(agent => ({
+      id: agent.userId,
+      name: agent.fullName,
+      email: agent.email,
+      imageUrl: agent.imageUrl,
+      isOnline: agent.isOnline ?? false,
+      isActive: agent.isActive ?? true,
+    }))
   }
 }
 

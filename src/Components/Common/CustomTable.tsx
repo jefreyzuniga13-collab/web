@@ -5,12 +5,32 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, FormGroup, FormControlLabel, Checkbox
 } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { useMemo, useState } from 'react'
-import type { Props } from '@/Interfaces/Common/CustomTable'
+import { useEffect, useMemo, useState } from 'react'
+import type { ColumnBreakpoint, Props } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Common/CustomTable.css'
 
 
 type Order = 'asc' | 'desc'
+
+const BREAKPOINTS: Record<ColumnBreakpoint, number> = {
+  sm: 768,
+  md: 1024,
+  lg: 1280,
+}
+
+const useViewportWidth = () => {
+  const [width, setWidth] = useState(() =>
+    typeof window === 'undefined' ? 1440 : window.innerWidth
+  )
+
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  return width
+}
 
 export default function CustomTable<T>({
   columns,
@@ -19,6 +39,7 @@ export default function CustomTable<T>({
   page,
   rowsPerPage,
   rowsPerPageOptions = [20, 30, 50],
+  loading = false,
   onPageChange,
   onRowsPerPageChange,
 }: Props<T>) {
@@ -32,6 +53,25 @@ export default function CustomTable<T>({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
   const [menuColId, setMenuColId] = useState<string | null>(null)
   const [openManage, setOpenManage] = useState(false)
+  const viewportWidth = useViewportWidth()
+
+  const responsiveColumns = useMemo(() => {
+    return columns.filter((col, index) => {
+      const id = String(col.id)
+
+      if (id === 'actions') return true
+      if (col.hideBelow && viewportWidth < BREAKPOINTS[col.hideBelow]) {
+        return false
+      }
+
+      if (!col.hideBelow) {
+        if (viewportWidth < BREAKPOINTS.sm && index >= 3) return false
+        if (viewportWidth < BREAKPOINTS.md && index >= 5) return false
+      }
+
+      return true
+    })
+  }, [columns, viewportWidth])
 
   const openMenu = (e: React.MouseEvent<HTMLButtonElement>, colId: string) => {
     setMenuAnchor(e.currentTarget)
@@ -84,6 +124,13 @@ export default function CustomTable<T>({
     return orderBy ? [...result].sort(comparator) : result
   }, [rows, columns, colFilters, orderBy, order])
 
+  const visibleResponsiveColumns = useMemo(
+    () => responsiveColumns.filter(col => visibleCols[String(col.id)]),
+    [responsiveColumns, visibleCols]
+  )
+
+  const skeletonRowCount = Math.min(Math.max(rowsPerPage, 8), 12)
+
   return (
     <Paper className="table__container">
 
@@ -91,7 +138,7 @@ export default function CustomTable<T>({
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {columns.map(col => {
+              {responsiveColumns.map(col => {
                 const id = String(col.id)
                 if (!visibleCols[id]) return null
                 return (
@@ -118,9 +165,25 @@ export default function CustomTable<T>({
           </TableHead>
 
           <TableBody>
-            {filteredAndSortedRows.map((row, rowIndex) => (
+            {loading
+              ? Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
+                  <TableRow key={`skeleton-${rowIndex}`} className="table__row--skeleton">
+                    {visibleResponsiveColumns.map((col, colIndex) => (
+                      <TableCell
+                        key={String(col.id)}
+                        align={col.align}
+                        className="table__cell--body table__cell--skeleton"
+                      >
+                        <span
+                          className={`table__skeleton-bar table__skeleton-bar--${(colIndex % 3) + 1}`}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              : filteredAndSortedRows.map((row, rowIndex) => (
               <TableRow hover key={rowIndex}>
-                {columns.map(col => {
+                {responsiveColumns.map(col => {
                   const id = String(col.id)
                   if (!visibleCols[id]) return null
                   if (col.render) {
@@ -160,6 +223,12 @@ export default function CustomTable<T>({
         rowsPerPageOptions={rowsPerPageOptions}
         onPageChange={onPageChange}
         onRowsPerPageChange={onRowsPerPageChange}
+        showFirstButton
+        showLastButton
+        labelRowsPerPage="Filas por página"
+        labelDisplayedRows={({ from, to, count: total }) =>
+          `${from}–${to} de ${total !== -1 ? total : `más de ${to}`}`
+        }
       />
 
 
@@ -219,7 +288,7 @@ export default function CustomTable<T>({
         </MenuItem>
 
         <MenuItem onClick={() => { setOpenManage(true); closeMenu() }}>
-          MNostrar Columna
+          Mostrar Columna
         </MenuItem>
       </Menu>
 

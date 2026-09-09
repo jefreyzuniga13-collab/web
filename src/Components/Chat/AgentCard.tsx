@@ -10,7 +10,7 @@ interface AgentCardProps {
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, isCompact = false }) => {
-  const { isOnline } = useUserPresence(agent.userId)
+  const { isOnline } = useUserPresence(agent.userId, agent.isOnline)
   const assignedCount = useAssignedCount(agent.userId)
 
   // Generate avatar from initials if no imageUrl is provided

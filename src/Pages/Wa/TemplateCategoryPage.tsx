@@ -11,7 +11,7 @@ import { useTemplateCategory } from '@/Hooks/Chat/useTemplateCategory'
 import type { TemplateCategoryResponseDto } from '@/Interfaces/Chat/TemplateCategoryInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Crm/SystemParamsPage.css'
-import { TextField } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 import {templateCategoryTranslations} from '@/Utils/Translation/categoryTemplateTranslation'
 import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
 
@@ -33,7 +33,8 @@ export default function TemplateCategoryPage() {
     handleSubmit,
     toggleStatus,
     setGlobalFilter,
-    globalFilter
+    globalFilter,
+    loadingList
   } = useTemplateCategory()
   
 
@@ -111,22 +112,15 @@ export default function TemplateCategoryPage() {
         </div>
       </div>
 
-       <div className='table-contaner__search-filter__container'>
-              <TextField
-                label="Filtrar"
-                variant="outlined"
-                size="medium"
-                fullWidth
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className='table-contaner__search-filter'
-              />
+       <div className="table-contaner__search-filter__container">
+              <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
             </div> 
 
 
       <CustomTable<TemplateCategoryResponseDto>
         columns={columns}
         rows={templateCategories}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

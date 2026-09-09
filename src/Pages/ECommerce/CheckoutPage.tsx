@@ -10,6 +10,7 @@ import { CurrencySection } from "@/Components/ECommerce/Tabs/CurrencySection"
 import LocationSection from "@/Components/ECommerce/Payment/LocationSection"
 import OnlyTextAddressSection from "@/Components/ECommerce/Payment/OnlyTextAddressSection"
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import { useClientLocation } from "@/Hooks/Ecommerce/payment/useClientLocation"
@@ -27,9 +28,11 @@ import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
 import { construirDetallePago, obtenerTipoPagoDesdeMoneda, validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils"
 import { getAddressFromCoords } from "@/Utils/ECommerce/reverseGeocoding"
 import { CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY, ECOMMERCEUSERID_KEY } from "@/Utils/ECommerce/keys"
+import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
+import { fetchDivisasPagoTipo } from "@/Utils/ECommerce/fetchDivisasPagoTipo"
 import type { BillingFormState, CheckoutStep, Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface"
-import type { FacturaTempo, ObtenerDivisaPagosTipoReq, ObtenerDivisaPagosTipoRes, PagoGenerico } from "@/Interfaces/Ecommerce/FacturaTempo"
+import type { FacturaTempo, ObtenerDivisaPagosTipoRes, PagoGenerico } from "@/Interfaces/Ecommerce/FacturaTempo"
 import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface"
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
 import type { PowertranzPayWithTokenRequestDto } from "@/Interfaces/Ecommerce/powertranzInterface"
@@ -63,13 +66,6 @@ type FinalLocation = {
 
 type CheckoutPayload = Payload & TempLinkResolveResponseDto
 
-const getDivisaConfig = (item: Currencyto): ObtenerDivisaPagosTipoReq => {
-  return {
-    codigo: "0",
-    formulario: "1-",
-    opcion: safeStr(item?.codPago)
-  }
-}
 
 const getLogText = (
   log: LogCartResponseDto | null,
@@ -113,6 +109,10 @@ const CheckoutPage: React.FC = () => {
 
   const payload =
     location.state?.payload as CheckoutPayload | undefined
+
+  if (payload?.empresaId) {
+    applyPublicEmpresaId(payload.empresaId)
+  }
 
   const carPCG = useAppSelector(selectCarPCG)
 
@@ -362,32 +362,13 @@ const CheckoutPage: React.FC = () => {
     setPagosMultiples([])
   }
 
-  const loadDivisaIfNeeded = async (
+  const loadDivisaIfNeeded = useCallback(async (
     item: Currencyto
   ): Promise<ObtenerDivisaPagosTipoRes[]> => {
     setDivisaLoading(true)
 
     try {
-      const req = getDivisaConfig(item)
-      const resp = await CartService.GetDivisaPagosTipoAsync(req)
-
-      const list = Array.isArray(resp?.data)
-        ? (resp.data as ObtenerDivisaPagosTipoRes[])
-        : resp?.data
-          ? [resp.data as ObtenerDivisaPagosTipoRes]
-          : []
-
-      const fixed = list
-        .filter(Boolean)
-        .map((x) => ({
-          nombre: safeStr(x?.nombre),
-          codigo: safeStr(x?.codigo),
-          codigoExterno: safeStr(x?.codigoExterno),
-          tipo: safeStr(x?.tipo),
-          banco: safeStr(x?.banco),
-          aCambio: safeStr(x?.aCambio)
-        }))
-        .filter((x) => x.codigo || x.codigoExterno || x.nombre)
+      const fixed = await fetchDivisasPagoTipo(item)
 
       setDivisaOpts(fixed)
       setDivisaSelected(fixed.length > 0 ? fixed[0] : null)
@@ -401,7 +382,7 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setDivisaLoading(false)
     }
-  }
+  }, [setDivisaSelected])
 
   const handleSelectCurrency = async (item: Currencyto) => {
     const nextMethod = obtenerTipoPagoDesdeMoneda(item)
@@ -1102,6 +1083,28 @@ const CheckoutPage: React.FC = () => {
   }, [permiteMultiPago, multiPagoActivo])
 
   useEffect(() => {
+    if (step !== "paymentMethod" || multiPagoActivo) return
+    if (!selectedCurrency) return
+
+    const needsBanks =
+      method === "transfer" ||
+      method === "manualCard" ||
+      method === "gatewayCard"
+
+    if (!needsBanks || divisaOpts.length > 0 || divisaLoading) return
+
+    void loadDivisaIfNeeded(selectedCurrency)
+  }, [
+    divisaLoading,
+    divisaOpts.length,
+    loadDivisaIfNeeded,
+    method,
+    multiPagoActivo,
+    selectedCurrency,
+    step,
+  ])
+
+  useEffect(() => {
     if (payNowCooldown <= 0) return
 
     const timer = window.setInterval(() => {
@@ -1135,7 +1138,7 @@ const CheckoutPage: React.FC = () => {
           <div className="checkout-left">
             {initializingCheckout && (
               <div className="checkout-section">
-                <p className="checkout-hint">Cargando checkout...</p>
+                <ListSkeleton variant="cart" count={5} />
               </div>
             )}
 

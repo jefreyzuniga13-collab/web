@@ -1,7 +1,9 @@
 .conversations-page__container {
   padding: var(--space-sm) var(--space-2xl);
   display: grid;
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   grid-template-rows: auto 1fr;
   gap: var(--space-lg);
 }

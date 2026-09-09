@@ -5,8 +5,8 @@ import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
 import { useMemo } from 'react'
-import { TextField } from '@mui/material'
 import Button from '@/Components/Common/Button'
+import SearchFilter from '@/Components/Common/SearchFilter'
 import CustomTable from '@/Components/Common/CustomTable'
 import LicenseModalForm from '@/Components/Crm/LicenseModalForm'
 import type { LicenseProj } from '@/Interfaces/Crm/LicenseInterfaz'
@@ -59,6 +59,7 @@ export default function LicensePage() {
     globalFilter,
     setGlobalFilter,
     loading,
+    loadingList,
     licensePeriods
   } = useLicenses()
 
@@ -184,15 +185,7 @@ export default function LicensePage() {
       </div>
 
       <div className="table-contaner__search-filter__container">
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="table-contaner__search-filter"
-        />
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div>
 
       {error && <p className="contact-page__error">Error: {error.message}</p>}
@@ -200,6 +193,7 @@ export default function LicensePage() {
       <CustomTable<LicenseProj>
         columns={columns}
         rows={data}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

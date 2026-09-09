@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "@mui/material";
-import { FaBuilding, FaPhoneAlt } from "react-icons/fa";
-import { MdContacts, MdFilterListAlt } from "react-icons/md";
+import { MdAssignmentInd } from "react-icons/md";
+import { Building2, Contact, ListFilter, Phone, Users } from "lucide-react";
 import { IoMdCloseCircleOutline, IoMdHourglass } from "react-icons/io";
 import { LuLoaderCircle } from "react-icons/lu";
 import { InboxList } from "@/Components/Chat/InboxList";
@@ -16,17 +16,13 @@ import Input from "@/Components/Common/Input";
 import { useSupportPage } from "@/Hooks/Chat/useSupportPage";
 import { useConversations, type Filter } from "@/Hooks/Chat/useConversations";
 import useContact from "@/Hooks/Auth/useContact";
-import useLogCart from "@/Hooks/Crm/useLogCard";
 import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamValue";
-import { getProductFromCarAsync } from "@/Context/Slices/Ecommerce/cartSlice";
-import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import type { AppDispatch, RootState } from "@/Context";
 import { selectCompanySistema, selectIsAutomaticallyAssigned } from "@/Context/Slices/Auth/authSlice";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
 import { isValidSaleCompany } from "@/Utils/isValidSaleCompany";
 import { LICENSE_WARNING_MESSAGE_PARAM_ID } from "@/Constants/systemParams";
-import { FaPeopleGroup } from "react-icons/fa6";
 
 import "@/Styles/Chat/SupportPage.css";
 
@@ -42,8 +38,6 @@ const SupportPage: React.FC = () => {
 
   const [mobileChatVisible, setMobileChatVisible] = useState(false);
 
-  const dispatch = useAppDispatch();
-
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth,
   );
@@ -51,9 +45,9 @@ const SupportPage: React.FC = () => {
   const companySistema = useSelector(selectCompanySistema);
   const isAutomaticallyAssigned = useSelector(selectIsAutomaticallyAssigned);
 
-  const { fetchById, selectedData: contact } = useContact();
-
-  const { fetchByContactId } = useLogCart();
+  const { fetchById, selectedData: contact } = useContact(undefined, {
+    loadList: false,
+  });
 
   const {
     conversation,
@@ -260,75 +254,6 @@ const SupportPage: React.FC = () => {
   ]);
 
   /**
-   * El carrito también es información secundaria.
-   *
-   * Solo se consulta cuando el usuario abre el panel de detalle,
-   * evitando dos solicitudes adicionales al seleccionar el chat.
-   */
-  useEffect(() => {
-    if (!detailToggle || !convId || !canShowSaleDetail || !activeContact?.id) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadCart = async (): Promise<void> => {
-      try {
-        const log = await fetchByContactId(activeContact.id);
-
-        if (cancelled) return;
-
-        const noPedido = log?.orderId && log.orderId > 0 ? log.orderId : 0;
-
-        const cart = await dispatch(
-          getProductFromCarAsync({
-            codCliente: activeContact.id,
-            noPedido,
-          }),
-        ).unwrap();
-
-        if (cancelled) return;
-
-        const items = Array.isArray(cart) ? cart : [];
-
-        const count =
-          items[0]?.listDetalle?.reduce((sum, detail) => {
-            if (detail.tipoComponente !== "O") {
-              return sum + Number(detail.cantidad ?? 0);
-            }
-
-            return sum;
-          }, 0) ?? 0;
-
-        dispatch(
-          setContactCartBadge({
-            contactId: activeContact.id,
-            hasCart: count > 0,
-            count,
-          }),
-        );
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Error al cargar el carrito del contacto:", error);
-        }
-      }
-    };
-
-    void loadCart();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    activeContact?.id,
-    canShowSaleDetail,
-    convId,
-    detailToggle,
-    dispatch,
-    fetchByContactId,
-  ]);
-
-  /**
    * Selecciona una conversación usando la información que
    * ya se encuentra disponible en la lista paginada.
    *
@@ -395,25 +320,34 @@ const SupportPage: React.FC = () => {
     <div className={layoutClassName}>
       <aside className="sidebar">
         <div className="inbox-header">
-          <div className="inbox-title-container">
-            <h3 className="inbox-title">Conversaciones</h3>
+          <Input
+            className="inbox-title-container__filter__input"
+            value={searchConversation}
+            onChange={(event) => setSearchConversation(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            }}
+            placeholder="Filtrar conversaciones"
+          />
 
-            <div className="inbox-title__headerfilters">
-              {isRoot && (
-                <Tooltip title="Filtrar por empresa">
-                  <button
-                    className="sort-button"
-                    onClick={() => setShowCompanyModal(true)}
-                    title="Seleccionar empresa"
-                    type="button"
-                  >
-                    <FaBuilding className="sort-button-icon" />
-                  </button>
-                </Tooltip>
-              )}
+          <div className="inbox-title__headerfilters">
+            {isRoot && (
+              <Tooltip title="Filtrar por empresa">
+                <button
+                  className="sort-button"
+                  onClick={() => setShowCompanyModal(true)}
+                  title="Seleccionar empresa"
+                  type="button"
+                >
+                  <Building2 className="sort-button-icon" size={19} strokeWidth={1.8} />
+                </button>
+              </Tooltip>
+            )}
 
-
-              {(isRoot || isAdmin) && !isAutomaticallyAssigned &&  (
+            {(isRoot || isAdmin) && !isAutomaticallyAssigned && (
               <Tooltip title="Asignar conversaciones">
                 <button
                   className="sort-button"
@@ -421,38 +355,22 @@ const SupportPage: React.FC = () => {
                   title="Asignar conversaciones"
                   type="button"
                 >
-                  <FaPeopleGroup className="sort-button-icon" size={18} />
+                  <Users className="sort-button-icon" size={19} strokeWidth={1.8} />
                 </button>
               </Tooltip>
-              )}
+            )}
 
-              <Tooltip title="Filtrar conversaciones">
-                <span>
-                  <button
-                    className="sort-button"
-                    onClick={() => setOrderModalVisible(true)}
-                    type="button"
-                  >
-                    <MdFilterListAlt className="sort-button-icon" size={18} />
-                  </button>
-                </span>
-              </Tooltip>
-            </div>
-          </div>
-
-          <div className="inbox-title-container__filter">
-            <Input
-              className="inbox-title-container__filter__input"
-              value={searchConversation}
-              onChange={(event) => setSearchConversation(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }
-              }}
-              placeholder="Filtrar conversaciones"
-            />
+            <Tooltip title="Filtrar conversaciones">
+              <span>
+                <button
+                  className="sort-button"
+                  onClick={() => setOrderModalVisible(true)}
+                  type="button"
+                >
+                  <ListFilter className="sort-button-icon" size={19} strokeWidth={1.8} />
+                </button>
+              </span>
+            </Tooltip>
           </div>
         </div>
 
@@ -480,20 +398,20 @@ const SupportPage: React.FC = () => {
         <header className="main-header">
           <h2 className="main-title">
             {convId !== null &&
-            activeConversation?.systemDefinedCompanyName != null ? (
+            (activeConversation?.systemDefinedCompanyName ||
+              activeConversation?.clientContactName) ? (
               <span className="main_header-text">
-                <MdContacts fontSize={12} className="main_header-icon" />{" "}
-                {activeConversation.systemDefinedCompanyName}
-              </span>
-            ) : (
-              ""
-            )}
-
-            {convId !== null &&
-            activeConversation?.clientContactName != null ? (
-              <span className="main_header-text">
-                <MdContacts fontSize={12} className="main_header-icon" />{" "}
-                {activeConversation.clientContactName}
+                <Contact size={17} strokeWidth={1.8} className="main_header-icon" />
+                {activeConversation.systemDefinedCompanyName
+                  ? ` ${activeConversation.systemDefinedCompanyName}`
+                  : ""}
+                {activeConversation.systemDefinedCompanyName &&
+                activeConversation.clientContactName
+                  ? " · "
+                  : ""}
+                {activeConversation.clientContactName
+                  ? ` ${activeConversation.clientContactName}`
+                  : ""}
               </span>
             ) : (
               ""
@@ -501,7 +419,7 @@ const SupportPage: React.FC = () => {
 
             {convId !== null && activeConversation?.contactNumber != null ? (
               <span className="main_header-text">
-                <FaPhoneAlt fontSize={12} className="main_header-icon" />{" "}
+                <Phone size={17} strokeWidth={1.8} className="main_header-icon" />{" "}
                 {activeConversation.contactNumber}
               </span>
             ) : (
@@ -518,7 +436,10 @@ const SupportPage: React.FC = () => {
               >
                 <button
                   className="close-btn"
-                  onClick={() => void handleCloseClick()}
+                  onClick={() => {
+                    if (isClosed || isClosing) return
+                    void handleCloseClick()
+                  }}
                   type="button"
                   disabled={isClosed || isClosing}
                   aria-busy={isClosing}
@@ -553,7 +474,12 @@ const SupportPage: React.FC = () => {
                   type="button"
                   disabled={isClosed || isClosing || loadingAgents}
                 >
-                  {label}
+                  {canAssign ? (
+                    <MdAssignmentInd size={14} />
+                  ) : (
+                    <IoMdCloseCircleOutline size={14} />
+                  )}
+                  <span>{label}</span>
                 </button>
               </div>
             )}
@@ -573,8 +499,12 @@ const SupportPage: React.FC = () => {
           showMobileActions={isMobile && mobileChatVisible && Boolean(convId)}
           mobileAssignLabel={label}
           mobileCanAssign={canAssign}
-          mobileIsClosed={isClosed || isClosing}
-          onMobileClose={() => void handleCloseClick()}
+          mobileIsClosed={isClosed}
+          mobileIsClosing={isClosing}
+          onMobileClose={() => {
+            if (isClosed || isClosing) return
+            void handleCloseClick()
+          }}
           onMobileAssign={handleAssignClick}
           showMobileDetailButton={
             isMobile &&

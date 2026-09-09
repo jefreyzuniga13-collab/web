@@ -1,22 +1,19 @@
 import { useCallback, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "react-toastify"
-
 import type {
   Currencyto,
   InvoiceOrderInterface,
   InvoiceOrderRequestDto,
   PrintOrdenFactInterfaceRaw
 } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-
 import type { FacturaTempo } from "@/Interfaces/Ecommerce/FacturaTempo"
-
 import type {
   NearestBranchRequestDto,
   NearestBranchResponseDto
 } from "@/Interfaces/Ecommerce/BranchInterfaces"
-
 import { InvoiceOrderService } from "@/Services/Ecommerce/InvoiceOrderService"
+import { readPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
 
 interface ApiResponse<T> {
   success: boolean
@@ -36,8 +33,8 @@ const invoiceOrderKeys = {
   transportationCost: (distanceKm: number) =>
     [...invoiceOrderKeys.all, "transportation-cost", distanceKm] as const,
 
-  currency: () =>
-    [...invoiceOrderKeys.all, "currency"] as const,
+  currency: (empresaId = "") =>
+    [...invoiceOrderKeys.all, "currency", empresaId] as const,
 
   printDetFac: (
     codSucursal: string,
@@ -88,7 +85,7 @@ const useInvoiceOrder = () => {
     isFetching: fetchingCurrency,
     error: currencyError
   } = useQuery<Currencyto[], Error>({
-    queryKey: invoiceOrderKeys.currency(),
+    queryKey: invoiceOrderKeys.currency(readPublicEmpresaId()),
     queryFn: async () => {
       const res: ApiResponse<Currencyto[]> =
         await InvoiceOrderService.GetCurrency()
@@ -305,7 +302,7 @@ const useInvoiceOrder = () => {
 
   const GetCurrencyAsync = useCallback(async () => {
     return await queryClient.fetchQuery({
-      queryKey: invoiceOrderKeys.currency(),
+      queryKey: invoiceOrderKeys.currency(readPublicEmpresaId()),
       queryFn: async () => {
         const res: ApiResponse<Currencyto[]> =
           await InvoiceOrderService.GetCurrency()

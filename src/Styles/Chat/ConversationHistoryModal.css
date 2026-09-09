@@ -255,6 +255,8 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
   background-size: 400px auto;
   background-repeat: repeat;
   background-position: top left;

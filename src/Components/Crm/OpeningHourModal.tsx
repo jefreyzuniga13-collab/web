@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
+import { Label } from '@/Components/Common/Label'
 import DatePickerField from '@/Components/Common/DatePickerField'
 import TimePickerField from '@/Components/Common/TimePickerField'
 import { useOpeningHourForm } from '@/Hooks/Crm/useOpeningHourForm'
 import '@/Styles/Crm/OpeningHourModal.css'
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
-import type { Dayjs } from 'dayjs'
 
 const WEEK_DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] as const
 
@@ -16,13 +14,7 @@ interface OpeningHourModalProps {
   isOpen: boolean
   data?: any
   onClose: () => void
-  onSubmit: (values: any) => void
-}
-
-// Helper para convertir PickerValue (Date | Dayjs | null) a Date | null
-const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
-  if (!value) return null
-  return value instanceof Date ? value : (value as Dayjs).toDate()
+  onSubmit: (values: any) => void | Promise<void>
 }
 
 export default function OpeningHourModal({
@@ -42,38 +34,44 @@ export default function OpeningHourModal({
     handleRecurrence,
     toggleDay,
     handleSubmit,
+    loading,
   } = useOpeningHourForm({ mode, data, onSubmit })
 
   if (!isOpen) return null
 
   return (
     <div className="oh-modal__overlay">
-      <div className="oh-modal__container">
+      <div className="oh-modal__container crm-form">
         <header className="oh-modal__header">
-          <h2 className="oh-modal__title">
-            {mode === 'create' && 'Crear Horario'}
-            {mode === 'edit'   && 'Editar Horario'}
-            {mode === 'view'   && 'Detalle Horario'}
-          </h2>
-          <button type="button" className="oh-modal__close" onClick={onClose}>×</button>
+          <div className="oh-modal__header-text">
+            <h2 className="oh-modal__title">
+              {mode === 'create' && 'Crear Horario'}
+              {mode === 'edit'   && 'Editar Horario'}
+              {mode === 'view'   && 'Detalle Horario'}
+            </h2>
+            <p className="oh-modal__subtitle">
+              Define el horario regular o el feriado de atención.
+            </p>
+          </div>
+          <button type="button" className="oh-modal__close" onClick={onClose} aria-label="Cerrar">×</button>
         </header>
         <form className="oh-modal__body" onSubmit={handleSubmit}>
           <div className="oh-modal__grid">
             
             <div className="oh-modal__col">
-              <label className="oh-modal__label">Nombre</label>
+              <Label >Nombre</Label>
               <Input name="name" value={form.name} onChange={handleTextChange} disabled={isView} />
               {errors.name && <div className="oh-modal__error">{errors.name}</div>}
             </div>
 
             <div className="oh-modal__col">
-              <label className="oh-modal__label">Descripción</label>
+              <Label >Descripción</Label>
               <Input name="description" value={form.description} onChange={handleTextChange} disabled={isView} />
               {errors.description && <div className="oh-modal__error">{errors.description}</div>}
             </div>
 
             <div className="oh-modal__col">
-              <p className="oh-modal__inline-label">Recurrencia</p>
+              <Label >Recurrencia</Label>
               <select className="oh-modal__select" value={form.recurrence} onChange={handleRecurrence} disabled={isView}>
                 <option value="Weekly">Semanal</option>
                 {/* <option value="AnnualHoliday">Feriado Anual</option> */}
@@ -118,6 +116,7 @@ export default function OpeningHourModal({
                 </div>
                 
                 <div className="oh-modal__col">
+                  <Label >Hora inicio</Label>
                   <TimePickerField
                     label="Hora inicio"
                     value={form.startTime}
@@ -126,6 +125,7 @@ export default function OpeningHourModal({
                   />
                 </div>
                 <div className="oh-modal__col">
+                  <Label >Hora fin</Label>
                   <TimePickerField
                     label="Hora fin"
                     value={form.endTime}
@@ -133,29 +133,23 @@ export default function OpeningHourModal({
                     disabled={isView}
                   />
                 </div>
-                {errors.time && <div className="oh-modal__error">{errors.time}</div>}
+                {errors.time && <div className="oh-modal__error oh-modal__col--full">{errors.time}</div>}
+                {errors.range && <div className="oh-modal__error oh-modal__col--full">{errors.range}</div>}
               </>
             )}
 
             {form.recurrence === 'OneTimeHoliday' && (
               <>
                 <div className="oh-modal__col">
-                  <p className="oh-modal__inline-label">¿Es feriado fijo dd/MM?</p>
-                  <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                      label="Día feriado"
-                      value={form.holidayDate}
-                      onChange={d =>
-                        setForm(f => ({
-                          ...f,
-                          holidayDate: pickerValueToDate(d as Date | Dayjs | null),
-                        }))
-                      }
-                      disabled={isView}
-                      format="dd/MM"
-                    />
-                  </LocalizationProvider>
-                  {errors.holidayDate && <div className="oh-modal__error">{errors.holidayDate}</div>}
+                  <Label >¿Es feriado fijo dd/MM?</Label>
+                  <DatePickerField
+                    label="Día feriado"
+                    value={form.holidayDate}
+                    onChange={d => setForm(f => ({ ...f, holidayDate: d }))}
+                    disabled={isView}
+                    format="dd/MM"
+                    error={errors.holidayDate}
+                  />
                 </div>
               </>
             )}
@@ -217,6 +211,7 @@ export default function OpeningHourModal({
               variant="secondary"
               onClick={onClose}
               className="oh-modal__btn oh-modal__btn--cancel"
+              disabled={loading}
             >
               Cancelar
             </Button>
@@ -225,6 +220,7 @@ export default function OpeningHourModal({
                 variant="primary"
                 type="submit"
                 className="oh-modal__btn oh-modal__btn--confirm"
+                loading={loading}
               >
                 {mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>

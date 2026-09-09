@@ -1,11 +1,12 @@
 import Input from "@/Components/Common/Input"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Tooltip from "@mui/material/Tooltip"
 import { toast } from "react-toastify"
 import { TiArrowBack } from "react-icons/ti"
 import { FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
-import { MdClear } from "react-icons/md"
+import { ListPlus, ListX, X } from "lucide-react"
 import { useSelector } from "react-redux"
 import Lottie from "lottie-react"
 import { useCategoryPCG } from "@/Hooks/Ecommerce/tabs/useCategoryPCG"
@@ -496,7 +497,7 @@ export const ProductTab = ({ conversationId }: Props) => {
   if (loading) {
     return (
       <div className="detailPanel-loaderContainer">
-        <div className="detailPanel-loader">Cargando...</div>
+        <ListSkeleton variant="list" count={8} />
       </div>
     )
   }
@@ -600,12 +601,12 @@ export const ProductTab = ({ conversationId }: Props) => {
                     onClick={selectVisibleProducts}
                     disabled={productPcg.length === 0 || addingSelected}
                   >
-                    <MdClear fontSize={20} />
+                    <ListPlus size={18} strokeWidth={2.2} />
                   </button>
                 </span>
               </Tooltip>
 
-              <Tooltip title="Limpiar selección">
+              <Tooltip title="Deseleccionar">
                 <span>
                   <button
                     type="button"
@@ -613,7 +614,7 @@ export const ProductTab = ({ conversationId }: Props) => {
                     onClick={clearSelection}
                     disabled={selectedCount === 0 || addingSelected}
                   >
-                    <MdClear fontSize={20} />
+                    <ListX size={18} strokeWidth={2.2} />
                   </button>
                 </span>
               </Tooltip>
@@ -682,7 +683,7 @@ export const ProductTab = ({ conversationId }: Props) => {
         aria-label="Limpiar búsqueda"
         title="Limpiar búsqueda"
       >
-        <MdClear fontSize={20} />
+        <X size={18} strokeWidth={2} />
       </button>
     )}
   </div>
@@ -706,7 +707,7 @@ export const ProductTab = ({ conversationId }: Props) => {
           className="productTab-productPCG__container productTab-productPCG__container--scroll"
         >
           {loadingProductPcg && productPcg.length === 0 ? (
-            <span>Cargando...</span>
+            <ListSkeleton variant="product" count={7} />
           ) : (
             <>
               {productPcg == null || productPcg.length === 0 ? (
@@ -745,9 +746,7 @@ export const ProductTab = ({ conversationId }: Props) => {
               <div ref={sentinelRef} style={{ height: 1 }} />
 
               {loadingProductPcg && productPcg.length > 0 && (
-                <div style={{ padding: "0.8rem", textAlign: "center" }}>
-                  Cargando más...
-                </div>
+                <ListSkeleton variant="product" count={2} />
               )}
 
               {!hasMore && productPcg.length > 0 && (

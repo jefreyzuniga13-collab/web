@@ -3,6 +3,11 @@ import { FaRegNoteSticky } from "react-icons/fa6"
 import { IoStorefrontOutline } from "react-icons/io5"
 import { TbCoins } from "react-icons/tb"
 
+import Input from "@/Components/Common/Input"
+import { Label } from "@/Components/Common/Label"
+import { Textarea } from "@/Components/Common/Textarea"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
+
 import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 
@@ -100,47 +105,36 @@ export default function CartPanelDeliveryStep({
       <div className="productTab-content-footer">
         <div className="productTab-content__inputContaner">
           <div className="productTab-content__inputs">
-            <div className="productTab-content__divContainer">
-              <BsPersonBoundingBox fontSize={14} />
-              <p className="productTab-content__text productTab-content__text--primary">
-                Nombre de la persona que recibe
-              </p>
-            </div>
+            <Label htmlFor="invoiceName" icon={BsPersonBoundingBox}>
+              Nombre de la persona que recibe
+            </Label>
 
-            <input
+            <Input
               type="text"
               id="invoiceName"
               name="invoiceName"
-              className="productTab-content__input"
               placeholder="A nombre de"
               value={invoiceName}
               maxLength={200}
               onChange={(event) => setInvoiceName(event.target.value)}
             />
 
-            <div className="productTab-content__divContainer">
-              <FaRegNoteSticky fontSize={14} />
-              <p className="productTab-content__text productTab-content__text--primary">
-                Observaciones generales del pedido
-              </p>
-            </div>
+            <Label htmlFor="observation" icon={FaRegNoteSticky}>
+              Observaciones generales del pedido
+            </Label>
 
-            <textarea
-              rows={5}
+            <Textarea
               id="observation"
               name="observation"
-              className="productTab-content__input"
+              rows={5}
               placeholder="Observación"
               value={observation}
               onChange={(event) => setObservation(event.target.value)}
             />
 
-            <div className="productTab-content__divContainer">
-              <IoStorefrontOutline fontSize={14} />
-              <p className="productTab-content__text productTab-content__text--primary">
-                Modalidad de entrega
-              </p>
-            </div>
+            <Label htmlFor="retiraSucursal" icon={IoStorefrontOutline}>
+              Modalidad de entrega
+            </Label>
 
             <div className="transportationCost__input">
               <input
@@ -155,13 +149,6 @@ export default function CartPanelDeliveryStep({
                 Retirar en sucursal, sin costo de envío
               </label>
             </div>
-
-            {/* <div className="productTab-content__divContainer">
-              <FiMapPin fontSize={14} />
-              <p className="productTab-content__text productTab-content__text--primary">
-                Configuración del checkout
-              </p>
-            </div> */}
 
             <div className="transportationCost__input">
               <input
@@ -180,29 +167,19 @@ export default function CartPanelDeliveryStep({
             </div>
 
             {!onlyTextAddress && !isPickup && (
-              <>
-                {/* <div className="productTab-content__divContainer">
-                  <FiMapPin fontSize={14} />
-                  <p className="productTab-content__text productTab-content__text--primary">
-                    Dirección de entrega
-                  </p>
-                </div> */}
-
-                <textarea
-                  rows={5}
-                  id="descripcion"
-                  name="descripcion"
-                  className="productTab-content__input"
-                  placeholder="Agente ingresa la dirección de entrega"
-                  value={addDescription}
-                  disabled={addressInputsDisabled}
-                  onChange={(event) => {
-                    if (!addressInputsDisabled) {
-                      setAddDescription(event.target.value)
-                    }
-                  }}
-                />
-              </>
+              <Textarea
+                id="descripcion"
+                name="descripcion"
+                rows={5}
+                placeholder="Agente ingresa la dirección de entrega"
+                value={addDescription}
+                disabled={addressInputsDisabled}
+                onChange={(event) => {
+                  if (!addressInputsDisabled) {
+                    setAddDescription(event.target.value)
+                  }
+                }}
+              />
             )}
 
             {onlyTextAddress && !isPickup && (
@@ -219,34 +196,28 @@ export default function CartPanelDeliveryStep({
               </p>
             )}
 
-            <div className="productTab-content__divContainer">
-              <TbCoins fontSize={14} />
-              <p className="productTab-content__text productTab-content__text--primary">
-                Costo de transporte
-              </p>
-            </div>
+            <Label htmlFor="shipment" icon={TbCoins}>
+              Costo de transporte
+            </Label>
 
-            <div className="transportationCost__input">
-              <input
-                type="number"
-                min={0}
-                id="shipment"
-                name="shipment"
-                className="productTab-content__input transportationCost"
-                placeholder="C$ transporte"
-                value={transCost}
-                disabled={transportDisabled}
-                onChange={(event) => {
-                  if (transportDisabled) return
+            <Input
+              type="number"
+              min={0}
+              id="shipment"
+              name="shipment"
+              placeholder="C$ transporte"
+              value={transCost}
+              disabled={transportDisabled}
+              onChange={(event) => {
+                if (transportDisabled) return
 
-                  setTransCost(
-                    event.target.value === ""
-                      ? 0
-                      : safePositiveNumber(event.target.value)
-                  )
-                }}
-              />
-            </div>
+                setTransCost(
+                  event.target.value === ""
+                    ? 0
+                    : safePositiveNumber(event.target.value)
+                )
+              }}
+            />
           </div>
         </div>
       </div>
@@ -266,15 +237,14 @@ export default function CartPanelDeliveryStep({
           </div>
 
           <div className="addressMenu__content">
-            <input
+            <Input
               type="text"
-              className="addressMenu-search"
               placeholder="Buscar dirección..."
               value={addressSearch}
               onChange={(event) => setAddressSearch(event.target.value)}
             />
 
-            {addressLoading && <p>Cargando direcciones...</p>}
+            {addressLoading && <ListSkeleton variant="list" count={3} />}
 
             {!addressLoading && filteredAddresses.length === 0 && (
               <p>

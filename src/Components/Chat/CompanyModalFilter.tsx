@@ -1,41 +1,48 @@
-import { IoClose } from "react-icons/io5";
-import CompanySelector from "@/Components/Auth/CompanySelector";
-import "@/Styles/Chat/FilterOrderModal.css";
+import { IoClose } from "react-icons/io5"
+import CompanySelector from "@/Components/Auth/CompanySelector"
+import Button from "@/Components/Common/Button"
+import "@/Styles/Chat/FilterOrderModal.css"
+import "@/Styles/Chat/CompanyModalFilter.css"
 
-interface FilterOrderModalProps {
-  onClose: () => void;
+interface CompanyModalFilterProps {
+  onClose: () => void
 }
-const CompanyModalFilter: React.FC<FilterOrderModalProps> = ({
-  onClose
-}) => {
-  
+
+export default function CompanyModalFilter({
+  onClose,
+}: CompanyModalFilterProps) {
   return (
     <div className="modal-overlay">
-      <div className="filter-modal">
+      <div className="company-filter-modal" role="dialog" aria-labelledby="company-filter-title">
         <button
           type="button"
-          className="filter-modal__close"
+          className="company-filter-modal__close"
           onClick={onClose}
-          aria-label="Cerrar filtro"
+          aria-label="Cerrar"
           title="Cerrar"
         >
-          <IoClose size={22} />
+          <IoClose size={20} />
         </button>
 
-        <div className="filter-modal__header">
-          <h3 className="filter-modal__title">Cambiar Empresa</h3>
+        <header className="company-filter-modal__header">
+          <h3 id="company-filter-title" className="company-filter-modal__title">
+            Cambiar empresa
+          </h3>
+          <p className="company-filter-modal__subtitle">
+            Seleccioná la empresa con la que querés trabajar.
+          </p>
+        </header>
+
+        <div className="company-filter-modal__body">
+          <CompanySelector />
         </div>
 
-        <section className="filter-modal__section">
-          <div className="filter-modal__company">
-            <CompanySelector />
-          </div>
-        </section>
-
-      
+        <footer className="company-filter-modal__footer">
+          <Button variant="primary" onClick={onClose}>
+            Listo
+          </Button>
+        </footer>
       </div>
     </div>
-  );
-};
-
-export default CompanyModalFilter;
+  )
+}

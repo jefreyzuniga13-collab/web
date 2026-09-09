@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'react-toastify'
 import { OpeningHourService } from '@/Services/Crm/OpeningHourService'
 import type {
   OpeningHourInterface,
@@ -60,6 +61,8 @@ export const useOpeningHour = () => {
       await fetchPage(1, pageSize)
     } catch (err: any) {
       setError(err)
+      toast.error(err?.message ?? 'No se pudo crear el horario.')
+      throw err
     } finally {
       setLoadingItem(false)
     }
@@ -78,6 +81,8 @@ export const useOpeningHour = () => {
 
     } catch (err: any) {
       setError(err)
+      toast.error(err?.message ?? 'No se pudo actualizar el horario.')
+      throw err
     } finally {
       setLoadingItem(false)
     }
@@ -129,11 +134,11 @@ export const useOpeningHour = () => {
     setSelectedOpeningHour(null);
   }, [])
 
-  const handleSubmit = useCallback((values: OpeningHourFormValues) => {
+  const handleSubmit = useCallback(async (values: OpeningHourFormValues) => {
     if (modalMode === 'create') {
-      create(values)
+      await create(values)
     } else if (modalMode === 'edit' && selectedOpeningHour) {
-      update(selectedOpeningHour.id, values)
+      await update(selectedOpeningHour.id, values)
     }
     closeModal()
   }, [modalMode, selectedOpeningHour, create, update, closeModal])
@@ -147,6 +152,7 @@ export const useOpeningHour = () => {
     openingHours,
     selectedOpeningHour,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

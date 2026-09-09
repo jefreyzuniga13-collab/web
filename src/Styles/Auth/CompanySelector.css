@@ -8,7 +8,7 @@
 }
 
 .company-selector__label {
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: #4b5563;
 }

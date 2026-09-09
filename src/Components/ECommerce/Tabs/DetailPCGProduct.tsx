@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { FaShoppingCart } from "react-icons/fa"
 import { IoMdSend } from "react-icons/io"
-import { MdInventory, MdAddTask, MdCheckCircle } from "react-icons/md"
+import { MdInventory } from "react-icons/md"
+import { Check, CircleMinus, CirclePlus, Send } from "lucide-react"
+import Tooltip from "@mui/material/Tooltip"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md"
 import { toast } from "react-toastify"
 import Button from "@/Components/Common/Button"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import vacio from "@/assets/vacio.png"
 import "@/Styles/Ecommerce/DetailProduct.css"
 import "@/Styles/Ecommerce/ModifierAccordion.css"
@@ -495,7 +498,7 @@ const DetailPCGProduct = ({
       const totalQty = selected.reduce((sum, id) => {
         return sum + clampQty(optionQuantities[id] ?? 1)
       }, 0)
-
+      
       if (mod.esRequerido === "S" && selected.length === 0) {
         toast.warning(`Seleccione al menos una opción en "${mod.descripcionMod}".`)
         return false
@@ -696,21 +699,26 @@ const DetailPCGProduct = ({
     }
   }, [buildProductPayload, onSaveBatchConfig, setDetailProduct])
 
-  const handleSendMessage = useCallback(async () => {
-    if (sendLockRef.current) return
+  const handleSendMessage = useCallback(
+    async (includeModifiers: boolean) => {
+      if (sendLockRef.current) return
 
-    sendLockRef.current = true
+      sendLockRef.current = true
 
-    try {
-      await sendProductMessage({
-        product: detail,
-        conversationId,
-        observation: observacion,
-      })
-    } finally {
-      sendLockRef.current = false
-    }
-  }, [conversationId, detail, observacion, sendProductMessage])
+      try {
+        await sendProductMessage({
+          product: detail,
+          conversationId,
+          observation: observacion,
+          includeModifiers,
+          codPrecio: codPrecioActivo || "01",
+        })
+      } finally {
+        sendLockRef.current = false
+      }
+    },
+    [codPrecioActivo, conversationId, detail, observacion, sendProductMessage]
+  )
 
   const handleToggleSelection = useCallback(() => {
     onToggleSelect?.(detail)
@@ -905,9 +913,7 @@ const DetailPCGProduct = ({
             )}
 
             {loadingBranches && (
-              <div className="detail-product__branchListLoading">
-                Cargando sucursales...
-              </div>
+              <ListSkeleton variant="list" count={4} />
             )}
 
             <textarea
@@ -946,6 +952,7 @@ const DetailPCGProduct = ({
           {batchMode && onToggleSelect && (
             <Button
               type="button"
+              variant="secondary"
               className={`productTab-simpleAddBar__btn simpleAddBar-select ${
                 isSelected ? "simpleAddBar-select--active" : ""
               }`}
@@ -954,9 +961,9 @@ const DetailPCGProduct = ({
               title={isSelected ? "Deseleccionar producto" : "Agregar a selección"}
             >
               {isSelected ? (
-                <MdCheckCircle fontSize={20} />
+                <CircleMinus size={18} strokeWidth={2.2} />
               ) : (
-                <MdAddTask fontSize={20} />
+                <CirclePlus size={18} strokeWidth={2.2} />
               )}
             </Button>
           )}
@@ -964,6 +971,7 @@ const DetailPCGProduct = ({
           {canSaveBatchConfig && (
             <Button
               type="button"
+              variant="secondary"
               className="productTab-simpleAddBar__btn simpleAddBar-secondary"
               onClick={handleSaveBatchConfig}
               disabled={actionsDisabled}
@@ -972,13 +980,14 @@ const DetailPCGProduct = ({
               {actionsDisabled ? (
                 <AiOutlineLoading3Quarters fontSize={20} />
               ) : (
-                <MdCheckCircle fontSize={20} />
+                <Check size={18} strokeWidth={2} />
               )}
             </Button>
           )}
 
           <Button
             type="button"
+            variant="secondary"
             className="productTab-simpleAddBar__btn simpleAddBar-secondary"
             onClick={handleAddToCart}
             disabled={addCartDisabled}
@@ -995,19 +1004,43 @@ const DetailPCGProduct = ({
             )}
           </Button>
 
-          <Button
-            type="button"
-            variant="primary"
-            className="productTab-simpleAddBar__btn"
-            disabled={actionsDisabled}
-            onClick={handleSendMessage}
-          >
-            {actionsDisabled ? (
-              <AiOutlineLoading3Quarters fontSize={20} />
-            ) : (
-              <IoMdSend fontSize={20} />
-            )}
-          </Button>
+          <Tooltip title="Enviar principal">
+            <span>
+              <Button
+                type="button"
+                variant="secondary"
+                className="productTab-simpleAddBar__btn simpleAddBar-send"
+                disabled={actionsDisabled}
+                onClick={() => void handleSendMessage(false)}
+              >
+                {actionsDisabled ? (
+                  <AiOutlineLoading3Quarters fontSize={20} />
+                ) : (
+                  <Send size={18} strokeWidth={2.2} />
+                )}
+              </Button>
+            </span>
+          </Tooltip>
+
+          {detail.tieneOpcion && (
+            <Tooltip title="Enviar completo">
+              <span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="productTab-simpleAddBar__btn simpleAddBar-send"
+                  disabled={actionsDisabled}
+                  onClick={() => void handleSendMessage(true)}
+                >
+                  {actionsDisabled ? (
+                    <AiOutlineLoading3Quarters fontSize={20} />
+                  ) : (
+                    <IoMdSend fontSize={20} />
+                  )}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </div>
       </footer>
 

@@ -7,13 +7,13 @@ import { selectIsRoot } from "@/Context/Slices/Auth/authSlice"
 import { selectActiveCompanyName } from "@/Context/Slices/Auth/companySlice"
 import { tasaCambio } from "@/Constants/tasaCambio"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
+import { fetchDivisasPagoTipo } from "@/Utils/ECommerce/fetchDivisasPagoTipo"
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface"
 import type { ContactLogInterface } from "@/Interfaces/Auth/ContactInterface"
 import type { FaloteRequestDto, InvoiceTotalsDto } from "@/Interfaces/Crm/CartPCGInterface"
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
 import type {
   FacturaTempo,
-  ObtenerDivisaPagosTipoReq,
   ObtenerDivisaPagosTipoRes,
   PagoGenerico,
   SINO
@@ -91,33 +91,6 @@ type UseAgentCartPaymentParams = {
   pagosMultiples?: PagoSeleccionado[]
 }
 
-const normalizarDivisas = (
-  data: unknown
-): ObtenerDivisaPagosTipoRes[] => {
-  const list = Array.isArray(data)
-    ? data as ObtenerDivisaPagosTipoRes[]
-    : data
-      ? [data as ObtenerDivisaPagosTipoRes]
-      : []
-
-  return list
-    .filter(Boolean)
-    .map((item) => ({
-      nombre: safeStr(item.nombre),
-      codigo: safeStr(item.codigo),
-      codigoExterno: safeStr(item.codigoExterno),
-      tipo: safeStr(item.tipo),
-      banco: safeStr(item.banco),
-      aCambio: safeStr(item.aCambio)
-    }))
-    .filter(
-      (item) =>
-        item.codigo ||
-        item.codigoExterno ||
-        item.nombre
-    )
-}
-
 export const useAgentCartPayment = ({
   contactId,
   conversationId,
@@ -178,16 +151,9 @@ export const useAgentCartPayment = ({
       setDivisaLoading(true)
 
       try {
-        const req: ObtenerDivisaPagosTipoReq = {
-          codigo: "0",
-          formulario: "1-",
-          opcion: getPaymentCodeByMethod(nextMethod)
-        }
-
-        const resp =
-          await CartService.GetDivisaPagosTipoAsync(req)
-
-        const fixed = normalizarDivisas(resp?.data)
+        const fixed = await fetchDivisasPagoTipo({
+          codPago: getPaymentCodeByMethod(nextMethod),
+        } as Currencyto)
 
         setDivisaOpts(fixed)
         setDivisaSelected(
@@ -216,16 +182,7 @@ export const useAgentCartPayment = ({
       setDivisaLoading(true)
 
       try {
-        const req: ObtenerDivisaPagosTipoReq = {
-          codigo: "0",
-          formulario: "1-",
-          opcion: safeStr(item.codPago)
-        }
-
-        const resp =
-          await CartService.GetDivisaPagosTipoAsync(req)
-
-        return normalizarDivisas(resp?.data)
+        return await fetchDivisasPagoTipo(item)
       } catch {
         toast.error(
           "No se pudieron cargar las opciones de pago."

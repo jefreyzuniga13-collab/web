@@ -14,6 +14,10 @@ import { toast } from "react-toastify";
 
 type ModalMode = "create" | "edit" | "view";
 
+type UseContactOptions = {
+  loadList?: boolean;
+};
+
 const contactKeys = {
   all: ["contacts"] as const,
 
@@ -34,9 +38,10 @@ const contactKeys = {
     [...contactKeys.all, "client-code", clientCode, page, pageSize] as const,
 };
 
-const useContact = (contactId?: number) => {
+const useContact = (contactId?: number, options?: UseContactOptions) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const loadList = options?.loadList ?? true;
 
   const [selectedData, setSelectedData] = useState<ContactLogInterface | null>(
     null,
@@ -66,6 +71,8 @@ const useContact = (contactId?: number) => {
     queryKey: contactKeys.list(globalFilter, page, pageSize),
 
     queryFn: () => contactService.getAllAsync(globalFilter, page, pageSize),
+
+    enabled: loadList,
 
     staleTime: 1000 * 60 * 5,
   });

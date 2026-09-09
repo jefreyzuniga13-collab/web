@@ -138,6 +138,7 @@ const fetchById = useCallback(async (id: number) => {
     clients,
     form,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

@@ -1121,8 +1121,28 @@ box-shadow: rgba(0, 0, 0, 0.18) 0px 2px 4px;
 .dashboard-mui-table__pagination p,
 .dashboard-mui-table__pagination .MuiTablePagination-selectLabel,
 .dashboard-mui-table__pagination .MuiTablePagination-displayedRows {
-  color: var(--color-gray-700);
+  color: var(--text-primary);
   font-size: var(--font-size-base) !important;
+}
+
+.dashboard-mui-table__pagination .MuiTablePagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-mui-table__pagination .MuiTablePagination-actions button {
+  width: 3.2rem !important;
+  height: 3.2rem !important;
+  color: var(--text-primary) !important;
+  background: #fff !important;
+  border: var(--control-border-width) solid var(--control-border) !important;
+  border-radius: 0.5rem !important;
+}
+
+.dashboard-mui-table__pagination .MuiTablePagination-actions button:hover:not(:disabled) {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 .dashboard-channel-icon {

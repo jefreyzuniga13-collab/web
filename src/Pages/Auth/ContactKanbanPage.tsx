@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import {TextField } from "@mui/material";
+import SearchFilter from "@/Components/Common/SearchFilter";
 import { ImWhatsapp } from "react-icons/im";
 import { RiMessengerLine } from "react-icons/ri";
 import { FaInstagram } from "react-icons/fa6";
@@ -9,6 +9,9 @@ import type {
   ContactClassificationGroupProj,
   ContactLogProj,
 } from "@/Interfaces/Auth/ContactLogProj";
+import Button from "@/Components/Common/Button";
+import ListSkeleton from "@/Components/Common/ListSkeleton";
+import { getClassificationColor } from "@/Utils/contactClassification";
 import "@/Styles/Auth/ContactKanbanPage.css";
 
 function getDisplayName(contact: ContactLogProj) {
@@ -87,15 +90,17 @@ function ContactCard({
 
 function KanbanColumn({
   column,
-  color,
   onLoadMore,
   loadingColumnId,
 }: {
   column: ContactClassificationGroupProj;
-  color: string;
   onLoadMore: (column: ContactClassificationGroupProj) => void;
   loadingColumnId: number | null;
 }) {
+  const color = getClassificationColor(
+    column.bgColor,
+    column.classification
+  );
   const listRef = useRef<HTMLDivElement | null>(null);
   const isLoadingThisColumn = loadingColumnId === column.contactClassificationId;
 
@@ -169,7 +174,7 @@ function KanbanColumn({
 
         {isLoadingThisColumn && (
           <div className="contact-kanban-column__loading">
-            Cargando más...
+            <ListSkeleton variant="list" count={3} />
           </div>
         )}
 
@@ -196,6 +201,8 @@ export default function ContactKanbanPage() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setItemsPerColumn,
     loadMoreColumn,
+    reclassify,
+    reclassifying,
   } = useContactClassificationKanban();
 
   const totalContacts = useMemo(
@@ -217,22 +224,29 @@ export default function ContactKanbanPage() {
           </div>
 
           <p>
-            Visualiza los contactos agrupados por clasificación.
+            Potencial: 15 días sin compra o compra mayor a 100 días.
+            Seguimiento: 5 min sin responder o 30 min sin respuesta del cliente.
+            Venta: compra en los últimos 45 días.
           </p>
         </div>
       </section>
 
       <section className="contact-kanban-toolbar">
         <div className="contact-kanban-toolbar__search">
-          <TextField
+          <SearchFilter
             label="Buscar contacto"
-            variant="outlined"
-            size="medium"
             value={globalFilter}
-            onChange={e => setGlobalFilter(e.target.value)}
-            fullWidth
+            onApply={setGlobalFilter}
           />
         </div>
+        <Button
+          variant="primary"
+          onClick={() => reclassify()}
+          disabled={reclassifying}
+          className="contact-kanban-toolbar__action"
+        >
+          {reclassifying ? "Actualizando..." : "Actualizar tipificación"}
+        </Button>
         <div className="contact-kanban-toolbar__total">
           <strong>{totalContacts}</strong>
           <span>contactos</span>
@@ -248,7 +262,7 @@ export default function ContactKanbanPage() {
 
       {loading ? (
         <div className="contact-kanban-loading">
-          Cargando tablero...
+          <ListSkeleton variant="list" count={8} />
         </div>
       ) : (
         <section className="contact-kanban-board">
@@ -261,7 +275,6 @@ export default function ContactKanbanPage() {
               <KanbanColumn
                 key={column.contactClassificationId}
                 column={column}
-                color={column.bgColor}
                 loadingColumnId={loadingColumnId}
                 onLoadMore={loadMoreColumn}
               />

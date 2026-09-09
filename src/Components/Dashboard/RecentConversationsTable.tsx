@@ -199,7 +199,9 @@ const RecentConversationsTable: React.FC<RecentConversationsTableProps> = ({
                 setPage(1);
               }}
               rowsPerPageOptions={[10, 20, 30, 50]}
-              labelRowsPerPage="Filas"
+              labelRowsPerPage="Filas por página"
+              showFirstButton
+              showLastButton
               labelDisplayedRows={({ from, to, count }) =>
                 `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`
               }

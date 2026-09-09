@@ -2,6 +2,7 @@ import type { MouseEvent } from "react"
 import { LoaderCircle, X } from "lucide-react"
 
 import { AgentCard } from "@/Components/Chat/AgentCard"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { useAssignModal } from "@/Hooks/Chat/useAssignModal"
 
 import "@/styles/Chat/AssignModal.css"
@@ -49,19 +50,27 @@ export const AssignModal: React.FC = () => {
       >
         <header className="assign-modal__header">
           <div className="assign-modal__header-content">
-            <h2
-              id="assign-modal-title"
-              className="assign-modal__title"
-            >
-              {isReassigning
-                ? "Reasignar conversación "
-                : "Asignar agente "}
-
-              <span className="assign-modal__client-name">
-                {conversation.clientContactName ??
-                  `#${conversation.conversationId}`}
-              </span>
-            </h2>
+            <div className="assign-modal__heading">
+              <h2
+                id="assign-modal-title"
+                className="assign-modal__title"
+              >
+                {isReassigning
+                  ? "Reasignar conversación"
+                  : "Asignar agente"}
+              </h2>
+              <p className="assign-modal__subtitle">
+                {isReassigning
+                  ? "Elegí el agente que tomará esta conversación."
+                  : "Elegí el agente al que querés asignar esta conversación."}
+                {conversation.clientContactName || conversation.conversationId
+                  ? ` Contacto: ${
+                      conversation.clientContactName ??
+                      `#${conversation.conversationId}`
+                    }.`
+                  : ""}
+              </p>
+            </div>
 
             <button
               className="assign-modal__close-button"
@@ -77,14 +86,7 @@ export const AssignModal: React.FC = () => {
 
         <div className="assign-modal__body">
           {loadingAgents ? (
-            <div className="assign-modal__empty">
-              <LoaderCircle
-                size={18}
-                className="assign-modal__loading-icon"
-              />
-
-              <span>Cargando agentes...</span>
-            </div>
+            <ListSkeleton variant="list" count={6} />
           ) : agents.length === 0 ? (
             <div className="assign-modal__empty">
               No hay agentes disponibles.

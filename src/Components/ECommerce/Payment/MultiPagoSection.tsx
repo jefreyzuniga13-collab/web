@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import Input from "@/Components/Common/Input";
+import Select from "@/Components/Common/Select";
+import { Label } from "@/Components/Common/Label";
 import ManualCardPaymentSection from "@/Components/ECommerce/Payment/ManualCardPaymentSection";
 import type { Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface";
 import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTempo";
@@ -8,7 +11,7 @@ import type { CheckoutPaymentMethod,  ManualCardFormState} from "@/Interfaces/Ec
 import { initialManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
 import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, totalPendiente} from "@/Utils/ECommerce/pagoFacturaUtils";
 import { formatearDecimales } from "@/Utils/calcularIVA";
-import { safeStr } from "@/Utils/ECommerce/formatters";
+import { round2, safeStr } from "@/Utils/ECommerce/formatters";
 import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
 
 type Props = {
@@ -169,7 +172,7 @@ export default function MultiPagoSection({
 
     const pendienteActual = totalPendiente(pagos, totalPagar);
 
-    setMonto(pendienteActual > 0 ? pendienteActual : 0);
+    setMonto(pendienteActual > 0 ? round2(pendienteActual) : 0);
 
     if (nextMethod === "transfer" || nextMethod === "manualCard") {
       setDivisaLoading(true);
@@ -320,13 +323,10 @@ export default function MultiPagoSection({
 
       <div className="multipago-form">
         <div className="checkout-field checkout-field--full">
-          <label className="checkout-label" htmlFor="multipagoCurrency">
-            Forma de pago
-          </label>
+          <Label htmlFor="multipagoCurrency">Forma de pago</Label>
 
-          <select
+          <Select
             id="multipagoCurrency"
-            className="checkout-input"
             value={
               selectedCurrency
                 ? (formasPagoDisponibles
@@ -338,21 +338,15 @@ export default function MultiPagoSection({
                 : ""
             }
             disabled={disabled || pendiente <= 0}
+            placeholder="Seleccionar"
             onChange={(event) => {
               void handleSelectCurrency(event.target.value);
             }}
-          >
-            <option value="">Seleccionar</option>
-
-            {formasPagoDisponibles.map((item, index) => (
-              <option
-                key={getCurrencyKey(item, index)}
-                value={getCurrencyKey(item, index)}
-              >
-                {safeStr(item.descripcion_Pago)}
-              </option>
-            ))}
-          </select>
+            options={formasPagoDisponibles.map((item, index) => ({
+              value: getCurrencyKey(item, index),
+              label: safeStr(item.descripcion_Pago)
+            }))}
+          />
         </div>
 
         {method && (
@@ -364,15 +358,13 @@ export default function MultiPagoSection({
 
         {requiereDivisa && (
           <div className="checkout-field checkout-field--full">
-            <label className="checkout-label" htmlFor="multipagoDivisa">
-              Banco o tipo de pago
-            </label>
+            <Label htmlFor="multipagoDivisa">Banco o tipo de pago</Label>
 
-            <select
+            <Select
               id="multipagoDivisa"
-              className="checkout-input"
               value={safeStr(divisaSelected?.codigo)}
               disabled={disabled || divisaLoading}
+              placeholder={divisaLoading ? "Cargando..." : "Seleccionar"}
               onChange={(event) => {
                 const code = safeStr(event.target.value);
 
@@ -382,35 +374,23 @@ export default function MultiPagoSection({
 
                 setDivisaSelected(found);
               }}
-            >
-              <option value="">
-                {divisaLoading ? "Cargando..." : "Seleccionar"}
-              </option>
-
-              {divisaOpts.map((item) => (
-                <option
-                  key={`${item.codigo}-${item.codigoExterno}-${item.banco}`}
-                  value={safeStr(item.codigo)}
-                >
-                  {safeStr(item.nombre)}
-                </option>
-              ))}
-            </select>
+              options={divisaOpts.map((item) => ({
+                value: safeStr(item.codigo),
+                label: safeStr(item.nombre)
+              }))}
+            />
           </div>
         )}
 
         {method && (
           <div className="checkout-field checkout-field--full">
-            <label className="checkout-label" htmlFor="multipagoMonto">
-              Monto
-            </label>
+            <Label htmlFor="multipagoMonto">Monto</Label>
 
-            <input
+            <Input
               id="multipagoMonto"
               type="number"
               min={0}
               max={method === "cash" ? undefined : pendiente}
-              className="checkout-input"
               value={monto}
               disabled={disabled || pendiente <= 0}
               onChange={(event) => {
@@ -431,15 +411,11 @@ export default function MultiPagoSection({
 
         {method === "transfer" && (
           <div className="checkout-field checkout-field--full">
-            <label className="checkout-label" htmlFor="multipagoReferencia">
-              Referencia
-            </label>
+            <Label htmlFor="multipagoReferencia">Referencia</Label>
 
-            <input
+            <Input
               id="multipagoReferencia"
               type="text"
-              className="checkout-input"
-              // maxLength={4}
               value={referencia}
               disabled={disabled}
               onChange={(event) => setReferencia(event.target.value)}

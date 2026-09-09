@@ -33,7 +33,7 @@ export const FACTURA_TEMPO_INITIAL: FacturaTempo = {
   verComoPreventa: "S",
   tipoServicio: PCG_SERVICES.CRM,
   agente: -1,
-  fechaFactura: "20260117",
+  fechaFactura: "19000101",
   cajero: "Pcg",
   subCliente: "",
   numeroExoneracion: "",

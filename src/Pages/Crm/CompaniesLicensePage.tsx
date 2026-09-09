@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { TextField, Tooltip } from '@mui/material'
+import { Tooltip } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 import IconButton from '@mui/material/IconButton'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
@@ -46,6 +47,7 @@ export default function CompaniesLicensePage() {
     globalFilter,
     setGlobalFilter,
     loading,
+    loadingList,
     companyLicenseStatuses,
     changeStatus
   } = useCompaniesLicenses()
@@ -174,15 +176,7 @@ export default function CompaniesLicensePage() {
       </div>
 
       <div className="table-contaner__search-filter__container">
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
-          className="table-contaner__search-filter"
-        />
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div>
 
       {error && <p className="contact-page__error">Error: {error.message}</p>}
@@ -190,6 +184,7 @@ export default function CompaniesLicensePage() {
       <CustomTable<CompaniesLicenseProj>
         columns={columns}
         rows={data}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

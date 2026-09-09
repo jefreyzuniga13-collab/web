@@ -7,13 +7,14 @@ import { MdOutlineEdit } from "react-icons/md";
 import "@/Styles/Crm/OpeningHourPage.css"
 import "@/Styles/Crm/WorkShiftPage.css"
 import '@/Styles/Crm/SystemParamsPage.css'
-import { TextField } from "@mui/material"
+import SearchFilter from "@/Components/Common/SearchFilter"
 import type { ClientProcResponse } from "@/Interfaces/Crm/ClientInterface"
 import {useNavigate} from 'react-router-dom'
 
 export default function ClientPage() {
   const {
     clients,
+    loadingList,
     error,
     page,
     pageSize,
@@ -122,22 +123,15 @@ export default function ClientPage() {
         </div>
       </div>
 
-     <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
+     <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div> 
       {error && <p className="ws-page__error">Error: {error.message}</p>}
 
        <CustomTable<ClientProcResponse>
               columns={columns}
               rows={clients}
+              loading={loadingList}
               count={totalCount}
               page={page - 1}
               rowsPerPage={pageSize}

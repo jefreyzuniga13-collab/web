@@ -182,9 +182,14 @@
 }
 
 .detail-product__inputNumber {
-  padding: 9px 15px;
-  max-width: 70px;
+  width: 5.2rem;
+  height: 3.2rem;
+  max-width: 7rem;
+  padding: 0 0.6rem;
   font-size: var(--font-size-sm);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: 0.5rem;
+  box-sizing: border-box;
 }
 
 .productTab-buyButton,

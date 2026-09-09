@@ -34,7 +34,7 @@
 .user-form__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-lg) var(--space-xl);
+  gap: var(--space-xl) var(--space-xl);
 }
 
 @media (min-width: var(--breakpoint-tablet)) {
@@ -49,19 +49,30 @@
 }
 
 .user-form__label {
-  margin-bottom: var(--space-xs);
+  margin-bottom: 0.8rem;
   font-size: var(--font-size-base) !important;
   color: var(--text-primary);
 }
 
 .user-form__input,
 .user-form__select,
-.user-form__password-field input {
+.user-form__password-field input,
+.user-form .input-field {
   width: 100%;
-  padding: var(--space-md);
-  font-size: var(--font-size-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--border-radius-sm);
+  height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  font-size: var(--control-font-size);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--control-radius);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.user-form__select:focus,
+.user-form .input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 119, 225, 0.12);
 }
 
 .user-form__input--error,
@@ -95,8 +106,8 @@
 }
 
 .user-form__multi-select {
-  border: 1px solid var(--border-default);
-  border-radius: var(--border-radius-sm);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--control-radius);
   padding: var(--space-sm);
 }
 

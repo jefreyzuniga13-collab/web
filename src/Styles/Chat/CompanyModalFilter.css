@@ -1,0 +1,84 @@
+.company-filter-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(42rem, calc(100vw - 3.2rem));
+  min-height: 0;
+  padding: 2rem 2.2rem 1.8rem;
+  background: var(--bg-primary);
+  border-radius: var(--modal-radius);
+  box-shadow: 0 1.6rem 4rem rgba(15, 23, 42, 0.16);
+  box-sizing: border-box;
+}
+
+.company-filter-modal__close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-error);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-filter-modal__close:hover {
+  background: #fef2f2;
+}
+
+.company-filter-modal__header {
+  padding-right: 3.6rem;
+  margin-bottom: 1.6rem;
+  text-align: left;
+}
+
+.company-filter-modal__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.company-filter-modal__subtitle {
+  margin: 0.4rem 0 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.company-filter-modal .company-selector__label {
+  font-size: var(--font-size-sm);
+}
+
+.company-filter-modal .MuiInputBase-input,
+.company-filter-modal .MuiAutocomplete-option {
+  font-size: var(--font-size-sm) !important;
+}
+
+.company-filter-modal__body {
+  width: 100%;
+}
+
+.company-filter-modal__body .company-selector {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.company-filter-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.8rem;
+}
+
+.company-filter-modal__footer .btn {
+  min-width: 10rem;
+}

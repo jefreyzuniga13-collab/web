@@ -71,18 +71,16 @@ export function ReplaceSessionModal({
       />
 
       <div className="replace-session__card">
-        <div className="replace-session__icon">
-          <FiAlertTriangle />
-        </div>
 
         <div className="replace-session__header">
-          <span className="replace-session__eyebrow">
-            Sesión activa detectada
-          </span>
-
-          <h2 id="replace-session-title">
-            Ya existe una sesión iniciada
-          </h2>
+          <div className="replace-session__heading">
+            <div className="replace-session__icon">
+              <FiAlertTriangle />
+            </div>
+            <span className="replace-session__eyebrow">
+              Sesión activa detectada
+            </span>
+          </div>
 
           <p id="replace-session-description">
             Tu usuario ya está conectado en otro dispositivo. Puedes cancelar

@@ -173,7 +173,7 @@ export const useCartPCGFlow = (
         servicioventa: 1,
         facturaexonerada: "N",
         lote: "Sin Lote",
-        vencimiento: "20260116",
+        vencimiento: "19000101",
         vienedelabusqueda: "N",
         observacion,
         iddescuentolineal: 0,
@@ -227,7 +227,7 @@ export const useCartPCGFlow = (
         servicioventa: 1,
         facturaexonerada: "N",
         lote: "Sin Lote",
-        vencimiento: "20260116",
+        vencimiento: "19000101",
         vienedelabusqueda: "N",
         observacion: cleanText(option.descripcionMod),
         iddescuentolineal: 0,
@@ -981,7 +981,7 @@ const aplicarDescuentoProducto = useCallback(
 
         facturaexonerada: "N",
         lote: "Sin Lote",
-        vencimiento: "20260116",
+        vencimiento: "19000101",
         vienedelabusqueda: "N",
 
         observacion: cleanText(

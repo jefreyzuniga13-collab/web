@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import {AlertCircle,CalendarDays,Check,CheckCircle2,ChevronDown,Loader2,Search,UserRound,UsersRound,X} from "lucide-react";
 
+import ListSkeleton from "@/Components/Common/ListSkeleton";
 import useBulkAssignment from "@/Hooks/Chat/useBulkAssignment";
 import useAssignableAgents from "@/Hooks/Auth/useAssignableAgents";
 import type { BulkAssignmentRequest } from "@/Interfaces/Chat/BulkAssignmentInterface";
@@ -134,7 +135,7 @@ export default function BulkAssignmentModal({
     isError: isAgentsError,
 
     refetch: refetchAgents,
-  } = useAssignableAgents();
+  } = useAssignableAgents({ enabled: isOpen });
 
   const [filters, setFilters] =
     useState<BulkAssignmentFormFilters>(initialFilters);
@@ -212,14 +213,6 @@ export default function BulkAssignmentModal({
   const displayedErrorMessage = dateRangeInvalid
     ? "La fecha inicial no puede ser mayor que la fecha final."
     : errorMessage;
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    void refetchAgents();
-  }, [isOpen, refetchAgents]);
 
   useEffect(() => {
     if (!isCompleted || completionHandled) {
@@ -598,11 +591,7 @@ export default function BulkAssignmentModal({
                 </div>
 
                 {isLoadingAgents || isFetchingAgents ? (
-                  <div className="bulkAssignmentEmptyState">
-                    <Loader2 className="bulkAssignmentSpin" />
-
-                    <span>Cargando agentes...</span>
-                  </div>
+                  <ListSkeleton variant="list" count={6} />
                 ) : isAgentsError ? (
                   <div className="bulkAssignmentErrorState">
                     <AlertCircle />

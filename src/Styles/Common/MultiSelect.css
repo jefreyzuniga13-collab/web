@@ -13,9 +13,9 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: 4rem;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 0.1rem solid var(--color-input-border);
+  min-height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  border: var(--control-border-width) solid var(--control-border);
   border-radius: var(--radius-md);
   background-color: var(--color-input-background);
   cursor: pointer;

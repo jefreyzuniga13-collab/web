@@ -15,6 +15,8 @@ import {format} from 'date-fns'
 
 const toPascal = (s: string) => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
 
+const getByRoleInflight = new Map<string, Promise<PagedResponse<ConversationDto>>>();
+
 
 export function getConversation(id: number) {
   return api.get<{ data: ConversationDto }>(`/Conversations/${id}`);
@@ -371,7 +373,7 @@ async getConversationsByRole(
   to: Date | null,
   searchConversation: string,
   page: number = 1,
-  pageSize: number = 10,
+  pageSize: number = 30,
   state: string = ""
 ): Promise<PagedResponse<ConversationDto>> {
   const params: Record<string, string | number> = {
@@ -396,12 +398,26 @@ async getConversationsByRole(
     params.state = toPascal(state);
   }
 
-  const { data } = await api.get<ApiResponse<PagedResponse<ConversationDto>>>(
-    "/Conversations/getByRole",
-    { params }
-  );
+  const requestKey = JSON.stringify(params);
+  const inflight = getByRoleInflight.get(requestKey);
 
-  return data.data;
+  if (inflight) {
+    return inflight;
+  }
+
+  const request = api
+    .get<ApiResponse<PagedResponse<ConversationDto>>>(
+      "/Conversations/getByRole",
+      { params }
+    )
+    .then(({ data }) => data.data)
+    .finally(() => {
+      getByRoleInflight.delete(requestKey);
+    });
+
+  getByRoleInflight.set(requestKey, request);
+
+  return request;
 }
 
   async getConversationsByContact(

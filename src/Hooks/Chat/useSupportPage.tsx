@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   closeConversation,
@@ -19,7 +20,6 @@ import type {
 } from "@/Interfaces/Chat/ChatInterfaces";
 
 import { openAssignModal } from "@/Context/Slices/Chat/assignModalSlice";
-import { useSystemParams } from "@/Hooks/Crm/useSystemParams";
 
 import {
   selectIsAdmin,
@@ -29,10 +29,10 @@ import {
 
 import { CompanySystemParamsService } from "@/Services/Crm/CompanySystemParamsService";
 import { AgentService } from "@/Services/auth/AgentService";
+import { SystemParamService } from "@/Services/Crm/SystemParamService";
+import { supportAgentKeys } from "@/Hooks/Auth/useAssignableAgents";
 
 import { SystemParamType } from "@/Utils/systemParam";
-
-import type { CompanySystemParamsInterface } from "@/Interfaces/Crm/CompanySystemParams";
 
 type FilterOption = {
   label: string;
@@ -103,8 +103,6 @@ export function useSupportPage() {
   const isRoot = useSelector(selectIsRoot);
   const userId = useSelector(selectUserId);
 
-  const { selectedParam, fetchByName } = useSystemParams();
-
   const [convId, setConvId] = useState<number | null>(null);
 
   const [conversation, setConversation] =
@@ -127,11 +125,24 @@ export function useSupportPage() {
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const [detailToggle, setDetailToggle] = useState(false);
 
-  const [companySystemParam, setCompanySystemParam] =
-    useState<CompanySystemParamsInterface | null>(null);
+  const { data: selectedParam = null } = useQuery({
+    queryKey: ["system-param", "name", "OpcionesRapidas"],
+    queryFn: () => SystemParamService.getByNameAsync("OpcionesRapidas"),
+    staleTime: 1000 * 60 * 10,
+  });
 
-  const [agents, setAgents] = useState<AgentDto[]>([]);
-  const [loadingAgents, setLoadingAgents] = useState(false);
+  const { data: companySystemParam = null } = useQuery({
+    queryKey: [
+      "company-system-param",
+      "by-id",
+      SystemParamType.AsignarConversacionesEntreAgentes,
+    ],
+    queryFn: () =>
+      CompanySystemParamsService.getByIdAsync(
+        SystemParamType.AsignarConversacionesEntreAgentes
+      ),
+    staleTime: 1000 * 60 * 10,
+  });
 
   /**
    * Los administradores y Root pueden ver
@@ -161,6 +172,18 @@ export function useSupportPage() {
   const [filterOrder, setFilterOrder] = useState<string[]>(() =>
     getStoredFilterOrder(DEFAULT_OPTIONS)
   );
+
+  /**
+   * Agentes del filtro Admin/Root.
+   * Solo se piden al abrir el modal de filtros,
+   * no al iniciar sesión ni al entrar al chat.
+   */
+  const { data: agents = [], isLoading: loadingAgents } = useQuery<AgentDto[]>({
+    queryKey: supportAgentKeys.list(),
+    queryFn: () => AgentService.getAgentsAsync(),
+    enabled: (isAdmin || isRoot) && orderModalVisible,
+    staleTime: 1000 * 60 * 5,
+  });
 
   /**
    * Opciones de agentes utilizadas por
@@ -235,13 +258,6 @@ export function useSupportPage() {
   }, [selectedFilter]);
 
   /**
-   * Carga las opciones rápidas.
-   */
-  useEffect(() => {
-    void fetchByName("OpcionesRapidas");
-  }, [fetchByName]);
-
-  /**
    * Conserva en el hook la conversación que ya fue obtenida
    * por la lista paginada.
    *
@@ -264,87 +280,6 @@ export function useSupportPage() {
       setConversation(null);
     }
   }, [convId]);
-
-  /**
-   * Obtiene la política empresarial
-   * para asignar entre agentes.
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchPolicy = async (): Promise<void> => {
-      try {
-        const response =
-          await CompanySystemParamsService.getByIdAsync(
-            SystemParamType.AsignarConversacionesEntreAgentes
-          );
-
-        if (cancelled) return;
-
-        setCompanySystemParam(response);
-      } catch (error) {
-        if (cancelled) return;
-
-        console.error(
-          "Error al obtener la política de asignación:",
-          error
-        );
-
-        setCompanySystemParam(null);
-      }
-    };
-
-    void fetchPolicy();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /**
-   * Carga los agentes utilizados en
-   * los filtros de Admin y Root.
-   */
-  useEffect(() => {
-    if (!isAdmin && !isRoot) {
-      setAgents([]);
-      setLoadingAgents(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchAgents = async (): Promise<void> => {
-      try {
-        setLoadingAgents(true);
-
-        const data = await AgentService.getAgentsAsync();
-
-        if (cancelled) return;
-
-        setAgents(data ?? []);
-      } catch (error) {
-        if (cancelled) return;
-
-        console.error(
-          "Error al cargar agentes:",
-          error
-        );
-
-        setAgents([]);
-      } finally {
-        if (!cancelled) {
-          setLoadingAgents(false);
-        }
-      }
-    };
-
-    void fetchAgents();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdmin, isRoot]);
 
   /**
    * Abre el modal de asignación.
