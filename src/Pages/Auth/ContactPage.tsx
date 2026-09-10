@@ -11,10 +11,11 @@ import Button from "@/Components/Common/Button";
 import CustomTable from "@/Components/Common/CustomTable";
 import '@/Styles/Auth/ContactPage.css';
 import ContactModalForm from "@/Components/Auth/ContactModalForm";
-import { TextField } from "@mui/material";
+import SearchFilter from "@/Components/Common/SearchFilter";
 import { ImWhatsapp } from "react-icons/im";
 import { RiMessengerLine } from "react-icons/ri";
 import { FaInstagram } from "react-icons/fa6";
+import { getClassificationCode } from "@/Utils/contactClassification";
 
 export default function ContactPage() {
   const {
@@ -23,7 +24,6 @@ export default function ContactPage() {
     openEdit,
     toggle,
     verify,
-    error,
     data,
     page,
     pageSize,
@@ -37,7 +37,8 @@ export default function ContactPage() {
     handleSubmit,
     globalFilter,
     setGlobalFilter,
-    loading
+    loading,
+    loadingList
   } = useContact();
 
   const columns: Column<ContactLogInterface>[] = useMemo(() => [
@@ -59,12 +60,27 @@ export default function ContactPage() {
       id: 'contactClassificationName',
       label: 'Tipificación',
       minWidth: 80,
-      render: row => row.contactClassificationName ?? '-'
+      render: row => {
+        const name = row.contactClassificationName?.trim()
+        if (!name) return "-"
+
+        const code = getClassificationCode(
+          row.contactClassificationBgColor,
+          name
+        )
+
+        return (
+          <span className={`contact-page__classification ${code}`}>
+            {name}
+          </span>
+        )
+      }
     },
     {
       id: 'clienteCodigo',
       label: 'Fuente',
       minWidth: 100,
+      hideBelow: 'md',
       render: row=>{
         if(row.clienteCodigo == null) return "No específicado"
         if(Number(row.clienteCodigo)  < 50000) return "INNOVA"
@@ -75,6 +91,7 @@ export default function ContactPage() {
       id: 'companyName',
       label: 'Nombre Empresa',
       minWidth: 80,
+      hideBelow: 'lg',
       render: row => row.companyName ?? '-'
     },
     {
@@ -118,6 +135,7 @@ export default function ContactPage() {
       id: 'status',
       label: 'Estado',
       minWidth: 120,
+      hideBelow: 'md',
       render: row => {
         switch (row.status) {
           case 'New': return 'Nuevo';
@@ -135,6 +153,7 @@ export default function ContactPage() {
       id: 'createdAt',
       label: 'Creado',
       minWidth: 110,
+      hideBelow: 'lg',
       render: row => new Date(row.createdAt!).toLocaleDateString('es-NI')
     },
     {
@@ -143,17 +162,17 @@ export default function ContactPage() {
       minWidth: 150,
       render: row => (
         <>
-          <IconButton size="medium" onClick={() => openView(row)}>
-            <VisibilityIcon fontSize="medium" />
+          <IconButton size="small" onClick={() => openView(row)}>
+            <VisibilityIcon fontSize="small" />
           </IconButton>
-          <IconButton size="medium" onClick={() => openEdit(row)}>
-            <EditIcon fontSize="medium" />
+          <IconButton size="small" onClick={() => openEdit(row)}>
+            <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="medium" onClick={() => toggle(row.id as number)}>
+          <IconButton size="small" onClick={() => toggle(row.id as number)}>
             {row.isActive ? (
-              <ToggleOnIcon fontSize="medium" color="success" />
+              <ToggleOnIcon fontSize="small" color="success" />
             ) : (
-              <ToggleOffIcon fontSize="medium" />
+              <ToggleOffIcon fontSize="small" />
             )}
           </IconButton>
           {/* <IconButton size="medium" onClick={() => verify(row.id)}>
@@ -184,23 +203,13 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
+      <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div> 
-      {error && <p className="contact-page__error">Error: {error.message}</p>}
-
-
       <CustomTable<ContactLogInterface>
         columns={columns}
         rows={data}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

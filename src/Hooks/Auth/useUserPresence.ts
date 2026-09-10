@@ -3,12 +3,17 @@ import { userService } from '@/Services/auth/UserService'
 import { presenceConnection } from '@/Services/signalr'
 import { HubConnectionState } from '@microsoft/signalr'
 
-export function useUserPresence(userId: number) {
-  const [isOnline, setIsOnline] = useState(false)
+export function useUserPresence(userId: number, initialOnline?: boolean) {
+  const [isOnline, setIsOnline] = useState(initialOnline ?? false)
   const [lastOnline, setLastOnline] = useState<Date | null>(null)
 
   useEffect(() => {
     if (!userId) return
+
+    if (initialOnline !== undefined) {
+      setIsOnline(initialOnline)
+      return
+    }
 
     userService.getUserPresence(userId)
       .then(dto => {
@@ -16,7 +21,7 @@ export function useUserPresence(userId: number) {
         setLastOnline(dto.data.lastOnline ? new Date(dto.data.lastOnline) : null)
       })
       .catch(console.error)
-  }, [userId])
+  }, [initialOnline, userId])
 
   // Suscripción a eventos SignalR
   useEffect(() => {

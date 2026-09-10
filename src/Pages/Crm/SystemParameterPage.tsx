@@ -12,7 +12,7 @@ import type { SystemParamResponseDto } from '@/Interfaces/Auth/AuthInterface'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import type { NameTranslation, TypeTranslation } from '@/Interfaces/Crm/OpeningHour'
 import { nameTranslations } from '@/Utils/Translation/nameTranslations'
-import { TextField } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 import '@/Styles/Crm/SystemParamsPage.css'
 
 const typeTranslations: Record<TypeTranslation, string> = {
@@ -40,7 +40,8 @@ export default function SystemParamsPage() {
     handleSubmit,
     toggleSystemParam,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loadingList
   } = useSystemParams()
 
   const columns: Column<SystemParamResponseDto>[] = useMemo(() => [
@@ -119,21 +120,14 @@ export default function SystemParamsPage() {
         </div>
       </div>
 
-      <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="table-contaner__search-filter"
-        />
+      <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div>
       
       <CustomTable<SystemParamResponseDto>
         columns={columns}
         rows={systemParams}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

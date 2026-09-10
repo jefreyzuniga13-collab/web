@@ -198,8 +198,13 @@ export function ListComponent<T extends Record<string, any>>({
               setPage(1);
             }}
             rowsPerPageOptions={[10, 20, 30]}
-            labelRowsPerPage="Filas"
-            sx={{ mt: 2, fontSize: 12 }}
+            labelRowsPerPage="Filas por página"
+            showFirstButton
+            showLastButton
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`
+            }
+            sx={{ mt: 2 }}
           />
         </>
       ) : (

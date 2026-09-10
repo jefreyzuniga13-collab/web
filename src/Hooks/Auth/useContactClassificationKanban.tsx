@@ -115,9 +115,27 @@ export default function useContactClassificationKanban() {
     },
   });
 
+  const reclassifyMutation = useMutation({
+    mutationFn: () => contactService.reclassifyContactsAsync(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: contactClassificationKeys.all,
+      });
+      toast.success("Tipificación actualizada.");
+    },
+    onError: () => {
+      toast.error("No se pudo actualizar la tipificación.");
+    },
+  });
+
   const setGlobalFilter = useCallback((value: string) => {
     setGlobalFilterState(value);
   }, []);
+
+  const reclassify = useCallback(() => {
+    if (reclassifyMutation.isPending) return;
+    return reclassifyMutation.mutateAsync();
+  }, [reclassifyMutation]);
 
   const loadMoreColumn = useCallback(
     async (column: ContactClassificationGroupProj) => {
@@ -149,6 +167,8 @@ export default function useContactClassificationKanban() {
     setGlobalFilter,
     setItemsPerColumn,
     loadMoreColumn,
+    reclassify,
+    reclassifying: reclassifyMutation.isPending,
     refetch,
   };
 }

@@ -82,7 +82,7 @@ export const useDetailPanel = (contactId?: number, selectedParam?: unknown) => {
     error: contactError,
     fetchById: fetchContactById,
     getByClient: fetchContactsByClient,
-  } = useContact(contactId)
+  } = useContact(contactId, { loadList: false })
 
   const {
     client,

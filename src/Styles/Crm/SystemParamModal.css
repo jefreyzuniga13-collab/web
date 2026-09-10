@@ -39,8 +39,9 @@
 .system-param-modal__title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
+  color: var(--text-muted);
   margin: 0;
+  text-align: left;
 }
 
 .system-param-modal__close-button {

@@ -6,7 +6,7 @@ import { toast } from "react-toastify"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 import type { RootState, AppDispatch } from "@/Context"
 import { selectCarPCG,selectCartError,selectCartLoading,getProductFromCarAsync,updateCarAsync,setActiveContactId} from "@/Context/Slices/Ecommerce/cartSlice"
-import { selectCartBadgeByContactId, setContactCartBadge} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
+import { setContactCartBadge} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { selectCompanySistema, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
@@ -16,6 +16,7 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import useInvoiceOrder from "@/Hooks/Ecommerce/payment/useInvoiceOrder"
 import { useAgentCartPayment } from "@/Hooks/Ecommerce/tabs/useAgentCartPayment"
 import { useCartPCGFlowCtx } from "@/Context/CartPCGFlowProvider"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import CartPanelProductStep from "@/Components/ECommerce/Tabs/CartPanelProductStep"
 import CartPanelDeliveryStep from "@/Components/ECommerce/Tabs/CartPanelDeliveryStep"
 import CartPanelPaymentStep from "@/Components/ECommerce/Tabs/CartPanelPaymentStep"
@@ -59,14 +60,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const carPCG = useAppSelector(selectCarPCG)
   const loading = useAppSelector(selectCartLoading)
   const error = useAppSelector(selectCartError)
-  const badgeMap = useAppSelector(selectCartBadgeByContactId)
   const companySistema = useAppSelector(selectCompanySistema)
   const permiteMultiPago = useAppSelector(selectPermiteMultipago)
-
-  const contactHasCart = badgeMap?.[contactId] ?? {
-    hasCart: false,
-    count: 0
-  }
   const [search, setSearch] = useState("")
   const [orderId, setOrderId] = useState<number | null>(null)
   const [cancelLoading, setCancelLoading] = useState(false)
@@ -90,6 +85,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [observation, setObservation] = useState("")
   const [currentLog, setCurrentLog] =
     useState<LogCartResponseDto | null>(null)
+  const [cartReady, setCartReady] = useState(false)
   const [multiPagoActivo, setMultiPagoActivoState] = useState(false)
   const [pagosMultiples, setPagosMultiples] =
     useState<PagoSeleccionado[]>([])
@@ -118,7 +114,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   } = useCartPCGFlowCtx()
   const {sendMessageLinkAsync,getMessageLinkAsync,error: errorCart,loading: loadingCart} = useCart()
   const {UpdatedStatus,fetchByContactId,update: updatedLogCart} = useLogCart()
-  const { UpdateEcommerceUserAsync, getById } = useContact()
+  const { UpdateEcommerceUserAsync, getById } = useContact(undefined, {
+    loadList: false,
+  })
   const { createAsync } = useUserEcommerce()
 
   const {
@@ -144,7 +142,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     [carPCG]
   )
 
-  const showEmpty = !contactHasCart.hasCart || detailsCount === 0
+  const showEmpty = detailsCount === 0
 
   const isPickup = retiraSucursal === "S"
   const isOnlyTextAddress = onlyTextAddress === true
@@ -1359,8 +1357,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     if (!contactId || !conversationId) return
 
     const myReq = ++reqRef.current
+    setCartReady(false)
 
     const loadCart = async () => {
+      try {
       if (cartClearedRef.current) return
 
       const log = await fetchByContactId(contactId)
@@ -1467,6 +1467,11 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           count
         })
       )
+      } finally {
+        if (myReq === reqRef.current) {
+          setCartReady(true)
+        }
+      }
     }
 
     void loadCart()
@@ -1493,10 +1498,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     totalsLoading ||
     payLoading
 
-  if (loadingCart || loading) {
+  if (!cartReady || loadingCart || loading) {
     return (
       <div className="cartPanel-loadingCartContiner">
-        <p className="cartPanel-loadingCartText">Cargando...</p>
+        <ListSkeleton variant="cart" count={5} />
       </div>
     )
   }

@@ -228,6 +228,7 @@ export function useCompanySystemParams() {
     selectedItem,
 
     loading,
+    loadingList,
     error,
 
     page,

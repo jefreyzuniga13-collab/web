@@ -303,6 +303,7 @@ const useCompaniesLicenses = () => {
     data,
     selectedData,
     loading,
+    loadingList,
     error,
 
     page,

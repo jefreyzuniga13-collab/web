@@ -10,6 +10,8 @@
 // }
 
 
+export type ColumnBreakpoint = 'sm' | 'md' | 'lg'
+
 export interface Column<T> {
   id: Extract<keyof T, string> | 'actions'
   label: string
@@ -17,6 +19,7 @@ export interface Column<T> {
   align?: 'left' | 'right' | 'center'
   format?: (v: any) => string
   render?: (row: T) => React.ReactNode
+  hideBelow?: ColumnBreakpoint
 }
 
 
@@ -43,6 +46,7 @@ export interface Props<T> {
   rowsPerPage: number
   /** Opciones de filas por página */
   rowsPerPageOptions?: number[]
+  loading?: boolean
   onPageChange: (event: unknown, newPage: number) => void
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }

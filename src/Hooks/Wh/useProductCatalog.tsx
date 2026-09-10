@@ -160,6 +160,7 @@ export function useProductCatalog() {
     productCatalog,
     selectedProductCatalog,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

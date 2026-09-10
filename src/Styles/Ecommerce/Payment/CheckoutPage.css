@@ -433,14 +433,15 @@
 
 .checkout-input {
   width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-gray-200);
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-base);
-  color: var(--color-gray-800);
-  background-color: var(--bg-primary);
+  height: var(--control-height);
+  border-radius: var(--control-radius);
+  border: var(--control-border-width) solid var(--control-border);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  font-size: var(--control-font-size);
+  color: var(--text-primary);
+  background-color: #fff;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -450,8 +451,8 @@
 
 .checkout-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px rgba(109, 40, 217, 0.2);
-  background-color: var(--bg-primary);
+  box-shadow: 0 0 0 2px rgba(37, 119, 225, 0.12);
+  background-color: #fff;
 }
 
 .checkout-input:disabled {
@@ -691,10 +692,17 @@
 
 /* Dirección de solo texto */
 .checkout-input--textarea {
+  height: auto;
   min-height: 7rem;
   resize: vertical;
   line-height: 1.45;
   font-family: inherit;
+}
+
+.checkout-field .input-wrapper,
+.checkout-field .select-wrapper {
+  width: 100%;
+  min-width: 0;
 }
 
 .checkout-only-text-address {

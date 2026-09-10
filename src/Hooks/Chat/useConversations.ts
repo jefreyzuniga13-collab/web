@@ -47,7 +47,7 @@ export interface UseConversationsResult {
   onPageSizeChange: (size: number) => void
 }
 
-const DEFAULT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 30
 
 const STORAGE_FROM = "convFrom"
 const STORAGE_TO = "convTo"
@@ -181,6 +181,9 @@ export function useConversations(
 
   const [pageSize, setPageSize] =
     useState(DEFAULT_PAGE_SIZE)
+
+  const [reloadNonce, setReloadNonce] =
+    useState(0)
 
   const [pagination, setPagination] =
     useState<PaginationInfo>({
@@ -697,8 +700,8 @@ export function useConversations(
     saveRange(nextRange)
 
     setAppliedRange(nextRange)
-    setConversations([])
     setPage(1)
+    setReloadNonce(value => value + 1)
   }, [form])
 
   const clearFilter = useCallback((): void => {
@@ -712,8 +715,8 @@ export function useConversations(
 
     setForm(cleanRange)
     setAppliedRange(cleanRange)
-    setConversations([])
     setPage(1)
+    setReloadNonce(value => value + 1)
   }, [])
 
   /*
@@ -838,6 +841,7 @@ export function useConversations(
     normalizeConversation,
     page,
     pageSize,
+    reloadNonce,
     searchConversation,
   ])
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import "@/Styles/Crm/ClientManagementPanel.css";
 import Button from "@/Components/Common/Button";
+import ListSkeleton from "@/Components/Common/ListSkeleton";
 import Input from "@/Components/Common/Input";
 import { Label } from "@/Components/Common/Label";
 import { Textarea } from "@/Components/Common/Textarea";
@@ -504,7 +505,9 @@ export default function ClientAdminPanel() {
           {tab === 1 && (
             <div className="cap__panel">
               {loading ? (
-                <div className="cap__loader">Cargando…</div>
+                <div className="cap__loader">
+                  <ListSkeleton variant="detail" count={1} />
+                </div>
               ) : (
                 <div className="cap__grid cap__grid--form">
                   {!!Object.keys(generalErrors).length && <div className="cap__alert">Revise los campos marcados.</div>}
@@ -592,6 +595,7 @@ export default function ClientAdminPanel() {
               <CustomTable<CredentialResponseDTO>
                 columns={credColumns}
                 rows={credentials}
+                loading={loading}
                 count={credentials.length}
                 page={0}
                 rowsPerPage={credentials.length || 10}
@@ -716,6 +720,7 @@ export default function ClientAdminPanel() {
               <CustomTable<OutsourcedDeviceResponseDTO>
                 columns={eqColumns}
                 rows={equipments}
+                loading={loading}
                 count={equipments.length}
                 page={0}
                 rowsPerPage={equipments.length || 10}
@@ -786,6 +791,7 @@ export default function ClientAdminPanel() {
               <CustomTable<OutsourcedSystemsResponseDTO>
                 columns={sysColumns}
                 rows={systems}
+                loading={loading}
                 count={systems.length}
                 page={0}
                 rowsPerPage={systems.length || 10}

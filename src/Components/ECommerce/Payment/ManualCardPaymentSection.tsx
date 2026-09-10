@@ -1,3 +1,6 @@
+import Input from "@/Components/Common/Input"
+import Select from "@/Components/Common/Select"
+import { Label } from "@/Components/Common/Label"
 import type { ManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
 import "@/Styles/Ecommerce/Payment/ManualCardPaymentSection.css"
 
@@ -73,14 +76,11 @@ export default function ManualCardPaymentSection({
   return (
     <div className="checkout-manual-card">
       <div className="checkout-field checkout-field--full">
-        <label className="checkout-label" htmlFor="tarjetahabiente">
-          Tarjetahabiente *
-        </label>
+        <Label htmlFor="tarjetahabiente">Tarjetahabiente *</Label>
 
-        <input
+        <Input
           id="tarjetahabiente"
           type="text"
-          className="checkout-input"
           value={value.tarjetahabiente}
           disabled={disabled}
           onChange={(event) =>
@@ -92,39 +92,31 @@ export default function ManualCardPaymentSection({
       </div>
 
       <div className="checkout-field checkout-field--full">
-        <label className="checkout-label" htmlFor="tarjeta">
-          Tarjeta *
-        </label>
+        <Label htmlFor="tarjeta">Tarjeta *</Label>
 
-        <select
+        <Select
           id="tarjeta"
-          className="checkout-input"
-
-          value={value.tarjeta} 
+          value={value.tarjeta}
           disabled={disabled}
+          placeholder="Selecciona una tarjeta"
           onChange={(event) => updateField("tarjeta", event.target.value)}
-          autoComplete="off"
-        >
-          <option value="" disabled>Selecciona una tarjeta</option> 
-          
-          <option value="Visa">Visa</option>
-          <option value="Mastercard">Mastercard</option>
-          <option value="American Express">American Express</option>
-          <option value="Discover">Discover</option>
-          <option value="OTRA">Otra</option>
-        </select>
+          options={[
+            { value: "Visa", label: "Visa" },
+            { value: "Mastercard", label: "Mastercard" },
+            { value: "American Express", label: "American Express" },
+            { value: "Discover", label: "Discover" },
+            { value: "OTRA", label: "Otra" }
+          ]}
+        />
       </div>
 
       <div className="checkout-field checkout-field--full">
-        <label className="checkout-label" htmlFor="ultDigito">
-          Últimos 4 dígitos *
-        </label>
+        <Label htmlFor="ultDigito">Últimos 4 dígitos *</Label>
 
-        <input
+        <Input
           id="ultDigito"
           type="text"
           inputMode="numeric"
-          className="checkout-input"
           value={value.ultDigito}
           disabled={disabled}
           onChange={(event) =>
@@ -137,15 +129,12 @@ export default function ManualCardPaymentSection({
       </div>
 
       <div className="checkout-field checkout-field--full">
-        <label className="checkout-label" htmlFor="fechaVence">
-          Fecha de vencimiento *
-        </label>
+        <Label htmlFor="fechaVence">Fecha de vencimiento *</Label>
 
-        <input
+        <Input
           id="fechaVence"
           type="text"
           inputMode="numeric"
-          className="checkout-input"
           value={value.fechaVence}
           disabled={disabled}
           onChange={(event) => handleFechaVence(event.target.value)}

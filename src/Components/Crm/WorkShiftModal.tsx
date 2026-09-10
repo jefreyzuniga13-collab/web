@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Button from '@/Components/Common/Button'
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { Label } from '@/Components/Common/Label'
+import DatePickerField from '@/Components/Common/DatePickerField'
 import { Autocomplete, TextField } from '@mui/material'
 import { useWorkShiftForm } from '@/Hooks/Crm/useWorkShiftForm'
 import { useOpeningHour } from '@/Hooks/Crm/useOpeningHour'
@@ -16,7 +16,7 @@ interface WorkShiftModalProps {
   isOpen: boolean
   data?: WorkShiftInterface | null
   onClose: () => void
-  onSubmit: (values: WorkShiftFormValues) => void
+  onSubmit: (values: WorkShiftFormValues) => void | Promise<void>
 }
 
 export default function WorkShiftModal({
@@ -118,22 +118,28 @@ export default function WorkShiftModal({
 
   return (
     <div className="ws-modal__overlay">
-      <div className="ws-modal__container">
+      <div className="ws-modal__container crm-form">
         <header className="ws-modal__header">
-          <h2 className="ws-modal__title">
-            {mode === 'create'
-              ? 'Asignar Turno'
-              : mode === 'update'
-              ? 'Editar Asignación de Turno'
-              : 'Detalle Asignación de Turno'}
-          </h2>
-          <button type="button" className="ws-modal__close" onClick={onClose}>
+          <div className="ws-modal__header-text">
+            <h2 className="ws-modal__title">
+              {mode === 'create'
+                ? 'Asignar Turno'
+                : mode === 'update'
+                ? 'Editar Asignación de Turno'
+                : 'Detalle Asignación de Turno'}
+            </h2>
+            <p className="ws-modal__subtitle">
+              Asigna un horario y un agente al turno.
+            </p>
+          </div>
+          <button type="button" className="ws-modal__close" onClick={onClose} aria-label="Cerrar">
             ×
           </button>
         </header>
         <form className="ws-modal__body" onSubmit={handleSubmit}>
           <div className="ws-modal__grid">
             <div className="ws-modal__col">
+              <Label >Horario</Label>
               <Autocomplete
                 options={openingHours}
                 getOptionLabel={h => h.name}
@@ -152,6 +158,7 @@ export default function WorkShiftModal({
             </div>
 
             <div className="ws-modal__col">
+              <Label >Usuario asignado</Label>
               <Autocomplete
                 options={agents}
                 getOptionLabel={a => a.fullName}
@@ -172,69 +179,40 @@ export default function WorkShiftModal({
               )}
             </div>
 
-            {/* Date Picker - Válido desde */}
             <div className="ws-modal__col">
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Valido desde"
-                  value={form.validFrom as Date | null}
-                  onChange={value => {
-                    const date =
-                      value == null
-                        ? null
-                        : value instanceof Date
-                        ? value
-                        : (value as Dayjs).toDate()
-                    handleDate('validFrom', date)
-                  }}
-                  disabled={isView}
-                  format="dd/MM/yyyy"
-                  shouldDisableDate={shouldDisableDate}
-                  slotProps={{
-                    textField: { className: 'date-picker-field', fullWidth: true },
-                  }}
-                />
-              </LocalizationProvider>
+              <Label >Válido desde</Label>
+              <DatePickerField
+                label="Válido desde"
+                value={form.validFrom as Date | null}
+                onChange={date => handleDate('validFrom', date)}
+                disabled={isView}
+                shouldDisableDate={date => !isDateEnabled(date)}
+                error={errors.validFrom}
+              />
               {isHolidaySunday && (
                 <p className="ws-modal__info">
                   <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo,
                   crear turno para el siguiente lunes hábil y asignar agente.
                 </p>
               )}
-              {errors.validFrom && <div className="ws-modal__error">{errors.validFrom}</div>}
             </div>
 
-            {/* Date Picker - Válido hasta */}
             <div className="ws-modal__col">
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Valido hasta"
-                  value={(form.validTo as Date) || null}
-                  onChange={value => {
-                    const date =
-                      value == null
-                        ? null
-                        : value instanceof Date
-                        ? value
-                        : (value as Dayjs).toDate()
-                    handleDate('validTo', date)
-                  }}
-                  disabled={isView}
-                  format="dd/MM/yyyy"
-                  shouldDisableDate={shouldDisableDate}
-                  slotProps={{
-                    textField: { className: 'date-picker-field', fullWidth: true },
-                  }}
-                />
-              </LocalizationProvider>
-
+              <Label >Válido hasta</Label>
+              <DatePickerField
+                label="Válido hasta"
+                value={(form.validTo as Date) || null}
+                onChange={date => handleDate('validTo', date)}
+                disabled={isView}
+                shouldDisableDate={date => !isDateEnabled(date)}
+                error={errors.validTo}
+              />
               {isHolidaySunday && (
                 <p className="ws-modal__info">
                   <span className="ws-modal__info-span">Atención:</span> este feriado cae en domingo,
                   crear turno para el siguiente lunes hábil y asignar agente.
                 </p>
               )}
-              {errors.validTo && <div className="ws-modal__error">{errors.validTo}</div>}
             </div>
 
             <div className="ws-modal__col">
@@ -245,7 +223,7 @@ export default function WorkShiftModal({
                   checked={form.isActive}
                   onChange={handleCheckbox}
                   disabled={isView}
-                />{' '}
+                />
                 Activo
               </label>
             </div>
@@ -276,6 +254,7 @@ export default function WorkShiftModal({
               variant="secondary"
               onClick={onClose}
               className="ws-modal__btn ws-modal__btn--cancel"
+              disabled={loading}
             >
               Cancelar
             </Button>
@@ -284,8 +263,9 @@ export default function WorkShiftModal({
                 variant="primary"
                 type="submit"
                 className="ws-modal__btn ws-modal__btn--confirm"
+                loading={loading}
               >
-                {loading ? "Cargando..." : mode === 'create' ? 'Crear' : 'Guardar'}
+                {mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             )}
           </footer>

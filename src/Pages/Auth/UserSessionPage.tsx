@@ -9,7 +9,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 // import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 // import ToggleOnIcon from "@mui/icons-material/ToggleOn";
-import { TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import SearchFilter from "@/Components/Common/SearchFilter";
 import Button from '@/Components/Common/Button';
 
 import { format, parseISO } from "date-fns";
@@ -31,8 +32,7 @@ export default function UserSessionPage() {
   const {
     sessions,
     selectedSession,
-    // loading,
-    // error,
+    loadingList,
     page,
     pageSize,
     totalCount,
@@ -133,15 +133,7 @@ export default function UserSessionPage() {
       </div>
 
       <div className="table-contaner__search-filter__container">
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
-          className="table-contaner__search-filter"
-        />
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div>
 
       {/* {loading && <p className="ws-page__loading">Cargando...</p>}
@@ -150,6 +142,7 @@ export default function UserSessionPage() {
       <CustomTable<UserSessionResponseDto>
         columns={columns}
         rows={sessions}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

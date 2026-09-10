@@ -1,10 +1,7 @@
 import { useMemo } from "react";
 
-import {
-  CircularProgress,
-  IconButton,
-  TextField,
-} from "@mui/material";
+import { IconButton } from "@mui/material";
+import SearchFilter from "@/Components/Common/SearchFilter";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
@@ -251,19 +248,10 @@ export default function UsersPage() {
       </div>
 
       <div className="table-contaner__search-filter__container">
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
+        <SearchFilter
           value={globalFilter}
+          onApply={setGlobalFilter}
           disabled={loadingItem}
-          onChange={(event) =>
-            setGlobalFilter(
-              event.target.value,
-            )
-          }
-          className="table-contaner__search-filter"
         />
       </div>
 
@@ -277,18 +265,10 @@ export default function UsersPage() {
         </div>
       )}
 
-      {loadingList && (
-        <div
-          className="users-page__loading"
-          aria-label="Cargando usuarios"
-        >
-          <CircularProgress size={24} />
-        </div>
-      )}
-
       <CustomTable<User>
         columns={columns}
         rows={users}
+        loading={loadingList}
         count={totalCount}
         page={Math.max(page - 1, 0)}
         rowsPerPage={pageSize}
@@ -329,7 +309,7 @@ export default function UsersPage() {
               ? "Editar Usuario"
               : "Detalle Usuario"
         }
-        size="large"
+        size="medium"
       >
         {modalMode === "create" && (
           <UserForm

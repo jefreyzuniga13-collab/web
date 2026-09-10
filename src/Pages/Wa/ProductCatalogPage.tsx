@@ -11,7 +11,7 @@ import { useProductCatalog } from '@/Hooks/Wh/useProductCatalog'
 import type { ProductCatalogResponse } from '@/Interfaces/Wh/ProductCatalogInterfaces'
 import type { Column } from '@/Interfaces/Common/CustomTable'
 import '@/Styles/Crm/SystemParamsPage.css'
-import { TextField } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 
 export default function ProductCatalogPage() {
   const {
@@ -31,7 +31,8 @@ export default function ProductCatalogPage() {
     handleSubmit,
     toggleSystemParam,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loadingList
   } = useProductCatalog()
 
   const columns: Column<ProductCatalogResponse>[] = useMemo(() => [
@@ -118,16 +119,8 @@ export default function ProductCatalogPage() {
         </div>
       </div>
 
-       <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="medium"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
+       <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div> 
 
       {/* {error && <p className="sp-page__error">Error: {error. || error}</p>} */}
@@ -135,6 +128,7 @@ export default function ProductCatalogPage() {
       <CustomTable<ProductCatalogResponse>
         columns={columns}
         rows={productCatalog}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

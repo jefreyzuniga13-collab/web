@@ -48,28 +48,40 @@
 .inbox-list__date-group {
   list-style: none;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin: 8px 0 6px;
-  padding: 0;
-  pointer-events: none;
+  gap: 10px;
   margin: 0;
+  padding: 6px 14px;
+  pointer-events: none;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inbox-list__date-group::before,
+.inbox-list__date-group::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #d1d5db;
 }
 
 .inbox-list__date-group span {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--color-gray-600);
-  border-radius: 999px;
-  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 0;
+  border-radius: 0;
   text-transform: capitalize;
 }
 
 .inbox-list__item {
   display: flex;
   flex-direction: column;
-  padding: 9px 16px;
+  padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 0.1rem solid var(--border-secondary);
+  border-bottom: 1px solid #eceff3;
+  border-left: none;
   transition: background-color var(--transition-fast) var(--transition-ease);
   position: relative;
   background-color: var(--bg-primary);
@@ -79,22 +91,20 @@
   background-color: var(--color-gray-100);
 }
 
-.inbox-list__item--selected {
-  background-color: var(--color-blue-light);
-}
-
+.inbox-list__item--selected,
 .inbox-list__item--selected:hover {
   background-color: var(--color-blue-light);
 }
 
-.inbox-list__item--isblocked {
+.inbox-list__item--isblocked,
+.inbox-list__item--isblocked:hover {
   background-color: #ffe4e6;
 }
 
 .inbox-list__top {
   display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 0;
   width: 100%;
 }
@@ -104,13 +114,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   justify-content: flex-start;
 }
 
 .inbox-list__name-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -118,13 +128,13 @@
 }
 
 .inbox-list__name {
-  font-weight: var(--font-weight-medium);
-  font-size: 13px;
-  color: var(--color-gray-800);
-  margin-right: var(--space-sm);
+  font-weight: 500;
+  font-size: var(--text-chat-title);
+  color: #1f2937;
+  margin-right: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   overflow: hidden;
 }
@@ -145,17 +155,17 @@
 }
 
 .inbox-list__namecontactClassification > span:first-child {
-  font-size: var(--font-size-base);
-  /* font-weight: 700; */
-  color: var(--color-gray-800);
+  font-size: var(--text-chat-title);
+  font-weight: 500;
+  color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .inbox-list__contactClassification {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   white-space: nowrap;
   color: var(--color-gray-500);
 }
@@ -163,19 +173,43 @@
 .inbox-list__contactClassification.potencial,
 .potencial {
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .inbox-list__contactClassification.seguimiento,
 .seguimiento {
-  color: var(--greenColor);
-  font-weight: 700;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.inbox-list__classification {
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.inbox-list__classification--potencial {
+  color: var(--color-primary);
+}
+
+.inbox-list__classification--seguimiento {
+  color: #16a34a;
+}
+
+.inbox-list__classification--venta {
+  color: var(--color-secondary);
+}
+
+.inbox-list__classification--sinclasificar {
+  color: #667085;
 }
 
 .inbox-list__contactClassification.venta,
 .venta {
   color: var(--color-secondary);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .inbox-list__contactClassification.sinclasificar,
@@ -185,11 +219,12 @@
 }
 
 .inbox-list__isItemsInCart {
-  color: var(--greenColor);
-  font-size: 12px;
+  color: #16a34a;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .inbox-list__menu-button {
@@ -225,73 +260,80 @@
 }
 
 .inbox-list__names {
-  font-size: 11px;
-  color: var(--color-gray-600);
-  margin: 1px 0;
+  font-size: var(--text-chat-meta);
+  color: #667085;
+  margin: 1px 0 0;
   text-align: left;
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-  line-height: 1.22;
+  line-height: 1.3;
 }
 
 .inbox-list__names span {
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .inbox-list__names strong {
-  font-weight: 800;
-  color: var(--color-gray-700);
+  font-weight: 500;
+  color: #4b5563;
 }
 
 .inbox-list__preview {
-  font-size: 11px;
-  color: var(--color-gray-500);
+  font-size: var(--text-chat-meta);
+  color: #667085;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
   text-align: left;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .inbox-list__bottom {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 5px;
-  margin-top: 3px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 2px;
+  margin-top: 1px;
   position: relative;
+  flex-shrink: 0;
+}
+
+.inbox-list__bottom-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
 }
 
 .inbox-list__bottom_text {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
 }
 
 .inbox-list__status {
-  font-size: 10px;
-  border-radius: var(--radius-full);
+  font-size: var(--text-chat-meta);
   display: inline-block;
-  padding: 3px 6px;
-  font-weight: var(--font-weight-medium);
-  line-height: 1;
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 0.4rem;
+  font-weight: 500;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
-.inbox-list__status--new {
+.inbox-list__status--new,
+.inbox-list__status--bot {
   background-color: #dbeafe;
   color: #1e40af;
 }
 
 .inbox-list__status--paused {
-  background-color: var(--color-secondary);
-  color: var(--bg-primary);
-}
-
-.inbox-list__status--bot {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: #fff7ed;
+  color: var(--color-secondary);
 }
 
 .inbox-list__status--human {
@@ -308,7 +350,7 @@
 
 .inbox-list__status--esperando {
   background-color: var(--color-gray-100);
-  color: #adbb5d;
+  color: #667085;
 }
 
 .inbox-list__status--closed {
@@ -317,12 +359,12 @@
 }
 
 .inbox-list__status--incomplete {
-  background-color: var(--color-error);
-  color: var(--text-white);
+  background-color: #fee2e2;
+  color: var(--color-error);
 }
 
 .inbox-list__status--default {
-  background-color: var(--color-gray-200);
+  background-color: var(--color-gray-100);
   color: var(--color-gray-600);
 }
 
@@ -392,22 +434,29 @@
 
 @media (max-width: 1350px) {
   .inbox-list__bottom {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
   }
 }
 
 @media (max-width: 1239px) {
   .inbox-list__name,
+  .inbox-list__namecontactClassification > span:first-child {
+    font-size: 13.5px;
+  }
+
   .inbox-list__names,
-  .inbox-list__preview,
+  .inbox-list__preview {
+    font-size: 12px;
+  }
+
   .inbox-list__status,
-  .inbox-list__unread-badge {
-    font-size: 10px;
+  .inbox-list__classification {
+    font-size: 10.5px;
   }
 
   .inbox-list__namecontactClassification > span:first-child {
-    max-width: 150px;
+    max-width: 170px;
   }
 }
 
@@ -423,16 +472,16 @@
   }
 
   .inbox-list__date-group {
-    margin: 5px 0 4px;
+    padding: 5px 10px;
   }
 
   .inbox-list__date-group span {
-    font-size: 9px;
-    padding: 2px 6px;
+    font-size: 10px;
+    padding: 0;
   }
 
   .inbox-list__item {
-    padding: 7px 9px;
+    padding: 9px 10px;
   }
 
   .inbox-list__top {
@@ -448,22 +497,23 @@
   }
 
   .inbox-list__name {
-    font-size: 11px;
-    gap: 3px;
-    margin-right: 4px;
+    font-size: 14px;
+    gap: 5px;
+    margin-right: 0;
   }
 
   .inbox-list__namecontactClassification {
-    gap: 4px;
+    gap: 5px;
   }
 
   .inbox-list__namecontactClassification > span:first-child {
-    font-size: 11px;
-    max-width: min(55vw, 230px);
+    font-size: 14px;
+    max-width: min(58vw, 240px);
   }
 
-  .inbox-list__contactClassification {
-    font-size: 9px;
+  .inbox-list__contactClassification,
+  .inbox-list__classification {
+    font-size: 10.5px;
   }
 
   .inbox-list__isItemsInCart {
@@ -477,15 +527,15 @@
   }
 
   .inbox-list__names {
-    font-size: 9px;
+    font-size: 12px;
     gap: 4px;
-    margin: 1px 0;
-    line-height: 1.15;
+    margin: 1px 0 0;
+    line-height: 1.3;
   }
 
   .inbox-list__preview {
-    font-size: 9px;
-    line-height: 1.15;
+    font-size: 12px;
+    line-height: 1.3;
   }
 
   .inbox-list__bottom {
@@ -494,8 +544,9 @@
   }
 
   .inbox-list__status {
-    font-size: 8px;
-    padding: 2px 5px;
+    font-size: var(--text-chat-meta);
+    padding: 0.35rem 0.8rem;
+    border-radius: 0.4rem;
   }
 
   .inbox-list__unread-badge {
@@ -527,21 +578,23 @@
     max-width: 50vw;
   }
 
-  .inbox-list__contactClassification {
-    font-size: 8px;
+  .inbox-list__contactClassification,
+  .inbox-list__classification {
+    font-size: 11px;
   }
 
   .inbox-list__names {
-    font-size: 8.5px;
+    font-size: 10.5px;
   }
 
   .inbox-list__preview {
-    font-size: 8.5px;
+    font-size: 10.5px;
   }
 
   .inbox-list__status {
-    font-size: 8px;
-    padding: 2px 4px;
+    font-size: var(--text-chat-meta);
+    padding: 0.35rem 0.8rem;
+    border-radius: 0.4rem;
   }
 }
 
@@ -551,14 +604,9 @@
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  max-width: 180px;
+  max-width: 220px;
   vertical-align: middle;
-}
-
-/* Paréntesis que rodean el nombre */
-.inbox-list__editable-name-parenthesis {
-  flex: 0 0 auto;
-  line-height: 1;
+  font-weight: 500;
 }
 
 /* Input que reemplaza temporalmente el nombre */
@@ -600,65 +648,15 @@
   cursor: wait;
 }
 
-/* Mantiene alineados nombre y clasificación */
 .inbox-list__namecontactClassification {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
-/* Mantiene alineado el icono con el nombre */
-.inbox-list__name {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-/* Menú de opciones */
 .inbox-list__menu {
-  position: absolute;
+  top: 28px;
+  right: 0;
   z-index: 1000;
-
-  min-width: 190px;
-  padding: 6px 0;
-
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
-/* Opciones del menú */
-.inbox-list__menu-item {
-  display: block;
-  width: 100%;
-
-  padding: 10px 14px;
-  border: 0;
-
-  background: transparent;
-  color: #111827;
-
-  font-size: 14px;
-  text-align: left;
-
-  cursor: pointer;
-}
-
-.inbox-list__menu-item:hover:not(:disabled) {
-  background-color: #f3f4f6;
-}
-
-.inbox-list__menu-item:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: -2px;
-}
-
-.inbox-list__menu-item:disabled {
-  color: #9ca3af;
-  cursor: not-allowed;
 }

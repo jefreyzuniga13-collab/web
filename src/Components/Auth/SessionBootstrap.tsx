@@ -1,9 +1,9 @@
-import type { AppDispatch, RootState } from "@/Context";
+import type { AppDispatch } from "@/Context";
 import { checkSessionThunk } from "@/Context/Slices/Auth/authSlice";
-import { useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import CustomLoader from "@/Components/Common/CustomLoader";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
-import Spinner from "@/Components/Common/Spinner";
 
 interface Props {
   children: React.ReactNode;
@@ -15,9 +15,6 @@ const PUBLIC_ROUTES = new Set([
   "/payment-result",
   "/payment-hosted",
   "/successOrder",
-  
-  "/login",
-  "/login/",
   "/login",
   "/signup",
   "/check-email",
@@ -38,9 +35,6 @@ function normalizePath(pathname: string) {
 export default function SessionBootstrap({ children }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
-  const checkingSession = useSelector(
-    (state: RootState) => state.auth.checkingSession
-  );
 
   const normalizedPath = useMemo(
     () => normalizePath(location.pathname),
@@ -48,15 +42,34 @@ export default function SessionBootstrap({ children }: Props) {
   );
 
   const isPublicRoute = PUBLIC_ROUTES.has(normalizedPath);
+  const [bootstrapping, setBootstrapping] = useState(!isPublicRoute);
 
-  
   useEffect(() => {
-    if (isPublicRoute) return;
-    dispatch(checkSessionThunk());
+    if (isPublicRoute) {
+      setBootstrapping(false);
+      return;
+    }
+
+    let cancelled = false;
+    setBootstrapping(true);
+
+    if (normalizedPath === "/chat") {
+      void import("@/Pages/Chat/SupportPage");
+    }
+
+    void dispatch(checkSessionThunk()).finally(() => {
+      if (!cancelled) {
+        setBootstrapping(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [dispatch, isPublicRoute]);
 
-  if (!isPublicRoute && checkingSession) {
-    return <Spinner />;
+  if (!isPublicRoute && bootstrapping) {
+    return <CustomLoader />;
   }
 
   return <>{children}</>;

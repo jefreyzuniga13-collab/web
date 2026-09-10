@@ -1,93 +1,244 @@
-.MuiPaper-root{
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
 .table__container {
   width: 100%;
   display: flex;
   max-height: 100%;
+  min-height: 0;
   flex-direction: column;
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
+  overflow: hidden;
 }
 
 .table__scroll-container {
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
-.MuiTableBody-root,
-.MuiTableRow-root{
-  min-height: 90% !important;
+.table__container .MuiTableHead-root,
+.table__container thead {
+  background-image: linear-gradient(90deg, #3180de 0%, #2577e1 100%);
+  background-color: #2577e1;
 }
 
-.table__cell--header {
-  font-size: var(--font-size-lg) !important;
-  background-color: var(--color-primary) !important;
+.table__container .MuiTableHead-root .MuiTableRow-root {
+  background: transparent;
+}
+
+.table__container .table__cell--header {
+  font-size: var(--table-header-font) !important;
+  font-weight: 500 !important;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
   color: var(--text-white) !important;
-  padding: var(--space-sm) !important;
+  padding: var(--table-header-padding) !important;
+  min-height: 5.2rem;
+  height: 5.2rem;
+  line-height: 1.3 !important;
+  vertical-align: middle !important;
 }
 
-.table__cell--body {
-  font-size: var(--font-size-sm) !important;
-   padding: 3px var(--space-sm) !important;
+.table__container .table__cell--body {
+  font-size: var(--table-cell-font) !important;
+  padding: var(--table-cell-padding) !important;
+  line-height: 1.3 !important;
+  vertical-align: middle !important;
 }
 
-.table__pagination,
-.table__pagination p {
-  min-height: 10% !important;
-  font-size: var(--font-size-sm) !important;
+.table__container .table__cell--header {
+  text-align: center !important;
 }
 
-.status {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-xl);
-  font-weight: 500;
-  display: inline-block;
-  min-width: 40px;
+.table__container .table__cell--header > div {
+  justify-content: center;
   text-align: center;
 }
 
-.status--active {
-  background-color: var(--color-success);
-  color: var(--text-white);
+.table__row--skeleton {
+  pointer-events: none;
 }
 
-.status .status--inactive {
-  background-color: var(--color-error);
-  color: var(--text-white);
+.table__cell--skeleton {
+  height: 3.6rem;
 }
 
-.table__container {
-  width: 100%;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
+.table__skeleton-bar {
+  display: block;
+  height: 1.2rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-200) 0%,
+    var(--color-gray-100) 50%,
+    var(--color-gray-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: tableSkeleton 1.2s ease-in-out infinite;
 }
 
-.table__cell--header {
-  font-size: var(--font-size-lg) !important;
-  background-color: var(--color-primary) !important;
+.table__skeleton-bar--1 {
+  width: 78%;
+}
+
+.table__skeleton-bar--2 {
+  width: 58%;
+}
+
+.table__skeleton-bar--3 {
+  width: 68%;
+}
+
+@keyframes tableSkeleton {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.table__container .MuiTableCell-root {
+  font-size: var(--table-cell-font) !important;
+}
+
+.table__container .MuiTableCell-head,
+.table__container .MuiTableCell-stickyHeader {
+  line-height: 1.2 !important;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
   color: var(--text-white) !important;
+  font-weight: 500 !important;
 }
 
-.table__cell--body {
-  font-size: var(--font-size-sm) !important;
+.table__container .MuiTableRow-root {
+  max-width: 100%;
+}
+
+.table__container .MuiTableBody-root .MuiTableRow-root:hover {
+  background-color: var(--color-gray-50);
+}
+
+.table__container .MuiTableHead-root .MuiTableRow-root:hover,
+.table__container .MuiTableHead-root .MuiTableCell-root:hover,
+.table__container .MuiTableCell-stickyHeader:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.table__container tbody .MuiIconButton-root {
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.2rem;
+}
+
+.table__container tbody .MuiIconButton-root svg,
+.table__container tbody .MuiSvgIcon-root {
+  font-size: var(--table-cell-font) !important;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-weight: 400;
 }
 
 .table__pagination,
-.table__pagination p {
-  font-size: var(--font-size-sm) !important;
+.table__pagination p,
+.table__container .MuiTablePagination-root,
+.table__container .MuiTablePagination-toolbar,
+.table__container .MuiTablePagination-selectLabel,
+.table__container .MuiTablePagination-displayedRows,
+.table__container .MuiTablePagination-input,
+.table__container .MuiSelect-select,
+.table__container .MuiTablePagination-actions {
+  min-height: auto !important;
+  font-size: var(--font-size-base) !important;
+  color: var(--text-primary) !important;
 }
 
-/* Status badge (if used) */
+.table__pagination {
+  flex-shrink: 0;
+}
+
+.table__container .MuiTablePagination-toolbar {
+  min-height: 5.6rem !important;
+  padding: 0.8rem var(--space-md) !important;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  row-gap: 0.8rem;
+  column-gap: 1.2rem;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.table__container .MuiTablePagination-spacer {
+  flex: 0 0 0 !important;
+}
+
+.table__container .MuiTablePagination-selectLabel,
+.table__container .MuiTablePagination-displayedRows {
+  margin: 0 !important;
+  font-weight: 500 !important;
+}
+
+.table__container .MuiTablePagination-select {
+  border: none !important;
+  padding-left: 0.8rem !important;
+}
+
+.table__container .MuiTablePagination-input,
+.table__container .MuiTablePagination-input .MuiInputBase-root {
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: 0.5rem;
+  margin: 0 0.6rem;
+}
+
+.table__container .MuiTablePagination-input::before,
+.table__container .MuiTablePagination-input::after,
+.table__container .MuiTablePagination-input .MuiOutlinedInput-notchedOutline,
+.table__container .MuiInput-underline::before,
+.table__container .MuiInput-underline::after {
+  display: none !important;
+  border: none !important;
+}
+
+.table__container .MuiTablePagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.table__container .MuiTablePagination-actions button {
+  width: 3.2rem !important;
+  height: 3.2rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: var(--text-primary) !important;
+  background: #fff !important;
+  border: var(--control-border-width) solid var(--control-border) !important;
+  border-radius: 0.5rem !important;
+}
+
+.table__container .MuiTablePagination-actions button svg {
+  font-size: 2rem !important;
+}
+
+.table__container .MuiTablePagination-actions button:hover:not(:disabled) {
+  background: var(--bg-secondary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.table__container .MuiTablePagination-actions button.Mui-disabled {
+  opacity: 0.35;
+}
+
 .status {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-xl);
-  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border-radius: 0.4rem;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--table-cell-font);
+  line-height: 1.3;
   display: inline-block;
-  min-width: 40px;
+  min-width: 0;
   text-align: center;
 }
 
@@ -101,47 +252,16 @@
   color: var(--text-white);
 }
 
-.MuiTableRow-root{
-  max-width: 100%;
-}
-.MuiTableCell-head{
-      line-height: 1.2 !important;
-}
-
-.MuiTableCell-root{
-  font-size: var(--font-size-base) !important;
-  pad: var(--space-sm) 0 !important;
-}
-
-.table-contaner__search-filter__container{
-  max-width: 50%;
-  text-align:left;
-  padding: var(--space-sm) 0  var(--space-sm) 0;
-  margin: 0;
-}
-
-.table-contaner__search-filter{
-  max-width: 50%;
+.table-contaner__search-filter__container {
+  max-width: 28rem;
   text-align: left;
-  justify-self: start;
   padding: 0;
   margin: 0;
 }
 
-.MuiInputBase-input{
-  font-size: 12px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.MuiInputBase-inputSizeSmall{
-  height: 1rem !important;
-  display: flex Im !important;
-  justify-content: center !important;
-  align-items: center !important;
-  font-size: 12px !important;
-}
-
-.MuiOutlinedInput-notchedOutline{
-  font-size: 12px !important;
+.table-contaner__search-filter {
+  max-width: 100%;
+  text-align: left;
+  padding: 0;
+  margin: 0;
 }

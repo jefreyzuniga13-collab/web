@@ -312,6 +312,10 @@ type ConstruirPagoFacturaOptions = {
   montoAplicado: number
 }
 
+
+const trunc4 = (value: number): number =>
+  Math.trunc(value * 10000) / 10000
+
 /**
  * Construye un PagoGenerico individual dentro de multipago.
  *
@@ -346,12 +350,14 @@ export const construirPagoFactura = (
     Number(options.montoAplicado ?? 0)
   )
 
-  const cambio = esEfectivo
-    ? Math.max(
-        0,
-        montoRecibido - montoAplicado
-      )
-    : 0
+    const cambio = esEfectivo
+      ? trunc4(
+          Math.max(
+            0,
+            montoRecibido - montoAplicado
+          )
+        )
+      : 0
 
   const monedaFactura =
     safeStr(factura.moneda) || "1"
@@ -390,6 +396,7 @@ export const construirPagoFactura = (
         )
       : ""
 
+      
   const fechaOVence = esTransferencia
     ? new Date().toISOString().slice(0, 10)
     : esTarjetaManual
@@ -415,6 +422,9 @@ export const construirPagoFactura = (
     ? tasaFactura
     : tasaCambioSistema
 
+
+
+    
   return {
     numPago: String(index + 1),
     concepto,
@@ -456,7 +466,9 @@ export const construirPagoFactura = (
     /**
      * No redondear. PCG recibe la precisión completa.
      */
-    montoS: montoRecibido / tasa,
+    montoS: trunc4(
+      montoRecibido / tasa
+    ),
 
     indice: String(index + 1),
     codClienteCrd: "00000",

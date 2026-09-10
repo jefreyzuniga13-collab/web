@@ -79,26 +79,69 @@ const ProfileCard: React.FC = () => {
             </div>
           </div>
 
-          <div className="profile-card__header-actions">
-
-            {!isEditing ? (
-              <button className="profile-card__edit-btn" onClick={handleEdit}>
-                <MdOutlineEdit  size={16} />
-                Editar perfil
-              </button>
-            ) : (
-              <div className="profile-card__edit-actions">
-                <button className="profile-card__save-btn" onClick={handleSave}>
-                  Guardar
-                </button>
-                <button
-                  className="profile-card__cancel-btn"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </button>
+          <div className="profile-card__header-aside">
+            <div className="profile-card__header-meta">
+              <div className="profile-card__header-meta-item">
+                <span className="profile-card__header-meta-label">Estado</span>
+                <span className="profile-card__header-meta-value">
+                  <span
+                    className={`profile-card__account-indicator ${
+                      currentUser.isActive
+                        ? "profile-card__account-indicator--active"
+                        : "profile-card__account-indicator--inactive"
+                    }`}
+                  />
+                  {currentUser.isActive ? "Activa" : "Inactiva"}
+                </span>
               </div>
-            )}
+
+              <div className="profile-card__header-meta-item">
+                <span className="profile-card__header-meta-label">Miembro desde</span>
+                <span className="profile-card__header-meta-value">
+                  {new Date(currentUser.createdAt).toLocaleDateString("es-ES", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+
+              <div className="profile-card__header-meta-item">
+                <span className="profile-card__header-meta-label">Última actividad</span>
+                <span className="profile-card__header-meta-value">
+                  {currentUser.lastOnline
+                    ? new Date(currentUser.lastOnline).toLocaleDateString("es-ES", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "No disponible"}
+                </span>
+              </div>
+            </div>
+
+            <div className="profile-card__header-actions">
+              {!isEditing ? (
+                <button className="profile-card__edit-btn" onClick={handleEdit}>
+                  <MdOutlineEdit size={16} />
+                  Editar perfil
+                </button>
+              ) : (
+                <div className="profile-card__edit-actions">
+                  <button className="profile-card__save-btn" onClick={handleSave}>
+                    Guardar
+                  </button>
+                  <button
+                    className="profile-card__cancel-btn"
+                    onClick={handleCancel}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -197,61 +240,6 @@ const ProfileCard: React.FC = () => {
               </div>
             </div>
 
-            <div className="profile-card__section">
-              <h3 className="profile-card__section-title">
-                Información de Cuenta
-              </h3>
-              <div className="profile-card__info-grid">
-                <div className="profile-card__field">
-                  <Label>Estado de cuenta</Label>
-                  <div className="profile-card__status-badge">
-                    <span
-                      className={`profile-card__account-indicator ${currentUser.isActive
-                          ? "profile-card__account-indicator--active"
-                          : "profile-card__account-indicator--inactive"
-                        }`}
-                    >
-
-                    </span>
-                    {currentUser.isActive ? "Activa" : "Inactiva"}
-                  </div>
-                </div>
-
-                {/* <div className="profile-card__field">
-                <Label>Tipo de cliente</Label>
-                <span className="profile-card__value">{currentUser.clientType || 'Estándar'}</span>
-              </div> */}
-
-                <div className="profile-card__field">
-                  <Label>Miembro desde</Label>
-                  <span className="profile-card__value">
-                    {new Date(currentUser.createdAt).toLocaleDateString("es-ES", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                <div className="profile-card__field">
-                  <Label>Última actividad</Label>
-                  <span className="profile-card__value">
-                    {currentUser.lastOnline
-                      ? new Date(currentUser.lastOnline).toLocaleDateString(
-                        "es-ES",
-                        {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )
-                      : "No disponible"}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

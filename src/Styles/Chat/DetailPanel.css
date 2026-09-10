@@ -124,7 +124,7 @@
 }
 
 .detailPanel-optionBtn__icon {
-  color: var(--color-gray-600, #6b7280);
+  color: var(--color-primary-light);
 }
 
 .detailPanel-option:hover {
@@ -132,7 +132,7 @@
 }
 
 .detailPanel-option.is-active {
-  background: var(--color-primary, #0070B4);
+  background: var(--gradient-brand);
   color: var(--text-white, #fff);
 }
 
@@ -232,6 +232,17 @@
   padding: 0 12px;
   overflow-y: auto;
   /* overflow: hidden; */
+}
+
+.detailPanel-tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.detailPanel-tab[hidden] {
+  display: none !important;
 }
 
 .detailPanel-content-header {
@@ -410,14 +421,12 @@
   gap: 8px;
 }
 
-.btn {
+.chat-window__details .btn {
   border: 1px solid var(--border-secondary, #e5e7eb);
   border-radius: 8px;
-  /* padding: 6px 10px; */
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   background: var(--bg-primary, #fff);
   cursor: pointer;
-  font: inherit;
   white-space: nowrap;
   transition:
     transform 0.06s ease,
@@ -425,26 +434,26 @@
     background 0.12s ease;
 }
 
-.btn:hover {
+.chat-window__details .btn:hover {
   transform: translateY(-1px);
 }
 
-.btn:active {
+.chat-window__details .btn:active {
   transform: translateY(0);
 }
 
-.btn--primary {
+.chat-window__details .btn--primary {
   background: var(--color-primary, #0070B4);
   color: var(--text-white, #fff);
   border-color: transparent;
 }
 
-.btn--secondary {
+.chat-window__details .btn--secondary {
   background: var(--bg-tertiary, #f7f8fa);
   color: var(--color-gray-800, #1f2937);
 }
 
-.btn--ghost {
+.chat-window__details .btn--ghost {
   background-color: var(--bg-primary, #fff);
 }
 

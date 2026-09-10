@@ -1,3 +1,5 @@
+import Select from "@/Components/Common/Select"
+import { Label } from "@/Components/Common/Label"
 import type {
   ObtenerDivisaPagosTipoRes
 } from "@/Interfaces/Ecommerce/FacturaTempo"
@@ -83,15 +85,17 @@ export default function PaymentCurrencySelect({
     </div> */}
     
     <div className="checkout-field__payment-methods">
-      <label className="checkout-label" htmlFor="payType">
-        {label}
-      </label>
-    
-      <select
+      <Label htmlFor="payType">{label}</Label>
+
+      <Select
         id="payType"
-        className="checkout-input"
         value={safeStr(divisaSelected?.codigo)}
         disabled={disabled || divisaLoading}
+        placeholder={divisaLoading ? "Cargando..." : "Seleccionar"}
+        options={divisaOpts.map((item) => ({
+          value: safeStr(item.codigo),
+          label: item.nombre
+        }))}
         onChange={(event) => {
           const code = safeStr(event.target.value)
 
@@ -100,20 +104,7 @@ export default function PaymentCurrencySelect({
 
           setDivisaSelected(found)
         }}
-      >
-        <option value="">
-          {divisaLoading ? "Cargando..." : "Seleccionar"}
-        </option>
-
-        {divisaOpts.map((item) => (
-          <option
-            key={`${item.codigo}-${item.codigoExterno}`}
-            value={item.codigo}
-          >
-            {item.nombre}
-          </option>
-        ))}
-      </select>
+      />
     </div>
     
     </div>

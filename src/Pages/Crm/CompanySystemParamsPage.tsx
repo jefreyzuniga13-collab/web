@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { TextField, MenuItem, IconButton } from '@mui/material'
+import SearchFilter from '@/Components/Common/SearchFilter'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
@@ -19,7 +20,7 @@ const {
   items,
   companies,
   systemParams,
-  // loading,
+  loadingList,
   error,
   page,
   pageSize,
@@ -147,13 +148,10 @@ const {
       {error && <p className="sp-page__error">{error.message}</p>}
 
       <div className="table-contaner__search-filter__container">
-        <TextField
+        <SearchFilter
           label="Buscar"
-          variant="outlined"
-          size="medium"
-          fullWidth
           value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          onApply={setGlobalFilter}
         />
 
         <TextField
@@ -177,6 +175,7 @@ const {
       <CustomTable<CompanySystemParamProj>
         columns={columns}
         rows={items}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

@@ -174,6 +174,7 @@ export function useDynamicParam() {
     dynamicParams,
     selectedDynamicParam,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { MessageSquareOff, MoreVertical } from "lucide-react"
+import { MessageSquareOff, MoreVertical, ShoppingCart } from "lucide-react"
 import "@/Styles/Chat/InboxList.css"
 import { toast } from "react-toastify"
 import { markConversationRead } from "@/Services/chat/ConversationService"
 import type { ConversationDto } from "@/Interfaces/Chat/ChatInterfaces"
 import type { PaginationInfo } from "@/Interfaces/Common/GlobalInterface"
-import CustomLoader from "@/Components/Common/CustomLoader"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { selectCartBadgeByContactId } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { useSelector } from "react-redux"
-import { FaCartFlatbedSuitcase } from "react-icons/fa6"
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import { useContactBlock } from "@/Hooks/Wh/useContactBlock"
 import {
@@ -23,6 +22,7 @@ import {
   parseConversationDate,
 } from "@/Utils/ECommerce/formatters"
 import { getChannelIcon } from "@/Utils/Chat/Utils"
+import { getClassificationCode } from "@/Utils/contactClassification"
 import useContact from "@/Hooks/Auth/useContact"
 
 interface Props {
@@ -82,7 +82,9 @@ export const InboxList: React.FC<Props> = ({
   const { blockContact, unblockContact, isBlocking, isUnblocking } =
     useContactBlock()
 
-  const { updateFullName, updatingFullName } = useContact()
+  const { updateFullName, updatingFullName } = useContact(undefined, {
+    loadList: false,
+  })
 
   const [menuState, setMenuState] = useState<MenuState>(null)
 
@@ -144,6 +146,22 @@ export const InboxList: React.FC<Props> = ({
     }
   }, [editingContactId])
 
+  const allowNextPageRef = useRef(false)
+
+  useEffect(() => {
+    allowNextPageRef.current = false
+
+    if (loading || conversations.length === 0) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      allowNextPageRef.current = true
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [conversations.length, loading, page])
+
   useEffect(() => {
     const root = listRef.current
     const loader = loaderRef.current
@@ -156,6 +174,7 @@ export const InboxList: React.FC<Props> = ({
 
         if (
           entry.isIntersecting &&
+          allowNextPageRef.current &&
           page < pagination.totalPages &&
           !loading
         ) {
@@ -164,7 +183,7 @@ export const InboxList: React.FC<Props> = ({
       },
       {
         root,
-        rootMargin: "120px",
+        rootMargin: "0px",
         threshold: 0.1,
       }
     )
@@ -506,6 +525,14 @@ export const InboxList: React.FC<Props> = ({
     )
   }
 
+  if (conversations.length === 0 && loading) {
+    return (
+      <ul ref={listRef} className="inbox-list">
+        <ListSkeleton variant="list" count={18} asItems />
+      </ul>
+    )
+  }
+
   if (
     conversations.length === 0 &&
     !loading
@@ -539,6 +566,11 @@ export const InboxList: React.FC<Props> = ({
           )}
 
           {group.conversations.map(conversation => {
+            const classificationCode = getClassificationCode(
+              conversation.contactClassificationBgColor,
+              conversation.contactClassificationName
+            )
+
             const isSelected =
               conversation.conversationId === selectedId
 
@@ -650,11 +682,11 @@ export const InboxList: React.FC<Props> = ({
                 onPointerUp={handlePointerEnd}
                 onPointerLeave={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
-                className={`inbox-list__item${
+                className={`inbox-list__item inbox-list__item--class-${classificationCode}${
                   isSelected
                     ? " inbox-list__item--selected"
                     : ""
-                } ${
+                }${
                   conversation.isBlocked
                     ? " inbox-list__item--isblocked"
                     : ""
@@ -673,110 +705,69 @@ export const InboxList: React.FC<Props> = ({
                         <span className="inbox-list__namecontactClassification">
                           <span className="inbox-list__editable-name">
                             {isEditingName ? (
-                              <>
-                                <span
-                                  aria-hidden="true"
-                                  className="inbox-list__editable-name-parenthesis"
-                                >
-                                  (
-                                </span>
+                              <input
+                                ref={nameInputRef}
+                                type="text"
+                                className="inbox-list__inline-name-input"
+                                value={
+                                  editingNames[contactId] ??
+                                  displayedContactName
+                                }
+                                disabled={updatingFullName}
+                                aria-label="Nombre del contacto"
+                                onClick={event => {
+                                  event.stopPropagation()
+                                }}
+                                onPointerDown={event => {
+                                  event.stopPropagation()
+                                }}
+                                onChange={event => {
+                                  setEditingNames(prev => ({
+                                    ...prev,
+                                    [contactId]:
+                                      event.target.value,
+                                  }))
+                                }}
+                                onBlur={() => {
+                                  void handleUpdateFullName(
+                                    conversation
+                                  )
+                                }}
+                                onKeyDown={event => {
+                                  event.stopPropagation()
 
-                                <input
-                                  ref={nameInputRef}
-                                  type="text"
-                                  className="inbox-list__inline-name-input"
-                                  value={
-                                    editingNames[contactId] ??
-                                    displayedContactName
+                                  if (event.key === "Enter") {
+                                    event.preventDefault()
+                                    event.currentTarget.blur()
                                   }
-                                  disabled={updatingFullName}
-                                  aria-label="Nombre del contacto"
-                                  onClick={event => {
-                                    event.stopPropagation()
-                                  }}
-                                  onPointerDown={event => {
-                                    event.stopPropagation()
-                                  }}
-                                  onChange={event => {
-                                    setEditingNames(prev => ({
-                                      ...prev,
-                                      [contactId]:
-                                        event.target.value,
-                                    }))
-                                  }}
-                                  onBlur={() => {
-                                    void handleUpdateFullName(
+
+                                  if (event.key === "Escape") {
+                                    event.preventDefault()
+
+                                    handleCancelNameEdit(
                                       conversation
                                     )
-                                  }}
-                                  onKeyDown={event => {
-                                    event.stopPropagation()
-
-                                    if (event.key === "Enter") {
-                                      event.preventDefault()
-                                      event.currentTarget.blur()
-                                    }
-
-                                    if (event.key === "Escape") {
-                                      event.preventDefault()
-
-                                      handleCancelNameEdit(
-                                        conversation
-                                      )
-                                    }
-                                  }}
-                                />
-
-                                <span
-                                  aria-hidden="true"
-                                  className="inbox-list__editable-name-parenthesis"
-                                >
-                                  )
-                                </span>
-                              </>
+                                  }
+                                }}
+                              />
                             ) : conversation.clientContactId !=
                               null ? (
-                              ` (${displayedContactName})`
+                              displayedContactName
                             ) : (
                               ""
                             )}
                           </span>
-
-                          <span
-                            className={`inbox-list__contactClassification ${conversation.contactClassificationBgColor}`}
-                          >
-                            {
-                              conversation.contactClassificationName
-                            }
-                          </span>
                         </span>
 
                         {hasCart && (
-                          <span className="inbox-list__isItemsInCart">
-                            <FaCartFlatbedSuitcase
-                              fontSize={16}
-                            />
+                          <span
+                            className="inbox-list__isItemsInCart"
+                            title="Tiene productos en carrito"
+                          >
+                            <ShoppingCart size={16} strokeWidth={1.8} />
                           </span>
                         )}
                       </span>
-
-                      <button
-                        type="button"
-                        className="inbox-list__menu-button"
-                        onClick={event => {
-                          event.preventDefault()
-                          event.stopPropagation()
-
-                          openMenu(
-                            conversation.conversationId
-                          )
-                        }}
-                        disabled={actionLoading}
-                        title="Opciones"
-                        aria-label="Opciones de conversación"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
                     </div>
 
                     <div className="inbox-list__names">
@@ -798,6 +789,34 @@ export const InboxList: React.FC<Props> = ({
                   </div>
 
                   <div className="inbox-list__bottom">
+                    <div className="inbox-list__bottom-head">
+                      <button
+                        type="button"
+                        className="inbox-list__menu-button"
+                        onClick={event => {
+                          event.preventDefault()
+                          event.stopPropagation()
+
+                          openMenu(
+                            conversation.conversationId
+                          )
+                        }}
+                        disabled={actionLoading}
+                        title="Opciones"
+                        aria-label="Opciones de conversación"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+
+                      {conversation.contactClassificationName?.trim() && (
+                        <span
+                          className={`inbox-list__classification inbox-list__classification--${classificationCode}`}
+                        >
+                          {conversation.contactClassificationName}
+                        </span>
+                      )}
+                    </div>
+
                     <div className="inbox-list__bottom_text">
                       <span
                         className={`inbox-list__status inbox-list__status--${statusClass}`}
@@ -875,10 +894,8 @@ export const InboxList: React.FC<Props> = ({
         </React.Fragment>
       ))}
 
-      {loading && (
-        <li className="inbox-list__loader-item">
-          <CustomLoader />
-        </li>
+      {loading && conversations.length > 0 && (
+        <ListSkeleton variant="list" count={3} asItems />
       )}
 
       <li

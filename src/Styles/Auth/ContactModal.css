@@ -1,45 +1,44 @@
 .cm-modal__overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(0.2rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-lg);
+  padding: var(--space-md);
   z-index: 1000;
   animation: fadeIn var(--transition-normal) var(--transition-ease);
 }
 
 .cm-modal__container {
   background-color: var(--bg-primary);
-  border-radius: var(--radius-xl);
+  border-radius: var(--modal-radius);
   box-shadow: var(--shadow-xl);
-  width: 100%;
-  height: 90%;
-  max-width: 90rem;
-  max-height: 90vh;
+  width: min(var(--modal-max-width), calc(100vw - 2.4rem));
+  max-height: min(90vh, calc(100dvh - 2.4rem));
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: slideIn var(--transition-normal) var(--transition-ease);
-  padding: var(--space-2xl);
+  padding: var(--modal-padding);
 }
 
 .cm-modal__select,
 .cm-modal__textarea {
   width: 100%;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
+  min-height: var(--control-height);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--control-radius);
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  padding: var(--space-md);
+  font-size: var(--control-font-size);
+  padding: var(--control-padding-y) var(--control-padding-x);
   outline: none;
 }
 
 .cm-modal__textarea {
-  min-height: 9rem;
+  min-height: 8rem;
   resize: vertical;
 }
 
@@ -52,14 +51,30 @@
 .cm-modal__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-lg);
+  align-items: flex-start;
+  margin-bottom: var(--space-md);
+}
+
+.cm-modal__header-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .cm-modal__title {
-  font-size: var(--font-size-2xl);
+  margin: 0;
+  font-size: var(--page-title-size);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
+  text-align: left;
+}
+
+.cm-modal__subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: var(--page-subtitle-size);
+  text-align: left;
 }
 
 .cm-modal__close {
@@ -68,29 +83,33 @@
   font-size: var(--font-size-xl);
   line-height: 1;
   cursor: pointer;
-  color: var(--text-white);
+  color: var(--color-error);
   transition: color var(--transition-fast);
 }
+
 .cm-modal__close:hover {
-  color: var(--text-primary);
+  color: #b91c1c;
 }
 
 .cm-modal__body {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: var(--space-md);
 }
 
-/* Aquí forzamos dos columnas */
 .cm-modal__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
 }
 
-/* Si quieres que algún campo abarque las dos columnas */
+@media (min-width: 768px) {
+  .cm-modal__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .cm-modal__col--full {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .cm-modal__col {
@@ -100,28 +119,62 @@
 
 .cm-modal__grid label,
 .cm-modal__grid .cm-modal__col > label {
-  margin-bottom: var(--space-xs);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+  font-size: var(--control-label-size);
+  color: var(--text-secondary);
+}
+
+.cm-modal__check {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--control-height);
+}
+
+.cm-modal__check .label {
+  margin-bottom: 0;
+}
+
+.cm-modal__check input[type="checkbox"] {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--color-primary);
 }
 
 .cm-modal__error {
   color: var(--color-error);
   font-size: var(--font-size-sm);
-  margin-top: var(--space-xs);
+  margin-top: 0.4rem;
+}
+
+.cm-modal__hint {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 
 .cm-modal__footer {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-sm);
-  margin-top: var(--space-lg);
-}
-.cm-modal__footer__btn{
-  min-width: 100% !important;
+  margin-top: var(--space-md);
 }
 
-/* Asegura íconos MUI tamaño correcto */
-.MuiSvgIcon-root {
-  font-size: var(--font-size-xl) !important;
+.cm-modal__footer__btn {
+  min-width: 100% !important;
+  min-height: var(--control-height);
+}
+
+@media (max-width: 640px) {
+  .cm-modal__container {
+    width: calc(100vw - 1.6rem);
+    max-height: calc(100dvh - 1.6rem);
+    padding: var(--space-md);
+  }
+
+  .cm-modal__footer {
+    grid-template-columns: 1fr;
+  }
 }

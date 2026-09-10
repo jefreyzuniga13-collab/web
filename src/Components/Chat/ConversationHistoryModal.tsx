@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Search, ChevronDown, ChevronUp, X, Loader2 } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { ConversationService } from "@/Services/chat/ConversationService";
 import useContact from "@/Hooks/Auth/useContact";
 import bg from "@/assets/img/backgroundchat.png";
 import "@/Styles/Chat/ConversationHistoryModal.css";
-import CustomLoader from '@/Components/Common/CustomLoader'
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { formatTime } from "@/Utils/ECommerce/formatters";
 import { dateLabel, renderAttachments } from "@/Utils/Chat/Utils";
 
@@ -31,7 +31,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
     getByClientCode,
     loading: contactsLoading,
     error: contactsError
-  } = useContact();
+  } = useContact(undefined, { loadList: false });
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
@@ -285,7 +285,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
             <div className="chm-contacts-header">Contactos</div>
             <div className="chm-contacts-list">
               {contactsLoading && (
-                <div className="chm-contacts-loading">Cargando…</div>
+                <ListSkeleton variant="list" count={6} />
               )}
               {contactsError && (
                 <div className="chm-contacts-error">Error al cargar</div>
@@ -394,10 +394,11 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
               ref={listRef}
             >
               {loading && messages.length === 0 ? (
-                <div className="chm-loading">
-                  <Loader2 size={32} className="chm-spinner" />
-                  <span>Cargando historial…</span>
-                </div>
+                <ListSkeleton
+                  variant="message"
+                  count={14}
+                  className="list-skeleton--fill"
+                />
               ) : sortedMessages.length > 0 ? (
                 <div className="chm-list">
                   {stickyDate && (
@@ -580,7 +581,7 @@ const ConversationHistoryModal: React.FC<ConversationHistoryModalProps> = ({
                   })}
 
                   {loading && hasMore && (
-                    <CustomLoader/>
+                    <ListSkeleton variant="message" count={2} />
                   )}
 
                   {!hasMore && (

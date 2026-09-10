@@ -221,6 +221,12 @@ class ContactService {
       }
 
 
+      async reclassifyContactsAsync(): Promise<void> {
+        await api.post<ApiResponse<unknown>>(
+          "/ContactLogs/reclassify"
+        )
+      }
+
       async updateFullNameAsync(
       id: number,
       newFullName: string

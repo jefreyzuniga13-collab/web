@@ -9,18 +9,15 @@ import VisibilityIcon from "@mui/icons-material/Visibility"
 import ToggleOffIcon from "@mui/icons-material/ToggleOff"
 import ToggleOnIcon from "@mui/icons-material/ToggleOn"
 import { MdOutlineEdit } from "react-icons/md";
-import "@/Styles/Crm/OpeningHourPage.css"
 import "@/Styles/Crm/WorkShiftPage.css"
 import WorkShiftModal from "@/Components/Crm/WorkShiftModal"
 import { format, parseISO } from "date-fns"
-import { TextField } from "@mui/material"
+import SearchFilter from "@/Components/Common/SearchFilter"
 // import Spinner from "@/Components/Common/Spinner"
 
 export default function WorkShiftPage() {
   const {
     workShifts,
-    // loading,
-    error,
     page,
     pageSize,
     totalCount,
@@ -36,7 +33,8 @@ export default function WorkShiftPage() {
     modalMode,
     selectedWorkShift,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    loadingList
   } = useWorkShift()
 
   const columns: Column<WorkShiftInterface>[] = useMemo(() => [
@@ -123,23 +121,13 @@ export default function WorkShiftPage() {
         </div>
       </div>
 
-     <div className='table-contaner__search-filter__container'>
-        <TextField
-          label="Filtrar"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className='table-contaner__search-filter'
-        />
+      <div className="table-contaner__search-filter__container">
+        <SearchFilter value={globalFilter} onApply={setGlobalFilter} />
       </div> 
-      {/* {loading && <div className="ws-page__loading"><Spinner/></div>} */}
-      {error && <p className="ws-page__error">Error: {error.message}</p>}
-
       <CustomTable<WorkShiftInterface>
         columns={columns}
         rows={workShifts}
+        loading={loadingList}
         count={totalCount}
         page={page - 1}
         rowsPerPage={pageSize}

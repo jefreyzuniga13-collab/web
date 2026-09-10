@@ -166,22 +166,6 @@ const Navbar: React.FC = () => {
       aria-label="Navegación principal"
     >
       <div className="navbar__header">
-        <div className="navbar__header-container">
-          {companyImageSrc && (
-            <img
-              src={companyImageSrc}
-              alt="Logo de la empresa"
-              className="navbar__logo"
-            />
-          )}
-
-          {companyHeader && (
-            <p className="navbar__header__text">
-              {companyHeader}
-            </p>
-          )}
-        </div>
-
         <button
           type="button"
           className="navbar__collapse-btn"
@@ -271,6 +255,20 @@ const Navbar: React.FC = () => {
           {userFullName ||
             "Usuario"}
         </span>
+
+        {companyImageSrc && (
+          <img
+            src={companyImageSrc}
+            alt="Logo de la empresa"
+            className="navbar__logo"
+          />
+        )}
+
+        {companyHeader && (
+          <p className="navbar__header__text">
+            {companyHeader}
+          </p>
+        )}
       </div>
 
       <p className="navbar__copyright">

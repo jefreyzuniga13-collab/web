@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type JSX } from "react";
 import { FaTrash } from "react-icons/fa";
 import { safeStr } from "@/Utils/ECommerce/formatters";
+import ListSkeleton from "@/Components/Common/ListSkeleton";
 import { useTarjetaPCG } from "@/Hooks/Ecommerce/payment/useTarjeta";
 import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import '@/Styles/Ecommerce/Payment/SavedCards.css';
@@ -107,7 +108,7 @@ export default function SavedCards({ ecommerceUserId, onSelectCard }: Props) {
   if (loadingTarjetas) {
     return (
       <div className="checkout-saved-cards">
-        <div className="checkout-saved-cards__empty">Cargando tarjetas...</div>
+        <ListSkeleton variant="list" count={3} />
       </div>
     );
   }

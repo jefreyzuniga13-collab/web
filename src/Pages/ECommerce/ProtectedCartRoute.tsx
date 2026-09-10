@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import NotFound from "@/Pages/Auth/NotFound"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import CarPage from "@/Pages/ECommerce/CarPage"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import { CartService } from "@/Services/Ecommerce/CartService"
+import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
 
 type Status = "loading" | "ok" | "unauthorized"
 
@@ -44,16 +46,12 @@ const savePayloadToSession = (
 }
 
 const applyEmpresaId = (payload: TempLinkResolveResponseDto) => {
-  const empresaId = payload?.empresaId?.trim() ?? ""
+  const empresaId = applyPublicEmpresaId(payload?.empresaId)
 
-  if (empresaId) {
-    sessionStorage.setItem("EmpresaId", empresaId)
-    return
+  if (!empresaId) {
+    localStorage.removeItem("EmpresaId")
+    console.warn("empresaId no vino en el payload")
   }
-
-  sessionStorage.removeItem("EmpresaId")
-  localStorage.removeItem("EmpresaId")
-  console.warn("empresaId no vino en el payload")
 }
 
 const resolvePaynowTokenOnce = async (
@@ -167,8 +165,8 @@ const ProtectedCartRoute = () => {
 
   if (status === "loading") {
     return (
-      <main className="cart-page cart-page--centered">
-        <p>Validando enlace...</p>
+      <main className="cart-page">
+        <ListSkeleton variant="cart" count={5} />
       </main>
     )
   }

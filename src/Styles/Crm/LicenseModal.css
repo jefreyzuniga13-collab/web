@@ -60,6 +60,7 @@
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary);
+  text-align: left;
 }
 
 .cm-modal__close {
@@ -165,6 +166,14 @@
   color: var(--color-error);
   font-size: var(--font-size-sm);
   margin-top: var(--space-xs);
+}
+
+.cm-modal__hint {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 
 .cm-modal__footer {

@@ -29,7 +29,7 @@ type Errors = {
 interface UseOpeningHourFormParams {
   mode: 'create' | 'edit' | 'view'
   data?: OpeningHourInterface | null
-  onSubmit: (values: OpeningHourFormValues) => void
+  onSubmit: (values: OpeningHourFormValues) => void | Promise<void>
 }
 
 const SPANISH_TO_ENGLISH: Record<string, DayOfWeek> = {
@@ -81,6 +81,7 @@ export function useOpeningHourForm({
 
   const [form, setForm] = useState<OpeningHourFormState>(initialForm)
   const [errors, setErrors] = useState<Errors>({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if ((mode === 'edit' || isView) && data) {
@@ -160,7 +161,7 @@ export function useOpeningHourForm({
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Errors = {}
 
@@ -253,11 +254,15 @@ export function useOpeningHourForm({
       isActive: form.isActive,
     }
 
-    onSubmit(payload)
-
-    if (mode === 'create') {
-      setForm(initialForm)
-      setErrors({})
+    setLoading(true)
+    try {
+      await onSubmit(payload)
+      if (mode === 'create') {
+        setForm(initialForm)
+        setErrors({})
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -271,5 +276,6 @@ export function useOpeningHourForm({
     handleRecurrence,
     toggleDay,
     handleSubmit,
+    loading,
   }
 }

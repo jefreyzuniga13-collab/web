@@ -55,7 +55,8 @@
 
 .table__cell--header {
   font-size: var(--font-size-sm) !important;
-  background-color: var(--color-primary) !important;
+  background: none !important;
+  background-color: transparent !important;
   color: var(--text-white) !important;
 }
 
@@ -65,15 +66,16 @@
 
 .table__pagination,
 .table__pagination p {
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--font-size-base) !important;
+  color: var(--text-primary) !important;
 }
 
 .status {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-xl);
+  padding: 0.4rem 1rem;
+  border-radius: 0.4rem;
   font-weight: 500;
   display: inline-block;
-  min-width: 40px;
+  min-width: 0;
   text-align: center;
 }
 
@@ -101,7 +103,8 @@
 
 .table__cell--header {
   font-size: var(--font-size-sm) !important;
-  background-color: var(--color-primary) !important;
+  background: none !important;
+  background-color: transparent !important;
   color: var(--text-white) !important;
 }
 
@@ -111,16 +114,17 @@
 
 .table__pagination,
 .table__pagination p {
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--font-size-base) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Status badge (if used) */
 .status {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-xl);
+  padding: 0.4rem 1rem;
+  border-radius: 0.4rem;
   font-weight: 500;
   display: inline-block;
-  min-width: 40px;
+  min-width: 0;
   text-align: center;
 }
 

@@ -9,6 +9,9 @@ interface DatePickerFieldProps {
   onChange: (date: Date | null) => void;
   disabled?: boolean;
   className?: string;
+  shouldDisableDate?: (date: Date) => boolean;
+  error?: string;
+  format?: string;
 }
 
 const pickerValueToDate = (value: Date | Dayjs | null): Date | null => {
@@ -22,6 +25,9 @@ export default function DatePickerField({
   onChange,
   disabled = false,
   className = "",
+  shouldDisableDate,
+  error,
+  format = "dd/MM/yyyy",
 }: DatePickerFieldProps) {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -33,24 +39,19 @@ export default function DatePickerField({
           const asDate = pickerValueToDate(newValue as Date | Dayjs | null);
           onChange(asDate);
         }}
-        format="dd/MM/yyyy"
+        format={format}
+        shouldDisableDate={
+          shouldDisableDate
+            ? (day) => shouldDisableDate(pickerValueToDate(day as Date | Dayjs | null) ?? new Date())
+            : undefined
+        }
         slotProps={{
           textField: {
             className: `date-picker-field ${className}`,
+            size: "small",
             fullWidth: true,
-            sx: {
-              "& .MuiInputBase-root": {
-                height: 36,
-                fontSize: "0.85rem",
-                padding: "0 6px",
-              },
-              "& input": {
-                padding: "0 8px",
-              },
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderRadius: "6px",
-              },
-            },
+            error: Boolean(error),
+            helperText: error,
           },
         }}
       />

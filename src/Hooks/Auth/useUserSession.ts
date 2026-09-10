@@ -98,6 +98,7 @@ export const useUserSession = () => {
     sessions,
     selectedSession,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

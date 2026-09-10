@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 import { WorkShiftService } from "@/Services/Crm/WorkShiftService";
 import type {
   WorkShiftInterface,
@@ -56,6 +57,8 @@ export const useWorkShift = () => {
       await fetchPage(1, pageSize);
     } catch (err: any) {
       setError(err);
+      toast.error(err?.message ?? "No se pudo crear el turno.");
+      throw err;
     } finally {
       setLoadingItem(false);
     }
@@ -69,6 +72,8 @@ export const useWorkShift = () => {
       await fetchPage(page, pageSize);
     } catch (err: any) {
       setError(err);
+      toast.error(err?.message ?? "No se pudo actualizar el turno.");
+      throw err;
     } finally {
       setLoadingItem(false);
     }
@@ -116,12 +121,11 @@ export const useWorkShift = () => {
     setSelectedWorkShift(null);
   }, []);
 
-  const handleSubmit = useCallback((values: WorkShiftFormValues) => {
-
+  const handleSubmit = useCallback(async (values: WorkShiftFormValues) => {
     if (modalMode === 'create') {
-      create(values);
+      await create(values);
     } else if (modalMode === 'update' && selectedWorkShift) {
-      update(selectedWorkShift.id, values);
+      await update(selectedWorkShift.id, values);
     }
     closeModal();
   }, [modalMode, selectedWorkShift, create, update, closeModal]);
@@ -134,6 +138,7 @@ export const useWorkShift = () => {
     workShifts,
     selectedWorkShift,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

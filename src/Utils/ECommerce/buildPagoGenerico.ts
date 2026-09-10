@@ -128,6 +128,11 @@ type BuildPagoGenericoParams = {
   indice?: string
 }
 
+
+const trunc4 = (value: number): number =>
+  Math.trunc(value * 10000) / 10000
+
+
 /**
  * Construye un PagoGenerico para pago único.
  *
@@ -177,12 +182,14 @@ export const buildPagoGenerico = ({
 
   const montoAplicado = totalFactura
 
-  const cambio = esEfectivo
-    ? Math.max(
+const cambio = esEfectivo
+  ? trunc4(
+      Math.max(
         0,
         montoRecibido - montoAplicado
       )
-    : 0
+    )
+  : 0
 
   const tasa = Number.isFinite(
     Number(tasaCambio)
@@ -304,7 +311,9 @@ export const buildPagoGenerico = ({
      *
      * No redondear.
      */
-    montoS: montoRecibido / tasa,
+    montoS: trunc4(
+      montoRecibido / tasa
+    ),
 
     indice,
     codClienteCrd: "00000",

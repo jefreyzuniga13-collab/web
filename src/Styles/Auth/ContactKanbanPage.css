@@ -81,9 +81,14 @@
 
 .contact-kanban-toolbar {
   display: grid;
-  grid-template-columns: 300px 190px;
+  grid-template-columns: minmax(220px, 300px) auto 190px;
   gap: 12px;
   align-items: center;
+}
+
+.contact-kanban-toolbar__action {
+  white-space: nowrap;
+  height: 42px;
 }
 
 .contact-kanban-toolbar__search {

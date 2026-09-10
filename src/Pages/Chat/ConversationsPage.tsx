@@ -15,8 +15,6 @@ import  RatingStars from '@/Utils/ConvertToStarts'
 import { ImWhatsapp } from "react-icons/im";
 import { RiMessengerLine } from "react-icons/ri";
 import { FaInstagram } from "react-icons/fa6";
-import Spinner from '@/Components/Common/Spinner'
-
 export default function ConversationsPage() {
   const location = useLocation();
   const { state, rating, selectedAgentId } = useParams<{ state?: string; rating?: string; selectedAgentId?: string }>();
@@ -116,13 +114,13 @@ useEffect(() => {
         </div>
       </header>
 
-      {loading && <Spinner size={16} text="Cargando datos..." />}
       {error && <p className="conversations-page__error">Error: {error.message}</p>}
 
-      {!loading && !error && (
+      {!error && (
         <CustomTable<ConversationDto>
           columns={columns}
           rows={data}
+          loading={loading}
           count={totalCount}
           page={page - 1}
           rowsPerPage={pageSize}

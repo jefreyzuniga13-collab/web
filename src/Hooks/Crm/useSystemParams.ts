@@ -6,7 +6,12 @@ import type {
 } from '@/Interfaces/Auth/AuthInterface'
 import { SystemParamService } from '@/Services/Crm/SystemParamService'
 
-export function useSystemParams() {
+type UseSystemParamsOptions = {
+  loadList?: boolean
+}
+
+export function useSystemParams(options?: UseSystemParamsOptions) {
+  const loadList = options?.loadList ?? true
   const [systemParams, setSystemParams] = useState<SystemParamResponseDto[]>([])
   const [selectedParam, setSelectedParam] = useState<SystemParamResponseDto | null>(null)
   const [page, setPage] = useState(1)
@@ -161,13 +166,15 @@ export function useSystemParams() {
   )
 
   useEffect(() => {
+    if (!loadList) return
     fetchPage()
-  }, [fetchPage, globalFilter])
+  }, [fetchPage, globalFilter, loadList])
 
   return {
     systemParams,
     selectedParam,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

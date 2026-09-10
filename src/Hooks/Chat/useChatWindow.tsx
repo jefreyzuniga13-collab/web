@@ -946,10 +946,7 @@ export const useChatWindow = (
               href={part}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: "#8595f0ff",
-                textDecoration: "underline",
-              }}
+              className="chat-window__message-link"
             >
               {part}
             </a>
@@ -1466,8 +1463,6 @@ export const useChatWindow = (
         files.length > 0 &&
         !sendingRef.current &&
         conversationId &&
-        args.conversationStatus !== "Closed" &&
-        args.conversationStatus !== "Incomplete" &&
         !isTyping
       ) {
         event.preventDefault()
@@ -1480,7 +1475,7 @@ export const useChatWindow = (
     return () => {
       window.removeEventListener("keydown", onGlobalEnter)
     }
-  }, [args.conversationStatus, conversationId, files.length, handleSend])
+  }, [conversationId, files.length, handleSend])
 
   const visibleState = useMemo(
     () => ({

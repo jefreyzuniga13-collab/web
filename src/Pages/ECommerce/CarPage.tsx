@@ -3,7 +3,7 @@ import "@/Styles/Ecommerce/CartPage.css"
 import noimageavailable from '@/assets/vacio.png'
 import { useNavigate } from "react-router-dom"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
-import CustomLoader from "@/Components/Common/CustomLoader"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import {
@@ -131,8 +131,11 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
   if (loading) {
     return (
-      <main className="cart-page cart-page--centered">
-        <CustomLoader />
+      <main className="cart-page">
+        <header className="cart-page__header">
+          <h1 className="cart-page__title">Carrito de compra</h1>
+        </header>
+        <ListSkeleton variant="cart" count={5} />
       </main>
     )
   }

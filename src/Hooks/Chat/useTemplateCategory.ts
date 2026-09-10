@@ -159,6 +159,7 @@ export function useTemplateCategory() {
     templateCategories,
     selectedTemplateCategory,
     loading: loadingList || loadingItem,
+    loadingList,
     error,
     page,
     pageSize,

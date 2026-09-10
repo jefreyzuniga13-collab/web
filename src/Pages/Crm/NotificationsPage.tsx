@@ -29,7 +29,8 @@ export default function NotificationsPage(){
     modalMode,
     handleSubmit,
     selectedData,
-    closeModalAsync
+    closeModalAsync,
+    loadingList
   } = useNotification();
 
   const column: Column<NotificationResponseDto>[] = useMemo(()=>[
@@ -112,6 +113,7 @@ export default function NotificationsPage(){
           <CustomTable<NotificationResponseDto>
             columns={column}
             rows={data}
+            loading={loadingList}
             count={totalCount}
             page={page - 1}
             rowsPerPage={pageSize}

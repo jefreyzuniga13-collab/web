@@ -21,7 +21,7 @@
 
 .productTab-content-header__titleDetail{
   text-transform: capitalize;
-  font-size: var(--font-size-sm) !important;
+  font-size: var(--text-chat-title) !important;
   display: flex;
   justify-content: start;
   align-items: center;

@@ -231,6 +231,8 @@ export interface AgentDto {
   userId: number
   fullName: string
   email: string
+  isActive?: boolean
+  isOnline?: boolean
 }
 
 export interface CompanyDto {

@@ -33,22 +33,31 @@
 
 .assign-modal__header-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-lg);
+}
+
+.assign-modal__heading {
+  min-width: 0;
+  text-align: left;
 }
 
 .assign-modal__title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--text-default);
+  color: var(--color-primary);
   margin: 0;
   line-height: var(--line-height-tight);
+  text-align: left;
 }
 
-.assign-modal__client-name {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
+.assign-modal__subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
 }
 
 .assign-modal__close-button {
@@ -291,6 +300,10 @@
 
   .assign-modal__title {
     font-size: var(--font-size-base);
+  }
+
+  .assign-modal__subtitle {
+    font-size: var(--font-size-sm);
   }
 
   .assign-modal__agents-list {

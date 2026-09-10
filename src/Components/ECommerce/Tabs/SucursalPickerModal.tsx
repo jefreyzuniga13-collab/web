@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { ExistenciaSucursalItem } from "@/Interfaces/Ecommerce/FacturaTempo"
 import "@/Styles/Ecommerce/SucursalPickerModal.css"
 import { cleanText } from "@/Utils/ECommerce/formatters"
+import ListSkeleton from "@/Components/Common/ListSkeleton"
 
 export type SucursalPickerValue = {
   codsucursal: string
@@ -152,7 +153,7 @@ export function SucursalPickerModal({
 
         <div className="spmBody">
           {loading ? (
-            <div className="spmLoading">Cargando...</div>
+            <ListSkeleton variant="list" count={6} />
           ) : rows.length === 0 ? (
             <div className="spmEmpty">No hay sucursales para mostrar.</div>
           ) : (

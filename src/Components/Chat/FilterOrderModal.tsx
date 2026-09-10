@@ -8,6 +8,7 @@ import { IoClose } from "react-icons/io5"
 import Button from "@/Components/Common/Button"
 import CustomAutocomplete from "@/Components/Common/CustomAutocomplete"
 import "@/Styles/Chat/FilterOrderModal.css"
+import "@/Styles/Common/DateTimePicker.css"
 interface FormInterface {
   validFrom: Date | null
   validTo: Date | null
@@ -172,9 +173,9 @@ const FilterOrderModal: React.FC<
     slotProps: {
       textField: {
         className:
-          "filter-modal__date-field",
+          "filter-modal__date-field date-picker-field",
         fullWidth: true,
-        size: "medium" as const,
+        size: "small" as const,
       },
 
       actionBar: {

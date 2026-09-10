@@ -1,9 +1,9 @@
-.table-contaner__search-filter__container{
-  max-width: 50vw;
-  display: grid;
-  grid-template-columns: 45% 45%;
-  flex-wrap: wrap;
-  gap: 12px;
+.sp-page__container .table-contaner__search-filter__container{
+  max-width: 42rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 

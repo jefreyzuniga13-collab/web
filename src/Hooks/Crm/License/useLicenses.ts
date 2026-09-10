@@ -339,6 +339,7 @@ const useLicenses = (licenseId?: number) => {
     data,
     selectedData,
     loading,
+    loadingList,
     error,
     page,
     pageSize,

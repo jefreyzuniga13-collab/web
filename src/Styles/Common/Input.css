@@ -1,40 +1,73 @@
 .input-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-width: 100%;
-  }
-  .input-field-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  .input-field {
-    width: 100%;
-    padding: var(--space-md) 1rem;
-    border: 1px solid var(--border-default);
-    border-radius: 0.375rem;
-    font-size: var(--font-size-sm);
-    background: var(--input-bg);
-    transition: border-color 0.2s ease;
-  }
-  .input-field:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-  }
-  .input-field--error {
-    border-color: var(--error);
-  }
-  .input-icon {
-    position: absolute;
-    right: 3rem;
-    cursor: pointer;
-    display: flex;
-    font-size: var(--font-size-sm);
-    align-items: center;
-  }
-  .input-error-message {
-    margin-top: 0.25rem;
-    font-size: var(--font-size-xs);
-    color: var(--error);
-    text-align: left;
-  }  
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+}
+
+.input-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field {
+  width: 100%;
+  height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--control-radius);
+  font-size: var(--control-font-size);
+  background: #fff;
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-field-wrapper:has(.input-icon) .input-field {
+  padding-right: 3.6rem;
+}
+
+.input-field:-webkit-autofill,
+.input-field:-webkit-autofill:hover,
+.input-field:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+}
+
+.input-field::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.input-field:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 119, 225, 0.12);
+}
+
+.input-field--error {
+  border-color: var(--color-error);
+}
+
+.input-icon {
+  position: absolute;
+  right: 1rem;
+  cursor: pointer;
+  display: flex;
+  font-size: var(--control-font-size);
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.input-error-message {
+  margin-top: 0.25rem;
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  text-align: left;
+}

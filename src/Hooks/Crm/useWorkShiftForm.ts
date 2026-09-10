@@ -13,7 +13,7 @@ type Errors = {
 interface UseWorkShiftFormParams {
   mode: 'create' | 'update' | 'view'
   data?: WorkShiftInterface | null
-  onSubmit: (values: WorkShiftFormValues) => void
+  onSubmit: (values: WorkShiftFormValues) => void | Promise<void>
 }
 
 // Estado inicial del formulario
@@ -62,7 +62,7 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
     setForm(f => ({ ...f, isActive: e.target.checked }))
 
   // Validación y envío
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Errors = {}
 
@@ -100,12 +100,15 @@ export function useWorkShiftForm({ mode, data, onSubmit }: UseWorkShiftFormParam
     }
 
     setLoading(true)
-    onSubmit(payload)
-    if (mode === 'create') {
-      setForm(initialForm)
-      setErrors({})
+    try {
+      await onSubmit(payload)
+      if (mode === 'create') {
+        setForm(initialForm)
+        setErrors({})
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return {
