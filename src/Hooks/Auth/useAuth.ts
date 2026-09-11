@@ -24,6 +24,7 @@ import { clearCompanyState } from "@/Context/Slices/Auth/companySlice";
 
 import { authService } from "@/Services/auth/AuthService";
 import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage";
+import { runCartAutoCleanAfterLogin } from "@/Utils/ECommerce/runCartAutoCleanAfterLogin";
 
 type UseAuthHook = {
   login(payload: LoginRequest): Promise<ApiResponse<AuthData>>;
@@ -70,8 +71,10 @@ export function useAuth(): UseAuthHook {
     mutationFn: (payload: LoginRequest) =>
       authService.loginAsync(payload),
 
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       dispatch(setCredentials(response.data));
+
+      await runCartAutoCleanAfterLogin();
 
       toast.success(response.message);
 
@@ -85,8 +88,10 @@ export function useAuth(): UseAuthHook {
     mutationFn: (payload: LoginRequest) =>
       authService.forceReplaceLoginAsync(payload),
 
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       dispatch(setCredentials(response.data));
+
+      await runCartAutoCleanAfterLogin();
 
       toast.success(response.message);
 

@@ -49,6 +49,18 @@ class BulkAssignmentServi {
 
     return data.data
   }
+
+  async cancelAsync(
+    jobKey: string
+  ): Promise<BulkAssignmentJob> {
+    const { data } = await api.post<
+      ApiResponse<BulkAssignmentJob>
+    >(
+      `/Conversations/bulk-assignment/${jobKey}/cancel`
+    )
+
+    return data.data
+  }
 }
 
 export const BulkAssignmentService =

@@ -1,1251 +1,321 @@
-.bulkAssignmentModal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1300;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: var(--space-xl);
-
-  background: rgba(19, 20, 24, 0.58);
-  backdrop-filter: blur(0.3rem);
+.bam-modal {
+  width: min(72rem, calc(100vw - 3.2rem));
 }
 
-.bulkAssignmentModal {
-  width: min(98rem, 100%);
-  max-height: calc(100dvh - var(--space-3xl));
-
+.bam-form {
   display: flex;
   flex-direction: column;
-
-  background: var(--bg-primary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-xl);
-
-  color: var(--text-default);
-  font-family: "Roboto", sans-serif;
-
-  overflow: hidden;
-}
-
-
-.bulkAssignmentModal-header {
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-lg);
-
-  padding: var(--space-xl);
-
-  background: var(--bg-primary);
-  border-bottom: 0.1rem solid var(--border-secondary);
-}
-
-.bulkAssignmentModal-headerText {
-  min-width: 0;
-}
-
-.bulkAssignmentModal-title {
-  margin: 0;
-
-  color: var(--text-primary);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  text-align: left;
-}
-
-.bulkAssignmentModal-subtitle {
-  margin: var(--space-xs) 0 0;
-
-  color: var(--color-gray-500);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
-}
-
-.bulkAssignmentModal-closeButton {
-  width: 3.8rem;
-  height: 3.8rem;
-
-  flex-shrink: 0;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0;
-
-  color: var(--color-gray-600);
-  background: transparent;
-  border: 0.1rem solid transparent;
-  border-radius: var(--radius-lg);
-
-  cursor: pointer;
-
-  transition:
-    color var(--transition-fast) var(--transition-ease),
-    background-color var(--transition-fast) var(--transition-ease),
-    border-color var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentModal-closeButton svg {
-  width: 2rem;
-  height: 2rem;
-}
-
-.bulkAssignmentModal-closeButton:hover:not(:disabled) {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-color: var(--border-secondary);
-}
-
-.bulkAssignmentModal-closeButton:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-
-.bulkAssignmentModal-form {
   min-height: 0;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.bulkAssignmentModal-body {
-  min-height: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-
-  padding: var(--space-xl);
-
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-
-.bulkAssignmentSection {
-  padding: var(--space-lg);
-
-  background: var(--bg-primary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-xl);
-}
-
-.bulkAssignmentSection-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-lg);
-
-  margin-bottom: var(--space-lg);
-}
-
-.bulkAssignmentSection-header--agents {
-  align-items: center;
-}
-
-.bulkAssignmentSection-title {
-  margin: 0;
-
-  color: var(--text-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  text-align: left;
-}
-
-.bulkAssignmentSection-description {
-  margin: var(--space-xs) 0 0;
-
-  color: var(--color-gray-500);
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-normal);
-}
-
-
-.bulkAssignmentFiltersGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-md);
-}
-
-.bulkAssignmentField {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.bulkAssignmentField--wide {
-  grid-column: 1 / -1;
-}
-
-.bulkAssignmentField-label {
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-align: left;
-}
-
-.bulkAssignmentInputWrapper,
-.bulkAssignmentSelectWrapper,
-.bulkAssignmentAgentSearch {
-  min-height: 4.2rem;
-
-  display: flex;
-  align-items: center;
-
-  background: var(--input-bg);
-  border: 0.1rem solid var(--border-primary);
-  border-radius: var(--radius-lg);
-
-  transition:
-    border-color var(--transition-fast) var(--transition-ease),
-    box-shadow var(--transition-fast) var(--transition-ease),
-    background-color var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentInputWrapper:focus-within,
-.bulkAssignmentSelectWrapper:focus-within,
-.bulkAssignmentAgentSearch:focus-within {
-  border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 0.3rem rgba(1, 93, 150, 0.12);
-}
-
-.bulkAssignmentInputWrapper > svg,
-.bulkAssignmentAgentSearch > svg {
-  width: 1.8rem;
-  height: 1.8rem;
-
-  flex-shrink: 0;
-
-  margin-left: var(--space-md);
-
-  color: var(--color-gray-500);
-}
-
-.bulkAssignmentInput {
-  width: 100%;
-  min-width: 0;
-  height: 4rem;
-
-  padding: 0 var(--space-md);
-
-  color: var(--text-default);
-  font: inherit;
-  font-size: var(--font-size-sm);
-
-  background: transparent;
-  border: 0;
-  outline: none;
-}
-
-.bulkAssignmentInput::placeholder,
-.bulkAssignmentAgentSearch input::placeholder,
-.bulkAssignmentTextarea::placeholder {
-  color: var(--text-light);
-}
-
-.bulkAssignmentInput:disabled,
-.bulkAssignmentSelect:disabled,
-.bulkAssignmentTextarea:disabled,
-.bulkAssignmentAgentSearch input:disabled {
-  color: var(--text-light);
-  cursor: not-allowed;
-}
-
-.bulkAssignmentInputWrapper:has(input:disabled),
-.bulkAssignmentSelectWrapper:has(select:disabled),
-.bulkAssignmentAgentSearch:has(input:disabled) {
-  background: var(--bg-tertiary);
-}
-
-.bulkAssignmentSelectWrapper {
-  position: relative;
-}
-
-.bulkAssignmentSelect {
-  width: 100%;
-  height: 4rem;
-
-  padding: 0 4rem 0 var(--space-md);
-
-  color: var(--text-default);
-  font: inherit;
-  font-size: var(--font-size-sm);
-
-  appearance: none;
-  background: transparent;
-  border: 0;
-  outline: none;
-
-  cursor: pointer;
-}
-
-.bulkAssignmentSelectWrapper > svg {
-  position: absolute;
-  right: var(--space-md);
-
-  width: 1.7rem;
-  height: 1.7rem;
-
-  color: var(--color-gray-500);
-  pointer-events: none;
-}
-
-.bulkAssignmentTextarea {
-  width: 100%;
-  min-height: 9.6rem;
-
-  padding: var(--space-md);
-
-  color: var(--text-default);
-  font: inherit;
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
-
-  resize: vertical;
-
-  background: var(--input-bg);
-  border: 0.1rem solid var(--border-primary);
-  border-radius: var(--radius-lg);
-  outline: none;
-
-  transition:
-    border-color var(--transition-fast) var(--transition-ease),
-    box-shadow var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentTextarea:focus {
-  border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 0.3rem rgba(1, 93, 150, 0.12);
-}
-
-.bulkAssignmentCharacterCount {
-  align-self: flex-end;
-
-  color: var(--text-light);
-  font-size: var(--font-size-xs);
-}
-
-.bulkAssignmentOptions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md) var(--space-xl);
-
-  margin-top: var(--space-lg);
-}
-
-.bulkAssignmentOptions--agents {
-  margin-top: 0;
-}
-
-.bulkAssignmentCheckOption {
-  position: relative;
-
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-
-  cursor: pointer;
-  user-select: none;
-}
-
-.bulkAssignmentCheckOption input {
-  position: absolute;
-
-  width: 0.1rem;
-  height: 0.1rem;
-
-  opacity: 0;
-  pointer-events: none;
-}
-
-.bulkAssignmentCheckBox {
-  width: 1.8rem;
-  height: 1.8rem;
-
-  flex-shrink: 0;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  color: var(--text-white);
-  background: var(--bg-primary);
-  border: 0.1rem solid var(--color-gray-400);
-  border-radius: var(--radius-md);
-
-  transition:
-    background-color var(--transition-fast) var(--transition-ease),
-    border-color var(--transition-fast) var(--transition-ease),
-    box-shadow var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentCheckBox svg {
-  width: 1.3rem;
-  height: 1.3rem;
-
-  opacity: 0;
-}
-
-.bulkAssignmentCheckOption input:checked + .bulkAssignmentCheckBox {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.bulkAssignmentCheckOption input:checked + .bulkAssignmentCheckBox svg {
-  opacity: 1;
-}
-
-.bulkAssignmentCheckOption input:focus-visible + .bulkAssignmentCheckBox {
-  box-shadow: 0 0 0 0.3rem rgba(37, 119, 225, 0.16);
-}
-
-.bulkAssignmentCheckOption:has(input:disabled) {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* =========================================================
-   Controles y lista de agentes
-   ========================================================= */
-
-.bulkAssignmentAgentControls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-
-  margin-bottom: var(--space-md);
-}
-
-.bulkAssignmentAgentSearch {
-  width: min(36rem, 100%);
-}
-
-.bulkAssignmentAgentSearch input {
-  width: 100%;
-  min-width: 0;
-  height: 4rem;
-
-  padding: 0 var(--space-md);
-
-  color: var(--text-default);
-  font: inherit;
-  font-size: var(--font-size-sm);
-
-  background: transparent;
-  border: 0;
-  outline: none;
-}
-
-.bulkAssignmentTextButton {
-  padding: var(--space-xs) var(--space-sm);
-
-  color: var(--color-primary);
-  font: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-md);
-
-  cursor: pointer;
-
-  transition:
-    color var(--transition-fast) var(--transition-ease),
-    background-color var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentTextButton:hover:not(:disabled) {
-  color: var(--color-primary-dark);
-  background: var(--color-blue-light);
-}
-
-.bulkAssignmentTextButton:disabled {
-  color: var(--text-light);
-  cursor: not-allowed;
-}
-
-.bulkAssignmentAgentList {
-  max-height: 28rem;
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-
-  padding-right: var(--space-xs);
-
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.bulkAssignmentAgent {
-  width: 100%;
-
-  display: grid;
-  grid-template-columns: 2.2rem 4.2rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-md);
-
-  padding: 1rem var(--space-md);
-
-  text-align: left;
-
-  background: var(--bg-primary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-lg);
-
-  cursor: pointer;
-
-  transition:
-    border-color var(--transition-fast) var(--transition-ease),
-    background-color var(--transition-fast) var(--transition-ease),
-    box-shadow var(--transition-fast) var(--transition-ease),
-    transform var(--transition-fast) var(--transition-ease);
-}
-
-.bulkAssignmentAgent:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-}
-
-.bulkAssignmentAgent:active:not(:disabled) {
-  transform: translateY(0.1rem);
-}
-
-.bulkAssignmentAgent--selected {
-  background: var(--color-blue-light);
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-xs);
-}
-
-.bulkAssignmentAgent:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.bulkAssignmentAgent-selection {
-  width: 2rem;
-  height: 2rem;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  color: var(--text-white);
-  background: var(--bg-primary);
-  border: 0.1rem solid var(--color-gray-400);
-  border-radius: var(--radius-md);
-}
-
-.bulkAssignmentAgent--selected .bulkAssignmentAgent-selection {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.bulkAssignmentAgent-selection svg {
-  width: 1.4rem;
-  height: 1.4rem;
-}
-
-.bulkAssignmentAgent-avatar {
-  width: 4.2rem;
-  height: 4.2rem;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  overflow: hidden;
-
-  color: var(--color-gray-600);
-  background: var(--bg-secondary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-full);
-}
-
-.bulkAssignmentAgent-avatar img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-}
-
-.bulkAssignmentAgent-avatar svg {
-  width: 1.9rem;
-  height: 1.9rem;
-}
-
-.bulkAssignmentAgent-info {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.bulkAssignmentAgent-info strong {
-  overflow: hidden;
-
-  color: var(--text-primary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bulkAssignmentAgent-info small {
-  overflow: hidden;
-
-  color: var(--color-gray-500);
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-tight);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bulkAssignmentAgent-meta {
-  display: flex;
-  align-items: flex-end;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.bulkAssignmentAgent-status,
-.bulkAssignmentAgent-inactive {
-  display: inline-flex;
-  align-items: center;
-
-  padding: 0.3rem 0.7rem;
-
-  font-size: var(--font-size-1xs);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-
-  border-radius: var(--radius-full);
-}
-
-.bulkAssignmentAgent-status--online {
-  color: var(--color-green-primary);
-  background: var(--color-green-light);
-}
-
-.bulkAssignmentAgent-status--offline {
-  color: var(--color-gray-600);
-  background: var(--bg-secondary);
-}
-
-.bulkAssignmentAgent-inactive {
-  color: var(--color-warning);
-  background: var(--bg-tertiary);
-}
-
-/* =========================================================
-   Estados vacíos y errores
-   ========================================================= */
-
-.bulkAssignmentEmptyState,
-.bulkAssignmentErrorState {
-  min-height: 11rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-md);
-
-  padding: var(--space-lg);
-
-  color: var(--color-gray-500);
-  font-size: var(--font-size-xs);
-  text-align: center;
-
-  background: var(--bg-tertiary);
-  border: 0.1rem dashed var(--border-primary);
-  border-radius: var(--radius-lg);
-}
-
-.bulkAssignmentEmptyState {
-  flex-direction: column;
-}
-
-.bulkAssignmentEmptyState > svg,
-.bulkAssignmentErrorState > svg {
-  width: 2.4rem;
-  height: 2.4rem;
-
-  flex-shrink: 0;
-}
-
-.bulkAssignmentErrorState {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.bulkAssignmentErrorState > svg {
-  color: var(--color-error);
-}
-
-.bulkAssignmentErrorState > div {
-  min-width: 0;
   flex: 1;
 }
 
-.bulkAssignmentErrorState strong {
-  display: block;
-
-  color: var(--color-error);
-  font-size: var(--font-size-xs);
-}
-
-.bulkAssignmentErrorState p {
-  margin: var(--space-xs) 0 0;
-
+.bam-hint {
+  margin: -0.4rem 0 1.2rem;
   color: var(--color-gray-500);
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-normal);
+  font-size: var(--font-size-sm);
 }
 
-
-.bulkAssignmentDistribution {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.bulkAssignmentSummary {
+.bam-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.1rem;
-
-  overflow: hidden;
-
-  background: var(--border-secondary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-xl);
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+  margin-top: 1.6rem;
 }
 
-.bulkAssignmentSummary-item {
-  min-width: 0;
-
+.bam-checks {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-
-  padding: var(--space-md);
-
-  background: var(--bg-tertiary);
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin-bottom: 1.2rem;
 }
 
-.bulkAssignmentSummary-item span {
-  color: var(--color-gray-500);
-  font-size: var(--font-size-xs);
-}
-
-.bulkAssignmentSummary-item strong {
-  overflow: hidden;
-
-  color: var(--text-primary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* =========================================================
-   Footer y botones
-   ========================================================= */
-
-.bulkAssignmentModal-footer {
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-
-  padding: var(--space-lg) var(--space-xl);
-
-  background: var(--bg-primary);
-  border-top: 0.1rem solid var(--border-secondary);
-}
-
-.bulkAssignmentButton {
-  min-height: 4rem;
-
+.bam-check {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: var(--space-sm);
-
-  padding: 0.9rem var(--space-lg);
-
-  font: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-
-  border: 0.1rem solid transparent;
-  border-radius: var(--radius-lg);
-
+  min-height: var(--control-height);
+  color: var(--text-secondary);
+  font-size: var(--control-label-size);
   cursor: pointer;
-
-  transition:
-    color var(--transition-fast) var(--transition-ease),
-    background-color var(--transition-fast) var(--transition-ease),
-    border-color var(--transition-fast) var(--transition-ease),
-    box-shadow var(--transition-fast) var(--transition-ease),
-    transform var(--transition-fast) var(--transition-ease);
 }
 
-.bulkAssignmentButton svg {
-  width: 1.7rem;
-  height: 1.7rem;
+.bam-check input {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--color-primary);
 }
 
-.bulkAssignmentButton:hover:not(:disabled) {
-  transform: translateY(-0.1rem);
+.bam-agent-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.2rem;
+  align-items: start;
+  margin-bottom: 1.2rem;
 }
 
-.bulkAssignmentButton:active:not(:disabled) {
-  transform: translateY(0);
+.bam-agent-list {
+  max-height: 28rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-.bulkAssignmentButton:disabled {
+.bam-agent {
+  display: grid;
+  grid-template-columns: 2rem 3.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bam-agent:hover:not(:disabled) {
+  background: #eef2f6;
+  border-color: #d0d5dd;
+}
+
+.bam-agent--selected {
+  background: #eff6ff;
+  border-color: var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.bam-agent:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.bulkAssignmentButton--primary {
-  color: var(--text-white);
+.bam-agent__check {
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-gray-400);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: #fff;
+}
+
+.bam-agent--selected .bam-agent__check {
   background: var(--color-primary);
   border-color: var(--color-primary);
 }
 
-.bulkAssignmentButton--primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
-  box-shadow: var(--shadow-md);
-}
-
-.bulkAssignmentButton--secondary {
-  color: var(--text-secondary);
-  background: var(--bg-primary);
-  border-color: var(--border-primary);
-}
-
-.bulkAssignmentButton--secondary:hover:not(:disabled) {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-color: var(--color-gray-400);
-}
-
-
-.bulkAssignmentProcessView,
-.bulkAssignmentResultView {
-  min-height: 44rem;
-
-  display: flex;
+.bam-agent__avatar {
+  width: 3.6rem;
+  height: 3.6rem;
+  display: inline-flex;
   align-items: center;
-  flex-direction: column;
   justify-content: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--color-gray-600);
+}
 
-  padding: var(--space-3xl) var(--space-2xl);
+.bam-agent__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
+.bam-agent__info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bam-agent__info strong,
+.bam-agent__info small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bam-agent__info strong {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.bam-agent__info small {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+}
+
+.bam-modal .status {
+  padding: 0.4rem 1rem;
+  border-radius: 0.4rem;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--table-cell-font);
+  line-height: 1.3;
+  display: inline-block;
   text-align: center;
 }
 
-.bulkAssignmentProcessIcon,
-.bulkAssignmentResultIcon {
-  width: 6.8rem;
-  height: 6.8rem;
+.bam-modal .status--active {
+  background-color: var(--color-success);
+  color: var(--text-white);
+}
 
-  display: inline-flex;
+.bam-modal .status--inactive {
+  background-color: var(--color-error);
+  color: var(--text-white);
+}
+
+.bam-count {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-align: right;
+}
+
+.bam-empty {
+  display: flex;
   align-items: center;
   justify-content: center;
-
-  margin-bottom: var(--space-lg);
-
-  border-radius: var(--radius-full);
-}
-
-.bulkAssignmentProcessIcon {
-  color: var(--color-primary);
-  background: var(--color-blue-light);
-}
-
-.bulkAssignmentProcessIcon svg,
-.bulkAssignmentResultIcon svg {
-  width: 3.2rem;
-  height: 3.2rem;
-}
-
-.bulkAssignmentProcessView h3,
-.bulkAssignmentResultView h3 {
-  margin: 0;
-
-  color: var(--text-primary);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-}
-
-.bulkAssignmentProcessView > p,
-.bulkAssignmentResultView > p {
-  max-width: 54rem;
-
-  margin: var(--space-sm) 0 0;
-
+  gap: 1.2rem;
+  min-height: 10rem;
+  padding: 1.6rem;
+  border: 1px dashed var(--border-primary);
+  border-radius: 8px;
   color: var(--color-gray-500);
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+  text-align: center;
 }
 
-.bulkAssignmentProgress {
-  width: min(62rem, 100%);
-
-  margin-top: var(--space-xl);
+.bam-empty--error {
+  color: var(--color-error);
 }
 
-.bulkAssignmentProgress-header {
+.bam-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 0 0;
+  text-align: center;
+}
+
+.bam-result h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+}
+
+.bam-result p {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+}
+
+.bam-cancel-hint {
+  max-width: 42rem;
+}
+
+.bam-progress {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.bam-progress__bar {
+  flex: 1;
+  height: 0.8rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+}
+
+.bam-progress__bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.bam-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.2rem 2rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.bam-summary {
+  width: 100%;
+  text-align: left;
+}
+
+.bam-summary ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 24rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.bam-summary li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  margin-bottom: var(--space-sm);
-
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
+  gap: 1.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
 }
 
-.bulkAssignmentProgress-header strong {
+.bam-summary li strong,
+.bam-summary li small {
+  display: block;
+}
+
+.bam-summary li strong {
   color: var(--text-primary);
+  font-size: var(--font-size-sm);
 }
 
-.bulkAssignmentProgress-track {
-  width: 100%;
-  height: 1rem;
-
-  overflow: hidden;
-
-  background: var(--bg-secondary-hover);
-  border-radius: var(--radius-full);
-}
-
-.bulkAssignmentProgress-fill {
-  height: 100%;
-
-  background: var(--color-primary);
-  border-radius: inherit;
-
-  transition: width var(--transition-slow) var(--transition-ease);
-}
-
-.bulkAssignmentProcessStats {
-  width: min(70rem, 100%);
-
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-sm);
-
-  margin-top: var(--space-xl);
-}
-
-.bulkAssignmentProcessStats > div {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-
-  padding: var(--space-md);
-
-  background: var(--bg-tertiary);
-  border: 0.1rem solid var(--border-secondary);
-  border-radius: var(--radius-lg);
-}
-
-.bulkAssignmentProcessStats span {
+.bam-summary li small {
+  margin-top: 0.2rem;
   color: var(--color-gray-500);
   font-size: var(--font-size-xs);
 }
 
-.bulkAssignmentProcessStats strong {
-  color: var(--text-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+.bam-spin {
+  animation: bam-spin 0.8s linear infinite;
 }
 
-.bulkAssignmentProcessStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-
-  margin-top: var(--space-lg);
-  padding: var(--space-sm) var(--space-md);
-
-  color: var(--color-gray-600);
-  font-size: var(--font-size-xs);
-
-  background: var(--bg-secondary);
-  border-radius: var(--radius-full);
-}
-
-.bulkAssignmentProcessStatus strong {
-  color: var(--text-primary);
-}
-
-
-.bulkAssignmentResultIcon--success {
-  color: var(--color-success);
-  background: var(--color-green-light);
-}
-
-.bulkAssignmentResultIcon--error {
-  color: var(--color-error);
-  background: var(--bg-destructive-hover);
-}
-
-.bulkAssignmentResultFooter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-
-  margin-top: var(--space-xl);
-}
-
-.bulkAssignmentSpin {
-  animation: bulkAssignmentSpin 0.9s linear infinite;
-}
-
-@keyframes bulkAssignmentSpin {
+@keyframes bam-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-
-.bulkAssignmentModal-body,
-.bulkAssignmentAgentList {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-gray-300) transparent;
-}
-
-.bulkAssignmentModal-body::-webkit-scrollbar,
-.bulkAssignmentAgentList::-webkit-scrollbar {
-  width: 0.8rem;
-}
-
-.bulkAssignmentModal-body::-webkit-scrollbar-track,
-.bulkAssignmentAgentList::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.bulkAssignmentModal-body::-webkit-scrollbar-thumb,
-.bulkAssignmentAgentList::-webkit-scrollbar-thumb {
-  background: var(--color-gray-300);
-  border: 0.2rem solid transparent;
-  border-radius: var(--radius-full);
-  background-clip: padding-box;
-}
-
-.bulkAssignmentModal-body::-webkit-scrollbar-thumb:hover,
-.bulkAssignmentAgentList::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-400);
-  border: 0.2rem solid transparent;
-  background-clip: padding-box;
-}
-
-
-.bulkAssignmentModal button:focus-visible,
-.bulkAssignmentModal input:focus-visible,
-.bulkAssignmentModal select:focus-visible,
-.bulkAssignmentModal textarea:focus-visible {
-  outline: none;
-}
-
-.bulkAssignmentModal-closeButton:focus-visible,
-.bulkAssignmentTextButton:focus-visible,
-.bulkAssignmentButton:focus-visible,
-.bulkAssignmentAgent:focus-visible {
-  box-shadow: 0 0 0 0.3rem rgba(37, 119, 225, 0.2);
-}
-
-/* =========================================================
-   Responsive
-   ========================================================= */
-
-@media (max-width: 86rem) {
-  .bulkAssignmentModal-backdrop {
-    padding: var(--space-md);
-  }
-
-  .bulkAssignmentModal {
-    max-height: calc(100dvh - var(--space-xl));
-  }
-
-  .bulkAssignmentSummary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .bulkAssignmentAgentControls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .bulkAssignmentAgentSearch {
-    width: 100%;
-  }
-}
-
-@media (max-width: 68rem) {
-  .bulkAssignmentModal-backdrop {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .bulkAssignmentModal {
-    width: 100%;
-    max-height: 96dvh;
-
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-  }
-
-  .bulkAssignmentModal-header {
-    padding: var(--space-lg);
-  }
-
-  .bulkAssignmentModal-body {
-    padding: var(--space-lg);
-  }
-
-  .bulkAssignmentSection {
-    padding: var(--space-md);
-  }
-
-  .bulkAssignmentFiltersGrid {
+@media (max-width: 700px) {
+  .bam-grid,
+  .bam-agent-toolbar {
     grid-template-columns: 1fr;
   }
 
-  .bulkAssignmentField--wide {
-    grid-column: auto;
+  .bam-agent {
+    grid-template-columns: 2rem 3.2rem minmax(0, 1fr);
   }
 
-  .bulkAssignmentSection-header--agents {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .bulkAssignmentAgent {
-    grid-template-columns: 2.2rem 3.8rem minmax(0, 1fr);
-  }
-
-  .bulkAssignmentAgent-avatar {
-    width: 3.8rem;
-    height: 3.8rem;
-  }
-
-  .bulkAssignmentAgent-meta {
+  .bam-agent .status {
     grid-column: 2 / -1;
-
-    align-items: center;
-    flex-direction: row;
-
-    padding-left: 5rem;
-  }
-
-  .bulkAssignmentSummary {
-    grid-template-columns: 1fr;
-  }
-
-  .bulkAssignmentProcessStats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .bulkAssignmentModal-footer {
-    padding: var(--space-md) var(--space-lg);
-  }
-
-  .bulkAssignmentModal-footer .bulkAssignmentButton {
-    flex: 1;
-  }
-
-  .bulkAssignmentProcessView,
-  .bulkAssignmentResultView {
-    min-height: 40rem;
-    padding: var(--space-2xl) var(--space-lg);
-  }
-}
-
-@media (max-width: 43rem) {
-  .bulkAssignmentModal-header {
-    gap: var(--space-md);
-  }
-
-  .bulkAssignmentModal-title {
-    font-size: var(--font-size-lg);
-  }
-
-  .bulkAssignmentOptions {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .bulkAssignmentAgent {
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-  }
-
-  .bulkAssignmentAgent-meta {
-    padding-left: 4.7rem;
-  }
-
-  .bulkAssignmentModal-footer {
-    flex-direction: column-reverse;
-  }
-
-  .bulkAssignmentModal-footer .bulkAssignmentButton {
-    width: 100%;
-  }
-
-  .bulkAssignmentResultFooter {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .bulkAssignmentResultFooter .bulkAssignmentButton {
-    width: 100%;
-  }
-
-  .bulkAssignmentProcessStats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bulkAssignmentModal *,
-  .bulkAssignmentModal *::before,
-  .bulkAssignmentModal *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    justify-self: start;
   }
 }

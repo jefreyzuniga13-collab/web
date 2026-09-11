@@ -22,6 +22,7 @@ import {
 
 import { saveFacturaTempo } from "@/Utils/facturaTempoStorage"
 import { formatErrorMessage } from "@/Utils/Https/formatErrorMessage"
+import { runCartAutoCleanAfterLogin } from "@/Utils/ECommerce/runCartAutoCleanAfterLogin"
 
 interface LoginFormValues extends LoginRequest {
   remember: boolean
@@ -170,6 +171,7 @@ export default function useLoginForm() {
       dispatch(setCredentials(response.data))
       dispatch(closeActiveSesionModal())
 
+      await runCartAutoCleanAfterLogin()
       await saveFacturaTempo()
 
       setPendingLogin(null)

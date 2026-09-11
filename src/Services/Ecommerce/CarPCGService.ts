@@ -163,6 +163,50 @@ class CartServ {
 
     return data;
   }
+
+  async clearCart(
+    idUsuario: number,
+    noPedido: number,
+  ): Promise<boolean> {
+    let carts: CarDto[] = []
+
+    try {
+      carts = await this.getProductFromCar(idUsuario, noPedido)
+    } catch {
+      return false
+    }
+
+    const lines = (carts ?? []).flatMap((cart) => cart.listDetalle ?? [])
+
+    if (lines.length === 0) return true
+
+    const products = lines.filter(
+      (line) =>
+        line.tipoComponente === "P" &&
+        String(line.codProducto ?? "").trim() &&
+        String(line.unico ?? "").trim(),
+    )
+    const others = lines.filter(
+      (line) =>
+        line.tipoComponente !== "P" &&
+        String(line.codProducto ?? "").trim() &&
+        String(line.unico ?? "").trim(),
+    )
+
+    for (const line of [...products, ...others]) {
+      const res = await this.removeProductFromCar(
+        idUsuario,
+        noPedido,
+        String(line.codProducto).trim(),
+        String(line.unico).trim(),
+      )
+
+      if (!res?.success) return false
+    }
+
+    return true
+  }
+
   async CreatePCG(req: FacturaTempo): Promise<ApiPCGResponse<string>> {
     const { data } = await apiPCG.post<ApiPCGResponse<string>>(
       `CarritoCompra/InsertaFactura`,

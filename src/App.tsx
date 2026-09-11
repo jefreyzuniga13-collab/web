@@ -9,6 +9,7 @@ import { SignalRProvider } from "@/Context/SignalRContext";
 import { enqueuePopup } from "@/Context/Slices/Chat/popupSlice";
 import SessionBootstrap from "@/Components/Auth/SessionBootstrap";
 import { LicenseExpiredModalWatcher } from "@/Components/Auth/LicenseExpiredModalWatcher";
+import { CartAutoCleanModalWatcher } from "@/Components/ECommerce/CartAutoCleanModalWatcher";
 import OfflineBanner from "@/Components/Common/OfflineBanner";
 import ReLoginModal from "@/Components/Common/ReLoginModal";
 import { useForceLogoutListener } from "@/Hooks/Auth/useForceLogoutListener";
@@ -282,6 +283,8 @@ function AuthenticatedAppContent() {
       <ReLoginModal />
 
       <LicenseExpiredModalWatcher />
+
+      <CartAutoCleanModalWatcher />
 
       <AppRouter />
     </SignalRProvider>

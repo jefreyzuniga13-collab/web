@@ -36,15 +36,6 @@ export function setupResponseInterceptor(instance: AxiosInstance) {
         store.dispatch(openReLoginModal());
       }
 
-
-      // Si la api retorna error pero el token no estqa vencido no hacer reintentos
-      if(status === 500 &&
-        !tokenExpired
-      ){
-        config.retry = false;
-
-        return instance(config)
-      }
       return Promise.reject(error);
     }
   );

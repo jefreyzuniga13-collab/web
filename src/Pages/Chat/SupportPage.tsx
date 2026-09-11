@@ -18,7 +18,7 @@ import { useConversations, type Filter } from "@/Hooks/Chat/useConversations";
 import useContact from "@/Hooks/Auth/useContact";
 import { useCompanySystemParamValue } from "@/Hooks/Crm/useCompanySystemParamValue";
 import type { AppDispatch, RootState } from "@/Context";
-import { selectCompanySistema, selectIsAutomaticallyAssigned } from "@/Context/Slices/Auth/authSlice";
+import { selectCompanySistema } from "@/Context/Slices/Auth/authSlice";
 import { CHANNEL } from "@/Interfaces/Wh/MetaChannelId";
 import { getLicenseMessage } from "@/Utils/ECommerce/formatters";
 import { isValidSaleCompany } from "@/Utils/isValidSaleCompany";
@@ -43,7 +43,6 @@ const SupportPage: React.FC = () => {
   );
 
   const companySistema = useSelector(selectCompanySistema);
-  const isAutomaticallyAssigned = useSelector(selectIsAutomaticallyAssigned);
 
   const { fetchById, selectedData: contact } = useContact(undefined, {
     loadList: false,
@@ -347,7 +346,7 @@ const SupportPage: React.FC = () => {
               </Tooltip>
             )}
 
-            {(isRoot || isAdmin) && !isAutomaticallyAssigned && (
+            {(isRoot || isAdmin) && (
               <Tooltip title="Asignar conversaciones">
                 <button
                   className="sort-button"

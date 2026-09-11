@@ -39,6 +39,20 @@
   font-weight: 700;
 }
 
+.license-modal__list {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.license-modal__list li {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #334155;
+}
+
 .license-modal button {
   width: 100%;
   margin-top: 10px;

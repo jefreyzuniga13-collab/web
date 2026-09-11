@@ -1,5 +1,6 @@
 import api from "@/Utils/ApiConfig"
 import type { ApiResponse } from "@/Interfaces/Auth/UserInterfaces"
+import type { AutoCleanedCartSummary } from "@/Interfaces/Crm/AutoCleanedCart"
 import type {
   LogCartRequestDto,
   LogCartResponseDto,
@@ -81,6 +82,27 @@ class LogCartService {
   ): Promise<ApiResponse<LogCartResponseDto>> {
     const { data } = await api.patch<ApiResponse<LogCartResponseDto>>(
       `/LogCart/UpdatedStatus/${id}/${statusId}`
+    )
+
+    return data
+  }
+
+  async getPendingAutoClean(): Promise<
+    ApiResponse<AutoCleanedCartSummary[]>
+  > {
+    const { data } = await api.get<ApiResponse<AutoCleanedCartSummary[]>>(
+      "/LogCart/pendientes-limpieza"
+    )
+
+    return data
+  }
+
+  async confirmAutoClean(
+    logCartIds: number[]
+  ): Promise<ApiResponse<AutoCleanedCartSummary[]>> {
+    const { data } = await api.post<ApiResponse<AutoCleanedCartSummary[]>>(
+      "/LogCart/confirmar-limpieza",
+      { logCartIds }
     )
 
     return data

@@ -62,6 +62,22 @@ const isFailedJob = (
   return normalizeStatus(job?.status) === "failed";
 };
 
+const isCancelledJob = (
+  job?: BulkAssignmentJob | null,
+): boolean => {
+  return normalizeStatus(job?.status) === "cancelled";
+};
+
+const isTerminalJob = (
+  job?: BulkAssignmentJob | null,
+): boolean => {
+  return (
+    isCompletedJob(job) ||
+    isFailedJob(job) ||
+    isCancelledJob(job)
+  );
+};
+
 const getStorageKey = (
   companyId: number,
 ): string => {
@@ -129,12 +145,22 @@ const getErrorMessage = (
       }
     ).response;
 
+    const payload = response?.data as
+      | {
+          message?: string
+          detail?: string
+          error?: string
+          errors?: string[]
+        }
+      | undefined
+
     return (
-      response?.data?.message ??
-      response?.data?.detail ??
-      response?.data?.error ??
+      payload?.errors?.[0] ??
+      payload?.message ??
+      payload?.detail ??
+      payload?.error ??
       fallback
-    );
+    )
   }
 
   if (error instanceof Error) {
@@ -275,6 +301,8 @@ export const useBulkAssignment = () => {
         "No fue posible iniciar la asignación masiva.",
       );
 
+      setJobKey(null);
+      removeStoredJobKey(companyScope);
       setLocalErrorMessage(message);
       toast.error(message);
     },
@@ -304,10 +332,7 @@ export const useBulkAssignment = () => {
     refetchInterval: (query) => {
       const currentJob = query.state.data;
 
-      if (
-        isCompletedJob(currentJob) ||
-        isFailedJob(currentJob)
-      ) {
+      if (isTerminalJob(currentJob)) {
         return false;
       }
 
@@ -321,15 +346,20 @@ export const useBulkAssignment = () => {
 
   const isCompleted = isCompletedJob(job);
   const isFailed = isFailedJob(job);
+  const isCancelled = isCancelledJob(job);
 
   /**
    * Un error temporal de red no significa que el job
    * haya finalizado. El polling continúa activo.
    */
+  const createFailed = createMutation.isError;
+
   const isPolling =
     Boolean(jobKey) &&
     !isCompleted &&
-    !isFailed;
+    !isFailed &&
+    !isCancelled &&
+    !createFailed;
 
   const progressPercentage = useMemo(
     () => calculateProgress(job),
@@ -363,7 +393,7 @@ export const useBulkAssignment = () => {
   useEffect(() => {
     if (
       !jobKey ||
-      (!isCompleted && !isFailed)
+      (!isCompleted && !isFailed && !isCancelled)
     ) {
       return;
     }
@@ -371,6 +401,7 @@ export const useBulkAssignment = () => {
     removeStoredJobKey(companyScope);
   }, [
     companyScope,
+    isCancelled,
     isCompleted,
     isFailed,
     jobKey,
@@ -385,6 +416,71 @@ export const useBulkAssignment = () => {
       return createMutation.mutateAsync(request);
     },
     [createMutation],
+  );
+
+  const cancelMutation = useMutation<
+    BulkAssignmentJob,
+    Error,
+    void
+  >({
+    mutationFn: () => {
+      if (!jobKey) {
+        throw new Error(
+          "No hay un proceso de asignación para cancelar.",
+        );
+      }
+
+      return BulkAssignmentService.cancelAsync(jobKey);
+    },
+
+    onSuccess: (response) => {
+      if (!jobKey) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        bulkAssignmentKeys.job(
+          companyScope,
+          jobKey,
+        ),
+        response,
+      );
+
+      if (isCancelledJob(response)) {
+        removeStoredJobKey(companyScope);
+        toast.info(
+          response.message ??
+            "La asignación masiva fue cancelada.",
+        );
+        return;
+      }
+
+      toast.success(
+        response.message ??
+          "El proceso ya había finalizado.",
+      );
+    },
+
+    onError: (error) => {
+      const message = getErrorMessage(
+        error,
+        "No fue posible cancelar la asignación masiva.",
+      );
+
+      setLocalErrorMessage(message);
+      toast.error(message);
+    },
+  });
+
+  const cancelAssignment = useCallback(
+    async (): Promise<BulkAssignmentJob | null> => {
+      if (!jobKey) {
+        return null;
+      }
+
+      return cancelMutation.mutateAsync();
+    },
+    [cancelMutation, jobKey],
   );
 
   const refetchJob = useCallback(
@@ -417,15 +513,13 @@ export const useBulkAssignment = () => {
     setLocalErrorMessage(null);
 
     createMutation.reset();
+    cancelMutation.reset();
 
     if (!currentJobKey) {
       return;
     }
 
-    if (
-      isCompletedJob(job) ||
-      isFailedJob(job)
-    ) {
+    if (isTerminalJob(job)) {
       removeStoredJobKey(companyScope);
     }
 
@@ -443,6 +537,7 @@ export const useBulkAssignment = () => {
       ),
     });
   }, [
+    cancelMutation,
     companyScope,
     createMutation,
     job,
@@ -455,17 +550,20 @@ export const useBulkAssignment = () => {
     jobKey,
 
     createAssignment,
+    cancelAssignment,
     refetchJob,
     reset,
 
     isSubmitting: createMutation.isPending,
+    isCancelling: cancelMutation.isPending,
 
     isLoadingJob,
     isFetchingJob,
     isPolling,
 
     isCompleted,
-    isFailed,
+    isCancelled,
+    isFailed: isFailed || createFailed,
 
     hasPollingError: isJobError,
 
