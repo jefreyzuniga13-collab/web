@@ -18,7 +18,7 @@ import { FechaManagua } from "@/Utils/FechaManagua"
 import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
 import { buildCalculationRequest } from "@/Utils/ECommerce/utils"
 import { MAX_DESCUENTO_PORCENTUAL_UI, normalizarDescuentoInput, prepararDescuentoGlobal} from "@/Utils/ECommerce/descuentoGlobal"
-import { GENERAL_STATUS } from "@/Constants/status"
+import { cancelLogCartAndClearPcg } from "@/Utils/ECommerce/cancelLogCartAndClearPcg"
 import { tasaCambio } from "@/Constants/tasaCambio"
 import { TipoFalote } from "@/Constants/falote"
 
@@ -1166,16 +1166,17 @@ const aplicarDescuentoProducto = useCallback(
       if (!createdLog?.id) return
 
       try {
-        await UpdatedStatus(createdLog.id, GENERAL_STATUS.Cancelada)
+        await cancelLogCartAndClearPcg({
+          logCartId: createdLog.id,
+          contactId: Number(createdLog.contactId || contactId),
+          orderId: Number(createdLog.orderId),
+          updatedStatus: UpdatedStatus,
+        })
       } catch {
         toast.warning("No se pudo cancelar el LogCart creado.")
       }
-
-      // await cleanupFacturaTempo()
     },
-    [UpdatedStatus
-      // , cleanupFacturaTempo
-    ]
+    [UpdatedStatus, contactId]
   )
 
   const commitProductToCart = useCallback(

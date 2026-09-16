@@ -1,11 +1,13 @@
 import {useState,useEffect, useCallback, useRef,} from "react"
 import { useSelector } from "react-redux"
+import { store } from "@/Context"
 import { selectIsAdmin,selectIsRoot,selectUserId} from "@/Context/Slices/Auth/authSlice"
 import { useSignalR } from "@/Context/SignalRContext"
 import type {ConversationDto,MessageDto,AttachmentDto} from "@/Interfaces/Chat/ChatInterfaces"
 import type { PaginationInfo } from "@/Interfaces/Common/GlobalInterface"
 import { joinConversation } from "@/Services/signalr"
 import { ConversationService } from "@/Services/chat/ConversationService"
+import { hydrateCartBadges } from "@/Utils/ECommerce/hydrateCartBadges"
 
 export type Filter =
   | "all"
@@ -255,6 +257,14 @@ export function useConversations(
     (
       conversation: ConversationDto
     ): ConversationDto => {
+      const contactId = Number(
+        conversation.clientContactId ?? 0
+      )
+      const badge =
+        contactId > 0
+          ? store.getState().cartBadge.byContactId[contactId]
+          : undefined
+
       return {
         ...conversation,
 
@@ -267,6 +277,11 @@ export function useConversations(
 
         unreadCount:
           conversation.unreadCount ?? 0,
+
+        isItemsInCart:
+          badge !== undefined
+            ? badge.hasCart
+            : conversation.isItemsInCart,
       }
     },
     []
@@ -802,6 +817,8 @@ export function useConversations(
             conversation.conversationId
           )
         })
+
+        void hydrateCartBadges(items)
       })
       .catch((caughtError: unknown) => {
         if (

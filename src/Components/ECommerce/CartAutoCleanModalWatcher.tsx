@@ -4,7 +4,10 @@ import { useSelector } from "react-redux"
 import { CartAutoCleanModal } from "@/Components/ECommerce/CartAutoCleanModal"
 import type { AutoCleanedCartSummary } from "@/Interfaces/Crm/AutoCleanedCart"
 import type { RootState } from "@/Context"
-import { CART_AUTO_CLEAN_STORAGE_KEY } from "@/Utils/ECommerce/runCartAutoCleanAfterLogin"
+import {
+  CART_AUTO_CLEAN_READY_EVENT,
+  CART_AUTO_CLEAN_STORAGE_KEY,
+} from "@/Utils/ECommerce/runCartAutoCleanAfterLogin"
 
 function readSummary(): AutoCleanedCartSummary[] {
   try {
@@ -32,13 +35,29 @@ export function CartAutoCleanModalWatcher() {
   const [items, setItems] = useState<AutoCleanedCartSummary[]>([])
 
   useEffect(() => {
-    if (checkingSession || !isAuthenticated) return
+    const applySummary = (): void => {
+      if (checkingSession || !isAuthenticated) return
 
-    const summary = readSummary()
+      const summary = readSummary()
 
-    if (summary.length === 0) return
+      if (summary.length === 0) return
 
-    setItems(summary)
+      setItems(summary)
+    }
+
+    applySummary()
+
+    window.addEventListener(
+      CART_AUTO_CLEAN_READY_EVENT,
+      applySummary
+    )
+
+    return () => {
+      window.removeEventListener(
+        CART_AUTO_CLEAN_READY_EVENT,
+        applySummary
+      )
+    }
   }, [checkingSession, isAuthenticated])
 
   if (items.length === 0) return null

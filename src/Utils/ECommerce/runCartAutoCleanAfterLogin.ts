@@ -1,9 +1,11 @@
 import type { AutoCleanedCartSummary } from "@/Interfaces/Crm/AutoCleanedCart"
 import { store } from "@/Context"
+import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice"
 import { logCartService } from "@/Services/Crm/LogCartService"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 
 export const CART_AUTO_CLEAN_STORAGE_KEY = "cartAutoCleanSummary"
+export const CART_AUTO_CLEAN_READY_EVENT = "CartAutoCleanSummaryReady"
 
 let autoCleanInFlight: Promise<void> | null = null
 
@@ -52,9 +54,27 @@ async function runCartAutoCleanAfterLoginInternal(): Promise<void> {
       cleaned.map((item) => item.logCartId)
     )
 
+    for (const item of cleaned) {
+      const contactId = Number(item.contactId)
+
+      if (contactId <= 0) continue
+
+      store.dispatch(
+        setContactCartBadge({
+          contactId,
+          hasCart: false,
+          count: 0,
+        })
+      )
+    }
+
     sessionStorage.setItem(
       CART_AUTO_CLEAN_STORAGE_KEY,
       JSON.stringify(cleaned)
+    )
+
+    window.dispatchEvent(
+      new Event(CART_AUTO_CLEAN_READY_EVENT)
     )
   } catch {
     // El login no debe fallar si la limpieza no corre.

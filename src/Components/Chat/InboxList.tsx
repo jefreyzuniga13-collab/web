@@ -646,10 +646,7 @@ export const InboxList: React.FC<Props> = ({
                 : null
 
             const hasCart =
-              contactId > 0
-                ? badge?.hasCart ??
-                  conversation.isItemsInCart
-                : conversation.isItemsInCart
+              contactId > 0 && badge?.hasCart === true
 
             return (
               <li

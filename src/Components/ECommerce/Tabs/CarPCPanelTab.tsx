@@ -40,7 +40,7 @@ import { generateCartPdfFile } from "@/Utils/Pdf/GenerateCartPdfFile"
 import {generateRandomString,formatCurrencyNIO} from "@/Utils/ECommerce/formatters"
 import {buildCalculationRequest,buildLogUpdateRequest,countMainProducts,normalizeDraft,safeNumber,safePositiveNumber,toLogCartFormValues} from "@/Utils/ECommerce/utils"
 import { formatearDecimales } from "@/Utils/calcularIVA"
-import { GENERAL_STATUS } from "@/Constants/status"
+import { cancelLogCartAndClearPcg } from "@/Utils/ECommerce/cancelLogCartAndClearPcg"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
@@ -816,7 +816,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       const existingLog = await fetchByContactId(contactId)
 
       if (existingLog?.id) {
-        await UpdatedStatus(existingLog.id, GENERAL_STATUS.Cancelada)
+        await cancelLogCartAndClearPcg({
+          logCartId: existingLog.id,
+          contactId,
+          orderId: Number(existingLog.orderId || noPedido),
+          updatedStatus: UpdatedStatus,
+        })
       }
 
       removeDraft()

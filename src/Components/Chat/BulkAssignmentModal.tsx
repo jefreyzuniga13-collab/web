@@ -49,11 +49,19 @@ type ModalStep = "form" | "processing" | "completed" | "failed" | "cancelled"
 
 const DATE_TIME_FORMAT = "dd/MM/yyyy hh:mm a"
 
-const initialFilters: BulkAssignmentFormFilters = {
-  from: null,
-  to: null,
-  metaChannelId: null,
-  searchConversation: "",
+const createDefaultFilters = (): BulkAssignmentFormFilters => {
+  const to = new Date()
+  const from = new Date(to)
+
+  from.setDate(from.getDate() - 3)
+  from.setHours(0, 0, 0, 0)
+
+  return {
+    from,
+    to,
+    metaChannelId: null,
+    searchConversation: "",
+  }
 }
 
 const channelOptions = [
@@ -136,7 +144,7 @@ export default function BulkAssignmentModal({
   } = useAssignableAgents({ enabled: isOpen })
 
   const [filters, setFilters] =
-    useState<BulkAssignmentFormFilters>(initialFilters)
+    useState<BulkAssignmentFormFilters>(createDefaultFilters)
   const [selectedAgentIds, setSelectedAgentIds] = useState<number[]>([])
   const [useAllAgents, setUseAllAgents] = useState(false)
   const [comment, setComment] = useState("")
@@ -186,7 +194,7 @@ export default function BulkAssignmentModal({
     if (isOpen) return
 
     reset()
-    setFilters(initialFilters)
+    setFilters(createDefaultFilters())
     setSelectedAgentIds([])
     setUseAllAgents(false)
     setComment("")
