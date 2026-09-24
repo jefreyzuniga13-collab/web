@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "@mui/material";
 import { MdAssignmentInd } from "react-icons/md";
@@ -37,6 +37,7 @@ const SupportPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   const [mobileChatVisible, setMobileChatVisible] = useState(false);
+  const chatHistoryPushedRef = useRef(false);
 
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth,
@@ -163,6 +164,75 @@ const SupportPage: React.FC = () => {
     };
   }, []);
 
+  const blurActiveField = (): void => {
+    const active = document.activeElement;
+
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+  };
+
+  const closeMobileChat = useCallback((): void => {
+    blurActiveField();
+    setMobileChatVisible(false);
+    setDetailToggle(false);
+    setContactDetailToggle(false);
+  }, [setContactDetailToggle, setDetailToggle]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    const syncViewport = (): void => {
+      const viewport = window.visualViewport;
+      const height = viewport?.height ?? window.innerHeight;
+
+      root.style.setProperty("--app-vvh", `${Math.round(height)}px`);
+
+      if (root.classList.contains("mobile-chat-open")) {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    syncViewport();
+    window.visualViewport?.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("scroll", syncViewport);
+    window.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+      window.visualViewport?.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const shouldLock = isMobile && mobileChatVisible;
+
+    root.classList.toggle("mobile-chat-open", shouldLock);
+
+    return () => {
+      root.classList.remove("mobile-chat-open");
+    };
+  }, [isMobile, mobileChatVisible]);
+
+  useEffect(() => {
+    const handlePopState = (): void => {
+      if (!chatHistoryPushedRef.current && !mobileChatVisible) {
+        return;
+      }
+
+      chatHistoryPushedRef.current = false;
+      closeMobileChat();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [closeMobileChat, mobileChatVisible]);
+
   /**
    * El contacto es información secundaria.
    *
@@ -195,8 +265,14 @@ const SupportPage: React.FC = () => {
     ) {
       setConvId(null);
       setConversationSnapshot(null);
-      setMobileChatVisible(false);
       setDetailToggle(false);
+
+      if (chatHistoryPushedRef.current) {
+        chatHistoryPushedRef.current = false;
+        window.history.back();
+      } else {
+        setMobileChatVisible(false);
+      }
     }
   }, [
     convId,
@@ -221,9 +297,12 @@ const SupportPage: React.FC = () => {
       }
 
       if (isMobile && mobileChatVisible) {
-        setMobileChatVisible(false);
-        setContactDetailToggle(false);
-        setDetailToggle(false);
+        if (chatHistoryPushedRef.current) {
+          chatHistoryPushedRef.current = false;
+          window.history.back();
+        }
+
+        closeMobileChat();
         return;
       }
 
@@ -243,6 +322,7 @@ const SupportPage: React.FC = () => {
     };
   }, [
     bulkAssignmentOpen,
+    closeMobileChat,
     convId,
     isMobile,
     mobileChatVisible,
@@ -273,8 +353,15 @@ const SupportPage: React.FC = () => {
       setDetailToggle(false);
       setContactDetailToggle(false);
 
-      if (isMobile) {
-        setMobileChatVisible(Boolean(id));
+      if (isMobile && id) {
+        setMobileChatVisible(true);
+
+        if (!chatHistoryPushedRef.current) {
+          window.history.pushState({ mobileChat: true }, "");
+          chatHistoryPushedRef.current = true;
+        }
+      } else if (isMobile) {
+        closeMobileChat();
       }
     },
     [
@@ -284,6 +371,7 @@ const SupportPage: React.FC = () => {
       setConversationSnapshot,
       setConvId,
       setDetailToggle,
+      closeMobileChat,
     ],
   );
 
@@ -292,9 +380,14 @@ const SupportPage: React.FC = () => {
    * hacia la lista de conversaciones.
    */
   const handleMobileBack = (): void => {
-    setMobileChatVisible(false);
-    setDetailToggle(false);
-    setContactDetailToggle(false);
+    if (chatHistoryPushedRef.current) {
+      chatHistoryPushedRef.current = false;
+      window.history.back();
+      closeMobileChat();
+      return;
+    }
+
+    closeMobileChat();
   };
 
   /**
@@ -338,7 +431,6 @@ const SupportPage: React.FC = () => {
                 <button
                   className="sort-button"
                   onClick={() => setShowCompanyModal(true)}
-                  title="Seleccionar empresa"
                   type="button"
                 >
                   <Building2 className="sort-button-icon" size={19} strokeWidth={1.8} />
@@ -351,7 +443,6 @@ const SupportPage: React.FC = () => {
                 <button
                   className="sort-button"
                   onClick={() => setBulkAssignmentOpen(true)}
-                  title="Asignar conversaciones"
                   type="button"
                 >
                   <Users className="sort-button-icon" size={19} strokeWidth={1.8} />

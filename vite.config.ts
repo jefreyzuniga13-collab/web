@@ -12,6 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: false,
+      manifestFilename: "manifest.json",
 
       manifest: {
         name: "ORBITRA PCG",
@@ -55,7 +56,13 @@ export default defineConfig({
           5 * 1024 * 1024,
 
         globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,mp3}",
+          "**/*.{js,css,html,ico,png,svg}",
+        ],
+
+        navigateFallback: "index.html",
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /\/manifest\.(webmanifest|json)$/i,
         ],
 
         runtimeCaching: [
@@ -86,6 +93,13 @@ export default defineConfig({
         enabled: false,
       },
     }),
+    {
+      name: "strip-manifest-on-login-html",
+      enforce: "post",
+      transformIndexHtml(html) {
+        return html.replace(/<link[^>]+rel=["']manifest["'][^>]*>/gi, "");
+      },
+    },
   ],
 
   resolve: {

@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import CustomLoader from '@/Components/Common/CustomLoader';
 import type { RootState } from '@/Context';
 
 interface ProtectedRouteLayoutProps {
@@ -11,8 +12,8 @@ export default function ProtectedRouteLayout({ roles }: ProtectedRouteLayoutProp
     (state: RootState & { auth: RootState['auth'] & { roles?: string[] } }) => state.auth
   );
 
-  if (checkingSession) {
-    return null;
+  if (checkingSession && !isAuthenticated) {
+    return <CustomLoader />;
   }
 
   if (!isAuthenticated) {

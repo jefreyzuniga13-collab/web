@@ -47,9 +47,19 @@ export default function PaymentHostedPage() {
   const mode = state?.payment?.mode ?? null;
 
   useEffect(() => {
-    // Si no viene HTML de PowerTranz, no hay formulario que mostrar.
+    const search = window.location.search;
+
+    // La pasarela recarga la app y pierde location.state.
+    // Si ya vienen los query params del merchant-response, ir al resultado.
     if (!redirectData) {
-      navigate("/unauthorized", { replace: true });
+      if (search.includes("orderId=") || search.includes("approved=")) {
+        navigate(`/payment-result${search}`, { replace: true });
+        return;
+      }
+
+      navigate("/payment-result?approved=false&message=No se pudo continuar el pago.", {
+        replace: true,
+      });
       return;
     }
 
@@ -59,7 +69,9 @@ export default function PaymentHostedPage() {
     }
 
     if (!orderId) {
-      navigate("/unauthorized", { replace: true });
+      navigate("/payment-result?approved=false&message=No se encontró la orden del pago.", {
+        replace: true,
+      });
       return;
     }
 
@@ -106,7 +118,12 @@ export default function PaymentHostedPage() {
         const threeDsCompleted = authStatus === "Y" || isoCode === "3D0";
 
         if (!threeDsCompleted) {
-          navigate("/unauthorized", { replace: true });
+          navigate(
+            `/payment-result?approved=false&message=${encodeURIComponent(
+              authData.responseMessage || "El 3DS no se completó."
+            )}`,
+            { replace: true }
+          );
           return;
         }
 
@@ -119,9 +136,16 @@ export default function PaymentHostedPage() {
         navigate(`/payment-result?${buildResultParamsFromProcess(completeRes.data)}`, {
           replace: true,
         });
-      } catch {
-        console.log("catch PaymentHostedPage");
-        navigate("/unauthorized", { replace: true });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo completar el pago.";
+
+        navigate(
+          `/payment-result?approved=false&message=${encodeURIComponent(message)}`,
+          { replace: true }
+        );
       }
     }, 4000);
 

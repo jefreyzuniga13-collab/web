@@ -58,6 +58,17 @@ interface AuthState {
   isAutomaticallyAssigned: boolean;
 }
 
+const SESSION_TRUST_MS = 15_000;
+let sessionTrustedUntil = 0;
+
+function markSessionTrusted(): void {
+  sessionTrustedUntil = Date.now() + SESSION_TRUST_MS;
+}
+
+function hasTrustedSession(): boolean {
+  return Date.now() < sessionTrustedUntil;
+}
+
 const initialState: AuthState = {
   isAuthenticated: false,
 
@@ -253,6 +264,8 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<AuthData>,
     ) {
+      markSessionTrusted();
+
       aplicarSesion(
         state,
         action.payload,
@@ -346,6 +359,11 @@ const authSlice = createSlice({
       .addCase(
         checkSessionThunk.rejected,
         (state) => {
+          if (state.isAuthenticated && hasTrustedSession()) {
+            state.checkingSession = false;
+            return;
+          }
+
           limpiarSesion(state);
         },
       );

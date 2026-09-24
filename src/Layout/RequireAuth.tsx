@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
+import CustomLoader from "@/Components/Common/CustomLoader";
 import type { RootState } from "@/Context";
 import { SupportRequestedPopup } from "@/Components/Hub/SupportRequestedPopup";
 import { ConversationAssignedPopup } from "@/Components/Hub/ConversationAssignedPopup";
@@ -21,8 +22,8 @@ export function RequireAuth({ children }: RequireAuthProps) {
     (state: RootState) => state.auth,
   );
 
-  if (checkingSession) {
-    return null;
+  if (checkingSession && !isAuthenticated) {
+    return <CustomLoader />;
   }
 
   if (!isAuthenticated) {

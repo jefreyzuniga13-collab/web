@@ -4,6 +4,7 @@ import { useSelector } from "react-redux"
 import Navbar from "@/Components/Auth/Menu"
 import MobileNavbar from "@/Components/Auth/MobileNavbar"
 import { AssignModal } from "@/Components/Chat/AssignModal"
+import CustomLoader from "@/Components/Common/CustomLoader"
 import type { RootState } from "@/Context"
 
 const MOBILE_QUERY = "(max-width: 700px)"
@@ -42,8 +43,8 @@ const MainLayout: React.FC = () => {
     }
   }, [])
 
-  if (checkingSession) {
-    return null
+  if (checkingSession && (!isAuthenticated || !userId)) {
+    return <CustomLoader />
   }
 
   if (!isAuthenticated || !userId) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { procesarCheckoutExitoso } from "@/Utils/ECommerce/procesarCheckoutExitoso";
@@ -20,6 +20,7 @@ export default function PaymentResultPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const executedRef = useRef(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 
   // Recuperar los datos devuelto por la api, mediante flujo 3ds con pasarela n
@@ -120,13 +121,12 @@ export default function PaymentResultPage() {
 
         sessionStorage.removeItem(SAVE_CARD_AFTER_PAYMENT_KEY);
       } catch (err: unknown) {
-        navigate("/unauthorized", { replace: true });
+        const text =
+          err instanceof Error
+            ? err.message
+            : "No se pudo finalizar el pedido después del pago.";
 
-        if (err instanceof Error) {
-          console.log(err.message);
-        } else {
-          console.log(err);
-        }
+        setErrorMessage(text);
       }
     };
     void run();
@@ -147,6 +147,15 @@ export default function PaymentResultPage() {
     navigate,
     CreateCard,
   ]);
+
+  if (errorMessage) {
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        <h1>No se pudo finalizar el pedido</h1>
+        <p>{errorMessage}</p>
+      </div>
+    );
+  }
 
   return null;
 }

@@ -561,6 +561,10 @@
   margin-top: var(--space-lg);
 }
 
+.cartPanel-tooltip {
+  display: inline-flex;
+}
+
 .productTab-footer__address,
 .btn_text {
   font-size: var(--font-size-sm) !important;

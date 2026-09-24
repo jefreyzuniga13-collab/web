@@ -109,79 +109,89 @@ export default function CartPanelActions({
     <div className="productTab-footer__payment">
       {showAddressButton && (
         <Tooltip title="Listar direcciones" slotProps={tooltipSlotProps}>
-          <Button
-            className="cartAddress-btn"
-            variant="secondary"
-            disabled={actionsDisabled}
-            onClick={async () => {
-              await loadAddresses()
-              setShowAddressModal(true)
-              setActiveStep(CART_AGENT_STEP.entrega)
-            }}
-          >
-            <FaMapMarkerAlt size={15} />
-          </Button>
+          <span className="cartPanel-tooltip">
+            <Button
+              className="cartAddress-btn"
+              variant="secondary"
+              disabled={actionsDisabled}
+              onClick={async () => {
+                await loadAddresses()
+                setShowAddressModal(true)
+                setActiveStep(CART_AGENT_STEP.entrega)
+              }}
+            >
+              <FaMapMarkerAlt size={15} />
+            </Button>
+          </span>
         </Tooltip>
       )}
 
       <Tooltip title="Enviar PDF" slotProps={tooltipSlotProps}>
-        <Button
-          className="cartPdf-btn"
-          variant="secondary"
-          disabled={actionsDisabled}
-          onClick={handleSendCartPdf}
-        >
-          {sending || sendChatLoading ? (
-            <AiOutlineLoading3Quarters fontSize={16} />
-          ) : (
-            <FaFilePdf fontSize={16} />
-          )}
-        </Button>
+        <span className="cartPanel-tooltip">
+          <Button
+            className="cartPdf-btn"
+            variant="secondary"
+            disabled={actionsDisabled}
+            onClick={handleSendCartPdf}
+          >
+            {sending || sendChatLoading ? (
+              <AiOutlineLoading3Quarters fontSize={16} />
+            ) : (
+              <FaFilePdf fontSize={16} />
+            )}
+          </Button>
+        </span>
       </Tooltip>
 
       <Tooltip title="Confirmar carrito" slotProps={tooltipSlotProps}>
-        <Button
-          className="cartChat-btn"
-          variant="secondary"
-          disabled={actionsDisabled}
-          onClick={handleSendCartChat}
-        >
-          {sendChatLoading ? (
-            <AiOutlineLoading3Quarters fontSize={16} />
-          ) : (
-            <IoIosChatboxes fontSize={16} />
-          )}
-        </Button>
+        <span className="cartPanel-tooltip">
+          <Button
+            className="cartChat-btn"
+            variant="secondary"
+            disabled={actionsDisabled}
+            onClick={handleSendCartChat}
+          >
+            {sendChatLoading ? (
+              <AiOutlineLoading3Quarters fontSize={16} />
+            ) : (
+              <IoIosChatboxes fontSize={16} />
+            )}
+          </Button>
+        </span>
       </Tooltip>
 
       <Tooltip title="Cancelar links" slotProps={tooltipSlotProps}>
-        <Button
-          className="cancelPanel-btn"
-          variant="secondary"
-          disabled={actionsDisabled}
-          onClick={Cancel}
-        >
-          {cancelLoading ? (
-            <AiOutlineLoading3Quarters fontSize={16} />
-          ) : (
-            <MdOutlineCancelScheduleSend fontSize={16} />
-          )}
-        </Button>
+        <span className="cartPanel-tooltip">
+          <Button
+            className="cancelPanel-btn"
+            variant="secondary"
+            disabled={actionsDisabled}
+            onClick={Cancel}
+          >
+            {cancelLoading ? (
+              <AiOutlineLoading3Quarters fontSize={16} />
+            ) : (
+              <MdOutlineCancelScheduleSend fontSize={16} />
+            )}
+          </Button>
+        </span>
       </Tooltip>
 
       <Tooltip title="Enviar link" slotProps={tooltipSlotProps}>
-        <Button
-          className="payment-btn"
-          variant="secondary"
-          disabled={actionsDisabled}
-          onClick={async () => await handleSendLink(false)}
-        >
-          {sendChatLoading ? (
-            <AiOutlineLoading3Quarters fontSize={16} />
-          ) : (
-            <IoSend fontSize={15} />
-          )}
-        </Button>
+        <span className="cartPanel-tooltip">
+          <Button
+            className="payment-btn"
+            variant="secondary"
+            disabled={actionsDisabled}
+            onClick={async () => await handleSendLink(false)}
+          >
+            {sendChatLoading ? (
+              <AiOutlineLoading3Quarters fontSize={16} />
+            ) : (
+              <IoSend fontSize={15} />
+            )}
+          </Button>
+        </span>
       </Tooltip>
     </div>
   )

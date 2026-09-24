@@ -69,4 +69,8 @@
   .mobile-navbar {
     display: flex;
   }
+
+  html.mobile-chat-open .mobile-navbar {
+    display: none;
+  }
 }
