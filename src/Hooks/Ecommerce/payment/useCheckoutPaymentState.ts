@@ -20,6 +20,7 @@ import type {
 
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
 import { safeStr } from "@/Utils/ECommerce/formatters"
+import { cubreMontoPago } from "@/Utils/ECommerce/monedaUtils"
 
 type Params = {
   /**
@@ -40,6 +41,12 @@ type Params = {
   totalPagar: number
 
   /**
+   * Total expresado en la moneda seleccionada del pago.
+   * Si no se envía, se usa totalPagar (córdobas).
+   */
+  totalEnMonedaPago?: number
+
+  /**
    * Método de pago inicial.
    * Es opcional porque normalmente el usuario selecciona el método en pantalla.
    */
@@ -49,8 +56,10 @@ type Params = {
 export function useCheckoutPaymentState({
   source,
   totalPagar,
+  totalEnMonedaPago,
   initialMethod = null
 }: Params) {
+  const totalEfectivo = totalEnMonedaPago ?? totalPagar
   /**
    * Método de pago seleccionado.
    * Puede iniciar en null cuando todavía no se ha seleccionado ningún método.
@@ -169,8 +178,8 @@ export function useCheckoutPaymentState({
   const cashOk = useMemo(() => {
     if (method !== "cash") return true
 
-    return safePositiveNumber(cashAmount) >= safePositiveNumber(totalPagar)
-  }, [method, cashAmount, totalPagar])
+    return cubreMontoPago(cashAmount, totalEfectivo)
+  }, [method, cashAmount, totalEfectivo])
 
   /**
    * Valida tarjeta con pasarela.
@@ -222,10 +231,10 @@ export function useCheckoutPaymentState({
     if (method !== "cash") return 0
 
     const recibido = safePositiveNumber(cashAmount)
-    const total = safePositiveNumber(totalPagar)
+    const total = safePositiveNumber(totalEfectivo)
 
     return recibido > total ? recibido - total : 0
-  }, [method, cashAmount, totalPagar])
+  }, [method, cashAmount, totalEfectivo])
 
   /**
    * Estado normalizado del pago.

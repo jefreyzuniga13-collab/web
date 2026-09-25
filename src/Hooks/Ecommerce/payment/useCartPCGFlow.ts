@@ -19,8 +19,8 @@ import { clampQty, cleanText } from "@/Utils/ECommerce/formatters"
 import { buildCalculationRequest } from "@/Utils/ECommerce/utils"
 import { MAX_DESCUENTO_PORCENTUAL_UI, normalizarDescuentoInput, prepararDescuentoGlobal} from "@/Utils/ECommerce/descuentoGlobal"
 import { cancelLogCartAndClearPcg } from "@/Utils/ECommerce/cancelLogCartAndClearPcg"
-import { tasaCambio } from "@/Constants/tasaCambio"
 import { TipoFalote } from "@/Constants/falote"
+import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
 
 // type CartServiceWithCleanup = typeof CartService & {
 //   LimpiarFacturaTempo?: (
@@ -77,6 +77,7 @@ export const useCartPCGFlow = (
 
   const companySistema = useSelector(selectCompanySistema)
   const codReferenciaPCG = useSelector(selectCodReferenciaPCG)
+  const { tasa: tasaCambio } = useCatalogoMoneda()
   const [locked, setLockedState] = useState<LockedInfo | null>(null)
   const [codPrecioActivo, setCodPrecioActivoState] = useState("")
   const [openSucursalModal, setOpenSucursalModal] = useState(false)

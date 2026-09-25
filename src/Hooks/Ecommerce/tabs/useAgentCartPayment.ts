@@ -5,7 +5,7 @@ import { toast } from "react-toastify"
 import type { AppDispatch } from "@/Context"
 import { selectIsRoot } from "@/Context/Slices/Auth/authSlice"
 import { selectActiveCompanyName } from "@/Context/Slices/Auth/companySlice"
-import { tasaCambio } from "@/Constants/tasaCambio"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 import { CartService } from "@/Services/Ecommerce/CarPCGService"
 import { fetchDivisasPagoTipo } from "@/Utils/ECommerce/fetchDivisasPagoTipo"
 import type { ApiResponse } from "@/Interfaces/Auth/AuthInterface"
@@ -89,6 +89,9 @@ type UseAgentCartPaymentParams = {
   dispatch: AppDispatch
   multiPagoActivo?: boolean
   pagosMultiples?: PagoSeleccionado[]
+  tasaCambio: number
+  monedaPago?: MonedaCatalogo | null
+  totalEnMonedaPago?: number
 }
 
 export const useAgentCartPayment = ({
@@ -112,7 +115,10 @@ export const useAgentCartPayment = ({
   resetCartPanelUi,
   dispatch,
   multiPagoActivo = false,
-  pagosMultiples = []
+  pagosMultiples = [],
+  tasaCambio,
+  monedaPago = null,
+  totalEnMonedaPago
 }: UseAgentCartPaymentParams) => {
   const isRoot = useSelector(selectIsRoot)
   const activeCompanyName = useSelector(selectActiveCompanyName)
@@ -125,7 +131,8 @@ export const useAgentCartPayment = ({
 
   const payment = useCheckoutPaymentState({
     source: "agent",
-    totalPagar
+    totalPagar,
+    totalEnMonedaPago
   })
 
   const {
@@ -323,7 +330,8 @@ export const useAgentCartPayment = ({
       if (multiPagoActivo) {
         const error = validarPagosSeleccionados(
           pagosMultiples,
-          totalFinal
+          totalFinal,
+          tasaCambio
         )
 
         if (error) {
@@ -371,8 +379,10 @@ export const useAgentCartPayment = ({
           transfer,
           manualCardData,
           moneda:
+            monedaPago?.id ||
             safeStr(facturaBase.moneda) ||
             "1",
+          monedaPago,
           codEmpresa:
             safeStr(facturaBase.codEmpresa)
         })
@@ -386,7 +396,9 @@ export const useAgentCartPayment = ({
       cashAmount,
       divisaSelected,
       transfer,
-      manualCardData
+      manualCardData,
+      tasaCambio,
+      monedaPago
     ]
   )
 

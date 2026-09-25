@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { TbRosetteDiscountCheck } from "react-icons/tb";
@@ -14,11 +14,15 @@ import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface";
 import type { TarjetaModelInterface } from "@/Interfaces/Ecommerce/TarjetaInterface";
 import type { CheckoutPaymentMethod, ManualCardFormState,} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes";
+import PaymentMonedaSelect from "@/Components/ECommerce/Payment/PaymentMonedaSelect"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 import { validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils";
+import { convertirDesdeCordoba, cubreMontoPago, esMonedaDolar, simboloMoneda } from "@/Utils/ECommerce/monedaUtils"
 import { safeStr } from "@/Utils/ECommerce/formatters";
 import { safeNumber } from "@/Utils/ECommerce/utils";
 import { formatearDecimales } from "@/Utils/calcularIVA";
 import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
+import "@/Styles/Ecommerce/Payment/PaymentBrandTiles.css";
 
 interface Props {
   /**
@@ -209,6 +213,13 @@ interface Props {
    * Carga bancos o tipos de pago para multipago.
    */
   cargarDivisas?: (item: Currencyto) => Promise<ObtenerDivisaPagosTipoRes[]>;
+
+  aplicaMultiMoneda?: boolean;
+  monedas?: MonedaCatalogo[];
+  monedaSeleccionada?: MonedaCatalogo | null;
+  onChangeMoneda?: (moneda: MonedaCatalogo) => void;
+  tasaCambio?: number;
+  monedaLoading?: boolean;
 }
 
 export default function PaymentMethodComponent({
@@ -246,6 +257,12 @@ export default function PaymentMethodComponent({
   setPagosMultiples,
   currency = [],
   cargarDivisas,
+  aplicaMultiMoneda = false,
+  monedas = [],
+  monedaSeleccionada = null,
+  onChangeMoneda,
+  tasaCambio,
+  monedaLoading = false,
 }: Props) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -289,11 +306,26 @@ export default function PaymentMethodComponent({
   /**
    * Valida efectivo.
    */
+  const totalEnMonedaPago = useMemo(() => {
+    return convertirDesdeCordoba(
+      safeNumber(totalPagar, 0),
+      esMonedaDolar(monedaSeleccionada),
+      tasaCambio
+    );
+  }, [totalPagar, monedaSeleccionada, tasaCambio]);
+
   const cashOk = useMemo(() => {
     if (method !== "cash") return true;
 
-    return safeNumber(cashAmount, 0) >= safeNumber(totalPagar, 0);
-  }, [method, cashAmount, totalPagar]);
+    return cubreMontoPago(cashAmount, totalEnMonedaPago);
+  }, [method, cashAmount, totalEnMonedaPago]);
+
+  useEffect(() => {
+    if (method !== "cash" || multiPagoActivo) return
+    if (totalEnMonedaPago <= 0) return
+
+    setCashAmount(Number(totalEnMonedaPago.toFixed(2)))
+  }, [method, monedaSeleccionada?.id, multiPagoActivo, setCashAmount, totalEnMonedaPago])
 
   /**
    * Valida el multipago completo.
@@ -305,10 +337,13 @@ export default function PaymentMethodComponent({
     if (!multiPagoActivo) return true;
 
     return (
-      validarPagosSeleccionados(pagosMultiples, safeNumber(totalPagar, 0)) ===
-      null
+      validarPagosSeleccionados(
+        pagosMultiples,
+        safeNumber(totalPagar, 0),
+        tasaCambio
+      ) === null
     );
-  }, [multiPagoActivo, pagosMultiples, totalPagar]);
+  }, [multiPagoActivo, pagosMultiples, totalPagar, tasaCambio]);
 
   /**
    * Habilita únicamente el botón final.
@@ -449,12 +484,21 @@ export default function PaymentMethodComponent({
             </div>
           )}
 
-          <div className="checkout-summary__subtitle">
+          <div className="checkout-summary__subtitle checkout-summary__subtitle--total">
             <p className="checkout-summary__p">Total:</p>
-            <strong className="checkout-summary__strong">
+            <strong className="checkout-summary__strong checkout-summary__strong--total">
               C$ {formatearDecimales(resumen.total)}
             </strong>
           </div>
+
+          {aplicaMultiMoneda && esMonedaDolar(monedaSeleccionada) && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Equivalente:</p>
+              <strong className="checkout-summary__strong">
+                {simboloMoneda(monedaSeleccionada)} {formatearDecimales(totalEnMonedaPago)}
+              </strong>
+            </div>
+          )}
 
           {!multiPagoActivo &&
             method === "manualCard" &&
@@ -469,6 +513,17 @@ export default function PaymentMethodComponent({
         </aside>
       )}
 
+      {!multiPagoActivo && aplicaMultiMoneda && onChangeMoneda && (
+        <PaymentMonedaSelect
+          monedas={monedas}
+          monedaSeleccionada={monedaSeleccionada}
+          onChange={onChangeMoneda}
+          bloquearDolar={method === "gatewayCard"}
+          disabled={payNowLock}
+          loading={monedaLoading}
+        />
+      )}
+
       {multiPagoActivo ? (
         setPagosMultiples && cargarDivisas ? (
           <MultiPagoSection
@@ -478,6 +533,12 @@ export default function PaymentMethodComponent({
             setPagos={setPagosMultiples}
             cargarDivisas={cargarDivisas}
             disabled={payNowLock}
+            aplicaMultiMoneda={aplicaMultiMoneda}
+            monedas={monedas}
+            monedaSeleccionada={monedaSeleccionada}
+            onChangeMoneda={onChangeMoneda}
+            tasaCambio={tasaCambio}
+            monedaLoading={monedaLoading}
           />
         ) : (
           <p className="checkout-payment-hint">

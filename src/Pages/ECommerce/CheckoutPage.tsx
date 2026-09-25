@@ -40,8 +40,9 @@ import type { CheckoutPaymentMethod } from "@/Interfaces/Ecommerce/PaymentChecko
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
-import { tasaCambio } from "@/Constants/tasaCambio"
 import { TipoFalote } from "@/Constants/falote"
+import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
+import { convertirDesdeCordoba } from "@/Utils/ECommerce/monedaUtils"
 
 const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
@@ -122,6 +123,7 @@ const CheckoutPage: React.FC = () => {
    */
   const permiteMultiPago = payload?.permiteMultiPago === true
   const permitePasarela = payload?.permitePasarela === true
+  const aplicaMultiMoneda = payload?.aplicaMultimoneda === true
 
   const [ecommerceUserId, setEcommerceUserId] = useState(0)
   const [orderId, setOrderId] = useState(0)
@@ -228,9 +230,21 @@ const CheckoutPage: React.FC = () => {
     return totalBase + transporte + propina
   }, [cartTotal, getTransporteFactura, tip])
 
+  const catalogoMoneda = useCatalogoMoneda({
+    aplicaMultiMoneda
+  })
+
+  const tasaCambio = catalogoMoneda.tasa
+  const totalEnMonedaPago = convertirDesdeCordoba(
+    totalPagar,
+    catalogoMoneda.esDolar,
+    tasaCambio
+  )
+
   const payment = useCheckoutPaymentState({
     source: "customerLink",
     totalPagar,
+    totalEnMonedaPago,
     initialMethod: "gatewayCard"
   })
 
@@ -394,6 +408,15 @@ const CheckoutPage: React.FC = () => {
 
     setSelectedCurrency(item)
     setMethod(nextMethod)
+
+    if (nextMethod === "gatewayCard") {
+      const cordoba = catalogoMoneda.monedas.find(
+        (moneda) => moneda.id === "1"
+      )
+      if (cordoba) {
+        catalogoMoneda.setMonedaSeleccionada(cordoba)
+      }
+    }
 
     await loadDivisaIfNeeded(item)
   }
@@ -666,7 +689,8 @@ const CheckoutPage: React.FC = () => {
     if (multiPagoActivo) {
       const error = validarPagosSeleccionados(
         pagosMultiples,
-        totalPagar
+        totalPagar,
+        tasaCambio
       )
 
       if (error) {
@@ -703,7 +727,8 @@ const CheckoutPage: React.FC = () => {
         tasaCambio,
         transfer,
         manualCardData,
-        moneda: safeStr(facturaBase.moneda) || "1",
+        moneda: catalogoMoneda.monedaId || safeStr(facturaBase.moneda) || "1",
+        monedaPago: catalogoMoneda.monedaSeleccionada,
         codEmpresa: safeStr(facturaBase.codEmpresa)
       })
     ]
@@ -1201,6 +1226,11 @@ const CheckoutPage: React.FC = () => {
                 permitePasarela={permitePasarela}
                 multiPagoActivo={multiPagoActivo}
                 setMultiPagoActivo={setMultiPagoActivo}
+                aplicaMultiMoneda={aplicaMultiMoneda}
+                monedas={catalogoMoneda.monedas}
+                monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
+                onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
+                monedaLoading={catalogoMoneda.loading}
               />
             )}
 
@@ -1246,6 +1276,12 @@ const CheckoutPage: React.FC = () => {
                 setPagosMultiples={setPagosMultiples}
                 currency={currency}
                 cargarDivisas={loadDivisaIfNeeded}
+                aplicaMultiMoneda={aplicaMultiMoneda}
+                monedas={catalogoMoneda.monedas}
+                monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
+                onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
+                tasaCambio={tasaCambio}
+                monedaLoading={catalogoMoneda.loading}
               />
             )}
           </div>

@@ -537,10 +537,10 @@
   width: 100%;
   min-width: 100%;
   border-radius: 0.75rem;
-  padding: var(--space-lg) var(--space-md);
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 6px;
   box-sizing: border-box;
   font-size: var(--font-size-base);
 }
@@ -589,9 +589,11 @@
   color: var(--color-gray-900);
 }
 
-.checkout-summary__content__total {
-  color: var(--color-green-primary) !important;
-  text-decoration: underline;
+.checkout-summary__content__total,
+.checkout-summary__strong--total,
+.checkout-summary__subtitle--total .checkout-summary__strong {
+  color: #16a34a !important;
+  font-weight: 700;
 }
 
 .checkout-hint {
@@ -603,10 +605,10 @@
 .checkout-methods-list {
   width: 100%;
   max-width: 550px;
-  padding: var(--space-lg);
+  padding: 8px 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 8px;
   overflow-x: hidden;
   overflow-y: visible;
   background-color: var(--bg-primary);

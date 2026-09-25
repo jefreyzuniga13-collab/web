@@ -36,6 +36,7 @@ import type {
 import type {
   PagoSeleccionado
 } from "@/Interfaces/Ecommerce/MultiPagoTypes"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 
 interface Props {
   /**
@@ -192,6 +193,13 @@ interface Props {
   cargarDivisas: (
     item: Currencyto
   ) => Promise<ObtenerDivisaPagosTipoRes[]>
+
+  aplicaMultiMoneda?: boolean
+  monedas?: MonedaCatalogo[]
+  monedaSeleccionada?: MonedaCatalogo | null
+  onChangeMoneda?: (moneda: MonedaCatalogo) => void
+  tasaCambio?: number
+  monedaLoading?: boolean
 }
 
 export default function CartPanelPaymentStep({
@@ -223,7 +231,13 @@ export default function CartPanelPaymentStep({
   pagosMultiples,
   setPagosMultiples,
   currency,
-  cargarDivisas
+  cargarDivisas,
+  aplicaMultiMoneda = false,
+  monedas = [],
+  monedaSeleccionada = null,
+  onChangeMoneda,
+  tasaCambio,
+  monedaLoading = false
 }: Props) {
   /**
    * Multipago solo se considera activo cuando:
@@ -398,6 +412,12 @@ export default function CartPanelPaymentStep({
         setPagosMultiples={setPagosMultiples}
         currency={currency}
         cargarDivisas={cargarDivisas}
+        aplicaMultiMoneda={aplicaMultiMoneda}
+        monedas={monedas}
+        monedaSeleccionada={monedaSeleccionada}
+        onChangeMoneda={onChangeMoneda}
+        tasaCambio={tasaCambio}
+        monedaLoading={monedaLoading}
       />
     </div>
   )

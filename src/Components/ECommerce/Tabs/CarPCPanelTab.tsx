@@ -7,7 +7,9 @@ import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux
 import type { RootState, AppDispatch } from "@/Context"
 import { selectCarPCG,selectCartError,selectCartLoading,getProductFromCarAsync,updateCarAsync,setActiveContactId} from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-import { selectCompanySistema, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
+import { selectAplicaMultimoneda, selectCompanySistema, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
+import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
+import { convertirDesdeCordoba } from "@/Utils/ECommerce/monedaUtils"
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useContact from "@/Hooks/Auth/useContact"
@@ -62,6 +64,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const error = useAppSelector(selectCartError)
   const companySistema = useAppSelector(selectCompanySistema)
   const permiteMultiPago = useAppSelector(selectPermiteMultipago)
+  const aplicaMultiMoneda = useAppSelector(selectAplicaMultimoneda)
+  const catalogoMoneda = useCatalogoMoneda({
+    aplicaMultiMoneda
+  })
   const [search, setSearch] = useState("")
   const [orderId, setOrderId] = useState<number | null>(null)
   const [cancelLoading, setCancelLoading] = useState(false)
@@ -654,7 +660,14 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     resetCartPanelUi,
     dispatch,
     multiPagoActivo,
-    pagosMultiples
+    pagosMultiples,
+    tasaCambio: catalogoMoneda.tasa,
+    monedaPago: catalogoMoneda.monedaSeleccionada,
+    totalEnMonedaPago: convertirDesdeCordoba(
+      totalPagarAgente,
+      catalogoMoneda.esDolar,
+      catalogoMoneda.tasa
+    )
   })
 
   paymentResetRef.current = agentPayment.payment.resetPayment
@@ -1621,6 +1634,12 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             setPagosMultiples={setPagosMultiples}
             currency={currency}
             cargarDivisas={cargarDivisasPorMoneda}
+            aplicaMultiMoneda={aplicaMultiMoneda}
+            monedas={catalogoMoneda.monedas}
+            monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
+            onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
+            tasaCambio={catalogoMoneda.tasa}
+            monedaLoading={catalogoMoneda.loading}
           />
         )}
 

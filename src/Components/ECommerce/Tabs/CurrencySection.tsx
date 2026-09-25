@@ -1,5 +1,7 @@
 import { useEffect } from "react"
 
+import PaymentMonedaSelect from "@/Components/ECommerce/Payment/PaymentMonedaSelect"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 import type {
   CheckoutStep,
   Currencyto
@@ -64,6 +66,12 @@ export interface Props {
    * Activa o desactiva el modo multipago.
    */
   setMultiPagoActivo?: (value: boolean) => void
+
+  aplicaMultiMoneda?: boolean
+  monedas?: MonedaCatalogo[]
+  monedaSeleccionada?: MonedaCatalogo | null
+  onChangeMoneda?: (moneda: MonedaCatalogo) => void
+  monedaLoading?: boolean
 }
 
 export const CurrencySection = ({
@@ -77,7 +85,12 @@ export const CurrencySection = ({
   permiteMultiPago = false,
   permitePasarela = false,
   multiPagoActivo = false,
-  setMultiPagoActivo
+  setMultiPagoActivo,
+  aplicaMultiMoneda = false,
+  monedas = [],
+  monedaSeleccionada = null,
+  onChangeMoneda,
+  monedaLoading = false
 }: Props) => {
   /**
    * En pago único se filtran las formas de pago según la configuración
@@ -180,6 +193,16 @@ export const CurrencySection = ({
             </span>
           </label>
         </div>
+      )}
+
+      {aplicaMultiMoneda && onChangeMoneda && (
+        <PaymentMonedaSelect
+          monedas={monedas}
+          monedaSeleccionada={monedaSeleccionada}
+          onChange={onChangeMoneda}
+          disabled={invoiceLoading}
+          loading={monedaLoading}
+        />
       )}
 
       {!multiPagoActivo && (

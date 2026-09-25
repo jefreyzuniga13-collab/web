@@ -8,6 +8,7 @@ import type {
   CheckoutPaymentMethod,
   ManualCardFormState
 } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 
 /**
  * Representa una forma de pago agregada dentro del flujo de multipago.
@@ -20,6 +21,7 @@ export type PagoSeleccionado = {
   monto: number
   referencia: string
   tarjetaManual?: ManualCardFormState
+  monedaPago?: MonedaCatalogo | null
 }
 
 /**
@@ -32,5 +34,6 @@ export const pagoSeleccionadoVacio: PagoSeleccionado = {
   divisa: null,
   monto: 0,
   referencia: "",
-  tarjetaManual: undefined
+  tarjetaManual: undefined,
+  monedaPago: null
 }

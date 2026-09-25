@@ -23,4 +23,9 @@ export class FechaManagua {
     // Retorna un string puro listo para usar
     return `${año}${mes}${día}`;
   }
+
+  static obtenerIso(): string {
+    const limpio = this.obtenerFormatoLimpio()
+    return `${limpio.slice(0, 4)}-${limpio.slice(4, 6)}-${limpio.slice(6, 8)}`
+  }
 }

@@ -9,7 +9,11 @@ import type { ObtenerDivisaPagosTipoRes } from "@/Interfaces/Ecommerce/FacturaTe
 import type { PagoSeleccionado } from "@/Interfaces/Ecommerce/MultiPagoTypes";
 import type { CheckoutPaymentMethod,  ManualCardFormState} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
 import { initialManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface";
-import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, totalPendiente} from "@/Utils/ECommerce/pagoFacturaUtils";
+import PaymentMonedaSelect from "@/Components/ECommerce/Payment/PaymentMonedaSelect";
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo";
+import { clavePagoMoneda, convertirDesdeCordoba, esMonedaDolar, simboloMoneda } from "@/Utils/ECommerce/monedaUtils";
+import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, totalPendiente, vueltoEnCordoba} from "@/Utils/ECommerce/pagoFacturaUtils";
+import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio";
 import { formatearDecimales } from "@/Utils/calcularIVA";
 import { round2, safeStr } from "@/Utils/ECommerce/formatters";
 import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
@@ -44,6 +48,13 @@ type Props = {
    * Bloquea los controles cuando hay proceso activo.
    */
   disabled?: boolean;
+
+  aplicaMultiMoneda?: boolean;
+  monedas?: MonedaCatalogo[];
+  monedaSeleccionada?: MonedaCatalogo | null;
+  onChangeMoneda?: (moneda: MonedaCatalogo) => void;
+  tasaCambio?: number;
+  monedaLoading?: boolean;
 };
 
 const crearIdPago = () => {
@@ -68,7 +79,9 @@ const getMetodoLabel = (metodo: CheckoutPaymentMethod) => {
 
 const getPagoTitulo = (pago: PagoSeleccionado) => {
   if (pago.metodo === "cash") {
-    return safeStr(pago.moneda?.descripcion_Pago) || "Efectivo";
+    const monedaLabel = pago.monedaPago?.abreviatura || pago.monedaPago?.simbolo;
+    const base = safeStr(pago.moneda?.descripcion_Pago) || "Efectivo";
+    return monedaLabel ? `${base} (${monedaLabel})` : base;
   }
 
   if (pago.metodo === "transfer") {
@@ -89,6 +102,12 @@ export default function MultiPagoSection({
   setPagos,
   cargarDivisas,
   disabled = false,
+  aplicaMultiMoneda = false,
+  monedas = [],
+  monedaSeleccionada = null,
+  onChangeMoneda,
+  tasaCambio = tasaCambioSistema,
+  monedaLoading = false,
 }: Props) {
   const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(
     null,
@@ -111,33 +130,47 @@ export default function MultiPagoSection({
     return filtrarFormasPagoMultipago(currency);
   }, [currency]);
 
-  const efectivoAgregado = useMemo(() => {
-    return pagos.some((pago) => pago.metodo === "cash");
+  const clavesUsadas = useMemo(() => {
+    return new Set(
+      pagos.map((pago) =>
+        clavePagoMoneda(
+          pago.metodo,
+          pago.monedaPago?.id || pago.moneda?.moneda_Fija
+        )
+      )
+    );
   }, [pagos]);
 
-  /**
-   * Después de agregar efectivo se ocultan todas las opciones de efectivo.
-   */
   const formasPagoDisponibles = useMemo(() => {
+    const monedaId = monedaSeleccionada?.id || "1";
+
     return formasPagoMultipago.filter((item) => {
-      return !(
-        efectivoAgregado &&
-        obtenerTipoPagoDesdeMoneda(item) === "cash"
-      );
+      const metodo = obtenerTipoPagoDesdeMoneda(item);
+      return !clavesUsadas.has(clavePagoMoneda(metodo, monedaId));
     });
-  }, [efectivoAgregado, formasPagoMultipago]);
+  }, [clavesUsadas, formasPagoMultipago, monedaSeleccionada?.id]);
 
   const pagado = useMemo(() => {
-    return totalPagado(pagos);
-  }, [pagos]);
+    return totalPagado(pagos, tasaCambio);
+  }, [pagos, tasaCambio]);
 
   const pendiente = useMemo(() => {
-    return totalPendiente(pagos, totalPagar);
-  }, [pagos, totalPagar]);
+    return totalPendiente(pagos, totalPagar, tasaCambio);
+  }, [pagos, totalPagar, tasaCambio]);
+
+  const pendienteEnMoneda = useMemo(() => {
+    return convertirDesdeCordoba(
+      pendiente,
+      esMonedaDolar(monedaSeleccionada),
+      tasaCambio
+    );
+  }, [pendiente, monedaSeleccionada, tasaCambio]);
+
+  const simbolo = simboloMoneda(monedaSeleccionada);
 
   const vuelto = useMemo(() => {
-    return Math.max(0, pagado - Number(totalPagar ?? 0));
-  }, [pagado, totalPagar]);
+    return vueltoEnCordoba(pagos, totalPagar, tasaCambio);
+  }, [pagos, totalPagar, tasaCambio]);
 
   const requiereDivisa = method === "transfer" || method === "manualCard";
 
@@ -170,9 +203,15 @@ export default function MultiPagoSection({
     setDivisaSelected(null);
     setManualCardData(initialManualCardFormState);
 
-    const pendienteActual = totalPendiente(pagos, totalPagar);
+    const pendienteActual = totalPendiente(pagos, totalPagar, tasaCambio);
 
-    setMonto(pendienteActual > 0 ? round2(pendienteActual) : 0);
+    const pendienteMoneda = convertirDesdeCordoba(
+      pendienteActual,
+      esMonedaDolar(monedaSeleccionada),
+      tasaCambio
+    );
+
+    setMonto(pendienteMoneda > 0 ? round2(pendienteMoneda) : 0);
 
     if (nextMethod === "transfer" || nextMethod === "manualCard") {
       setDivisaLoading(true);
@@ -205,8 +244,13 @@ export default function MultiPagoSection({
       return "La tarjeta en línea no está disponible dentro de multipago.";
     }
 
-    if (method === "cash" && efectivoAgregado) {
-      return "Solamente puede agregar un pago en efectivo.";
+    const claveActual = clavePagoMoneda(
+      method,
+      monedaSeleccionada?.id || selectedCurrency.moneda_Fija
+    );
+
+    if (clavesUsadas.has(claveActual)) {
+      return "Esa forma de pago ya fue agregada en esta moneda.";
     }
 
     const montoActual = Number(monto);
@@ -219,7 +263,7 @@ export default function MultiPagoSection({
      * Efectivo puede superar el pendiente para generar vuelto.
      * Los demás métodos no pueden excederlo.
      */
-    if (method !== "cash" && montoActual > pendiente) {
+    if (method !== "cash" && montoActual > pendienteEnMoneda) {
       return "El monto no puede superar el pendiente.";
     }
 
@@ -264,6 +308,7 @@ export default function MultiPagoSection({
       monto: Number(monto),
       referencia: method === "transfer" ? referencia.trim() : "",
       tarjetaManual: method === "manualCard" ? manualCardData : undefined,
+      monedaPago: monedaSeleccionada,
     };
 
     setPagos((prev) => [...prev, nuevoPago]);
@@ -283,16 +328,15 @@ export default function MultiPagoSection({
     !!method &&
     Number.isFinite(montoActual) &&
     montoActual > 0 &&
-    (method === "cash" || montoActual <= pendiente) &&
-    (method !== "cash" || !efectivoAgregado) &&
+    (method === "cash" || montoActual <= pendienteEnMoneda) &&
     (!requiereDivisa || !!divisaSelected);
 
   return (
     <div className="multipago-section">
       <div className="checkout-summary multipago-summary">
-        <div className="checkout-summary__subtitle">
+        <div className="checkout-summary__subtitle checkout-summary__subtitle--total">
           <p className="checkout-summary__p">Total factura:</p>
-          <strong className="checkout-summary__strong">
+          <strong className="checkout-summary__strong checkout-summary__strong--total">
             C$ {formatearDecimales(totalPagar)}
           </strong>
         </div>
@@ -311,6 +355,15 @@ export default function MultiPagoSection({
           </strong>
         </div>
 
+        {aplicaMultiMoneda && esMonedaDolar(monedaSeleccionada) && (
+          <div className="checkout-summary__subtitle">
+            <p className="checkout-summary__p">Pendiente en moneda:</p>
+            <strong className="checkout-summary__strong">
+              {simbolo} {formatearDecimales(pendienteEnMoneda)}
+            </strong>
+          </div>
+        )}
+
         {vuelto > 0 && (
           <div className="checkout-summary__subtitle">
             <p className="checkout-summary__p">Vuelto:</p>
@@ -322,6 +375,16 @@ export default function MultiPagoSection({
       </div>
 
       <div className="multipago-form">
+        {aplicaMultiMoneda && onChangeMoneda && (
+          <PaymentMonedaSelect
+            monedas={monedas}
+            monedaSeleccionada={monedaSeleccionada}
+            onChange={onChangeMoneda}
+            disabled={disabled}
+            loading={monedaLoading}
+          />
+        )}
+
         <div className="checkout-field checkout-field--full">
           <Label htmlFor="multipagoCurrency">Forma de pago</Label>
 

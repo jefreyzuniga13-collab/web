@@ -1,4 +1,15 @@
 import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio"
+import {
+  calcularMontosPago,
+  clavePagoMoneda,
+  esMonedaDolar,
+  absorberResiduoCambio,
+  cambioEnCordoba,
+  convertirDesdeCordoba,
+  montoACordoba,
+  montoACordobaCerrando,
+  tasaCambioValida
+} from "@/Utils/ECommerce/monedaUtils"
 
 import type {
   FacturaTempo,
@@ -116,18 +127,54 @@ export const filtrarFormasPagoUnico = (
 }
 
 /**
- * Suma los montos ingresados en multipago.
+ * Suma los montos ingresados en multipago, convertidos a córdobas.
  *
- * No redondea ni modifica los valores.
+ * La factura y la preventa siempre se validan en C$.
  */
 export const totalPagado = (
-  pagos: PagoSeleccionado[]
+  pagos: PagoSeleccionado[],
+  tasaCambio = tasaCambioSistema
 ): number => {
-  return pagos.reduce(
-    (acumulado, pago) =>
-      acumulado + Number(pago.monto ?? 0),
-    0
-  )
+  const tasa = tasaCambioValida(tasaCambio)
+
+  return pagos.reduce((acumulado, pago) => {
+    return (
+      acumulado +
+      montoACordoba(
+        Number(pago.monto ?? 0),
+        esMonedaDolar(pago.monedaPago),
+        tasa
+      )
+    )
+  }, 0)
+}
+
+/**
+ * Suma lo aplicado a la factura en córdobas.
+ * Si un pago en USD cubre el equivalente visible, cierra el pendiente exacto.
+ */
+export const totalAplicado = (
+  pagos: PagoSeleccionado[],
+  totalFactura: number,
+  tasaCambio = tasaCambioSistema
+): number => {
+  const tasa = tasaCambioValida(tasaCambio)
+  let restante = Math.max(0, Number(totalFactura ?? 0))
+  let aplicado = 0
+
+  for (const pago of pagos) {
+    const parte = montoACordobaCerrando(
+      Number(pago.monto ?? 0),
+      esMonedaDolar(pago.monedaPago),
+      tasa,
+      restante
+    )
+
+    aplicado += parte
+    restante = Math.max(0, restante - parte)
+  }
+
+  return aplicado
 }
 
 /**
@@ -138,12 +185,49 @@ export const totalPagado = (
  */
 export const totalPendiente = (
   pagos: PagoSeleccionado[],
-  totalFactura: number
+  totalFactura: number,
+  tasaCambio = tasaCambioSistema
 ): number => {
-  return Math.max(
+  const crudo = Math.max(
     0,
-    Number(totalFactura ?? 0) - totalPagado(pagos)
+    Number(totalFactura ?? 0) - totalAplicado(pagos, totalFactura, tasaCambio)
   )
+
+  return absorberResiduoCambio(crudo, tasaCambio)
+}
+
+/**
+ * Vuelto en córdobas: solo el excedente de efectivo sobre el
+ * equivalente visible, no el residuo de USD × tasa − total C$.
+ */
+export const vueltoEnCordoba = (
+  pagos: PagoSeleccionado[],
+  totalFactura: number,
+  tasaCambio = tasaCambioSistema
+): number => {
+  const tasa = tasaCambioValida(tasaCambio)
+  let restante = Math.max(0, Number(totalFactura ?? 0))
+  let vuelto = 0
+
+  for (const pago of pagos) {
+    const monto = Number(pago.monto ?? 0)
+    const esDolar = esMonedaDolar(pago.monedaPago)
+    const pendienteAntes = restante
+    const aplicadoCordoba = montoACordobaCerrando(
+      monto,
+      esDolar,
+      tasa,
+      pendienteAntes
+    )
+
+    if (pago.metodo === "cash") {
+      vuelto += cambioEnCordoba(monto, aplicadoCordoba, esDolar, tasa)
+    }
+
+    restante = Math.max(0, pendienteAntes - aplicadoCordoba)
+  }
+
+  return vuelto
 }
 
 /**
@@ -174,14 +258,15 @@ const obtenerIndiceUltimoPagoValido = (
  */
 export const validarPagosSeleccionados = (
   pagos: PagoSeleccionado[],
-  totalFactura: number
+  totalFactura: number,
+  tasaCambio = tasaCambioSistema
 ): string | null => {
   if (!pagos.length) {
     return "Debe agregar al menos una forma de pago."
   }
 
   const total = Number(totalFactura ?? 0)
-  const pagado = totalPagado(pagos)
+  const pagado = totalPagado(pagos, tasaCambio)
 
   if (!Number.isFinite(total) || total <= 0) {
     return "El total de la factura no es válido."
@@ -195,13 +280,19 @@ export const validarPagosSeleccionados = (
     return "La tarjeta en línea no está disponible dentro de multipago. Úsala como pago único."
   }
 
-  /** Efectivo solo puede registrarse una vez dentro del multipago. */
-  const cantidadPagosEfectivo = pagos.filter(
-    (pago) => pago.metodo === "cash"
-  ).length
+  const clavesVistas = new Set<string>()
 
-  if (cantidadPagosEfectivo > 1) {
-    return "Solamente puede agregar un pago en efectivo."
+  for (const pago of pagos) {
+    const clave = clavePagoMoneda(
+      pago.metodo,
+      pago.monedaPago?.id || pago.moneda?.moneda_Fija
+    )
+
+    if (clavesVistas.has(clave)) {
+      return "No puede repetir la misma forma de pago en la misma moneda."
+    }
+
+    clavesVistas.add(clave)
   }
 
   for (const pago of pagos) {
@@ -269,10 +360,14 @@ export const validarPagosSeleccionados = (
     }
   }
 
-  if (pagado < total - PAYMENT_EPSILON) {
-    return `Monto insuficiente. Pendiente C$${
-      total - pagado
-    }.`
+  const pendiente = totalPendiente(
+    pagos,
+    total,
+    tasaCambio
+  )
+
+  if (pendiente > PAYMENT_EPSILON) {
+    return `Monto insuficiente. Pendiente C$${pendiente}.`
   }
 
   if (pagado > total + PAYMENT_EPSILON) {
@@ -289,13 +384,10 @@ export const validarPagosSeleccionados = (
       return "Solamente un pago en efectivo puede superar el total para generar cambio."
     }
 
-    const totalAnterior = pagos
-      .slice(0, ultimoIndice)
-      .reduce(
-        (acumulado, pago) =>
-          acumulado + Number(pago.monto ?? 0),
-        0
-      )
+    const totalAnterior = totalPagado(
+      pagos.slice(0, ultimoIndice),
+      tasaCambio
+    )
 
     if (totalAnterior >= total - PAYMENT_EPSILON) {
       return "El pago en efectivo no puede agregarse después de haber cubierto completamente la factura."
@@ -307,9 +399,15 @@ export const validarPagosSeleccionados = (
 
 type ConstruirPagoFacturaOptions = {
   /**
-   * Monto de este pago que realmente se aplica a la factura.
+   * Monto de este pago que realmente se aplica a la factura,
+   * en la moneda del pago.
    */
   montoAplicado: number
+  /**
+   * MontoP exacto en córdobas. Si el USD cubre el equivalente visible,
+   * es el pendiente de la factura y no el redondeo de la tasa.
+   */
+  montoPCordoba?: number
 }
 
 
@@ -320,11 +418,10 @@ const trunc4 = (value: number): number =>
  * Construye un PagoGenerico individual dentro de multipago.
  *
  * Efectivo:
- * - monto: dinero recibido;
- * - montoA: dinero recibido;
- * - montoP: monto aplicado a la factura;
+ * - monto y montoA: dinero recibido, en C$ o USD según el pago;
+ * - montoP: monto aplicado a la factura en córdobas;
  * - cambio: monto recibido menos monto aplicado;
- * - montoS: dinero recibido convertido por tasa de cambio.
+ * - montoS: dinero recibido en dólares.
  *
  * Transferencia y tarjeta:
  * - monto, montoA y montoP tienen el mismo valor;
@@ -350,17 +447,28 @@ export const construirPagoFactura = (
     Number(options.montoAplicado ?? 0)
   )
 
-    const cambio = esEfectivo
-      ? trunc4(
-          Math.max(
-            0,
-            montoRecibido - montoAplicado
-          )
-        )
-      : 0
+  const esDolar = esMonedaDolar(pago.monedaPago)
 
-  const monedaFactura =
-    safeStr(factura.moneda) || "1"
+  const tasaFactura = Number(
+    factura.tasaCambio ?? tasaCambioSistema
+  )
+
+  const tasa = tasaCambioValida(tasaFactura)
+
+  const aplicadoCordoba =
+    options.montoPCordoba ??
+    (esDolar
+      ? montoACordoba(montoAplicado, true, tasa)
+      : montoAplicado)
+
+  const cambio = esEfectivo
+    ? cambioEnCordoba(montoRecibido, aplicadoCordoba, esDolar, tasa)
+    : 0
+
+  const monedaPagoId =
+    safeStr(pago.monedaPago?.id) ||
+    safeStr(factura.moneda) ||
+    "1"
 
   const divisa =
     pago.divisa as ObtenerDivisaPagosTipoRes | null
@@ -377,7 +485,9 @@ export const construirPagoFactura = (
     : safeStr(divisa?.nombre)
 
   const tipoPago = esEfectivo
-    ? safeStr(moneda?.moneda_Fija) || "1"
+    ? safeStr(pago.monedaPago?.id) ||
+      safeStr(moneda?.moneda_Fija) ||
+      "1"
     : safeStr(divisa?.tipo)
 
   const banco = esEfectivo
@@ -413,18 +523,14 @@ export const construirPagoFactura = (
         ? descripcionPago || "Tarjeta manual"
         : descripcionPago || "Pago"
 
-  const tasaFactura = Number(
-    factura.tasaCambio ?? tasaCambioSistema
-  )
+  const montos = calcularMontosPago({
+    monto: montoRecibido,
+    montoAplicado,
+    esDolar,
+    tasa,
+    montoPCordoba: options.montoPCordoba
+  })
 
-  const tasa = Number.isFinite(tasaFactura) &&
-    tasaFactura > 0
-    ? tasaFactura
-    : tasaCambioSistema
-
-
-
-    
   return {
     numPago: String(index + 1),
     concepto,
@@ -434,9 +540,9 @@ export const construirPagoFactura = (
     codPagoExterno,
     banco,
 
-    monto: montoRecibido,
-    moneda: monedaFactura,
-    montoA: montoRecibido,
+    monto: montos.monto,
+    moneda: monedaPagoId,
+    montoA: montos.montoA,
     cambio,
     tasaCambio: tasa,
 
@@ -461,14 +567,8 @@ export const construirPagoFactura = (
         )
       : "",
 
-    montoP: montoAplicado,
-
-    /**
-     * No redondear. PCG recibe la precisión completa.
-     */
-    montoS: trunc4(
-      montoRecibido / tasa
-    ),
+    montoP: montos.montoP,
+    montoS: montos.montoS,
 
     indice: String(index + 1),
     codClienteCrd: "00000",
@@ -512,9 +612,11 @@ export const construirDetallePago = (
   codSucursalFactura: string,
   totalFactura: number
 ): PagoGenerico[] => {
+  const tasa = tasaCambioValida(factura.tasaCambio)
   const error = validarPagosSeleccionados(
     pagos,
-    totalFactura
+    totalFactura,
+    tasa
   )
 
   if (error) {
@@ -527,16 +629,28 @@ export const construirDetallePago = (
     const montoRecibido = Number(
       pago.monto ?? 0
     )
-
-    const montoAplicado = Math.min(
+    const esDolar = esMonedaDolar(pago.monedaPago)
+    const pendienteAntes = Math.max(0, pendiente)
+    const aplicadoCordoba = montoACordobaCerrando(
       montoRecibido,
-      Math.max(0, pendiente)
+      esDolar,
+      tasa,
+      pendienteAntes
     )
 
-    pendiente = Math.max(
-      0,
-      pendiente - montoAplicado
-    )
+    pendiente = Math.max(0, pendienteAntes - aplicadoCordoba)
+
+    const cierraPendiente =
+      pendienteAntes > 0 && aplicadoCordoba >= pendienteAntes - PAYMENT_EPSILON
+
+    const montoAplicado = esDolar
+      ? cierraPendiente
+        ? Math.min(
+            montoRecibido,
+            convertirDesdeCordoba(pendienteAntes, true, tasa)
+          )
+        : trunc4(aplicadoCordoba / tasa)
+      : aplicadoCordoba
 
     return construirPagoFactura(
       pago,
@@ -544,7 +658,8 @@ export const construirDetallePago = (
       codSucursalFactura,
       index,
       {
-        montoAplicado
+        montoAplicado,
+        montoPCordoba: aplicadoCordoba
       }
     )
   })

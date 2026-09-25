@@ -48,65 +48,28 @@ export default function PaymentCurrencySelect({
 }: Props) {
   return (
     <div className="checkout-field checkout-field--full">
+      <div className="checkout-field__payment-methods">
+        <Label htmlFor="payType">{label}</Label>
 
-    {/* <div className="checkout-field__payment-methods">
-   <span className="checkout-title-label">Tipo de moneda</span>
+        <Select
+          id="payType"
+          value={safeStr(divisaSelected?.codigo)}
+          disabled={disabled || divisaLoading}
+          placeholder={divisaLoading ? "Cargando..." : "Seleccionar"}
+          options={divisaOpts.map((item) => ({
+            value: safeStr(item.codigo),
+            label: item.nombre
+          }))}
+          onChange={(event) => {
+            const code = safeStr(event.target.value)
 
-    <div className="checkout-checkbox-container">
-      <div className="checkout-checkbox-containerBody">
-        <input
-          type="radio"
-          id="payTypeCordoba"
-          name="currencyType"
-          className="checkout-radio"
-          checked
+            const found =
+              divisaOpts.find((item) => safeStr(item.codigo) === code) ?? null
+
+            setDivisaSelected(found)
+          }}
         />
-        <label htmlFor="payTypeCordoba" className="checkout-label">
-          Córdoba
-        </label>
       </div>
-
-      <div className="checkout-checkbox-containerBody">
-        <input
-          type="radio"
-          id="payTypeDolar"
-          name="currencyType"
-          className="checkout-radio"
-        />
-        <label htmlFor="payTypeDolar" className="checkout-label">
-          Dólar
-        </label>
-      </div>
-    </div>
-    </div> */}
-
-    {/* <div>
-      <input type="number" value={100} max={100000}/>
-    </div> */}
-    
-    <div className="checkout-field__payment-methods">
-      <Label htmlFor="payType">{label}</Label>
-
-      <Select
-        id="payType"
-        value={safeStr(divisaSelected?.codigo)}
-        disabled={disabled || divisaLoading}
-        placeholder={divisaLoading ? "Cargando..." : "Seleccionar"}
-        options={divisaOpts.map((item) => ({
-          value: safeStr(item.codigo),
-          label: item.nombre
-        }))}
-        onChange={(event) => {
-          const code = safeStr(event.target.value)
-
-          const found =
-            divisaOpts.find((item) => safeStr(item.codigo) === code) ?? null
-
-          setDivisaSelected(found)
-        }}
-      />
-    </div>
-    
     </div>
   )
 }

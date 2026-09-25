@@ -15,6 +15,16 @@ import type {
 import {
   safeStr
 } from "@/Utils/ECommerce/formatters"
+import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
+import {
+  calcularMontosPago,
+  cambioEnCordoba,
+  convertirDesdeCordoba,
+  cubreMontoPago,
+  esMonedaDolar,
+  montoACordoba,
+  tasaCambioValida
+} from "@/Utils/ECommerce/monedaUtils"
 
 /**
  * Código utilizado para consultar opciones mediante
@@ -108,9 +118,14 @@ type BuildPagoGenericoParams = {
   transactionIdentifier?: string
 
   /**
-   * Moneda de factura utilizada por PCG.
+   * Moneda PCG del pago (ComboMonedas).
    */
   moneda?: string
+
+  /**
+   * Catálogo de moneda seleccionado en checkout.
+   */
+  monedaPago?: MonedaCatalogo | null
 
   /**
    * Código de empresa.
@@ -128,20 +143,14 @@ type BuildPagoGenericoParams = {
   indice?: string
 }
 
-
-const trunc4 = (value: number): number =>
-  Math.trunc(value * 10000) / 10000
-
-
 /**
  * Construye un PagoGenerico para pago único.
  *
  * Efectivo:
- * - monto: dinero recibido;
- * - montoA: dinero recibido;
- * - montoP: total de factura;
+ * - monto y montoA: dinero recibido, en C$ o USD según el pago;
+ * - montoP: total aplicado en córdobas;
  * - cambio: dinero recibido menos total;
- * - montoS: dinero recibido convertido por tasa de cambio.
+ * - montoS: dinero recibido en dólares.
  *
  * Otros métodos:
  * - monto, montoA y montoP corresponden al total;
@@ -161,6 +170,7 @@ export const buildPagoGenerico = ({
   manualCardData = null,
   transactionIdentifier = "",
   moneda = "1",
+  monedaPago = null,
   codEmpresa = "",
   numPago = "1",
   indice = "0"
@@ -171,6 +181,13 @@ export const buildPagoGenerico = ({
   const esPasarela = method === "gatewayCard"
 
   const totalFactura = Number(total ?? 0)
+  const esDolar = esMonedaDolar(monedaPago)
+  const tasa = tasaCambioValida(tasaCambio)
+  const totalEnMonedaPago = convertirDesdeCordoba(
+    totalFactura,
+    esDolar,
+    tasa
+  )
 
   const efectivoRecibido = Number(
     cashAmount ?? 0
@@ -178,24 +195,31 @@ export const buildPagoGenerico = ({
 
   const montoRecibido = esEfectivo
     ? efectivoRecibido
-    : totalFactura
+    : totalEnMonedaPago
 
-  const montoAplicado = totalFactura
+  const montoAplicado = esEfectivo
+    ? Math.min(montoRecibido, totalEnMonedaPago)
+    : totalEnMonedaPago
 
-const cambio = esEfectivo
-  ? trunc4(
-      Math.max(
-        0,
-        montoRecibido - montoAplicado
-      )
-    )
-  : 0
+  const cubreTotal = cubreMontoPago(montoRecibido, totalEnMonedaPago)
+  const aplicadoCordoba = cubreTotal
+    ? totalFactura
+    : Math.min(montoACordoba(montoRecibido, esDolar, tasa), totalFactura)
 
-  const tasa = Number.isFinite(
-    Number(tasaCambio)
-  ) && Number(tasaCambio) > 0
-    ? Number(tasaCambio)
-    : 1
+  const cambio = esEfectivo
+    ? cambioEnCordoba(montoRecibido, aplicadoCordoba, esDolar, tasa)
+    : 0
+
+  const montos = calcularMontosPago({
+    monto: montoRecibido,
+    montoAplicado,
+    esDolar,
+    tasa,
+    montoPCordoba: cubreTotal ? totalFactura : undefined
+  })
+
+  const monedaPagoId =
+    safeStr(monedaPago?.id) || safeStr(moneda) || "1"
 
   const concepto = getPaymentConceptByMethod(
     method,
@@ -217,7 +241,9 @@ const cambio = esEfectivo
     : safeStr(divisaSelected?.codigoExterno)
 
   const tipoPago = esEfectivo
-    ?  selectedCurrency?.moneda_Fija ?? "1"
+    ? safeStr(monedaPago?.id) ||
+      selectedCurrency?.moneda_Fija ||
+      "1"
     : safeStr(divisaSelected?.tipo)
 
   const banco = esEfectivo
@@ -264,14 +290,14 @@ const cambio = esEfectivo
      *
      * En otros métodos es igual al total.
      */
-    monto: montoRecibido,
+    monto: montos.monto,
 
-    moneda,
+    moneda: monedaPagoId,
 
     /**
      * Dinero recibido.
      */
-    montoA: montoRecibido,
+    montoA: montos.montoA,
 
     /**
      * Cambio calculado solamente para efectivo.
@@ -304,16 +330,8 @@ const cambio = esEfectivo
     /**
      * Total aplicado realmente a la factura.
      */
-    montoP: montoAplicado,
-
-    /**
-     * PCG espera el monto recibido convertido.
-     *
-     * No redondear.
-     */
-    montoS: trunc4(
-      montoRecibido / tasa
-    ),
+    montoP: montos.montoP,
+    montoS: montos.montoS,
 
     indice,
     codClienteCrd: "00000",
