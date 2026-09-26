@@ -1,9 +1,9 @@
-import type { AppDispatch, RootState } from "@/Context";
+import type { AppDispatch } from "@/Context";
 import { checkSessionThunk } from "@/Context/Slices/Auth/authSlice";
 import CustomLoader from "@/Components/Common/CustomLoader";
 import { enablePwa } from "@/Utils/pwaLifecycle";
 import { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
 
 interface Props {
@@ -36,9 +36,6 @@ function normalizePath(pathname: string) {
 export default function SessionBootstrap({ children }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
 
   const normalizedPath = useMemo(
     () => normalizePath(location.pathname),
@@ -46,19 +43,11 @@ export default function SessionBootstrap({ children }: Props) {
   );
 
   const isPublicRoute = PUBLIC_ROUTES.has(normalizedPath);
-  const [bootstrapping, setBootstrapping] = useState(
-    !isPublicRoute && !isAuthenticated
-  );
+  const [bootstrapping, setBootstrapping] = useState(!isPublicRoute);
 
   useEffect(() => {
     if (isPublicRoute) {
       setBootstrapping(false);
-      return;
-    }
-
-    if (isAuthenticated) {
-      setBootstrapping(false);
-      enablePwa();
       return;
     }
 
@@ -72,13 +61,14 @@ export default function SessionBootstrap({ children }: Props) {
     void dispatch(checkSessionThunk()).finally(() => {
       if (!cancelled) {
         setBootstrapping(false);
+        enablePwa();
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [dispatch, isAuthenticated, isPublicRoute, normalizedPath]);
+  }, [dispatch, isPublicRoute]);
 
   if (!isPublicRoute && bootstrapping) {
     return <CustomLoader />;

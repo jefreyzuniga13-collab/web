@@ -15,6 +15,10 @@ import { formatDateTimeNI } from "@/Utils/ECommerce/formatters";
 import { store } from "@/Context";
 import { setContactCartBadge } from "@/Context/Slices/Ecommerce/cartBadgeSlice";
 import { clearCart } from "@/Context/Slices/Ecommerce/cartSlice";
+import {
+  esErrorSesionInvalida,
+  expulsarSesionExpirada,
+} from "@/Utils/expulsarSesion";
 
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "";
 
@@ -301,6 +305,13 @@ function scheduleReconnect(): void {
     try {
       await restartHubConnection();
     } catch (error) {
+      if (esErrorSesionInvalida(error)) {
+        void expulsarSesionExpirada(
+          "La sesión fue cerrada, revocada o expiró.",
+        );
+        return;
+      }
+
       console.warn("[SignalR] Reintento fallido", error);
       scheduleReconnect();
     }
@@ -496,6 +507,14 @@ function bindConnectionLifecycle(
 
   connection.onclose((error) => {
     console.warn(`[${name}] Conexión cerrada`, error);
+
+    if (esErrorSesionInvalida(error)) {
+      void expulsarSesionExpirada(
+        "La sesión fue cerrada, revocada o expiró.",
+      );
+      return;
+    }
+
     scheduleReconnect();
   });
 }
@@ -764,6 +783,19 @@ export async function createHubConnection(): Promise<HubConnections> {
   try {
     return await startPromise;
   } catch (error) {
+    if (esErrorSesionInvalida(error)) {
+      void expulsarSesionExpirada(
+        "La sesión fue cerrada, revocada o expiró.",
+      );
+
+      return {
+        chatConnection: null,
+        notificationsConnection: null,
+        presenceConnection: null,
+        userConeccion: null,
+      };
+    }
+
     scheduleReconnect();
     throw error;
   } finally {

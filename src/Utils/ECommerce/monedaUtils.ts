@@ -1,11 +1,45 @@
 import { tasaCambio as tasaCambioRespaldo } from "@/Constants/tasaCambio"
 import type { MonedaCatalogo, TasaCambioCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 
-const trunc4 = (value: number): number =>
-  Math.trunc(value * 10000) / 10000
-
 const redondear2 = (value: number): number =>
   Math.round((Number(value) + Number.EPSILON) * 100) / 100
+
+const decimalesDe = (value: number): number => {
+  const limpio = Number(value)
+    .toFixed(10)
+    .replace(/0+$/, "")
+    .replace(/\.$/, "")
+  const punto = limpio.indexOf(".")
+  return punto < 0 ? 0 : limpio.length - punto - 1
+}
+
+const aEntero = (value: number, decimales: number): number =>
+  Math.round(Number(value) * 10 ** decimales)
+
+/**
+ * Multiplica sin basura de float: 20 × 36.6243 = 732.486
+ */
+export const multiplicarExacto = (a: number, b: number): number => {
+  const decA = decimalesDe(a)
+  const decB = decimalesDe(b)
+  return aEntero(a, decA) * aEntero(b, decB) / 10 ** (decA + decB)
+}
+
+export const restarExacto = (a: number, b: number): number => {
+  const decimales = Math.max(decimalesDe(a), decimalesDe(b))
+  return (aEntero(a, decimales) - aEntero(b, decimales)) / 10 ** decimales
+}
+
+export const dividirExacto = (a: number, b: number): number => {
+  const decA = decimalesDe(a)
+  const decB = decimalesDe(b)
+  return redondear2(
+    (aEntero(a, decA) * 10 ** decB) / (aEntero(b, decB) * 10 ** decA)
+  )
+}
+
+/** Dinero siempre a 2 decimales con redondeo: 220.127 → 220.13 */
+export const limpiarDecimal = (value: number): number => redondear2(value)
 
 const textoMoneda = (moneda?: MonedaCatalogo | null): string => {
   if (!moneda) return ""
@@ -80,9 +114,9 @@ export const montoACordoba = (
   tasa: number
 ): number => {
   const valor = Number(monto ?? 0)
-  if (!esDolar) return valor
+  if (!esDolar) return redondear2(valor)
 
-  return trunc4(valor * tasaCambioValida(tasa))
+  return redondear2(multiplicarExacto(valor, tasaCambioValida(tasa)))
 }
 
 /**
@@ -95,15 +129,15 @@ export const montoACordobaCerrando = (
   tasa: number,
   pendienteCordoba: number
 ): number => {
-  const pendiente = Math.max(0, Number(pendienteCordoba ?? 0))
+  const pendiente = Math.max(0, redondear2(pendienteCordoba ?? 0))
   const convertido = montoACordoba(monto, esDolar, tasa)
 
-  if (!esDolar) return Math.min(convertido, pendiente)
+  if (!esDolar) return redondear2(Math.min(convertido, pendiente))
 
   const requeridoUsd = convertirDesdeCordoba(pendiente, true, tasa)
   if (cubreMontoPago(monto, requeridoUsd)) return pendiente
 
-  return Math.min(convertido, pendiente)
+  return redondear2(Math.min(convertido, pendiente))
 }
 
 export type MontosPagoCalculados = {
@@ -137,18 +171,20 @@ export const calcularMontosPago = ({
 
   if (esDolar) {
     return {
-      monto: recibido,
-      montoA: recibido,
-      montoP: montoPCordoba ?? trunc4(aplicado * tasaSafe),
-      montoS: trunc4(recibido)
+      monto: limpiarDecimal(recibido),
+      montoA: limpiarDecimal(recibido),
+      montoP: limpiarDecimal(
+        montoPCordoba ?? multiplicarExacto(aplicado, tasaSafe)
+      ),
+      montoS: limpiarDecimal(recibido)
     }
   }
 
   return {
-    monto: recibido,
-    montoA: recibido,
-    montoP: trunc4(aplicado),
-    montoS: trunc4(recibido / tasaSafe)
+    monto: limpiarDecimal(recibido),
+    montoA: limpiarDecimal(recibido),
+    montoP: limpiarDecimal(aplicado),
+    montoS: dividirExacto(recibido, tasaSafe)
   }
 }
 
@@ -172,9 +208,8 @@ export const cubreMontoPago = (
 ): boolean => redondear2(recibido) + 0.001 >= redondear2(requerido)
 
 /**
- * Cambio siempre en córdobas.
- * recibido × tasa − lo aplicado a la factura.
- * $20 × 36.6243 − C$430.16 = C$302.326
+ * Cambio siempre en córdobas, 2 decimales.
+ * $20 × 36.6243 = 732.49 − 430.16 = 302.33
  */
 export const cambioEnCordoba = (
   recibido: number,
@@ -183,7 +218,9 @@ export const cambioEnCordoba = (
   tasa?: number
 ): number => {
   const recibidoC = montoACordoba(recibido, esDolar, tasa ?? 0)
-  return trunc4(Math.max(0, recibidoC - Number(aplicadoCordoba ?? 0)))
+  return redondear2(
+    Math.max(0, restarExacto(recibidoC, Number(aplicadoCordoba ?? 0)))
+  )
 }
 
 /**

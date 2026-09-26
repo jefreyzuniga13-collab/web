@@ -6,8 +6,10 @@ import {
   absorberResiduoCambio,
   cambioEnCordoba,
   convertirDesdeCordoba,
+  limpiarDecimal,
   montoACordoba,
   montoACordobaCerrando,
+  restarExacto,
   tasaCambioValida
 } from "@/Utils/ECommerce/monedaUtils"
 
@@ -410,10 +412,6 @@ type ConstruirPagoFacturaOptions = {
   montoPCordoba?: number
 }
 
-
-const trunc4 = (value: number): number =>
-  Math.trunc(value * 10000) / 10000
-
 /**
  * Construye un PagoGenerico individual dentro de multipago.
  *
@@ -638,7 +636,10 @@ export const construirDetallePago = (
       pendienteAntes
     )
 
-    pendiente = Math.max(0, pendienteAntes - aplicadoCordoba)
+    pendiente = Math.max(
+      0,
+      limpiarDecimal(restarExacto(pendienteAntes, aplicadoCordoba))
+    )
 
     const cierraPendiente =
       pendienteAntes > 0 && aplicadoCordoba >= pendienteAntes - PAYMENT_EPSILON
@@ -649,7 +650,7 @@ export const construirDetallePago = (
             montoRecibido,
             convertirDesdeCordoba(pendienteAntes, true, tasa)
           )
-        : trunc4(aplicadoCordoba / tasa)
+        : convertirDesdeCordoba(aplicadoCordoba, true, tasa)
       : aplicadoCordoba
 
     return construirPagoFactura(

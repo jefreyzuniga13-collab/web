@@ -1,8 +1,18 @@
 import type { AxiosInstance } from "axios";
 import { store } from "@/Context";
 import { refreshTokenThunk } from "@/Context/Slices/Auth/authSlice";
-import { openReLoginModal } from "@/Context/Slices/Chat/uiSlice";
-import { logoutThunk } from "@/Context/Slices/Auth/authThunks";
+import { expulsarSesionExpirada } from "@/Utils/expulsarSesion";
+
+function esRutaAuthPublica(url?: string): boolean {
+  if (!url) return false;
+
+  return (
+    url.includes("/Auth/login") ||
+    url.includes("/Auth/refresh") ||
+    url.includes("/Auth/me") ||
+    url.includes("/Auth/logout")
+  );
+}
 
 export function setupResponseInterceptor(instance: AxiosInstance) {
   instance.interceptors.response.use(
@@ -14,26 +24,21 @@ export function setupResponseInterceptor(instance: AxiosInstance) {
       const tokenExpired =
         error?.response?.headers?.["x-token-expired"] === "true";
 
-      const isRefreshRequest =
-        typeof config?.url === "string" &&
-        config.url.includes("/Auth/refresh");
+      if (status === 401 && !esRutaAuthPublica(config?.url)) {
+        if (tokenExpired && !config._retry) {
+          config._retry = true;
 
-      if (
-        status === 401 &&
-        tokenExpired &&
-        !config._retry &&
-        !isRefreshRequest
-      ) {
-        config._retry = true;
+          const result = await store.dispatch(refreshTokenThunk());
 
-        const result = await store.dispatch(refreshTokenThunk());
-
-        if (refreshTokenThunk.fulfilled.match(result)) {
-          return instance(config);
+          if (refreshTokenThunk.fulfilled.match(result)) {
+            return instance(config);
+          }
         }
-        
-        store.dispatch(logoutThunk());
-        store.dispatch(openReLoginModal());
+
+        void expulsarSesionExpirada(
+          error?.response?.data?.message ||
+            "Tu sesión expiró. Inicia sesión nuevamente.",
+        );
       }
 
       return Promise.reject(error);
