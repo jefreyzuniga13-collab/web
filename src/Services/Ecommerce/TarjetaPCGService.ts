@@ -8,12 +8,23 @@ class TarjetaPCGServ {
  async GetByUser(
     IdUsuario: string,
   ): Promise<ApiPCGResponse<TarjetaModelInterface[]>> {
-
+    try {
       const { data } = await apiPCG.get<ApiPCGResponse<TarjetaModelInterface[]>>(
         `Tarjeta/ListaTarjetas/${IdUsuario}`,
       );
 
-      return data;
+      return {
+        ...data,
+        success: true,
+        data: Array.isArray(data?.data) ? data.data : [],
+      };
+    } catch {
+      return {
+        success: true,
+        data: [],
+        message: "El cliente no tiene tarjetas guardadas",
+      };
+    }
   }
 
    async GetByUserAndCard(

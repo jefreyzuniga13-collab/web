@@ -34,12 +34,25 @@ interface Props {
 
 export default function CartPanelTotals({
   invoiceTotalsDto,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   effectiveShipping,
   retiraSucursal,
   selectedAddressId,
   addDescription
 }: Props) {
+  const hasAddress =
+    selectedAddressId != null || addDescription.trim().length > 0
+
+  /**
+   * Preferir el transporte del consolidado; si aún no viene,
+   * mostrar el ingresado en entrega para que el subtotal no quede oculto.
+   */
+  const transporteVisible =
+    invoiceTotalsDto?.transporte != null && invoiceTotalsDto.transporte > 0
+      ? invoiceTotalsDto.transporte
+      : retiraSucursal !== "S" && hasAddress && effectiveShipping > 0
+        ? effectiveShipping
+        : 0
+
   return (
     <div className="productTab-content-footer carPCPanel-totals">
       {invoiceTotalsDto?.subTotal != null &&
@@ -74,12 +87,12 @@ export default function CartPanelTotals({
         </div>
       )}
 
-      {invoiceTotalsDto?.transporte != null && invoiceTotalsDto.transporte > 0  && (
+      {transporteVisible > 0 && (
         <div className="productTab-content__container">
           <p className="productTab-content-footer__title">Transporte:</p>
 
           <span className="productTab-content-footer__value">
-            C$ {formatearDecimales(invoiceTotalsDto.transporte)}
+            C$ {formatearDecimales(transporteVisible)}
           </span>
         </div>
       )}
@@ -88,9 +101,7 @@ export default function CartPanelTotals({
         <div className="productTab-content__container">
           <p className="productTab-content-footer__title">
             {`Total${
-              retiraSucursal === "N" &&
-              selectedAddressId == null &&
-              addDescription.trim().length === 0
+              retiraSucursal === "N" && !hasAddress
                 ? " Más envío"
                 : ""
             }:`}

@@ -97,6 +97,9 @@ export default function ManualCardPaymentSection({
             readOnly
             disabled={disabled}
           />
+          <small className="checkout-amount-fixed-help">
+            En pago único debe pagar el total; el monto no se puede cambiar.
+          </small>
         </div>
       )}
 

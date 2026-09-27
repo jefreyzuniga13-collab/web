@@ -5,7 +5,10 @@ import ListSkeleton from "@/Components/Common/ListSkeleton"
 import CarPage from "@/Pages/ECommerce/CarPage"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import { CartService } from "@/Services/Ecommerce/CartService"
-import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
+import {
+  applyPublicEmpresaId,
+  clearPublicEmpresaContext
+} from "@/Utils/ECommerce/publicEmpresa"
 
 type Status = "loading" | "ok" | "unauthorized"
 
@@ -45,11 +48,27 @@ const savePayloadToSession = (
   }
 }
 
+/**
+ * Cache viejo puede no traer aplicaMultimoneda; sin ese flag
+ * el checkout no muestra el selector de moneda.
+ */
+const isPayloadComplete = (
+  payload: TempLinkResolveResponseDto | null
+): payload is TempLinkResolveResponseDto => {
+  if (!payload) return false
+
+  return (
+    typeof payload.permiteMultiPago === "boolean" &&
+    typeof payload.permitePasarela === "boolean" &&
+    typeof payload.aplicaMultimoneda === "boolean"
+  )
+}
+
 const applyEmpresaId = (payload: TempLinkResolveResponseDto) => {
   const empresaId = applyPublicEmpresaId(payload?.empresaId)
 
   if (!empresaId) {
-    localStorage.removeItem("EmpresaId")
+    clearPublicEmpresaContext()
     console.warn("empresaId no vino en el payload")
   }
 }
@@ -61,15 +80,23 @@ const resolvePaynowTokenOnce = async (
 
   const memoryPayload = resolveMemoryCache.get(cleanToken)
 
-  if (memoryPayload) {
+  if (isPayloadComplete(memoryPayload)) {
     return memoryPayload
+  }
+
+  if (memoryPayload) {
+    resolveMemoryCache.delete(cleanToken)
   }
 
   const sessionPayload = readPayloadFromSession(cleanToken)
 
-  if (sessionPayload) {
+  if (isPayloadComplete(sessionPayload)) {
     resolveMemoryCache.set(cleanToken, sessionPayload)
     return sessionPayload
+  }
+
+  if (sessionPayload) {
+    sessionStorage.removeItem(getCacheKey(cleanToken))
   }
 
   const currentRequest = resolveInFlight.get(cleanToken)
@@ -119,8 +146,7 @@ const ProtectedCartRoute = () => {
 
     const validate = async () => {
       if (!cleanToken) {
-        sessionStorage.removeItem("EmpresaId")
-        localStorage.removeItem("EmpresaId")
+        clearPublicEmpresaContext()
         setPayload(null)
         setStatus("unauthorized")
         return
@@ -148,8 +174,7 @@ const ProtectedCartRoute = () => {
 
         console.error("Error resolviendo token temporal:", error)
 
-        sessionStorage.removeItem("EmpresaId")
-        localStorage.removeItem("EmpresaId")
+        clearPublicEmpresaContext()
 
         setPayload(null)
         setStatus("unauthorized")

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { BsPersonBoundingBox } from "react-icons/bs"
 import { FaRegNoteSticky } from "react-icons/fa6"
 import { IoStorefrontOutline } from "react-icons/io5"
@@ -26,6 +27,9 @@ interface Props {
   transCost: number
   setTransCost: (value: number) => void
 
+  /** Recalcula totales al salir de dirección / transporte. */
+  onRecalcTotals?: () => void
+
   retiraSucursal: SINO
   setRetiraSucursal: (value: SINO) => void
 
@@ -50,6 +54,21 @@ interface Props {
   applySelectedAddressToLog: (addressId: number) => Promise<void>
 }
 
+const limpiarMontoTexto = (value: string): string => {
+  let limpio = value.replace(/[^0-9.]/g, "")
+
+  const puntos = limpio.split(".")
+  if (puntos.length > 2) {
+    limpio = `${puntos[0]}.${puntos.slice(1).join("")}`
+  }
+
+  if (limpio.startsWith("0") && limpio[1] !== "." && limpio.length > 1) {
+    limpio = limpio.replace(/^0+/, "")
+  }
+
+  return limpio
+}
+
 /** Paso de entrega del carrito administrado por el agente. */
 export default function CartPanelDeliveryStep({
   invoiceName,
@@ -60,11 +79,12 @@ export default function CartPanelDeliveryStep({
   setAddDescription,
   transCost,
   setTransCost,
+  onRecalcTotals,
   retiraSucursal,
   setRetiraSucursal,
   onlyTextAddress,
-  setOnlyTextAddress,
-  onlyTextAddressDisabled,
+  setOnlyTextAddress: _setOnlyTextAddress,
+  onlyTextAddressDisabled: _onlyTextAddressDisabled,
   addressInputsDisabled,
   transportDisabled,
   pickupDisabled,
@@ -80,24 +100,47 @@ export default function CartPanelDeliveryStep({
 }: Props) {
   const isPickup = retiraSucursal === "S"
 
+  const [transCostText, setTransCostText] = useState(
+    transCost > 0 ? String(transCost) : ""
+  )
+
+  useEffect(() => {
+    setTransCostText(transCost > 0 ? String(transCost) : "")
+  }, [transCost])
+
   const handlePickupChange = (checked: boolean) => {
     setRetiraSucursal(checked ? "S" : "N")
 
     if (checked) {
-      setOnlyTextAddress(false)
       setAddDescription("")
       setTransCost(0)
+      setTransCostText("")
       setShowAddressModal(false)
     }
   }
 
-  const handleOnlyTextChange = (checked: boolean) => {
-    setOnlyTextAddress(checked)
+  const handleTransCostChange = (value: string) => {
+    if (transportDisabled) return
 
-    if (checked) {
-      setAddDescription("")
-      setShowAddressModal(false)
+    const limpio = limpiarMontoTexto(value)
+
+    if (limpio === "" || limpio === ".") {
+      setTransCostText(limpio)
+      setTransCost(0)
+      return
     }
+
+    setTransCostText(limpio)
+    setTransCost(safePositiveNumber(parseFloat(limpio) || 0))
+  }
+
+  const handleTransCostBlur = () => {
+    if (transportDisabled) return
+
+    const monto = safePositiveNumber(parseFloat(transCostText) || 0)
+    setTransCost(monto)
+    setTransCostText(monto > 0 ? String(monto) : "")
+    onRecalcTotals?.()
   }
 
   return (
@@ -150,6 +193,7 @@ export default function CartPanelDeliveryStep({
               </label>
             </div>
 
+            {/* Opción "cliente escribe dirección" oculta por ahora.
             <div className="transportationCost__input">
               <input
                 type="checkbox"
@@ -165,6 +209,7 @@ export default function CartPanelDeliveryStep({
                 El cliente escribirá la dirección en texto, sin mapa
               </label>
             </div>
+            */}
 
             {!onlyTextAddress && !isPickup && (
               <Textarea
@@ -179,15 +224,22 @@ export default function CartPanelDeliveryStep({
                     setAddDescription(event.target.value)
                   }
                 }}
+                onBlur={() => {
+                  if (!addressInputsDisabled) {
+                    onRecalcTotals?.()
+                  }
+                }}
               />
             )}
 
+            {/*
             {onlyTextAddress && !isPickup && (
               <p className="productTab-helperText productTab-helperText--info">
                 La dirección será ingresada por el cliente en el checkout, por
                 lo que no se requiere una dirección manual en este panel.
               </p>
             )}
+            */}
 
             {isPickup && (
               <p className="productTab-helperText productTab-helperText--pickup">
@@ -201,22 +253,15 @@ export default function CartPanelDeliveryStep({
             </Label>
 
             <Input
-              type="number"
-              min={0}
+              type="text"
+              inputMode="decimal"
               id="shipment"
               name="shipment"
-              placeholder="C$ transporte"
-              value={transCost}
+              placeholder="Ej. 100"
+              value={transCostText}
               disabled={transportDisabled}
-              onChange={(event) => {
-                if (transportDisabled) return
-
-                setTransCost(
-                  event.target.value === ""
-                    ? 0
-                    : safePositiveNumber(event.target.value)
-                )
-              }}
+              onChange={(event) => handleTransCostChange(event.target.value)}
+              onBlur={handleTransCostBlur}
             />
           </div>
         </div>

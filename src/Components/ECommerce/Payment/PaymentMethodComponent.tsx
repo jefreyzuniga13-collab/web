@@ -513,12 +513,14 @@ export default function PaymentMethodComponent({
         </aside>
       )}
 
-      {!multiPagoActivo && aplicaMultiMoneda && onChangeMoneda && (
+      {!multiPagoActivo &&
+        aplicaMultiMoneda &&
+        onChangeMoneda &&
+        method !== "gatewayCard" && (
         <PaymentMonedaSelect
           monedas={monedas}
           monedaSeleccionada={monedaSeleccionada}
           onChange={onChangeMoneda}
-          bloquearDolar={method === "gatewayCard"}
           disabled={payNowLock}
           loading={monedaLoading}
         />

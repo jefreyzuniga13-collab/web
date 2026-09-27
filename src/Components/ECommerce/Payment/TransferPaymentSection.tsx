@@ -35,6 +35,9 @@ export default function TransferPaymentSection({
           value={`${simboloMoneda} ${formatearDecimales(totalPagar)}`}
           readOnly
         />
+        <small className="checkout-amount-fixed-help">
+          En pago único debe pagar el total; el monto no se puede cambiar.
+        </small>
       </div>
 
       <div className="checkout-field checkout-field--full">

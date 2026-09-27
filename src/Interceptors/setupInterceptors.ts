@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { AxiosHeaders } from "axios";
 import { store } from "@/Context";
+import { isPaynowPublicContext } from "@/Utils/ECommerce/publicEmpresa";
 
 const getStorageValue = (key: string): string => {
   return (
@@ -64,16 +65,33 @@ export function setupEmpresaInterceptor(instance: AxiosInstance) {
         ? String(selectedCompany.empresaId)
         : "";
 
-    const empresaIdFromStorage =
-      getStorageValue("EmpresaId") ||
-      getStorageValue("empresaId");
+    /**
+     * En paynow prioriza sessionStorage (empresa del link).
+     * Evita que un login CRM viejo en el iPhone mande otra empresa
+     * y el carrito salga vacío.
+     */
+    const paynowPublic = isPaynowPublicContext();
 
-    const empresaId = isRoot
-      ? empresaIdFromSelectedCompany ||
-        empresaIdFromStorage ||
-        empresaIdAuth
-      : empresaIdAuth ||
-        empresaIdFromStorage;
+    const empresaIdFromStorage = paynowPublic
+      ? (
+          sessionStorage.getItem("EmpresaId") ||
+          localStorage.getItem("EmpresaId") ||
+          getStorageValue("empresaId") ||
+          ""
+        )
+      : (
+          getStorageValue("EmpresaId") ||
+          getStorageValue("empresaId")
+        );
+
+    const empresaId = paynowPublic
+      ? empresaIdFromStorage || empresaIdAuth
+      : isRoot
+        ? empresaIdFromSelectedCompany ||
+          empresaIdFromStorage ||
+          empresaIdAuth
+        : empresaIdAuth ||
+          empresaIdFromStorage;
 
     if (!config.headers) {
       config.headers = new AxiosHeaders();
@@ -86,23 +104,3 @@ export function setupEmpresaInterceptor(instance: AxiosInstance) {
     return config;
   });
 }
-
-// export function setupNetworkInterceptor(instance: AxiosInstance) {
-//   instance.interceptors.response.use(
-//     (response) => response,
-//     (error) => {
-//       const code = error?.code ?? "";
-//       const hasResponse = !!error?.response;
-//       const isTimeout = code === "ECONNABORTED";
-//       const isNetwork = !hasResponse && !isTimeout;
-
-//       // if (isTimeout) {
-//       //   toast.error("La operación tardó demasiado. Intenta de nuevo.");
-//       // } else if (isNetwork) {
-//       //   toast.error("No se pudo conectar al servidor. Verifica tu conexión.");
-//       // }
-
-//       return Promise.reject(error);
-//     }
-//   );
-// }

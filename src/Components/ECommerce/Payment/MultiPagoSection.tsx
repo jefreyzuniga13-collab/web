@@ -380,6 +380,10 @@ export default function MultiPagoSection({
             monedas={monedas}
             monedaSeleccionada={monedaSeleccionada}
             onChange={onChangeMoneda}
+            bloquearDolar={
+              method === "gatewayCard" ||
+              pagos.some((pago) => pago.metodo === "gatewayCard")
+            }
             disabled={disabled}
             loading={monedaLoading}
           />
@@ -447,26 +451,45 @@ export default function MultiPagoSection({
 
         {method && (
           <div className="checkout-field checkout-field--full">
-            <Label htmlFor="multipagoMonto">Monto</Label>
+            <Label htmlFor="multipagoMonto">Monto ({simbolo})</Label>
 
             <Input
               id="multipagoMonto"
               type="number"
               min={0}
-              max={method === "cash" ? undefined : pendiente}
+              max={method === "cash" ? undefined : pendienteEnMoneda}
               value={monto}
               disabled={disabled || pendiente <= 0}
               onChange={(event) => {
-                const value =
+                const raw =
                   event.target.value === "" ? 0 : Number(event.target.value);
 
-                setMonto(value);
+                if (!Number.isFinite(raw) || raw < 0) {
+                  setMonto(0);
+                  return;
+                }
+
+                /**
+                 * Efectivo: puede superar el pendiente (vuelto).
+                 * Transferencia / tarjeta: menos del pendiente sí; más no.
+                 */
+                if (method !== "cash" && raw > pendienteEnMoneda) {
+                  setMonto(round2(pendienteEnMoneda));
+                  return;
+                }
+
+                setMonto(raw);
               }}
             />
 
-            {method === "cash" && (
+            {method === "cash" ? (
               <small className="multipago-cash-help">
                 Puede superar el pendiente; el excedente será el vuelto.
+              </small>
+            ) : (
+              <small className="multipago-cash-help">
+                Puede ingresar menos del pendiente; no puede superar el monto
+                pendiente.
               </small>
             )}
           </div>

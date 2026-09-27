@@ -156,8 +156,17 @@
 
 .checkout-summary__strong__pendiente {
   color: var(--color-secondary, #f59e0b);
-  text-align: right;
+  text-align: left;
   font-weight: var(--font-weight-semibold, 600);
+}
+
+.multipago-cash-help {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-gray-500, #6b7280);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  text-align: left;
 }
 
 .multipago-remove-btn {

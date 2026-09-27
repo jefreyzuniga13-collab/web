@@ -42,7 +42,7 @@ import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGIn
 import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
 import { TipoFalote } from "@/Constants/falote"
 import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
-import { convertirDesdeCordoba } from "@/Utils/ECommerce/monedaUtils"
+import { convertirDesdeCordoba, esMonedaDolar } from "@/Utils/ECommerce/monedaUtils"
 
 const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
@@ -230,8 +230,18 @@ const CheckoutPage: React.FC = () => {
     return totalBase + transporte + propina
   }, [cartTotal, getTransporteFactura, tip])
 
+  /**
+   * Pasarela (pago electrónico): solo córdobas.
+   * La pasarela cobra en dólares; el cliente no elige U$.
+   */
+  const esPagoElectronico = useMemo(() => {
+    if (!selectedCurrency) return false
+    return obtenerTipoPagoDesdeMoneda(selectedCurrency) === "gatewayCard"
+  }, [selectedCurrency])
+
   const catalogoMoneda = useCatalogoMoneda({
-    aplicaMultiMoneda
+    aplicaMultiMoneda,
+    bloquearDolar: esPagoElectronico
   })
 
   const tasaCambio = catalogoMoneda.tasa
@@ -411,8 +421,9 @@ const CheckoutPage: React.FC = () => {
 
     if (nextMethod === "gatewayCard") {
       const cordoba = catalogoMoneda.monedas.find(
-        (moneda) => moneda.id === "1"
-      )
+        (moneda) => !esMonedaDolar(moneda)
+      ) ?? catalogoMoneda.monedas.find((moneda) => moneda.id === "1")
+
       if (cordoba) {
         catalogoMoneda.setMonedaSeleccionada(cordoba)
       }
@@ -977,7 +988,14 @@ const CheckoutPage: React.FC = () => {
     const hasGatewayPermission =
       typeof payload.permitePasarela === "boolean"
 
-    if (!hasMultiPagoPermission || !hasGatewayPermission) {
+    const hasMultimonedaPermission =
+      typeof payload.aplicaMultimoneda === "boolean"
+
+    if (
+      !hasMultiPagoPermission ||
+      !hasGatewayPermission ||
+      !hasMultimonedaPermission
+    ) {
       console.error(
         "TempLink/Resolve no devolvió los permisos de pago requeridos.",
         payload
@@ -1227,11 +1245,6 @@ const CheckoutPage: React.FC = () => {
                 permitePasarela={permitePasarela}
                 multiPagoActivo={multiPagoActivo}
                 setMultiPagoActivo={setMultiPagoActivo}
-                aplicaMultiMoneda={aplicaMultiMoneda}
-                monedas={catalogoMoneda.monedas}
-                monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
-                onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
-                monedaLoading={catalogoMoneda.loading}
               />
             )}
 

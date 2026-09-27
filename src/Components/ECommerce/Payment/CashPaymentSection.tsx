@@ -73,6 +73,10 @@ export default function CashPaymentSection({
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Ej. 300"
         />
+
+        <small className="checkout-cash-help">
+          Puede superar el total; el excedente será el vuelto.
+        </small>
       </div>
     </div>
   );

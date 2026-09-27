@@ -22,6 +22,7 @@ import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import { formatearDecimales } from "@/Utils/calcularIVA"
+import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
 
 interface CarPageProps {
   payload: TempLinkResolveResponseDto
@@ -50,6 +51,9 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
     if (!payload?.contactId || !payload?.orderId) return
 
     const run = async () => {
+      // Reaplica la empresa del link antes de consultar PCG (crítico en iPhone).
+      applyPublicEmpresaId(payload.empresaId)
+
       await dispatch(
         getProductFromCarAsync({
           codCliente: payload.contactId,

@@ -144,8 +144,10 @@
   font-size: var(--font-size-base) !important;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
 }
 
 @media (min-width: 768px) {

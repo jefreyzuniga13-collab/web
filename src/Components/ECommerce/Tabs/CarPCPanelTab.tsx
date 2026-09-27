@@ -43,6 +43,7 @@ import {generateRandomString,formatCurrencyNIO} from "@/Utils/ECommerce/formatte
 import {buildCalculationRequest,buildLogUpdateRequest,countMainProducts,normalizeDraft,safeNumber,safePositiveNumber,toLogCartFormValues} from "@/Utils/ECommerce/utils"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { cancelLogCartAndClearPcg } from "@/Utils/ECommerce/cancelLogCartAndClearPcg"
+import { GENERAL_STATUS } from "@/Constants/status"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
@@ -77,7 +78,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [retiraSucursal, setRetiraSucursal] = useState<SINO>("N")
   const [onlyTextAddress, setOnlyTextAddress] = useState<boolean>(false)
   const [transCost, setTransCost] = useState(0)
-  const [debouncedTransCost, setDebouncedTransCost] = useState(0)
   const [invoiceTotalsDto, setInvoiceTotalsDto] =
     useState<InvoiceTotalsDto | null>(null)
   const [totalsLoading, setTotalsLoading] = useState(false)
@@ -101,6 +101,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const hydratedRef = useRef(false)
   const skipPersistOnceRef = useRef(false)
   const cartClearedRef = useRef(false)
+  const addDescriptionRef = useRef(addDescription)
+  const transCostRef = useRef(transCost)
 
   /**
    * Permite limpiar también el estado de pago aunque el reset principal
@@ -119,7 +121,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     aplicarDescuentoProducto,
   } = useCartPCGFlowCtx()
   const {sendMessageLinkAsync,getMessageLinkAsync,error: errorCart,loading: loadingCart} = useCart()
-  const {UpdatedStatus,fetchByContactId,update: updatedLogCart} = useLogCart()
+  const {UpdatedStatus,fetchByContactId,update: updatedLogCart, removeByContactCache} = useLogCart()
   const { UpdateEcommerceUserAsync, getById } = useContact(undefined, {
     loadList: false,
   })
@@ -283,7 +285,6 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     setRetiraSucursal("N")
     setOnlyTextAddress(false)
     setTransCost(0)
-    setDebouncedTransCost(0)
 
     setInvoiceTotalsDto(null)
     setTotalsLoading(false)
@@ -310,24 +311,24 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const getShippingForTotals = useCallback(
     (opts?: { cost?: number; pickup?: boolean }) => {
       const pickup = opts?.pickup ?? retiraSucursal === "S"
-      const cost = safePositiveNumber(opts?.cost ?? transCost)
+      const cost = safePositiveNumber(
+        opts?.cost ?? transCostRef.current
+      )
 
       const allowShipping =
         !pickup &&
         (
           onlyTextAddress ||
           safeNumber(selectedAddressId, 0) > 0 ||
-          addDescription.trim().length > 0
+          addDescriptionRef.current.trim().length > 0
         )
 
       return allowShipping ? cost : 0
     },
     [
-      addDescription,
       onlyTextAddress,
       retiraSucursal,
-      selectedAddressId,
-      transCost
+      selectedAddressId
     ]
   )
 
@@ -379,6 +380,28 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     return totals
   }, [calcTotals])
+
+  /**
+   * Solo se llama en onBlur de dirección/transporte o al cambiar
+   * modalidad / dirección seleccionada / productos (no por tecla).
+   */
+  const handleRecalcTotals = useCallback(() => {
+    if (!contactId || detailsCount === 0) return
+    if (cartClearedRef.current) return
+
+    void calcTotals({
+      cost: safePositiveNumber(transCostRef.current),
+      pickup: retiraSucursal === "S"
+    })
+  }, [calcTotals, contactId, detailsCount, retiraSucursal])
+
+  useEffect(() => {
+    addDescriptionRef.current = addDescription
+  }, [addDescription])
+
+  useEffect(() => {
+    transCostRef.current = transCost
+  }, [transCost])
 
   /**
    * Obtiene o crea el usuario ecommerce relacionado al contacto.
@@ -841,27 +864,21 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   const clearCartStateAfterEmpty = useCallback(
     async (noPedido: number) => {
-      setAddDescription("")
-      setRetiraSucursal("N")
-      setOnlyTextAddress(false)
-      setTransCost(0)
-      setDebouncedTransCost(0)
-      setSelectedAddressId(null)
-      setInvoiceName("")
-      setObservation("")
-      setCurrentLog(null)
-      setOrderId(null)
-      setInvoiceTotalsDto(null)
-      setMultiPagoActivoState(false)
-      setPagosMultiples([])
-      setLocked(null)
-
-      paymentResetRef.current?.()
+      /**
+       * Limpia UI + draft. Si luego se vuelve a montar el carrito,
+       * el effect de totales reactiva cartClearedRef y deja editar
+       * dirección / transporte de nuevo.
+       */
+      resetCartPanelUi()
 
       try {
         if (noPedido > 0) {
           await UserSessionService.revokeCartTempLink(noPedido)
         }
+      } catch {}
+
+      try {
+        await removeByContactCache(contactId)
       } catch {}
 
       const existingLog = await fetchByContactId(contactId)
@@ -873,11 +890,19 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           orderId: Number(existingLog.orderId || noPedido),
           updatedStatus: UpdatedStatus,
         })
-      }
 
-      removeDraft()
+        try {
+          await removeByContactCache(contactId)
+        } catch {}
+      }
     },
-    [UpdatedStatus, contactId, fetchByContactId, removeDraft, setLocked]
+    [
+      UpdatedStatus,
+      contactId,
+      fetchByContactId,
+      removeByContactCache,
+      resetCartPanelUi,
+    ]
   )
 
   const handleRemoveItem = async (
@@ -1381,30 +1406,29 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     if (error) toast.error(error)
   }, [error])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedTransCost(safePositiveNumber(transCost))
-    }, 350)
-
-    return () => clearTimeout(timer)
-  }, [transCost])
-
+  /**
+   * Recalcula al cambiar productos, retiro en sucursal o dirección
+   * seleccionada. Dirección manual y transporte van por onBlur.
+   *
+   * Si el carrito se vació (cartClearedRef) y luego se vuelve a montar,
+   * se reactivan los cálculos para permitir dirección/transporte nuevos.
+   */
   useEffect(() => {
     if (!contactId || detailsCount === 0) return
-    if (cartClearedRef.current) return
+
+    if (cartClearedRef.current) {
+      cartClearedRef.current = false
+    }
 
     void calcTotals({
-      cost: debouncedTransCost,
       pickup: retiraSucursal === "S"
     })
   }, [
     contactId,
     carPCG,
     detailsCount,
-    debouncedTransCost,
     retiraSucursal,
     selectedAddressId,
-    addDescription,
     onlyTextAddress,
     calcTotals
   ])
@@ -1419,10 +1443,21 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       try {
       if (cartClearedRef.current) return
 
-      const log = await fetchByContactId(contactId)
+      const logRaw = await fetchByContactId(contactId)
 
       if (cartClearedRef.current) return
       if (myReq !== reqRef.current) return
+
+      /**
+       * Un LogCart cancelado no debe rehidratar dirección/transporte:
+       * el carrito nuevo debe quedar editable y limpio.
+       */
+      const log =
+        logRaw &&
+        Number(logRaw.statusId) !== GENERAL_STATUS.Cancelada &&
+        Number(logRaw.statusId) !== GENERAL_STATUS.Finalizada
+          ? logRaw
+          : null
 
       setCurrentLog(log ?? null)
 
@@ -1448,22 +1483,30 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setTransCost(safePositiveNumber(draft.transCost))
       } else if (log?.transCost != null) {
         setTransCost(safePositiveNumber(log.transCost))
+      } else {
+        setTransCost(0)
       }
 
       if (draft?.retiraSucursal === "S" || draft?.retiraSucursal === "N") {
         setRetiraSucursal(draft.retiraSucursal)
       } else if (log?.retiraSucursal === "S" || log?.retiraSucursal === "N") {
         setRetiraSucursal(log.retiraSucursal)
+      } else {
+        setRetiraSucursal("N")
       }
 
       if (draft?.addDescription?.trim()) {
         setAddDescription(draft.addDescription)
+      } else {
+        setAddDescription("")
       }
 
       if (draft?.onlyTextAddress != null) {
         setOnlyTextAddress(Boolean(draft.onlyTextAddress))
       } else if (log?.onlyTextAddress != null) {
         setOnlyTextAddress(Boolean(log.onlyTextAddress))
+      } else {
+        setOnlyTextAddress(false)
       }
 
       const draftWithInvoiceName = draft as
@@ -1493,12 +1536,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setInvoiceName(invoiceNameFromDraft)
       } else if (invoiceNameFromLog) {
         setInvoiceName(invoiceNameFromLog)
+      } else {
+        setInvoiceName("")
       }
 
       if (draft?.observation?.trim()) {
         setObservation(draft.observation)
       } else if (String(log?.observacion ?? "").trim().length > 0) {
         setObservation(String(log?.observacion))
+      } else {
+        setObservation("")
       }
 
       if (cartClearedRef.current) return
@@ -1621,6 +1668,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             setAddDescription={setAddDescription}
             transCost={transCost}
             setTransCost={setTransCost}
+            onRecalcTotals={handleRecalcTotals}
             retiraSucursal={retiraSucursal}
             setRetiraSucursal={setRetiraSucursal}
             onlyTextAddress={onlyTextAddress}

@@ -20,5 +20,5 @@ export interface TempLinkResolveResponseDto {
 
   permiteMultiPago: boolean
   permitePasarela: boolean
-  aplicaMultimoneda?: boolean
+  aplicaMultimoneda: boolean
 }

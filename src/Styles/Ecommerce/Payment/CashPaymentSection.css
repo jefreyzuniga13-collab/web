@@ -2,4 +2,14 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-} 
+}
+
+.checkout-cash-help,
+.checkout-amount-fixed-help {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-gray-500, #6b7280);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  text-align: left;
+}
