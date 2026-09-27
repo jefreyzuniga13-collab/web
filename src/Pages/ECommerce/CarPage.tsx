@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
 import "@/Styles/Ecommerce/CartPage.css"
-import noimageavailable from '@/assets/vacio.png'
+import noimageavailable from "@/assets/vacio.png"
 import { useNavigate } from "react-router-dom"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
+import PublicCheckoutShell from "@/Components/ECommerce/Payment/PublicCheckoutShell"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import {
@@ -96,6 +97,18 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
   const hasItems = productGroups.length > 0
 
+  const productUnits = useMemo(() => {
+    return productGroups.reduce((sum, group) => {
+      return sum + Number(group.product.cantidad ?? 0)
+    }, 0)
+  }, [productGroups])
+
+  const getLineSubtotal = (item: ListDetalleCarrito) => {
+    const price = Number(item.precioV ?? 0)
+    const qty = Number(item.cantidad ?? 0)
+    return price * qty
+  }
+
   const formatMoney = (value?: number | null) => {
     return Number(value ?? 0).toLocaleString("es-NI", {
       style: "currency",
@@ -133,36 +146,46 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
     if (hasItems) navigate("/checkout", { state: { payload } })
   }
 
+  const branchName = String(existingLog?.branchName ?? "").trim()
+
   if (loading) {
     return (
-      <main className="cart-page">
-        <header className="cart-page__header">
-          <h1 className="cart-page__title">Carrito de compra</h1>
-        </header>
+      <PublicCheckoutShell activeStep="cart">
+        <div className="public-checkout__hero">
+          <h1 className="public-checkout__hero-title">Tu carrito</h1>
+          <p className="public-checkout__hero-subtitle">
+            Cargando tus productos…
+          </p>
+        </div>
         <ListSkeleton variant="cart" count={5} />
-      </main>
+      </PublicCheckoutShell>
     )
   }
 
   if (error) {
     return (
-      <main className="cart-page cart-page--centered">
+      <PublicCheckoutShell activeStep="cart">
         <div className="cart-page__error">
           <span className="cart-page__error-text">{error}</span>
         </div>
-      </main>
+      </PublicCheckoutShell>
     )
   }
 
   return (
-    <main className="cart-page">
-      <header className="cart-page__header">
-        <h1 className="cart-page__title">Carrito de compra</h1>
-        <h3 className="cart-page__subtitle">Sucursal: {existingLog?.branchName ?? ""}</h3>
-      </header>
+    <PublicCheckoutShell activeStep="cart">
+      <div className="public-checkout__hero">
+        <h1 className="public-checkout__hero-title">Tu carrito</h1>
+        <p className="public-checkout__hero-subtitle">
+          Revisa tus productos antes de continuar.
+        </p>
+        {branchName ? (
+          <p className="public-checkout__hero-branch">Sucursal: {branchName}</p>
+        ) : null}
+      </div>
 
       {hasItems ? (
-        <section className="cart-page__content">
+        <section className="cart-page__panel">
           <section className="cart-page__table-section" aria-label="Carrito">
             <table className="cart-table">
               <thead className="cart-table__head">
@@ -177,7 +200,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                     Cantidad
                   </th>
                   <th className="cart-table__cell cart-table__cell--total">
-                    Contenido
+                    Subtotal
                   </th>
                 </tr>
               </thead>
@@ -218,17 +241,24 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                       </td>
 
                       <td className="cart-table__cell cart-table__cell--price">
-                        {product.precioV > 0 ? " C$ " + formatearDecimales(product.precioV) : ""}
+                        {product.precioV > 0
+                          ? "C$ " + formatearDecimales(product.precioV)
+                          : ""}
                       </td>
 
                       <td className="cart-table__cell cart-table__cell--qty">
-                        <div className="cart-qty">
+                        <div className="cart-qty" aria-label="Cantidad">
                           <span className="cart-qty__value">
                             {product.cantidad}
                           </span>
                         </div>
                       </td>
 
+                      <td className="cart-table__cell cart-table__cell--total">
+                        {getLineSubtotal(product) > 0
+                          ? "C$ " + formatearDecimales(getLineSubtotal(product))
+                          : ""}
+                      </td>
                     </tr>
 
                     {options.map((option, optionIndex) => (
@@ -240,8 +270,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                           <div className="cart-item cart-item--option">
                             <div className="cart-item__option-indicator" />
 
-                            <div className="cart-item__image-wrapper cart-item__image-wrapper--option">
-                            </div>
+                            <div className="cart-item__image-wrapper cart-item__image-wrapper--option" />
 
                             <div className="cart-item__info cart-item__info--option">
                               <span className="cart-item__modifier-label">
@@ -256,8 +285,9 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--price cart-table__cell--option">
-  
-                          {option.precioV > 0 ? " C$ " + formatearDecimales(option.precioV) : "Incluido"}
+                          {option.precioV > 0
+                            ? "C$ " + formatearDecimales(option.precioV)
+                            : "Incluido"}
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--qty cart-table__cell--option">
@@ -269,7 +299,10 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                         </td>
 
                         <td className="cart-table__cell cart-table__cell--total cart-table__cell--option">
-                          Opción
+                          {option.precioV > 0
+                            ? "C$ " +
+                              formatearDecimales(getLineSubtotal(option))
+                            : "Incluido"}
                         </td>
                       </tr>
                     ))}
@@ -279,15 +312,14 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
             </table>
           </section>
 
-          {/* LLega a mostrar el 0.00, todo cuando no deberia por eso se estaba revisando el logcart
-          desde el carpcgtab
-          */}
-          <aside className="cart-page__totals" aria-label="Total carrito">
-            <h2 className="cart-totals__title">Total Carrito</h2>
-
+          <aside className="cart-page__totals" aria-label="Resumen del pedido">
             <div className="cart-totals__card">
+              <h2 className="cart-totals__title">Resumen de tu pedido</h2>
+
               <div className="cart-totals__row">
-                <span className="cart-totals__label">Subtotal</span>
+                <span className="cart-totals__label">
+                  Productos ({productUnits || productGroups.length})
+                </span>
                 <span className="cart-totals__value cart-totals__value--strong">
                   {formatMoney(existingLog?.subTotal)}
                 </span>
@@ -295,21 +327,22 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
               {existingLog != null && Number(existingLog.transCost) > 0 && (
                 <div className="cart-totals__row">
-                  <span className="cart-totals__label">Transporte</span>
+                  <span className="cart-totals__label">Envío</span>
                   <span className="cart-totals__value cart-totals__value--strong">
                     {formatMoney(existingLog.transCost)}
                   </span>
                 </div>
               )}
 
-            {existingLog != null && Number(existingLog.descuentoPantalla) > 0 && (
-                <div className="cart-totals__row">
-                  <span className="cart-totals__label">Descuento</span>
-                  <span className="cart-totals__value cart-totals__value--strong">
-                    {formatMoney(existingLog.descuentoPantalla)}
-                  </span>
-                </div>
-              )}
+              {existingLog != null &&
+                Number(existingLog.descuentoPantalla) > 0 && (
+                  <div className="cart-totals__row">
+                    <span className="cart-totals__label">Descuento</span>
+                    <span className="cart-totals__value cart-totals__value--strong">
+                      {formatMoney(existingLog.descuentoPantalla)}
+                    </span>
+                  </div>
+                )}
 
               {existingLog != null && Number(existingLog.ivaPantalla) > 0 && (
                 <div className="cart-totals__row">
@@ -321,8 +354,10 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
               )}
 
               <div className="cart-totals__row cart-totals__row--total">
-                <span className="cart-totals__label">Total</span>
-                <span className="cart-totals__value cart-totals__value--strong">
+                <span className="cart-totals__label cart-totals__label--total">
+                  Total
+                </span>
+                <span className="cart-totals__value cart-totals__value--total">
                   {formatMoney(existingLog?.totalEnPantalla)}
                 </span>
               </div>
@@ -333,7 +368,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                 onClick={goToCheckout}
                 disabled={!hasItems}
               >
-                <p className="cart-totals_text">Procesar Pago</p>
+                Procesar pago
               </button>
             </div>
           </aside>
@@ -354,7 +389,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
           </p>
         </section>
       )}
-    </main>
+    </PublicCheckoutShell>
   )
 }
 

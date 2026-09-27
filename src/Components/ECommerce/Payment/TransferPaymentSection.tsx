@@ -1,6 +1,7 @@
 import Input from "@/Components/Common/Input"
 import { Label } from "@/Components/Common/Label"
 import { formatearDecimales } from "@/Utils/calcularIVA"
+import "@/Styles/Ecommerce/Payment/CashPaymentSection.css"
 import "@/Styles/Ecommerce/Payment/TransferPaymentSection.css"
 
 interface Props {
@@ -28,7 +29,7 @@ export default function TransferPaymentSection({
 
   return (
     <div className="checkout-cash">
-      <div className="checkout-field checkout-field--full">
+      <div className="checkout-field checkout-field--half">
         <Label htmlFor="transferAmount">Monto ({simboloMoneda})</Label>
         <Input
           id="transferAmount"
@@ -40,7 +41,7 @@ export default function TransferPaymentSection({
         </small>
       </div>
 
-      <div className="checkout-field checkout-field--full">
+      <div className="checkout-field checkout-field--half">
         <Label htmlFor="transferRef">Referencia *</Label>
         <Input
           id="transferRef"

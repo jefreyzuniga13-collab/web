@@ -1,7 +1,37 @@
 .checkout-cash {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  align-items: start;
+}
+
+/* Efectivo: monto solo a la derecha (mitad derecha) */
+.checkout-cash--amount-right .checkout-field {
+  grid-column: 2;
+}
+
+.checkout-cash .checkout-field,
+.checkout-cash .checkout-field--amount,
+.checkout-cash .checkout-field--ref,
+.checkout-cash .checkout-field--half {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: none;
+}
+
+.checkout-cash .checkout-field .input-wrapper,
+.checkout-cash .checkout-field input {
+  width: 100%;
+  max-width: none;
+}
+
+.checkout-cash .checkout-field--full {
+  grid-column: 1 / -1;
+  max-width: 100%;
 }
 
 .checkout-cash-help,
@@ -9,7 +39,17 @@
   display: block;
   margin-top: 0.35rem;
   color: var(--color-gray-500, #6b7280);
-  font-size: 0.95rem;
+  font-size: var(--font-size-sm);
   line-height: 1.35;
   text-align: left;
+}
+
+@media (max-width: 640px) {
+  .checkout-cash {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-cash--amount-right .checkout-field {
+    grid-column: 1;
+  }
 }

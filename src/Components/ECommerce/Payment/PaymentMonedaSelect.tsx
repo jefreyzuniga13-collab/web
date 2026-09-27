@@ -31,6 +31,7 @@ export default function PaymentMonedaSelect({
           const esDolar = esMonedaDolar(moneda)
           const bloqueada = bloquearDolar && esDolar
           const activa = monedaSeleccionada?.id === moneda.id
+          const simbolo = moneda.simbolo === "C$" ? "C\u200B$" : moneda.simbolo
 
           return (
             <label
@@ -41,6 +42,19 @@ export default function PaymentMonedaSelect({
                   : "checkout-payment-mode__option"
               }
             >
+              <span className="checkout-payment-mode__content">
+                <span className="checkout-payment-mode__name">
+                  {moneda.moneda || moneda.abreviatura || moneda.id}
+                </span>
+                <small className="notranslate" translate="no">
+                  {bloqueada
+                    ? "La pasarela solo acepta córdobas."
+                    : simbolo
+                      ? `Pagos en ${simbolo}`
+                      : "Selecciona la moneda del pago."}
+                </small>
+              </span>
+
               <input
                 type="radio"
                 name="currencyType"
@@ -49,19 +63,6 @@ export default function PaymentMonedaSelect({
                 disabled={disabled || loading || bloqueada}
                 onChange={() => onChange(moneda)}
               />
-
-              <span className="checkout-payment-mode__content">
-                <strong>
-                  {moneda.moneda || moneda.abreviatura || moneda.id}
-                </strong>
-                <small>
-                  {bloqueada
-                    ? "La pasarela solo acepta córdobas."
-                    : moneda.simbolo
-                      ? `Pagos en ${moneda.simbolo}`
-                      : "Selecciona la moneda del pago."}
-                </small>
-              </span>
             </label>
           )
         })}

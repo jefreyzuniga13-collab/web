@@ -109,9 +109,9 @@ const MapPicker: React.FC<MapPickerProps> = ({ value, onChange }) => {
     <div className="mapPickert-container">
       <MapContainer
         center={center}
-        zoom={15}
+        zoom={13}
         scrollWheelZoom={true}
-        style={{ height: "350px", width: "100%", borderRadius: "8px" }}
+        style={{ height: "100%", minHeight: "480px", width: "100%", borderRadius: "8px" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'

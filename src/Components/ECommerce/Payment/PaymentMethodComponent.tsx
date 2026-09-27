@@ -20,7 +20,7 @@ import { validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils";
 import { convertirDesdeCordoba, cubreMontoPago, esMonedaDolar, simboloMoneda } from "@/Utils/ECommerce/monedaUtils"
 import { safeStr } from "@/Utils/ECommerce/formatters";
 import { safeNumber } from "@/Utils/ECommerce/utils";
-import { formatearDecimales } from "@/Utils/calcularIVA";
+import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount";
 import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 import "@/Styles/Ecommerce/Payment/PaymentBrandTiles.css";
 
@@ -220,6 +220,11 @@ interface Props {
   onChangeMoneda?: (moneda: MonedaCatalogo) => void;
   tasaCambio?: number;
   monedaLoading?: boolean;
+
+  /**
+   * Oculta el título interno cuando el shell público ya muestra el hero.
+   */
+  hideTitle?: boolean;
 }
 
 export default function PaymentMethodComponent({
@@ -263,6 +268,7 @@ export default function PaymentMethodComponent({
   onChangeMoneda,
   tasaCambio,
   monedaLoading = false,
+  hideTitle = false,
 }: Props) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -365,25 +371,51 @@ export default function PaymentMethodComponent({
   /**
    * Se toman primero los totales frescos.
    * Si no vienen, se usa existingLog como respaldo.
+   * El total mostrado debe coincidir con totalPagar (mismo que el carrito).
    */
   const resumen = useMemo(() => {
+    const subTotal = safeNumber(
+      invoiceTotalsDto?.subTotal ?? existingLog?.subTotal ?? 0,
+      0
+    )
+    const descuento = safeNumber(
+      invoiceTotalsDto?.descuento ?? existingLog?.descuentoPantalla ?? 0,
+      0
+    )
+    const iva = safeNumber(
+      invoiceTotalsDto?.iva ?? existingLog?.ivaPantalla ?? 0,
+      0
+    )
+    const transporte = safeNumber(
+      invoiceTotalsDto?.transporte ??
+        existingLog?.transCost ??
+        transpCost ??
+        0,
+      0
+    )
+
+    const totalDesdePartes = Math.max(
+      0,
+      subTotal - descuento + iva + transporte
+    )
+    const totalLog = safeNumber(
+      invoiceTotalsDto?.total ?? existingLog?.totalEnPantalla ?? 0,
+      0
+    )
+
     return {
-      subTotal: safeNumber(
-        invoiceTotalsDto?.subTotal ?? existingLog?.subTotal ?? 0,
-        0,
-      ),
-      descuento: safeNumber(
-        invoiceTotalsDto?.descuento ?? existingLog?. descuentoPantalla ?? 0,
-        0,
-      ),
-      iva: safeNumber(
-        invoiceTotalsDto?.iva ?? existingLog?.ivaPantalla ?? 0,
-        0,
-      ),
-      transporte: safeNumber(invoiceTotalsDto?.transporte ?? existingLog?.transCost ?? 0, 0),
-      total: totalResumen,
-    };
-  }, [invoiceTotalsDto, existingLog, transpCost, totalResumen]);
+      subTotal,
+      descuento,
+      iva,
+      transporte,
+      total:
+        totalResumen > 0
+          ? totalResumen
+          : totalLog > 0
+            ? totalLog
+            : totalDesdePartes
+    }
+  }, [invoiceTotalsDto, existingLog, transpCost, totalResumen])
 
   const divisaLabel = useMemo(() => {
     if (method === "transfer") return "Tipo de transferencia / banco *";
@@ -413,7 +445,9 @@ export default function PaymentMethodComponent({
 
   return (
     <div className="checkout-section">
-      <h2 className="checkout-section__title">Pago y confirmar venta</h2>
+      {!hideTitle && (
+        <h2 className="checkout-section__title">Pago y confirmar venta</h2>
+      )}
 
       {!multiPagoActivo && showMethodSelector && (
         <PaymentMethodSelector
@@ -450,52 +484,55 @@ export default function PaymentMethodComponent({
 
           {resumen.subTotal > 0 && (
             <div className="checkout-summary__subtitle">
-              <p className="checkout-summary__p">Subtotal:</p>
+              <p className="checkout-summary__p">Subtotal</p>
               <strong className="checkout-summary__strong">
-                C$ {formatearDecimales(resumen.subTotal)}
+                <MoneyAmount amount={resumen.subTotal} />
               </strong>
             </div>
           )}
 
           {resumen.descuento > 0 && (
             <div className="checkout-summary__subtitle">
-              <p className="checkout-summary__p">Descuento:</p>
+              <p className="checkout-summary__p">Descuento</p>
               <strong className="checkout-summary__strong">
-                C$ {formatearDecimales(resumen.descuento)}
+                <MoneyAmount amount={resumen.descuento} />
               </strong>
             </div>
           )}
 
           {resumen.iva > 0 && (
             <div className="checkout-summary__subtitle">
-              <p className="checkout-summary__p">IVA:</p>
+              <p className="checkout-summary__p">IVA</p>
               <strong className="checkout-summary__strong">
-                C$ {formatearDecimales(resumen.iva)}
+                <MoneyAmount amount={resumen.iva} />
               </strong>
             </div>
           )}
 
           {resumen.transporte > 0 && (
             <div className="checkout-summary__subtitle">
-              <p className="checkout-summary__p">Transporte:</p>
+              <p className="checkout-summary__p">Transporte</p>
               <strong className="checkout-summary__strong">
-                C$ {formatearDecimales(resumen.transporte)}
+                <MoneyAmount amount={resumen.transporte} />
               </strong>
             </div>
           )}
 
           <div className="checkout-summary__subtitle checkout-summary__subtitle--total">
-            <p className="checkout-summary__p">Total:</p>
+            <p className="checkout-summary__p">Total</p>
             <strong className="checkout-summary__strong checkout-summary__strong--total">
-              C$ {formatearDecimales(resumen.total)}
+              <MoneyAmount amount={resumen.total} />
             </strong>
           </div>
 
           {aplicaMultiMoneda && esMonedaDolar(monedaSeleccionada) && (
             <div className="checkout-summary__subtitle">
-              <p className="checkout-summary__p">Equivalente:</p>
+              <p className="checkout-summary__p">Equivalente</p>
               <strong className="checkout-summary__strong">
-                {simboloMoneda(monedaSeleccionada)} {formatearDecimales(totalEnMonedaPago)}
+                <MoneyAmount
+                  amount={totalEnMonedaPago}
+                  symbol={simboloMoneda(monedaSeleccionada)}
+                />
               </strong>
             </div>
           )}
@@ -504,7 +541,7 @@ export default function PaymentMethodComponent({
             method === "manualCard" &&
             safeStr(manualCardData.ultDigito) && (
               <div className="checkout-summary__subtitle">
-                <p className="checkout-summary__p">Tarjeta manual:</p>
+                <p className="checkout-summary__p">Tarjeta manual</p>
                 <strong className="checkout-summary__strong">
                   **** {safeStr(manualCardData.ultDigito)}
                 </strong>
@@ -582,7 +619,7 @@ export default function PaymentMethodComponent({
         {/* Botón que ahora abre el modal en lugar de pagar directamente */}
         <button
           type="button"
-          className={`checkout-paybtn ${!showBackButton ? "showBackButton" : ""}`}
+          className={`checkout-paybtn checkout-paybtn--pay ${!showBackButton ? "showBackButton" : ""}`}
           onClick={handleOpenConfirmModal}
           disabled={!canPressPay}
         >

@@ -16,6 +16,7 @@ import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, to
 import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio";
 import { formatearDecimales } from "@/Utils/calcularIVA";
 import { round2, safeStr } from "@/Utils/ECommerce/formatters";
+import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount";
 import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
 
 type Props = {
@@ -334,44 +335,50 @@ export default function MultiPagoSection({
   return (
     <div className="multipago-section">
       <div className="checkout-summary multipago-summary">
-        <div className="checkout-summary__subtitle checkout-summary__subtitle--total">
-          <p className="checkout-summary__p">Total factura:</p>
-          <strong className="checkout-summary__strong checkout-summary__strong--total">
-            C$ {formatearDecimales(totalPagar)}
-          </strong>
-        </div>
+        <p className="multipago-summary__title">Estado del cobro</p>
 
-        <div className="checkout-summary__subtitle">
-          <p className="checkout-summary__p">Total recibido:</p>
-          <strong className="checkout-summary__strong">
-            C$ {formatearDecimales(pagado)}
-          </strong>
-        </div>
-
-        <div className="checkout-summary__subtitle">
-          <p className="checkout-summary__p">Pendiente:</p>
-          <strong className="checkout-summary__strong__pendiente">
-            C$ {formatearDecimales(pendiente)}
-          </strong>
-        </div>
-
-        {aplicaMultiMoneda && esMonedaDolar(monedaSeleccionada) && (
+        <div className="multipago-summary__group">
           <div className="checkout-summary__subtitle">
-            <p className="checkout-summary__p">Pendiente en moneda:</p>
-            <strong className="checkout-summary__strong">
-              {simbolo} {formatearDecimales(pendienteEnMoneda)}
+            <p className="checkout-summary__p">Total factura</p>
+            <strong className="checkout-summary__strong checkout-summary__strong--total">
+              <MoneyAmount amount={totalPagar} />
             </strong>
           </div>
-        )}
 
-        {vuelto > 0 && (
           <div className="checkout-summary__subtitle">
-            <p className="checkout-summary__p">Vuelto:</p>
+            <p className="checkout-summary__p">Total recibido</p>
             <strong className="checkout-summary__strong">
-              C$ {formatearDecimales(vuelto)}
+              <MoneyAmount amount={pagado} />
             </strong>
           </div>
-        )}
+        </div>
+
+        <div className="multipago-summary__group multipago-summary__group--status">
+          <div className="checkout-summary__subtitle checkout-summary__subtitle--pendiente">
+            <p className="checkout-summary__p">Pendiente</p>
+            <strong className="checkout-summary__strong__pendiente">
+              <MoneyAmount amount={pendiente} />
+            </strong>
+          </div>
+
+          {aplicaMultiMoneda && esMonedaDolar(monedaSeleccionada) && (
+            <div className="checkout-summary__subtitle">
+              <p className="checkout-summary__p">Pendiente en moneda</p>
+              <strong className="checkout-summary__strong">
+                <MoneyAmount amount={pendienteEnMoneda} symbol={simbolo} />
+              </strong>
+            </div>
+          )}
+
+          {vuelto > 0 && (
+            <div className="checkout-summary__subtitle checkout-summary__subtitle--vuelto">
+              <p className="checkout-summary__p">Vuelto</p>
+              <strong className="checkout-summary__strong checkout-summary__strong--vuelto">
+                <MoneyAmount amount={vuelto} />
+              </strong>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="multipago-form">
@@ -450,63 +457,71 @@ export default function MultiPagoSection({
         )}
 
         {method && (
-          <div className="checkout-field checkout-field--full">
-            <Label htmlFor="multipagoMonto">Monto ({simbolo})</Label>
+          <div
+            className={
+              method === "transfer"
+                ? "multipago-row-fields"
+                : "multipago-row-fields multipago-row-fields--amount-only"
+            }
+          >
+            <div className="checkout-field multipago-amount-field">
+              <Label htmlFor="multipagoMonto">Monto ({simbolo})</Label>
 
-            <Input
-              id="multipagoMonto"
-              type="number"
-              min={0}
-              max={method === "cash" ? undefined : pendienteEnMoneda}
-              value={monto}
-              disabled={disabled || pendiente <= 0}
-              onChange={(event) => {
-                const raw =
-                  event.target.value === "" ? 0 : Number(event.target.value);
+              <Input
+                id="multipagoMonto"
+                type="number"
+                min={0}
+                max={method === "cash" ? undefined : pendienteEnMoneda}
+                value={monto}
+                disabled={disabled || pendiente <= 0}
+                onChange={(event) => {
+                  const raw =
+                    event.target.value === "" ? 0 : Number(event.target.value);
 
-                if (!Number.isFinite(raw) || raw < 0) {
-                  setMonto(0);
-                  return;
-                }
+                  if (!Number.isFinite(raw) || raw < 0) {
+                    setMonto(0);
+                    return;
+                  }
 
-                /**
-                 * Efectivo: puede superar el pendiente (vuelto).
-                 * Transferencia / tarjeta: menos del pendiente sí; más no.
-                 */
-                if (method !== "cash" && raw > pendienteEnMoneda) {
-                  setMonto(round2(pendienteEnMoneda));
-                  return;
-                }
+                  /**
+                   * Efectivo: puede superar el pendiente (vuelto).
+                   * Transferencia / tarjeta: menos del pendiente sí; más no.
+                   */
+                  if (method !== "cash" && raw > pendienteEnMoneda) {
+                    setMonto(round2(pendienteEnMoneda));
+                    return;
+                  }
 
-                setMonto(raw);
-              }}
-            />
+                  setMonto(raw);
+                }}
+              />
 
-            {method === "cash" ? (
-              <small className="multipago-cash-help">
-                Puede superar el pendiente; el excedente será el vuelto.
-              </small>
-            ) : (
-              <small className="multipago-cash-help">
-                Puede ingresar menos del pendiente; no puede superar el monto
-                pendiente.
-              </small>
+              {method === "cash" ? (
+                <small className="multipago-cash-help">
+                  Puede superar el pendiente; el excedente será el vuelto.
+                </small>
+              ) : (
+                <small className="multipago-cash-help">
+                  Puede ingresar menos del pendiente; no puede superar el monto
+                  pendiente.
+                </small>
+              )}
+            </div>
+
+            {method === "transfer" && (
+              <div className="checkout-field multipago-ref-field">
+                <Label htmlFor="multipagoReferencia">Referencia</Label>
+
+                <Input
+                  id="multipagoReferencia"
+                  type="text"
+                  value={referencia}
+                  disabled={disabled}
+                  onChange={(event) => setReferencia(event.target.value)}
+                  placeholder="Referencia de transferencia"
+                />
+              </div>
             )}
-          </div>
-        )}
-
-        {method === "transfer" && (
-          <div className="checkout-field checkout-field--full">
-            <Label htmlFor="multipagoReferencia">Referencia</Label>
-
-            <Input
-              id="multipagoReferencia"
-              type="text"
-              value={referencia}
-              disabled={disabled}
-              onChange={(event) => setReferencia(event.target.value)}
-              placeholder="Referencia de transferencia"
-            />
           </div>
         )}
 
@@ -540,8 +555,8 @@ export default function MultiPagoSection({
                   </strong>
 
                   <span className="multipago-card__text">
-                    {getMetodoLabel(pago.metodo)} - C${" "}
-                    {formatearDecimales(pago.monto)}
+                    {getMetodoLabel(pago.metodo)} -{" "}
+                    <MoneyAmount amount={pago.monto} />
                   </span>
 
                   {pago.metodo === "transfer" && (

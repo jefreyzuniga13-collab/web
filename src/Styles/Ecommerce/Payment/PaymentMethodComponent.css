@@ -4,16 +4,3 @@
   text-align: left;
   margin-top: var(--space-lg);
 }
-
-.checkout-methods-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 550px;
-  padding: var(--space-lg) var(--space-xl);
-  overflow-x: hidden;
-  background-color: var(--bg-primary);
-  box-sizing: border-box;
-  border-radius: 0.75rem;
-}

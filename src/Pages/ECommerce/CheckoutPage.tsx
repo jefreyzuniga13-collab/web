@@ -43,6 +43,9 @@ import "@/Styles/Ecommerce/Payment/CheckoutPage.css"
 import { TipoFalote } from "@/Constants/falote"
 import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
 import { convertirDesdeCordoba, esMonedaDolar } from "@/Utils/ECommerce/monedaUtils"
+import PublicCheckoutShell, {
+  type PublicCheckoutStepId,
+} from "@/Components/ECommerce/Payment/PublicCheckoutShell"
 
 const CHECKOUT_PDF_CONTEXT_KEY = "checkout_pdf_context"
 
@@ -203,9 +206,9 @@ const CheckoutPage: React.FC = () => {
     const cart = carPCG?.[0] as any
 
     return safePositiveNumber(
-      cart?.total ??
+      existingLog?.totalEnPantalla ??
+        cart?.total ??
         cart?.totalFactura ??
-        existingLog?.totalEnPantalla ??
         0
     )
   }, [carPCG, existingLog?.totalEnPantalla])
@@ -222,13 +225,30 @@ const CheckoutPage: React.FC = () => {
     return 0
   }, [isPickup, existingLog?.transCost, transpCost])
 
+  /**
+   * Total a cobrar.
+   * Preferir totalEnPantalla del log (ya incluye IVA + transporte),
+   * igual que el resumen del carrito. No sumar transporte otra vez.
+   */
   const totalPagar = useMemo(() => {
-    const totalBase = safePositiveNumber(cartTotal)
-    const transporte = getTransporteFactura()
     const propina = safePositiveNumber(tip)
+    const totalPantalla = safePositiveNumber(existingLog?.totalEnPantalla)
 
-    return totalBase + transporte + propina
-  }, [cartTotal, getTransporteFactura, tip])
+    if (totalPantalla > 0) {
+      return totalPantalla + propina
+    }
+
+    const subTotal = safePositiveNumber(existingLog?.subTotal)
+    const descuento = safePositiveNumber(existingLog?.descuentoPantalla)
+    const iva = safePositiveNumber(existingLog?.ivaPantalla)
+    const transporte = getTransporteFactura()
+
+    if (subTotal > 0 || iva > 0 || transporte > 0) {
+      return Math.max(0, subTotal - descuento + iva + transporte) + propina
+    }
+
+    return safePositiveNumber(cartTotal) + transporte + propina
+  }, [existingLog, getTransporteFactura, tip, cartTotal])
 
   /**
    * Pasarela (pago electrónico): solo córdobas.
@@ -1172,136 +1192,180 @@ const CheckoutPage: React.FC = () => {
   }, [selectedCoords])
 
   return (
-    <section className="checkout-page">
-      <div className="checkout-shell">
-        <div className="checkout-page__title">
-          <h1 className="checkout-page__title__value">Checkout</h1>
-        </div>
+    <PublicCheckoutShell
+      activeStep={
+        (step === "location"
+          ? "location"
+          : step === "currency"
+            ? "currency"
+            : "paymentMethod") as PublicCheckoutStepId
+      }
+    >
+      <div className="checkout-page">
+        <div className="checkout-shell">
+          {!initializingCheckout && step === "location" && (
+            <div className="public-checkout__hero">
+              <h1 className="public-checkout__hero-title">
+                Selecciona la dirección de entrega
+              </h1>
+              <p className="public-checkout__hero-subtitle">
+                Puedes usar una dirección guardada o marcar una nueva ubicación
+                en el mapa
+              </p>
+            </div>
+          )}
 
-        <div className="checkout-main">
-          <div className="checkout-left">
-            {initializingCheckout && (
-              <div className="checkout-section">
-                <ListSkeleton variant="cart" count={5} />
-              </div>
-            )}
+          {!initializingCheckout && step === "currency" && (
+            <div className="public-checkout__hero">
+              <h1 className="public-checkout__hero-title">
+                Cómo deseas pagar
+              </h1>
+              <p className="public-checkout__hero-subtitle">
+                Elige pago único o multipago para continuar
+              </p>
+            </div>
+          )}
 
-            {!initializingCheckout &&
-              step === "location" &&
-              isOnlyTextAddress && (
-                <OnlyTextAddressSection
-                  billingForm={billingForm}
+          {!initializingCheckout && step === "paymentMethod" && (
+            <div className="public-checkout__hero">
+              <h1 className="public-checkout__hero-title">
+                Confirmar pago
+              </h1>
+              <p className="public-checkout__hero-subtitle">
+                Revisa el resumen e ingresa los datos de tu pago
+              </p>
+            </div>
+          )}
+
+          <div className="checkout-main">
+            <div className="checkout-left">
+              {initializingCheckout && (
+                <div className="checkout-section">
+                  <ListSkeleton variant="cart" count={5} />
+                </div>
+              )}
+
+              {!initializingCheckout &&
+                step === "location" &&
+                isOnlyTextAddress && (
+                  <OnlyTextAddressSection
+                    billingForm={billingForm}
+                    transpCost={getTransporteFactura()}
+                    disabled={invoiceLoading}
+                    onChange={(field, value) => {
+                      setBillingForm((previous) => ({
+                        ...previous,
+                        [field]: value
+                      }))
+                    }}
+                    onContinue={handleGoToCurrencyFromLocation}
+                  />
+                )}
+
+              {!initializingCheckout &&
+                step === "location" &&
+                !isOnlyTextAddress && (
+                  <LocationSection
+                    addressList={addressList}
+                    locationMode={locationMode}
+                    setLocationMode={setLocationMode}
+                    selectedAddressId={selectedAddressId}
+                    setSelectedAddressId={setSelectedAddressId}
+                    selectedCoords={selectedCoords}
+                    setSelectedCoords={setSelectedCoords}
+                    billingForm={billingForm}
+                    setBillingForm={setBillingForm}
+                    selectedAddress={selectedAddress}
+                    handleBillingChange={(event) => {
+                      const { id, value } = event.target
+
+                      setBillingForm((previous) => ({
+                        ...previous,
+                        [id]: value
+                      }))
+                    }}
+                    handleGoToCurrency={handleGoToCurrencyFromLocation}
+                    handleGoBack={() =>
+                      navigate("/cart", { state: { payload } })
+                    }
+                    handleCoordsChange={handleCoordsChangeFromMap}
+                    isLocked={false}
+                    isPickup={isPickup}
+                  />
+                )}
+
+              {!initializingCheckout && step === "currency" && (
+                <CurrencySection
+                  step={step}
+                  currency={currency}
+                  selectedCurrency={selectedCurrency}
+                  handleSelectCurrency={handleSelectCurrency}
+                  invoiceLoading={invoiceLoading}
+                  setStep={goToStep}
+                  handleGoToPayment={handleGoToPayment}
+                  permiteMultiPago={permiteMultiPago}
+                  permitePasarela={permitePasarela}
+                  multiPagoActivo={multiPagoActivo}
+                  setMultiPagoActivo={setMultiPagoActivo}
+                />
+              )}
+
+              {!initializingCheckout && step === "paymentMethod" && (
+                <PaymentMethodComponent
+                  step={step}
+                  setStep={goToStep}
+                  method={method}
+                  setMethod={setMethod}
+                  allowedMethods={[
+                    "cash",
+                    "transfer",
+                    "manualCard",
+                    "gatewayCard"
+                  ]}
+                  distanceKm={distanceKm}
                   transpCost={getTransporteFactura()}
-                  disabled={invoiceLoading}
-                  onChange={(field, value) => {
-                    setBillingForm((previous) => ({
-                      ...previous,
-                      [field]: value
-                    }))
-                  }}
-                  onContinue={handleGoToCurrencyFromLocation}
+                  tip={tip}
+                  setTip={setTip}
+                  cashAmount={cashAmount}
+                  setCashAmount={setCashAmount}
+                  transfer={transfer}
+                  setTransfer={setTransfer}
+                  payNowDisabled={payNowDisabled}
+                  payNowLock={payNowLock}
+                  handlePayNow={handlePayNow}
+                  divisaLoading={divisaLoading}
+                  divisaOpts={divisaOpts}
+                  divisaSelected={divisaSelected}
+                  setDivisaSelected={setDivisaSelected}
+                  carPCG={carPCG}
+                  totalPagar={totalPagar}
+                  existingLog={existingLog}
+                  ecommerceUserId={ecommerceUserId}
+                  onSelectCard={setSelectedSavedCard}
+                  manualCardData={manualCardData}
+                  setManualCardData={setManualCardData}
+                  backStep="currency"
+                  payButtonText="Pagar ahora"
+                  showMethodSelector={false}
+                  multiPagoActivo={multiPagoActivo}
+                  pagosMultiples={pagosMultiples}
+                  setPagosMultiples={setPagosMultiples}
+                  currency={currency}
+                  cargarDivisas={loadDivisaIfNeeded}
+                  aplicaMultiMoneda={aplicaMultiMoneda}
+                  monedas={catalogoMoneda.monedas}
+                  monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
+                  onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
+                  tasaCambio={tasaCambio}
+                  monedaLoading={catalogoMoneda.loading}
+                  hideTitle
                 />
               )}
-
-            {!initializingCheckout &&
-              step === "location" &&
-              !isOnlyTextAddress && (
-                <LocationSection
-                  addressList={addressList}
-                  locationMode={locationMode}
-                  setLocationMode={setLocationMode}
-                  selectedAddressId={selectedAddressId}
-                  setSelectedAddressId={setSelectedAddressId}
-                  selectedCoords={selectedCoords}
-                  setSelectedCoords={setSelectedCoords}
-                  billingForm={billingForm}
-                  setBillingForm={setBillingForm}
-                  selectedAddress={selectedAddress}
-                  handleBillingChange={(event) => {
-                    const { id, value } = event.target
-
-                    setBillingForm((previous) => ({
-                      ...previous,
-                      [id]: value
-                    }))
-                  }}
-                  handleGoToCurrency={handleGoToCurrencyFromLocation}
-                  handleCoordsChange={handleCoordsChangeFromMap}
-                  isLocked={false}
-                  isPickup={isPickup}
-                />
-              )}
-
-            {!initializingCheckout && step === "currency" && (
-              <CurrencySection
-                step={step}
-                currency={currency}
-                selectedCurrency={selectedCurrency}
-                handleSelectCurrency={handleSelectCurrency}
-                invoiceLoading={invoiceLoading}
-                setStep={goToStep}
-                handleGoToPayment={handleGoToPayment}
-                permiteMultiPago={permiteMultiPago}
-                permitePasarela={permitePasarela}
-                multiPagoActivo={multiPagoActivo}
-                setMultiPagoActivo={setMultiPagoActivo}
-              />
-            )}
-
-            {!initializingCheckout && step === "paymentMethod" && (
-              <PaymentMethodComponent
-                step={step}
-                setStep={goToStep}
-                method={method}
-                setMethod={setMethod}
-                allowedMethods={[
-                  "cash",
-                  "transfer",
-                  "manualCard",
-                  "gatewayCard"
-                ]}
-                distanceKm={distanceKm}
-                transpCost={getTransporteFactura()}
-                tip={tip}
-                setTip={setTip}
-                cashAmount={cashAmount}
-                setCashAmount={setCashAmount}
-                transfer={transfer}
-                setTransfer={setTransfer}
-                payNowDisabled={payNowDisabled}
-                payNowLock={payNowLock}
-                handlePayNow={handlePayNow}
-                divisaLoading={divisaLoading}
-                divisaOpts={divisaOpts}
-                divisaSelected={divisaSelected}
-                setDivisaSelected={setDivisaSelected}
-                carPCG={carPCG}
-                totalPagar={totalPagar}
-                existingLog={existingLog}
-                ecommerceUserId={ecommerceUserId}
-                onSelectCard={setSelectedSavedCard}
-                manualCardData={manualCardData}
-                setManualCardData={setManualCardData}
-                backStep="currency"
-                payButtonText="Pagar ahora"
-                showMethodSelector={false}
-                multiPagoActivo={multiPagoActivo}
-                pagosMultiples={pagosMultiples}
-                setPagosMultiples={setPagosMultiples}
-                currency={currency}
-                cargarDivisas={loadDivisaIfNeeded}
-                aplicaMultiMoneda={aplicaMultiMoneda}
-                monedas={catalogoMoneda.monedas}
-                monedaSeleccionada={catalogoMoneda.monedaSeleccionada}
-                onChangeMoneda={catalogoMoneda.setMonedaSeleccionada}
-                tasaCambio={tasaCambio}
-                monedaLoading={catalogoMoneda.loading}
-              />
-            )}
+            </div>
           </div>
         </div>
       </div>
-    </section>
+    </PublicCheckoutShell>
   )
 }
 

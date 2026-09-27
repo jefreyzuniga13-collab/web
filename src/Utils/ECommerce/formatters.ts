@@ -39,9 +39,14 @@ export function randomPhoneNumber(): string {
     return `${first}${rest}`;
   }
 
-export   const formatCurrencyNIO = (value?: number | null) => {
-    const n = Number(value ?? 0)
-    return `C$ ${n.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+export const formatCurrencyNIO = (value?: number | null) => {
+  const n = Number(value ?? 0)
+  // Separador invisible evita que traductores del navegador lo lean como CAD.
+  const symbol = `C\u200B$`
+  return `${symbol} ${n.toLocaleString("es-NI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
 }
 
   export const generateRandomString = () => {

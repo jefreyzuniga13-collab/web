@@ -61,8 +61,8 @@ export default function CashPaymentSection({
   // };
 
   return (
-    <div className="checkout-cash">
-      <div className="checkout-field checkout-field--full">
+    <div className="checkout-cash checkout-cash--amount-right">
+      <div className="checkout-field checkout-field--half">
         <Label htmlFor="cashAmount">Monto con el que pagas</Label>
 
         <Input

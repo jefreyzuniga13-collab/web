@@ -129,11 +129,7 @@ export const CurrencySection = ({
   }
 
   return (
-    <div className="checkout-methods-list">
-      <h2 className="checkout-section__title">
-        Selecciona cómo deseas pagar
-      </h2>
-
+    <div className="checkout-methods-list checkout-pay-panel">
       {permiteMultiPago && (
         <div className="checkout-payment-mode">
           <label
@@ -143,6 +139,11 @@ export const CurrencySection = ({
                 : "checkout-payment-mode__option"
             }
           >
+            <span className="checkout-payment-mode__content">
+              <span className="checkout-payment-mode__name">Pago único</span>
+              <small>Una sola forma de pago.</small>
+            </span>
+
             <input
               type="radio"
               name="paymentMode"
@@ -150,11 +151,6 @@ export const CurrencySection = ({
               onChange={() => handleChangeModoPago(false)}
               disabled={invoiceLoading}
             />
-
-            <span className="checkout-payment-mode__content">
-              <strong>Pago único</strong>
-              <small>Usa una sola forma de pago.</small>
-            </span>
           </label>
 
           <label
@@ -164,6 +160,11 @@ export const CurrencySection = ({
                 : "checkout-payment-mode__option"
             }
           >
+            <span className="checkout-payment-mode__content">
+              <span className="checkout-payment-mode__name">Multipago</span>
+              <small>Varias formas en una factura.</small>
+            </span>
+
             <input
               type="radio"
               name="paymentMode"
@@ -171,43 +172,40 @@ export const CurrencySection = ({
               onChange={() => handleChangeModoPago(true)}
               disabled={invoiceLoading}
             />
-
-            <span className="checkout-payment-mode__content">
-              <strong>Multipago</strong>
-              <small>
-                Usa varias formas de pago en una misma factura.
-              </small>
-            </span>
           </label>
         </div>
       )}
 
-      {!multiPagoActivo && (
-        <>
-          <div className="checkout-methods-list">
-            {formasPagoUnico.map((item, index) => {
-              const itemKey =
-                `${item.codPago}-${item.descripcion_Pago}-${index}`
+      <div className="checkout-pay-panel__body">
+        {!multiPagoActivo && (
+          <>
+            <p className="checkout-methods-heading">
+              Selecciona el método de pago
+            </p>
 
-              const isSelected =
-                selectedCurrency?.codPago === item.codPago &&
-                selectedCurrency?.descripcion_Pago ===
-                  item.descripcion_Pago
+            <div className="checkout-methods-options">
+              {formasPagoUnico.map((item, index) => {
+                const itemKey =
+                  `${item.codPago}-${item.descripcion_Pago}-${index}`
 
-              return (
-                <button
-                  key={itemKey}
-                  type="button"
-                  onClick={() => handleSelectCurrency(item)}
-                  className={
-                    isSelected
-                      ? "checkout-method checkout-method--active"
-                      : "checkout-method"
-                  }
-                  disabled={invoiceLoading}
-                >
-                  <div className="checkout-method__left">
-                    <span className="checkout-radio">
+                const isSelected =
+                  selectedCurrency?.codPago === item.codPago &&
+                  selectedCurrency?.descripcion_Pago ===
+                    item.descripcion_Pago
+
+                return (
+                  <button
+                    key={itemKey}
+                    type="button"
+                    onClick={() => handleSelectCurrency(item)}
+                    className={
+                      isSelected
+                        ? "checkout-method checkout-method--active"
+                        : "checkout-method"
+                    }
+                    disabled={invoiceLoading}
+                  >
+                    <span className="checkout-radio" aria-hidden="true">
                       <span
                         className={
                           isSelected
@@ -220,36 +218,22 @@ export const CurrencySection = ({
                     <span className="checkout-method__label">
                       {item.descripcion_Pago}
                     </span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {selectedCurrency && (
-            <div className="checkout-selected-currency">
-              <p>Método seleccionado:</p>
-
-              <strong>
-                {selectedCurrency.descripcion_Pago}
-              </strong>
+                  </button>
+                )
+              })}
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
 
-      {multiPagoActivo && permiteMultiPago && (
-        <div className="checkout-selected-currency">
-          <p>Modo seleccionado:</p>
-
-          <strong>Multipago</strong>
-
-          <small>
-            En el siguiente paso podrás agregar efectivo,
-            transferencia o tarjeta manual.
-          </small>
-        </div>
-      )}
+        {multiPagoActivo && permiteMultiPago && (
+          <div className="checkout-selected-currency checkout-selected-currency--info">
+            <strong>Multipago</strong>
+            <small>
+              En el siguiente paso agregas efectivo, transferencia o tarjeta.
+            </small>
+          </div>
+        )}
+      </div>
 
       <div className="checkout-actionBtn">
         <button

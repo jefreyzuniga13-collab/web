@@ -4,19 +4,134 @@
   flex-direction: column;
   gap: 1rem;
   box-sizing: border-box;
-  border-top: 1px solid #e5e7eb;
-  margin-top: 0.75rem;
+  border-top: none;
+  margin-top: 0;
   margin-bottom: 1.5rem;
-  padding-top: 0.9rem;
+  padding-top: 0;
 }
 
 .multipago-summary {
   width: 100%;
-  padding: 0.75rem 0;
+  max-width: 100%;
+  padding: 0.85rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  box-shadow: none;
+}
+
+.multipago-summary__title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: left;
+}
+
+.multipago-summary__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.multipago-summary__group--status {
+  padding-top: 0.65rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.multipago-summary .checkout-summary__subtitle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: unset;
+  text-align: left;
+}
+
+.multipago-summary .checkout-summary__p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: #4b5563;
+  font-weight: 500;
+  text-align: left;
+}
+
+.multipago-summary .checkout-summary__strong {
+  font-size: var(--font-size-sm);
+  color: #111827;
+  font-weight: 600;
+  text-align: right;
+}
+
+.multipago-summary .checkout-summary__strong--total {
+  font-size: var(--font-size-base);
+}
+
+.checkout-summary__subtitle--pendiente .checkout-summary__p,
+.checkout-summary__subtitle--vuelto .checkout-summary__p {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.checkout-summary__strong__pendiente {
+  color: var(--color-secondary, #f59e0b);
+  text-align: right;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.checkout-summary__strong--vuelto {
+  color: #2563eb !important;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.multipago-row-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1rem;
+  width: 100%;
+  align-items: start;
+}
+
+.multipago-row-fields--amount-only {
+  grid-template-columns: 1fr 1fr;
+}
+
+.multipago-row-fields--amount-only .multipago-amount-field {
+  grid-column: 1;
+}
+
+.multipago-amount-field,
+.multipago-ref-field {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.multipago-amount-field .input-wrapper,
+.multipago-amount-field input,
+.multipago-ref-field .input-wrapper,
+.multipago-ref-field input {
+  max-width: none;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .multipago-row-fields,
+  .multipago-row-fields--amount-only {
+    grid-template-columns: 1fr;
+  }
+
+  .multipago-row-fields--amount-only .multipago-amount-field {
+    grid-column: 1;
+  }
 }
 
 .multipago-form {
@@ -24,11 +139,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  padding: 0.7rem;
-  border-radius: 0.75rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  padding: 0.75rem 0;
+  border-radius: 0;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
   box-sizing: border-box;
+  box-shadow: none;
 }
 
 .multipago-selected-method {
@@ -36,10 +153,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.6rem;
-  background-color: #f8fafc;
-  border: 1px solid #e5e7eb;
+  padding: 0.55rem 0;
+  border-radius: 0;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
   box-sizing: border-box;
 }
 
@@ -121,11 +239,13 @@
 
 .multipago-card {
   width: 100%;
-  padding: 0.75rem;
-  border-radius: 0.7rem;
-  border: 1px solid #bfdbfe;
-  background-color: #eff6ff;
+  padding: 0.7rem 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  background-color: transparent;
   box-sizing: border-box;
+  box-shadow: none;
 }
 
 .multipago-card__content {
@@ -156,7 +276,7 @@
 
 .checkout-summary__strong__pendiente {
   color: var(--color-secondary, #f59e0b);
-  text-align: left;
+  text-align: right;
   font-weight: var(--font-weight-semibold, 600);
 }
 

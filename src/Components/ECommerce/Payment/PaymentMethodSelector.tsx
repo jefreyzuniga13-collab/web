@@ -59,21 +59,19 @@ export default function PaymentMethodSelector({
                 : "checkout-method"
             }
           >
-            <div className="checkout-method__left">
-              <span className="checkout-radio">
-                <span
-                  className={
-                    isActive
-                      ? "checkout-radio__dot checkout-radio__dot--active"
-                      : "checkout-radio__dot"
-                  }
-                />
-              </span>
+            <span className="checkout-radio" aria-hidden="true">
+              <span
+                className={
+                  isActive
+                    ? "checkout-radio__dot checkout-radio__dot--active"
+                    : "checkout-radio__dot"
+                }
+              />
+            </span>
 
-              <span className="checkout-method__label">
-                {CHECKOUT_PAYMENT_METHOD_LABEL[method]}
-              </span>
-            </div>
+            <span className="checkout-method__label">
+              {CHECKOUT_PAYMENT_METHOD_LABEL[method]}
+            </span>
           </button>
         )
       })}
