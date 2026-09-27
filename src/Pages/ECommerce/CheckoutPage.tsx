@@ -31,7 +31,7 @@ import { CHECKOUT_INVOICE_KEY, CHECKOUT_PAYLOAD_KEY, ECOMMERCEUSERID_KEY } from 
 import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
 import { fetchDivisasPagoTipo } from "@/Utils/ECommerce/fetchDivisasPagoTipo"
 import type { BillingFormState, CheckoutStep, Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
-import type { ClientLocationDto, Coords, LocationMode } from "@/Interfaces/Ecommerce/ClientLocationInterface"
+import type { ClientLocationDto, Coords, LocationMode, TotalesPantallaReqDTO } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { FacturaTempo, ObtenerDivisaPagosTipoRes, PagoGenerico } from "@/Interfaces/Ecommerce/FacturaTempo"
 import type { FaloteRequestDto } from "@/Interfaces/Crm/CartPCGInterface"
 import type { LogCartResponseDto, Payload } from "@/Interfaces/Crm/LogCartInterface"
@@ -651,8 +651,9 @@ const CheckoutPage: React.FC = () => {
       sucursal: existingLog?.branch ?? codSucursalFactura,
       tabla: "det_factura_tempo",
       totalEnPantalla: existingLog?.subTotal ?? 0,
-      usuario: String(payload?.contactId ?? "")
-    }
+      usuario: String(payload?.contactId ?? ""),
+      valorTransportePantalla: existingLog?.transCost ?? 0
+    } as unknown as TotalesPantallaReqDTO
 
     const validacionTotales =
       await CartService.sp_valida_SobTotalFactura(totalesPantallaReq)

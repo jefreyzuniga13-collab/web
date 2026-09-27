@@ -2,15 +2,24 @@ import Input from "@/Components/Common/Input"
 import { Label } from "@/Components/Common/Label"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import "@/Styles/Ecommerce/Payment/TransferPaymentSection.css"
+
 interface Props {
-  totalPagar: number;
-  transfer: string;
-  setTransfer: (transfer: string) => void;
-  transferRefOk: boolean;
+  /**
+   * Monto exacto a cobrar, en la moneda del pago (C$ o USD).
+   */
+  totalPagar: number
+  /**
+   * Símbolo de la moneda seleccionada (C$ o $).
+   */
+  simboloMoneda?: string
+  transfer: string
+  setTransfer: (transfer: string) => void
+  transferRefOk: boolean
 }
 
 export default function TransferPaymentSection({
   totalPagar,
+  simboloMoneda = "C$",
   transfer,
   setTransfer,
   transferRefOk,
@@ -20,10 +29,10 @@ export default function TransferPaymentSection({
   return (
     <div className="checkout-cash">
       <div className="checkout-field checkout-field--full">
-        <Label htmlFor="transferAmount">Monto</Label>
+        <Label htmlFor="transferAmount">Monto ({simboloMoneda})</Label>
         <Input
           id="transferAmount"
-          value={formatearDecimales(totalPagar)}
+          value={`${simboloMoneda} ${formatearDecimales(totalPagar)}`}
           readOnly
         />
       </div>
@@ -44,5 +53,5 @@ export default function TransferPaymentSection({
         )}
       </div>
     </div>
-  );
+  )
 }

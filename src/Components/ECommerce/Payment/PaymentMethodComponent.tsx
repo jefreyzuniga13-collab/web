@@ -380,7 +380,7 @@ export default function PaymentMethodComponent({
         invoiceTotalsDto?.iva ?? existingLog?.ivaPantalla ?? 0,
         0,
       ),
-      transporte: safeNumber(transpCost || existingLog?.transCost || 0, 0),
+      transporte: safeNumber(invoiceTotalsDto?.transporte ?? existingLog?.transCost ?? 0, 0),
       total: totalResumen,
     };
   }, [invoiceTotalsDto, existingLog, transpCost, totalResumen]);
@@ -548,7 +548,8 @@ export default function PaymentMethodComponent({
       ) : (
         <PaymentFormRenderer
           method={method}
-          totalPagar={totalPagar}
+          totalPagar={totalEnMonedaPago}
+          simboloMoneda={simboloMoneda(monedaSeleccionada)}
           cashAmount={cashAmount}
           setCashAmount={setCashAmount}
           transfer={transfer}

@@ -157,11 +157,46 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const hasManualAddress = addDescription.trim().length > 0
   const hasDeliveryAddress = hasSelectedAddress || hasManualAddress
 
-  /** Transporte válido para dirección definida o captura de solo texto. */
-  const effectiveShipping =
-    !isPickup && (isOnlyTextAddress || hasDeliveryAddress)
-      ? safePositiveNumber(transCost)
-      : 0
+  /**
+   * Transporte que ingresó el cliente (input).
+   * Se usa al validar (sp_valida) y al mandar a VspConsolidadoFactura.
+   */
+  const inputShipping = useMemo(() => {
+    if (isPickup) return 0
+
+    const tieneDireccion = isOnlyTextAddress || hasDeliveryAddress
+    if (!tieneDireccion) return 0
+
+    return safePositiveNumber(transCost)
+  }, [
+    hasDeliveryAddress,
+    isOnlyTextAddress,
+    isPickup,
+    transCost,
+  ])
+
+  /**
+   * Transporte para pantalla / chat / LogCart / factura:
+   * lo que devolvió VspConsolidadoFactura (fallback al input).
+   */
+  const effectiveShipping = useMemo(() => {
+    if (isPickup) return 0
+
+    const tieneDireccion = isOnlyTextAddress || hasDeliveryAddress
+    if (!tieneDireccion) return 0
+
+    if (invoiceTotalsDto?.transporte != null) {
+      return safePositiveNumber(invoiceTotalsDto.transporte)
+    }
+
+    return inputShipping
+  }, [
+    hasDeliveryAddress,
+    inputShipping,
+    invoiceTotalsDto?.transporte,
+    isOnlyTextAddress,
+    isPickup,
+  ])
 
   const addressInputsDisabled =
     isPickup || isOnlyTextAddress || hasSelectedAddress
@@ -297,7 +332,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   )
 
   /**
-   * Calcula totales del carrito usando el transporte del paso 2.
+   * Calcula totales del carrito.
+   * El input de transporte se manda a VspConsolidadoFactura;
+   * pantalla y factura usan el transporte que ese SP retorna.
+   * La validación (sp_valida) usa el monto ingresado por el cliente.
    */
   const calcTotals = useCallback(
     async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {
@@ -644,7 +682,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     conversationId,
     orderId,
     totalPagar: totalPagarAgente,
-    effectiveShipping,
+    effectiveShipping: inputShipping,
     retiraSucursal,
     addDescription,
     observation,

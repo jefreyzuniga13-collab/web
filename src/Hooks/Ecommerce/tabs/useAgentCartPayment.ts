@@ -36,6 +36,7 @@ import {
 import { procesarVentaCheckout } from "@/Utils/ECommerce/procesarVentaCheckout"
 import { safePositiveNumber } from "@/Utils/ECommerce/utils"
 import { TipoFalote } from "@/Constants/falote"
+import type { TotalesPantallaReqDTO } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 
 type EnsureEcommerceUserResult = {
   ecommerceUserId: number
@@ -275,8 +276,10 @@ export const useAgentCartPayment = ({
         sucursal: codSucursalFactura,
         tabla: "det_factura_tempo",
         totalEnPantalla: totals.subTotal ?? 0,
-        usuario: contactId.toString()
-      }
+        usuario: contactId.toString(),
+        // Valida con lo que ingresó el cliente (input), no el de la API.
+        valorTransportePantalla: effectiveShipping
+      } as unknown as TotalesPantallaReqDTO
 
       const validacionTotales =
         await CartService.sp_valida_SobTotalFactura(req)
@@ -312,7 +315,7 @@ export const useAgentCartPayment = ({
         )
       }
     },
-    [contactId]
+    [contactId, effectiveShipping]
   )
 
   const construirDetallePagoFinal = useCallback(
@@ -633,8 +636,7 @@ export const useAgentCartPayment = ({
                 logForInvoice
               ),
 
-            valorTransporte:
-              effectiveShipping,
+            valorTransporte: safePositiveNumber(totals.transporte),
 
             retiraSucursal,
 

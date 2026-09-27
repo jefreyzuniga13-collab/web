@@ -2,6 +2,7 @@ import Input from "@/Components/Common/Input"
 import Select from "@/Components/Common/Select"
 import { Label } from "@/Components/Common/Label"
 import type { ManualCardFormState } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import { formatearDecimales } from "@/Utils/calcularIVA"
 import "@/Styles/Ecommerce/Payment/ManualCardPaymentSection.css"
 
 interface Props {
@@ -22,12 +23,24 @@ interface Props {
    * o mientras se cargan datos relacionados.
    */
   disabled?: boolean
+
+  /**
+   * Monto exacto a cobrar, en la moneda del pago (C$ o USD).
+   */
+  totalPagar?: number
+
+  /**
+   * Símbolo de la moneda seleccionada (C$ o $).
+   */
+  simboloMoneda?: string
 }
 
 export default function ManualCardPaymentSection({
   value,
   onChange,
-  disabled = false
+  disabled = false,
+  totalPagar,
+  simboloMoneda = "C$",
 }: Props) {
   /**
    * Actualiza un campo específico del formulario.
@@ -75,6 +88,18 @@ export default function ManualCardPaymentSection({
 
   return (
     <div className="checkout-manual-card">
+      {typeof totalPagar === "number" && totalPagar > 0 && (
+        <div className="checkout-field checkout-field--full">
+          <Label htmlFor="manualCardAmount">Monto ({simboloMoneda})</Label>
+          <Input
+            id="manualCardAmount"
+            value={`${simboloMoneda} ${formatearDecimales(totalPagar)}`}
+            readOnly
+            disabled={disabled}
+          />
+        </div>
+      )}
+
       <div className="checkout-field checkout-field--full">
         <Label htmlFor="tarjetahabiente">Tarjetahabiente *</Label>
 

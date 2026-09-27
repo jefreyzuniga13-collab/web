@@ -26,9 +26,14 @@ interface Props {
   method: CheckoutPaymentMethod | null
 
   /**
-   * Total final a pagar.
+   * Total a mostrar en la moneda del pago (C$ o USD).
    */
   totalPagar: number
+
+  /**
+   * Símbolo de la moneda del pago.
+   */
+  simboloMoneda?: string
 
   /**
    * Monto recibido en efectivo.
@@ -81,6 +86,7 @@ interface Props {
 export default function PaymentFormRenderer({
   method,
   totalPagar,
+  simboloMoneda = "C$",
   cashAmount,
   setCashAmount,
   transfer,
@@ -111,6 +117,7 @@ export default function PaymentFormRenderer({
     return (
       <TransferPaymentSection
         totalPagar={totalPagar}
+        simboloMoneda={simboloMoneda}
         transfer={transfer}
         setTransfer={setTransfer}
         transferRefOk={transferRefOk}
@@ -123,6 +130,8 @@ export default function PaymentFormRenderer({
       <ManualCardPaymentSection
         value={manualCardData}
         onChange={setManualCardData}
+        totalPagar={totalPagar}
+        simboloMoneda={simboloMoneda}
       />
     )
   }

@@ -34,6 +34,7 @@ interface Props {
 
 export default function CartPanelTotals({
   invoiceTotalsDto,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   effectiveShipping,
   retiraSucursal,
   selectedAddressId,
@@ -73,12 +74,12 @@ export default function CartPanelTotals({
         </div>
       )}
 
-      {effectiveShipping > 0 && (
+      {invoiceTotalsDto?.transporte != null && invoiceTotalsDto.transporte > 0  && (
         <div className="productTab-content__container">
           <p className="productTab-content-footer__title">Transporte:</p>
 
           <span className="productTab-content-footer__value">
-            C$ {formatearDecimales(effectiveShipping)}
+            C$ {formatearDecimales(invoiceTotalsDto.transporte)}
           </span>
         </div>
       )}

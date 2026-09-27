@@ -93,4 +93,5 @@ export interface TotalesPantallaReqDTO {
   descuentoPantalla: number
   ivaPantalla: number
   exonerado: string
+  valorTransportePantalla: string
 }
