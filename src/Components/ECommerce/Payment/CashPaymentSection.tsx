@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Input from "@/Components/Common/Input";
 import { Label } from "@/Components/Common/Label";
+import { limpiarMontoTexto } from "@/Utils/ECommerce/utils";
 import "@/Styles/Ecommerce/Payment/CashPaymentSection.css";
 
 interface Props {
@@ -21,14 +22,7 @@ export default function CashPaymentSection({
   }, [cashAmount]);
 
   const handleChange = (value: string) => {
-    // Reemplaza todo lo que no sea número o punto decimal
-    let limpio = value.replace(/[^0-9.]/g, "");
-
-    // Evita más de un punto decimal
-    const puntos = limpio.split(".");
-    if (puntos.length > 2) {
-      limpio = `${puntos[0]}.${puntos.slice(1).join("")}`;
-    }
+    const limpio = limpiarMontoTexto(value);
 
     if (limpio === "" || limpio === ".") {
       setCashAmountText(limpio);
@@ -36,29 +30,9 @@ export default function CashPaymentSection({
       return;
     }
 
-    // Evita ceros iniciales inválidos (ej. "05" pasa a "5", pero "0.5" se mantiene)
-    if (limpio.startsWith("0") && limpio[1] !== "." && limpio.length > 1) {
-      limpio = limpio.replace(/^0+/, "");
-    }
-
     setCashAmountText(limpio);
     setCashAmount(parseFloat(limpio) || 0);
   };
-
-  // const handleChange = (value: string) => {
-  //   const limpio = value.replace(/\D/g, "");
-
-  //   if (limpio === "") {
-  //     setCashAmountText("");
-  //     setCashAmount(0);
-  //     return;
-  //   }
-
-  //   const sinCerosIniciales = limpio.replace(/^0+/, "") || "0";
-
-  //   setCashAmountText(sinCerosIniciales);
-  //   setCashAmount(Number(sinCerosIniciales));
-  // };
 
   return (
     <div className="checkout-cash checkout-cash--amount-right">
@@ -68,7 +42,7 @@ export default function CashPaymentSection({
         <Input
           id="cashAmount"
           type="text"
-          inputMode="numeric"
+          inputMode="decimal"
           value={cashAmountText}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Ej. 300"

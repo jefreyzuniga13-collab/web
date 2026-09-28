@@ -497,7 +497,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         return {
           addressId: null,
           retiraSucursal: "N",
-          transCost: effectiveShipping
+          // Input del agente: sp_valida del link de pago lo necesita.
+          transCost: inputShipping
         }
       }
 
@@ -515,7 +516,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         return {
           addressId: validSelectedAddressId,
           retiraSucursal: "N",
-          transCost: effectiveShipping
+          transCost: inputShipping
         }
       }
 
@@ -575,7 +576,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         return {
           addressId: newAddressId,
           retiraSucursal: "N",
-          transCost: effectiveShipping
+          transCost: inputShipping
         }
       }
 
@@ -587,7 +588,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     },
     [
       addDescription,
-      effectiveShipping,
+      inputShipping,
       onlyTextAddress,
       retiraSucursal,
       selectedAddressId

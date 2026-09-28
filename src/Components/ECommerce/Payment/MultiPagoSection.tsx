@@ -16,6 +16,7 @@ import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, to
 import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio";
 import { formatearDecimales } from "@/Utils/calcularIVA";
 import { round2, safeStr } from "@/Utils/ECommerce/formatters";
+import { limpiarMontoTexto } from "@/Utils/ECommerce/utils";
 import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount";
 import "@/Styles/Ecommerce/Payment/MultiPagoSection.css";
 
@@ -114,7 +115,7 @@ export default function MultiPagoSection({
     null,
   );
   const [method, setMethod] = useState<CheckoutPaymentMethod | null>(null);
-  const [monto, setMonto] = useState<number>(0);
+  const [montoTexto, setMontoTexto] = useState("");
   const [referencia, setReferencia] = useState("");
   const [divisaOpts, setDivisaOpts] = useState<ObtenerDivisaPagosTipoRes[]>([]);
 
@@ -178,11 +179,43 @@ export default function MultiPagoSection({
   const resetFormulario = () => {
     setSelectedCurrency(null);
     setMethod(null);
-    setMonto(0);
+    setMontoTexto("");
     setReferencia("");
     setDivisaOpts([]);
     setDivisaSelected(null);
     setManualCardData(initialManualCardFormState);
+  };
+
+  const parseMontoTexto = (value: string): number => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+
+  const handleMontoChange = (value: string) => {
+    const limpio = limpiarMontoTexto(value);
+
+    if (limpio === "" || limpio === ".") {
+      setMontoTexto(limpio);
+      return;
+    }
+
+    const raw = Number(limpio);
+
+    if (!Number.isFinite(raw) || raw < 0) {
+      setMontoTexto("");
+      return;
+    }
+
+    /**
+     * Efectivo: puede superar el pendiente (vuelto).
+     * Transferencia / tarjeta: menos del pendiente sí; más no.
+     */
+    if (method !== "cash" && raw > pendienteEnMoneda) {
+      setMontoTexto(String(round2(pendienteEnMoneda)));
+      return;
+    }
+
+    setMontoTexto(limpio);
   };
 
   const handleSelectCurrency = async (value: string) => {
@@ -212,7 +245,9 @@ export default function MultiPagoSection({
       tasaCambio
     );
 
-    setMonto(pendienteMoneda > 0 ? round2(pendienteMoneda) : 0);
+    setMontoTexto(
+      pendienteMoneda > 0 ? String(round2(pendienteMoneda)) : ""
+    );
 
     if (nextMethod === "transfer" || nextMethod === "manualCard") {
       setDivisaLoading(true);
@@ -254,7 +289,7 @@ export default function MultiPagoSection({
       return "Esa forma de pago ya fue agregada en esta moneda.";
     }
 
-    const montoActual = Number(monto);
+    const montoActual = parseMontoTexto(montoTexto);
 
     if (!Number.isFinite(montoActual) || montoActual <= 0) {
       return "El monto debe ser mayor a 0.";
@@ -306,7 +341,7 @@ export default function MultiPagoSection({
       metodo: method!,
       moneda: selectedCurrency,
       divisa: requiereDivisa ? divisaSelected : null,
-      monto: Number(monto),
+      monto: parseMontoTexto(montoTexto),
       referencia: method === "transfer" ? referencia.trim() : "",
       tarjetaManual: method === "manualCard" ? manualCardData : undefined,
       monedaPago: monedaSeleccionada,
@@ -320,7 +355,7 @@ export default function MultiPagoSection({
     setPagos((prev) => prev.filter((pago) => pago.id !== id));
   };
 
-  const montoActual = Number(monto);
+  const montoActual = parseMontoTexto(montoTexto);
 
   const puedeAgregar =
     !disabled &&
@@ -469,31 +504,12 @@ export default function MultiPagoSection({
 
               <Input
                 id="multipagoMonto"
-                type="number"
-                min={0}
-                max={method === "cash" ? undefined : pendienteEnMoneda}
-                value={monto}
+                type="text"
+                inputMode="decimal"
+                value={montoTexto}
                 disabled={disabled || pendiente <= 0}
-                onChange={(event) => {
-                  const raw =
-                    event.target.value === "" ? 0 : Number(event.target.value);
-
-                  if (!Number.isFinite(raw) || raw < 0) {
-                    setMonto(0);
-                    return;
-                  }
-
-                  /**
-                   * Efectivo: puede superar el pendiente (vuelto).
-                   * Transferencia / tarjeta: menos del pendiente sí; más no.
-                   */
-                  if (method !== "cash" && raw > pendienteEnMoneda) {
-                    setMonto(round2(pendienteEnMoneda));
-                    return;
-                  }
-
-                  setMonto(raw);
-                }}
+                placeholder="Ej. 100"
+                onChange={(event) => handleMontoChange(event.target.value)}
               />
 
               {method === "cash" ? (

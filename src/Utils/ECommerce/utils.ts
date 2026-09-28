@@ -65,6 +65,52 @@ export const safePositiveNumber = (value: unknown): number => {
   return n > 0 ? n : 0
 }
 
+/**
+ * Limpia un input de monto como texto (sin type=number).
+ * Permite vacío, un solo punto decimal y evita ceros a la izquierda.
+ */
+export const limpiarMontoTexto = (value: string): string => {
+  let limpio = value.replace(/[^0-9.]/g, "")
+
+  const puntos = limpio.split(".")
+  if (puntos.length > 2) {
+    limpio = `${puntos[0]}.${puntos.slice(1).join("")}`
+  }
+
+  if (limpio.startsWith("0") && limpio[1] !== "." && limpio.length > 1) {
+    limpio = limpio.replace(/^0+/, "")
+  }
+
+  return limpio
+}
+
+/**
+ * Transporte de pantalla (consolidado): lo que debe verse en labels.
+ * Se deriva del total en pantalla para no confundirlo con el input
+ * guardado en LogCart.transCost (ese va a sp_valida).
+ */
+export const deriveTransportePantalla = (
+  log: Pick<
+    LogCartResponseDto,
+    "totalEnPantalla" | "subTotal" | "ivaPantalla" | "descuentoPantalla" | "transCost"
+  > | null | undefined
+): number => {
+  if (!log) return 0
+
+  const total = safePositiveNumber(log.totalEnPantalla)
+  const subTotal = safePositiveNumber(log.subTotal)
+  const iva = safePositiveNumber(log.ivaPantalla)
+  const descuento = safePositiveNumber(log.descuentoPantalla)
+  const inputOLog = safePositiveNumber(log.transCost)
+
+  if (total > 0 && (subTotal > 0 || iva > 0)) {
+    const derived = Math.round((total - subTotal - iva + descuento) * 100) / 100
+    if (derived > 0) return derived
+  }
+
+  return inputOLog
+}
+
 export const safeText = (value: unknown): string => {
   return String(value ?? "").trim()
 }

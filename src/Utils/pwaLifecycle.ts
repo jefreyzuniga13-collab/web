@@ -1,6 +1,7 @@
 import { registerSW } from "virtual:pwa-register";
 
 const SILENCE_RELOAD_KEY = "orbitra.pwa.silence-login";
+const UPDATE_CHECK_MS = 60 * 1000;
 
 let registered = false;
 let updatingServiceWorker = false;
@@ -65,6 +66,18 @@ export async function silencePwaOnPublicRoute(): Promise<boolean> {
   return true;
 }
 
+function requestServiceWorkerUpdate(
+  registration: ServiceWorkerRegistration | undefined
+): void {
+  if (!registration) {
+    return;
+  }
+
+  void registration.update().catch((error: unknown) => {
+    console.warn("[PWA] No se pudo comprobar una actualización:", error);
+  });
+}
+
 export function enablePwa(): void {
   if (registered || isPwaSilentPath()) {
     return;
@@ -98,11 +111,21 @@ export function enablePwa(): void {
         return;
       }
 
+      requestServiceWorkerUpdate(registration);
+
       window.setInterval(() => {
-        void registration.update().catch((error: unknown) => {
-          console.warn("[PWA] No se pudo comprobar una actualización:", error);
-        });
-      }, 5 * 60 * 1000);
+        requestServiceWorkerUpdate(registration);
+      }, UPDATE_CHECK_MS);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          requestServiceWorkerUpdate(registration);
+        }
+      });
+
+      window.addEventListener("focus", () => {
+        requestServiceWorkerUpdate(registration);
+      });
     },
 
     onRegisterError(error: unknown): void {

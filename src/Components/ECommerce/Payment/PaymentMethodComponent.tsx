@@ -19,7 +19,7 @@ import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo"
 import { validarPagosSeleccionados } from "@/Utils/ECommerce/pagoFacturaUtils";
 import { convertirDesdeCordoba, cubreMontoPago, esMonedaDolar, simboloMoneda } from "@/Utils/ECommerce/monedaUtils"
 import { safeStr } from "@/Utils/ECommerce/formatters";
-import { safeNumber } from "@/Utils/ECommerce/utils";
+import { safeNumber, deriveTransportePantalla } from "@/Utils/ECommerce/utils";
 import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount";
 import "@/Styles/Ecommerce/Payment/PaymentMethodComponent.css";
 import "@/Styles/Ecommerce/Payment/PaymentBrandTiles.css";
@@ -388,7 +388,9 @@ export default function PaymentMethodComponent({
     )
     const transporte = safeNumber(
       invoiceTotalsDto?.transporte ??
-        existingLog?.transCost ??
+        (existingLog
+          ? deriveTransportePantalla(existingLog)
+          : undefined) ??
         transpCost ??
         0,
       0

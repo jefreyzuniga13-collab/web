@@ -14,6 +14,7 @@ import { setupRequestInterceptor } from "@/Interceptors/requestInterceptor";
 import { setupResponseInterceptor } from "@/Interceptors/responseInterceptor";
 import { setupEmpresaInterceptor } from "@/Interceptors/setupInterceptors";
 import { cleanStalePwa } from "@/Utils/cleanStalePwa";
+import { ensureLatestAppVersion } from "@/Utils/ensureAppVersion";
 import {
   enablePwa,
   isPwaSilentPath,
@@ -35,6 +36,12 @@ async function startApp(): Promise<void> {
     }
 
     renderApp();
+    return;
+  }
+
+  const versionReloading = await ensureLatestAppVersion();
+
+  if (versionReloading) {
     return;
   }
 

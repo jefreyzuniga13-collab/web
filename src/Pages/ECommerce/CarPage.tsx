@@ -24,6 +24,7 @@ import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
+import { deriveTransportePantalla } from "@/Utils/ECommerce/utils"
 
 interface CarPageProps {
   payload: TempLinkResolveResponseDto
@@ -325,11 +326,12 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                 </span>
               </div>
 
-              {existingLog != null && Number(existingLog.transCost) > 0 && (
+              {existingLog != null &&
+                deriveTransportePantalla(existingLog) > 0 && (
                 <div className="cart-totals__row">
                   <span className="cart-totals__label">Envío</span>
                   <span className="cart-totals__value cart-totals__value--strong">
-                    {formatMoney(existingLog.transCost)}
+                    {formatMoney(deriveTransportePantalla(existingLog))}
                   </span>
                 </div>
               )}

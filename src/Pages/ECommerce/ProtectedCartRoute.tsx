@@ -53,7 +53,7 @@ const savePayloadToSession = (
  * el checkout no muestra el selector de moneda.
  */
 const isPayloadComplete = (
-  payload: TempLinkResolveResponseDto | null
+  payload: TempLinkResolveResponseDto | null | undefined
 ): payload is TempLinkResolveResponseDto => {
   if (!payload) return false
 

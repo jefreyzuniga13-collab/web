@@ -12,7 +12,7 @@ import ListSkeleton from "@/Components/Common/ListSkeleton"
 import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 
-import { safePositiveNumber } from "@/Utils/ECommerce/utils"
+import { safePositiveNumber, limpiarMontoTexto } from "@/Utils/ECommerce/utils"
 
 interface Props {
   invoiceName: string
@@ -52,21 +52,6 @@ interface Props {
   selectedAddressId: number | null
 
   applySelectedAddressToLog: (addressId: number) => Promise<void>
-}
-
-const limpiarMontoTexto = (value: string): string => {
-  let limpio = value.replace(/[^0-9.]/g, "")
-
-  const puntos = limpio.split(".")
-  if (puntos.length > 2) {
-    limpio = `${puntos[0]}.${puntos.slice(1).join("")}`
-  }
-
-  if (limpio.startsWith("0") && limpio[1] !== "." && limpio.length > 1) {
-    limpio = limpio.replace(/^0+/, "")
-  }
-
-  return limpio
 }
 
 /** Paso de entrega del carrito administrado por el agente. */

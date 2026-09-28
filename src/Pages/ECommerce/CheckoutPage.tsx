@@ -683,7 +683,10 @@ const CheckoutPage: React.FC = () => {
       tabla: "det_factura_tempo",
       totalEnPantalla: existingLog?.subTotal ?? 0,
       usuario: String(payload?.contactId ?? ""),
-      valorTransportePantalla: existingLog?.transCost ?? 0
+      // Igual que el agente: lo escrito en el input, no el consolidado del label.
+      valorTransportePantalla:
+        safePositiveNumber(transpCost) ||
+        safePositiveNumber(existingLog?.transCost)
     } as unknown as TotalesPantallaReqDTO
 
     const validacionTotales =

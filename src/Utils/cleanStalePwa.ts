@@ -1,4 +1,4 @@
-const RESET_KEY = "orbitra.pwa.clean.v4";
+const RESET_KEY = "orbitra.pwa.clean.v6";
 
 function isPaymentPath(): boolean {
   const path = window.location.pathname.replace(/\/+$/, "");
