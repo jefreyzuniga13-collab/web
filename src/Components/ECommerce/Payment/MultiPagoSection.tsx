@@ -14,7 +14,6 @@ import type { MonedaCatalogo } from "@/Interfaces/Ecommerce/MonedaCatalogo";
 import { clavePagoMoneda, convertirDesdeCordoba, esMonedaDolar, simboloMoneda } from "@/Utils/ECommerce/monedaUtils";
 import { filtrarFormasPagoMultipago, obtenerTipoPagoDesdeMoneda, totalPagado, totalPendiente, vueltoEnCordoba} from "@/Utils/ECommerce/pagoFacturaUtils";
 import { tasaCambio as tasaCambioSistema } from "@/Constants/tasaCambio";
-import { formatearDecimales } from "@/Utils/calcularIVA";
 import { round2, safeStr } from "@/Utils/ECommerce/formatters";
 import { limpiarMontoTexto } from "@/Utils/ECommerce/utils";
 import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount";

@@ -1,10 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { onPlaySound, offPlaySound } from "@/Services/signalr";
-import {
-  notificationSound,
-  newConversationSound,
-  closeConversationSound,
-} from "@/Utils/sound";
+import {notificationSound, newConversationSound, closeConversationSound} from "@/Utils/sound";
 import { selectUserId } from "@/Context/Slices/Auth/authSlice"
 import { useSelector } from "react-redux";
 
@@ -29,6 +25,7 @@ export function GlobalSoundNotifier() {
         newConversationSound.play();
         return;
       }
+      
       if (dto.kind === "close") {
         closeConversationSound.play();
         return;
@@ -39,6 +36,7 @@ export function GlobalSoundNotifier() {
     [
       myUserId
     ]
+
   );
 
   useEffect(() => {

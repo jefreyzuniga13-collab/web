@@ -636,7 +636,7 @@ export const useAgentCartPayment = ({
                 logForInvoice
               ),
 
-            valorTransporte: safePositiveNumber(totals.transporte),
+            valorTransporte: safePositiveNumber(effectiveShipping),
 
             retiraSucursal,
 

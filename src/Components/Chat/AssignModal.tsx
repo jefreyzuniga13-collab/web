@@ -1,10 +1,8 @@
 import type { MouseEvent } from "react"
 import { LoaderCircle, X } from "lucide-react"
-
 import { AgentCard } from "@/Components/Chat/AgentCard"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { useAssignModal } from "@/Hooks/Chat/useAssignModal"
-
 import "@/styles/Chat/AssignModal.css"
 
 export const AssignModal: React.FC = () => {

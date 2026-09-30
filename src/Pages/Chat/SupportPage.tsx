@@ -31,6 +31,7 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 const MOBILE_QUERY = "(max-width: 768px)";
 
 const SupportPage: React.FC = () => {
+  const [searchInput, setSearchInput] = useState<string>("");
   const [searchConversation, setSearchConversation] = useState<string>("");
   const [bulkAssignmentOpen, setBulkAssignmentOpen] = useState(false);
 
@@ -38,6 +39,9 @@ const SupportPage: React.FC = () => {
 
   const [mobileChatVisible, setMobileChatVisible] = useState(false);
   const chatHistoryPushedRef = useRef(false);
+  const mobileChatVisibleRef = useRef(false);
+  const isMobileRef = useRef(false);
+  const mobileBackFallbackTimerRef = useRef<number | null>(null);
 
   const { isRoot, licenseExpireAt, showLicenseWarning } = useSelector(
     (state: RootState) => state.auth,
@@ -173,11 +177,37 @@ const SupportPage: React.FC = () => {
   };
 
   const closeMobileChat = useCallback((): void => {
+    if (mobileBackFallbackTimerRef.current != null) {
+      window.clearTimeout(mobileBackFallbackTimerRef.current);
+      mobileBackFallbackTimerRef.current = null;
+    }
+
     blurActiveField();
     setMobileChatVisible(false);
+    mobileChatVisibleRef.current = false;
     setDetailToggle(false);
     setContactDetailToggle(false);
-  }, [setContactDetailToggle, setDetailToggle]);
+
+    // Solo en móvil: al volver a la lista se limpia la conversación.
+    // En web/desktop la selección no se toca.
+    if (isMobileRef.current) {
+      setConvId(null);
+      setConversationSnapshot(null);
+    }
+  }, [
+    setContactDetailToggle,
+    setConversationSnapshot,
+    setConvId,
+    setDetailToggle,
+  ]);
+
+  useEffect(() => {
+    mobileChatVisibleRef.current = mobileChatVisible;
+  }, [mobileChatVisible]);
+
+  useEffect(() => {
+    isMobileRef.current = isMobile;
+  }, [isMobile]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -216,9 +246,13 @@ const SupportPage: React.FC = () => {
     };
   }, [isMobile, mobileChatVisible]);
 
+  /**
+   * Gesto swipe / history.back() del botón:
+   * un solo cierre vía popstate (evita congelar el slide en iPhone).
+   */
   useEffect(() => {
     const handlePopState = (): void => {
-      if (!chatHistoryPushedRef.current && !mobileChatVisible) {
+      if (!chatHistoryPushedRef.current && !mobileChatVisibleRef.current) {
         return;
       }
 
@@ -231,7 +265,7 @@ const SupportPage: React.FC = () => {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [closeMobileChat, mobileChatVisible]);
+  }, [closeMobileChat]);
 
   /**
    * El contacto es información secundaria.
@@ -263,23 +297,19 @@ const SupportPage: React.FC = () => {
       convId &&
       !convHook.conversations.some((item) => item.conversationId === convId)
     ) {
-      setConvId(null);
-      setConversationSnapshot(null);
       setDetailToggle(false);
 
       if (chatHistoryPushedRef.current) {
-        chatHistoryPushedRef.current = false;
         window.history.back();
       } else {
-        setMobileChatVisible(false);
+        closeMobileChat();
       }
     }
   }, [
+    closeMobileChat,
     convId,
     convHook.conversations,
     convHook.loading,
-    setConvId,
-    setConversationSnapshot,
     setDetailToggle,
   ]);
 
@@ -298,8 +328,8 @@ const SupportPage: React.FC = () => {
 
       if (isMobile && mobileChatVisible) {
         if (chatHistoryPushedRef.current) {
-          chatHistoryPushedRef.current = false;
           window.history.back();
+          return;
         }
 
         closeMobileChat();
@@ -355,7 +385,9 @@ const SupportPage: React.FC = () => {
 
       if (isMobile && id) {
         setMobileChatVisible(true);
+        mobileChatVisibleRef.current = true;
 
+        // Un pushState por visita al chat; al volver se consume con back().
         if (!chatHistoryPushedRef.current) {
           window.history.pushState({ mobileChat: true }, "");
           chatHistoryPushedRef.current = true;
@@ -365,25 +397,38 @@ const SupportPage: React.FC = () => {
       }
     },
     [
+      closeMobileChat,
       convHook.conversations,
       isMobile,
       setContactDetailToggle,
       setConversationSnapshot,
       setConvId,
       setDetailToggle,
-      closeMobileChat,
     ],
   );
 
   /**
-   * Regresa desde el chat móvil
-   * hacia la lista de conversaciones.
+   * Lista ← Chat (móvil).
+   * Solo history.back(); popstate cierra el panel (igual que el swipe).
+   * Fallback por si popstate no llega.
    */
   const handleMobileBack = (): void => {
     if (chatHistoryPushedRef.current) {
-      chatHistoryPushedRef.current = false;
       window.history.back();
-      closeMobileChat();
+
+      if (mobileBackFallbackTimerRef.current != null) {
+        window.clearTimeout(mobileBackFallbackTimerRef.current);
+      }
+
+      mobileBackFallbackTimerRef.current = window.setTimeout(() => {
+        mobileBackFallbackTimerRef.current = null;
+
+        if (chatHistoryPushedRef.current || mobileChatVisibleRef.current) {
+          chatHistoryPushedRef.current = false;
+          closeMobileChat();
+        }
+      }, 400);
+
       return;
     }
 
@@ -414,12 +459,15 @@ const SupportPage: React.FC = () => {
         <div className="inbox-header">
           <Input
             className="inbox-title-container__filter__input"
-            value={searchConversation}
-            onChange={(event) => setSearchConversation(event.target.value)}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onBlur={() => setSearchConversation(searchInput)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
                 event.stopPropagation();
+                setSearchConversation(searchInput);
+                (event.target as HTMLInputElement).blur();
               }
             }}
             placeholder="Filtrar conversaciones"

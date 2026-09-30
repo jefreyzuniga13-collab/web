@@ -178,8 +178,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   ])
 
   /**
-   * Transporte para pantalla / chat / LogCart / factura:
+   * Transporte que se muestra en pantalla y en el chat:
    * lo que devolvió VspConsolidadoFactura (fallback al input).
+   * La factura usa el monto ingresado, no este valor.
    */
   const effectiveShipping = useMemo(() => {
     if (isPickup) return 0
@@ -334,9 +335,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
   /**
    * Calcula totales del carrito.
-   * El input de transporte se manda a VspConsolidadoFactura;
-   * pantalla y factura usan el transporte que ese SP retorna.
-   * La validación (sp_valida) usa el monto ingresado por el cliente.
+   * El input de transporte se manda a VspConsolidadoFactura.
+   * La pantalla muestra el transporte que ese SP retorna.
+   * La factura y la validación (sp_valida) usan el monto ingresado.
    */
   const calcTotals = useCallback(
     async (opts?: { cost?: number; pickup?: boolean; silent?: boolean }) => {

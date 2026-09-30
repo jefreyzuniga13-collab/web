@@ -1,27 +1,20 @@
 import { useMemo } from "react";
-
 import { IconButton } from "@mui/material";
 import SearchFilter from "@/Components/Common/SearchFilter";
-
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
-
 import CustomTable from "@/Components/Common/CustomTable";
 import Button from "@/Components/Common/Button";
 import Modal from "@/Components/Auth/Modal";
 import UserForm from "@/Components/Auth/UserForm";
-
 import useClasicUser from "@/Hooks/Auth/useClasicUser";
-
 import type { Column } from "@/Interfaces/Common/CustomTable";
-
 import type {
   User,
   UpdateUserRequest,
 } from "@/Interfaces/Auth/UserInterfaces";
-
 import "@/Styles/Auth/UsersPage.css";
 
 type UserFormData =

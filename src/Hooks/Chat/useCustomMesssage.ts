@@ -72,23 +72,8 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
     return customMessages.filter((item) => item.isActive)
   }, [customMessages])
 
-  const invalidateCustomMessages = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: CUSTOM_MESSAGES_QUERY_KEY,
-    })
-  }, [queryClient])
-
-  const fetchByIdMutation = useMutation({
-    mutationFn: async (id: number) => {
-      try {
-        return await CustomMessageServices.getByIdAsync(id)
-      } catch (error: any) {
-        throw normalizeError(error)
-      }
-    },
-    onSuccess: (item) => {
-      setSelectedCustomMessage(item)
-
+  const upsertLocalMessage = useCallback(
+    (item: CustomMessageResponseDto) => {
       queryClient.setQueryData<CustomMessageResponseDto[]>(
         CUSTOM_MESSAGES_QUERY_KEY,
         (current = []) => {
@@ -104,6 +89,29 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
         }
       )
     },
+    [queryClient]
+  )
+
+  const invalidateCustomMessages = useCallback(async () => {
+    // useCustomMessage(false) deja la query disabled; hay que forzar refetch.
+    await queryClient.invalidateQueries({
+      queryKey: CUSTOM_MESSAGES_QUERY_KEY,
+      refetchType: "all",
+    })
+  }, [queryClient])
+
+  const fetchByIdMutation = useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        return await CustomMessageServices.getByIdAsync(id)
+      } catch (error: any) {
+        throw normalizeError(error)
+      }
+    },
+    onSuccess: (item) => {
+      setSelectedCustomMessage(item)
+      upsertLocalMessage(item)
+    },
   })
 
   const createMutation = useMutation({
@@ -114,7 +122,11 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
         throw normalizeError(error)
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
+      if (created?.id) {
+        upsertLocalMessage(created)
+      }
+
       await invalidateCustomMessages()
     },
   })
@@ -130,7 +142,11 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
         throw normalizeError(error)
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (updated) => {
+      if (updated?.id) {
+        upsertLocalMessage(updated)
+      }
+
       await invalidateCustomMessages()
     },
   })
@@ -144,11 +160,7 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
       }
     },
     onSuccess: (toggled) => {
-      queryClient.setQueryData<CustomMessageResponseDto[]>(
-        CUSTOM_MESSAGES_QUERY_KEY,
-        (current = []) =>
-          current.map((item) => (item.id === toggled.id ? toggled : item))
-      )
+      upsertLocalMessage(toggled)
 
       setSelectedCustomMessage((current) => {
         if (!current) return current
@@ -252,22 +264,9 @@ export function useCustomMessage(options: UseCustomMessageOptions | boolean = tr
 
   const insertLocal = useCallback(
     (item: CustomMessageResponseDto) => {
-      queryClient.setQueryData<CustomMessageResponseDto[]>(
-        CUSTOM_MESSAGES_QUERY_KEY,
-        (current = []) => {
-          const exists = current.some((message) => message.id === item.id)
-
-          if (exists) {
-            return current.map((message) =>
-              message.id === item.id ? item : message
-            )
-          }
-
-          return [item, ...current]
-        }
-      )
+      upsertLocalMessage(item)
     },
-    [queryClient]
+    [upsertLocalMessage]
   )
 
   const removeLocal = useCallback(
