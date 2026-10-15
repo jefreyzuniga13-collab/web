@@ -99,6 +99,10 @@ const TemplateCategoryPage = lazy(
   () => import("@/Pages/Wa/TemplateCategoryPage"),
 );
 
+const WaTemplatePage = lazy(
+  () => import("@/Pages/Wa/WaTemplatePage"),
+);
+
 const ProductCatalogPage = lazy(
   () => import("@/Pages/Wa/ProductCatalogPage"),
 );
@@ -214,6 +218,14 @@ export function AppRouter() {
           <Route
             path="templates-categories"
             element={<TemplateCategoryPage />}
+          />
+          <Route
+            path="templates-management"
+            element={<WaTemplatePage />}
+          />
+          <Route
+            path="wa-templates"
+            element={<Navigate to="/templates-management" replace />}
           />
           <Route path="profile" element={<ProfilePage />} />
           <Route

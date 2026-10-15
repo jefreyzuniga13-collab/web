@@ -9,6 +9,7 @@ export type MessageType =
   | "Document"
   | "Interactive"
   | "Bot"
+  | "Template"
   | "Contact"
 
 export type MessageStatus = "Sent" | "Delivered" | "Read" | "Failed"

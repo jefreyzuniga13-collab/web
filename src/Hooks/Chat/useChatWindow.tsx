@@ -673,7 +673,9 @@ export const useChatWindow = (
         hasText(message) ||
         message.referral != null ||
         message.messageType === "Interactive" ||
-        message.messageType === "Contact"
+        message.messageType === "Contact" ||
+        message.messageType === "Template" ||
+        Boolean(message.waTemplateId)
     )
   }, [mergedMessages, hasMedia, hasText])
 

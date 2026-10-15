@@ -210,8 +210,8 @@ export function useWaTemplateForm({
     categoryId: null,
     categoryName: null,
     isActive: true,
-    header: { enabled: true, text: '', segments: [{ kind: 'text', text: 'Título' }] },
-    body:   { enabled: true, text: '', segments: [{ kind: 'text', text: 'Este es un mensaje.' }] },
+    header: { enabled: true, text: '', segments: [{ kind: 'text', text: '' }] },
+    body:   { enabled: true, text: '', segments: [{ kind: 'text', text: '' }] },
     footer: { enabled: true, text: '' },
   }), [])
 
@@ -378,7 +378,6 @@ export function useWaTemplateForm({
     if (!form.externalName.trim()) e.externalName = 'No se pudo generar el nombre interno'
     if (!form.language.trim()) e.language = 'Idioma requerido'
     if (!form.categoryId) e.categoryId = 'Categoría requerida'
-    if (form.header.enabled && !form.header.text.trim()) e.headerText = 'Texto de encabezado requerido'
     if (form.body.enabled && !form.body.text.trim()) e.bodyText = 'Texto del cuerpo requerido'
     
     if (form.header.text.length  > 60) e.headerText = 'Longitud maxima del encabezado es 60'
@@ -392,7 +391,7 @@ export function useWaTemplateForm({
 const buildComponents = useCallback(() => {
   const comps: any[] = []
 
-    if (form.header.enabled) {
+    if (form.header.enabled && form.header.text.trim()) {
       const { text, examples } = segmentsToTemplateText(form.header.segments)
       const headerComp: any = { type: 'HEADER', format: 'TEXT', text }
       // Para HEADER: arreglo de strings (no anidado)

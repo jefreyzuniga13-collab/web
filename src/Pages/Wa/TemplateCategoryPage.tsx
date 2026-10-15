@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CustomTable from '@/Components/Common/CustomTable'
 import Button from '@/Components/Common/Button'
 import IconButton from '@mui/material/IconButton'
@@ -16,6 +17,7 @@ import {templateCategoryTranslations} from '@/Utils/Translation/categoryTemplate
 import type { TemplateCategoryTranslation } from '@/Interfaces/Common/GlobalInterface'
 
 export default function TemplateCategoryPage() {
+  const navigate = useNavigate()
   const {
     templateCategories,
     selectedTemplateCategory,
@@ -105,7 +107,10 @@ export default function TemplateCategoryPage() {
           <h1 className="sp-page__title">Categorias de plantillas</h1>
           <p className="sp-page__subtitle">Administra categories de plantillas</p>
         </div>
-        <div className="sp-page__btnContainer">
+        <div className="sp-page__btnContainer" style={{ gap: 8, display: 'flex' }}>
+          <Button variant="secondary" onClick={() => navigate('/templates-management')}>
+            Plantillas
+          </Button>
           <Button variant="primary" onClick={openCreate}>
             Nuevo categoria
           </Button>

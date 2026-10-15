@@ -1,431 +1,265 @@
-// /* eslint-disable @typescript-eslint/no-unused-expressions */
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { useEffect, useMemo, useState } from 'react'
-// import * as XLSX from 'xlsx'
-// import Button from '@/Components/Common/Button'
-// import { Label } from '@/Components/Common/Label'
-// import Input from '@/Components/Common/Input'
-// import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
-// import { Paper, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, 
-//   TableContainer, TableHead, TableRow, Checkbox, TablePagination, Box, Typography, Divider } from '@mui/material'
-// import { useWaTemplateSendModal } from '@/Hooks/Wh/useWaTemplateSendModal'
+import { useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
+import { toast } from 'react-toastify'
+import Button from '@/Components/Common/Button'
+import Input from '@/Components/Common/Input'
+import { Label } from '@/Components/Common/Label'
+import { contactService } from '@/Services/auth/ContactService'
+import { WaTemplateService } from '@/Services/Wa/WaTemplateService'
+import type { ContactLogInterface } from '@/Interfaces/Auth/ContactInterface'
+import type { WaTemplateResponseDto } from '@/Interfaces/Wh/TemplateInterface'
+import '@/Styles/Crm/SystemParamForm.css'
+import '@/Styles/Wa/WaTemplate.css'
 
-// type Props = {
-//   isOpen: boolean
-//   template: WaTemplateResponseDto
-//   onClose: () => void
-// }
+type Recipient = {
+  phone: string
+  fullName: string
+}
 
-// export default function WaTemplateSendModal({ isOpen, template, onClose }: Props) {
-//   const {
-//     schema,
-//     source,
-//     verifiedContact,
-//     bodyParams,
-//     setBodyParams,
-//     setSource,
-//     setExcelFile,
-//     selectedIds,
-//     setSelectedIds,
-//     handleSend,
-//   } = useWaTemplateSendModal({ isOpen, template, onClose }) || {}//Recuperar logica desde el hook
+type Props = {
+  isOpen: boolean
+  template: WaTemplateResponseDto
+  onClose: () => void
+  conversationId?: number | null
+  presetRecipient?: Recipient | null
+}
 
-//   const [searchClient, setSearchClient] = useState('')
-//   const [searchClientContact, setSearchClientContact] = useState('')
-//   const [searchPhone, setSearchPhone] = useState('')
-//   const [confirmOpen, setConfirmOpen] = useState(false)
-//   const [page, setPage] = useState(0)
-//   const [rowsPerPage, setRowsPerPage] = useState(10)
-//   const [summaryPage, setSummaryPage] = useState(0)
-//   const [rowsPerSummaryPage, setRowsPerSummaryPage] = useState(10)
-//   const [excelPreview, setExcelPreview] = useState<Array<{ fullName: string; phone: string }>>([])
+const WHATSAPP_CHANNEL = 1
 
-//   //Efecto de limpieza ala cambio de fuente
-//   useEffect(() => {
-//     setSearchClient('')
-//     setSearchClientContact('')
-//     setSearchPhone('')
-//     setSelectedIds && setSelectedIds([])
-//     setExcelPreview([])
-//     setPage(0)
-//     setSummaryPage(0)
-//   }, [source, setSelectedIds])
+export default function WaTemplateSendModal({
+  isOpen,
+  template,
+  onClose,
+  conversationId,
+  presetRecipient
+}: Props) {
+  const [source, setSource] = useState<'contacts' | 'excel'>('contacts')
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<ContactLogInterface[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selected, setSelected] = useState<Recipient[]>([])
+  const [sending, setSending] = useState(false)
 
-//   const rows = useMemo(() => Array.isArray(verifiedContact) ? verifiedContact : [], [verifiedContact])
+  useEffect(() => {
+    if (!isOpen) return
+    if (presetRecipient?.phone) {
+      setSelected([presetRecipient])
+      setSource('contacts')
+    } else {
+      setSelected([])
+    }
+  }, [isOpen, presetRecipient])
 
-//   const filtered = useMemo(() => {
-//   const sc  = searchClient.trim().toLowerCase();
-//   const sp  = searchPhone.trim().toLowerCase();
-//   const scc = searchClientContact.trim().toLowerCase();
+  useEffect(() => {
+    if (!isOpen || source !== 'contacts') return
 
-//   //Filtreo de contacto, cliente y numero. Tabla de selección de contactos cargados. 
-//   return rows.filter((r: any) => {
-//     const c  = String(r.clienteNombre ?? '').toLowerCase();
-//     const p  = String(r.phone ?? '').toLowerCase();
-//     const cc = String(r.fullName ?? '').toLowerCase();
+    const handle = window.setTimeout(async () => {
+      setSearching(true)
+      try {
+        const page = await contactService.getAllAsync(query.trim(), 1, 30)
+        const whatsapp = (page.items ?? []).filter(
+          (contact) => Number(contact.metaChannelId) === WHATSAPP_CHANNEL && contact.phone
+        )
+        setResults(whatsapp)
+      } catch {
+        setResults([])
+      } finally {
+        setSearching(false)
+      }
+    }, 300)
 
-//     const phoneOk   = !sp  || p.includes(sp);
-//     const clientOk  = !sc  || c.includes(sc);
-//     const contactOk = !scc || cc.includes(scc);
+    return () => window.clearTimeout(handle)
+  }, [isOpen, query, source])
 
-//     // Si se proporcionó al menos uno (cliente o contacto), basta con que uno coincida (OR).
-//     // Si no se proporcionó ninguno, no restringe.
-//     const nameBlockOk = (sc || scc) ? (clientOk || contactOk) : true;
+  const selectedPhones = useMemo(
+    () => new Set(selected.map((item) => item.phone)),
+    [selected]
+  )
 
-//     return phoneOk && nameBlockOk;
-//   });
-// }, [rows, searchClient, searchPhone, searchClientContact]);
+  if (!isOpen) return null
 
-//   //Manejo de paginación en tablas
-//   const paged = useMemo(() => {
-//     const start = page * rowsPerPage
-//     return filtered.slice(start, start + rowsPerPage)
-//   }, [filtered, page, rowsPerPage])
+  const toggleContact = (contact: ContactLogInterface) => {
+    const phone = String(contact.phone ?? '').trim()
+    if (!phone) return
 
-//   const selectedRows = useMemo(() => {
-//     const ids = new Set<number>((selectedIds ?? []) as number[])
-//     return rows.filter((r: any) => ids.has(Number(r.id)))
-//   }, [rows, selectedIds])
+    setSelected((current) => {
+      if (current.some((item) => item.phone === phone)) {
+        return current.filter((item) => item.phone !== phone)
+      }
 
-//   const summaryPaged = useMemo(() => {
-//     const start = summaryPage * rowsPerSummaryPage
-//     return selectedRows.slice(start, start + rowsPerSummaryPage)
-//   }, [selectedRows, summaryPage, rowsPerSummaryPage])
+      return [
+        ...current,
+        {
+          phone,
+          fullName: contact.fullName || contact.waName || phone
+        }
+      ]
+    })
+  }
 
-//   const allOnPageSelected = useMemo(() => {
-//     const ids = new Set<number>((selectedIds ?? []) as number[])
-//     return paged.length > 0 && paged.every((r: any) => ids.has(Number(r.id)))
-//   }, [paged, selectedIds])
+  const onExcel = async (file: File | null) => {
+    if (!file) return
 
-//   //Manejo de tablas selecciondas. Agregar al resumen de selección
-//   const toggleRow = (id: number) => {
-//     if (!setSelectedIds) return
-//     const current = new Set<number>((selectedIds ?? []) as number[])
-//     if (current.has(id)) current.delete(id)
-//     else current.add(id)
-//     setSelectedIds(Array.from(current))
-//   }
+    const buffer = await file.arrayBuffer()
+    const book = XLSX.read(buffer, { type: 'array' })
+    const sheet = book.Sheets[book.SheetNames[0]]
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      defval: '',
+      raw: false
+    })
 
-//   //Manejador de la seleccion absoluta de las filas hacia el detalle de selección
-//   const toggleAllOnPage = () => {
-//     if (!setSelectedIds) return
-//     const current = new Set<number>((selectedIds ?? []) as number[])
-//     if (allOnPageSelected) {
-//       paged.forEach((r: any) => current.delete(Number(r.id)))
-//     } else {
-//       paged.forEach((r: any) => current.add(Number(r.id)))
-//     }
-//     setSelectedIds(Array.from(current))
-//   }
+    const parsed = rows
+      .map((row) => {
+        const fullName = String(
+          row.nombre ?? row.Nombre ?? row.fullName ?? row.FullName ?? row.name ?? row.Name ?? ''
+        ).trim()
+        const rawPhone = String(
+          row.numero ?? row.Numero ?? row.telefono ?? row.Telefono ?? row.phone ?? row.Phone ?? ''
+        ).trim()
+        const phone = rawPhone.replace(/[^\d+]/g, '')
+        return { phone, fullName: fullName || phone }
+      })
+      .filter((row) => row.phone.length > 0)
 
-//   //Cuando se carga el excel se procede a actulaizar la tabla de resumen
-//   const onChangeFile = async (file: File | null) => {
-//     setExcelFile && setExcelFile(file)
-//     if (!file) {
-//       setExcelPreview([])
-//       return
-//     }
-//     const buf = await file.arrayBuffer()
-//     const wb = XLSX.read(buf, { type: 'array' }) //recuperar las filas como array
-//     const ws = wb.Sheets[wb.SheetNames[0]]
-//     const list = XLSX.utils.sheet_to_json<any>(ws, { defval: '', raw: false })
-//       .map((r: any) => {
+    const unique = new Map<string, Recipient>()
+    parsed.forEach((row) => unique.set(row.phone, row))
+    setSelected(Array.from(unique.values()))
+    toast.info(`${unique.size} contacto(s) leídos del Excel.`)
+  }
 
-//         //Recuperar las columnas por fila
-//         const fullName = String(r.fullName ?? r.FullName ?? r.name ?? r.Name ?? '').trim()
-//         const rawPhone = String(r.phone ?? r.Phone ?? '').trim()
-//         const phone = rawPhone.replace(/[^\d+]/g, '')
-//         return { fullName: fullName || phone, phone }
-//       })
-//       .filter((x: any) => !!x.phone)
-//     setExcelPreview(list)
-//   }
+  const handleSend = async () => {
+    if (selected.length === 0) {
+      toast.error('Selecciona al menos un contacto.')
+      return
+    }
 
-//   const onConfirmSend = () => {
-//     setConfirmOpen(false)
-//     handleSend && handleSend()
-//   }
+    setSending(true)
+    try {
+      const result = await WaTemplateService.SendBatchNewConversationsAsync({
+        templateName: template.name,
+        language: template.language || 'es',
+        conversationId: conversationId ?? null,
+        recipients: selected.map((item) => ({
+          phone: item.phone,
+          fullName: item.fullName,
+          variables: []
+        }))
+      })
 
-//   if (!isOpen) return null
+      if (result.failed > 0) {
+        toast.warning(`Enviadas: ${result.sent}. Fallaron: ${result.failed}.`)
+      } else {
+        toast.success(`Plantilla enviada a ${result.sent} contacto(s).`)
+      }
 
-//   return (
-//     <div className="sp-modal__overlay max">
-//       <div className="sp-modal__container max-modal">
-//         <header className="sp-modal__header">
-//           <h2 className="sp-modal__title">Enviar plantilla: <span className='wat-title__data'>{template?.name}</span></h2>
-//         </header>
+      onClose()
+    } catch {
+      toast.error('No se pudo enviar la plantilla.')
+    } finally {
+      setSending(false)
+    }
+  }
 
-//         <div className='wat-content-container'>
-//             <div className="sp-modal__body max-body" style={{ display: 'grid', gap: 12 }}>
-//           <div className={source == "excel" ? 'wat-header-container' : ''}>
-//             <div className='contact'>
-//             <Label>Fuente de destinatarios</Label>
-//             <div style={{ display: 'flex', gap: 8 }}>
-//               <Button variant={source === 'contacts' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('contacts')}>Contactos</Button>
-//               <Button variant={source === 'excel' ? 'primary' : 'secondary'} onClick={() => setSource && setSource('excel')}>Excel</Button>
-//             </div>
-//             </div>
+  return (
+    <div className="sp-modal__overlay">
+      <div className="sp-modal__container wa-template-send">
+        <header className="sp-modal__header">
+          <div>
+            <h2 className="sp-modal__title">Enviar plantilla</h2>
+            <p className="wa-template-modal__subtitle">{template.name}</p>
+          </div>
+          <button type="button" className="sp-modal__close" onClick={onClose}>×</button>
+        </header>
 
-//             {source === 'excel' && (
-//               <div>
-//                 <Label>Acciones</Label>
-//                         <div style={{ display: 'flex', gap: 8 }}>
-//                             <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-//                             <Button
-//                               variant="primary"
-//                               onClick={() => setConfirmOpen(true)}
-//                             >
-//                               Enviar
-//                             </Button>
-//                           </div>
-//               </div>
-//               )}
-//           </div>
+        <div className="sp-modal__body">
+          <div className="wa-template-send__tabs">
+            <Button
+              type="button"
+              variant={source === 'contacts' ? 'primary' : 'secondary'}
+              onClick={() => setSource('contacts')}
+            >
+              Contactos
+            </Button>
+            <Button
+              type="button"
+              variant={source === 'excel' ? 'primary' : 'secondary'}
+              onClick={() => setSource('excel')}
+            >
+              Excel
+            </Button>
+          </div>
 
-//           {/* Lista de contactos */}
-//           {source === 'contacts' && (
-//             <Box>
-//               <Box sx={{ display: 'grid', gap: 1 }}>
-//                 <Label>Selecciona contactos</Label>
-//                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-//                   <Input placeholder="Buscar por cliente o contacto" value={searchClient} onChange={e => {
-//                     setSearchClient(e.target.value)
-//                     setSearchClientContact(e.target.value)
-//                   }} />
-//                   <Input placeholder="Buscar por teléfono" value={searchPhone} onChange={e => setSearchPhone(e.target.value)} />
-//                 </Box>
+          {source === 'contacts' ? (
+            <>
+              <Label>Buscar por nombre o número</Label>
+              <div className="wa-template-send__search">
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Nombre o teléfono"
+                />
+              </div>
+              <div className="wa-template-send__list">
+                {searching && <p className="wa-template-field__hint">Buscando...</p>}
+                {!searching && results.length === 0 && (
+                  <p className="wa-template-field__hint">No hay contactos de WhatsApp.</p>
+                )}
+                {results.map((contact) => {
+                  const active = selectedPhones.has(contact.phone)
+                  return (
+                    <button
+                      key={contact.id}
+                      type="button"
+                      className={`wa-template-send__item ${active ? 'is-selected' : ''}`}
+                      onClick={() => toggleContact(contact)}
+                    >
+                      <span className="wa-template-send__check" aria-hidden="true" />
+                      <span>
+                        {contact.fullName || contact.waName || 'Sin nombre'}
+                        <small>{contact.phone}</small>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="wa-template-send__excel">
+              <Label>Excel con columnas nombre y numero</Label>
+              <p className="wa-template-field__hint">
+                La primera hoja. Cada fila es un contacto de esta empresa.
+              </p>
+              <Input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(event) => void onExcel(event.target.files?.[0] ?? null)}
+              />
+            </div>
+          )}
 
-//                 <Paper sx={{ width: '100%' }}>
-//                   <TableContainer sx={{ maxHeight: 500 }}>
-//                     <Table stickyHeader size="small" aria-label="contacts-table">
-//                       <TableHead>
-//                         <TableRow>
-//                           <TableCell padding="checkbox">
-//                             <Checkbox
-//                               indeterminate={!allOnPageSelected && (selectedIds?.length ?? 0) > 0}
-//                               checked={allOnPageSelected}
-//                               onChange={toggleAllOnPage}
-//                             />
-//                           </TableCell>
-//                           <TableCell>Cliente</TableCell>
-//                           <TableCell>Contacto</TableCell>
-//                           <TableCell>Teléfono</TableCell>
-//                         </TableRow>
-//                       </TableHead>
-//                       <TableBody>
-//                         {paged.map((r: any) => {
-//                           const id = Number(r.id)
-//                           const checked = Boolean((selectedIds ?? []).includes(id as never))
-//                           return (
-//                             <TableRow hover key={id}>
-//                               <TableCell padding="checkbox">
-//                                 <Checkbox checked={checked} onChange={() => toggleRow(id)} />
-//                               </TableCell>
-//                               <TableCell>{r.clienteNombre ?? ''}</TableCell>
-//                               <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
-//                               <TableCell>{r.phone ?? ''}</TableCell>
-//                             </TableRow>
-//                           )
-//                         })}
-//                         {paged.length === 0 && (
-//                           <TableRow>
-//                             <TableCell colSpan={4}><Typography variant="body2">Sin resultados</Typography></TableCell>
-//                           </TableRow>
-//                         )}
-//                       </TableBody>
-//                     </Table>
-//                   </TableContainer>
-//                   <TablePagination
-//                     component="div"
-//                     count={filtered.length}
-//                     page={page}
-//                     onPageChange={(_, p) => setPage(p)}
-//                     rowsPerPage={rowsPerPage}
-//                     onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0) }}
-//                     rowsPerPageOptions={[5, 10, 25]}
-//                   />
-//                 </Paper>
-//               </Box>
-//             </Box>
-//           )}
+          <p className="wa-template-field__hint">{selected.length} seleccionado(s)</p>
+          <div className="wa-template-send__selected">
+            {selected.map((item) => (
+              <span key={item.phone} className="wa-template-send__chip">
+                {item.fullName} · {item.phone}
+                <button
+                  type="button"
+                  onClick={() => setSelected((current) => current.filter((row) => row.phone !== item.phone))}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
 
-//           {/* Construir tabla de resumen de excel */}
-//           {source === 'excel' && (
-//             <Box sx={{ display: 'grid', gap: 1 }}>
-//               <Label>Sube Excel con columnas "fullName" y "phone" (o al menos "phone")</Label>
-//               <Input type="file" accept=".xlsx" onChange={e => onChangeFile(e.target.files?.[0] || null)} />
-//               <Divider sx={{ my: 1 }} />
-//               <Label>Resumen (solo lectura)</Label>
-//               <Paper sx={{ width: '100%' }}>
-//                 <TableContainer sx={{ maxHeight: 420 }}>
-//                   <Table stickyHeader size="small" aria-label="excel-summary">
-//                     <TableHead>
-//                       <TableRow>
-//                         <TableCell>Contacto</TableCell>
-//                         <TableCell>Teléfono</TableCell>
-//                       </TableRow>
-//                     </TableHead>
-//                     <TableBody>
-//                       {excelPreview.slice(0, 200).map((r, i) => (
-//                         <TableRow key={i}>
-//                           <TableCell>{r.fullName}</TableCell>
-//                           <TableCell>{r.phone}</TableCell>
-//                         </TableRow>
-//                       ))}
-//                       {excelPreview.length === 0 && (
-//                         <TableRow>
-//                           <TableCell colSpan={2}><Typography variant="body2">Sin datos</Typography></TableCell>
-//                         </TableRow>
-//                       )}
-//                     </TableBody>
-//                   </Table>
-//                 </TableContainer>
-//               </Paper>
-//             </Box>
-//           )}
-
-//           {/* Si se cuenta con variables se lista el resumen */}
-//           {schema && schema.bodyVars > 0 && (
-//             <div>
-//               <Label>Cuerpo — completa las variables</Label>
-//               <div style={{ display: 'grid', gap: 8 }}>
-//                 {Array.from({ length: schema.bodyVars }, (_, i) => (
-//                   <div key={i} style={{ display: 'grid', gap: 4 }}>
-//                     <span className="sp-modal__label">{`Valor para {{${i + 1}}}`}</span>
-//                     <Input
-//                       value={bodyParams?.[i] ?? ''}
-//                       onChange={e => {
-//                         const next = [...(bodyParams || [])]
-//                         next[i] = e.target.value
-//                         setBodyParams && setBodyParams(next)
-//                       }}
-//                     />
-//                   </div>
-//                 ))}
-//               </div>
-//             </div>
-//           )}
-
-//         </div>
-
-//         {/* tabla de resumen de contacto */}
-//          {source === 'contacts' && (
-
-
-//               <div className='sp-modal__body max-body'>
-//               <header style={{display: "flex", gap: 8, justifyContent: "flex-end"}}>
-//                 <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-//                 <Button
-//                   variant="primary"
-//                   onClick={() => setConfirmOpen(true)}
-//                   disabled={
-//                     source === 'contacts'
-//                       ? !(selectedIds && selectedIds.length > 0)
-//                       : excelPreview.length === 0
-//                   }
-//                 >
-//                   Enviar
-//                 </Button>
-//               </header>
-//                   <Box sx={{ display: 'grid', gap: 1 }}>
-//                 <Label>Resumen de selección</Label>
-//                 <Paper sx={{ width: '100%' }}>
-//                   <TableContainer sx={{ maxHeight: 500 }}>
-//                     <Table stickyHeader size="small" aria-label="summary-table">
-//                       <TableHead>
-//                         <TableRow>
-//                           <TableCell>Cliente</TableCell>
-//                           <TableCell>Contacto</TableCell>
-//                           <TableCell>Teléfono</TableCell>
-//                           <TableCell align="right">Quitar</TableCell>
-//                         </TableRow>
-//                       </TableHead>
-//                       <TableBody>
-//                         {summaryPaged.map((r: any) => (
-//                           <TableRow key={r.id}>
-//                             <TableCell>{r.clienteNombre ?? ''}</TableCell>
-//                             <TableCell>{r.fullName ?? r.waName ?? ''}</TableCell>
-//                             <TableCell>{r.phone ?? ''}</TableCell>
-//                             <TableCell align="right">
-//                               <Button variant="destructive" onClick={() => toggleRow(Number(r.id))} className='wat_btn'>Quitar</Button>
-//                             </TableCell>
-//                           </TableRow>
-//                         ))}
-//                         {summaryPaged.length === 0 && (
-//                           <TableRow>
-//                             <TableCell colSpan={4}><Typography variant="body2">Sin seleccionados</Typography></TableCell>
-//                           </TableRow>
-//                         )}
-//                       </TableBody>
-//                     </Table>
-//                   </TableContainer>
-//                   <TablePagination
-//                     component="div"
-//                     count={selectedRows.length}
-//                     page={summaryPage}
-//                     onPageChange={(_, p) => setSummaryPage(p)}
-//                     rowsPerPage={rowsPerSummaryPage}
-//                     onRowsPerPageChange={(e) => { setRowsPerSummaryPage(parseInt(e.target.value, 10)); setSummaryPage(0) }}
-//                     rowsPerPageOptions={[5, 10, 25]}
-//                   />
-//                 </Paper>
-//                 <Typography variant="body2">Seleccionados: {selectedIds?.length ?? 0}</Typography>
-//               </Box>
-//               </div>
-              
-//          )}
-//         </div>
-//       </div>
-
-//       {/*Modal de confirmación y resumen  */}
-//       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
-//         <DialogTitle>Confirmar envío</DialogTitle>
-//         <DialogContent dividers>
-//           <div style={{ display: 'grid', gap: 12 }}>
-//             <div><strong>Plantilla:</strong> {template?.name}</div>
-//             <div><strong>Destino:</strong> {source === 'contacts' ? 'Contactos seleccionados' : 'Archivo Excel'}</div>
-
-//             {/* si la fuente es contactos desde base de datos, se recuperar las propiedades seleccionadas y la cantidad. */}
-//             {source === 'contacts' && (
-//               <div>
-//                 <strong>Total seleccionados:</strong> {selectedIds?.length || 0}
-//                 <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-//                   {selectedRows.slice(0, 5).map((r: any) => (
-//                     <li key={r.id}>{`${r.clienteNombre ?? ''} — ${r.fullName ?? r.waName ?? ''} — ${r.phone ?? ''}`}</li>
-//                   ))}
-//                   {(selectedIds?.length || 0) > 5 && <li>...</li>}
-//                 </ul>
-//               </div>
-//             )}
-//             {/* Si la fuente es excel se extra las propiedades y se recupera la cantidad de filas */}
-//             {source === 'excel' && (
-//               <div>
-//                 <strong>Total en Excel:</strong> {excelPreview.length}
-//                 <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-//                   {excelPreview.slice(0, 5).map((r, i) => (
-//                     <li key={i}>{`${r.fullName} — ${r.phone}`}</li>
-//                   ))}
-//                   {excelPreview.length > 5 && <li>...</li>}
-//                 </ul>
-//               </div>
-//             )}
-//             {schema && schema.bodyVars > 0 && (
-//               <div>
-//                 <strong>Cuerpo:</strong>
-//                 <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-//                   {Array.from({ length: schema.bodyVars }, (_, i) => (
-//                     <li key={i}>{`{{${i + 1}}} = ${bodyParams?.[i] ?? ''}`}</li>
-//                   ))}
-//                 </ul>
-//               </div>
-//             )}
-//           </div>
-//         </DialogContent>
-//         <DialogActions>
-//           <Button variant="secondary" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
-//           <Button variant="primary" onClick={onConfirmSend}>Confirmar y enviar</Button>
-//         </DialogActions>
-//       </Dialog>
-//     </div>
-//   )
-// }
+        <footer className="sp-modal__footer">
+          <Button variant="secondary" onClick={onClose} disabled={sending}>Cancelar</Button>
+          <Button variant="primary" onClick={() => void handleSend()} disabled={sending}>
+            {sending ? 'Enviando...' : 'Enviar'}
+          </Button>
+        </footer>
+      </div>
+    </div>
+  )
+}

@@ -43,8 +43,15 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
   onSendNow,
 }) => {
   const [mode, setMode] = useState<Mode>("list");
+  const [query, setQuery] = useState("");
   const [editTarget, setEditTarget] = useState<CustomMessageResponseDto | null>(null);
   const [form, setForm] = useState<CustomMessageRequestDto>({ content: "", isActive: true });
+
+  const filteredItems = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((item) => item.content.toLowerCase().includes(term));
+  }, [items, query]);
 
   /**
    * Posiciona el flyout a la IZQUIERDA del botón:
@@ -173,11 +180,18 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
         </div>
 
         {mode === "list" && (
-          <div className="cmf-list">
-            {items.map((it) => (
+          <>
+            <input
+              className="cmf-textarea cmf-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar mensaje"
+            />
+            <div className="cmf-list">
+            {filteredItems.map((it) => (
               <div key={it.id} className="cmf-item">
                 <div className="cmf-item-text">
-                  <div className="cmf-item-content">{it.content}</div>
+                  <div className="cmf-item-content" title={it.content}>{it.content}</div>
                   {/* Toggle opcional:
                   <label className="cmf-switch">
                     <input type="checkbox" checked={it.isActive} onChange={() => onToggle(it.id)} />
@@ -211,10 +225,13 @@ export const CustomMessagesFlyout: React.FC<Props> = ({
               </div>
             ))}
 
-            {items.length === 0 && (
-              <div className="cmf-empty">No hay mensajes aún</div>
+            {filteredItems.length === 0 && (
+              <div className="cmf-empty">
+                {query.trim() ? "Ningún mensaje coincide." : "No hay mensajes aún"}
+              </div>
             )}
-          </div>
+            </div>
+          </>
         )}
 
         {mode !== "list" && (

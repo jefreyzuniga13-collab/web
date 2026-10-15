@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   LoaderCircle,
+  FileText,
   MessageSquareMore,
   Mic,
   Paperclip,
@@ -28,6 +29,11 @@ import { AiOutlineShoppingCart } from "react-icons/ai"
 import { useChatWindow } from "@/Hooks/Chat/useChatWindow"
 import useCustomMessage from "@/Hooks/Chat/useCustomMesssage"
 import { CustomMessagesFlyout } from "@/Components/Chat/CustomMessagesFlyout"
+import TemplatesFlyout from "@/Components/Chat/TemplatesFlyout"
+import { WaTemplateService } from "@/Services/Wa/WaTemplateService"
+import type { WaTemplateResponseDto } from "@/Interfaces/Wh/TemplateInterface"
+import { toast } from "react-toastify"
+import { useQueryClient } from "@tanstack/react-query"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
 import { MetaAdReferralCard } from "@/Components/Chat/MetaAdReferralCard"
 import type { AttachmentDto, MessageDto } from "@/Interfaces/Chat/ChatInterfaces"
@@ -35,6 +41,7 @@ import { formatearHoraNicaragua, formatDateDivider } from "@/Utils/formatters"
 
 import "@/Styles/Chat/ChatWindow.css"
 import "@/Styles/Chat/custom-messages-flyout.css"
+import "@/Styles/Wa/WaTemplate.css"
 
 const composerTooltipSlotProps = {
   tooltip: {
@@ -47,6 +54,8 @@ const composerTooltipSlotProps = {
 
 type ChatWindowProps = {
   conversationId?: number
+  contactPhone?: string | null
+  contactName?: string | null
   userId?: number
   agentId?: number
   conversationStatus?: string | null
@@ -114,6 +123,8 @@ const getReplyPreviewImage = (message: MessageDto): string | null => {
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationId,
+  contactPhone,
+  contactName,
   userId,
   agentId,
   conversationStatus,
@@ -137,6 +148,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   mobileDetailOpen = false,
   onMobileToggleDetail,
 }) => {
+  const queryClient = useQueryClient()
   const {
     visibleMessages,
     loadingMessages,
@@ -221,12 +233,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const emojiPickerRef = useRef<HTMLDivElement | null>(null)
   const customMessagesButtonRef = useRef<HTMLButtonElement | null>(null)
+  const templatesButtonRef = useRef<HTMLButtonElement | null>(null)
 
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [customMessagesOpen, setCustomMessagesOpen] = useState(false)
   const [customMessagesAnchor, setCustomMessagesAnchor] =
     useState<DOMRect | null>(null)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [templatesAnchor, setTemplatesAnchor] = useState<DOMRect | null>(null)
+  const [sendingTemplate, setSendingTemplate] = useState(false)
 
   const loadingOlderRef = useRef(false)
   const shouldStickToBottomRef = useRef(true)
@@ -291,10 +307,62 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     })
   }, [textAreaRef])
 
+  const toggleTemplates = useCallback(() => {
+    if (!canType || sendingTemplate) return
+
+    setShowEmojiPicker(false)
+    setCustomMessagesOpen(false)
+    setTemplatesAnchor(
+      templatesButtonRef.current?.getBoundingClientRect() ?? null
+    )
+    setTemplatesOpen((current) => !current)
+  }, [canType, sendingTemplate])
+
+  const sendTemplateToChat = useCallback(async (template: WaTemplateResponseDto) => {
+    const phone = String(contactPhone ?? "").trim()
+
+    if (!phone) {
+      toast.error("Esta conversación no tiene número de WhatsApp.")
+      return
+    }
+
+    setSendingTemplate(true)
+    try {
+      const result = await WaTemplateService.SendBatchNewConversationsAsync({
+        templateName: template.name,
+        language: template.language || "es",
+        conversationId: conversationId ?? null,
+        recipients: [{
+          phone,
+          fullName: contactName || phone,
+          variables: []
+        }]
+      })
+
+      if (result.failed > 0) {
+        toast.error(result.items?.[0]?.error || "No se pudo enviar la plantilla.")
+        return
+      }
+
+      if (conversationId) {
+        await queryClient.invalidateQueries({
+          queryKey: ["chat-messages", conversationId],
+        })
+      }
+
+      toast.success("Plantilla enviada.")
+    } catch {
+      toast.error("No se pudo enviar la plantilla.")
+    } finally {
+      setSendingTemplate(false)
+    }
+  }, [contactName, contactPhone, conversationId, queryClient])
+
   const toggleCustomMessages = useCallback(() => {
     if (!canType) return
 
     setShowEmojiPicker(false)
+    setTemplatesOpen(false)
 
     const rect =
       customMessagesButtonRef.current?.getBoundingClientRect() ?? null
@@ -798,9 +866,20 @@ if (
 
             {message.messageType === "Contact" && renderContactMessage(message)}
 
+            {(message.messageType === "Template" || message.waTemplateId) && (
+              <span className="chat-window__template-tag">Plantilla</span>
+            )}
+
             {hasText(message) && (
               <p className="chat-window__message-text">
                 {renderMessageContent(message.content ?? "", searchTerm)}
+              </p>
+            )}
+
+            {!hasText(message) &&
+              (message.messageType === "Template" || message.waTemplateId) && (
+              <p className="chat-window__message-text">
+                {message.templateName || "Plantilla"}
               </p>
             )}
           </div>
@@ -1128,6 +1207,21 @@ if (
         )}
 
         <div className="chat-window__quick">
+          <Tooltip title="Plantillas" arrow slotProps={composerTooltipSlotProps}>
+            <span className="chat-window__composer-tip">
+              <button
+                ref={templatesButtonRef}
+                type="button"
+                className="chat-window__quick-toggle"
+                disabled={!canType || sendingTemplate}
+                aria-label="Plantillas"
+                onClick={toggleTemplates}
+              >
+                <FileText size={19} strokeWidth={1.8} />
+              </button>
+            </span>
+          </Tooltip>
+
           <Tooltip title="Mensajes personalizados" arrow slotProps={composerTooltipSlotProps}>
             <span className="chat-window__composer-tip">
               <button
@@ -1299,6 +1393,15 @@ if (
           </span>
         </Tooltip>
       </footer>
+
+      <TemplatesFlyout
+        anchorRect={templatesAnchor}
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        onPick={(template) => {
+          void sendTemplateToChat(template)
+        }}
+      />
 
       <CustomMessagesFlyout
         anchorRect={customMessagesAnchor}

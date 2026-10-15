@@ -136,13 +136,10 @@ export function CartAutoCleanModal({ items, onClose }: Props) {
       <div className="cart-auto-clean__card">
         <header className="cart-auto-clean__header">
           <div className="cart-auto-clean__heading">
-            <span className="cart-auto-clean__icon" aria-hidden>
-              <ShoppingCart size={20} />
-            </span>
 
             <div>
-              <p className="cart-auto-clean__eyebrow">Limpieza automática</p>
-              <h2 id="cart-auto-clean-title">Carritos vaciados</h2>
+              <p className="cart-auto-clean__eyebrow">Limpieza automática completada</p>
+              {/* <h2 id="cart-auto-clean-title">Limpieza automática completada</h2> */}
             </div>
           </div>
 
@@ -157,8 +154,7 @@ export function CartAutoCleanModal({ items, onClose }: Props) {
         </header>
 
         <p className="cart-auto-clean__lead">
-          Se vaciaron para no dejar pedidos cargados de sesiones anteriores.
-          El tiempo de espera configurado es de {hoursLimit} h.
+          Se retiraron los elementos para no dejar pedidos pendientes de sesiones anteriores. {hoursLimit} h.
         </p>
 
         <div className="cart-auto-clean__stats">

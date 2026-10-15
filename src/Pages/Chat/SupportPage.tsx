@@ -626,6 +626,8 @@ const SupportPage: React.FC = () => {
 
         <ChatWindow
           conversationId={convId ?? 0}
+          contactPhone={activeConversation?.contactNumber}
+          contactName={activeConversation?.clientContactName}
           userId={userId}
           conversationStatus={activeConversation?.status ?? null}
           selectedParam={selectedParam}

@@ -8,6 +8,7 @@ export type SendTemplateItemResult = {
 export type SendTemplateBatchRequest = {
   templateName: string            // snake_case (ExternalName en tu BD)
   language: string                // ej "es" | "es_MX"
+  conversationId?: number | null
   headerMediaId?: string | null
   headerMediaUrl?: string | null
   buttonUrlBase?: string | null
