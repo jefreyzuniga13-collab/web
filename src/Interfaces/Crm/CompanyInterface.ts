@@ -3,5 +3,6 @@ export interface CompanyInterface{
     name: string;
     address?: string;
     createdAt?: string | null;
+    aplicaOpciones?: boolean;
 }
 

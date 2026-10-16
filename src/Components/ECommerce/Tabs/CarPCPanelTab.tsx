@@ -236,7 +236,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     },
     [draftKey]
   )
-
+  
   const removeDraft = useCallback(() => {
     try {
       localStorage.removeItem(draftKey)
@@ -730,7 +730,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       totalPagarAgente,
       catalogoMoneda.esDolar,
       catalogoMoneda.tasa
-    )
+    ),
+    currency
   })
 
   paymentResetRef.current = agentPayment.payment.resetPayment
@@ -1047,8 +1048,13 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     })
 
     const total = safeNumber(totals.total, 0)
+    const iva = safeNumber(totals.iva, 0)
 
     if (retiraSucursal === "S") {
+      if (iva > 0) {
+        lines.push(`IVA: ${formatCurrencyNIO(iva)}`)
+      }
+
       lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
       lines.push("🏬 Retira en sucursal")
 
@@ -1060,6 +1066,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     }
 
     const envio = safePositiveNumber(effectiveShipping)
+
+    if (iva > 0) {
+      lines.push(`IVA: ${formatCurrencyNIO(iva)}`)
+    }
 
     if (envio > 0) {
       lines.push(`🚚 Envío: ${formatCurrencyNIO(envio)}`)

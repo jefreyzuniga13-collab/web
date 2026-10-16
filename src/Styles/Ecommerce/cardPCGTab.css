@@ -1179,6 +1179,115 @@
   font-weight: 700;
 }
 
+.carPCPanel-stepContent__discountAuthorize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-primary, #2563eb);
+  border-radius: 0.55rem;
+  background: var(--color-white, #fff);
+  color: var(--color-primary, #2563eb);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.carPCPanel-stepContent__discountAuthorize svg {
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+}
+
+.carPCPanel-stepContent__discountAuthorize:hover {
+  background: var(--color-primary, #2563eb);
+  color: var(--color-white, #fff);
+}
+
+.carPCPanel-stepContent__discountAuth {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.65rem;
+  background: var(--color-white, #fff);
+  box-sizing: border-box;
+}
+
+.carPCPanel-stepContent__discountAuthHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--color-primary, #2563eb);
+}
+
+.carPCPanel-stepContent__discountAuthHeading > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  font-size: 1.35rem;
+}
+
+.carPCPanel-stepContent__discountAuthHeading div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.carPCPanel-stepContent__discountAuthHeading strong {
+  color: var(--color-gray-800, #1f2937);
+  font-size: 0.9rem;
+}
+
+.carPCPanel-stepContent__discountAuthHeading span {
+  color: var(--color-gray-600, #4b5563);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.carPCPanel-stepContent__discountAuth .MuiFormControl-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.carPCPanel-stepContent__discountAuthActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.carPCPanel-stepContent__discountAuthActions button {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.45rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.carPCPanel-stepContent__discountAuthCancel {
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  background: var(--color-white, #fff);
+  color: var(--color-gray-700, #374151);
+}
+
+.carPCPanel-stepContent__discountAuthSubmit {
+  border: 1px solid var(--color-primary, #2563eb);
+  background: var(--color-primary, #2563eb);
+  color: var(--color-white, #fff);
+}
+
+.carPCPanel-stepContent__discountAuthActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .carPCPanel-stepContent__clearSelection {
   display: inline-flex;
   align-items: center;

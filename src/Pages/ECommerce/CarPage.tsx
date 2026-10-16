@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import type { TempLinkResolveResponseDto } from "@/Interfaces/Common/GlobalPCGInterface"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
 import PublicCheckoutShell from "@/Components/ECommerce/Payment/PublicCheckoutShell"
+import MoneyAmount from "@/Components/ECommerce/Payment/MoneyAmount"
 import Lottie from "lottie-react"
 import EmptyCartPlayer from "@/assets/lottie/Empty.json"
 import {
@@ -22,7 +23,6 @@ import type { RootState, AppDispatch } from "@/Context"
 import type { LogCartResponseDto } from "@/Interfaces/Crm/LogCartInterface"
 import useLogCart from "@/Hooks/Crm/useLogCard"
 import type { ListDetalleCarrito } from "@/Interfaces/Crm/CartPCGInterface"
-import { formatearDecimales } from "@/Utils/calcularIVA"
 import { applyPublicEmpresaId } from "@/Utils/ECommerce/publicEmpresa"
 import { deriveTransportePantalla } from "@/Utils/ECommerce/utils"
 
@@ -108,14 +108,6 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
     const price = Number(item.precioV ?? 0)
     const qty = Number(item.cantidad ?? 0)
     return price * qty
-  }
-
-  const formatMoney = (value?: number | null) => {
-    return Number(value ?? 0).toLocaleString("es-NI", {
-      style: "currency",
-      currency: "NIO",
-      maximumFractionDigits: 2,
-    })
   }
 
   const getImage = (image?: string | null) => {
@@ -243,7 +235,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                       <td className="cart-table__cell cart-table__cell--price">
                         {product.precioV > 0
-                          ? "C$ " + formatearDecimales(product.precioV)
+                          ? <MoneyAmount amount={Number(product.precioV)} />
                           : ""}
                       </td>
 
@@ -257,7 +249,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                       <td className="cart-table__cell cart-table__cell--total">
                         {getLineSubtotal(product) > 0
-                          ? "C$ " + formatearDecimales(getLineSubtotal(product))
+                          ? <MoneyAmount amount={getLineSubtotal(product)} />
                           : ""}
                       </td>
                     </tr>
@@ -287,7 +279,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                         <td className="cart-table__cell cart-table__cell--price cart-table__cell--option">
                           {option.precioV > 0
-                            ? "C$ " + formatearDecimales(option.precioV)
+                            ? <MoneyAmount amount={Number(option.precioV)} />
                             : "Incluido"}
                         </td>
 
@@ -301,8 +293,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
 
                         <td className="cart-table__cell cart-table__cell--total cart-table__cell--option">
                           {option.precioV > 0
-                            ? "C$ " +
-                              formatearDecimales(getLineSubtotal(option))
+                            ? <MoneyAmount amount={getLineSubtotal(option)} />
                             : "Incluido"}
                         </td>
                       </tr>
@@ -322,7 +313,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   Productos ({productUnits || productGroups.length})
                 </span>
                 <span className="cart-totals__value cart-totals__value--strong">
-                  {formatMoney(existingLog?.subTotal)}
+                  <MoneyAmount amount={Number(existingLog?.subTotal ?? 0)} />
                 </span>
               </div>
 
@@ -331,7 +322,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                 <div className="cart-totals__row">
                   <span className="cart-totals__label">Envío</span>
                   <span className="cart-totals__value cart-totals__value--strong">
-                    {formatMoney(deriveTransportePantalla(existingLog))}
+                    <MoneyAmount amount={deriveTransportePantalla(existingLog)} />
                   </span>
                 </div>
               )}
@@ -341,7 +332,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   <div className="cart-totals__row">
                     <span className="cart-totals__label">Descuento</span>
                     <span className="cart-totals__value cart-totals__value--strong">
-                      {formatMoney(existingLog.descuentoPantalla)}
+                      <MoneyAmount amount={Number(existingLog.descuentoPantalla ?? 0)} />
                     </span>
                   </div>
                 )}
@@ -350,7 +341,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                 <div className="cart-totals__row">
                   <span className="cart-totals__label">IVA</span>
                   <span className="cart-totals__value">
-                    {formatMoney(existingLog.ivaPantalla)}
+                    <MoneyAmount amount={Number(existingLog.ivaPantalla ?? 0)} />
                   </span>
                 </div>
               )}
@@ -360,7 +351,7 @@ const CarPage: React.FC<CarPageProps> = ({ payload }) => {
                   Total
                 </span>
                 <span className="cart-totals__value cart-totals__value--total">
-                  {formatMoney(existingLog?.totalEnPantalla)}
+                  <MoneyAmount amount={Number(existingLog?.totalEnPantalla ?? 0)} />
                 </span>
               </div>
 

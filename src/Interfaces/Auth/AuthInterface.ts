@@ -25,6 +25,8 @@ export interface AuthData {
   permiteMultiPago: boolean;
   permitePasarela: boolean;
   aplicaDescuento: boolean;
+  aplicaDescuentoUsuario: boolean;
+  aplicaOpciones: boolean;
   aplicaMultimoneda?: boolean;
 
   codReferenciaPCG?: string;
@@ -144,6 +146,8 @@ export interface AuthMe {
   permiteMultiPago: boolean;
   permitePasarela: boolean;
   aplicaDescuento: boolean;
+  aplicaDescuentoUsuario: boolean;
+  aplicaOpciones: boolean;
   aplicaMultimoneda?: boolean;
 
   codReferenciaPCG?: string;

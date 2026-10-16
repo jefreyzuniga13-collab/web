@@ -61,7 +61,7 @@ export default function CartPanelTotals({
             <p className="productTab-content-footer__title">Subtotal:</p>
 
             <span className="productTab-content-footer__value">
-              C$ {formatearDecimales(invoiceTotalsDto.subTotal)}
+              NIO {formatearDecimales(invoiceTotalsDto.subTotal)}
             </span>
           </div>
         )}
@@ -72,7 +72,7 @@ export default function CartPanelTotals({
             <p className="productTab-content-footer__title">Descuento:</p>
 
             <span className="productTab-content-footer__value">
-              C$ {formatearDecimales(invoiceTotalsDto.descuento)}
+              NIO {formatearDecimales(invoiceTotalsDto.descuento)}
             </span>
           </div>
         )}
@@ -82,7 +82,7 @@ export default function CartPanelTotals({
           <p className="productTab-content-footer__title">IVA:</p>
 
           <span className="productTab-content-footer__value">
-            C$ {formatearDecimales(invoiceTotalsDto.iva)}
+            NIO {formatearDecimales(invoiceTotalsDto.iva)}
           </span>
         </div>
       )}
@@ -92,7 +92,7 @@ export default function CartPanelTotals({
           <p className="productTab-content-footer__title">Transporte:</p>
 
           <span className="productTab-content-footer__value">
-            C$ {formatearDecimales(transporteVisible)}
+            NIO {formatearDecimales(transporteVisible)}
           </span>
         </div>
       )}
@@ -108,7 +108,7 @@ export default function CartPanelTotals({
           </p>
 
           <span className="productTab-content-footer__totalValue">
-            C$ {formatearDecimales(invoiceTotalsDto.total)}
+            NIO {formatearDecimales(invoiceTotalsDto.total)}
           </span>
         </div>
       )}

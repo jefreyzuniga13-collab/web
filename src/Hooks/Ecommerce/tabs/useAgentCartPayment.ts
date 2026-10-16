@@ -93,6 +93,7 @@ type UseAgentCartPaymentParams = {
   tasaCambio: number
   monedaPago?: MonedaCatalogo | null
   totalEnMonedaPago?: number
+  currency: Currencyto[]
 }
 
 export const useAgentCartPayment = ({
@@ -119,7 +120,8 @@ export const useAgentCartPayment = ({
   pagosMultiples = [],
   tasaCambio,
   monedaPago = null,
-  totalEnMonedaPago
+  totalEnMonedaPago,
+  currency
 }: UseAgentCartPaymentParams) => {
   const isRoot = useSelector(selectIsRoot)
   const activeCompanyName = useSelector(selectActiveCompanyName)
@@ -159,9 +161,17 @@ export const useAgentCartPayment = ({
       setDivisaLoading(true)
 
       try {
-        const fixed = await fetchDivisasPagoTipo({
-          codPago: getPaymentCodeByMethod(nextMethod),
+        const selectedCatalogItem = currency.find((item) => {
+          const code = safeStr(item.codPago).toUpperCase()
+          const description = safeStr(item.descripcion_Pago).toLowerCase()
+          if (nextMethod === "transfer") return code === "STR" || description.includes("transfer")
+          if (nextMethod === "manualCard") return code === "STA"
+          return false
+        })
+        const paymentItem = selectedCatalogItem ?? ({
+          codPago: getPaymentCodeByMethod(nextMethod)
         } as Currencyto)
+        const fixed = await fetchDivisasPagoTipo(paymentItem)
 
         setDivisaOpts(fixed)
         setDivisaSelected(
@@ -180,7 +190,7 @@ export const useAgentCartPayment = ({
         setDivisaLoading(false)
       }
     },
-    [setDivisaSelected]
+    [currency, setDivisaSelected]
   )
 
   const cargarDivisasPorMoneda = useCallback(

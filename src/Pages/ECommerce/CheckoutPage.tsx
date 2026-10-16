@@ -168,6 +168,12 @@ const CheckoutPage: React.FC = () => {
     InsertaFacturaAsync
   } = useInvoiceOrder()
 
+  // El cliente paga la tarjeta por pasarela (PAS); STA es captura manual del agente.
+  const currencyCliente = useMemo(
+    () => currency.filter((item) => safeStr(item.codPago).toUpperCase() !== "STA"),
+    [currency]
+  )
+
   const { fetchByContactId, UpdatedStatus } = useLogCart()
   const { CreateAsync: createLocationAsync, GetAsync, clientLocations } = useClientLocation()
   const { mutateAsync: completeFpiAsync } = useCompleteFpi()
@@ -1300,7 +1306,7 @@ const CheckoutPage: React.FC = () => {
               {!initializingCheckout && step === "currency" && (
                 <CurrencySection
                   step={step}
-                  currency={currency}
+                  currency={currencyCliente}
                   selectedCurrency={selectedCurrency}
                   handleSelectCurrency={handleSelectCurrency}
                   invoiceLoading={invoiceLoading}
@@ -1353,7 +1359,7 @@ const CheckoutPage: React.FC = () => {
                   multiPagoActivo={multiPagoActivo}
                   pagosMultiples={pagosMultiples}
                   setPagosMultiples={setPagosMultiples}
-                  currency={currency}
+                  currency={currencyCliente}
                   cargarDivisas={loadDivisaIfNeeded}
                   aplicaMultiMoneda={aplicaMultiMoneda}
                   monedas={catalogoMoneda.monedas}

@@ -28,13 +28,14 @@ type Props = {
  */
 export default function MoneyAmount({
   amount,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   symbol = "C\u200B$",
   className,
   children
 }: Props) {
   return (
     <span className={className ? `notranslate ${className}` : "notranslate"} translate="no">
-      {children ?? `${symbol} ${formatearDecimales(amount)}`}
+      {children ?? `NIO ${formatearDecimales(amount)}`}
     </span>
   )
 }

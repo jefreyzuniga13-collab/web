@@ -7,15 +7,17 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react"
-import { Tooltip } from "@mui/material"
+import { TextField, Tooltip } from "@mui/material"
 import { useSelector } from "react-redux"
 import { toast } from "react-toastify"
 import { MdCheckCircle, MdClear, MdDelete } from "react-icons/md"
+import { FaUserLock } from "react-icons/fa"
 import { GiPriceTag } from "react-icons/gi"
 
 import Input from "@/Components/Common/Input"
 import vacio from "@/assets/vacio.png"
-import { selectAplicaDescuento } from "@/Context/Slices/Auth/authSlice"
+import { selectAplicaDescuento, selectAplicaDescuentoUsuario, selectUserId } from "@/Context/Slices/Auth/authSlice"
+import { authService } from "@/Services/auth/AuthService"
 
 import { formatearDecimales } from "@/Utils/calcularIVA"
 import { safeNumber } from "@/Utils/ECommerce/utils"
@@ -118,6 +120,13 @@ export default function CartPanelProductStep({
   aplicarDescuentoProducto,
 }: Props) {
   const aplicaDescuento = useSelector(selectAplicaDescuento)
+  const aplicaDescuentoUsuario = useSelector(selectAplicaDescuentoUsuario)
+  const puedeSolicitarDescuento = aplicaDescuento && aplicaDescuentoUsuario
+  const userId = useSelector(selectUserId)
+  const [descuentoAutorizado, setDescuentoAutorizado] = useState(false)
+  const [mostrarCapturaClave, setMostrarCapturaClave] = useState(false)
+  const [claveDescuento, setClaveDescuento] = useState("")
+  const [validandoClave, setValidandoClave] = useState(false)
 
   const [productoSeleccionado, setProductoSeleccionado] =
     useState<ProductoSeleccionado | null>(null)
@@ -138,20 +147,43 @@ export default function CartPanelProductStep({
    * tiene deshabilitada esta funcionalidad.
    */
   useEffect(() => {
-    if (aplicaDescuento) return
+    setDescuentoAutorizado(false)
+    setMostrarCapturaClave(false)
+    setClaveDescuento("")
+    if (puedeSolicitarDescuento) return
 
     descuentoLockRef.current = false
     setProductoSeleccionado(null)
     setDescuentoInput("")
     setAplicandoDescuento(false)
-  }, [aplicaDescuento])
+  }, [puedeSolicitarDescuento, userId])
+
+  const confirmarClaveDescuento = useCallback(async () => {
+    if (!claveDescuento || validandoClave) return
+    setValidandoClave(true)
+    try {
+      const response = await authService.confirmPasswordAsync(claveDescuento)
+      if (!response.success || !response.data) {
+        toast.error(response.message || "La contraseña no es válida.")
+        return
+      }
+      setDescuentoAutorizado(true)
+      setMostrarCapturaClave(false)
+      setClaveDescuento("")
+      toast.success("Clave confirmada para una aplicación de descuento.")
+    } catch {
+      toast.error("No se pudo validar la contraseña.")
+    } finally {
+      setValidandoClave(false)
+    }
+  }, [claveDescuento, validandoClave])
 
   const seleccionarProducto = useCallback(
     (
       key: string,
       detail: AplicarDescuentoProductoParams["detalle"]
     ) => {
-      if (!aplicaDescuento || aplicandoDescuento) return
+      if (!puedeSolicitarDescuento || !descuentoAutorizado || aplicandoDescuento) return
 
       if (detail.permiteDescuento !== "S") {
         toast.info("Este producto no permite descuento.")
@@ -175,7 +207,7 @@ export default function CartPanelProductStep({
        */
       setDescuentoInput("")
     },
-    [aplicaDescuento, aplicandoDescuento]
+    [puedeSolicitarDescuento, descuentoAutorizado, aplicandoDescuento]
   )
 
   const handleProductKeyDown = useCallback(
@@ -264,7 +296,7 @@ export default function CartPanelProductStep({
    */
   const handleDiscountBlur = useCallback(
     async (event: FocusEvent<HTMLInputElement>) => {
-      if (!aplicaDescuento || descuentoLockRef.current) return
+      if (!puedeSolicitarDescuento || !descuentoAutorizado || descuentoLockRef.current) return
 
       const input = event.currentTarget
       const nextTarget =
@@ -333,10 +365,13 @@ export default function CartPanelProductStep({
       } finally {
         descuentoLockRef.current = false
         setAplicandoDescuento(false)
+        setDescuentoAutorizado(false)
+        setDescuentoInput("")
       }
     },
     [
-      aplicaDescuento,
+      puedeSolicitarDescuento,
+      descuentoAutorizado,
       aplicarDescuentoGlobal,
       aplicarDescuentoProducto,
       descuentoInput,
@@ -427,11 +462,13 @@ export default function CartPanelProductStep({
             )
 
             const permiteDescuento =
-              aplicaDescuento &&
+              puedeSolicitarDescuento &&
+              descuentoAutorizado &&
               detail.permiteDescuento === "S"
 
             const estaSeleccionado =
-              aplicaDescuento &&
+              puedeSolicitarDescuento &&
+              descuentoAutorizado &&
               productoSeleccionado?.key === productoKey
 
             const porcentajeActual =
@@ -446,7 +483,7 @@ export default function CartPanelProductStep({
 
             const className = [
               "carPCPanel-content__list",
-              aplicaDescuento
+              puedeSolicitarDescuento && descuentoAutorizado
                 ? permiteDescuento
                   ? "carPCPanel-content__list--selectable"
                   : "carPCPanel-content__list--discountDisabled"
@@ -483,7 +520,7 @@ export default function CartPanelProductStep({
                     : undefined
                 }
                 aria-disabled={
-                  aplicaDescuento
+                  puedeSolicitarDescuento
                     ? !permiteDescuento ||
                       aplicandoDescuento
                     : undefined
@@ -633,7 +670,69 @@ export default function CartPanelProductStep({
         })}
       </div>
 
-      {aplicaDescuento && (
+      {puedeSolicitarDescuento && !descuentoAutorizado && (
+        <div className="carPCPanel-stepContent__descuento">
+          {!mostrarCapturaClave ? (
+            <button
+              type="button"
+              className="carPCPanel-stepContent__discountAuthorize"
+              aria-label="Autorizar un descuento"
+              onClick={() => setMostrarCapturaClave(true)}
+            >
+              <FaUserLock aria-hidden="true" />
+              <span>Autorizar descuento</span>
+            </button>
+          ) : (
+            <form
+              className="carPCPanel-stepContent__discountAuth"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void confirmarClaveDescuento()
+              }}
+            >
+              <div className="carPCPanel-stepContent__discountAuthHeading">
+                <FaUserLock aria-hidden="true" />
+                <div>
+                  <strong>Autorizar descuento</strong>
+                  <span>Ingresa tu contraseña para aplicar un descuento.</span>
+                </div>
+              </div>
+              <TextField
+                autoFocus
+                fullWidth
+                size="small"
+                type="password"
+                label="Contraseña del usuario"
+                value={claveDescuento}
+                autoComplete="current-password"
+                onChange={(event) => setClaveDescuento(event.target.value)}
+              />
+              <div className="carPCPanel-stepContent__discountAuthActions">
+                <button
+                  type="button"
+                  className="carPCPanel-stepContent__discountAuthCancel"
+                  disabled={validandoClave}
+                  onClick={() => {
+                    setMostrarCapturaClave(false)
+                    setClaveDescuento("")
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="carPCPanel-stepContent__discountAuthSubmit"
+                  disabled={!claveDescuento || validandoClave}
+                >
+                  {validandoClave ? "Validando…" : "Confirmar clave"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {puedeSolicitarDescuento && descuentoAutorizado && (
         <div
           className={[
             "carPCPanel-stepContent__descuento",

@@ -44,7 +44,8 @@ export default function UserForm({
     roleIds: [] as number[],
     sendWelcomeEmail: false,
     incognitoMode: false,
-    codReferenciaPCG: ''
+    codReferenciaPCG: '',
+    aplicaDescuento: false
   })
 
 
@@ -66,7 +67,8 @@ export default function UserForm({
       roleIds: initialData.roles.map(r => r.roleId),
       sendWelcomeEmail: false,
       incognitoMode: initialData.incognitoMode,
-      codReferenciaPCG: initialData.codReferenciaPCG ?? ''
+      codReferenciaPCG: initialData.codReferenciaPCG ?? '',
+      aplicaDescuento: initialData.aplicaDescuento ?? false
     });
   }
 }, [initialData]);
@@ -131,6 +133,7 @@ export default function UserForm({
     payload.append('sendWelcomeEmail', String(formData.sendWelcomeEmail))
     payload.append('incognitoMode', String(formData.incognitoMode))
     payload.append('codReferenciaPCG', String(formData.codReferenciaPCG))
+    payload.append('aplicaDescuento', String(formData.aplicaDescuento))
     formData.roleIds.forEach(id => payload.append('roleIds', String(id)))
     if (selectedFile) payload.append('imageFile', selectedFile)
     onSubmit(payload)
@@ -337,6 +340,17 @@ export default function UserForm({
                 Usuario activo
               </label>
             )}
+
+            <label>
+              <input
+                type="checkbox"
+                name="aplicaDescuento"
+                checked={formData.aplicaDescuento}
+                onChange={handleCheckboxChange}
+                disabled={isViewing}
+              />
+              Puede aplicar descuentos (solicita contraseña)
+            </label>
 
             {/* Modo incognito. false, no se envia en en los mensajes al cliente el nombre */}
               <label>

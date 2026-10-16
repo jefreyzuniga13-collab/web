@@ -40,7 +40,7 @@ export default function ManualCardPaymentSection({
   onChange,
   disabled = false,
   totalPagar,
-  simboloMoneda = "C$",
+  simboloMoneda = "NIO",
 }: Props) {
   /**
    * Actualiza un campo específico del formulario.

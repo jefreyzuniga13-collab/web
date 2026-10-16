@@ -4,6 +4,7 @@ export interface User {
   fullName: string;
   email: string;
   isActive: boolean;
+  aplicaDescuento: boolean;
   companyId: number;
   phone: string | null;
   identifier: string | null;
@@ -53,6 +54,7 @@ export interface CreateUserRequest {
   sendWelcomeEmail?: boolean;
   incognitoMode?: boolean
   codReferenciaPCG? : string
+  aplicaDescuento?: boolean
 }
 
 export interface UpdateUserRequest {
@@ -67,6 +69,7 @@ export interface UpdateUserRequest {
   roleIds: number[];
   incognitoMode?: boolean
     codReferenciaPCG? : string
+  aplicaDescuento?: boolean
 }
 
 export interface UserHistoryItem {

@@ -204,6 +204,14 @@ class AuthService {
     return data.data
   }
 
+  async confirmPasswordAsync(password: string): Promise<ApiResponse<boolean>> {
+    const { data } = await api.post<ApiResponse<boolean>>(
+      "/Auth/confirm-password",
+      { password },
+    )
+    return data
+  }
+
   private buildLoginPayload(
     request: LoginRequest
   ): LoginRequest {

@@ -292,11 +292,12 @@ export async function procesarVentaCheckout({
       )
     )
 
+    // PENDIENTE: PAGO.
     if (usarPdfPagoElectronico && transactionIdentifier) {
       const pdfPagoElectronico = generatePagoElectronicoPDFFile({
         orderFac: resPrintPDF.data,
         transactionIdentifier,
-        telefono: "+505 7545 4150",
+        telefono: existingLog?.companyPhone ?? "",
         existingLog
       })
 

@@ -45,6 +45,8 @@ interface AuthState {
 
   //Parametrizar el aplica descuento
   aplicaDescuento: boolean;
+  aplicaDescuentoUsuario: boolean;
+  aplicaOpciones: boolean;
 
   aplicaMultimoneda: boolean;
 
@@ -97,6 +99,8 @@ const initialState: AuthState = {
 
   permitePasarela: false,
   aplicaDescuento: false,
+  aplicaDescuentoUsuario: false,
+  aplicaOpciones: false,
   aplicaMultimoneda: false,
 
   codReferenciaPCG: "",
@@ -181,6 +185,8 @@ const limpiarSesion = (
   state.permitePasarela = false;
 
   state.aplicaDescuento = false;
+  state.aplicaDescuentoUsuario = false;
+  state.aplicaOpciones = false;
   state.aplicaMultimoneda = false;
 
   state.codReferenciaPCG = "";
@@ -231,6 +237,10 @@ const aplicarSesion = (
 
   state.aplicaDescuento =
     payload.aplicaDescuento ?? false;
+  state.aplicaDescuentoUsuario =
+    payload.aplicaDescuentoUsuario ?? false;
+  state.aplicaOpciones =
+    payload.aplicaOpciones ?? false;
 
   state.aplicaMultimoneda =
     payload.aplicaMultimoneda ?? false;
@@ -439,6 +449,14 @@ export const selectAplicaMultimoneda = (
 export const selectAplicaDescuento = (
   state: RootState,
 ) => state.auth.aplicaDescuento;
+
+export const selectAplicaDescuentoUsuario = (
+  state: RootState,
+) => state.auth.aplicaDescuentoUsuario;
+
+export const selectAplicaOpciones = (
+  state: RootState,
+) => state.auth.aplicaOpciones;
 
 export const selectCodReferenciaPCG = (
   state: RootState,

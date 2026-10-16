@@ -56,6 +56,7 @@ type Props = {
   onChangeMoneda?: (moneda: MonedaCatalogo) => void;
   tasaCambio?: number;
   monedaLoading?: boolean;
+  agentPaymentFlow?: boolean;
 };
 
 const crearIdPago = () => {
@@ -109,6 +110,7 @@ export default function MultiPagoSection({
   onChangeMoneda,
   tasaCambio = tasaCambioSistema,
   monedaLoading = false,
+  agentPaymentFlow = false,
 }: Props) {
   const [selectedCurrency, setSelectedCurrency] = useState<Currencyto | null>(
     null,
@@ -128,8 +130,12 @@ export default function MultiPagoSection({
   );
 
   const formasPagoMultipago = useMemo(() => {
-    return filtrarFormasPagoMultipago(currency);
-  }, [currency]);
+    if (!agentPaymentFlow) return filtrarFormasPagoMultipago(currency);
+    return currency.filter((item) => {
+      const code = safeStr(item.codPago).toUpperCase();
+      return code === "1" || code === "STR" || code === "STA";
+    });
+  }, [agentPaymentFlow, currency]);
 
   const clavesUsadas = useMemo(() => {
     return new Set(
@@ -149,7 +155,7 @@ export default function MultiPagoSection({
       const metodo = obtenerTipoPagoDesdeMoneda(item);
       return !clavesUsadas.has(clavePagoMoneda(metodo, monedaId));
     });
-  }, [clavesUsadas, formasPagoMultipago, monedaSeleccionada?.id]);
+  }, [clavesUsadas, formasPagoMultipago, monedaSeleccionada?.id, agentPaymentFlow]);
 
   const pagado = useMemo(() => {
     return totalPagado(pagos, tasaCambio);

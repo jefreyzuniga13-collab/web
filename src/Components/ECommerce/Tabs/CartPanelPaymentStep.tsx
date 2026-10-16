@@ -6,10 +6,6 @@ import {
 
 import PaymentMethodComponent from "@/Components/ECommerce/Payment/PaymentMethodComponent"
 
-import {
-  AGENT_PAYMENT_METHODS
-} from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
-
 import type {
   CheckoutPaymentMethod,
   ManualCardFormState
@@ -383,7 +379,9 @@ export default function CartPanelPaymentStep({
         setStep={() => onBack()}
         method={method}
         setMethod={setMethod}
-        allowedMethods={AGENT_PAYMENT_METHODS}
+        allowedMethods={[]}
+        paymentOptions={currency}
+        agentPaymentFlow
         transpCost={transpCost}
         cashAmount={cashAmount}
         setCashAmount={setCashAmount}

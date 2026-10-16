@@ -397,7 +397,7 @@ const ProductPCGTabComponent = ({
               </Button>
             </span>
           </Tooltip>
-
+          
           {prod.tieneOpcion && (
             <Tooltip title="Enviar completo">
               <span>

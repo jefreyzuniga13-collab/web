@@ -191,7 +191,7 @@ export const calcularMontosPago = ({
 export const simboloMoneda = (moneda?: MonedaCatalogo | null): string => {
   if (moneda?.simbolo) {
     // Evita que "C$" se traduzca/interprete como dólar canadiense.
-    return moneda.simbolo === "C$" ? "C\u200B$" : moneda.simbolo
+    return moneda.simbolo === "C$" ? "NIO" : 'NIO'
   }
   if (esMonedaDolar(moneda)) return "U$"
   return "C\u200B$"

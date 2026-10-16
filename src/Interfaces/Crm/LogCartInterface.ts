@@ -42,6 +42,9 @@ export interface LogCartResponseDto {
    */
   companyName?: string | null
 
+  /** Teléfono de atención de la empresa asociado al carrito. */
+  companyPhone?: string | null
+
   /**
    * Usuario o agente que creó el carrito.
    */

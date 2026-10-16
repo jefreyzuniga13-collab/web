@@ -20,7 +20,7 @@ interface Props {
 
 export default function TransferPaymentSection({
   totalPagar,
-  simboloMoneda = "C$",
+  simboloMoneda = "NIO",
   transfer,
   setTransfer,
   transferRefOk,

@@ -1,6 +1,7 @@
 import type {
   CheckoutPaymentMethod
 } from "@/Interfaces/Ecommerce/PaymentCheckoutInterface"
+import type { Currencyto } from "@/Interfaces/Ecommerce/InvoiceOrderInterface"
 
 import {
   CHECKOUT_PAYMENT_METHOD_LABEL
@@ -34,14 +35,44 @@ type Props = {
    * o mientras se procesa una acción.
    */
   disabled?: boolean
+  options?: Currencyto[]
+  resolveMethod?: (option: Currencyto) => CheckoutPaymentMethod | null
 }
 
 export default function PaymentMethodSelector({
   value,
   methods,
   onChange,
-  disabled = false
+  disabled = false,
+  options,
+  resolveMethod
 }: Props) {
+  if (options && resolveMethod) {
+    return (
+      <div className="checkout-methods-list">
+        {options.map((option) => {
+          const method = resolveMethod(option)
+          const isActive = !!method && value === method
+
+          return (
+            <button
+              key={`${option.codPago}-${option.descripcion_Pago}`}
+              type="button"
+              disabled={disabled || !method}
+              onClick={() => method && onChange(method)}
+              className={isActive ? "checkout-method checkout-method--active" : "checkout-method"}
+            >
+              <span className="checkout-radio" aria-hidden="true">
+                <span className={isActive ? "checkout-radio__dot checkout-radio__dot--active" : "checkout-radio__dot"} />
+              </span>
+              <span className="checkout-method__label">{option.descripcion_Pago}</span>
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div className="checkout-methods-list">
       {methods.map((method) => {

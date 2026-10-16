@@ -225,6 +225,8 @@ interface Props {
    * Oculta el título interno cuando el shell público ya muestra el hero.
    */
   hideTitle?: boolean;
+  paymentOptions?: Currencyto[];
+  agentPaymentFlow?: boolean;
 }
 
 export default function PaymentMethodComponent({
@@ -269,6 +271,8 @@ export default function PaymentMethodComponent({
   tasaCambio,
   monedaLoading = false,
   hideTitle = false,
+  paymentOptions,
+  agentPaymentFlow = false,
 }: Props) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -455,6 +459,16 @@ export default function PaymentMethodComponent({
         <PaymentMethodSelector
           value={method}
           methods={allowedMethods}
+          options={paymentOptions?.filter((option) =>
+            !agentPaymentFlow || safeStr(option.codPago).toUpperCase() !== "PAS"
+          )}
+          resolveMethod={(option) => {
+            const code = safeStr(option.codPago).toUpperCase()
+            if (code === "1") return "cash"
+            if (code === "STR") return "transfer"
+            if (code === "STA") return "manualCard"
+            return null
+          }}
           onChange={(nextMethod) => {
             setMethod(nextMethod);
             setDivisaSelected(null);
@@ -580,6 +594,7 @@ export default function PaymentMethodComponent({
             onChangeMoneda={onChangeMoneda}
             tasaCambio={tasaCambio}
             monedaLoading={monedaLoading}
+            agentPaymentFlow={agentPaymentFlow}
           />
         ) : (
           <p className="checkout-payment-hint">
