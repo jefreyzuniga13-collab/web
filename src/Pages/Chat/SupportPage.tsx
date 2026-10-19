@@ -297,7 +297,27 @@ const SupportPage: React.FC = () => {
       convId &&
       !convHook.conversations.some((item) => item.conversationId === convId)
     ) {
+      const newConversationForSameContact =
+        activeConversation?.clientContactId != null &&
+        activeConversation.createdAt != null &&
+        convHook.conversations.some(
+          (item) => {
+            return (
+              item.clientContactId === activeConversation.clientContactId &&
+              item.conversationId !== convId &&
+              new Date(item.createdAt).getTime() >
+                new Date(activeConversation.createdAt).getTime()
+            );
+          },
+        );
+
       setDetailToggle(false);
+
+      if (newConversationForSameContact) {
+        setConvId(null);
+        setConversationSnapshot(null);
+        setContactDetailToggle(false);
+      }
 
       if (chatHistoryPushedRef.current) {
         window.history.back();
@@ -307,9 +327,13 @@ const SupportPage: React.FC = () => {
     }
   }, [
     closeMobileChat,
+    activeConversation?.clientContactId,
     convId,
     convHook.conversations,
     convHook.loading,
+    setContactDetailToggle,
+    setConvId,
+    setConversationSnapshot,
     setDetailToggle,
   ]);
 
