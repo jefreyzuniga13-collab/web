@@ -18,10 +18,9 @@ import type {
   MouseEvent,
 } from "react"
 import Tooltip from "@mui/material/Tooltip"
-import { IoMdSend } from "react-icons/io"
 import { MdInventory } from "react-icons/md"
-import { CirclePlus, CircleMinus, Send } from "lucide-react"
-import { FaShoppingCart } from "react-icons/fa"
+import { CirclePlus, CircleMinus, ClipboardList } from "lucide-react"
+import { FaFileInvoiceDollar, FaShoppingCart } from "react-icons/fa"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { toast } from "react-toastify"
 
@@ -224,6 +223,21 @@ const ProductPCGTabComponent = ({
     ]
   )
 
+  const handleQuoteClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      event.preventDefault()
+
+      if (prod.tieneOpcion) {
+        handleOpenDetail()
+        return
+      }
+
+      void handleSendMessage(event, false)
+    },
+    [handleOpenDetail, handleSendMessage, prod.tieneOpcion]
+  )
+
   const disabledCartButton =
     cartLoading ||
     simpleQuantity <= 0 ||
@@ -365,7 +379,7 @@ const ProductPCGTabComponent = ({
                 type="button"
                 variant="secondary"
                 onClick={handleCartButtonClick}
-                className="productTab-simpleAddBar__btn simpleAddBar-secondary"
+                className="productTab-simpleAddBar__btn simpleAddBar-cart"
                 disabled={disabledCartButton}
               >
                 <FaShoppingCart fontSize={20} />
@@ -373,33 +387,32 @@ const ProductPCGTabComponent = ({
             </span>
           </Tooltip>
 
-          <Tooltip title="Enviar principal">
+          <Tooltip title="Enviar cotización">
             <span>
               <Button
                 type="button"
                 variant="secondary"
                 disabled={
-                  sending ||
-                  conversationId <= 0
+                  prod.tieneOpcion
+                    ? false
+                    : sending || conversationId <= 0
                 }
-                onClick={(event) =>
-                  void handleSendMessage(event, false)
-                }
-                className="productTab-simpleAddBar__btn simpleAddBar-send"
+                onClick={handleQuoteClick}
+                className="productTab-simpleAddBar__btn simpleAddBar-quote"
               >
-                {sending ? (
+                {sending && !prod.tieneOpcion ? (
                   <AiOutlineLoading3Quarters
                     fontSize={20}
                   />
                 ) : (
-                  <Send size={18} strokeWidth={2.2} />
+                  <FaFileInvoiceDollar fontSize={18} />
                 )}
               </Button>
             </span>
           </Tooltip>
           
           {prod.tieneOpcion && (
-            <Tooltip title="Enviar completo">
+            <Tooltip title="Enviar resumen del producto">
               <span>
                 <Button
                   type="button"
@@ -411,14 +424,14 @@ const ProductPCGTabComponent = ({
                   onClick={(event) =>
                     void handleSendMessage(event, true)
                   }
-                  className="productTab-simpleAddBar__btn simpleAddBar-send"
+                  className="productTab-simpleAddBar__btn simpleAddBar-options"
                 >
                   {sending ? (
                     <AiOutlineLoading3Quarters
                       fontSize={20}
                     />
                   ) : (
-                    <IoMdSend fontSize={20} />
+                    <ClipboardList size={18} strokeWidth={2.2} />
                   )}
                 </Button>
               </span>

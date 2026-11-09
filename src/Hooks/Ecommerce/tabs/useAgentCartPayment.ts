@@ -669,7 +669,12 @@ export const useAgentCartPayment = ({
               safeStr(contact.email),
 
             telefonoCte:
-              telefonoContacto
+              telefonoContacto,
+
+            identificacion:
+              safeStr(persistedLog?.identificacion) ||
+              safeStr(logForInvoice?.identificacion) ||
+              safeStr(existingLog.identificacion)
           })
 
         const payload: Payload = {

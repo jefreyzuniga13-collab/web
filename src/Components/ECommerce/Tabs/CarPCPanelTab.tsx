@@ -88,6 +88,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const [selectedAddressId, setSelectedAddressId] =
     useState<number | null>(null)
   const [invoiceName, setInvoiceName] = useState("")
+  const [identificacion, setIdentificacion] = useState("")
   const [observation, setObservation] = useState("")
   const [currentLog, setCurrentLog] =
     useState<LogCartResponseDto | null>(null)
@@ -297,6 +298,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     setSelectedAddressId(null)
     setInvoiceName("")
+    setIdentificacion("")
     setObservation("")
     setCurrentLog(null)
 
@@ -617,6 +619,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         totals,
         observation,
         invoiceName,
+        identificacion,
         onlyTextAddress
       })
 
@@ -634,6 +637,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         subTotal: req.subTotal ?? 0,
         observacion: req.observacion ?? "",
         invoiceName: req.invoiceName ?? "",
+        identificacion: req.identificacion ?? "",
         onlyTextAddress: req.onlyTextAddress ?? false
       } as LogCartResponseDto
 
@@ -648,6 +652,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       conversationId,
       getAddressPayload,
       invoiceName,
+      identificacion,
       observation,
       onlyTextAddress,
       removeDraft,
@@ -676,6 +681,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           totals: null,
           observation,
           invoiceName,
+          identificacion,
           onlyTextAddress
         })
 
@@ -688,6 +694,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         transCost: addressPayload.transCost,
         observacion: observation,
         invoiceName: req.invoiceName ?? "",
+        identificacion: req.identificacion ?? "",
         onlyTextAddress: req.onlyTextAddress ?? false
       } as LogCartResponseDto)
     },
@@ -695,6 +702,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         contactId,
         conversationId,
         invoiceName,
+        identificacion,
         observation,
         onlyTextAddress,
         transCost,
@@ -1004,6 +1012,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       lines.push(`👤 A nombre de: ${invoiceName.trim()}`)
     }
 
+    if (identificacion.trim().length > 0) {
+      lines.push(`🪪 Identificación: ${identificacion.trim()}`)
+    }
+
     if (onlyTextAddress) {
       lines.push("📍 Dirección: el cliente la escribirá en el checkout")
     }
@@ -1052,7 +1064,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
 
     if (retiraSucursal === "S") {
       if (iva > 0) {
-        lines.push(`IVA: ${formatCurrencyNIO(iva)}`)
+        lines.push(`🧾 IVA: ${formatCurrencyNIO(iva)}`)
       }
 
       lines.push(`*🪙 Total:* ${formatCurrencyNIO(total)}`)
@@ -1068,7 +1080,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     const envio = safePositiveNumber(effectiveShipping)
 
     if (iva > 0) {
-      lines.push(`IVA: ${formatCurrencyNIO(iva)}`)
+      lines.push(`🧾 IVA: ${formatCurrencyNIO(iva)}`)
     }
 
     if (envio > 0) {
@@ -1153,7 +1165,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           transCost: effectiveShipping,
           addressName: addressName.length > 0 ? addressName : null,
           addressText: addressText.length > 0 ? addressText : null,
-          finalTotal: totals.total
+          finalTotal: totals.total,
+          identificacion
         },
         currentLog?.branchName ?? ""
       )
@@ -1197,7 +1210,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         ecommerceUserId,
         email: contact.email ?? "",
         fullName: invoiceName.trim() || (contact.fullName ?? ""),
-        contactId
+        contactId: safeNumber(existingLog.contactId, contactId)
       }
 
       if (returnLink) {
@@ -1327,6 +1340,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     }
 
     setInvoiceName(String(draftWithInvoiceName.invoiceName ?? "").trim())
+    setIdentificacion(String(draft.identificacion ?? "").trim())
     setAddDescription(draft.addDescription)
     setRetiraSucursal(draft.retiraSucursal)
     setOnlyTextAddress(Boolean(draft.onlyTextAddress))
@@ -1352,6 +1366,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       transCost: safePositiveNumber(transCost),
       selectedAddressId,
       invoiceName,
+      identificacion,
       observation,
       onlyTextAddress
     } as DraftState
@@ -1364,6 +1379,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     transCost,
     selectedAddressId,
     invoiceName,
+    identificacion,
     observation,
     onlyTextAddress,
     writeDraft
@@ -1552,6 +1568,20 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
         setInvoiceName("")
       }
 
+      const identificacionFromDraft = String(draft?.identificacion ?? "").trim()
+      const identificacionFromLog = String(
+        (log as LogCartResponseDto & { identificacion?: string | null })
+          ?.identificacion ?? ""
+      ).trim()
+
+      if (identificacionFromDraft) {
+        setIdentificacion(identificacionFromDraft)
+      } else if (identificacionFromLog) {
+        setIdentificacion(identificacionFromLog)
+      } else {
+        setIdentificacion("")
+      }
+
       if (draft?.observation?.trim()) {
         setObservation(draft.observation)
       } else if (String(log?.observacion ?? "").trim().length > 0) {
@@ -1674,6 +1704,8 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
           <CartPanelDeliveryStep
             invoiceName={invoiceName}
             setInvoiceName={setInvoiceName}
+            identificacion={identificacion}
+            setIdentificacion={setIdentificacion}
             observation={observation}
             setObservation={setObservation}
             addDescription={addDescription}

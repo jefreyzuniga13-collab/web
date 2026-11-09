@@ -1,22 +1,24 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react"
 import { BsPersonBoundingBox } from "react-icons/bs"
+import { FaIdCard } from "react-icons/fa"
 import { FaRegNoteSticky } from "react-icons/fa6"
 import { IoStorefrontOutline } from "react-icons/io5"
 import { TbCoins } from "react-icons/tb"
-
 import Input from "@/Components/Common/Input"
 import { Label } from "@/Components/Common/Label"
 import { Textarea } from "@/Components/Common/Textarea"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
-
 import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
-
 import { safePositiveNumber, limpiarMontoTexto } from "@/Utils/ECommerce/utils"
 
 interface Props {
   invoiceName: string
   setInvoiceName: (value: string) => void
+
+  identificacion: string
+  setIdentificacion: (value: string) => void
 
   observation: string
   setObservation: (value: string) => void
@@ -58,6 +60,8 @@ interface Props {
 export default function CartPanelDeliveryStep({
   invoiceName,
   setInvoiceName,
+  identificacion,
+  setIdentificacion,
   observation,
   setObservation,
   addDescription,
@@ -145,6 +149,20 @@ export default function CartPanelDeliveryStep({
               value={invoiceName}
               maxLength={200}
               onChange={(event) => setInvoiceName(event.target.value)}
+            />
+
+            <Label htmlFor="identificacion" icon={FaIdCard}>
+              RUC o cédula
+            </Label>
+
+            <Input
+              type="text"
+              id="identificacion"
+              name="identificacion"
+              placeholder="Identificación"
+              value={identificacion}
+              maxLength={40}
+              onChange={(event) => setIdentificacion(event.target.value)}
             />
 
             <Label htmlFor="observation" icon={FaRegNoteSticky}>

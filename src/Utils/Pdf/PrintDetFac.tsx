@@ -443,6 +443,19 @@ export const generateOrdeFacPDFFile = (
     maxWidth: usableWidth
   })
 
+  const identificacion = safePdfText(existingLog?.identificacion)
+
+  if (identificacion) {
+    infoY = drawInfoRow({
+      doc,
+      label: "Identificación:",
+      value: identificacion,
+      x: marginX,
+      y: infoY,
+      maxWidth: usableWidth
+    })
+  }
+
   infoY = drawInfoRow({
     doc,
     label: "Vendedor:",

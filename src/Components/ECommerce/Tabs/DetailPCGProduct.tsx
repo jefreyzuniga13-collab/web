@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { FaShoppingCart } from "react-icons/fa"
-import { IoMdSend } from "react-icons/io"
+import { FaFileInvoiceDollar, FaShoppingCart } from "react-icons/fa"
 import { MdInventory } from "react-icons/md"
-import { Check, CircleMinus, CirclePlus, Send } from "lucide-react"
+import { Check, CircleMinus, CirclePlus, ClipboardList } from "lucide-react"
 import Tooltip from "@mui/material/Tooltip"
 import { AiOutlineLoading3Quarters } from "react-icons/ai"
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md"
 import { toast } from "react-toastify"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useSelector } from "react-redux"
 import Button from "@/Components/Common/Button"
 import ListSkeleton from "@/Components/Common/ListSkeleton"
@@ -704,21 +704,45 @@ const DetailPCGProduct = ({
     async (includeModifiers: boolean) => {
       if (sendLockRef.current) return
 
+      if (!includeModifiers && detail.tieneOpcion && !validateRequiredModifiers()) {
+        return
+      }
+
       sendLockRef.current = true
 
       try {
+        const quoteOptions = includeModifiers
+          ? undefined
+          : buildModifierOptionsPayload().map((option) => ({
+              group: option.descripcionMod,
+              name: option.descripcionOp,
+              qty: option.cantidad,
+              price: option.precioVenta,
+            }))
+
         await sendProductMessage({
           product: detail,
           conversationId,
           observation: observacion,
           includeModifiers,
           codPrecio: codPrecioActivo || "01",
+          quantity: clampQty(cantidad),
+          quoteOptions,
         })
       } finally {
         sendLockRef.current = false
       }
     },
-    [codPrecioActivo, conversationId, detail, observacion, sendProductMessage]
+    [
+      buildModifierOptionsPayload,
+      cantidad,
+      codPrecioActivo,
+      conversationId,
+      detail,
+      observacion,
+      sendProductMessage,
+      validateRequiredModifiers,
+    ]
   )
 
   const handleToggleSelection = useCallback(() => {
@@ -989,7 +1013,7 @@ const DetailPCGProduct = ({
           <Button
             type="button"
             variant="secondary"
-            className="productTab-simpleAddBar__btn simpleAddBar-secondary"
+            className="productTab-simpleAddBar__btn simpleAddBar-cart"
             onClick={handleAddToCart}
             disabled={addCartDisabled}
             title={
@@ -1005,38 +1029,38 @@ const DetailPCGProduct = ({
             )}
           </Button>
 
-          <Tooltip title="Enviar principal">
+          <Tooltip title="Enviar cotización">
             <span>
               <Button
                 type="button"
                 variant="secondary"
-                className="productTab-simpleAddBar__btn simpleAddBar-send"
+                className="productTab-simpleAddBar__btn simpleAddBar-quote"
                 disabled={actionsDisabled}
                 onClick={() => void handleSendMessage(false)}
               >
                 {actionsDisabled ? (
                   <AiOutlineLoading3Quarters fontSize={20} />
                 ) : (
-                  <Send size={18} strokeWidth={2.2} />
+                  <FaFileInvoiceDollar fontSize={18} />
                 )}
               </Button>
             </span>
           </Tooltip>
 
           {detail.tieneOpcion && (
-            <Tooltip title="Enviar completo">
+            <Tooltip title="Enviar resumen del producto">
               <span>
                 <Button
                   type="button"
                   variant="secondary"
-                  className="productTab-simpleAddBar__btn simpleAddBar-send"
+                  className="productTab-simpleAddBar__btn simpleAddBar-options"
                   disabled={actionsDisabled}
                   onClick={() => void handleSendMessage(true)}
                 >
                   {actionsDisabled ? (
                     <AiOutlineLoading3Quarters fontSize={20} />
                   ) : (
-                    <IoMdSend fontSize={20} />
+                    <ClipboardList size={18} strokeWidth={2.2} />
                   )}
                 </Button>
               </span>

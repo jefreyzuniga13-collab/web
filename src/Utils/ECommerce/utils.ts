@@ -144,6 +144,7 @@ export const normalizeDraft = (raw: string | null): DraftState | null => {
 
     return {
       invoiceName: safeText(parsed.invoiceName),
+      identificacion: safeText(parsed.identificacion),
       addDescription: safeText(parsed.addDescription),
       retiraSucursal: parsed.retiraSucursal === "S" ? "S" : "N",
       transCost: safePositiveNumber(parsed.transCost),
@@ -210,6 +211,7 @@ export const buildLogUpdateRequest = ({
   totals,
   observation,
   invoiceName,
+  identificacion,
   onlyTextAddress
 }: BuildLogUpdateParams): LogCartUpdateRequestDto => {
   const totalEnPantalla =
@@ -252,6 +254,17 @@ export const buildLogUpdateRequest = ({
     ) ||
     null
 
+  const identificacionFinal =
+    identificacion !== undefined
+      ? safeText(identificacion)
+      : safeText(
+          getLogValue<string | null>(
+            log,
+            ["identificacion", "Identificacion"],
+            null
+          )
+        )
+
   const onlyTextAddressFinal =
     onlyTextAddress ??
     getLogValue<boolean>(
@@ -285,6 +298,7 @@ export const buildLogUpdateRequest = ({
     exonerado: getLogValue<any>(log, ["exonerado", "Exonerado"], null),
     observacion: observation ?? "",
     invoiceName: invoiceNameFinal,
+    identificacion: identificacionFinal,
     onlyTextAddress: onlyTextAddressFinal,
 
     destinationBranchCode: getLogValue<any>(
@@ -320,6 +334,17 @@ export const toLogCartFormValues = (
     ) ||
     null
 
+  const identificacionFinal =
+    req.identificacion !== undefined && req.identificacion !== null
+      ? safeText(req.identificacion)
+      : safeText(
+          getLogValue<string | null>(
+            log,
+            ["identificacion", "Identificacion"],
+            null
+          )
+        )
+
   const onlyTextAddressFinal =
     req.onlyTextAddress ??
     getLogValue<boolean>(
@@ -346,6 +371,7 @@ export const toLogCartFormValues = (
     ),
 
     invoiceName: invoiceNameFinal,
+    identificacion: identificacionFinal,
     onlyTextAddress: onlyTextAddressFinal
   } as LogCartFormValues
 }

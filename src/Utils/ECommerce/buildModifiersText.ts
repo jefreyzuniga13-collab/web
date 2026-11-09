@@ -25,15 +25,16 @@ export const buildModifiersText = (
 
   const lines: string[] = []
 
-  mods.forEach((mod) => {
+  mods.forEach((mod, groupIndex) => {
+    const groupNumber = groupIndex + 1
     const required = includeRequiredTag && mod.esRequerido === "S" ? " (requerido)" : ""
-    const header = `\n${headerPrefix}${mod.descripcionMod ?? ""}${required}:`
+    const header = `\n${headerPrefix}${groupNumber}. ${mod.descripcionMod ?? ""}${required}:`
 
     const opciones = (mod.listOpciones ?? [])
-      .map((op: listaOpciones) => {
+      .map((op: listaOpciones, optionIndex) => {
         const precio =
           includePrices && Number(op.precioVenta ?? 0) > 0 ? ` - ${currencyPrefix}${formatearDecimales(op.precioVenta)}` : ""
-        return `• ${op.descripcionOp ?? ""}${precio}`
+        return `${groupNumber}.${optionIndex + 1} ${op.descripcionOp ?? ""}${precio}`
       })
       .join("\n")
 

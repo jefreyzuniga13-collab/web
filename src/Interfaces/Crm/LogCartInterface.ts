@@ -108,6 +108,11 @@ export interface LogCartResponseDto {
    */
   invoiceName?: string | null
 
+  /**
+   * RUC o cédula de quien recibe el pedido.
+   * Viaja vacío cuando el agente no lo escribe.
+   */
+  identificacion?: string | null
 
     onlyTextAddress:boolean
 }
@@ -143,6 +148,8 @@ export interface LogCartRequestDto {
   codPrecio: string
 
     invoiceName?: string | null
+
+    identificacion?: string | null
 }
 export interface LogCartFormValues {
   orderId: number
@@ -176,6 +183,8 @@ export interface LogCartFormValues {
   codPrecio: string
 
     invoiceName?: string | null
+
+    identificacion?: string | null
 }
 
 export type LogCartUpdateRequestDto = {
@@ -209,6 +218,7 @@ export type LogCartUpdateRequestDto = {
 
   serie?: string | null
     invoiceName?: string | null
+    identificacion?: string | null
 
     onlyTextAddress:boolean
 }
@@ -270,6 +280,7 @@ export type DraftState = {
   selectedAddressId: number | null
   observation: string
   invoiceName: string
+  identificacion: string
   onlyTextAddress:boolean
 }
 
@@ -292,5 +303,6 @@ export type BuildLogUpdateParams = {
   totals?: InvoiceTotalsDto | null
   observation: string
   invoiceName?: string | null
+  identificacion?: string | null
   onlyTextAddress:boolean
 }

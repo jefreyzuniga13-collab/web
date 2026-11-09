@@ -94,6 +94,11 @@ type BuildFacturaTempoParams = {
    * Correo del cliente si existe.
    */
   correo?: string
+
+  /**
+   * RUC o cédula. La API lo recibe en el campo identificaicon.
+   */
+  identificacion?: string
 }
 
 /**
@@ -120,7 +125,8 @@ export const buildFacturaTempo = ({
   tasa,
   codCli,
   telefonoCte,
-  correo
+  correo,
+  identificacion
 }: BuildFacturaTempoParams): FacturaTempo => {
   return {
     ...facturaBase,
@@ -131,6 +137,7 @@ export const buildFacturaTempo = ({
     codCli: safeStr(codCli ?? facturaBase.codCli),
     nombreCliente: safeStr(nombreCliente),
     clientePadre: safeStr(nombreCliente),
+    identificaicon: safeStr(identificacion ?? facturaBase.identificaicon),
 
     direccionCte: safeStr(direccionCte),
     referencia: safeStr(referencia),

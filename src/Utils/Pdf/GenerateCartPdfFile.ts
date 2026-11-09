@@ -23,6 +23,7 @@ type CartPdfOptions = {
   addressText?: string | null
   addressName?: string | null
   finalTotal?: number | null
+  identificacion?: string | null
 }
 
 const sanitizeMoney = (v: any): number => {
@@ -58,36 +59,50 @@ export const generateCartPdfFile = (cart: CarDto, invoiceTotalsDto: InvoiceTotal
 
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
-  doc.text(`Sucursal : ${branchName}`, marginX, marginY + 15)
-  doc.text(`Cliente: ${contact.fullName != null ? contact.fullName : contact.waName}`, marginX, marginY + 22)
-  doc.setFont("helvetica", "normal")
-  doc.text(`Fecha: ${time}`, marginX, marginY + 29)
 
-  let infoY = marginY + 36
-  doc.setFont("helvetica", "bold")
-  doc.text("Entrega:", marginX, infoY)
+  const lineStep = 7
+  let infoY = marginY + 15
+  const clientName =
+    contact.fullName != null ? contact.fullName : contact.waName
+  const identificacion = String(opts?.identificacion ?? "").trim()
+
+  const drawInfoLine = (text: string) => {
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    doc.text(text, marginX, infoY)
+    infoY += lineStep
+  }
+
+  drawInfoLine(`Sucursal: ${branchName ?? ""}`)
+  drawInfoLine(`Cliente: ${clientName ?? ""}`)
+
+  if (identificacion) {
+    drawInfoLine(`Identificación: ${identificacion}`)
+  }
+
+  drawInfoLine(`Fecha: ${time}`)
 
   if (isPickup) {
-    doc.text("Retira en sucursal", marginX + 18, infoY)
+    drawInfoLine("Entrega: Retira en sucursal")
   } else if (hasAddress) {
     const addrLine = addressName.length > 0 ? addressName : addressText
-    const descLine = addressText.length > 0 && addrLine !== addressText ? addressText : ""
-    doc.text("Envío a domicilio", marginX + 18, infoY)
-    infoY += 3
-    doc.text(`Dirección: ${addrLine}`, marginX, infoY)
+    const descLine =
+      addressText.length > 0 && addrLine !== addressText ? addressText : ""
+
+    drawInfoLine("Entrega: Envío a domicilio")
+    drawInfoLine(`Dirección: ${addrLine}`)
+
     if (descLine.length > 0) {
-      infoY += 3
-      doc.text(`Referencia: ${descLine}`, marginX, infoY)
+      drawInfoLine(`Referencia: ${descLine}`)
     }
   } else {
-    doc.text("Pendiente de dirección", marginX + 18, infoY)
+    drawInfoLine("Entrega: Pendiente de dirección")
   }
-    doc.setFont("helvetica", "normal")
 
   const body = buildRowsFromCart(cart)
 
   autoTable(doc, {
-    startY: infoY + 8,
+    startY: infoY + 4,
     head: [["Producto", "Cant.", "Precio", "Total", "Más detalles"]],
     body,
     margin: { left: marginX, right: marginX },

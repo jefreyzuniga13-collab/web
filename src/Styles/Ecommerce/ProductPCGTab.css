@@ -208,17 +208,35 @@
   opacity: 0.88;
 }
 
-.simpleAddBar-send {
-  background: #ef6d22 !important;
+.simpleAddBar-cart {
+  background: #171717 !important;
 }
 
-.simpleAddBar-send:hover:not(:disabled) {
+.simpleAddBar-cart:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.simpleAddBar-quote {
+  background: #34c767 !important;
+}
+
+.simpleAddBar-quote:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.simpleAddBar-options {
+  background: #6b7280 !important;
+}
+
+.simpleAddBar-options:hover:not(:disabled) {
   opacity: 0.88;
 }
 
 .simpleAddBar-select:disabled,
 .simpleAddBar-secondary:disabled,
-.simpleAddBar-send:disabled,
+.simpleAddBar-cart:disabled,
+.simpleAddBar-quote:disabled,
+.simpleAddBar-options:disabled,
 .productTab-simpleAddBar__btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

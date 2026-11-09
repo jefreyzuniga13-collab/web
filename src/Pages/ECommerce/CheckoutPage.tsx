@@ -919,7 +919,11 @@ const CheckoutPage: React.FC = () => {
         detallePago,
         tasa: tasaCambio,
         correo: billingForm.email,
-        telefonoCte: telefonoContacto
+        telefonoCte: telefonoContacto,
+        identificacion: getLogText(existingLog, [
+          "identificacion",
+          "Identificacion"
+        ])
       })
 
       if (isGatewayCard) {

@@ -9,6 +9,13 @@ import { useSelector } from "react-redux"
 import vacio from '@/assets/vacio.png'
 import { formatearDecimales } from "@/Utils/calcularIVA"
 
+export type ProductQuoteOption = {
+  group: string
+  name: string
+  qty: number
+  price: number
+}
+
 type Props = {
   product: ProductoPCGInterface
   conversationId: number
@@ -17,18 +24,86 @@ type Props = {
   fallbackMediaUrl?: string 
   includeModifiers?: boolean
   codPrecio?: string
+  quantity?: number
+  quoteOptions?: ProductQuoteOption[]
 }
 
-
-const buildBaseCaption = (p: ProductoPCGInterface): string => {
+const buildBaseCaption = (
+  p: ProductoPCGInterface,
+  quantity?: number
+): string => {
   const parts: string[] = []
   if (p.descripcion) parts.push(`*Producto:* ${p.descripcion}`)
   if (p.contenido) parts.push(`*Contenido:* ${p.contenido}`)
-  if (p.precio && Number(p.precio) > 0) {
-    // parts.push(`*Precio:* C$ ${(p.precio)}`)
-    parts.push(`*Precio:* C$ ${formatearDecimales(p.precio)}`)
-  }
+  if (quantity && quantity > 1) parts.push(`*Cantidad:* ${quantity}`)
+  // if (p.precio && Number(p.precio) > 0) {
+  //   parts.push(`*Precio:* C$ ${formatearDecimales(p.precio)}`)
+  // }
   return parts.join("\n").trim()
+}
+
+const buildQuoteCaption = (
+  unitPrice: number,
+  quantity: number,
+  lines: ProductQuoteOption[] | undefined
+): string => {
+  const selected = lines ?? []
+  const qty = Math.max(1, quantity || 1)
+  const hasSelection = selected.length > 0
+  const price = Number(unitPrice ?? 0)
+
+  if (!hasSelection) {
+    if (price <= 0) return ""
+
+    const chunks = [`*Precio:* C$ ${formatearDecimales(price)}`]
+
+    if (qty > 1) {
+      chunks.push(`*Total:* C$ ${formatearDecimales(qty * price)}`)
+    }
+
+    return `\n\n${chunks.join("\n")}`
+  }
+
+  const chunks: string[] = []
+  let optionsTotal = 0
+
+  if (hasSelection) {
+    const groups = new Map<string, ProductQuoteOption[]>()
+
+    selected.forEach((line) => {
+      const key = line.group.trim() || "Opciones"
+      const current = groups.get(key) ?? []
+      current.push(line)
+      groups.set(key, current)
+    })
+
+    chunks.push("*Opciones:*")
+
+    let groupNumber = 0
+    groups.forEach((items, group) => {
+      groupNumber += 1
+      chunks.push(`${groupNumber}. ${group}:`)
+      items.forEach((item, optionIndex) => {
+        const optionQty = Math.max(1, item.qty || 1)
+        const price = Number(item.price ?? 0)
+        optionsTotal += optionQty * price
+        const qtyText = optionQty > 1 ? ` x${optionQty}` : ""
+        // const priceText = price > 0 ? ` - C$ ${formatearDecimales(price)}` : ""
+        chunks.push(
+          // `${groupNumber}.${optionIndex + 1} ${item.name}${qtyText}${priceText}`
+          `${groupNumber}.${optionIndex + 1} ${item.name}${qtyText}`
+        )
+      })
+    })
+  }
+
+  const total = qty * Number(unitPrice ?? 0) + optionsTotal
+  if (total > 0) {
+    chunks.push(`*Total:* C$ ${formatearDecimales(total)}`)
+  }
+
+  if (!chunks.length) return ""
+  return `\n\n${chunks.join("\n")}`
 }
 
 export const useProductMessageComposer = () => {
@@ -45,7 +120,9 @@ export const useProductMessageComposer = () => {
       maxLen = 1024,
       fallbackMediaUrl,
       includeModifiers = true,
-      codPrecio
+      codPrecio,
+      quantity,
+      quoteOptions,
     }: Props) => {
       if (sending) return
       if (!conversationId) return
@@ -54,7 +131,7 @@ export const useProductMessageComposer = () => {
 
       setSending(true)
       try {
-        const base = buildBaseCaption(product)
+        const base = buildBaseCaption(product, quantity)
         if (!base) return
 
         let modsText = ""
@@ -78,12 +155,20 @@ export const useProductMessageComposer = () => {
           }
         }
 
+        const quoteText = includeModifiers
+          ? ""
+          : buildQuoteCaption(
+              Number(product.precio ?? 0),
+              quantity ?? 1,
+              quoteOptions
+            )
+
         const obsText =
           observation && observation.trim().length > 0
             ? `\n\n*📝 Observación :* ${observation.trim()}`
             : ""
 
-        const caption = `${base}${modsText}${obsText}`.trim()
+        const caption = `${base}${quoteText}${modsText}${obsText}`.trim()
 
         if (!caption) return
         
