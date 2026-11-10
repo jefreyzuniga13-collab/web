@@ -128,7 +128,7 @@ function BarriosContent() {
       label: "Transporte",
       minWidth: 100,
       align: "right",
-      render: (row) => `C$ ${row.precio.toFixed(2)}`
+      render: (row) => `NIO ${row.precio.toFixed(2)}`
     },
     {
       id: "atender",
@@ -229,7 +229,7 @@ function BarriosContent() {
           { label: "Código", value: porBaja?.codBarrio ?? "" },
           { label: "Barrio", value: porBaja?.descripcion ?? "" },
           { label: "Sucursal", value: porBaja?.sucursal ?? "" },
-          { label: "Transporte", value: porBaja ? `C$ ${porBaja.precio.toFixed(2)}` : "" }
+          { label: "Transporte", value: porBaja ? `NIO ${porBaja.precio.toFixed(2)}` : "" }
         ]}
         onClose={() => setPorBaja(null)}
         onConfirm={async () => { if (porBaja) await darDeBaja(porBaja) }}

@@ -252,6 +252,11 @@
   color: var(--text-white);
 }
 
+.status--neutral {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
 .table-contaner__search-filter__container {
   max-width: 28rem;
   text-align: left;

@@ -85,7 +85,7 @@ export default function CallCenterBarrioModal({
 
   const opcionesPrecio = precios.map((item) => ({
     value: item.codPrecioTrans,
-    label: `${item.descripcion} · C$ ${item.precio.toFixed(2)}`
+    label: `${item.descripcion} · NIO ${item.precio.toFixed(2)}`
   }))
 
   const cambiar = (campo: keyof BarrioFormValues, valor: string) =>
@@ -133,6 +133,7 @@ export default function CallCenterBarrioModal({
             <div className="oh-modal__col">
               <Label>Sucursal</Label>
               <CustomAutocomplete
+                disablePortal={false}
                 placeholder="Buscar sucursal"
                 options={opcionesSucursal}
                 value={opcionesSucursal.find((item) => item.value === form.codSucursal) ?? null}
@@ -143,6 +144,7 @@ export default function CallCenterBarrioModal({
             <div className="oh-modal__col">
               <Label>Lista de precio</Label>
               <CustomAutocomplete
+                disablePortal={false}
                 placeholder="Buscar lista de precio"
                 options={opcionesPrecio}
                 value={opcionesPrecio.find((item) => item.value === form.codPrecioTrans) ?? null}

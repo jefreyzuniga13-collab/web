@@ -18,6 +18,7 @@ interface Props<TOption extends BaseAutocompleteOption> {
   hasMore?: boolean;
   loading?: boolean;
   onLoadMore?: () => void;
+  disablePortal?: boolean;
 }
 
 function CustomAutocomplete<TOption extends BaseAutocompleteOption>({
@@ -32,6 +33,7 @@ function CustomAutocomplete<TOption extends BaseAutocompleteOption>({
   hasMore = false,
   loading = false,
   onLoadMore,
+  disablePortal = true,
 }: Props<TOption>) {
   const handleScroll = useCallback(
     (event: React.SyntheticEvent) => {
@@ -52,7 +54,7 @@ function CustomAutocomplete<TOption extends BaseAutocompleteOption>({
 
   return (
     <Autocomplete<TOption, false, false, false>
-      disablePortal
+      disablePortal={disablePortal}
       options={options}
       value={value}
       onChange={(_, newValue) => onChange(newValue)}

@@ -5,8 +5,12 @@ import IconButton from "@mui/material/IconButton";
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import EditIcon from '@mui/icons-material/Edit';
+import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle';
+import { selectIsCallCenter } from "@/Context/Slices/Auth/authSlice";
+import CallCenterClienteModal from "@/Components/Crm/CallCenterClienteModal";
 import Button from "@/Components/Common/Button";
 import CustomTable from "@/Components/Common/CustomTable";
 import '@/Styles/Auth/ContactPage.css';
@@ -38,10 +42,15 @@ export default function ContactPage() {
     globalFilter,
     setGlobalFilter,
     loading,
-    loadingList
+    loadingList,
+    refetchPage
   } = useContact();
 
-  const columns: Column<ContactLogInterface>[] = useMemo(() => [
+  const isCallCenter = useSelector(selectIsCallCenter);
+  const [clienteContactId, setClienteContactId] = useState<number | null>(null);
+
+  const columns: Column<ContactLogInterface>[] = useMemo(() => {
+    const lista: Column<ContactLogInterface>[] = [
     {
       id: 'fullName',
       label: 'Nombre Completo',
@@ -175,6 +184,15 @@ export default function ContactPage() {
               <ToggleOffIcon fontSize="small" />
             )}
           </IconButton>
+          {isCallCenter && (
+            <IconButton
+              size="small"
+              title={row.codClientePcg ? `Gestionar Cliente ${row.codClientePcg}` : "Gestionar Cliente"}
+              onClick={() => setClienteContactId(row.id)}
+            >
+              <PersonPinCircleIcon fontSize="small" color={row.codClientePcg?.trim() ? "success" : "disabled"} />
+            </IconButton>
+          )}
           {/* <IconButton size="medium" onClick={() => verify(row.id)}>
             {row.isVerified ? (
               <CheckBoxIcon fontSize="medium" color="success" />
@@ -185,7 +203,23 @@ export default function ContactPage() {
         </>
       )
     }
-  ], [openView, openEdit, toggle, verify]);
+  ];
+
+    if (!isCallCenter) return lista;
+
+    const clienteErp: Column<ContactLogInterface> = {
+      id: 'codClientePcg',
+      label: 'Cliente Vinculado',
+      minWidth: 100,
+      render: row => row.codClientePcg?.trim()
+        ? <span className="status status--active">{row.codClientePcg}</span>
+        : <span className="status status--neutral">Sin vincular</span>
+    };
+
+    return lista
+      .filter(col => col.id !== 'clienteCodigo' && col.id !== 'companyName')
+      .flatMap(col => (col.id === 'phone' ? [col, clienteErp] : [col]));
+  }, [openView, openEdit, toggle, verify, isCallCenter]);
 
   return (
     <div className="contact-page__container">
@@ -226,6 +260,16 @@ export default function ContactPage() {
         onSubmit={handleSubmit}
         loading={loading}
       />
+
+      {clienteContactId !== null && (
+        <CallCenterClienteModal
+          key={clienteContactId}
+          isOpen
+          contactId={clienteContactId}
+          onClose={() => setClienteContactId(null)}
+          onCambio={() => void refetchPage()}
+        />
+      )}
     </div>
   );
 }

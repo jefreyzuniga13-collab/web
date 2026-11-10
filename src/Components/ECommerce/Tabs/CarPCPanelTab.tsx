@@ -210,8 +210,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   /** En call center el transporte sale del barrio. En el resto se bloquea al retirar. */
   const transportDisabled = isPickup || isCallCenter
 
-  const pickupDisabled =
-    isOnlyTextAddress || hasSelectedAddress || hasManualAddress
+  /** En call center la dirección elegida no impide cambiar a retiro en sucursal. */
+  const pickupDisabled = isCallCenter
+    ? isOnlyTextAddress || hasSelectedAddress
+    : isOnlyTextAddress || hasSelectedAddress || hasManualAddress
 
   const onlyTextAddressDisabled =
     isPickup || hasSelectedAddress || hasManualAddress

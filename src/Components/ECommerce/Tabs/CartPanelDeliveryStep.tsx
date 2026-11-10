@@ -229,6 +229,10 @@ export default function CartPanelDeliveryStep({
                 identificacion={identificacion}
                 direccionSeleccionada={addDescription}
                 onSelect={(texto, precio) => onCallCenterAddress?.(texto, precio)}
+                onCliente={({ nombre, identificacion: cedula }) => {
+                  if (nombre) setInvoiceName(nombre)
+                  if (cedula) setIdentificacion(cedula)
+                }}
               />
             )}
 
