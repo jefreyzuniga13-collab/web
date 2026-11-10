@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import * as Icons from "lucide-react";
-import {SquareArrowLeft,SquareArrowRight} from "lucide-react";
+import {MapPin,SquareArrowLeft,SquareArrowRight,Truck} from "lucide-react";
 import {useLocation,useNavigate} from "react-router-dom";
 import {useDispatch,useSelector} from "react-redux";
 import { useMenus } from "@/Hooks/Auth/useMenus";
@@ -9,7 +9,7 @@ import { markOffline } from "@/Hooks/Auth/useUserPresence";
 import { logoutThunk } from "@/Context/Slices/Auth/authThunks";
 import type { AppDispatch } from "@/Context";
 import { selectActiveCompanyImage, selectActiveCompanyName, selectActiveCompanyWhPhone,} from "@/Context/Slices/Auth/companySlice";
-import { selectCompanyImageUrl, selectUserFullName, selectUserId, selectUserImageUrl,} from "@/Context/Slices/Auth/authSlice"
+import { selectCompanyImageUrl, selectIsAdmin, selectIsCallCenter, selectIsRoot, selectUserFullName, selectUserId, selectUserImageUrl,} from "@/Context/Slices/Auth/authSlice"
 import Profile from "@/assets/img/profile.png";
 import "@/Styles/Auth/Navbar.css";
 
@@ -53,6 +53,20 @@ const Navbar: React.FC = () => {
   const userId = useSelector(
     selectUserId,
   );
+
+  const isCallCenter = useSelector(selectIsCallCenter);
+  const isAdmin = useSelector(selectIsAdmin);
+  const isRoot = useSelector(selectIsRoot);
+  const muestraCallCenter = isCallCenter && (isAdmin || isRoot);
+
+  const callCenterMenus = muestraCallCenter
+    ? [
+        { url: "callcenter-barrios", text: "Barrios", icon: MapPin },
+        { url: "callcenter-precios", text: "Precios de transporte", icon: Truck },
+      ].filter(
+        (item) => !menus.some((menu) => normalizePath(menu.url) === item.url),
+      )
+    : [];
 
   const userFullName = useSelector(
     selectUserFullName,
@@ -240,6 +254,26 @@ const Navbar: React.FC = () => {
             );
           })
         )}
+        {callCenterMenus.map((item) => (
+          <MenuItem
+            key={item.url}
+            icon={<item.icon size={20} />}
+            text={item.text}
+            onClick={() => {
+              void handleMenuClick(
+                item.url,
+                item.text,
+              );
+            }}
+            selected={selectedUrl === item.url}
+            className={
+              collapsed
+                ? "collapsed-styles"
+                : ""
+            }
+            collapsed={collapsed}
+          />
+        ))}
       </ul>
 
       <div className="navbar__profile">

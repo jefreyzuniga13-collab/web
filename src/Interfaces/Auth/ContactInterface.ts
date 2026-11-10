@@ -40,6 +40,7 @@ export interface ContactLogInterface {
   verifiedBy?: User | null;
   clienteCodigo?: string;
   clienteNombre?: string;
+  codClientePcg?: string | null;
 
    ecommerceUserId?: number;
   isSpam?: boolean;

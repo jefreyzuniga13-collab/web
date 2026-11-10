@@ -30,6 +30,17 @@ class ContactService {
     return data;
   }
 
+  async updateCodClientePcg(
+    id: number,
+    codClientePcg: string
+  ): Promise<ApiResponse<ContactLogInterface>> {
+    const { data } = await api.patch<ApiResponse<ContactLogInterface>>(
+      `/ContactLogs/cod-cliente-pcg/${id}`,
+      { codClientePcg }
+    );
+    return data;
+  }
+
    async getAllVerifiedAsync(
     page: number,
     pageSize: number

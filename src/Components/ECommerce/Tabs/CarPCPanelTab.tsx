@@ -7,7 +7,7 @@ import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux
 import type { RootState, AppDispatch } from "@/Context"
 import { selectCarPCG,selectCartError,selectCartLoading,getProductFromCarAsync,updateCarAsync,setActiveContactId} from "@/Context/Slices/Ecommerce/cartSlice"
 import { setContactCartBadge} from "@/Context/Slices/Ecommerce/cartBadgeSlice"
-import { selectAplicaMultimoneda, selectCompanySistema, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
+import { selectAplicaMultimoneda, selectCompanySistema, selectIsCallCenter, selectPermiteMultipago} from "@/Context/Slices/Auth/authSlice"
 import { useCatalogoMoneda } from "@/Hooks/Ecommerce/payment/useCatalogoMoneda"
 import { convertirDesdeCordoba } from "@/Utils/ECommerce/monedaUtils"
 import { useCart } from "@/Hooks/Ecommerce/tabs/useCart"
@@ -205,8 +205,10 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
   const addressInputsDisabled =
     isPickup || isOnlyTextAddress || hasSelectedAddress
 
-  /** El transporte se bloquea únicamente cuando el pedido se retira. */
-  const transportDisabled = isPickup
+  const isCallCenter = useSelector(selectIsCallCenter)
+
+  /** En call center el transporte sale del barrio. En el resto se bloquea al retirar. */
+  const transportDisabled = isPickup || isCallCenter
 
   const pickupDisabled =
     isOnlyTextAddress || hasSelectedAddress || hasManualAddress
@@ -215,7 +217,7 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
     isPickup || hasSelectedAddress || hasManualAddress
 
   const showAddressButton =
-    !isPickup && !isOnlyTextAddress && !hasManualAddress
+    !isCallCenter && !isPickup && !isOnlyTextAddress && !hasManualAddress
 
   const totalPagarAgente = useMemo(() => {
     return safePositiveNumber(invoiceTotalsDto?.total ?? 0)
@@ -397,6 +399,16 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
       pickup: retiraSucursal === "S"
     })
   }, [calcTotals, contactId, detailsCount, retiraSucursal])
+
+  const handleCallCenterAddress = useCallback((texto: string, precio: number) => {
+    const costo = safePositiveNumber(precio)
+    addDescriptionRef.current = texto
+    transCostRef.current = costo
+    setAddDescription(texto)
+    setTransCost(costo)
+    if (!contactId || detailsCount === 0 || cartClearedRef.current) return
+    void calcTotals({ cost: costo, pickup: false })
+  }, [calcTotals, contactId, detailsCount])
 
   useEffect(() => {
     addDescriptionRef.current = addDescription
@@ -1730,6 +1742,9 @@ const CarPCPanelTab = ({ conversationId, contactId }: Props) => {
             setAddressSearch={setAddressSearch}
             selectedAddressId={selectedAddressId}
             applySelectedAddressToLog={applySelectedAddressToLog}
+            isCallCenter={isCallCenter}
+            contactId={contactId}
+            onCallCenterAddress={handleCallCenterAddress}
           />
         )}
 

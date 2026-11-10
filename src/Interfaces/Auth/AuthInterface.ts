@@ -28,6 +28,7 @@ export interface AuthData {
   aplicaDescuentoUsuario: boolean;
   aplicaOpciones: boolean;
   aplicaMultimoneda?: boolean;
+  isCallCenter?: boolean;
 
   codReferenciaPCG?: string;
 
@@ -149,6 +150,7 @@ export interface AuthMe {
   aplicaDescuentoUsuario: boolean;
   aplicaOpciones: boolean;
   aplicaMultimoneda?: boolean;
+  isCallCenter?: boolean;
 
   codReferenciaPCG?: string;
 

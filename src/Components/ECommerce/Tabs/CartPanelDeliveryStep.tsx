@@ -12,6 +12,7 @@ import ListSkeleton from "@/Components/Common/ListSkeleton"
 import type { ClientLocationDto } from "@/Interfaces/Ecommerce/ClientLocationInterface"
 import type { SINO } from "@/Interfaces/Ecommerce/FacturaTempo"
 import { safePositiveNumber, limpiarMontoTexto } from "@/Utils/ECommerce/utils"
+import CallCenterAddressPanel from "@/Components/ECommerce/Tabs/CallCenterAddressPanel"
 
 interface Props {
   invoiceName: string
@@ -54,6 +55,10 @@ interface Props {
   selectedAddressId: number | null
 
   applySelectedAddressToLog: (addressId: number) => Promise<void>
+
+  isCallCenter?: boolean
+  contactId?: number
+  onCallCenterAddress?: (texto: string, precio: number) => void
 }
 
 /** Paso de entrega del carrito administrado por el agente. */
@@ -85,7 +90,10 @@ export default function CartPanelDeliveryStep({
   addressSearch,
   setAddressSearch,
   selectedAddressId,
-  applySelectedAddressToLog
+  applySelectedAddressToLog,
+  isCallCenter = false,
+  contactId = 0,
+  onCallCenterAddress
 }: Props) {
   const isPickup = retiraSucursal === "S"
 
@@ -214,7 +222,17 @@ export default function CartPanelDeliveryStep({
             </div>
             */}
 
-            {!onlyTextAddress && !isPickup && (
+            {isCallCenter && !isPickup && (
+              <CallCenterAddressPanel
+                contactId={contactId}
+                invoiceName={invoiceName}
+                identificacion={identificacion}
+                direccionSeleccionada={addDescription}
+                onSelect={(texto, precio) => onCallCenterAddress?.(texto, precio)}
+              />
+            )}
+
+            {!isCallCenter && !onlyTextAddress && !isPickup && (
               <Textarea
                 id="descripcion"
                 name="descripcion"

@@ -1,0 +1,126 @@
+.cc-addr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: var(--space-xs, 4px) 0 var(--space-sm);
+}
+
+.cc-addr__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.cc-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  background: var(--bg-secondary, #eef2f7);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.cc-badge--warning {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.cc-note {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.cc-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cc-addr__item {
+  text-align: left;
+  border: 1px solid var(--control-border, #d7dde3);
+  border-radius: var(--control-radius, 8px);
+  background: var(--bg-primary, #fff);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 0.15s);
+}
+
+.cc-addr__item:hover {
+  border-color: var(--color-primary);
+}
+
+.cc-addr__item--active {
+  border-color: var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.cc-addr__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.cc-addr__price {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.cc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cc-icon-btn:hover {
+  color: var(--color-primary);
+}
+
+.cc-icon-btn--danger:hover {
+  color: var(--color-error);
+}
+
+.cc-confirm {
+  width: min(28rem, calc(100vw - 2.4rem));
+}
+
+.cc-confirm__detalle {
+  margin: 0;
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--control-border, #e5e7eb);
+  border-bottom: 1px solid var(--control-border, #e5e7eb);
+}
+
+.cc-confirm__fila {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 4px 0;
+  font-size: var(--control-font-size);
+}
+
+.cc-confirm__fila dt {
+  color: var(--text-muted);
+}
+
+.cc-confirm__fila dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.cc-addr__item p,
+.cc-addr__item small {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+}

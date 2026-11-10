@@ -50,6 +50,8 @@ interface AuthState {
 
   aplicaMultimoneda: boolean;
 
+  isCallCenter: boolean;
+
   codReferenciaPCG: string;
 
   // Licencia
@@ -102,6 +104,8 @@ const initialState: AuthState = {
   aplicaDescuentoUsuario: false,
   aplicaOpciones: false,
   aplicaMultimoneda: false,
+
+  isCallCenter: false,
 
   codReferenciaPCG: "",
 
@@ -189,6 +193,8 @@ const limpiarSesion = (
   state.aplicaOpciones = false;
   state.aplicaMultimoneda = false;
 
+  state.isCallCenter = false;
+
   state.codReferenciaPCG = "";
 
   state.licenseExpireAt = "";
@@ -245,6 +251,8 @@ const aplicarSesion = (
   state.aplicaMultimoneda =
     payload.aplicaMultimoneda ?? false;
 
+  state.isCallCenter =
+    payload.isCallCenter ?? false;
 
   state.codReferenciaPCG =
     payload.codReferenciaPCG ?? "";
@@ -457,6 +465,10 @@ export const selectAplicaDescuentoUsuario = (
 export const selectAplicaOpciones = (
   state: RootState,
 ) => state.auth.aplicaOpciones;
+
+export const selectIsCallCenter = (
+  state: RootState,
+) => state.auth.isCallCenter;
 
 export const selectCodReferenciaPCG = (
   state: RootState,
